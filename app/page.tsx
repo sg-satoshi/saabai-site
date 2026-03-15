@@ -17,7 +17,7 @@ export default function Home() {
           priority
         />
         <a
-          href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
+          href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
           className="text-base font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
         >
           Book an AI Audit
@@ -61,7 +61,7 @@ export default function Home() {
         {/* CTAs */}
         <div className="relative flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
+            href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
             className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
             Book a Free AI Audit
@@ -215,7 +215,7 @@ export default function Home() {
               Not sure where to start? An AI Audit maps every opportunity in your operation.
             </p>
             <a
-              href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
+              href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
               className="text-base font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors flex items-center gap-2 group"
             >
               Book a free audit
@@ -325,7 +325,7 @@ export default function Home() {
           opportunities and show you the numbers.
         </p>
         <a
-          href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
+          href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
           Book a Free AI Audit
