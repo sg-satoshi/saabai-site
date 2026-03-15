@@ -97,7 +97,7 @@ export default function Home() {
           Your team is doing work that should be automated.
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {[
             {
               stat: "20–30 hrs",
@@ -139,7 +139,7 @@ export default function Home() {
           How Saabai builds your operational advantage.
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {[
             {
               tag: "Start here",
@@ -218,7 +218,7 @@ export default function Home() {
           Built for firms that run on expertise.
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {[
             { industry: "Law Firms", use: "Client intake, matter tracking, document drafting, billing automation" },
             { industry: "Real Estate Agencies", use: "Lead qualification, listing follow-up, inspection scheduling, appraisal workflows" },
