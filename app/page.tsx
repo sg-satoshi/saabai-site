@@ -12,13 +12,13 @@ export default function Home() {
         <Image
           src="/brand/saabai-logo.png"
           alt="Saabai.ai"
-          width={130}
-          height={34}
+          width={163}
+          height={43}
           priority
         />
         <a
           href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
-          className="text-sm font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
+          className="text-base font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
         >
           Book an AI Audit
         </a>
@@ -62,13 +62,13 @@ export default function Home() {
         <div className="relative flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
-            className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide"
+            className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
             Book a Free AI Audit
           </a>
           <a
             href="#how-it-works"
-            className="border border-saabai-border px-9 py-[14px] rounded-xl font-medium text-sm text-saabai-text-muted hover:border-saabai-teal/50 hover:text-saabai-text transition-colors"
+            className="border border-saabai-border px-9 py-[14px] rounded-xl font-medium text-base text-saabai-text-muted hover:border-saabai-teal/50 hover:text-saabai-text transition-colors"
           >
             See How It Works
           </a>
@@ -140,7 +140,7 @@ export default function Home() {
               <div className="text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-5">
                 {label}
               </div>
-              <p className="text-sm text-saabai-text-muted leading-relaxed">{detail}</p>
+              <p className="text-base text-saabai-text-muted leading-relaxed">{detail}</p>
             </div>
           ))}
         </div>
@@ -205,18 +205,18 @@ export default function Home() {
                 </span>
               )}
               <h3 className="text-lg font-semibold mb-3 tracking-tight">{title}</h3>
-              <p className="text-sm text-saabai-text-muted leading-relaxed">{body}</p>
+              <p className="text-base text-saabai-text-muted leading-relaxed">{body}</p>
             </div>
           ))}
 
           {/* Filler cell */}
           <div className="bg-saabai-surface p-12 flex flex-col items-start justify-between gap-8">
-            <p className="text-sm text-saabai-text-dim leading-relaxed">
+            <p className="text-base text-saabai-text-dim leading-relaxed">
               Not sure where to start? An AI Audit maps every opportunity in your operation.
             </p>
             <a
               href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
-              className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors flex items-center gap-2 group"
+              className="text-base font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors flex items-center gap-2 group"
             >
               Book a free audit
               <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
@@ -247,7 +247,7 @@ export default function Home() {
               {/* Left accent reveal on hover */}
               <div className="absolute left-0 top-6 bottom-6 w-px bg-saabai-teal/0 group-hover:bg-saabai-teal/50 transition-colors" />
               <h3 className="text-base font-semibold mb-2.5 tracking-tight">{industry}</h3>
-              <p className="text-sm text-saabai-text-muted leading-relaxed">{use}</p>
+              <p className="text-base text-saabai-text-muted leading-relaxed">{use}</p>
             </div>
           ))}
         </div>
@@ -294,7 +294,7 @@ export default function Home() {
               {/* Teal accent line */}
               <div className="w-8 h-px bg-saabai-teal/50 mb-6" />
               <h3 className="text-lg font-semibold mb-3 tracking-tight">{title}</h3>
-              <p className="text-sm text-saabai-text-muted leading-relaxed">{body}</p>
+              <p className="text-base text-saabai-text-muted leading-relaxed">{body}</p>
             </div>
           ))}
         </div>
@@ -326,7 +326,7 @@ export default function Home() {
         </p>
         <a
           href="mailto:hello@saabai.ai?subject=AI Audit Enquiry"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
           Book a Free AI Audit
         </a>
