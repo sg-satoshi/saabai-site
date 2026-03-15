@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -13,6 +14,20 @@ const navLinks = [
 ];
 
 export default function Nav({ activePage }: { activePage?: string }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 border-b border-saabai-border"
@@ -32,40 +47,45 @@ export default function Nav({ activePage }: { activePage?: string }) {
       {/* Right side: hamburger + CTA */}
       <div className="flex items-center gap-4">
 
-        {/* Hover menu */}
-        <div className="relative group">
+        {/* Click-toggle menu */}
+        <div className="relative" ref={menuRef}>
 
-          {/* Hamburger icon */}
-          <div
+          {/* Hamburger button */}
+          <button
+            onClick={() => setOpen((v) => !v)}
             aria-label="Open menu"
-            className="flex flex-col justify-center gap-[5px] p-2.5 rounded-lg group-hover:bg-saabai-surface transition-colors cursor-pointer"
+            aria-expanded={open}
+            className={`flex flex-col justify-center gap-[5px] p-2.5 rounded-lg transition-colors ${open ? "bg-saabai-surface" : "hover:bg-saabai-surface"}`}
           >
             <span className="block w-[22px] h-[2px] bg-saabai-text-muted rounded-full" />
             <span className="block w-[22px] h-[2px] bg-saabai-text-muted rounded-full" />
             <span className="block w-[22px] h-[2px] bg-saabai-text-muted rounded-full" />
-          </div>
+          </button>
 
-          {/* Dropdown — visible on group hover */}
-          <div className="absolute right-0 top-full pt-2 hidden group-hover:block">
-            <div className="w-52 bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-              {navLinks.map(({ label, href }) => (
-                <a
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-3 px-5 py-4 text-sm font-medium tracking-wide transition-colors ${
-                    activePage === href
-                      ? "text-saabai-teal bg-saabai-surface-raised"
-                      : "text-saabai-text-muted hover:text-saabai-text hover:bg-saabai-surface-raised"
-                  }`}
-                >
-                  {activePage === href && (
-                    <span className="w-1 h-1 rounded-full bg-saabai-teal shrink-0" />
-                  )}
-                  {label}
-                </a>
-              ))}
+          {/* Dropdown */}
+          {open && (
+            <div className="absolute right-0 top-full pt-2">
+              <div className="w-52 bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                {navLinks.map(({ label, href }) => (
+                  <a
+                    key={href}
+                    href={href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-5 py-4 text-sm font-medium tracking-wide transition-colors ${
+                      activePage === href
+                        ? "text-saabai-teal bg-saabai-surface-raised"
+                        : "text-saabai-text-muted hover:text-saabai-text hover:bg-saabai-surface-raised"
+                    }`}
+                  >
+                    {activePage === href && (
+                      <span className="w-1 h-1 rounded-full bg-saabai-teal shrink-0" />
+                    )}
+                    {label}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* CTA button */}
