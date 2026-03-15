@@ -57,7 +57,7 @@ export default function ChatWidget() {
     const timer = setTimeout(() => {
       setShowBubble(true);
       track("bubble_shown");
-    }, 12000);
+    }, 5000);
     return () => clearTimeout(timer);
   }, []);
 
