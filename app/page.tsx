@@ -12,8 +12,8 @@ export default function Home() {
         <Image
           src="/brand/saabai-logo.png"
           alt="Saabai.ai"
-          width={163}
-          height={43}
+          width={212}
+          height={56}
           priority
         />
         <a
