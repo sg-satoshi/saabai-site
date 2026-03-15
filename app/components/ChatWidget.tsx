@@ -216,11 +216,11 @@ export default function ChatWidget() {
 
       {/* ── Proactive bubble ─────────────────────────────────────────── */}
       {showBubble && !isOpen && (
-        <div className="w-80 bg-saabai-surface border border-saabai-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div className="w-80 border border-saabai-teal/25 rounded-2xl relative overflow-hidden" style={{ background: "#1c1a52", boxShadow: "0 8px_40px rgba(0,0,0,0.6), 0 0 32px rgba(98,197,209,0.2)" }}>
           <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
 
           {/* Mini header */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-border">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-teal/15">
             <div className="flex items-center gap-3">
               <MiaAvatar size={36} dotSize={10} />
               <div>
@@ -255,10 +255,10 @@ export default function ChatWidget() {
 
       {/* ── Chat panel ───────────────────────────────────────────────── */}
       {isOpen && (
-        <div className="w-[380px] max-w-[calc(100vw-24px)] h-[520px] bg-saabai-surface border border-saabai-border rounded-2xl shadow-[0_8px_48px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden">
+        <div className="w-[380px] max-w-[calc(100vw-24px)] h-[520px] rounded-2xl flex flex-col overflow-hidden" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)" }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-saabai-border shrink-0 relative">
+          <div className="flex items-center justify-between px-5 py-4 shrink-0 relative" style={{ borderBottom: "1px solid rgba(98,197,209,0.15)", background: "#201e5c" }}>
             <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
             <div className="flex items-center gap-3">
               <MiaAvatar size={40} dotSize={11} />
@@ -295,8 +295,9 @@ export default function ChatWidget() {
                   className={`max-w-[82%] px-4 py-3 rounded-xl text-sm leading-relaxed ${
                     message.role === "user"
                       ? "bg-saabai-teal text-saabai-bg font-medium"
-                      : "bg-saabai-surface-raised text-saabai-text-muted"
+                      : "text-saabai-text-muted"
                   }`}
+                  style={message.role !== "user" ? { background: "#272466" } : {}}
                 >
                   {getMessageText(message)}
                 </div>
@@ -306,7 +307,7 @@ export default function ChatWidget() {
             {/* Typing indicator */}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-saabai-surface-raised px-4 py-3 rounded-xl flex items-center gap-1.5">
+                <div className="px-4 py-3 rounded-xl flex items-center gap-1.5" style={{ background: "#272466" }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "120ms" }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "240ms" }} />
@@ -396,13 +397,15 @@ export default function ChatWidget() {
           {/* Input */}
           <form
             onSubmit={onSubmit}
-            className="px-4 py-3 border-t border-saabai-border flex items-center gap-2 shrink-0"
+            className="px-4 py-3 flex items-center gap-2 shrink-0"
+            style={{ borderTop: "1px solid rgba(98,197,209,0.15)", background: "#201e5c" }}
           >
             <input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type a message…"
-              className="flex-1 bg-saabai-bg border border-saabai-border rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none transition-colors"
+              style={{ background: "#2a2870", border: "1px solid rgba(98,197,209,0.2)" }}
             />
             <button
               type="submit"
