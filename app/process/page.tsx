@@ -173,7 +173,7 @@ export default function Process() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
         <a href="/">
           <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={100} height={28} />
         </a>

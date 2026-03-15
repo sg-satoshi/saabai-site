@@ -398,7 +398,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
         <Image
           src="/brand/saabai-logo.png"
           alt="Saabai.ai"
