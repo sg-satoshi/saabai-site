@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "Saabai.ai | AI Systems for Professional Firms",
   description:
     "Saabai builds AI automation systems that remove operational drag, automate repetitive workflows, and give professional service firms their time back.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
