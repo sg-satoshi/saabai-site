@@ -226,10 +226,7 @@ export default function ChatWidget() {
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</span>
-                </div>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</p>
               </div>
             </div>
             <button
@@ -272,10 +269,7 @@ export default function ChatWidget() {
                 <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">
                   AI Automation Advisor
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</span>
-                </div>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</p>
               </div>
             </div>
             <button
