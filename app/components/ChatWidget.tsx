@@ -11,7 +11,7 @@ const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "initial",
     role: "assistant",
-    parts: [{ type: "text", text: "Hey — what brings you to Saabai today?" }],
+    parts: [{ type: "text", text: "Hey, I'm Mia — what brings you to Saabai today?" }],
   },
 ];
 
@@ -197,11 +197,31 @@ export default function ChatWidget() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-saabai-border shrink-0 relative">
             <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-saabai-teal/15 border border-saabai-teal/30 flex items-center justify-center shrink-0">
-                <span className="text-saabai-teal text-sm font-bold">S</span>
+              {/* Avatar — replace /public/brand/agent-avatar.png with Mia's headshot */}
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-saabai-teal/30 shrink-0 bg-saabai-teal/10">
+                <img
+                  src="/brand/agent-avatar.png"
+                  alt="Mia"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to initial if image not yet added
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML =
+                        '<span class="w-full h-full flex items-center justify-center text-saabai-teal text-sm font-bold">M</span>';
+                    }
+                  }}
+                />
               </div>
               <div>
-                <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-1">
+                <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">
+                  Mia
+                </p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">
                   Saabai AI
                 </p>
                 <div className="flex items-center gap-1.5">
