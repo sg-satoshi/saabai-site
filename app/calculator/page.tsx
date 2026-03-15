@@ -107,7 +107,7 @@ export default function Calculator() {
       <section className="py-8 px-6 max-w-3xl mx-auto">
 
         {/* Inputs */}
-        <div className="bg-saabai-surface border border-saabai-border rounded-2xl overflow-hidden mb-6">
+        <div className="bg-saabai-surface border border-saabai-border rounded-2xl overflow-hidden mb-6 shadow-[0_0_48px_var(--saabai-glow-mid)]">
           {/* Card top accent */}
           <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
 
@@ -161,7 +161,7 @@ export default function Calculator() {
         <div className="flex flex-col gap-4">
 
           {/* Time results */}
-          <div className="grid grid-cols-3 gap-px bg-saabai-border rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-3 gap-px bg-saabai-border rounded-2xl overflow-hidden shadow-[0_0_48px_var(--saabai-glow-mid)]">
             {timeResults.map(({ label, value, unit }) => (
               <div key={label} className="bg-saabai-surface p-8 relative">
                 <div className="h-px absolute top-0 left-0 right-0 bg-gradient-to-r from-transparent via-saabai-teal/25 to-transparent" />
@@ -177,7 +177,7 @@ export default function Calculator() {
           </div>
 
           {/* Annual cost — hero result */}
-          <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden relative">
+          <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden relative shadow-[0_0_60px_var(--saabai-glow-strong)]">
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/60 to-transparent" />
             <div className="p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>

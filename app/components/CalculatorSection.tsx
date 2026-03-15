@@ -62,7 +62,7 @@ export default function CalculatorSection() {
         Adjust the sliders to estimate the hidden labour cost of repetitive work across your team.
       </p>
 
-      <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden">
+      <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden shadow-[0_0_60px_var(--saabai-glow-mid)]">
 
         {/* Left — Inputs */}
         <div className="bg-saabai-surface p-10 flex flex-col gap-9">
