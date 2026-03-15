@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Nav from "./components/Nav";
+import CalculatorSection from "./components/CalculatorSection";
 
 export default function Home() {
   return (
@@ -282,6 +283,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <CalculatorSection />
 
       {/* ── CTA ─────────────────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
