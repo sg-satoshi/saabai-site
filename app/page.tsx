@@ -307,7 +307,7 @@ export default function Home() {
           <span className="text-gradient">firm could recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          A free 30-minute call to map out exactly where AI can save your firm
+          A free 20-minute call to map out exactly where AI can save your firm
           time and money.
         </p>
         <a
