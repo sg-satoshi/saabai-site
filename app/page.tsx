@@ -20,7 +20,7 @@ export default function Home() {
           href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
           className="text-base font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
         >
-          Book an AI Audit
+          Book an AI Automation Strategy Call
         </a>
       </nav>
 
@@ -64,7 +64,7 @@ export default function Home() {
             href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
             className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
-            Book a Free AI Audit
+            Book an AI Automation Strategy Call
           </a>
           <a
             href="#how-it-works"
@@ -218,7 +218,7 @@ export default function Home() {
               href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
               className="text-base font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors flex items-center gap-2 group"
             >
-              Book a free audit
+              Book a strategy call
               <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
             </a>
           </div>
@@ -321,16 +321,28 @@ export default function Home() {
           <span className="text-gradient">firm could recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free AI Audit. We&apos;ll identify your highest-value automation
-          opportunities and show you the numbers.
+          A free 30-minute call to map out exactly where AI can save your firm
+          time and money.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book a Free AI Audit
+          Book an AI Automation Strategy Call
         </a>
-        <p className="relative text-saabai-text-dim text-xs mt-7 tracking-wide">
+        <ul className="relative mt-8 mb-4 inline-flex flex-col items-start gap-3 text-left">
+          {[
+            "Identify repetitive work that can be automated",
+            "Discover where AI agents can save time and money",
+            "Walk away with practical next steps",
+          ].map((point) => (
+            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
+              {point}
+            </li>
+          ))}
+        </ul>
+        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
           No obligation. No jargon. Just a clear picture of what&apos;s possible.
         </p>
       </section>
