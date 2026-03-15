@@ -56,7 +56,7 @@ export default function CalculatorSection() {
         Free Calculator
       </p>
       <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-5 max-w-2xl mx-auto leading-snug">
-        How much is manual work costing your firm?
+        How Much Is Repetitive Work Really Costing Your Business?
       </h2>
       <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-16 leading-relaxed">
         Adjust the sliders to estimate the hidden labour cost of repetitive work across your team.

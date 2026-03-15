@@ -84,9 +84,9 @@ export default function Calculator() {
         </div>
 
         <h1 className="relative text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          Automation Opportunity
+          How Much Is Repetitive Work
           <br />
-          <span className="text-gradient">Calculator.</span>
+          <span className="text-gradient">Really Costing Your Business?</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-5 leading-relaxed">
