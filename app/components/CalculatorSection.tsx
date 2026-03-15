@@ -129,7 +129,7 @@ export default function CalculatorSection() {
           </div>
 
           {/* Hours */}
-          <div className="grid grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden">
+          <div className="grid grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             {[
               { label: "Hours / week", value: formatHours(weeklyHours) },
               { label: "Hours / year", value: formatHours(annualHours) },

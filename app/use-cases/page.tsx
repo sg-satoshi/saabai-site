@@ -124,7 +124,7 @@ export default function UseCases() {
             </div>
 
             {/* Right — examples card */}
-            <div className="bg-saabai-surface rounded-xl border border-saabai-border overflow-hidden">
+            <div className="bg-saabai-surface rounded-xl border border-saabai-border overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
               <div className="p-8">
                 <p className="text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-6">

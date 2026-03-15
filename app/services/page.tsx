@@ -163,7 +163,7 @@ export default function Services() {
           replaces them with intelligent automation.
         </p>
 
-        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {services.map(({ title, description, benefits }) => (
             <div
               key={title}
@@ -196,7 +196,7 @@ export default function Services() {
           From bottleneck to automated — in weeks.
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {steps.map(({ step, title, body }) => (
             <div key={step} className="bg-saabai-surface p-10 relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-border to-transparent" />
@@ -223,7 +223,7 @@ export default function Services() {
           Measurable outcomes, not just efficiency gains.
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {results.map(({ stat, label, detail }) => (
             <div key={label} className="bg-saabai-surface p-10 relative">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />

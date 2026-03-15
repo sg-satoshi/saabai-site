@@ -208,7 +208,7 @@ export default function Calculator() {
           </div>
 
           {/* Weekly / monthly costs — supporting */}
-          <div className="grid grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             {[
               { label: "Weekly labour cost", value: formatCurrency(weeklyCost) },
               { label: "Monthly labour cost", value: formatCurrency(monthlyCost) },
