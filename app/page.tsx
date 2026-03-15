@@ -1,43 +1,11 @@
 import Image from "next/image";
+import Nav from "./components/Nav";
 
 export default function Home() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
 
-      {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 border-b border-saabai-border"
-        style={{ background: "var(--saabai-nav)", backdropFilter: "blur(16px)" }}
-      >
-        {/* Logo — left */}
-        <Image
-          src="/brand/saabai-logo.png"
-          alt="Saabai.ai"
-          width={212}
-          height={56}
-          priority
-        />
-
-        {/* Nav links — centre */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-10">
-          <a
-            href="/services"
-            className="text-sm font-medium text-saabai-text-muted hover:text-saabai-text transition-colors tracking-wide"
-          >
-            Services
-          </a>
-        </div>
-
-        {/* CTA — right */}
-        <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
-        >
-          Book a Strategy Call
-        </a>
-      </nav>
+      <Nav />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
