@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
+/* ─── Saabai Brand Colour System ───────────────────────────────────────────
+   Colours sampled directly from /public/brand/saabai-logo.png.
+   All colour decisions flow from here. Update this block to re-skin the
+   entire site. Token names follow the pattern: --saabai-<role>.
+
+   Sampled values:
+     Logo background:  #0b092e  (deep indigo-navy)
+     Helix teal:       #62c5d1  (primary brand accent)
+     Mid blue:         #1f4dc5  (secondary accent)
+     Deep blue:        #0915a4  (gradient / glow anchor)
+     Text:             #ffffff  (wordmark)
+   ────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds — derived from logo background #0b092e */
+  --saabai-bg:              #0b092e;   /* main page bg — exact logo bg        */
+  --saabai-surface:         #100e38;   /* card / section surface              */
+  --saabai-surface-raised:  #161342;   /* elevated elements / hover surface   */
+  --saabai-nav:             #0b092ef0; /* nav bg (94% opacity)                */
+
+  /* Brand accents — sampled from logo helix mark */
+  --saabai-teal:            #62c5d1;   /* primary accent — helix colour       */
+  --saabai-teal-bright:     #7dd3dc;   /* hover / lighter teal                */
+  --saabai-teal-dim:        #62c5d126; /* teal at ~15% for glows/fills        */
+  --saabai-blue:            #1f4dc5;   /* secondary accent — mid blue         */
+  --saabai-blue-deep:       #0915a4;   /* deep blue — gradient / glow anchor  */
+  --saabai-glow:            #62c5d11a; /* ambient glow (~10%)                 */
+
+  /* Borders */
+  --saabai-border:          #62c5d120; /* teal-tinted border (~12%)           */
+  --saabai-border-subtle:   #ffffff0d; /* very subtle white divider (~5%)     */
+
+  /* Text */
+  --saabai-text:            #f0f4ff;   /* primary text (slightly warm white)  */
+  --saabai-text-muted:      #8399c0;   /* secondary / body copy               */
+  --saabai-text-dim:        #4b5e8a;   /* tertiary / labels                   */
+
+  /* Legacy vars expected by layout */
+  --background: var(--saabai-bg);
+  --foreground: var(--saabai-text);
 }
 
+/* ─── Tailwind v4 Theme Registration ──────────────────────────────────────
+   Registers custom tokens as Tailwind utility classes:
+   bg-saabai-bg, text-saabai-teal, border-saabai-border, etc.
+   ────────────────────────────────────────────────────────────────────────── */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+
+  /* Backgrounds */
+  --color-saabai-bg:              var(--saabai-bg);
+  --color-saabai-surface:         var(--saabai-surface);
+  --color-saabai-surface-raised:  var(--saabai-surface-raised);
+
+  /* Accents */
+  --color-saabai-teal:            var(--saabai-teal);
+  --color-saabai-teal-bright:     var(--saabai-teal-bright);
+  --color-saabai-teal-dim:        var(--saabai-teal-dim);
+  --color-saabai-blue:            var(--saabai-blue);
+  --color-saabai-blue-deep:       var(--saabai-blue-deep);
+  --color-saabai-glow:            var(--saabai-glow);
+
+  /* Borders */
+  --color-saabai-border:          var(--saabai-border);
+  --color-saabai-border-subtle:   var(--saabai-border-subtle);
+
+  /* Text */
+  --color-saabai-text:            var(--saabai-text);
+  --color-saabai-text-muted:      var(--saabai-text-muted);
+  --color-saabai-text-dim:        var(--saabai-text-dim);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ─── Base Styles ──────────────────────────────────────────────────────────*/
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--saabai-bg);
+  color: var(--saabai-text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
