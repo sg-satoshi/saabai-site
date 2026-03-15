@@ -23,9 +23,50 @@ function getMessageText(message: UIMessage): string {
     .join("\n\n");
 }
 
+// Reusable Mia avatar — circular crop with optional online dot
+function MiaAvatar({ size = 36, dotSize = 10, showDot = true }: { size?: number; dotSize?: number; showDot?: boolean }) {
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <div
+        className="rounded-full overflow-hidden border border-saabai-teal/30 bg-saabai-teal/10 w-full h-full"
+      >
+        <img
+          src="/brand/agent-avatar.png"
+          alt="Mia"
+          width={size}
+          height={size}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.style.display = "none";
+            const parent = target.parentElement;
+            if (parent) {
+              parent.innerHTML =
+                `<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--saabai-teal);font-weight:700;font-size:${Math.round(size * 0.38)}px">M</span>`;
+            }
+          }}
+        />
+      </div>
+      {showDot && (
+        <span
+          className="absolute rounded-full bg-emerald-400"
+          style={{
+            width: dotSize,
+            height: dotSize,
+            bottom: 0,
+            right: 0,
+            border: "2px solid var(--saabai-bg)",
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
+  const [pulsing, setPulsing] = useState(false);
 
   // Derived from tool invocation results in message.parts
   const [showBookingCTA, setShowBookingCTA] = useState(false);
@@ -50,7 +91,7 @@ export default function ChatWidget() {
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  // ── Proactive bubble — show after 12s on first visit only ───────────
+  // ── Proactive bubble — show after 5s on first visit only ────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (localStorage.getItem("saabai-chat-seen")) return;
@@ -61,13 +102,22 @@ export default function ChatWidget() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── Gentle pulse on launcher every 10s (only when closed) ───────────
+  useEffect(() => {
+    if (isOpen) return;
+    const interval = setInterval(() => {
+      setPulsing(true);
+      setTimeout(() => setPulsing(false), 900);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   // ── Auto-scroll to latest message ───────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   // ── Detect completed tool calls via message.parts (AI SDK v6) ───────
-  // Tool parts: type "tool-{toolName}", state "output-available" = done.
   useEffect(() => {
     for (const message of messages) {
       for (const part of message.parts ?? []) {
@@ -78,7 +128,7 @@ export default function ChatWidget() {
         if (!id || processedTools.current.has(id)) continue;
         processedTools.current.add(id);
 
-        const toolName = part.type.slice(5); // strip "tool-" prefix
+        const toolName = part.type.slice(5);
 
         if (toolName === "show_booking_cta") {
           setShowBookingCTA(true);
@@ -91,9 +141,7 @@ export default function ChatWidget() {
 
         if (toolName === "qualify_lead") {
           const a = (part as { input?: Record<string, boolean> }).input ?? {};
-          const score = [a.business_fit, a.pain_point_named, a.automation_potential].filter(
-            Boolean
-          ).length;
+          const score = [a.business_fit, a.pain_point_named, a.automation_potential].filter(Boolean).length;
           if (score >= 2) {
             track("lead_qualified", { ...a, score });
           }
@@ -154,10 +202,12 @@ export default function ChatWidget() {
     }
   }
 
-  // Only render messages that have visible text content
-  const displayMessages = messages.filter(
-    (m) => getMessageText(m).trim() !== ""
-  );
+  const displayMessages = messages.filter((m) => getMessageText(m).trim() !== "");
+
+  // Shared glow shadow — intensifies during pulse
+  const launcherShadow = pulsing
+    ? "0 0 0 5px rgba(98,197,209,0.15), 0 8px 36px rgba(98,197,209,0.45), 0 4px 16px rgba(0,0,0,0.35)"
+    : "0 0 28px rgba(98,197,209,0.28), 0 4px 16px rgba(0,0,0,0.3)";
 
   // ── Render ────────────────────────────────────────────────────────────
 
@@ -169,33 +219,16 @@ export default function ChatWidget() {
         <div className="w-80 bg-saabai-surface border border-saabai-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
           <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
 
-          {/* Mini header — matches expanded widget */}
+          {/* Mini header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-border">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full overflow-hidden border border-saabai-teal/30 shrink-0 bg-saabai-teal/10">
-                <img
-                  src="/brand/agent-avatar.png"
-                  alt="Mia"
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.style.display = "none";
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML =
-                        '<span class="w-full h-full flex items-center justify-center text-saabai-teal text-sm font-bold">M</span>';
-                    }
-                  }}
-                />
-              </div>
+              <MiaAvatar size={36} dotSize={10} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai AI</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Online now</span>
+                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</span>
                 </div>
               </div>
             </div>
@@ -231,36 +264,17 @@ export default function ChatWidget() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-saabai-border shrink-0 relative">
             <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
             <div className="flex items-center gap-3">
-              {/* Avatar — replace /public/brand/agent-avatar.png with Mia's headshot */}
-              <div className="w-9 h-9 rounded-full overflow-hidden border border-saabai-teal/30 shrink-0 bg-saabai-teal/10">
-                <img
-                  src="/brand/agent-avatar.png"
-                  alt="Mia"
-                  width={36}
-                  height={36}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to initial if image not yet added
-                    const target = e.currentTarget;
-                    target.style.display = "none";
-                    const parent = target.parentElement;
-                    if (parent) {
-                      parent.innerHTML =
-                        '<span class="w-full h-full flex items-center justify-center text-saabai-teal text-sm font-bold">M</span>';
-                    }
-                  }}
-                />
-              </div>
+              <MiaAvatar size={40} dotSize={11} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">
                   Mia
                 </p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">
-                  Saabai AI
+                  AI Automation Advisor
                 </p>
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Online now</span>
+                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</span>
                 </div>
               </div>
             </div>
@@ -270,12 +284,7 @@ export default function ChatWidget() {
               aria-label="Close chat"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M1 1l12 12M13 1L1 13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </button>
           </div>
@@ -304,18 +313,9 @@ export default function ChatWidget() {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-saabai-surface-raised px-4 py-3 rounded-xl flex items-center gap-1.5">
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce"
-                    style={{ animationDelay: "120ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce"
-                    style={{ animationDelay: "240ms" }}
-                  />
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "120ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "240ms" }} />
                 </div>
               </div>
             )}
@@ -387,13 +387,7 @@ export default function ChatWidget() {
               <div className="mx-1 mt-1 bg-saabai-surface-raised border border-saabai-border rounded-xl p-4 text-center">
                 <div className="w-6 h-6 rounded-full bg-saabai-teal/20 flex items-center justify-center mx-auto mb-2">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path
-                      d="M1 6l3.5 3.5L11 2"
-                      stroke="var(--saabai-teal)"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <path d="M1 6l3.5 3.5L11 2" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <p className="text-sm text-saabai-text-muted leading-relaxed">
@@ -423,36 +417,47 @@ export default function ChatWidget() {
               aria-label="Send"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M1 7h12M7 1l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </form>
         </div>
       )}
 
-      {/* ── Floating button ──────────────────────────────────────────── */}
+      {/* ── Launcher ─────────────────────────────────────────────────── */}
       {!isOpen && (
-        <button
-          onClick={openWidget}
-          className="w-14 h-14 rounded-full bg-saabai-teal hover:bg-saabai-teal-bright transition-all shadow-[0_4px_24px_var(--saabai-glow-strong)] flex items-center justify-center"
-          aria-label="Open chat"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        <>
+          {/* Desktop — pill button */}
+          <button
+            onClick={openWidget}
+            aria-label="Chat with Mia"
+            className="hidden md:flex items-center gap-3 pl-2 pr-5 py-2 rounded-full transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              background: "var(--saabai-surface)",
+              border: "1px solid rgba(98,197,209,0.35)",
+              boxShadow: launcherShadow,
+              transform: pulsing ? "scale(1.025) translateY(-1px)" : undefined,
+            }}
+          >
+            <MiaAvatar size={38} dotSize={11} />
+            <span className="text-sm font-medium text-saabai-text whitespace-nowrap">
+              Ask Mia about automation
+            </span>
+          </button>
+
+          {/* Mobile — avatar circle only */}
+          <button
+            onClick={openWidget}
+            aria-label="Chat with Mia"
+            className="flex md:hidden rounded-full transition-all duration-300 hover:-translate-y-0.5"
+            style={{
+              boxShadow: launcherShadow,
+              transform: pulsing ? "scale(1.04) translateY(-1px)" : undefined,
+            }}
+          >
+            <MiaAvatar size={56} dotSize={13} />
+          </button>
+        </>
       )}
     </div>
   );
