@@ -111,14 +111,22 @@ export default function Services() {
             priority
           />
         </a>
-        <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-base font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
-        >
-          Book an AI Automation Strategy Call
-        </a>
+        <div className="flex items-center gap-8">
+          <a
+            href="/services"
+            className="text-sm font-medium text-saabai-text transition-colors tracking-wide"
+          >
+            Services
+          </a>
+          <a
+            href="https://calendly.com/shanegoldberg/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-base font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide"
+          >
+            Book an AI Automation Strategy Call
+          </a>
+        </div>
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
