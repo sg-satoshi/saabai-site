@@ -2,8 +2,7 @@
 
 /* ─── Saabai Brand Colour System ───────────────────────────────────────────
    Colours sampled directly from /public/brand/saabai-logo.png.
-   All colour decisions flow from here. Update this block to re-skin the
-   entire site. Token names follow the pattern: --saabai-<role>.
+   All colour decisions flow from here.
 
    Sampled values:
      Logo background:  #0b092e  (deep indigo-navy)
@@ -14,61 +13,59 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Backgrounds — derived from logo background #0b092e */
-  --saabai-bg:              #0b092e;   /* main page bg — exact logo bg        */
-  --saabai-surface:         #100e38;   /* card / section surface              */
-  --saabai-surface-raised:  #161342;   /* elevated elements / hover surface   */
-  --saabai-nav:             #0b092ef0; /* nav bg (94% opacity)                */
+  /* Backgrounds */
+  --saabai-bg:              #0b092e;
+  --saabai-surface:         #0f0d38;
+  --saabai-surface-raised:  #141240;
+  --saabai-nav:             #0b092ef2;
 
-  /* Brand accents — sampled from logo helix mark */
-  --saabai-teal:            #62c5d1;   /* primary accent — helix colour       */
-  --saabai-teal-bright:     #7dd3dc;   /* hover / lighter teal                */
-  --saabai-teal-dim:        #62c5d126; /* teal at ~15% for glows/fills        */
-  --saabai-blue:            #1f4dc5;   /* secondary accent — mid blue         */
-  --saabai-blue-deep:       #0915a4;   /* deep blue — gradient / glow anchor  */
-  --saabai-glow:            #62c5d11a; /* ambient glow (~10%)                 */
+  /* Brand accents */
+  --saabai-teal:            #62c5d1;
+  --saabai-teal-bright:     #82d8e2;
+  --saabai-blue:            #1f4dc5;
+  --saabai-blue-deep:       #0915a4;
+
+  /* Glows */
+  --saabai-glow:            #62c5d118;   /* 9%  — ambient, resting           */
+  --saabai-glow-mid:        #62c5d12e;   /* 18% — hero, stat numbers         */
+  --saabai-glow-strong:     #62c5d13d;   /* 24% — CTA section                */
 
   /* Borders */
-  --saabai-border:          #62c5d120; /* teal-tinted border (~12%)           */
-  --saabai-border-subtle:   #ffffff0d; /* very subtle white divider (~5%)     */
+  --saabai-border:          #62c5d11a;   /* ~10% teal                        */
+  --saabai-border-accent:   #62c5d140;   /* ~25% teal for featured card      */
 
   /* Text */
-  --saabai-text:            #f0f4ff;   /* primary text (slightly warm white)  */
-  --saabai-text-muted:      #8399c0;   /* secondary / body copy               */
-  --saabai-text-dim:        #4b5e8a;   /* tertiary / labels                   */
+  --saabai-text:            #f0f4ff;
+  --saabai-text-muted:      #8399c0;
+  --saabai-text-dim:        #4b5e8a;
 
-  /* Legacy vars expected by layout */
+  /* Legacy */
   --background: var(--saabai-bg);
   --foreground: var(--saabai-text);
 }
 
-/* ─── Tailwind v4 Theme Registration ──────────────────────────────────────
-   Registers custom tokens as Tailwind utility classes:
-   bg-saabai-bg, text-saabai-teal, border-saabai-border, etc.
-   ────────────────────────────────────────────────────────────────────────── */
+/* ─── Tailwind v4 Theme Registration ────────────────────────────────────── */
 
 @theme inline {
   --color-background:             var(--background);
   --color-foreground:             var(--foreground);
 
-  /* Backgrounds */
   --color-saabai-bg:              var(--saabai-bg);
   --color-saabai-surface:         var(--saabai-surface);
   --color-saabai-surface-raised:  var(--saabai-surface-raised);
 
-  /* Accents */
   --color-saabai-teal:            var(--saabai-teal);
   --color-saabai-teal-bright:     var(--saabai-teal-bright);
-  --color-saabai-teal-dim:        var(--saabai-teal-dim);
   --color-saabai-blue:            var(--saabai-blue);
   --color-saabai-blue-deep:       var(--saabai-blue-deep);
+
   --color-saabai-glow:            var(--saabai-glow);
+  --color-saabai-glow-mid:        var(--saabai-glow-mid);
+  --color-saabai-glow-strong:     var(--saabai-glow-strong);
 
-  /* Borders */
   --color-saabai-border:          var(--saabai-border);
-  --color-saabai-border-subtle:   var(--saabai-border-subtle);
+  --color-saabai-border-accent:   var(--saabai-border-accent);
 
-  /* Text */
   --color-saabai-text:            var(--saabai-text);
   --color-saabai-text-muted:      var(--saabai-text-muted);
   --color-saabai-text-dim:        var(--saabai-text-dim);
@@ -77,11 +74,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* ─── Base Styles ──────────────────────────────────────────────────────────*/
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 
 body {
   background: var(--saabai-bg);
   color: var(--saabai-text);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Utilities ─────────────────────────────────────────────────────────── */
+
+/* Gradient text — used on hero headline accent */
+.text-gradient {
+  background: linear-gradient(135deg, var(--saabai-text) 0%, var(--saabai-teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Teal number glow — used on stat numbers */
+.stat-glow {
+  text-shadow:
+    0 0 40px var(--saabai-glow-mid),
+    0 0 80px var(--saabai-glow);
+}
+
+/* Teal top-border gradient for featured cards */
+.card-featured::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-top: 1px solid var(--saabai-border-accent);
+  pointer-events: none;
 }
