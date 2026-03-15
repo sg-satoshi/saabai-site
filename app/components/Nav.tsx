@@ -47,8 +47,13 @@ export default function Nav({ activePage }: { activePage?: string }) {
       {/* Right side: hamburger + CTA */}
       <div className="flex items-center gap-4">
 
-        {/* Click-toggle menu */}
-        <div className="relative" ref={menuRef}>
+        {/* Click-toggle menu (tap on mobile, hover on desktop) */}
+        <div
+          className="relative"
+          ref={menuRef}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
 
           {/* Hamburger button */}
           <button
