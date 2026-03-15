@@ -166,17 +166,51 @@ export default function ChatWidget() {
 
       {/* ── Proactive bubble ─────────────────────────────────────────── */}
       {showBubble && !isOpen && (
-        <div className="w-72 bg-saabai-surface border border-saabai-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
-          <div className="h-px absolute top-0 left-6 right-6 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
-          <div className="p-4">
+        <div className="w-80 bg-saabai-surface border border-saabai-border rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] relative overflow-hidden">
+          <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+
+          {/* Mini header — matches expanded widget */}
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-saabai-teal/30 shrink-0 bg-saabai-teal/10">
+                <img
+                  src="/brand/agent-avatar.png"
+                  alt="Mia"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = "none";
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML =
+                        '<span class="w-full h-full flex items-center justify-center text-saabai-teal text-sm font-bold">M</span>';
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai AI</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                  <span className="text-[10px] text-saabai-text-dim tracking-wide">Online now</span>
+                </div>
+              </div>
+            </div>
             <button
               onClick={() => setShowBubble(false)}
-              className="absolute top-3 right-3 w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none"
+              className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none"
               aria-label="Dismiss"
             >
               ×
             </button>
-            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3 pr-5">
+          </div>
+
+          {/* Message + CTA */}
+          <div className="p-4">
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">
               Quick question — are you exploring how automation could save your team time?
             </p>
             <button
