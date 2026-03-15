@@ -78,12 +78,11 @@ export default function Home() {
         <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none z-10" style={{
           background: "linear-gradient(to left, var(--saabai-bg), transparent)"
         }} />
-        <div className="flex items-center justify-center flex-wrap gap-x-6 gap-y-3 px-12 text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase">
+        <div className="flex items-center justify-center flex-wrap gap-x-5 gap-y-3 px-4 sm:px-12 text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase">
           {["Law Firms", "Real Estate Agencies", "Accounting Firms", "Financial Advisory", "Professional Services", "Advisory Businesses"].map((name, i, arr) => (
-            <>
-              <span key={name}>{name}</span>
-              {i < arr.length - 1 && <span key={`dot-${i}`} className="text-saabai-border">·</span>}
-            </>
+            <span key={name} className="whitespace-nowrap">
+              {name}{i < arr.length - 1 && <span className="text-saabai-border mx-2.5">·</span>}
+            </span>
           ))}
         </div>
       </div>
