@@ -291,7 +291,7 @@ export default function Services() {
           Book an AI Automation Strategy Call
         </a>
 
-        <ul className="relative mt-8 mb-4 inline-flex flex-col items-start gap-3 text-left">
+        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
           {[
             "Identify repetitive work that can be automated",
             "Discover where AI agents can save time and money",
