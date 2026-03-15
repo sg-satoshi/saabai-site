@@ -342,7 +342,6 @@ export default function Home() {
           alt="Saabai.ai"
           width={100}
           height={28}
-          className="opacity-35"
         />
         <p className="text-xs text-saabai-text-dim tracking-wide">
           © {new Date().getFullYear()} Saabai.ai. All rights reserved.
