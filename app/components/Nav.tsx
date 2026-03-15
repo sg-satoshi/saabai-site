@@ -5,6 +5,9 @@ import Image from "next/image";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
+  { label: "Use Cases", href: "/use-cases" },
+  { label: "Process", href: "/process" },
+  { label: "About", href: "/about" },
 ];
 
 export default function Nav({ activePage }: { activePage?: string }) {
