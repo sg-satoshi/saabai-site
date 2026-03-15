@@ -19,6 +19,31 @@ export default function CalculatorSection() {
   const [hoursPerWeek, setHoursPerWeek] = useState(8);
   const [hourlyCost, setHourlyCost] = useState(40);
 
+  const [email, setEmail] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+
+  async function submitEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || emailSubmitting) return;
+    setEmailSubmitting(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          source: "calculator_homepage",
+          calculatorResults: { teamMembers, hoursPerWeek, hourlyCost, weeklyHours, annualHours, annualCost },
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      setEmailSubmitted(true);
+    } finally {
+      setEmailSubmitting(false);
+    }
+  }
+
   const weeklyHours  = teamMembers * hoursPerWeek;
   const annualHours  = weeklyHours * 52;
   const annualCost   = annualHours * hourlyCost;
@@ -151,6 +176,36 @@ export default function CalculatorSection() {
               in annual savings.
             </p>
           </div>
+
+          {/* Email capture */}
+          {emailSubmitted ? (
+            <div className="flex items-center gap-2.5 py-3">
+              <span className="w-5 h-5 rounded-full bg-saabai-teal/20 flex items-center justify-center shrink-0">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M1 5l2.5 2.5L9 1.5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <p className="text-sm text-saabai-text-muted">Sent — check your inbox.</p>
+            </div>
+          ) : (
+            <form onSubmit={submitEmail} className="flex gap-2">
+              <input
+                type="email"
+                required
+                placeholder="Email me my results"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 min-w-0 bg-saabai-bg border border-saabai-border rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={emailSubmitting}
+                className="shrink-0 bg-saabai-surface-raised border border-saabai-border text-saabai-text-muted hover:text-saabai-teal hover:border-saabai-teal/40 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40"
+              >
+                {emailSubmitting ? "…" : "Send"}
+              </button>
+            </form>
+          )}
 
           {/* CTA */}
           <a

@@ -20,6 +20,10 @@ export default function Calculator() {
   const [hoursPerWeek, setHoursPerWeek] = useState(8);
   const [hourlyCost, setHourlyCost] = useState(40);
 
+  const [email, setEmail] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+
   const weeklyHours   = teamMembers * hoursPerWeek;
   const monthlyHours  = Math.round(weeklyHours * 4.33);
   const annualHours   = weeklyHours * 52;
@@ -27,6 +31,27 @@ export default function Calculator() {
   const weeklyCost  = weeklyHours  * hourlyCost;
   const monthlyCost = monthlyHours * hourlyCost;
   const annualCost  = annualHours  * hourlyCost;
+
+  async function submitEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || emailSubmitting) return;
+    setEmailSubmitting(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          source: "calculator_page",
+          calculatorResults: { teamMembers, hoursPerWeek, hourlyCost, weeklyHours, monthlyHours, annualHours, weeklyCost, monthlyCost, annualCost },
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      setEmailSubmitted(true);
+    } finally {
+      setEmailSubmitting(false);
+    }
+  }
 
   const inputs = [
     {
@@ -218,6 +243,49 @@ export default function Calculator() {
                 <div className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">{label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Email capture */}
+          <div className="bg-saabai-surface border border-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.25), 0 0 24px rgba(98,197,209,0.15)" }}>
+            <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+            <div className="p-6">
+              {emailSubmitted ? (
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-saabai-teal/20 flex items-center justify-center shrink-0">
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                      <path d="M1 5.5l3 3L10 1.5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <p className="text-sm text-saabai-text-muted">Your estimate is on its way — check your inbox.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-saabai-text mb-1">
+                    Email me my results
+                  </p>
+                  <p className="text-xs text-saabai-text-dim mb-4 leading-relaxed">
+                    We&apos;ll send your {formatCurrency(annualCost)} estimate straight to your inbox.
+                  </p>
+                  <form onSubmit={submitEmail} className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="flex-1 min-w-0 bg-saabai-bg border border-saabai-border rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={emailSubmitting}
+                      className="shrink-0 bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright transition-colors disabled:opacity-40"
+                    >
+                      {emailSubmitting ? "…" : "Send"}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Insight block */}
