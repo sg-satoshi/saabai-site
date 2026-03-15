@@ -286,6 +286,84 @@ export default function Home() {
 
       <CalculatorSection />
 
+      {/* ── FAQ ─────────────────────────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-3xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          FAQ
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-5 max-w-2xl mx-auto leading-snug">
+          Questions we actually get asked.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-16 leading-relaxed">
+          Honest answers — no buzzword bingo, no sales spin.
+        </p>
+
+        <div className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.25), 0 0 24px rgba(98,197,209,0.15)" }}>
+          {[
+            {
+              q: "What exactly is AI automation?",
+              a: "In plain terms: it's software that does the repetitive, rules-based work your team currently does by hand. Think automatically sending follow-up emails, pulling data from one system into another, answering routine client questions at 11pm, or generating that weekly report nobody enjoys building. We design the systems; they run themselves.",
+            },
+            {
+              q: "We're not a tech company. Is this actually for us?",
+              a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers — these are exactly who we work with. Your team doesn't need to know how any of it works. You just get the time back.",
+            },
+            {
+              q: "How much does it typically cost?",
+              a: "It depends on the scope and complexity of what we're automating. We don't quote before understanding your operation — that's the point of the strategy call. What we will say: most clients recover the investment inside the first few months through time and cost savings.",
+            },
+            {
+              q: "How long does it take to get something up and running?",
+              a: "Simple automations can go live in a week or two. More complex multi-system workflows typically take four to six weeks from design to deployment. We move fast — but not at the expense of building it properly.",
+            },
+            {
+              q: "We already use [insert software here]. Will this work with our existing tools?",
+              a: "Almost certainly yes. We build on top of the tools you already have — your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out. If a tool has an API (or even just a web interface), we can typically automate around it.",
+            },
+            {
+              q: "We're a law firm. What does this actually look like for us?",
+              a: "Practically: AI-assisted client intake that qualifies matters and routes them correctly before anyone on your team touches it. Automated follow-up sequences for leads that went quiet. Document templates that draft themselves from intake data. Billing reminders that go out without a principal chasing them. None of this requires changing how you practise law — it just removes the admin around it.",
+            },
+            {
+              q: "We run a real estate agency. What's the opportunity here?",
+              a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate the serious buyers and sellers to your agents. Beyond that: automated inspection reminders, appraisal follow-up sequences, listing updates, and vendor communication workflows. Your agents close deals — the system handles everything else.",
+            },
+            {
+              q: "We're an accounting or financial services firm. What about compliance and data security?",
+              a: "Fair question and a serious one. We design systems with data handling in mind — we're not connecting sensitive client data to random third-party tools. We discuss your compliance requirements upfront and design around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing.",
+            },
+            {
+              q: "We're not particularly tech-savvy as a team. Will we actually be able to use this?",
+              a: "That's the whole point. If your team needs to understand how it works to get value from it, we haven't built it well enough. The systems we design are meant to be invisible — they just run. If something needs manual input, it's designed to be as simple as filling in a form.",
+            },
+            {
+              q: "What happens on the strategy call?",
+              a: "It's a 20-minute working conversation — not a sales presentation. We'll ask you about your current workflows, where your team's time goes, and what's frustrating to operate. By the end, you'll have a rough map of where automation could have the biggest impact in your business. You'll leave with something useful regardless of whether we work together.",
+            },
+            {
+              q: "Is the strategy call really free? What's the catch?",
+              a: "Yes, genuinely free. No invoice, no follow-up pressure, no 'free call' that turns into a two-hour pitch. The catch, if there is one: we only take it if we think there's a real opportunity to help. If your operation isn't a good fit for what we do, we'll tell you on the call.",
+            },
+            {
+              q: "We tried automation before and it didn't stick. Why would this be different?",
+              a: "Usually because the previous attempt was a generic off-the-shelf tool that wasn't designed around how your business actually operates. Or it got set up, then nobody maintained it, then it broke, then everyone went back to doing it manually. We build custom systems and stay involved post-launch. If something breaks or drifts, that's our problem to fix — not yours.",
+            },
+          ].map(({ q, a }) => (
+            <details key={q} className="group bg-saabai-surface">
+              <summary className="flex items-center justify-between gap-6 px-8 py-6 cursor-pointer list-none select-none hover:bg-saabai-surface-raised transition-colors">
+                <span className="text-base font-medium text-saabai-text leading-snug">{q}</span>
+                <span className="shrink-0 w-6 h-6 rounded-full border border-saabai-border flex items-center justify-center text-saabai-text-dim text-sm font-light transition-all group-open:border-saabai-teal/60 group-open:text-saabai-teal group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <div className="px-8 pb-7 pt-1">
+                <p className="text-base text-saabai-text-muted leading-relaxed">{a}</p>
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       {/* ── CTA ─────────────────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
         {/* Multi-layer glow */}
