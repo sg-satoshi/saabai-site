@@ -107,7 +107,7 @@ export default function Calculator() {
       <section className="py-8 px-6 max-w-3xl mx-auto">
 
         {/* Inputs */}
-        <div className="bg-saabai-surface border border-saabai-border rounded-2xl overflow-hidden mb-6 shadow-[0_0_48px_var(--saabai-glow-mid)]">
+        <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden mb-6" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {/* Card top accent */}
           <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
 
@@ -161,7 +161,7 @@ export default function Calculator() {
         <div className="flex flex-col gap-4">
 
           {/* Time results */}
-          <div className="grid grid-cols-3 gap-px bg-saabai-border rounded-2xl overflow-hidden shadow-[0_0_48px_var(--saabai-glow-mid)]">
+          <div className="grid grid-cols-3 gap-px bg-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             {timeResults.map(({ label, value, unit }) => (
               <div key={label} className="bg-saabai-surface p-8 relative">
                 <div className="h-px absolute top-0 left-0 right-0 bg-gradient-to-r from-transparent via-saabai-teal/25 to-transparent" />
@@ -177,7 +177,7 @@ export default function Calculator() {
           </div>
 
           {/* Annual cost — hero result */}
-          <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden relative shadow-[0_0_60px_var(--saabai-glow-strong)]">
+          <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden relative" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/60 to-transparent" />
             <div className="p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
