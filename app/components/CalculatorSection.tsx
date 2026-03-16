@@ -192,7 +192,7 @@ export default function CalculatorSection() {
               <input
                 type="email"
                 required
-                placeholder="Email me my results"
+                placeholder="Send my cost estimate to my inbox"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 min-w-0 bg-saabai-bg border border-saabai-border rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
@@ -214,7 +214,7 @@ export default function CalculatorSection() {
             rel="noopener noreferrer"
             className="block w-full text-center bg-saabai-teal text-saabai-bg px-6 py-3.5 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
-            See where automation can help →
+            Book a Free Call to Start Recovering This Cost →
           </a>
         </div>
 

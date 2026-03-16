@@ -33,7 +33,7 @@ export default function MobileCtaBar() {
           className="block w-full text-center bg-saabai-teal text-saabai-bg px-6 py-3.5 rounded-xl font-semibold text-sm tracking-wide hover:bg-saabai-teal-bright transition-colors"
           style={{ boxShadow: "0 0 24px rgba(98,197,209,0.35)" }}
         >
-          Book a free 20-min strategy call →
+          Book a free 30-min strategy call →
         </a>
       </div>
     </div>

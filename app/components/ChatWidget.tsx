@@ -338,7 +338,7 @@ export default function ChatWidget() {
                   Book a Free Strategy Call →
                 </a>
                 <p className="text-[10px] text-saabai-text-dim text-center mt-2 tracking-wide">
-                  Free · 20 minutes · No obligation
+                  Free · 30 minutes · No obligation
                 </p>
               </div>
             )}

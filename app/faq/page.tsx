@@ -98,7 +98,7 @@ const faqs = [
     items: [
       {
         q: "What happens on the strategy call?",
-        a: "It's a 20-minute working conversation — not a sales presentation. We'll ask about your current workflows, where your team's time goes, and what's most frustrating to operate. By the end, you'll have a rough map of where automation could have the biggest impact in your business. You'll leave with something useful regardless of whether we work together.",
+        a: "It's a 30-minute working conversation — not a sales presentation. We'll ask about your current workflows, where your team's time goes, and what's most frustrating to operate. By the end, you'll have a rough map of where automation could have the biggest impact in your business. You'll leave with something useful regardless of whether we work together.",
       },
       {
         q: "Is the strategy call really free? What's the catch?",
@@ -110,7 +110,7 @@ const faqs = [
       },
       {
         q: "How do we get started?",
-        a: "Book a free 20-minute strategy call. We'll spend the time understanding your operation and identifying where automation can have the biggest impact. From there, if it makes sense to work together, we'll put together a proposal. No commitment required to have the first conversation.",
+        a: "Book a free 30-minute strategy call. We'll spend the time understanding your operation and identifying where automation can have the biggest impact. From there, if it makes sense to work together, we'll put together a proposal. No commitment required to have the first conversation.",
       },
     ],
   },
@@ -218,7 +218,7 @@ export default function FAQ() {
           <span className="text-gradient">your specific situation.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          A free 20-minute strategy call is the fastest way to understand
+          A free 30-minute strategy call is the fastest way to understand
           what automation could look like for your business.
         </p>
         <a

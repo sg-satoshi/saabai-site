@@ -23,7 +23,7 @@ export default function Home() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            AI Systems · Workflow Automation · Intelligent Infrastructure
+            AI Automation for Professional Firms · Australia
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
@@ -37,9 +37,8 @@ export default function Home() {
 
         {/* Sub-headline */}
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-xl mx-auto mb-14 leading-relaxed">
-          Saabai builds AI systems that remove operational drag, automate
-          repetitive workflows, and give principals their time back — without
-          increasing headcount.
+          We build AI systems that recover 20+ hours a week for professional
+          firms — without adding staff or changing how your team works.
         </p>
 
         {/* CTAs */}
@@ -48,7 +47,7 @@ export default function Home() {
             href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
             className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
-            Book an AI Automation Strategy Call
+            Book Your Free Strategy Call
           </a>
           <a
             href="#how-it-works"
@@ -57,6 +56,11 @@ export default function Home() {
             See How It Works
           </a>
         </div>
+
+        {/* Social proof micro-line */}
+        <p className="relative text-xs text-saabai-text-dim tracking-wide mt-8">
+          Trusted by law firms, accounting practices, and advisory businesses across Australia
+        </p>
 
         {/* Decorative bottom fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
@@ -188,14 +192,25 @@ export default function Home() {
                 </span>
               )}
               <h3 className="text-lg font-semibold mb-3 tracking-tight">{title}</h3>
-              <p className="text-base text-saabai-text-muted leading-relaxed">{body}</p>
+              <p className="text-base text-saabai-text-muted leading-relaxed mb-5">{body}</p>
+              {tag === "Start here" && (
+                <a
+                  href="https://calendly.com/shanegoldberg/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors flex items-center gap-1.5 group"
+                >
+                  Book an AI Audit
+                  <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+                </a>
+              )}
             </div>
           ))}
 
           {/* Filler cell */}
           <div className="bg-saabai-surface p-12 flex flex-col items-start justify-between gap-8">
             <p className="text-base text-saabai-text-dim leading-relaxed">
-              Not sure where to start? An AI Audit maps every opportunity in your operation.
+              Most firms start with an AI Audit — a 90-minute session that identifies exactly where time and money are being lost, with a written roadmap of what to fix first.
             </p>
             <a
               href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
@@ -280,6 +295,19 @@ export default function Home() {
               <p className="text-base text-saabai-text-muted leading-relaxed">{body}</p>
             </div>
           ))}
+        </div>
+
+        {/* CTA below process steps */}
+        <div className="mt-16 text-center">
+          <a
+            href="https://calendly.com/shanegoldberg/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors group"
+          >
+            Ready to start? Book your AI Audit
+            <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+          </a>
         </div>
       </section>
 
@@ -366,33 +394,22 @@ export default function Home() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          Discover what your<br />
-          <span className="text-gradient">firm could recover.</span>
+          Find out exactly how much time<br />
+          <span className="text-gradient">your firm is losing — and how to get it back.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          A free 20-minute call to map out exactly where AI can save your firm
-          time and money.
+          Book a free 30-minute call. We&apos;ll map the highest-value automation
+          opportunities in your operation and give you a clear picture of
+          what&apos;s possible — no obligation, no jargon.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
-          No obligation. No jargon. Just a clear picture of what&apos;s possible.
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
+          No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>
       </section>
 
