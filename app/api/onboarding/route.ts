@@ -6,6 +6,7 @@ export async function POST(req: Request) {
   const data = await req.json();
 
   const {
+    industry,
     // Business
     companyName, contactName, role, location, revenue, teamSize,
     // Services
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     <div style="font-family: system-ui, sans-serif; max-width: 640px; margin: 0 auto; color: #1a1a1a;">
       <div style="background: #0b092e; padding: 32px; border-radius: 12px 12px 0 0;">
         <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 8px;">Saabai · New Client Fact Find</p>
-        <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 600;">AI Agent Enquiry — Building Company</h1>
+        <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 600;">AI Agent Enquiry — ${industry || "New Client"}</h1>
       </div>
 
       <div style="background: #f8f8f8; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: "Saabai Onboarding <onboarding@saabai.ai>",
       to: ["hello@saabai.ai"],
-      subject: `New Fact Find — ${companyName || "Building Company"} (${contactName || "Unknown"})`,
+      subject: `New Fact Find [${industry || "General"}] — ${companyName || "Unknown"} (${contactName || "Unknown"})`,
       html,
       replyTo: data.replyEmail || undefined,
     });

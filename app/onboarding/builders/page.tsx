@@ -207,6 +207,7 @@ export default function Onboarding() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          industry: "Building & Construction",
           companyName, contactName, role, location, revenue, teamSize,
           services, otherService, typicalJobValue, minJobSize,
           contactChannels: [...contactChannels, ...(otherChannel ? [otherChannel] : [])],
