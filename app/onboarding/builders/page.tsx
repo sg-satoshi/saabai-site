@@ -331,7 +331,7 @@ export default function Onboarding() {
                 />
               </Field>
               <div className="grid sm:grid-cols-2 gap-6">
-                <Field label="Typical job value" hint="Ballpark is fine">
+                <Field label="Typical job value — approx. is fine">
                   <Input value={typicalJobValue} onChange={(e) => setTypicalJobValue(e.target.value)} placeholder="e.g. $350,000" />
                 </Field>
                 <Field label="Minimum job size you'll quote">
