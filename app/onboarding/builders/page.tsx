@@ -8,6 +8,7 @@ const SERVICES = [
   "Knockdown rebuilds",
   "Renovations / extensions",
   "Dual occupancy / duplexes",
+  "Granny flats / secondary dwellings",
   "Commercial construction",
   "Fit-outs",
   "Decks / patios / outdoor structures",
