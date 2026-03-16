@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+
+export const metadata: Metadata = {
+  title: "AI Automation Services for Professional Firms",
+  description:
+    "Custom AI automation services for professional firms — client intake, workflow automation, compliance document systems, and 24/7 AI agents. Book a free strategy call.",
+  alternates: { canonical: "https://www.saabai.ai/services" },
+  openGraph: {
+    url: "https://www.saabai.ai/services",
+    title: "AI Automation Services for Professional Firms | Saabai",
+    description:
+      "Custom AI automation services for professional firms — client intake, workflow automation, compliance docs, and 24/7 AI agents. Book a free strategy call.",
+  },
+};
 
 const services = [
   {

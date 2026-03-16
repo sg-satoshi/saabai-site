@@ -1,6 +1,20 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+
+export const metadata: Metadata = {
+  title: "About Saabai — AI Automation for Professional Firms",
+  description:
+    "Saabai was built to give professional firms the operational leverage of a larger organisation — without the headcount or complexity. Meet the founder, Shane Goldberg.",
+  alternates: { canonical: "https://www.saabai.ai/about" },
+  openGraph: {
+    url: "https://www.saabai.ai/about",
+    title: "About Saabai — AI Automation for Professional Firms",
+    description:
+      "Saabai was built to give professional firms the operational leverage of a larger organisation — without the headcount or complexity. Meet the founder.",
+  },
+};
 
 export default function About() {
   return (

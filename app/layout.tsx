@@ -14,13 +14,70 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const BASE_URL = "https://www.saabai.ai";
+
 export const metadata: Metadata = {
-  title: "Saabai.ai | AI Systems for Professional Firms",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "AI Automation for Professional Firms Australia | Saabai",
+    template: "%s | Saabai",
+  },
   description:
-    "Saabai builds AI automation systems that remove operational drag, automate repetitive workflows, and give professional service firms their time back.",
+    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call — no obligation.",
+  keywords: [
+    "AI automation professional firms Australia",
+    "AI automation law firms",
+    "AI automation accounting firms",
+    "AI workflow automation",
+    "business process automation professional services",
+    "AI systems professional services Australia",
+    "automate repetitive work",
+    "AI audit Australia",
+  ],
+  authors: [{ name: "Shane Goldberg", url: BASE_URL }],
+  creator: "Saabai",
+  publisher: "Saabai",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_AU",
+    url: BASE_URL,
+    siteName: "Saabai",
+    title: "AI Automation for Professional Firms Australia | Saabai",
+    description:
+      "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Saabai — AI Automation for Professional Firms",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Automation for Professional Firms Australia | Saabai",
+    description:
+      "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: BASE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -30,7 +87,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-AU">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -1,5 +1,90 @@
+import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+
+export const metadata: Metadata = {
+  title: "AI Automation FAQ for Professional Firms",
+  description:
+    "Honest answers about AI automation for professional firms — cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+  alternates: { canonical: "https://www.saabai.ai/faq" },
+  openGraph: {
+    url: "https://www.saabai.ai/faq",
+    title: "AI Automation FAQ for Professional Firms | Saabai",
+    description:
+      "Honest answers about AI automation for professional firms — cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+  },
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "We're not a tech company. Is AI automation actually for us?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers — these are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How long does it take to get AI automation live?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Will AI automation work with our existing software tools?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Almost certainly yes. We build on top of the tools you already have — your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How much does AI automation typically cost?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "It depends on scope and complexity. We don't quote before understanding your operation — that's what the free strategy call is for. Most clients recover the investment inside the first few months through time and operational cost savings.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is the strategy call really free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, genuinely free. No invoice, no follow-up pressure, no free call that turns into a two-hour pitch. We only take it if we think there's a real opportunity to help. If your operation isn't a good fit, we'll tell you on the call.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "We tried automation before and it didn't stick. Why would this be different?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal — not an afterthought.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "We're a law firm. What does AI automation look like for us?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "AI-assisted client intake that qualifies matters before anyone on your team touches it. Automated follow-up for enquiries. Document templates that populate from intake data. Billing and deadline reminders that go out automatically. None of this requires changing how you practise law — it removes the admin wrapped around it.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "We're an accounting or financial services firm. What about compliance and data security?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We design systems with data handling in mind from the start. Your compliance requirements are discussed upfront and the architecture is built around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing.",
+      },
+    },
+  ],
+};
 
 const faqs = [
   {
@@ -125,6 +210,10 @@ const faqs = [
 export default function FAQ() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
       <Nav activePage="/faq" />
 

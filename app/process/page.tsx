@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+
+export const metadata: Metadata = {
+  title: "Our AI Automation Process — Audit to Deployment",
+  description:
+    "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
+  alternates: { canonical: "https://www.saabai.ai/process" },
+  openGraph: {
+    url: "https://www.saabai.ai/process",
+    title: "Our AI Automation Process — Audit to Deployment | Saabai",
+    description:
+      "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
+  },
+};
 
 const steps = [
   {

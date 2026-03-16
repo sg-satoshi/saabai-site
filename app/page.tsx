@@ -1,10 +1,48 @@
+import type { Metadata } from "next";
 import Nav from "./components/Nav";
 import CalculatorSection from "./components/CalculatorSection";
 import Footer from "./components/Footer";
 
+export const metadata: Metadata = {
+  title: "AI Automation for Professional Firms Australia | Saabai",
+  description:
+    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call — no obligation.",
+  alternates: { canonical: "https://www.saabai.ai" },
+  openGraph: {
+    url: "https://www.saabai.ai",
+    title: "AI Automation for Professional Firms Australia | Saabai",
+    description:
+      "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call.",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: "Saabai",
+  url: "https://www.saabai.ai",
+  logo: "https://www.saabai.ai/brand/saabai-logo.png",
+  description:
+    "AI automation systems for professional service firms — law firms, accounting practices, real estate agencies, and financial advisers across Australia.",
+  founder: {
+    "@type": "Person",
+    name: "Shane Goldberg",
+  },
+  areaServed: {
+    "@type": "Country",
+    name: "Australia",
+  },
+  serviceType: "AI Automation",
+  sameAs: ["https://saabai.ai"],
+};
+
 export default function Home() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
 
       <Nav />
 

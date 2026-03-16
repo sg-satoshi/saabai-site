@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+
+export const metadata: Metadata = {
+  title: "AI Automation Use Cases for Professional Firms",
+  description:
+    "See how law firms, real estate agencies, accounting firms and financial advisers use AI automation to eliminate manual work and recover hours each week.",
+  alternates: { canonical: "https://www.saabai.ai/use-cases" },
+  openGraph: {
+    url: "https://www.saabai.ai/use-cases",
+    title: "AI Automation Use Cases for Professional Firms | Saabai",
+    description:
+      "See how law firms, real estate agencies, accounting firms and financial advisers use AI automation to eliminate manual work and recover hours each week.",
+  },
+};
 
 const useCases = [
   {
