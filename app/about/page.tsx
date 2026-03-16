@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
@@ -48,17 +49,16 @@ export default function About() {
           {/* Left — headshot placeholder */}
           <div className="flex flex-col items-center md:items-start gap-5">
             <div
-              className="w-48 h-48 rounded-2xl border border-saabai-border bg-saabai-surface flex items-center justify-center overflow-hidden"
+              className="w-48 h-48 rounded-2xl border border-saabai-border overflow-hidden"
               style={{ boxShadow: "0 0 40px rgba(98,197,209,0.2)" }}
             >
-              {/* Headshot slot — replace src with actual photo */}
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-saabai-text-dim">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span className="text-xs tracking-wide">Photo coming</span>
-              </div>
+              <Image
+                src="/shane-goldberg.png"
+                alt="Shane Goldberg — Founder, Saabai"
+                width={192}
+                height={192}
+                className="w-full h-full object-cover object-top"
+              />
             </div>
             <div>
               <p className="text-base font-semibold text-saabai-text tracking-tight">Shane Goldberg</p>
