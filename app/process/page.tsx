@@ -1,37 +1,38 @@
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 
 const steps = [
   {
     step: "01",
-    title: "AI Efficiency Audit",
+    title: "AI Audit",
     description:
-      "We analyse your current workflows to identify repetitive tasks, bottlenecks, and opportunities for automation.",
+      "We map your workflows, tools, and team operations to identify exactly where automation will create the biggest impact.",
     detail:
-      "In a focused 90-minute session, we map your existing tools, processes, and team workflows. You receive a written report detailing every automation opportunity ranked by business impact and ease of implementation.",
+      "In a focused 90-minute session, we document your existing processes and bottlenecks. You receive a written report detailing every automation opportunity, ranked by business impact and ease of implementation — with projected time savings for each.",
   },
   {
     step: "02",
-    title: "Automation System Design",
+    title: "System Design",
     description:
-      "We design AI-powered workflows and automation systems tailored to your business operations.",
+      "We design custom automation workflows tailored to your firm — not generic templates adapted to fit.",
     detail:
-      "No generic templates. Every system is built around your specific tools, team structure, and commercial priorities — with a clear implementation roadmap and projected time savings.",
+      "Every system is built around your specific tools, team structure, and commercial priorities. You get a clear implementation roadmap, architecture documentation, and a realistic picture of what gets built and in what order.",
   },
   {
     step: "03",
-    title: "Implementation & Deployment",
+    title: "Build & Deploy",
     description:
-      "Your automation systems are deployed and integrated with your existing tools and software platforms.",
+      "Your automation systems are implemented, integrated with your existing tools, and handed over with full documentation.",
     detail:
-      "We handle the full build, integration, and testing process. Your team gets working automation from day one — with handover documentation and training included.",
+      "We handle the full build, integration, and testing process. Your team doesn&apos;t need to manage the technical side — they just get working automation. Handover includes documentation and training so your team can operate the system confidently.",
   },
   {
     step: "04",
-    title: "Continuous Optimisation",
+    title: "Ongoing Optimisation",
     description:
-      "We refine and improve your automation systems to ensure they continue delivering efficiency gains.",
+      "We monitor, refine, and improve your systems monthly — so they get better over time, not worse.",
     detail:
-      "Monthly review cycles, performance monitoring, and iterative improvements keep your systems compounding in value over time. Automation should get better the longer it runs.",
+      "Monthly review cycles, performance monitoring, and iterative improvements keep your systems compounding in value. Automation should get smarter the longer it runs. If something breaks or drifts, that&apos;s our problem to fix — not yours.",
   },
 ];
 
@@ -53,20 +54,21 @@ export default function Process() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            Structured · Practical · Outcome-Driven
+            How We Work · Audit to Deployment · Built for Professional Firms
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          Our Automation
+          From audit to
           <br />
-          <span className="text-gradient">Process.</span>
+          <span className="text-gradient">operating advantage.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          A structured approach to identifying, designing, and deploying
-          automation systems that deliver real business outcomes.
+          A structured, four-step process that takes professional firms from
+          identifying the right workflows to automating them — without
+          disrupting how your team works.
         </p>
 
         <a
@@ -75,7 +77,7 @@ export default function Process() {
           rel="noopener noreferrer"
           className="relative bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
@@ -125,6 +127,21 @@ export default function Process() {
         </div>
       </section>
 
+      {/* ── Timeline callout ─────────────────────────────────────────────── */}
+      <section className="py-16 px-6 max-w-4xl mx-auto border-t border-saabai-border">
+        <div className="border-l-2 border-saabai-teal/50 pl-8 py-2">
+          <p className="text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-3">
+            Typical Timeline
+          </p>
+          <p className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
+            Most firms have their first automations live within 2–4 weeks of the audit.
+          </p>
+          <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
+            The AI Audit is the starting point — a 90-minute session that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.
+          </p>
+        </div>
+      </section>
+
       {/* ── Final CTA ───────────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
@@ -139,13 +156,14 @@ export default function Process() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          Ready to automate
+          The audit is where
           <br />
-          <span className="text-gradient">your operations?</span>
+          <span className="text-gradient">everything starts.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Start with a free AI Efficiency Audit. We&apos;ll map your workflows
-          and identify exactly where automation will create the biggest impact.
+          Book a free 30-minute strategy call. We&apos;ll map your workflows and
+          identify exactly where automation will create the biggest impact in
+          your firm — no commitment required.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -153,34 +171,14 @@ export default function Process() {
           rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No obligation. No jargon. Just a clear picture of what&apos;s possible.
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="/">
-          <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={100} height={28} />
-        </a>
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );

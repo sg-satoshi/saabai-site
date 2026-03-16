@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Nav from "./components/Nav";
 import CalculatorSection from "./components/CalculatorSection";
+import Footer from "./components/Footer";
 
 export default function Home() {
   return (
@@ -57,9 +57,9 @@ export default function Home() {
           </a>
         </div>
 
-        {/* Social proof micro-line */}
+        {/* Reassurance micro-line */}
         <p className="relative text-xs text-saabai-text-dim tracking-wide mt-8">
-          Trusted by law firms, accounting practices, and advisory businesses across Australia
+          Free 30-minute call. No commitment. No jargon. Clear picture of what&apos;s possible.
         </p>
 
         {/* Decorative bottom fade */}
@@ -413,18 +413,7 @@ export default function Home() {
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Image
-          src="/brand/saabai-logo.png"
-          alt="Saabai.ai"
-          width={100}
-          height={28}
-        />
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );

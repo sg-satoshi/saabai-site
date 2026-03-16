@@ -1,7 +1,9 @@
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 
 const faqs = [
   {
+    id: "the-basics",
     category: "The Basics",
     items: [
       {
@@ -22,11 +24,12 @@ const faqs = [
       },
       {
         q: "Will this replace our staff?",
-        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time — so your people can focus on the work that actually requires their expertise. Most businesses that automate well find their team becomes more effective, not redundant.",
+        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time — so your people can focus on the work that actually requires their expertise. Most firms that automate well find their team becomes more effective, not redundant.",
       },
     ],
   },
   {
+    id: "cost-timeline",
     category: "Cost & Timeline",
     items: [
       {
@@ -48,6 +51,7 @@ const faqs = [
     ],
   },
   {
+    id: "technical-integration",
     category: "Technical & Integration",
     items: [
       {
@@ -69,6 +73,7 @@ const faqs = [
     ],
   },
   {
+    id: "industry-specific",
     category: "Industry-Specific",
     items: [
       {
@@ -94,6 +99,7 @@ const faqs = [
     ],
   },
   {
+    id: "working-with-us",
     category: "Working With Us",
     items: [
       {
@@ -147,21 +153,25 @@ export default function FAQ() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
           Everything you want to know about AI automation for professional
-          service businesses — answered plainly.
+          firms — answered plainly.
         </p>
-        <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-14 leading-relaxed">
+        <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-12 leading-relaxed">
           If your question isn&apos;t here, book a free strategy call. We&apos;re
           happy to talk through the specifics of your business.
         </p>
 
-        <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
-        >
-          Book a Free Strategy Call
-        </a>
+        {/* Anchor navigation */}
+        <div className="relative flex flex-wrap items-center justify-center gap-3 mb-2">
+          {faqs.map(({ id, category }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className="text-xs font-medium tracking-wide text-saabai-text-dim hover:text-saabai-teal border border-saabai-border hover:border-saabai-teal/40 px-4 py-2 rounded-full transition-colors"
+            >
+              {category}
+            </a>
+          ))}
+        </div>
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
           background: "linear-gradient(to bottom, transparent, var(--saabai-bg))"
@@ -169,9 +179,10 @@ export default function FAQ() {
       </section>
 
       {/* ── FAQ Categories ───────────────────────────────────────────────── */}
-      {faqs.map(({ category, items }, catIndex) => (
+      {faqs.map(({ id, category, items }, catIndex) => (
         <section
           key={category}
+          id={id}
           className={`py-16 px-6 max-w-3xl mx-auto ${catIndex > 0 ? "border-t border-saabai-border" : ""}`}
         >
           <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-8">
@@ -219,7 +230,7 @@ export default function FAQ() {
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           A free 30-minute strategy call is the fastest way to understand
-          what automation could look like for your business.
+          what automation could look like in your firm.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -227,34 +238,14 @@ export default function FAQ() {
           rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No obligation. No jargon. Just a clear picture of what&apos;s possible.
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="/">
-          <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={100} height={28} />
-        </a>
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );

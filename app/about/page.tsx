@@ -1,11 +1,5 @@
 import Nav from "../components/Nav";
-
-const differentiators = [
-  "Focus on business outcomes, not AI buzzwords",
-  "Custom automation systems tailored to each business",
-  "Practical implementations that integrate with existing tools",
-  "Continuous optimisation to maximise efficiency",
-];
+import Footer from "../components/Footer";
 
 export default function About() {
   return (
@@ -25,20 +19,21 @@ export default function About() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            Our Mission · Our Philosophy · Our Approach
+            The Saabai Story
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          About
+          We built what
           <br />
-          <span className="text-gradient">Saabai.</span>
+          <span className="text-gradient">we couldn&apos;t find.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          Helping businesses reclaim time, reduce operational friction, and
-          unlock growth through intelligent automation.
+          An AI automation firm that actually understands how professional
+          service businesses operate — and builds systems that fit the way
+          firms work, not the other way around.
         </p>
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
@@ -46,8 +41,58 @@ export default function About() {
         }} />
       </section>
 
-      {/* ── Mission ─────────────────────────────────────────────────────── */}
+      {/* ── Founder ─────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-[280px_1fr] gap-16 items-start">
+
+          {/* Left — headshot placeholder */}
+          <div className="flex flex-col items-center md:items-start gap-5">
+            <div
+              className="w-48 h-48 rounded-2xl border border-saabai-border bg-saabai-surface flex items-center justify-center overflow-hidden"
+              style={{ boxShadow: "0 0 40px rgba(98,197,209,0.2)" }}
+            >
+              {/* Headshot slot — replace src with actual photo */}
+              <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-saabai-text-dim">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span className="text-xs tracking-wide">Photo coming</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-base font-semibold text-saabai-text tracking-tight">Shane Goldberg</p>
+              <p className="text-sm text-saabai-text-dim mt-0.5">Founder, Saabai</p>
+            </div>
+          </div>
+
+          {/* Right — founder narrative */}
+          <div className="flex flex-col gap-6">
+            <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
+              Saabai was built after years of watching talented professionals —
+              lawyers, accountants, advisers — spend half their working week on
+              work that had nothing to do with their expertise.
+            </p>
+            <p className="text-lg text-saabai-text-muted leading-relaxed">
+              The problem wasn&apos;t effort. It was architecture. The wrong work
+              was landing on the wrong desks, and the tools that were supposed
+              to fix it either required a technical team to maintain, or weren&apos;t
+              built around how professional firms actually operate.
+            </p>
+            <p className="text-lg text-saabai-text-muted leading-relaxed">
+              Saabai exists to fix that — by designing automation systems that
+              are specific to your firm, built and maintained by people who
+              understand both the technology and the business. Not generic
+              platforms. Not off-the-shelf tools with a logo swap. Systems
+              that work the way your firm works.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── Mission ─────────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
           <div>
             <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
@@ -57,10 +102,10 @@ export default function About() {
           </div>
           <div>
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Saabai was created to help businesses escape the constant pressure
-              of repetitive operational work. By designing intelligent automation
-              systems, we enable teams to focus on strategy, growth, and
-              high-value work instead of manual processes.
+              Give professional firms the operational leverage of a much larger
+              organisation — without the headcount, the overhead, or the
+              complexity. Every hour recovered from manual work is an hour
+              returned to the expertise your clients are actually paying for.
             </p>
           </div>
         </div>
@@ -77,39 +122,22 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-6">
             <p className="text-2xl md:text-3xl font-semibold tracking-tight leading-snug">
-              AI should not be hype.
+              AI should deliver results.
               <br />
-              <span className="text-saabai-text-muted">It should deliver measurable business outcomes.</span>
+              <span className="text-saabai-text-muted">Not just a good demo.</span>
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
-              Saabai focuses on practical automation systems that reduce costs,
-              save time, and make businesses run more efficiently. We don&apos;t
-              sell AI for the sake of it — we solve real operational problems
-              with the right tools.
+              We don&apos;t sell AI for the sake of it. Every system we build is
+              designed around a specific operational problem — with clear
+              metrics for what success looks like before we write a line of
+              code. If it doesn&apos;t recover time or reduce cost, we haven&apos;t
+              done our job.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── What Makes Saabai Different ──────────────────────────────────── */}
-      <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
-        <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
-          <div>
-            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
-              What Makes Us Different
+            <p className="text-lg text-saabai-text-muted leading-relaxed">
+              We also don&apos;t disappear after deployment. If something breaks or
+              drifts, that&apos;s our problem to fix — not yours. Ongoing
+              maintenance is part of how we work, not an add-on.
             </p>
-            <div className="w-8 h-px bg-saabai-teal/50 mt-4" />
-          </div>
-          <div className="flex flex-col gap-4">
-            {differentiators.map((point) => (
-              <div
-                key={point}
-                className="flex items-start gap-4 py-5 border-b border-saabai-border last:border-0"
-              >
-                <span className="mt-2 w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-                <p className="text-lg text-saabai-text-muted leading-relaxed">{point}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -128,13 +156,14 @@ export default function About() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          Explore how automation could
+          Ready to see what&apos;s possible
           <br />
-          <span className="text-gradient">transform your business.</span>
+          <span className="text-gradient">in your firm?</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free strategy call and discover exactly where AI automation
-          can save your business time, reduce costs, and unlock growth.
+          Book a free 30-minute strategy call. We&apos;ll map your workflows,
+          identify where automation creates the biggest impact, and give you
+          a clear picture of what&apos;s possible — no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -142,34 +171,14 @@ export default function About() {
           rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
-          No obligation. No jargon. Just a clear picture of what&apos;s possible.
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
+          No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="/">
-          <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={100} height={28} />
-        </a>
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );

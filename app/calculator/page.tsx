@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 
 function formatHours(h: number) {
   return h.toLocaleString("en-AU", { maximumFractionDigits: 0 });
@@ -325,13 +326,13 @@ export default function Calculator() {
           Next Step
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          See where automation could
+          Find out how much of this
           <br />
-          <span className="text-gradient">create the biggest ROI.</span>
+          <span className="text-gradient">your firm could recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book an AI Automation Strategy Call to identify practical automation
-          opportunities in your business.
+          Book a free 30-minute strategy call. We&apos;ll map the highest-value
+          automation opportunities in your operation — no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -339,34 +340,14 @@ export default function Calculator() {
           rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No obligation. No jargon. Just a clear picture of what&apos;s possible.
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="/">
-          <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={100} height={28} />
-        </a>
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );

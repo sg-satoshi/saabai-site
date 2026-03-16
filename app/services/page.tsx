@@ -1,49 +1,49 @@
-import Image from "next/image";
 import Nav from "../components/Nav";
+import Footer from "../components/Footer";
 
 const services = [
   {
-    title: "AI Sales & Lead Qualification",
+    title: "Client Intake & Lead Qualification",
     description:
-      "Automatically qualify leads, follow up with prospects, and book meetings without manual outreach.",
+      "AI systems that screen enquiries, qualify leads, and route them correctly — before anyone on your team touches them.",
     benefits: [
-      "AI lead qualification",
-      "Automated follow-ups",
-      "CRM integration",
-      "Meeting booking automation",
-    ],
-  },
-  {
-    title: "AI Customer Support Systems",
-    description:
-      "Deploy AI-powered support systems that answer common questions instantly and reduce support workload.",
-    benefits: [
-      "24/7 automated responses",
-      "Knowledge base integration",
-      "Faster response times",
-      "Reduced support costs",
-    ],
-  },
-  {
-    title: "Business Process Automation",
-    description:
-      "Remove repetitive administrative tasks by automating workflows across your tools and systems.",
-    benefits: [
-      "Reporting automation",
-      "Data syncing across platforms",
-      "Automated task routing",
-      "Workflow optimisation",
-    ],
-  },
-  {
-    title: "AI Lead Generation Systems",
-    description:
-      "Generate and qualify new business opportunities automatically using AI-powered prospecting systems.",
-    benefits: [
-      "Targeted lead discovery",
-      "Automated outreach",
+      "Automated lead scoring and qualification",
+      "Intelligent enquiry routing",
       "CRM pipeline automation",
-      "Lead enrichment",
+      "Instant follow-up sequences",
+    ],
+  },
+  {
+    title: "Client Communications & Support",
+    description:
+      "AI-powered response systems that handle routine client queries 24/7 — so your team focuses on complex, high-value work.",
+    benefits: [
+      "24/7 automated client responses",
+      "Knowledge base integration",
+      "Appointment and scheduling automation",
+      "Proactive client status updates",
+    ],
+  },
+  {
+    title: "Operations & Workflow Automation",
+    description:
+      "Connect your CRM, documents, calendar, and billing systems into automated pipelines that run without manual input.",
+    benefits: [
+      "Cross-system data synchronisation",
+      "Automated reporting and dashboards",
+      "Document generation workflows",
+      "Task routing and escalation",
+    ],
+  },
+  {
+    title: "Compliance & Document Automation",
+    description:
+      "Automate compliance documentation, contract workflows, and audit trails — reducing risk and reclaiming hours.",
+    benefits: [
+      "Automated document generation",
+      "Compliance checklists and reminders",
+      "Digital signature workflows",
+      "Audit trail management",
     ],
   },
 ];
@@ -51,46 +51,46 @@ const services = [
 const steps = [
   {
     step: "01",
-    title: "AI Efficiency Audit",
+    title: "AI Audit",
     body: "We analyse your current operations to identify where automation can create the biggest impact.",
   },
   {
     step: "02",
-    title: "Automation System Design",
-    body: "We design custom AI workflows tailored to your business processes.",
+    title: "System Design",
+    body: "We design custom AI workflows tailored to your firm's specific tools, team structure, and commercial priorities.",
   },
   {
     step: "03",
-    title: "AI Agent Deployment",
-    body: "Your automation systems are implemented and integrated into your existing tools.",
+    title: "Build & Deploy",
+    body: "Your automation systems are implemented and integrated into your existing tools — no ripping anything out.",
   },
   {
     step: "04",
-    title: "Continuous Optimisation",
-    body: "We refine and improve your systems to maximise efficiency and performance.",
+    title: "Ongoing Optimisation",
+    body: "Monthly review cycles, performance monitoring, and iterative improvements to compound efficiency over time.",
   },
 ];
 
 const results = [
   {
-    stat: "500+ hrs",
-    label: "Saved annually",
-    detail: "Businesses typically recover hundreds of hours each year by automating repetitive admin, outreach, and reporting tasks.",
+    stat: "20–30 hrs",
+    label: "Recovered per week",
+    detail: "Professional firms typically recover 20–30 hours a week by automating admin, reporting, follow-up, and document workflows.",
   },
   {
     stat: "3×",
     label: "Faster response times",
-    detail: "AI agents respond to leads and customers instantly — day or night — without increasing headcount.",
+    detail: "AI agents respond to leads and clients instantly — day or night — without increasing headcount.",
   },
   {
     stat: "40%",
     label: "Reduction in operational costs",
-    detail: "Automating manual workflows reduces the cost of delivery, support, and administration across the business.",
+    detail: "Automating manual workflows reduces the cost of delivery, support, and administration across the firm.",
   },
   {
-    stat: "∞",
-    label: "Scalable without friction",
-    detail: "AI systems handle volume growth without the overhead of hiring, training, or managing additional staff.",
+    stat: "24/7",
+    label: "Automated coverage",
+    detail: "AI systems handle enquiries, follow-up, and routine tasks around the clock — no sick days, no overtime.",
   },
 ];
 
@@ -112,25 +112,21 @@ export default function Services() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            AI Automation · Intelligent Workflows · Business Efficiency
+            AI Automation for Professional Firms · Australia
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          AI Automation
+          Stop managing admin.
           <br />
-          <span className="text-gradient">Services.</span>
+          <span className="text-gradient">Start scaling expertise.</span>
         </h1>
 
-        <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
-          We design and deploy intelligent automation systems that remove
-          repetitive work, increase operational efficiency, and unlock new
-          growth opportunities for businesses.
-        </p>
-        <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-14 leading-relaxed">
-          From AI sales agents to fully automated workflows, Saabai builds
-          practical automation systems that deliver measurable business outcomes.
+        <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
+          We design and deploy custom automation systems that eliminate
+          operational drag — so your team can focus on high-value client work,
+          not the admin wrapped around it.
         </p>
 
         <div className="relative">
@@ -140,7 +136,7 @@ export default function Services() {
             rel="noopener noreferrer"
             className="bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
-            Book an AI Automation Strategy Call
+            Book Your Free Strategy Call
           </a>
         </div>
 
@@ -152,15 +148,16 @@ export default function Services() {
       {/* ── What We Help Automate ────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          What We Help Businesses Automate
+          What We Help Professional Firms Automate
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
           Stop doing manually what AI can do automatically.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-20 leading-relaxed">
-          Most companies are overwhelmed by repetitive tasks that slow growth
-          and waste valuable time. Saabai identifies these bottlenecks and
-          replaces them with intelligent automation.
+          Most professional firms are held back by the same problems: manual
+          admin, slow client follow-up, repetitive reporting. Saabai identifies
+          these bottlenecks and replaces them with intelligent systems built
+          around how your firm actually operates.
         </p>
 
         <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -190,7 +187,7 @@ export default function Services() {
       {/* ── How It Works ────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          How Our Automation Process Works
+          How We Work
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-24 max-w-2xl mx-auto leading-snug">
           From bottleneck to automated — in weeks.
@@ -217,10 +214,10 @@ export default function Services() {
       {/* ── Results ─────────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          Results Businesses Typically See
+          Results Professional Firms Typically See
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
-          Measurable outcomes, not just efficiency gains.
+          Time recovered. Costs reduced. Capacity unlocked.
         </h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -253,12 +250,14 @@ export default function Services() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          Ready to automate<br />
-          <span className="text-gradient">your business?</span>
+          Find out exactly where your firm
+          <br />
+          <span className="text-gradient">is losing time — and how to fix it.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Discover where AI automation can save time, reduce costs, and unlock
-          new growth opportunities in your business.
+          Book a free 30-minute strategy call. We&apos;ll map the highest-value
+          automation opportunities in your operation and give you a clear
+          picture of what&apos;s possible — no obligation, no jargon.
         </p>
 
         <a
@@ -267,41 +266,15 @@ export default function Services() {
           rel="noopener noreferrer"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book an AI Automation Strategy Call
+          Book Your Free Strategy Call
         </a>
 
-        <ul className="relative mt-8 mb-4 flex flex-col items-start gap-3 text-left mx-auto w-fit">
-          {[
-            "Identify repetitive work that can be automated",
-            "Discover where AI agents can save time and money",
-            "Walk away with practical next steps",
-          ].map((point) => (
-            <li key={point} className="flex items-center gap-3 text-saabai-text-muted text-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-              {point}
-            </li>
-          ))}
-        </ul>
-
-        <p className="relative text-saabai-text-dim text-xs mt-4 tracking-wide">
-          No obligation. No jargon. Just a clear picture of what&apos;s possible.
+        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
+          No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="border-t border-saabai-border py-10 pl-8 pr-24 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <a href="/">
-          <Image
-            src="/brand/saabai-logo.png"
-            alt="Saabai.ai"
-            width={100}
-            height={28}
-          />
-        </a>
-        <p className="text-xs text-saabai-text-dim tracking-wide">
-          © {new Date().getFullYear()} Saabai.ai. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
 
     </div>
   );
