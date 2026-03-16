@@ -283,7 +283,7 @@ export default function Onboarding() {
             <div className="flex flex-col gap-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <Field label="Company name">
-                  <Input required value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Goldberg Building Co." />
+                  <Input required value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. Apex Constructions" />
                 </Field>
                 <Field label="Your name">
                   <Input required value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="John Smith" />
