@@ -57,7 +57,7 @@ export default function About() {
                 alt="Shane Goldberg — Founder, Saabai"
                 width={192}
                 height={192}
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-cover object-[center_25%]"
               />
             </div>
             <div>
