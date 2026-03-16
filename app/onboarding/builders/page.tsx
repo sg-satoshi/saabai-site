@@ -293,7 +293,7 @@ export default function Onboarding() {
                 <Field label="Your role">
                   <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Owner / Director / Manager" />
                 </Field>
-                <Field label="Location" hint="Suburb, city, or state">
+                <Field label="Location — suburb, city or state">
                   <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Sydney, NSW" />
                 </Field>
               </div>
@@ -307,7 +307,7 @@ export default function Onboarding() {
                     <option>$10M+</option>
                   </Select>
                 </Field>
-                <Field label="Team size" hint="Include trades, admin, PMs">
+                <Field label="Team size — include trades, admin, PMs">
                   <Input type="number" min={1} value={teamSize} onChange={(e) => setTeamSize(e.target.value)} placeholder="e.g. 8" />
                 </Field>
               </div>
