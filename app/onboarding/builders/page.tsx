@@ -266,7 +266,7 @@ export default function Onboarding() {
           Building & Construction · AI Agent Fact Find
         </p>
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-5 leading-snug">
-          Help us understand how<br />your building business works.
+          Help us understand how your building business works.
         </h1>
         <p className="text-base text-saabai-text-muted leading-relaxed max-w-lg mx-auto">
           Your answers let us skip the small talk and get straight to what matters — a clear picture of where your business is losing time and exactly what we&apos;d automate. Takes around 10–15 minutes.
