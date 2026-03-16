@@ -138,7 +138,7 @@ function CheckboxGroup({
           <div className="w-4 h-4 shrink-0" />
           <input
             type="text"
-            placeholder="Other: _______________"
+            placeholder="Something else..."
             value={otherValue || ""}
             onChange={(e) => onOtherChange?.(e.target.value)}
             className="bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors flex-1"
@@ -262,13 +262,13 @@ export default function Onboarding() {
       {/* Hero */}
       <div className="max-w-2xl mx-auto px-6 pt-16 pb-12 text-center">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-4">
-          Client Fact Find — AI Agent & Quoting System
+          Building & Construction · AI Agent Fact Find
         </p>
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-5 leading-snug">
-          Tell us about your business.
+          Help us understand how<br />your build business works.
         </h1>
         <p className="text-base text-saabai-text-muted leading-relaxed max-w-lg mx-auto">
-          This helps us understand your operation before we speak so we can give you a clear, specific picture of what&apos;s possible. Takes around 10–15 minutes.
+          Your answers let us skip the small talk and get straight to what matters — a clear picture of where your business is losing time and exactly what we&apos;d automate. Takes around 10–15 minutes.
         </p>
       </div>
 
@@ -330,7 +330,7 @@ export default function Onboarding() {
                 />
               </Field>
               <div className="grid sm:grid-cols-2 gap-6">
-                <Field label="Typical job value" hint="Rough average is fine">
+                <Field label="Typical job value" hint="Ballpark is fine">
                   <Input value={typicalJobValue} onChange={(e) => setTypicalJobValue(e.target.value)} placeholder="e.g. $350,000" />
                 </Field>
                 <Field label="Minimum job size you'll quote">
@@ -343,7 +343,7 @@ export default function Onboarding() {
           {/* 3 — Enquiry Process */}
           <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-8" style={{ boxShadow: "0 0 40px rgba(98,197,209,0.1)" }}>
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent -mt-8 mb-8" />
-            <SectionHeading>03 — Current Enquiry Process</SectionHeading>
+            <SectionHeading>03 — How Enquiries Come In</SectionHeading>
             <div className="flex flex-col gap-6">
               <Field label="How do customers currently contact you?">
                 <CheckboxGroup
@@ -381,7 +381,7 @@ export default function Onboarding() {
           {/* 4 — Quoting */}
           <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-8" style={{ boxShadow: "0 0 40px rgba(98,197,209,0.1)" }}>
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent -mt-8 mb-8" />
-            <SectionHeading>04 — Your Quoting Process</SectionHeading>
+            <SectionHeading>04 — How You Quote</SectionHeading>
             <div className="flex flex-col gap-6">
               <Field label="How do you currently produce quotes?">
                 <Select value={howTheyQuote} onChange={(e) => setHowTheyQuote(e.target.value)}>
@@ -393,7 +393,7 @@ export default function Onboarding() {
                   <option>Combination of the above</option>
                 </Select>
               </Field>
-              <Field label="What information do you need from a customer to produce a quote?" hint="List everything you'd normally need to ask — job type, size, location, finishes level, land details, etc.">
+              <Field label="What do you need from a customer to produce a quote?" hint="Job type, size in m², location, site conditions, finishes level, land details — anything you'd normally ask">
                 <Textarea value={quoteInfo} onChange={(e) => setQuoteInfo(e.target.value)} placeholder="e.g. Job type, approx m², location, site conditions, finishes level (standard / mid / premium), council area, existing structure..." />
               </Field>
               <Field label="How long does it typically take you to produce a quote after an enquiry?">
@@ -440,9 +440,9 @@ export default function Onboarding() {
           {/* 6 — Agent Scope */}
           <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-8" style={{ boxShadow: "0 0 40px rgba(98,197,209,0.1)" }}>
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent -mt-8 mb-8" />
-            <SectionHeading>06 — What You Want the Agent to Do</SectionHeading>
+            <SectionHeading>06 — What the Agent Needs to Handle</SectionHeading>
             <div className="flex flex-col gap-6">
-              <Field label="Select everything you want the agent to handle">
+              <Field label="Tick everything that applies to your business">
                 <CheckboxGroup options={AGENT_GOALS} selected={agentGoals} onChange={setAgentGoals} />
               </Field>
               <Field label="Is there anything specific the agent should NOT do or say?" hint="e.g. never quote for commercial work, always require a site visit before confirming any price">
@@ -475,7 +475,7 @@ export default function Onboarding() {
                   <option>Prefer to discuss</option>
                 </Select>
               </Field>
-              <Field label="Anything else we should know?">
+              <Field label="Anything we haven't covered?">
                 <Textarea value={anythingElse} onChange={(e) => setAnythingElse(e.target.value)} placeholder="Optional — any context that might be useful before we speak" />
               </Field>
             </div>
@@ -491,10 +491,10 @@ export default function Onboarding() {
             className="w-full bg-saabai-teal text-saabai-bg px-8 py-4 rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ boxShadow: "0 0 32px rgba(98,197,209,0.3)" }}
           >
-            {submitting ? "Sending…" : "Submit Fact Find →"}
+            {submitting ? "Sending…" : "Send My Answers →"}
           </button>
           <p className="text-xs text-saabai-text-dim text-center -mt-8">
-            We&apos;ll review and come back to you within 1 business day.
+            We&apos;ll review your answers and come back within 1 business day with a tailored scope of what we&apos;d build.
           </p>
 
         </div>
