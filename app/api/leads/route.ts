@@ -344,20 +344,30 @@ function buildTranscriptShell({
 function buildOperatorTranscriptEmail(lead: {
   timestamp: string;
   source?: string;
+  email?: string;
   conversation?: { role: string; content: string }[];
 }) {
-  const { timestamp, source, conversation = [] } = lead;
+  const { timestamp, source, email, conversation = [] } = lead;
   const userCount = conversation.filter((m) => m.role === "user").length;
   const bubblesHtml = buildChatBubblesHtml(conversation);
   const intentional = source === "chat_ended";
 
+  const contactRow = email
+    ? `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:12px;color:#999;min-width:80px;">Visitor email</span>
+        <a href="mailto:${email}" style="font-size:14px;font-weight:600;color:#62c5d1;text-decoration:none;">${email}</a>
+       </div>`
+    : `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+        <span style="font-size:12px;color:#bbb;">No email provided</span>
+       </div>`;
+
   return {
-    subject: `Mia transcript — ${userCount} messages · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney", dateStyle: "short", timeStyle: "short" })}`,
+    subject: `Mia transcript — ${email ?? "anonymous"} · ${userCount} messages`,
     html: buildTranscriptShell({
       eyebrow: "Saabai · Mia Transcript",
       heading: intentional ? "A visitor ended the conversation." : "A conversation was closed.",
       subheading: `${userCount} messages · ${intentional ? "Visitor clicked End chat" : "Widget closed without ending"}`,
-      bubblesHtml,
+      bubblesHtml: contactRow + bubblesHtml,
       footerNote: "Sent automatically after a Mia conversation ends.",
     }),
   };
