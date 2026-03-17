@@ -343,20 +343,22 @@ function buildTranscriptShell({
 // Operator transcript — fires when widget is closed with genuine dialogue
 function buildOperatorTranscriptEmail(lead: {
   timestamp: string;
+  source?: string;
   conversation?: { role: string; content: string }[];
 }) {
-  const { timestamp, conversation = [] } = lead;
+  const { timestamp, source, conversation = [] } = lead;
   const userCount = conversation.filter((m) => m.role === "user").length;
   const bubblesHtml = buildChatBubblesHtml(conversation);
+  const intentional = source === "chat_ended";
 
   return {
-    subject: `Mia conversation — ${userCount} visitor messages · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney", dateStyle: "short", timeStyle: "short" })}`,
+    subject: `Mia transcript — ${userCount} messages · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney", dateStyle: "short", timeStyle: "short" })}`,
     html: buildTranscriptShell({
       eyebrow: "Saabai · Mia Transcript",
-      heading: "A conversation just ended.",
-      subheading: `${userCount} messages from the visitor · No lead form submitted`,
+      heading: intentional ? "A visitor ended the conversation." : "A conversation was closed.",
+      subheading: `${userCount} messages · ${intentional ? "Visitor clicked End chat" : "Widget closed without ending"}`,
       bubblesHtml,
-      footerNote: "Sent automatically when a visitor closes the chat after genuine dialogue.",
+      footerNote: "Sent automatically after a Mia conversation ends.",
     }),
   };
 }
@@ -398,7 +400,7 @@ export async function POST(req: Request) {
   console.log("[lead captured]", JSON.stringify(lead));
 
   const isCalculator = lead.source?.startsWith("calculator");
-  const isChatClosed = lead.source === "chat_closed";
+  const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended";
 
   if (process.env.RESEND_API_KEY) {
 
