@@ -369,9 +369,15 @@ export default function ChatWidget() {
                   <button
                     onClick={submitLeadCapture}
                     disabled={!leadForm.name.trim() || !leadForm.email.trim() || leadSubmitting}
-                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-sm hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-sm hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                   >
-                    {leadSubmitting ? "Sending…" : "Send my details"}
+                    {leadSubmitting ? (
+                      <>
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-bg animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-bg animate-bounce" style={{ animationDelay: "120ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-bg animate-bounce" style={{ animationDelay: "240ms" }} />
+                      </>
+                    ) : "Send my details"}
                   </button>
                 </div>
               </div>
