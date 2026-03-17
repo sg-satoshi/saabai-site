@@ -73,9 +73,12 @@ export default function ChatWidget() {
   const [showLeadCapture, setShowLeadCapture] = useState(false);
 
   // Lead capture form state
-  const [leadForm, setLeadForm] = useState({ name: "", email: "" });
+  const [leadForm, setLeadForm] = useState({ name: "", email: "", sendTranscript: true });
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
+
+  // Track if operator transcript has been sent for this session
+  const transcriptSentRef = useRef(false);
 
   // Input is managed locally in AI SDK v6 (not part of useChat)
   const [inputValue, setInputValue] = useState("");
@@ -164,6 +167,21 @@ export default function ChatWidget() {
     if (userMessages.length > 0) {
       track("conversation_abandoned", { messageCount: messages.length });
     }
+
+    // Send operator transcript if genuine dialogue (>3 user messages) and not already sent
+    if (userMessages.length > 3 && !transcriptSentRef.current) {
+      transcriptSentRef.current = true;
+      fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "chat_closed",
+          timestamp: new Date().toISOString(),
+          conversation: messages.map((m) => ({ role: m.role, content: getMessageText(m) })),
+        }),
+      }).catch(() => {});
+    }
+
     setIsOpen(false);
   }
 
@@ -184,12 +202,16 @@ export default function ChatWidget() {
   async function submitLeadCapture() {
     if (!leadForm.name.trim() || !leadForm.email.trim()) return;
     setLeadSubmitting(true);
+    // Mark transcript as sent so closeWidget doesn't double-fire
+    transcriptSentRef.current = true;
     try {
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...leadForm,
+          name: leadForm.name,
+          email: leadForm.email,
+          sendTranscript: leadForm.sendTranscript,
           source: "chat_widget",
           timestamp: new Date().toISOString(),
           conversation: messages.map((m) => ({ role: m.role, content: getMessageText(m) })),
@@ -366,6 +388,15 @@ export default function ChatWidget() {
                     onKeyDown={(e) => { if (e.key === "Enter") submitLeadCapture(); }}
                     className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
                   />
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={leadForm.sendTranscript}
+                      onChange={(e) => setLeadForm((f) => ({ ...f, sendTranscript: e.target.checked }))}
+                      className="w-3.5 h-3.5 rounded accent-saabai-teal cursor-pointer shrink-0"
+                    />
+                    <span className="text-[11px] text-saabai-text-dim leading-relaxed">Email me a copy of this conversation</span>
+                  </label>
                   <button
                     onClick={submitLeadCapture}
                     disabled={!leadForm.name.trim() || !leadForm.email.trim() || leadSubmitting}

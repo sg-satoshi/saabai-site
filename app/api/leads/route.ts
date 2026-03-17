@@ -250,6 +250,146 @@ function buildCalculatorCustomerEmail(lead: {
   };
 }
 
+// ── Chat transcript emails ────────────────────────────────────────────────────
+
+function buildChatBubblesHtml(
+  conversation: { role: string; content: string }[],
+  visitorName?: string,
+) {
+  return conversation
+    .filter((m) => m.content.trim())
+    .map(({ role, content }) => {
+      const isMia = role === "assistant";
+      const label = isMia ? "Mia" : visitorName || "You";
+
+      if (isMia) {
+        return `
+          <tr>
+            <td style="padding: 4px 0 8px;">
+              <table style="border-collapse: collapse;">
+                <tr>
+                  <td style="vertical-align: bottom; padding-right: 8px; width: 28px;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); display: flex; align-items: center; justify-content: center; text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">M</div>
+                  </td>
+                  <td>
+                    <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">${label}</div>
+                    <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+      } else {
+        return `
+          <tr>
+            <td style="padding: 4px 0 8px; text-align: right;">
+              <div style="font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; text-align: right;">${label}</div>
+              <div style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 11px 15px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; text-align: left;">${content}</div>
+            </td>
+          </tr>`;
+      }
+    })
+    .join("");
+}
+
+function buildTranscriptShell({
+  heading,
+  subheading,
+  eyebrow,
+  bubblesHtml,
+  ctaHtml,
+  footerNote,
+}: {
+  heading: string;
+  subheading: string;
+  eyebrow: string;
+  bubblesHtml: string;
+  ctaHtml?: string;
+  footerNote: string;
+}) {
+  return `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <!-- Header -->
+      <div style="background: #0b092e; padding: 40px 40px 36px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #62c5d1, transparent);"></div>
+        <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 12px; font-weight: 600;">${eyebrow}</p>
+        <h1 style="color: #ffffff; font-size: 24px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">${heading}</h1>
+        <p style="color: rgba(255,255,255,0.55); font-size: 14px; margin: 0; line-height: 1.5;">${subheading}</p>
+      </div>
+
+      <!-- Body -->
+      <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+
+        <!-- Chat bubbles -->
+        <div style="background: #ffffff; border: 1px solid #e8e8ec; border-radius: 12px; padding: 24px; margin-bottom: 28px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            ${bubblesHtml}
+          </table>
+        </div>
+
+        ${ctaHtml ?? ""}
+
+        <!-- Footer -->
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e8e8ec;">
+          <p style="font-size: 13px; font-weight: 700; color: #1a1a1a; margin: 0 0 4px;">Saabai</p>
+          <p style="font-size: 12px; color: #bbb; margin: 0;">AI Automation for Professional Firms · Australia</p>
+          <p style="font-size: 12px; color: #ccc; margin: 10px 0 0;">${footerNote}</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Operator transcript — fires when widget is closed with genuine dialogue
+function buildOperatorTranscriptEmail(lead: {
+  timestamp: string;
+  conversation?: { role: string; content: string }[];
+}) {
+  const { timestamp, conversation = [] } = lead;
+  const userCount = conversation.filter((m) => m.role === "user").length;
+  const bubblesHtml = buildChatBubblesHtml(conversation);
+
+  return {
+    subject: `Mia conversation — ${userCount} visitor messages · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney", dateStyle: "short", timeStyle: "short" })}`,
+    html: buildTranscriptShell({
+      eyebrow: "Saabai · Mia Transcript",
+      heading: "A conversation just ended.",
+      subheading: `${userCount} messages from the visitor · No lead form submitted`,
+      bubblesHtml,
+      footerNote: "Sent automatically when a visitor closes the chat after genuine dialogue.",
+    }),
+  };
+}
+
+// Customer transcript — sent when they opt in via the lead capture form
+function buildCustomerTranscriptEmail(lead: {
+  name?: string;
+  email: string;
+  conversation?: { role: string; content: string }[];
+}) {
+  const { name, email, conversation = [] } = lead;
+
+  const ctaHtml = `
+    <div style="text-align: center; margin-bottom: 28px;">
+      <p style="font-size: 15px; color: #444; margin: 0 0 20px; line-height: 1.6;">Ready to put these ideas into action? Book a free 30-minute strategy call — we'll map out exactly what can be automated in your business.</p>
+      <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; letter-spacing: -0.01em;">Book Your Free Strategy Call →</a>
+      <p style="font-size: 12px; color: #aaa; margin: 12px 0 0;">Free · 30 minutes · No obligation</p>
+    </div>
+  `;
+
+  return {
+    subject: `Your conversation with Mia — ${name || "here's your transcript"}`,
+    html: buildTranscriptShell({
+      eyebrow: "Saabai · Your Conversation",
+      heading: `Here's your chat with Mia${name ? `, ${name}` : ""}.`,
+      subheading: "Everything you discussed — saved for your reference.",
+      bubblesHtml: buildChatBubblesHtml(conversation, name),
+      ctaHtml,
+      footerNote: "You requested this transcript during your chat at saabai.ai. Questions? Reply to this email.",
+    }),
+  };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -258,38 +398,70 @@ export async function POST(req: Request) {
   console.log("[lead captured]", JSON.stringify(lead));
 
   const isCalculator = lead.source?.startsWith("calculator");
+  const isChatClosed = lead.source === "chat_closed";
 
   if (process.env.RESEND_API_KEY) {
-    // Operator notification
-    const { subject, html } = isCalculator
-      ? buildCalculatorOperatorEmail(lead)
-      : buildMiaEmail(lead);
 
-    try {
-      await resend.emails.send({
-        from: "Saabai Leads <leads@saabai.ai>",
-        to: ["hello@saabai.ai"],
-        subject,
-        html,
-        replyTo: lead.email || undefined,
-      });
-    } catch (err) {
-      console.error("[resend operator error]", err);
-    }
-
-    // Customer confirmation — calculator only
-    if (isCalculator && lead.email) {
-      const { subject: custSubject, html: custHtml } = buildCalculatorCustomerEmail(lead);
+    if (isChatClosed) {
+      // Operator-only transcript when visitor closes without submitting lead form
+      const { subject, html } = buildOperatorTranscriptEmail(lead);
       try {
         await resend.emails.send({
-          from: "Shane at Saabai.ai <hello@saabai.ai>",
-          to: [lead.email],
-          subject: custSubject,
-          html: custHtml,
-          replyTo: "hello@saabai.ai",
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
         });
       } catch (err) {
-        console.error("[resend customer error]", err);
+        console.error("[resend transcript error]", err);
+      }
+    } else {
+      // Standard lead notification (Mia or calculator)
+      const { subject, html } = isCalculator
+        ? buildCalculatorOperatorEmail(lead)
+        : buildMiaEmail(lead);
+
+      try {
+        await resend.emails.send({
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
+          replyTo: lead.email || undefined,
+        });
+      } catch (err) {
+        console.error("[resend operator error]", err);
+      }
+
+      // Customer emails
+      if (isCalculator && lead.email) {
+        const { subject: custSubject, html: custHtml } = buildCalculatorCustomerEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Shane at Saabai.ai <hello@saabai.ai>",
+            to: [lead.email],
+            subject: custSubject,
+            html: custHtml,
+            replyTo: "hello@saabai.ai",
+          });
+        } catch (err) {
+          console.error("[resend customer calculator error]", err);
+        }
+      }
+
+      if (!isCalculator && lead.email && lead.sendTranscript) {
+        const { subject: txSubject, html: txHtml } = buildCustomerTranscriptEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Shane at Saabai.ai <hello@saabai.ai>",
+            to: [lead.email],
+            subject: txSubject,
+            html: txHtml,
+            replyTo: "hello@saabai.ai",
+          });
+        } catch (err) {
+          console.error("[resend customer transcript error]", err);
+        }
       }
     }
   }
