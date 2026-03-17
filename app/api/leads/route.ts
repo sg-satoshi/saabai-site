@@ -405,7 +405,7 @@ export async function POST(req: Request) {
   if (process.env.RESEND_API_KEY) {
 
     if (isChatClosed) {
-      // Operator-only transcript when visitor closes without submitting lead form
+      // Operator transcript
       const { subject, html } = buildOperatorTranscriptEmail(lead);
       try {
         await resend.emails.send({
@@ -416,6 +416,22 @@ export async function POST(req: Request) {
         });
       } catch (err) {
         console.error("[resend transcript error]", err);
+      }
+
+      // Customer transcript — if they opted in via the end panel
+      if (lead.sendTranscript && lead.email) {
+        const { subject: txSubject, html: txHtml } = buildCustomerTranscriptEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Shane at Saabai.ai <hello@saabai.ai>",
+            to: [lead.email],
+            subject: txSubject,
+            html: txHtml,
+            replyTo: "hello@saabai.ai",
+          });
+        } catch (err) {
+          console.error("[resend customer transcript error]", err);
+        }
       }
     } else {
       // Standard lead notification (Mia or calculator)
