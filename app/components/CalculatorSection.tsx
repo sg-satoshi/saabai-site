@@ -200,9 +200,15 @@ export default function CalculatorSection() {
               <button
                 type="submit"
                 disabled={emailSubmitting}
-                className="shrink-0 bg-saabai-surface-raised border border-saabai-border text-saabai-text-muted hover:text-saabai-teal hover:border-saabai-teal/40 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40"
+                className="shrink-0 bg-saabai-surface-raised border border-saabai-border text-saabai-text-muted hover:text-saabai-teal hover:border-saabai-teal/40 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-1"
               >
-                {emailSubmitting ? "…" : "Send"}
+                {emailSubmitting ? (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-current animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1 h-1 rounded-full bg-current animate-bounce" style={{ animationDelay: "120ms" }} />
+                    <span className="w-1 h-1 rounded-full bg-current animate-bounce" style={{ animationDelay: "240ms" }} />
+                  </>
+                ) : "Send"}
               </button>
             </form>
           )}
