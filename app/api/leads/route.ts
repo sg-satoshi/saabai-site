@@ -148,7 +148,9 @@ function buildCalculatorCustomerEmail(lead: {
   const savingsHigh = annualCost ? formatCurrency(annualCost * 0.5)  : null;
 
   return {
-    subject: `Your automation cost estimate — ${annualCost ? formatCurrency(annualCost) + "/yr" : "Saabai"}`,
+    subject: annualCost
+      ? `You're leaving ${formatCurrency(annualCost)} on the table every year`
+      : `Your automation estimate from Saabai`,
     html: `
       <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
 
@@ -280,7 +282,7 @@ export async function POST(req: Request) {
       const { subject: custSubject, html: custHtml } = buildCalculatorCustomerEmail(lead);
       try {
         await resend.emails.send({
-          from: "Saabai <hello@saabai.ai>",
+          from: "Shane at Saabai.ai <hello@saabai.ai>",
           to: [lead.email],
           subject: custSubject,
           html: custHtml,
