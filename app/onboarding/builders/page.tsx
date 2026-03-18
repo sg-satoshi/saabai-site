@@ -47,10 +47,10 @@ const AGENT_GOALS = [
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-8">
-      <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-2">
+      <p className="text-lg font-semibold tracking-wide text-saabai-teal uppercase mb-3">
         {children}
       </p>
-      <div className="w-8 h-px bg-saabai-teal/40" />
+      <div className="w-12 h-0.5 bg-saabai-teal/40" />
     </div>
   );
 }
