@@ -113,8 +113,15 @@ function CheckboxGroup({
   function toggle(opt: string) {
     onChange(selected.includes(opt) ? selected.filter((s) => s !== opt) : [...selected, opt]);
   }
+  const allSelected = options.every((o) => selected.includes(o));
+  function toggleAll() {
+    onChange(allSelected ? selected.filter((s) => !options.includes(s)) : [...new Set([...selected, ...options])]);
+  }
   return (
     <div className="flex flex-col gap-2.5">
+      <button type="button" onClick={toggleAll} className="self-start text-[11px] font-medium text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide mb-1">
+        {allSelected ? "Deselect all" : "Select all"}
+      </button>
       {options.map((opt) => (
         <label key={opt} className="flex items-center gap-3 cursor-pointer group">
           <div
