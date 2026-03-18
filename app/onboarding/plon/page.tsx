@@ -66,7 +66,7 @@ const PIPEDRIVE_USE = [
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-8">
-      <p className="text-lg font-semibold tracking-wide text-saabai-teal uppercase mb-3">{children}</p>
+      <p className="text-2xl font-semibold tracking-wide text-saabai-teal uppercase mb-3">{children}</p>
       <div className="w-12 h-0.5 bg-saabai-teal/40" />
     </div>
   );
