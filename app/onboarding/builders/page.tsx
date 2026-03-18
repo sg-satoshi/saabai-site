@@ -118,10 +118,10 @@ function CheckboxGroup({
       {options.map((opt) => (
         <label key={opt} className="flex items-center gap-3 cursor-pointer group">
           <div
-            className={`w-4 h-4 rounded shrink-0 border transition-colors flex items-center justify-center ${
+            className={`w-4 h-4 rounded shrink-0 border-2 transition-colors flex items-center justify-center ${
               selected.includes(opt)
                 ? "bg-saabai-teal border-saabai-teal"
-                : "border-saabai-border bg-saabai-bg group-hover:border-saabai-teal/50"
+                : "border-white/30 bg-saabai-bg group-hover:border-saabai-teal/70"
             }`}
           >
             {selected.includes(opt) && (
