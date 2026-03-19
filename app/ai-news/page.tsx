@@ -11,9 +11,6 @@ export const metadata: Metadata = {
     "Live AI news, research and community discussions updated every 30 minutes. Curated from the top AI subreddits, TechCrunch, VentureBeat, The Verge, MIT Technology Review and more.",
 };
 
-function formatScore(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
-}
 
 function RedditCard({ item }: { item: NewsItem }) {
   return (
@@ -35,30 +32,12 @@ function RedditCard({ item }: { item: NewsItem }) {
       <p className="text-sm font-medium text-saabai-text leading-snug mb-4 group-hover:text-saabai-teal-bright transition-colors line-clamp-3">
         {item.title}
       </p>
-      <div className="flex items-center gap-4 text-[11px] text-saabai-text-dim">
-        {item.score !== undefined && (
-          <span className="flex items-center gap-1">
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3z" fill="currentColor" opacity="0.6" />
-            </svg>
-            {formatScore(item.score)} upvotes
-          </span>
-        )}
-        {item.comments !== undefined && (
-          <span className="flex items-center gap-1">
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1h10v7H7l-3 3V8H1V1z" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.6" />
-            </svg>
-            {formatScore(item.comments)} comments
-          </span>
-        )}
-        <span className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity text-saabai-teal">
-          View thread
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 8l6-6M3 2h5v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-        </span>
-      </div>
+      <span className="flex items-center gap-1 text-[11px] opacity-0 group-hover:opacity-100 transition-opacity text-saabai-teal">
+        View thread
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 8l6-6M3 2h5v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </span>
     </a>
   );
 }
