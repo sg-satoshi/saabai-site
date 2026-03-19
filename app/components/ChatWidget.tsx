@@ -306,8 +306,8 @@ export default function ChatWidget() {
                 className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised"
                 aria-label="Minimise chat"
               >
-                <svg width="16" height="10" viewBox="0 0 16 2" fill="none">
-                  <path d="M1 1h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 4l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               <button
