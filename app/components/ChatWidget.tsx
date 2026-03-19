@@ -250,7 +250,7 @@ export default function ChatWidget() {
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed bottom-6 md:bottom-12 right-6 z-[60] flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 md:bottom-14 right-6 z-[60] flex flex-col items-end gap-3">
 
       {/* ── Proactive bubble ─────────────────────────────────────────── */}
       {showBubble && !isOpen && (
