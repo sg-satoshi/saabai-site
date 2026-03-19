@@ -238,7 +238,7 @@ export default function ChatWidget() {
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies instantly</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies within a minute</p>
               </div>
             </div>
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
@@ -263,7 +263,7 @@ export default function ChatWidget() {
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide">
-                  {isEnded ? "Conversation ended" : "Usually replies instantly"}
+                  {isEnded ? "Conversation ended" : "Usually replies within a minute"}
                 </p>
               </div>
             </div>
