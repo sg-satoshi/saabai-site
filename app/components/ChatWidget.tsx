@@ -56,6 +56,25 @@ function getMessageText(message: UIMessage): string {
     .join("\n\n");
 }
 
+function renderMessageText(text: string): React.ReactNode[] {
+  const parts = text.split(/(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline break-all opacity-80 hover:opacity-100 transition-opacity"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 function MiaAvatar({ size = 36, dotSize = 10, showDot = true }: { size?: number; dotSize?: number; showDot?: boolean }) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -427,7 +446,7 @@ export default function ChatWidget() {
                   }`}
                   style={message.role !== "user" ? { background: "#272466" } : {}}
                 >
-                  {getMessageText(message)}
+                  {renderMessageText(getMessageText(message))}
                 </div>
               </div>
             ))}

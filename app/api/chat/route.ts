@@ -81,6 +81,40 @@ export async function POST(req: Request) {
       }),
 
       /**
+       * fetch_webpage — Read the content of a URL shared by the visitor.
+       * Use when the visitor shares their website or a relevant page for context.
+       */
+      fetch_webpage: tool({
+        description:
+          "Fetch and read the text content of a webpage URL shared by the visitor. " +
+          "Use this when a visitor shares their website URL or any other URL to give you context about their business. " +
+          "Do not call this unless the visitor has explicitly shared a URL in the conversation.",
+        inputSchema: z.object({
+          url: z.string().describe("The full URL to fetch, exactly as shared by the visitor."),
+        }),
+        execute: async ({ url }) => {
+          try {
+            const res = await fetch(url, {
+              headers: { "User-Agent": "Saabai-Mia/1.0" },
+              signal: AbortSignal.timeout(8000),
+            });
+            if (!res.ok) return { error: `Could not load page (HTTP ${res.status})` };
+            const html = await res.text();
+            const text = html
+              .replace(/<script[\s\S]*?<\/script>/gi, "")
+              .replace(/<style[\s\S]*?<\/style>/gi, "")
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 4000);
+            return { url, content: text };
+          } catch {
+            return { error: "Could not read that page. It may be blocking automated access." };
+          }
+        },
+      }),
+
+      /**
        * capture_lead — Trigger the lead capture form.
        * Call when visitor is warm but not ready to book, or score ≤1.
        */
