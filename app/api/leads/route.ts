@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { generateText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const runtime = "edge";
 
@@ -14,6 +16,141 @@ function formatNumber(n: number) {
   return n.toLocaleString("en-AU", { maximumFractionDigits: 0 });
 }
 
+// ── Conversation analysis via Claude Haiku ────────────────────────────────────
+
+interface ConversationAnalysis {
+  summary: string;
+  who: string;
+  business: string;
+  pain_points: string[];
+  qualification: "hot" | "warm" | "cold";
+  intent: string;
+  key_insight: string;
+  recommended_action: string;
+}
+
+async function analyseConversation(
+  conversation: { role: string; content: string }[],
+): Promise<ConversationAnalysis | null> {
+  if (conversation.filter((m) => m.role === "user").length < 2) return null;
+
+  const transcript = conversation
+    .filter((m) => m.content.trim())
+    .map((m) => `${m.role === "assistant" ? "Mia" : "Visitor"}: ${m.content}`)
+    .join("\n");
+
+  try {
+    const { text } = await generateText({
+      model: anthropic("claude-haiku-4-5-20251001"),
+      prompt: `You are analysing a sales conversation between Mia (Saabai's AI assistant) and a website visitor. Saabai sells AI automation to professional services businesses. The goal of each conversation is to book a free strategy call.
+
+Analyse the conversation below and return a JSON object only — no other text.
+
+Conversation:
+${transcript}
+
+Return this exact JSON structure:
+{
+  "summary": "2-3 sentence plain-English summary of the conversation and where it ended up",
+  "who": "Visitor's name if known, otherwise 'Unknown'",
+  "business": "What kind of business they run or work in. One sentence.",
+  "pain_points": ["Key pain point 1", "Key pain point 2"],
+  "qualification": "hot | warm | cold — hot means ready to book or clearly qualified, warm means interested but not there yet, cold means low fit or disengaged",
+  "intent": "What did the visitor actually want from this conversation? One sentence.",
+  "key_insight": "The single most useful thing to know before following up. What stood out?",
+  "recommended_action": "What should Shane do next? Be specific and direct."
+}`,
+    });
+
+    const json = text.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+    return JSON.parse(json) as ConversationAnalysis;
+  } catch {
+    return null;
+  }
+}
+
+function buildAnalysisHtml(analysis: ConversationAnalysis): string {
+  const qualColour = analysis.qualification === "hot"
+    ? { bg: "#0d3d1a", badge: "#22c55e", text: "#bbf7d0", label: "HOT" }
+    : analysis.qualification === "warm"
+    ? { bg: "#3d2a00", badge: "#f59e0b", text: "#fde68a", label: "WARM" }
+    : { bg: "#1e1e2e", badge: "#6b7280", text: "#d1d5db", label: "COLD" };
+
+  const painHtml = analysis.pain_points
+    .map((p) => `<li style="margin-bottom: 4px; font-size: 13px; color: #555; line-height: 1.5;">${p}</li>`)
+    .join("");
+
+  return `
+    <div style="background: #0b092e; border-radius: 12px; padding: 24px 28px; margin-bottom: 28px; border: 1px solid rgba(98,197,209,0.2);">
+      <!-- Intel header row -->
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px;">
+        <tr>
+          <td style="vertical-align: middle;">
+            <p style="color: #62c5d1; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; margin: 0;">Mia Intel</p>
+          </td>
+          <td style="text-align: right; vertical-align: middle;">
+            <span style="display: inline-block; background: ${qualColour.badge}; color: #000; font-size: 10px; font-weight: 800; letter-spacing: 0.15em; padding: 3px 10px; border-radius: 20px; text-transform: uppercase;">${qualColour.label}</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Summary -->
+      <p style="color: rgba(255,255,255,0.85); font-size: 14px; line-height: 1.6; margin: 0 0 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 18px;">${analysis.summary}</p>
+
+      <!-- Fields grid -->
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 7px 0; vertical-align: top; width: 140px;">
+            <span style="font-size: 11px; color: #62c5d1; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Who</span>
+          </td>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 13px; color: rgba(255,255,255,0.8);">${analysis.who}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 7px 0; vertical-align: top; width: 140px;">
+            <span style="font-size: 11px; color: #62c5d1; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Business</span>
+          </td>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 13px; color: rgba(255,255,255,0.8);">${analysis.business}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 11px; color: #62c5d1; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Intent</span>
+          </td>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 13px; color: rgba(255,255,255,0.8);">${analysis.intent}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 11px; color: #62c5d1; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">Key insight</span>
+          </td>
+          <td style="padding: 7px 0; vertical-align: top;">
+            <span style="font-size: 13px; color: rgba(255,255,255,0.8);">${analysis.key_insight}</span>
+          </td>
+        </tr>
+      </table>
+
+      ${painHtml ? `
+      <!-- Pain points -->
+      <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+        <p style="font-size: 11px; color: #62c5d1; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px;">Pain Points</p>
+        <ul style="margin: 0; padding-left: 18px; color: rgba(255,255,255,0.75);">
+          ${analysis.pain_points.map((p) => `<li style="margin-bottom: 4px; font-size: 13px; line-height: 1.5;">${p}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+
+      <!-- Recommended action — highlighted -->
+      <div style="margin-top: 16px; background: rgba(98,197,209,0.1); border: 1px solid rgba(98,197,209,0.25); border-radius: 8px; padding: 14px 16px;">
+        <p style="font-size: 10px; color: #62c5d1; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 6px;">Recommended Action</p>
+        <p style="font-size: 14px; color: #ffffff; font-weight: 500; margin: 0; line-height: 1.5;">${analysis.recommended_action}</p>
+      </div>
+    </div>
+  `;
+}
+
 // ── Operator notification: Mia chat lead ─────────────────────────────────────
 
 function buildMiaEmail(lead: {
@@ -21,8 +158,9 @@ function buildMiaEmail(lead: {
   email: string;
   timestamp: string;
   conversation?: { role: string; content: string }[];
+  analysis?: ConversationAnalysis | null;
 }) {
-  const { name, email, timestamp, conversation = [] } = lead;
+  const { name, email, timestamp, conversation = [], analysis } = lead;
 
   const conversationHtml = conversation
     .map(({ role, content }) => {
@@ -49,6 +187,7 @@ function buildMiaEmail(lead: {
           <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 600;">Mia captured a lead</h1>
         </div>
         <div style="background: #f8f8f8; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
+          ${analysis ? buildAnalysisHtml(analysis) : ""}
           <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Contact</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
             <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 120px;">Name</td><td style="padding: 6px 0; font-size: 14px; font-weight: 500;">${name || "Not provided"}</td></tr>
@@ -156,7 +295,6 @@ function buildCalculatorCustomerEmail(lead: {
 
         <!-- Header -->
         <div style="background: #0b092e; padding: 40px 40px 36px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
-          <!-- Top accent line -->
           <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #62c5d1, transparent);"></div>
           <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 12px; font-weight: 600;">Saabai · Your Cost Estimate</p>
           <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">Here are your numbers.</h1>
@@ -297,6 +435,7 @@ function buildTranscriptShell({
   subheading,
   eyebrow,
   bubblesHtml,
+  analysisHtml,
   ctaHtml,
   footerNote,
 }: {
@@ -304,6 +443,7 @@ function buildTranscriptShell({
   subheading: string;
   eyebrow: string;
   bubblesHtml: string;
+  analysisHtml?: string;
   ctaHtml?: string;
   footerNote: string;
 }) {
@@ -319,6 +459,8 @@ function buildTranscriptShell({
 
       <!-- Body -->
       <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+
+        ${analysisHtml ?? ""}
 
         <!-- Chat bubbles -->
         <div style="background: #ffffff; border: 1px solid #e8e8ec; border-radius: 12px; padding: 24px; margin-bottom: 28px;">
@@ -346,8 +488,9 @@ function buildOperatorTranscriptEmail(lead: {
   source?: string;
   email?: string;
   conversation?: { role: string; content: string }[];
+  analysis?: ConversationAnalysis | null;
 }) {
-  const { timestamp, source, email, conversation = [] } = lead;
+  const { timestamp, source, email, conversation = [], analysis } = lead;
   const userCount = conversation.filter((m) => m.role === "user").length;
   const bubblesHtml = buildChatBubblesHtml(conversation);
   const intentional = source === "chat_ended";
@@ -367,6 +510,7 @@ function buildOperatorTranscriptEmail(lead: {
       eyebrow: "Saabai · Mia Transcript",
       heading: intentional ? "A visitor ended the conversation." : "A conversation was closed.",
       subheading: `${userCount} messages · ${intentional ? "Visitor clicked End chat" : "Widget closed without ending"}`,
+      analysisHtml: analysis ? buildAnalysisHtml(analysis) : undefined,
       bubblesHtml: contactRow + bubblesHtml,
       footerNote: "Sent automatically after a Mia conversation ends.",
     }),
@@ -417,7 +561,9 @@ export async function POST(req: Request) {
     if (isChatClosed) {
       // Operator transcript — skip for short conversations
       if (lead.source !== "chat_ended_short") {
-        const { subject, html } = buildOperatorTranscriptEmail(lead);
+        // Generate AI analysis before building the email
+        const analysis = await analyseConversation(lead.conversation ?? []);
+        const { subject, html } = buildOperatorTranscriptEmail({ ...lead, analysis });
         try {
           await resend.emails.send({
             from: "Saabai Leads <leads@saabai.ai>",
@@ -447,20 +593,34 @@ export async function POST(req: Request) {
       }
     } else {
       // Standard lead notification (Mia or calculator)
-      const { subject, html } = isCalculator
-        ? buildCalculatorOperatorEmail(lead)
-        : buildMiaEmail(lead);
-
-      try {
-        await resend.emails.send({
-          from: "Saabai Leads <leads@saabai.ai>",
-          to: ["hello@saabai.ai"],
-          subject,
-          html,
-          replyTo: lead.email || undefined,
-        });
-      } catch (err) {
-        console.error("[resend operator error]", err);
+      if (isCalculator) {
+        const { subject, html } = buildCalculatorOperatorEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Saabai Leads <leads@saabai.ai>",
+            to: ["hello@saabai.ai"],
+            subject,
+            html,
+            replyTo: lead.email || undefined,
+          });
+        } catch (err) {
+          console.error("[resend operator error]", err);
+        }
+      } else {
+        // Mia lead capture — generate analysis
+        const analysis = await analyseConversation(lead.conversation ?? []);
+        const { subject, html } = buildMiaEmail({ ...lead, analysis });
+        try {
+          await resend.emails.send({
+            from: "Saabai Leads <leads@saabai.ai>",
+            to: ["hello@saabai.ai"],
+            subject,
+            html,
+            replyTo: lead.email || undefined,
+          });
+        } catch (err) {
+          console.error("[resend operator error]", err);
+        }
       }
 
       // Customer emails
