@@ -23,7 +23,7 @@ export default function NewsTicker() {
   if (items.length === 0) return null;
 
   // Duration scales with number of items — slowed by 33%
-  const duration = Math.max(80, Math.round(items.length * 8 * 1.33));
+  const duration = Math.max(100, Math.round(items.length * 8 * 1.33 * 1.29));
 
   return (
     <div
