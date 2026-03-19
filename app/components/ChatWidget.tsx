@@ -40,6 +40,15 @@ const INITIAL_MESSAGES: UIMessage[] = [
   },
 ];
 
+// Pages where Mia proactively opens after a delay, with a page-specific opener
+const PROACTIVE_PAGES: Record<string, string> = {
+  "/calculator": "Looks like you've been running some numbers. What came up for you?",
+  "/services": "Hey, Mia here. Anything on the services page I can help clarify?",
+  "/use-cases": "Seeing anything in there that looks familiar for your business?",
+  "/process": "Checking out how it all works? Happy to walk you through it.",
+  "/about": "Hey, Mia here. Any questions about the team or how Saabai works?",
+};
+
 function getMessageText(message: UIMessage): string {
   return message.parts
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
@@ -196,6 +205,29 @@ export default function ChatWidget() {
     }, 10000);
     return () => clearInterval(interval);
   }, [isOpen]);
+
+  // ── Proactive trigger — auto-opens on high-intent pages ──────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const proactiveMsg = PROACTIVE_PAGES[pathname];
+    if (!proactiveMsg) return;
+    if (isOpen) return;
+    if (returningVisitor) return;
+    if (sessionStorage.getItem("saabai-proactive-shown")) return;
+    if (localStorage.getItem("saabai-chat-seen")) return;
+
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("saabai-proactive-shown", "1");
+      localStorage.setItem("saabai-chat-seen", "1");
+      setMessages([{ id: "initial", role: "assistant", parts: [{ type: "text", text: proactiveMsg }] }]);
+      setIsOpen(true);
+      setShowBubble(false);
+      track("proactive_trigger", { page: pathname });
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isOpen, returningVisitor]);
 
   // ── Auto-scroll ──────────────────────────────────────────────────────
   useEffect(() => {

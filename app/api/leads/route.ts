@@ -206,6 +206,54 @@ function buildMiaEmail(lead: {
   };
 }
 
+// ── Visitor follow-up email after Mia lead capture ───────────────────────────
+
+function buildVisitorFollowUpEmail(lead: {
+  name?: string;
+  email: string;
+  analysis?: ConversationAnalysis | null;
+}) {
+  const { name, analysis } = lead;
+  const firstName = name?.split(" ")[0] || null;
+  const greeting = firstName ? `Hey ${firstName},` : "Hey,";
+
+  const personalLine = analysis?.business
+    ? `From what you shared about ${analysis.business.toLowerCase().replace(/\.$/, "")}, there's a real conversation to be had about what's automatable.`
+    : "From our chat, it sounds like there are some real opportunities worth exploring.";
+
+  return {
+    subject: firstName ? `Good chatting with you, ${firstName}` : "Good chat — here's your next step",
+    html: `
+      <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+
+        <div style="background: #0b092e; padding: 40px 40px 36px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #62c5d1, transparent);"></div>
+          <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 12px; font-weight: 600;">Saabai · From Shane</p>
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">${greeting}</h1>
+        </div>
+
+        <div style="background: #f7f7f9; padding: 36px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 20px;">Thanks for chatting with Mia today. ${personalLine}</p>
+
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 28px;">The free strategy call is the best next step — 30 minutes, no pitch, just a clear picture of what's possible for your business. I'll come in having already read your conversation with Mia, so you won't need to repeat yourself.</p>
+
+          <div style="text-align: center; margin-bottom: 24px;">
+            <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; letter-spacing: -0.01em;">Book Your Free 30-Min Strategy Call →</a>
+          </div>
+          <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 36px;">Free · No obligation · Pick a time that works for you</p>
+
+          <div style="border-top: 1px solid #e8e8ec; padding-top: 24px;">
+            <p style="font-size: 14px; color: #555; line-height: 1.6; margin: 0 0 6px;">Shane Goldberg</p>
+            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
+          </div>
+
+        </div>
+      </div>
+    `,
+  };
+}
+
 // ── Operator notification: calculator lead ───────────────────────────────────
 
 function buildCalculatorOperatorEmail(lead: {
@@ -651,6 +699,23 @@ export async function POST(req: Request) {
           });
         } catch (err) {
           console.error("[resend customer transcript error]", err);
+        }
+      }
+
+      // Visitor follow-up — send when they didn't request a transcript (fills the gap)
+      if (!isCalculator && lead.email && !lead.sendTranscript) {
+        const analysis = await analyseConversation(lead.conversation ?? []);
+        const { subject: fuSubject, html: fuHtml } = buildVisitorFollowUpEmail({ ...lead, analysis });
+        try {
+          await resend.emails.send({
+            from: "Shane at Saabai.ai <hello@saabai.ai>",
+            to: [lead.email],
+            subject: fuSubject,
+            html: fuHtml,
+            replyTo: "hello@saabai.ai",
+          });
+        } catch (err) {
+          console.error("[resend follow-up error]", err);
         }
       }
     }
