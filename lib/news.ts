@@ -121,6 +121,11 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     rssHN,
     rssMIT,
     rssWired,
+    rssArsTechnica,
+    rssZDNet,
+    rssRegister,
+    rssAINews,
+    rssMarkTechPost,
   ] = await Promise.all([
     fetchReddit("AINews", 50, rl),
     fetchReddit("artificial", 100, rl),
@@ -134,6 +139,11 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     fetchRss("https://hnrss.org/newest?q=artificial+intelligence&points=100", "Hacker News", nl),
     fetchRss("https://www.technologyreview.com/feed/", "MIT Tech Review", nl),
     fetchRss("https://www.wired.com/feed/tag/ai/latest/rss", "Wired", nl),
+    fetchRss("https://feeds.arstechnica.com/arstechnica/technology-lab", "Ars Technica", nl),
+    fetchRss("https://www.zdnet.com/topic/artificial-intelligence/rss.xml", "ZDNet", nl),
+    fetchRss("https://www.theregister.com/software/ai_ml/headlines.atom", "The Register", nl),
+    fetchRss("https://artificialintelligence-news.com/feed/", "AI News", nl),
+    fetchRss("https://www.marktechpost.com/feed/", "MarkTechPost", nl),
   ]);
 
   const reddit = [
@@ -152,6 +162,11 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     ...rssHN,
     ...rssMIT,
     ...rssWired,
+    ...rssArsTechnica,
+    ...rssZDNet,
+    ...rssRegister,
+    ...rssAINews,
+    ...rssMarkTechPost,
   ];
 
   // Interleave for the ticker

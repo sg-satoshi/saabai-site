@@ -138,7 +138,7 @@ export default async function AINewsPage() {
               <span key={s} className="text-[10px] font-semibold px-2 py-1 rounded tracking-wide"
                 style={{ background: "rgba(255,99,0,0.1)", color: "#ff6535" }}>{s}</span>
             ))}
-            {["TechCrunch", "VentureBeat", "The Verge", "Hacker News", "MIT Tech Review", "Wired"].map((s) => (
+            {["TechCrunch", "VentureBeat", "The Verge", "Hacker News", "MIT Tech Review", "Wired", "Ars Technica", "ZDNet", "The Register", "AI News", "MarkTechPost"].map((s) => (
               <span key={s} className="text-[10px] font-semibold px-2 py-1 rounded tracking-wide"
                 style={{ background: "rgba(98,197,209,0.08)", color: "#62c5d1" }}>{s}</span>
             ))}

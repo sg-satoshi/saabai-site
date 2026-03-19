@@ -48,7 +48,7 @@ export default function NewsTicker() {
           style={{ boxShadow: "0 0 6px rgba(74,222,128,0.8)" }} />
         <span className="text-[9px] font-bold tracking-[0.2em] uppercase whitespace-nowrap"
           style={{ color: "#7dd8e8" }}>
-          AI Live
+          Signal
         </span>
       </div>
 
