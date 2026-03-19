@@ -22,8 +22,8 @@ export default function NewsTicker() {
 
   if (items.length === 0) return null;
 
-  // Duration scales with number of items so reading speed stays consistent
-  const duration = Math.max(60, items.length * 8);
+  // Duration scales with number of items — slowed by 33%
+  const duration = Math.max(80, Math.round(items.length * 8 * 1.33));
 
   return (
     <div
@@ -87,7 +87,7 @@ export default function NewsTicker() {
                 {item.source}
               </span>
               <span
-                className="text-[12px] group-hover:text-white transition-colors duration-150"
+                className="text-[12px] font-medium group-hover:text-white transition-colors duration-150"
                 style={{ color: "#8899bb" }}
               >
                 {item.title}
