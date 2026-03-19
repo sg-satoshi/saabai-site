@@ -45,7 +45,10 @@ function parseRss(xml: string, sourceName: string, limit = 5): NewsItem[] {
 
 export async function fetchRss(url: string, sourceName: string, limit = 5): Promise<NewsItem[]> {
   try {
-    const res = await fetch(url, { next: { revalidate: 1800 } });
+    const res = await fetch(url, {
+      next: { revalidate: 1800 },
+      headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
+    });
     if (!res.ok) return [];
     const xml = await res.text();
     return parseRss(xml, sourceName, limit);
@@ -54,47 +57,24 @@ export async function fetchRss(url: string, sourceName: string, limit = 5): Prom
   }
 }
 
+// Reddit's JSON API blocks Vercel/cloud IPs — use their native RSS feed instead.
+// Reddit RSS is an Atom feed, parsed by the existing parseRss function.
 export async function fetchReddit(
   subreddit: string,
-  minScore = 50,
+  _minScore = 50, // kept for API compatibility, not used with RSS
   limit = 5,
 ): Promise<NewsItem[]> {
-  try {
-    const res = await fetch(
-      `https://www.reddit.com/r/${subreddit}/hot.json?limit=20`,
-      {
-        headers: { "User-Agent": "saabai-news/1.0 (saabai.ai)" },
-        next: { revalidate: 1800 },
-      },
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return data.data.children
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((p: any) =>
-        p.data.score >= minScore &&
-        !p.data.is_video &&
-        !p.data.stickied &&
-        p.data.title.length > 15,
-      )
-      .slice(0, limit)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((p: any) => ({
-        title: p.data.title,
-        url: p.data.url.startsWith("http")
-          ? p.data.url
-          : `https://reddit.com${p.data.permalink}`,
-        permalink: `https://reddit.com${p.data.permalink}`,
-        source: `r/${subreddit}`,
-        type: "reddit" as const,
-        score: p.data.score,
-        comments: p.data.num_comments,
-      }));
-  } catch {
-    return [];
-  }
+  const items = await fetchRss(
+    `https://www.reddit.com/r/${subreddit}/hot.rss`,
+    `r/${subreddit}`,
+    limit,
+  );
+  // Mark as reddit type and set permalink to reddit thread
+  return items.map((item) => ({
+    ...item,
+    type: "reddit" as const,
+    permalink: item.url,
+  }));
 }
 
 // Greedy interleave — never places two items from the same source consecutively.
