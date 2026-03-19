@@ -91,6 +91,7 @@ export default function ChatWidget() {
 
   const userMessages = messages.filter((m) => m.role === "user");
   const hasEnoughForTranscript = userMessages.length > 0;
+  const hasGenuineDialogue = userMessages.length > 2;
   const displayMessages = messages.filter((m) => getMessageText(m).trim() !== "");
 
   // ── Proactive bubble ─────────────────────────────────────────────────
@@ -160,6 +161,8 @@ export default function ChatWidget() {
 
   async function submitEndPanel(skipEmail: boolean) {
     if (transcriptSentRef.current) return;
+    // Only send operator transcript if genuine dialogue (>2 user messages)
+    if (!hasGenuineDialogue && skipEmail) { setEndSubmitted(true); return; }
     transcriptSentRef.current = true;
     setEndSubmitting(true);
     try {
@@ -167,7 +170,7 @@ export default function ChatWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          source: "chat_ended",
+          source: hasGenuineDialogue ? "chat_ended" : "chat_ended_short",
           email: skipEmail ? undefined : endEmail.trim() || undefined,
           sendTranscript: !skipEmail && !!endEmail.trim(),
           timestamp: new Date().toISOString(),

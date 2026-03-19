@@ -410,22 +410,24 @@ export async function POST(req: Request) {
   console.log("[lead captured]", JSON.stringify(lead));
 
   const isCalculator = lead.source?.startsWith("calculator");
-  const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended";
+  const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";
 
   if (process.env.RESEND_API_KEY) {
 
     if (isChatClosed) {
-      // Operator transcript
-      const { subject, html } = buildOperatorTranscriptEmail(lead);
-      try {
-        await resend.emails.send({
-          from: "Saabai Leads <leads@saabai.ai>",
-          to: ["hello@saabai.ai"],
-          subject,
-          html,
-        });
-      } catch (err) {
-        console.error("[resend transcript error]", err);
+      // Operator transcript — skip for short conversations
+      if (lead.source !== "chat_ended_short") {
+        const { subject, html } = buildOperatorTranscriptEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Saabai Leads <leads@saabai.ai>",
+            to: ["hello@saabai.ai"],
+            subject,
+            html,
+          });
+        } catch (err) {
+          console.error("[resend transcript error]", err);
+        }
       }
 
       // Customer transcript — if they opted in via the end panel
