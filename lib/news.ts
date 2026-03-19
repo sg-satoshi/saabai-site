@@ -97,6 +97,38 @@ export async function fetchReddit(
   }
 }
 
+// Greedy interleave — never places two items from the same source consecutively.
+// Always picks from the largest remaining group, skipping the last-used source.
+function shuffleNoConsecutive(items: NewsItem[]): NewsItem[] {
+  const groups = new Map<string, NewsItem[]>();
+  for (const item of items) {
+    if (!groups.has(item.source)) groups.set(item.source, []);
+    groups.get(item.source)!.push(item);
+  }
+  // Shuffle within each source group for internal variety
+  for (const group of groups.values()) {
+    for (let i = group.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [group[i], group[j]] = [group[j], group[i]];
+    }
+  }
+  const result: NewsItem[] = [];
+  let lastSource = "";
+  while (groups.size > 0) {
+    const candidates = [...groups.entries()]
+      .filter(([src]) => src !== lastSource)
+      .sort((a, b) => b[1].length - a[1].length);
+    // If all remaining items share the last source, allow it (avoids infinite loop)
+    const [source, group] = candidates.length > 0
+      ? candidates[0]
+      : [...groups.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+    result.push(group.shift()!);
+    lastSource = source;
+    if (group.length === 0) groups.delete(source);
+  }
+  return result;
+}
+
 export interface NewsData {
   reddit: NewsItem[];
   news: NewsItem[];
@@ -169,13 +201,12 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     ...rssMarkTechPost,
   ];
 
-  // Interleave for the ticker
-  const all: NewsItem[] = [];
-  const maxLen = Math.max(reddit.length, news.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (news[i]) all.push(news[i]);
-    if (reddit[i]) all.push(reddit[i]);
-  }
+  const allRaw = [...reddit, ...news];
 
-  return { reddit, news, all, updatedAt: new Date().toISOString() };
+  return {
+    reddit: shuffleNoConsecutive(reddit),
+    news: shuffleNoConsecutive(news),
+    all: shuffleNoConsecutive(allRaw),
+    updatedAt: new Date().toISOString(),
+  };
 }
