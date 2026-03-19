@@ -9,7 +9,7 @@ const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "initial",
     role: "assistant",
-    parts: [{ type: "text", text: "Hey, I'm Mia — what brings you to Saabai today?" }],
+    parts: [{ type: "text", text: "Hey, I'm Mia. What brings you to Saabai today?" }],
   },
 ];
 
