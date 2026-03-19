@@ -83,6 +83,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ─── News ticker animation ─────────────────────────────────────────────── */
+
+@keyframes news-ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* ─── Utilities ─────────────────────────────────────────────────────────── */
 
 /* Gradient text — used on hero headline accent */
