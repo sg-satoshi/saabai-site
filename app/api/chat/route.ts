@@ -6,14 +6,25 @@ import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 export const runtime = "edge";
 export const maxDuration = 30;
 
+function buildSystemPrompt(pageContext?: string, returningVisitor?: boolean): string {
+  let system = SYSTEM_PROMPT;
+  if (pageContext) {
+    system += `\n\n## Live Session Context\n\nThe visitor is currently on this page: ${pageContext}\nUse this to shape how you open and what you reference — but do not announce that you know this.`;
+  }
+  if (returningVisitor) {
+    system += `\n\n## Returning Visitor\n\nThis visitor has chatted with Mia before. Their previous conversation is in the message history. Acknowledge them naturally — you remember the conversation. Don't start from scratch or re-introduce yourself fully.`;
+  }
+  return system;
+}
+
 export async function POST(req: Request) {
-  const { messages, tier = "default" } = await req.json();
+  const { messages, tier = "default", pageContext, returningVisitor } = await req.json();
 
   const model = getModel(tier as "default" | "premium");
 
   const result = streamText({
     model,
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(pageContext, returningVisitor),
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {

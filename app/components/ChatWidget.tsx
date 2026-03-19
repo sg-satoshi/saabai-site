@@ -2,8 +2,35 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
+import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+
+const STORAGE_KEY = "saabai-conversation";
+const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function loadStoredConversation(): UIMessage[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const { messages, timestamp } = JSON.parse(raw);
+    if (Date.now() - new Date(timestamp).getTime() > STORAGE_TTL) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    if (!Array.isArray(messages) || messages.length <= 1) return null;
+    return messages as UIMessage[];
+  } catch {
+    return null;
+  }
+}
+
+function saveConversation(messages: UIMessage[]) {
+  try {
+    if (messages.length <= 1) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, timestamp: new Date().toISOString() }));
+  } catch {}
+}
 
 const INITIAL_MESSAGES: UIMessage[] = [
   {
@@ -61,9 +88,11 @@ function BouncingDots() {
 }
 
 export default function ChatWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [pulsing, setPulsing] = useState(false);
+  const [returningVisitor, setReturningVisitor] = useState(false);
 
   // Conversation end state
   const [isEnded, setIsEnded] = useState(false);
@@ -87,18 +116,50 @@ export default function ChatWidget() {
   const processedTools = useRef(new Set<string>());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const thinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamStartRef = useRef<number | null>(null);
 
-  const { messages, sendMessage, status, error } = useChat({ messages: INITIAL_MESSAGES });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor } };
+  const { messages, sendMessage, status, error, setMessages } = useChat(chatOptions);
   const isLoading = status === "submitted" || status === "streaming";
 
-  // Enforce a minimum "thinking" pause so responses never feel instant
+  // Restore stored conversation on mount
+  useEffect(() => {
+    const stored = loadStoredConversation();
+    if (stored) {
+      setMessages(stored);
+      setReturningVisitor(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist conversation to localStorage on every update
+  useEffect(() => {
+    if (messages.length > 1) saveConversation(messages);
+  }, [messages]);
+
+  // Proportional thinking delay — longer for longer responses
   useEffect(() => {
     if (status === "submitted") {
       setThinkingDelay(true);
+      streamStartRef.current = null;
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 800 + Math.random() * 1000);
+      // Base delay 1000–2200ms; will extend if response is short
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 1000 + Math.random() * 1200);
     }
-  }, [status]);
+    if (status === "streaming" && !streamStartRef.current) {
+      streamStartRef.current = Date.now();
+    }
+    if (status === "ready" && streamStartRef.current) {
+      // If response streamed in under 400ms it was very short — add a little extra delay
+      const streamDuration = Date.now() - streamStartRef.current;
+      if (streamDuration < 400 && thinkingDelay) {
+        if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+        thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 600);
+      }
+      streamStartRef.current = null;
+    }
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (thinkingTimer.current) clearTimeout(thinkingTimer.current); }, []);
 
   const showTypingIndicator = isLoading || thinkingDelay;
@@ -177,6 +238,7 @@ export default function ChatWidget() {
 
   function endConversation() {
     setIsEnded(true);
+    localStorage.removeItem(STORAGE_KEY);
     track("conversation_ended", { messageCount: messages.length });
   }
 
