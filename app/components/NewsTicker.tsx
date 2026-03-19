@@ -34,9 +34,10 @@ export default function NewsTicker() {
         boxShadow: "0 -4px 24px rgba(98,197,209,0.12), 0 -1px 0 rgba(98,197,209,0.08)",
       }}
     >
-      {/* AI LIVE label */}
-      <div
-        className="flex items-center gap-2 px-4 shrink-0 h-full"
+      {/* Signal label */}
+      <a
+        href="/ai-news"
+        className="flex items-center gap-2 px-4 shrink-0 h-full hover:opacity-80 transition-opacity"
         style={{
           background: "linear-gradient(90deg, #0d1a3a 0%, #091428 100%)",
           borderRight: "1px solid rgba(98,197,209,0.3)",
@@ -50,7 +51,7 @@ export default function NewsTicker() {
           style={{ color: "#7dd8e8" }}>
           Signal
         </span>
-      </div>
+      </a>
 
       {/* Scrolling track */}
       <div className="flex-1 overflow-hidden h-full flex items-center">
