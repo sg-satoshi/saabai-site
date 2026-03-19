@@ -144,7 +144,7 @@ export default function ChatWidget() {
   const processedTools = useRef(new Set<string>());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const thinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const streamStartRef = useRef<number | null>(null);
+  const messagesRef = useRef<typeof messages>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor } };
@@ -161,31 +161,32 @@ export default function ChatWidget() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep messagesRef current for use in status effect without re-triggering it
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
   // Persist conversation to localStorage on every update
   useEffect(() => {
     if (messages.length > 1) saveConversation(messages);
   }, [messages]);
 
-  // Proportional thinking delay — longer for longer responses
+  // Response-length-aware thinking delay — short snappy replies come back fast, longer ones breathe
   useEffect(() => {
     if (status === "submitted") {
       setThinkingDelay(true);
-      streamStartRef.current = null;
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      // Base delay 1000–2200ms; will extend if response is short
-      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 1000 + Math.random() * 1200);
+      // Minimum guaranteed delay while waiting for response
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 800);
     }
-    if (status === "streaming" && !streamStartRef.current) {
-      streamStartRef.current = Date.now();
-    }
-    if (status === "ready" && streamStartRef.current) {
-      // If response streamed in under 400ms it was very short — add a little extra delay
-      const streamDuration = Date.now() - streamStartRef.current;
-      if (streamDuration < 400 && thinkingDelay) {
-        if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-        thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 600);
-      }
-      streamStartRef.current = null;
+    if (status === "ready") {
+      // Adjust delay based on actual response length
+      const latestMsg = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
+      const len = latestMsg ? getMessageText(latestMsg).length : 0;
+      if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+      const delay =
+        len < 80  ? 300 + Math.random() * 400   // short snappy reply: 300–700ms
+        : len < 250 ? 700 + Math.random() * 700  // medium reply: 700–1400ms
+        : 1200 + Math.random() * 900;             // long thoughtful reply: 1200–2100ms
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), delay);
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { if (thinkingTimer.current) clearTimeout(thinkingTimer.current); }, []);
