@@ -81,18 +81,39 @@ export default function ChatWidget() {
   const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   const [inputValue, setInputValue] = useState("");
+  const [thinkingDelay, setThinkingDelay] = useState(false);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const thinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { messages, sendMessage, status, error } = useChat({ messages: INITIAL_MESSAGES });
   const isLoading = status === "submitted" || status === "streaming";
 
+  // Enforce a minimum "thinking" pause so responses never feel instant
+  useEffect(() => {
+    if (status === "submitted") {
+      setThinkingDelay(true);
+      if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 800 + Math.random() * 1000);
+    }
+  }, [status]);
+  useEffect(() => () => { if (thinkingTimer.current) clearTimeout(thinkingTimer.current); }, []);
+
+  const showTypingIndicator = isLoading || thinkingDelay;
+
   const userMessages = messages.filter((m) => m.role === "user");
   const hasEnoughForTranscript = userMessages.length > 0;
   const hasGenuineDialogue = userMessages.length > 2;
-  const displayMessages = messages.filter((m) => getMessageText(m).trim() !== "");
+
+  // During the thinking delay, hide the incoming assistant message so dots show instead
+  const latestAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id;
+  const displayMessages = messages.filter((m) => {
+    if (!getMessageText(m).trim()) return false;
+    if (thinkingDelay && m.role === "assistant" && m.id === latestAssistantId && m.id !== "initial") return false;
+    return true;
+  });
 
   // ── Proactive bubble ─────────────────────────────────────────────────
   useEffect(() => {
@@ -189,7 +210,7 @@ export default function ChatWidget() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const text = inputValue.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || thinkingDelay) return;
     if (!hasTrackedFirstMessage.current) {
       hasTrackedFirstMessage.current = true;
       track("first_message_sent");
@@ -309,7 +330,7 @@ export default function ChatWidget() {
             ))}
 
             {/* Typing indicator */}
-            {isLoading && (
+            {showTypingIndicator && (
               <div className="flex justify-start">
                 <div className="px-4 py-3 rounded-xl flex items-center gap-1.5" style={{ background: "#272466" }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -491,7 +512,7 @@ export default function ChatWidget() {
               />
               <button
                 type="submit"
-                disabled={!inputValue.trim() || isLoading}
+                disabled={!inputValue.trim() || isLoading || thinkingDelay}
                 className="w-9 h-9 rounded-xl bg-saabai-teal flex items-center justify-center hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 aria-label="Send"
               >
