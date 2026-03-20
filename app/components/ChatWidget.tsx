@@ -222,7 +222,8 @@ export default function ChatWidget() {
       splitTimers.current.forEach(clearTimeout);
       splitTimers.current = [];
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 800);
+      // Do NOT set a timer here — only "ready" clears thinkingDelay, ensuring
+      // messages are fully updated before voice/splits fire.
     }
     if (status === "ready") {
       const latestMsg = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
@@ -433,6 +434,29 @@ export default function ChatWidget() {
     track("conversation_ended", { messageCount: messages.length });
   }
 
+  function startNewChat() {
+    // Reset all conversation state
+    setMessages(INITIAL_MESSAGES);
+    setIsEnded(false);
+    setShowBookingCTA(false);
+    setShowLeadCapture(false);
+    setLeadSubmitted(false);
+    setLeadForm({ name: "", email: "", sendTranscript: true });
+    setEndEmail("");
+    setEndSubmitted(false);
+    setSplitProgress(null);
+    setVoiceError(null);
+    splitTimers.current.forEach(clearTimeout);
+    splitTimers.current = [];
+    stopAudio();
+    processedTools.current = new Set();
+    transcriptSentRef.current = false;
+    hasTrackedFirstMessage.current = false;
+    setReturningVisitor(false);
+    localStorage.removeItem(STORAGE_KEY);
+    track("new_chat_started");
+  }
+
   async function submitEndPanel(skipEmail: boolean) {
     if (transcriptSentRef.current) return;
     // Only send operator transcript if genuine dialogue (>2 user messages)
@@ -549,6 +573,16 @@ export default function ChatWidget() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* New chat — always visible so user can reset */}
+              {hasEnoughForTranscript && (
+                <button
+                  onClick={startNewChat}
+                  className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
+                  title="Clear this conversation and start fresh"
+                >
+                  New chat
+                </button>
+              )}
               {/* End chat — only show once user has sent a message and conversation isn't ended */}
               {hasEnoughForTranscript && !isEnded && (
                 <button
