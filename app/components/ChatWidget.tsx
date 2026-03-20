@@ -175,7 +175,7 @@ export default function ChatWidget() {
   const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [voiceError, setVoiceError] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
@@ -249,27 +249,30 @@ export default function ChatWidget() {
   async function playVoice(text: string) {
     if (!text.trim() || !audioRef.current) return;
     stopAudio();
-    setVoiceError(false);
+    setVoiceError(null);
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) { const msg = await res.text(); console.error("[Mia TTS]", res.status, msg); setVoiceError(true); return; }
+      if (!res.ok) {
+        const msg = await res.text();
+        setVoiceError(`${res.status}: ${msg.slice(0, 120)}`);
+        return;
+      }
       const blob = await res.blob();
-      if (!blob.size) { setVoiceError(true); return; }
+      if (!blob.size) { setVoiceError("Empty audio response"); return; }
       const url = URL.createObjectURL(blob);
       audioBlobUrlRef.current = url;
       const audio = audioRef.current;
       if (!audio) { URL.revokeObjectURL(url); return; }
       audio.src = url;
-      audio.load(); // required by some browsers when changing src
+      audio.load();
       await audio.play();
       audio.onended = () => { URL.revokeObjectURL(url); if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null; };
     } catch (err) {
-      console.error("[Mia voice]", err);
-      setVoiceError(true);
+      setVoiceError(String(err).slice(0, 120));
     }
   }
 
@@ -759,6 +762,13 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Voice error message */}
+          {voiceError && (
+            <div className="px-4 pb-1 text-[10px] text-red-400 leading-relaxed break-all">
+              Voice error: {voiceError}
+            </div>
+          )}
+
           {/* Input — hidden when conversation is ended */}
           {!isEnded && (
             <form
@@ -772,7 +782,7 @@ export default function ChatWidget() {
                 onClick={() => {
                   const newState = !voiceEnabled;
                   setVoiceEnabled(newState);
-                  setVoiceError(false);
+                  setVoiceError(null);
                   voiceEnabledRef.current = newState;
                   if (newState && !audioRef.current) {
                     // Create + unlock during user gesture — play() here permanently unlocks the element
