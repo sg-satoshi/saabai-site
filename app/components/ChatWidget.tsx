@@ -762,13 +762,6 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Voice error message */}
-          {voiceError && (
-            <div className="px-4 pb-1 text-[10px] text-red-400 leading-relaxed break-all">
-              Voice error: {voiceError}
-            </div>
-          )}
-
           {/* Input — hidden when conversation is ended */}
           {!isEnded && (
             <form
