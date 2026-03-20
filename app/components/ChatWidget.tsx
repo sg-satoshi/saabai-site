@@ -256,7 +256,7 @@ export default function ChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) { setVoiceError(true); return; }
+      if (!res.ok) { const msg = await res.text(); console.error("[Mia TTS]", res.status, msg); setVoiceError(true); return; }
       const blob = await res.blob();
       if (!blob.size) { setVoiceError(true); return; }
       const url = URL.createObjectURL(blob);
