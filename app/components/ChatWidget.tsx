@@ -183,8 +183,8 @@ export default function ChatWidget() {
   const messagesRef = useRef<typeof messages>([]);
   const prevThinkingDelay = useRef(false);
   const splitTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioBlobUrlRef = useRef<string | null>(null);
   const lastVoicedRef = useRef<{ id: string; count: number } | null>(null);
   const voiceEnabledRef = useRef(false);
 
@@ -238,13 +238,16 @@ export default function ChatWidget() {
   // Keep voiceEnabledRef in sync without adding to other effects' deps
   useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
 
-  // Play a segment of text via ElevenLabs TTS (Web Audio API — bypasses autoplay policy)
+  // Stop any currently playing audio and revoke the blob URL
+  function stopAudio() {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    if (audioBlobUrlRef.current) { URL.revokeObjectURL(audioBlobUrlRef.current); audioBlobUrlRef.current = null; }
+  }
+
+  // Play a segment via ElevenLabs TTS — reuses the pre-unlocked Audio element
   async function playVoice(text: string) {
-    if (!text.trim() || !audioCtxRef.current) return;
-    if (currentSourceRef.current) {
-      try { currentSourceRef.current.stop(); } catch {}
-      currentSourceRef.current = null;
-    }
+    if (!text.trim() || !audioRef.current) return;
+    stopAudio();
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
@@ -252,17 +255,13 @@ export default function ChatWidget() {
         body: JSON.stringify({ text }),
       });
       if (!res.ok) return;
-      const arrayBuffer = await res.arrayBuffer();
-      const ctx = audioCtxRef.current;
-      if (!ctx) return;
-      if (ctx.state === "suspended") await ctx.resume();
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
-      source.start(0);
-      currentSourceRef.current = source;
-      source.onended = () => { if (currentSourceRef.current === source) currentSourceRef.current = null; };
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      audioBlobUrlRef.current = url;
+      const audio = audioRef.current;
+      audio.src = url;
+      await audio.play();
+      audio.onended = () => { URL.revokeObjectURL(url); if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null; };
     } catch { /* silent fail */ }
   }
 
@@ -317,8 +316,8 @@ export default function ChatWidget() {
   useEffect(() => () => {
     if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
     splitTimers.current.forEach(clearTimeout);
-    if (currentSourceRef.current) { try { currentSourceRef.current.stop(); } catch {} }
-    if (audioCtxRef.current) { try { audioCtxRef.current.close(); } catch {} }
+    stopAudio();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const userMessages = messages.filter((m) => m.role === "user");
@@ -479,7 +478,7 @@ export default function ChatWidget() {
     setSplitProgress(null);
     splitTimers.current.forEach(clearTimeout);
     splitTimers.current = [];
-    if (currentSourceRef.current) { try { currentSourceRef.current.stop(); } catch {} currentSourceRef.current = null; }
+    stopAudio();
     setInputValue("");
     await sendMessage({ text });
   }
@@ -784,10 +783,16 @@ export default function ChatWidget() {
                   const newState = !voiceEnabled;
                   setVoiceEnabled(newState);
                   voiceEnabledRef.current = newState;
-                  if (newState && !audioCtxRef.current) {
-                    // Must be created inside a user gesture to bypass autoplay policy
-                    audioCtxRef.current = new AudioContext();
+                  if (newState && !audioRef.current) {
+                    // Create + unlock the Audio element during this user gesture.
+                    // Playing a silent clip here permanently unlocks it for async playback later.
+                    const audio = new Audio();
+                    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
+                    audio.volume = 0;
+                    audio.play().catch(() => {}).finally(() => { audio.pause(); audio.src = ""; audio.volume = 1; });
+                    audioRef.current = audio;
                   }
+                  if (!newState) stopAudio();
                 }}
                 aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
                 title={voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
