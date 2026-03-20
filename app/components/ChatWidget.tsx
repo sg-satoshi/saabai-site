@@ -785,11 +785,13 @@ export default function ChatWidget() {
                   voiceEnabledRef.current = newState;
                   if (newState && !audioRef.current) {
                     // Create + unlock the Audio element during this user gesture.
-                    // Playing a silent clip here permanently unlocks it for async playback later.
+                    // play() must be called here (inside a gesture) to permanently unlock it.
+                    // Do NOT clean up in .finally() — that races with real TTS playback.
                     const audio = new Audio();
-                    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
                     audio.volume = 0;
-                    audio.play().catch(() => {}).finally(() => { audio.pause(); audio.src = ""; audio.volume = 1; });
+                    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
+                    audio.play().catch(() => {});
+                    audio.volume = 1; // restore synchronously before TTS arrives
                     audioRef.current = audio;
                   }
                   if (!newState) stopAudio();
