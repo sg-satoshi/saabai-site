@@ -183,7 +183,8 @@ export default function ChatWidget() {
   const messagesRef = useRef<typeof messages>([]);
   const prevThinkingDelay = useRef(false);
   const splitTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const currentAudio = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const lastVoicedRef = useRef<{ id: string; count: number } | null>(null);
   const voiceEnabledRef = useRef(false);
 
@@ -237,10 +238,13 @@ export default function ChatWidget() {
   // Keep voiceEnabledRef in sync without adding to other effects' deps
   useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
 
-  // Play a segment of text via ElevenLabs TTS
+  // Play a segment of text via ElevenLabs TTS (Web Audio API — bypasses autoplay policy)
   async function playVoice(text: string) {
-    if (!text.trim()) return;
-    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
+    if (!text.trim() || !audioCtxRef.current) return;
+    if (currentSourceRef.current) {
+      try { currentSourceRef.current.stop(); } catch {}
+      currentSourceRef.current = null;
+    }
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
@@ -248,12 +252,17 @@ export default function ChatWidget() {
         body: JSON.stringify({ text }),
       });
       if (!res.ok) return;
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      currentAudio.current = audio;
-      await audio.play();
-      audio.onended = () => { URL.revokeObjectURL(url); if (currentAudio.current === audio) currentAudio.current = null; };
+      const arrayBuffer = await res.arrayBuffer();
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === "suspended") await ctx.resume();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      currentSourceRef.current = source;
+      source.onended = () => { if (currentSourceRef.current === source) currentSourceRef.current = null; };
     } catch { /* silent fail */ }
   }
 
@@ -308,7 +317,8 @@ export default function ChatWidget() {
   useEffect(() => () => {
     if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
     splitTimers.current.forEach(clearTimeout);
-    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
+    if (currentSourceRef.current) { try { currentSourceRef.current.stop(); } catch {} }
+    if (audioCtxRef.current) { try { audioCtxRef.current.close(); } catch {} }
   }, []);
 
   const userMessages = messages.filter((m) => m.role === "user");
@@ -469,7 +479,7 @@ export default function ChatWidget() {
     setSplitProgress(null);
     splitTimers.current.forEach(clearTimeout);
     splitTimers.current = [];
-    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
+    if (currentSourceRef.current) { try { currentSourceRef.current.stop(); } catch {} currentSourceRef.current = null; }
     setInputValue("");
     await sendMessage({ text });
   }
@@ -770,7 +780,15 @@ export default function ChatWidget() {
               {/* Voice toggle */}
               <button
                 type="button"
-                onClick={() => setVoiceEnabled((v) => !v)}
+                onClick={() => {
+                  const newState = !voiceEnabled;
+                  setVoiceEnabled(newState);
+                  voiceEnabledRef.current = newState;
+                  if (newState && !audioCtxRef.current) {
+                    // Must be created inside a user gesture to bypass autoplay policy
+                    audioCtxRef.current = new AudioContext();
+                  }
+                }}
                 aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
                 title={voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
