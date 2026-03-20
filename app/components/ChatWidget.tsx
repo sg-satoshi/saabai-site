@@ -273,7 +273,7 @@ export default function ChatWidget() {
     }
   }
 
-  // When thinkingDelay clears — trigger splits and voice for single messages
+  // When thinkingDelay clears — trigger split bubble reveal and a single TTS call for the full message
   useEffect(() => {
     if (prevThinkingDelay.current && !thinkingDelay) {
       const latestMsg = [...messagesRef.current]
@@ -281,6 +281,7 @@ export default function ChatWidget() {
         .find((m) => m.role === "assistant" && m.id !== "initial");
       if (latestMsg) {
         const segments = getMessageText(latestMsg).split("|||").map((s) => s.trim()).filter(Boolean);
+        // Progressive bubble reveal for multi-segment messages
         if (segments.length > 1) {
           setSplitProgress({ id: latestMsg.id, count: 1, total: segments.length });
           splitTimers.current.forEach(clearTimeout);
@@ -291,35 +292,16 @@ export default function ChatWidget() {
             }, (i + 1) * (650 + Math.random() * 450));
             splitTimers.current.push(t);
           });
-          // Play first segment immediately
-          if (voiceEnabledRef.current && segments[0]) {
-            lastVoicedRef.current = { id: latestMsg.id, count: 1 };
-            playVoice(segments[0]);
-          }
-        } else {
-          // Single message — play immediately
-          if (voiceEnabledRef.current && segments[0]) {
-            lastVoicedRef.current = { id: latestMsg.id, count: 1 };
-            playVoice(segments[0]);
-          }
+        }
+        // Voice: always one TTS call for the full message (||| stripped server-side)
+        if (voiceEnabledRef.current) {
+          lastVoicedRef.current = { id: latestMsg.id, count: 1 };
+          playVoice(getMessageText(latestMsg));
         }
       }
     }
     prevThinkingDelay.current = thinkingDelay;
   }, [thinkingDelay]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Voice for subsequent split segments as they reveal
-  useEffect(() => {
-    if (!splitProgress || !voiceEnabled) return;
-    const { id, count } = splitProgress;
-    const last = lastVoicedRef.current;
-    if (last?.id === id && last.count >= count) return;
-    const msg = messagesRef.current.find((m) => m.id === id);
-    if (!msg) return;
-    const segments = getMessageText(msg).split("|||").map((s) => s.trim()).filter(Boolean);
-    const seg = segments[count - 1];
-    if (seg) { lastVoicedRef.current = { id, count }; playVoice(seg); }
-  }, [splitProgress?.count, splitProgress?.id, voiceEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => {
     if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
