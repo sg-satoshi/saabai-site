@@ -174,6 +174,7 @@ export default function ChatWidget() {
   const [thinkingDelay, setThinkingDelay] = useState(false);
   const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
@@ -182,6 +183,9 @@ export default function ChatWidget() {
   const messagesRef = useRef<typeof messages>([]);
   const prevThinkingDelay = useRef(false);
   const splitTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const currentAudio = useRef<HTMLAudioElement | null>(null);
+  const lastVoicedRef = useRef<{ id: string; count: number } | null>(null);
+  const voiceEnabledRef = useRef(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile } };
@@ -230,7 +234,30 @@ export default function ChatWidget() {
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When thinkingDelay clears, trigger split animation if response has ||| segments
+  // Keep voiceEnabledRef in sync without adding to other effects' deps
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
+
+  // Play a segment of text via ElevenLabs TTS
+  async function playVoice(text: string) {
+    if (!text.trim()) return;
+    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio.current = audio;
+      await audio.play();
+      audio.onended = () => { URL.revokeObjectURL(url); if (currentAudio.current === audio) currentAudio.current = null; };
+    } catch { /* silent fail */ }
+  }
+
+  // When thinkingDelay clears — trigger splits and voice for single messages
   useEffect(() => {
     if (prevThinkingDelay.current && !thinkingDelay) {
       const latestMsg = [...messagesRef.current]
@@ -248,15 +275,40 @@ export default function ChatWidget() {
             }, (i + 1) * (650 + Math.random() * 450));
             splitTimers.current.push(t);
           });
+          // Play first segment immediately
+          if (voiceEnabledRef.current && segments[0]) {
+            lastVoicedRef.current = { id: latestMsg.id, count: 1 };
+            playVoice(segments[0]);
+          }
+        } else {
+          // Single message — play immediately
+          if (voiceEnabledRef.current && segments[0]) {
+            lastVoicedRef.current = { id: latestMsg.id, count: 1 };
+            playVoice(segments[0]);
+          }
         }
       }
     }
     prevThinkingDelay.current = thinkingDelay;
-  }, [thinkingDelay]);
+  }, [thinkingDelay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Voice for subsequent split segments as they reveal
+  useEffect(() => {
+    if (!splitProgress || !voiceEnabled) return;
+    const { id, count } = splitProgress;
+    const last = lastVoicedRef.current;
+    if (last?.id === id && last.count >= count) return;
+    const msg = messagesRef.current.find((m) => m.id === id);
+    if (!msg) return;
+    const segments = getMessageText(msg).split("|||").map((s) => s.trim()).filter(Boolean);
+    const seg = segments[count - 1];
+    if (seg) { lastVoicedRef.current = { id, count }; playVoice(seg); }
+  }, [splitProgress?.count, splitProgress?.id, voiceEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => {
     if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
     splitTimers.current.forEach(clearTimeout);
+    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
   }, []);
 
   const userMessages = messages.filter((m) => m.role === "user");
@@ -417,6 +469,7 @@ export default function ChatWidget() {
     setSplitProgress(null);
     splitTimers.current.forEach(clearTimeout);
     splitTimers.current = [];
+    if (currentAudio.current) { currentAudio.current.pause(); currentAudio.current = null; }
     setInputValue("");
     await sendMessage({ text });
   }
@@ -714,6 +767,32 @@ export default function ChatWidget() {
               className="px-4 py-3 flex items-center gap-2 shrink-0"
               style={{ borderTop: "1px solid rgba(98,197,209,0.15)", background: "#201e5c" }}
             >
+              {/* Voice toggle */}
+              <button
+                type="button"
+                onClick={() => setVoiceEnabled((v) => !v)}
+                aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
+                title={voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                style={{
+                  background: voiceEnabled ? "rgba(98,197,209,0.15)" : "transparent",
+                  color: voiceEnabled ? "var(--saabai-teal)" : "rgba(255,255,255,0.25)",
+                  border: voiceEnabled ? "1px solid rgba(98,197,209,0.3)" : "1px solid transparent",
+                }}
+              >
+                {voiceEnabled ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 4.5h2l3-3v11l-3-3H2V4.5z" fill="currentColor" />
+                    <path d="M9.5 4a3 3 0 0 1 0 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <path d="M11 2a5.5 5.5 0 0 1 0 10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 4.5h2l3-3v11l-3-3H2V4.5z" fill="currentColor" />
+                    <path d="M9 5l3 4M12 5l-3 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                )}
+              </button>
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
