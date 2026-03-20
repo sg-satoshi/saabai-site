@@ -176,6 +176,8 @@ export default function ChatWidget() {
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
@@ -188,6 +190,8 @@ export default function ChatWidget() {
   const audioBlobUrlRef = useRef<string | null>(null);
   const lastVoicedRef = useRef<{ id: string; count: number } | null>(null);
   const voiceEnabledRef = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile } };
@@ -203,6 +207,10 @@ export default function ChatWidget() {
     }
     const profile = loadVisitorProfile();
     if (profile) setVisitorProfile(profile);
+    // Check speech recognition support
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasSpeech = !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+    setSpeechSupported(hasSpeech);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -449,6 +457,8 @@ export default function ChatWidget() {
     splitTimers.current.forEach(clearTimeout);
     splitTimers.current = [];
     stopAudio();
+    recognitionRef.current?.stop();
+    setIsListening(false);
     processedTools.current = new Set();
     transcriptSentRef.current = false;
     hasTrackedFirstMessage.current = false;
@@ -498,6 +508,70 @@ export default function ChatWidget() {
     stopAudio();
     setInputValue("");
     await sendMessage({ text });
+  }
+
+  async function sendVoiceMessage(text: string) {
+    if (!text.trim() || isLoading || thinkingDelay || splitInProgress) return;
+    if (!hasTrackedFirstMessage.current) {
+      hasTrackedFirstMessage.current = true;
+      track("first_message_sent");
+    }
+    setSplitProgress(null);
+    splitTimers.current.forEach(clearTimeout);
+    splitTimers.current = [];
+    stopAudio();
+    setInputValue("");
+    await sendMessage({ text });
+  }
+
+  function toggleListening() {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-AU";
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      stopAudio(); // stop Mia speaking so mic picks up user, not echo
+    };
+
+    recognition.onresult = (event: { results: { isFinal: boolean; [k: number]: { transcript: string } }[] }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const results = Array.from(event.results as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transcript = results.map((r: any) => r[0].transcript).join("");
+      setInputValue(transcript);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+      // Auto-submit when voice mode is on — hands-free loop
+      if (voiceEnabledRef.current) {
+        setInputValue((current) => {
+          const text = current.trim();
+          if (text) sendVoiceMessage(text);
+          return "";
+        });
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   }
 
   async function submitLeadCapture() {
@@ -847,10 +921,38 @@ export default function ChatWidget() {
               <input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type a message…"
+                placeholder={isListening ? "Listening…" : "Type a message…"}
                 className="flex-1 rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none transition-colors"
-                style={{ background: "#2a2870", border: "1px solid rgba(98,197,209,0.2)" }}
+                style={{
+                  background: "#2a2870",
+                  border: isListening ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(98,197,209,0.2)",
+                }}
               />
+              {/* Mic button — only shown when speech is supported */}
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={isLoading || thinkingDelay || splitInProgress}
+                  aria-label={isListening ? "Stop listening" : "Speak to Mia"}
+                  title={isListening ? "Tap to stop" : "Tap to speak"}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: isListening ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)",
+                    border: isListening ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    color: isListening ? "#ef4444" : "rgba(255,255,255,0.4)",
+                    animation: isListening ? "pulse 1.2s ease-in-out infinite" : "none",
+                  }}
+                >
+                  {/* Microphone icon */}
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="4.5" y="1" width="5" height="7" rx="2.5" fill="currentColor"/>
+                    <path d="M2 6.5a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <line x1="7" y1="11.5" x2="7" y2="13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <line x1="4.5" y1="13" x2="9.5" y2="13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading || thinkingDelay || splitInProgress}
