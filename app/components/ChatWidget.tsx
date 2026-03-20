@@ -241,11 +241,11 @@ export default function ChatWidget() {
 
   // Stop any currently playing audio and revoke the blob URL
   function stopAudio() {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    if (audioRef.current) audioRef.current.pause();
     if (audioBlobUrlRef.current) { URL.revokeObjectURL(audioBlobUrlRef.current); audioBlobUrlRef.current = null; }
   }
 
-  // Play a segment via ElevenLabs TTS — reuses the pre-unlocked Audio element
+  // Play the full response text via ElevenLabs TTS — reuses the pre-unlocked Audio element
   async function playVoice(text: string) {
     if (!text.trim() || !audioRef.current) return;
     stopAudio();
@@ -267,8 +267,8 @@ export default function ChatWidget() {
       audioBlobUrlRef.current = url;
       const audio = audioRef.current;
       if (!audio) { URL.revokeObjectURL(url); return; }
+      // Set src and play — no explicit load() to avoid resetting unlock state
       audio.src = url;
-      audio.load();
       await audio.play();
       audio.onended = () => { URL.revokeObjectURL(url); if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null; };
     } catch (err) {
