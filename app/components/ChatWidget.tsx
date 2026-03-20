@@ -175,6 +175,7 @@ export default function ChatWidget() {
   const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceError, setVoiceError] = useState(false);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
@@ -248,21 +249,28 @@ export default function ChatWidget() {
   async function playVoice(text: string) {
     if (!text.trim() || !audioRef.current) return;
     stopAudio();
+    setVoiceError(false);
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { setVoiceError(true); return; }
       const blob = await res.blob();
+      if (!blob.size) { setVoiceError(true); return; }
       const url = URL.createObjectURL(blob);
       audioBlobUrlRef.current = url;
       const audio = audioRef.current;
+      if (!audio) { URL.revokeObjectURL(url); return; }
       audio.src = url;
+      audio.load(); // required by some browsers when changing src
       await audio.play();
       audio.onended = () => { URL.revokeObjectURL(url); if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null; };
-    } catch { /* silent fail */ }
+    } catch (err) {
+      console.error("[Mia voice]", err);
+      setVoiceError(true);
+    }
   }
 
   // When thinkingDelay clears — trigger splits and voice for single messages
@@ -782,27 +790,26 @@ export default function ChatWidget() {
                 onClick={() => {
                   const newState = !voiceEnabled;
                   setVoiceEnabled(newState);
+                  setVoiceError(false);
                   voiceEnabledRef.current = newState;
                   if (newState && !audioRef.current) {
-                    // Create + unlock the Audio element during this user gesture.
-                    // play() must be called here (inside a gesture) to permanently unlock it.
-                    // Do NOT clean up in .finally() — that races with real TTS playback.
+                    // Create + unlock during user gesture — play() here permanently unlocks the element
                     const audio = new Audio();
                     audio.volume = 0;
                     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
                     audio.play().catch(() => {});
-                    audio.volume = 1; // restore synchronously before TTS arrives
+                    audio.volume = 1;
                     audioRef.current = audio;
                   }
                   if (!newState) stopAudio();
                 }}
                 aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
-                title={voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
+                title={voiceError ? "Voice error — click to retry" : voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                 style={{
-                  background: voiceEnabled ? "rgba(98,197,209,0.15)" : "transparent",
-                  color: voiceEnabled ? "var(--saabai-teal)" : "rgba(255,255,255,0.25)",
-                  border: voiceEnabled ? "1px solid rgba(98,197,209,0.3)" : "1px solid transparent",
+                  background: voiceError ? "rgba(239,68,68,0.12)" : voiceEnabled ? "rgba(98,197,209,0.15)" : "transparent",
+                  color: voiceError ? "#ef4444" : voiceEnabled ? "var(--saabai-teal)" : "rgba(255,255,255,0.25)",
+                  border: voiceError ? "1px solid rgba(239,68,68,0.3)" : voiceEnabled ? "1px solid rgba(98,197,209,0.3)" : "1px solid transparent",
                 }}
               >
                 {voiceEnabled ? (
