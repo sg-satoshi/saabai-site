@@ -7,7 +7,17 @@ import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
 
 const STORAGE_KEY = "saabai-conversation";
+const PROFILE_KEY = "saabai-visitor-profile";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+interface VisitorProfile {
+  name?: string;
+  business?: string;
+  industry?: string;
+  team_size?: string;
+  pain_points?: string[];
+  updatedAt?: string;
+}
 
 function loadStoredConversation(): UIMessage[] | null {
   try {
@@ -30,6 +40,29 @@ function saveConversation(messages: UIMessage[]) {
     if (messages.length <= 1) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, timestamp: new Date().toISOString() }));
   } catch {}
+}
+
+function loadVisitorProfile(): VisitorProfile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function mergeVisitorProfile(update: Partial<VisitorProfile>) {
+  try {
+    const existing = loadVisitorProfile() ?? {};
+    const merged: VisitorProfile = {
+      ...existing,
+      ...update,
+      updatedAt: new Date().toISOString(),
+    };
+    if (update.pain_points && existing.pain_points) {
+      merged.pain_points = [...new Set([...existing.pain_points, ...update.pain_points])];
+    }
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(merged));
+    return merged;
+  } catch { return null; }
 }
 
 const INITIAL_MESSAGES: UIMessage[] = [
@@ -139,25 +172,31 @@ export default function ChatWidget() {
 
   const [inputValue, setInputValue] = useState("");
   const [thinkingDelay, setThinkingDelay] = useState(false);
+  const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
+  const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const thinkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messagesRef = useRef<typeof messages>([]);
+  const prevThinkingDelay = useRef(false);
+  const splitTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor } };
+  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile } };
   const { messages, sendMessage, status, error, setMessages } = useChat(chatOptions);
   const isLoading = status === "submitted" || status === "streaming";
 
-  // Restore stored conversation on mount
+  // Restore stored conversation and visitor profile on mount
   useEffect(() => {
     const stored = loadStoredConversation();
     if (stored) {
       setMessages(stored);
       setReturningVisitor(true);
     }
+    const profile = loadVisitorProfile();
+    if (profile) setVisitorProfile(profile);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -173,37 +212,77 @@ export default function ChatWidget() {
   useEffect(() => {
     if (status === "submitted") {
       setThinkingDelay(true);
+      setSplitProgress(null);
+      splitTimers.current.forEach(clearTimeout);
+      splitTimers.current = [];
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      // Minimum guaranteed delay while waiting for response
       thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 800);
     }
     if (status === "ready") {
-      // Adjust delay based on actual response length
       const latestMsg = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
       const len = latestMsg ? getMessageText(latestMsg).length : 0;
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
       const delay =
-        len < 80  ? 300 + Math.random() * 400   // short snappy reply: 300–700ms
-        : len < 250 ? 700 + Math.random() * 700  // medium reply: 700–1400ms
-        : 1200 + Math.random() * 900;             // long thoughtful reply: 1200–2100ms
+        len < 80  ? 300 + Math.random() * 400
+        : len < 250 ? 700 + Math.random() * 700
+        : 1200 + Math.random() * 900;
       thinkingTimer.current = setTimeout(() => setThinkingDelay(false), delay);
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => { if (thinkingTimer.current) clearTimeout(thinkingTimer.current); }, []);
 
-  const showTypingIndicator = isLoading || thinkingDelay;
+  // When thinkingDelay clears, trigger split animation if response has ||| segments
+  useEffect(() => {
+    if (prevThinkingDelay.current && !thinkingDelay) {
+      const latestMsg = [...messagesRef.current]
+        .reverse()
+        .find((m) => m.role === "assistant" && m.id !== "initial");
+      if (latestMsg) {
+        const segments = getMessageText(latestMsg).split("|||").map((s) => s.trim()).filter(Boolean);
+        if (segments.length > 1) {
+          setSplitProgress({ id: latestMsg.id, count: 1, total: segments.length });
+          splitTimers.current.forEach(clearTimeout);
+          splitTimers.current = [];
+          segments.slice(1).forEach((_, i) => {
+            const t = setTimeout(() => {
+              setSplitProgress((p) => p ? { ...p, count: Math.min(p.count + 1, p.total) } : null);
+            }, (i + 1) * (650 + Math.random() * 450));
+            splitTimers.current.push(t);
+          });
+        }
+      }
+    }
+    prevThinkingDelay.current = thinkingDelay;
+  }, [thinkingDelay]);
+
+  useEffect(() => () => {
+    if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
+    splitTimers.current.forEach(clearTimeout);
+  }, []);
 
   const userMessages = messages.filter((m) => m.role === "user");
   const hasEnoughForTranscript = userMessages.length > 0;
   const hasGenuineDialogue = userMessages.length > 2;
 
-  // During the thinking delay, hide the incoming assistant message so dots show instead
+  // Expand messages into display items, splitting ||| segments into separate bubbles
   const latestAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id;
-  const displayMessages = messages.filter((m) => {
-    if (!getMessageText(m).trim()) return false;
-    if (thinkingDelay && m.role === "assistant" && m.id === latestAssistantId && m.id !== "initial") return false;
-    return true;
-  });
+  const displayItems: { key: string; role: "user" | "assistant"; text: string }[] = [];
+  for (const m of messages) {
+    const text = getMessageText(m);
+    if (!text.trim()) continue;
+    if (thinkingDelay && m.role === "assistant" && m.id === latestAssistantId && m.id !== "initial") continue;
+    if (m.role === "assistant" && m.id !== "initial" && text.includes("|||")) {
+      const segs = text.split("|||").map((s) => s.trim()).filter(Boolean);
+      const visible = splitProgress?.id === m.id ? splitProgress.count : segs.length;
+      segs.slice(0, visible).forEach((seg, i) => {
+        displayItems.push({ key: `${m.id}-${i}`, role: "assistant", text: seg });
+      });
+    } else {
+      displayItems.push({ key: m.id, role: m.role as "user" | "assistant", text });
+    }
+  }
+
+  const splitInProgress = !!(splitProgress && splitProgress.count < splitProgress.total);
+  const showTypingIndicator = isLoading || thinkingDelay || splitInProgress;
 
   // ── Proactive bubble ─────────────────────────────────────────────────
   useEffect(() => {
@@ -266,6 +345,12 @@ export default function ChatWidget() {
         const toolName = part.type.slice(5);
         if (toolName === "show_booking_cta") { setShowBookingCTA(true); track("cta_shown"); }
         if (toolName === "capture_lead") setShowLeadCapture(true);
+        if (toolName === "remember_visitor") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const profileData = (part as any).input ?? {};
+          const merged = mergeVisitorProfile(profileData);
+          if (merged) setVisitorProfile(merged);
+        }
         if (toolName === "qualify_lead") {
           const a = (part as { input?: Record<string, boolean> }).input ?? {};
           const score = [a.business_fit, a.pain_point_named, a.automation_potential].filter(Boolean).length;
@@ -324,11 +409,14 @@ export default function ChatWidget() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const text = inputValue.trim();
-    if (!text || isLoading || thinkingDelay) return;
+    if (!text || isLoading || thinkingDelay || splitInProgress) return;
     if (!hasTrackedFirstMessage.current) {
       hasTrackedFirstMessage.current = true;
       track("first_message_sent");
     }
+    setSplitProgress(null);
+    splitTimers.current.forEach(clearTimeout);
+    splitTimers.current = [];
     setInputValue("");
     await sendMessage({ text });
   }
@@ -439,15 +527,15 @@ export default function ChatWidget() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
 
-            {displayMessages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            {displayItems.map((item) => (
+              <div key={item.key} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[82%] px-4 py-3 rounded-xl text-sm leading-relaxed ${
-                    message.role === "user" ? "bg-saabai-teal text-saabai-bg font-medium" : "text-saabai-text-muted"
+                    item.role === "user" ? "bg-saabai-teal text-saabai-bg font-medium" : "text-saabai-text-muted"
                   }`}
-                  style={message.role !== "user" ? { background: "#272466" } : {}}
+                  style={item.role !== "user" ? { background: "#272466" } : {}}
                 >
-                  {renderMessageText(getMessageText(message))}
+                  {renderMessageText(item.text)}
                 </div>
               </div>
             ))}
@@ -635,7 +723,7 @@ export default function ChatWidget() {
               />
               <button
                 type="submit"
-                disabled={!inputValue.trim() || isLoading || thinkingDelay}
+                disabled={!inputValue.trim() || isLoading || thinkingDelay || splitInProgress}
                 className="w-9 h-9 rounded-xl bg-saabai-teal flex items-center justify-center hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 aria-label="Send"
               >

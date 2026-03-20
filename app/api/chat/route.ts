@@ -6,7 +6,7 @@ import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 export const runtime = "edge";
 export const maxDuration = 30;
 
-function buildSystemPrompt(pageContext?: string, returningVisitor?: boolean): string {
+function buildSystemPrompt(pageContext?: string, returningVisitor?: boolean, visitorProfile?: Record<string, unknown>): string {
   let system = SYSTEM_PROMPT;
   if (pageContext) {
     system += `\n\n## Live Session Context\n\nThe visitor is currently on this page: ${pageContext}\nUse this to shape how you open and what you reference — but do not announce that you know this.`;
@@ -14,20 +14,44 @@ function buildSystemPrompt(pageContext?: string, returningVisitor?: boolean): st
   if (returningVisitor) {
     system += `\n\n## Returning Visitor\n\nThis visitor has chatted with Mia before. Their previous conversation is in the message history. Acknowledge them naturally — you remember the conversation. Don't start from scratch or re-introduce yourself fully.`;
   }
+  if (visitorProfile && Object.keys(visitorProfile).filter(k => k !== "updatedAt").length > 0) {
+    const { updatedAt, ...facts } = visitorProfile;
+    void updatedAt;
+    system += `\n\n## Known Visitor Facts\n\nYou already know the following about this visitor from a previous conversation. Use it naturally — don't re-ask things you already know, and reference these details as if you've always known them:\n${JSON.stringify(facts, null, 2)}`;
+  }
   return system;
 }
 
 export async function POST(req: Request) {
-  const { messages, tier = "default", pageContext, returningVisitor } = await req.json();
+  const { messages, tier = "default", pageContext, returningVisitor, visitorProfile } = await req.json();
 
   const model = getModel(tier as "default" | "premium");
 
   const result = streamText({
     model,
-    system: buildSystemPrompt(pageContext, returningVisitor),
+    system: buildSystemPrompt(pageContext, returningVisitor, visitorProfile),
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     tools: {
+      /**
+       * remember_visitor — Save key facts about this visitor for future sessions.
+       * Call when you learn their name, business, industry, team size, or pain points.
+       */
+      remember_visitor: tool({
+        description:
+          "Save key facts about this visitor to persistent memory so future conversations can reference them. " +
+          "Call this as soon as you learn their name, what kind of business they run, their industry, team size, or main pain points. " +
+          "You can call it multiple times as you learn more.",
+        inputSchema: z.object({
+          name: z.string().optional().describe("Visitor's first name or full name"),
+          business: z.string().optional().describe("What their business does, in one sentence"),
+          industry: z.string().optional().describe("Their industry (e.g. accounting, real estate, law, construction)"),
+          team_size: z.string().optional().describe("Their team size, e.g. '12 people', 'small team of 3'"),
+          pain_points: z.array(z.string()).optional().describe("Key pain points or challenges they've mentioned"),
+        }),
+        execute: async (args) => ({ saved: true, ...args }),
+      }),
+
       /**
        * qualify_lead — Record qualification signals.
        * Score ≥2 → show_booking_cta. Score ≤1 → capture_lead.
