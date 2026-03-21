@@ -6,11 +6,13 @@ const VOICE_ID = process.env.ELEVENLABS_VOICE_ID ?? "WotOlpik2Jh26pUiTVLy";
 const MODELS = ["eleven_flash_v2_5", "eleven_turbo_v2_5", "eleven_multilingual_v2"];
 
 export async function POST(req: Request) {
-  const { text } = await req.json();
+  const { text, voiceId } = await req.json();
   if (!text?.trim()) return new Response("No text", { status: 400 });
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return new Response("TTS not configured", { status: 500 });
+
+  const activeVoiceId = voiceId || VOICE_ID;
 
   const cleanText = text
     .replace(/\|\|\|/g, " ")
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
 
   for (const model_id of MODELS) {
     const res = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${activeVoiceId}/stream`,
       {
         method: "POST",
         headers: {
