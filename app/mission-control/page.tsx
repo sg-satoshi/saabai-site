@@ -1449,7 +1449,7 @@ export default function MissionControl() {
         <div className="flex flex-col gap-2 px-2 mb-6">
           <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
             <Image
-              src="/brand/saabai-logo-white-v2.png"
+              src="/brand/saabai-logo.png"
               alt="Saabai.ai"
               width={120}
               height={32}
