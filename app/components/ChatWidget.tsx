@@ -192,6 +192,7 @@ export default function ChatWidget() {
   const audioBlobUrlRef = useRef<string | null>(null);
   const lastVoicedRef = useRef<{ id: string; count: number } | null>(null);
   const voiceEnabledRef = useRef(false);
+  const isMiaSpeakingRef = useRef(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
@@ -254,6 +255,7 @@ export default function ChatWidget() {
 
   // Stop any currently playing audio and revoke the blob URL
   function stopAudio() {
+    isMiaSpeakingRef.current = false;
     if (audioRef.current) audioRef.current.pause();
     if (audioBlobUrlRef.current) { URL.revokeObjectURL(audioBlobUrlRef.current); audioBlobUrlRef.current = null; }
   }
@@ -282,11 +284,12 @@ export default function ChatWidget() {
       if (!audio) { URL.revokeObjectURL(url); return; }
       // Set src and play — no explicit load() to avoid resetting unlock state
       audio.src = url;
+      isMiaSpeakingRef.current = true;
       await audio.play();
       audio.onended = () => {
+        isMiaSpeakingRef.current = false;
         URL.revokeObjectURL(url);
         if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
-        // In voice mode, auto-start mic after Mia finishes speaking
         if (voiceModeRef.current) {
           setTimeout(() => { if (voiceModeRef.current) startListening(); }, 300);
         }
@@ -556,7 +559,7 @@ export default function ChatWidget() {
   }
 
   async function sendVoiceMessage(text: string) {
-    if (!text.trim() || isLoading || thinkingDelay || splitInProgress) return;
+    if (!text.trim() || isLoading) return;
     if (!hasTrackedFirstMessage.current) {
       hasTrackedFirstMessage.current = true;
       track("first_message_sent");
@@ -599,8 +602,21 @@ export default function ChatWidget() {
       if (voiceEnabledRef.current) {
         setInputValue((current) => {
           const text = current.trim();
-          if (text) sendVoiceMessage(text);
-          return "";
+          if (text) {
+            // User said something — submit immediately
+            sendVoiceMessage(text);
+            return "";
+          }
+          // Silence timeout with nothing heard — restart mic unless Mia is speaking
+          // (audio.onended handles restart when Mia finishes speaking)
+          if (voiceModeRef.current && !isMiaSpeakingRef.current) {
+            setTimeout(() => {
+              if (voiceModeRef.current && !recognitionRef.current && !isMiaSpeakingRef.current) {
+                startListening();
+              }
+            }, 400);
+          }
+          return current;
         });
       }
     };
