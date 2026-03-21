@@ -79,14 +79,14 @@ const BLANK_TOOL: Omit<Tool, "id" | "createdAt" | "updatedAt"> = {
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 const MC_KEY = "mc_unlocked_v1";
-const MC_PASSWORD = process.env.NEXT_PUBLIC_MC_PASSWORD ?? "saabai2026";
+const MC_PASSWORD = (process.env.NEXT_PUBLIC_MC_PASSWORD ?? "saabai2026").trim();
 
 function AuthGate({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
 
   function attempt() {
-    if (pin === MC_PASSWORD) {
+    if (pin.trim() === MC_PASSWORD) {
       sessionStorage.setItem(MC_KEY, "1");
       onUnlock();
     } else {
