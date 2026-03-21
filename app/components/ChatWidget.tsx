@@ -174,10 +174,12 @@ export default function ChatWidget() {
   const [thinkingDelay, setThinkingDelay] = useState(false);
   const [splitProgress, setSplitProgress] = useState<{ id: string; count: number; total: number } | null>(null);
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile | null>(null);
+  const [chatMode, setChatMode] = useState<"text" | "voice" | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const voiceModeRef = useRef(false);
   const transcriptSentRef = useRef(false);
   const hasTrackedFirstMessage = useRef(false);
   const processedTools = useRef(new Set<string>());
@@ -281,7 +283,14 @@ export default function ChatWidget() {
       // Set src and play — no explicit load() to avoid resetting unlock state
       audio.src = url;
       await audio.play();
-      audio.onended = () => { URL.revokeObjectURL(url); if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null; };
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
+        // In voice mode, auto-start mic after Mia finishes speaking
+        if (voiceModeRef.current) {
+          setTimeout(() => { if (voiceModeRef.current) toggleListening(); }, 300);
+        }
+      };
     } catch (err) {
       setVoiceError(String(err).slice(0, 120));
     }
@@ -423,13 +432,49 @@ export default function ChatWidget() {
 
   function openWidget() {
     setIsOpen(true);
+    setChatMode(null); // show mode picker first
     setShowBubble(false);
     localStorage.setItem("saabai-chat-seen", "1");
     track("widget_opened");
   }
 
+  function selectTextMode() {
+    setChatMode("text");
+    track("mode_selected", { mode: "text" });
+  }
+
+  function selectVoiceMode() {
+    setChatMode("voice");
+    voiceModeRef.current = true;
+    // Enable voice + unlock audio element during this click (user gesture)
+    setVoiceEnabled(true);
+    voiceEnabledRef.current = true;
+    if (!audioRef.current) {
+      const audio = new Audio();
+      audio.volume = 0;
+      audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
+      audio.play().catch(() => {});
+      audio.volume = 1;
+      audioRef.current = audio;
+    }
+    track("mode_selected", { mode: "voice" });
+    // Speak the greeting after a brief moment
+    setTimeout(() => {
+      const greeting = messages.find(m => m.id === "initial");
+      if (greeting) playVoice(getMessageText(greeting));
+    }, 400);
+  }
+
   function closeWidget() {
     setIsOpen(false);
+    if (voiceModeRef.current) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      stopAudio();
+      voiceModeRef.current = false;
+      setVoiceEnabled(false);
+      voiceEnabledRef.current = false;
+    }
   }
 
   function endConversation() {
@@ -455,6 +500,10 @@ export default function ChatWidget() {
     stopAudio();
     recognitionRef.current?.stop();
     setIsListening(false);
+    setChatMode(null);
+    voiceModeRef.current = false;
+    setVoiceEnabled(false);
+    voiceEnabledRef.current = false;
     processedTools.current = new Set();
     transcriptSentRef.current = false;
     hasTrackedFirstMessage.current = false;
@@ -625,8 +674,132 @@ export default function ChatWidget() {
         </div>
       )}
 
-      {/* ── Chat panel ───────────────────────────────────────────────── */}
-      {isOpen && (
+      {/* ── Mode picker ──────────────────────────────────────────────── */}
+      {isOpen && !chatMode && (
+        <div className="w-[380px] max-w-[calc(100vw-24px)] rounded-2xl overflow-hidden" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)" }}>
+          <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+          <div className="px-5 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(98,197,209,0.12)" }}>
+            <div className="flex items-center gap-3">
+              <MiaAvatar size={40} dotSize={11} />
+              <div>
+                <p className="text-sm font-semibold text-saabai-text leading-none mb-0.5">Mia</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">AI Automation Advisor</p>
+              </div>
+            </div>
+            <button onClick={closeWidget} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+          <div className="p-5 flex flex-col gap-3">
+            <p className="text-xs text-saabai-text-dim tracking-wide mb-1">How would you like to connect?</p>
+            <button
+              onClick={selectTextMode}
+              className="flex items-center gap-4 px-4 py-4 rounded-xl transition-all hover:border-saabai-teal/50 text-left"
+              style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.2)" }}
+            >
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(98,197,209,0.12)" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 3h12v8H9l-3 2.5V11H2V3z" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinejoin="round"/>
+                  <path d="M5 7h6M5 9.5h4" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-saabai-text leading-none mb-1">Chat</p>
+                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Text conversation with Mia</p>
+              </div>
+            </button>
+            <button
+              onClick={speechSupported ? selectVoiceMode : undefined}
+              disabled={!speechSupported}
+              className="flex items-center gap-4 px-4 py-4 rounded-xl transition-all hover:border-saabai-teal/50 text-left disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.2)" }}
+            >
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(98,197,209,0.12)" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="5.5" y="1.5" width="5" height="7" rx="2.5" fill="var(--saabai-teal)" opacity="0.9"/>
+                  <path d="M2.5 7.5a5.5 5.5 0 0 0 11 0" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinecap="round"/>
+                  <line x1="8" y1="13" x2="8" y2="14.5" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinecap="round"/>
+                  <line x1="5.5" y1="14.5" x2="10.5" y2="14.5" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-saabai-text leading-none mb-1">Talk {!speechSupported && <span className="text-[10px] font-normal text-saabai-text-dim ml-1">(not supported in this browser)</span>}</p>
+                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Voice conversation — speak naturally with Mia</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice mode UI ─────────────────────────────────────────────── */}
+      {isOpen && chatMode === "voice" && (
+        <div className="w-[380px] max-w-[calc(100vw-24px)] rounded-2xl overflow-hidden flex flex-col" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)", height: 340 }}>
+          <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+          {/* Voice header */}
+          <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(98,197,209,0.12)", background: "#201e5c" }}>
+            <p className="text-[10px] font-medium text-saabai-text-dim tracking-[0.15em] uppercase">Live Voice</p>
+            <button onClick={closeWidget} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1" aria-label="End call">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+          {/* Avatar + status */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6">
+            {/* Pulsing avatar ring */}
+            <div className="relative flex items-center justify-center">
+              {isListening && (
+                <>
+                  <span className="absolute rounded-full border border-saabai-teal/30 animate-ping" style={{ width: 88, height: 88 }} />
+                  <span className="absolute rounded-full border border-saabai-teal/20 animate-ping" style={{ width: 104, height: 104, animationDelay: "150ms" }} />
+                </>
+              )}
+              {(isLoading || thinkingDelay) && !isListening && (
+                <span className="absolute rounded-full border border-saabai-teal/40 animate-pulse" style={{ width: 88, height: 88 }} />
+              )}
+              <MiaAvatar size={68} dotSize={14} showDot={true} />
+            </div>
+            {/* Status */}
+            <p className="text-sm text-saabai-text-muted tracking-wide text-center">
+              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong — tap mic to retry" : "Tap the mic to speak"}
+            </p>
+            {voiceError && <p className="text-[10px] text-red-400 text-center">{voiceError}</p>}
+          </div>
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-4 pb-6">
+            <button
+              onClick={toggleListening}
+              disabled={isLoading || thinkingDelay}
+              aria-label={isListening ? "Stop" : "Speak"}
+              className="w-14 h-14 rounded-full flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: isListening ? "rgba(239,68,68,0.2)" : "rgba(98,197,209,0.15)",
+                border: isListening ? "1.5px solid rgba(239,68,68,0.5)" : "1.5px solid rgba(98,197,209,0.4)",
+                color: isListening ? "#ef4444" : "var(--saabai-teal)",
+                boxShadow: isListening ? "0 0 20px rgba(239,68,68,0.2)" : "0 0 20px rgba(98,197,209,0.15)",
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="7" y="2" width="6" height="9" rx="3" fill="currentColor"/>
+                <path d="M3.5 9.5a6.5 6.5 0 0 0 13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="10" y1="16" x2="10" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <line x1="7" y1="18" x2="13" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <button
+              onClick={closeWidget}
+              aria-label="End call"
+              className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
+              style={{ background: "rgba(239,68,68,0.15)", border: "1.5px solid rgba(239,68,68,0.3)", color: "#ef4444" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M2 9c0-1.1.4-2.1 1-2.9C4.6 4.3 6.7 3 9 3s4.4 1.3 6 3.1c.6.8 1 1.8 1 2.9 0 .5-.4.9-.9.9h-2.2c-.5 0-.9-.3-1-.8l-.4-1.6a.9.9 0 0 0-.9-.7H7.4a.9.9 0 0 0-.9.7L6.1 9c-.1.5-.5.8-1 .8H2.9c-.5 0-.9-.4-.9-.9z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Chat panel (text mode) ────────────────────────────────────── */}
+      {isOpen && chatMode === "text" && (
         <div className="w-[380px] max-w-[calc(100vw-24px)] h-[520px] rounded-2xl flex flex-col overflow-hidden" style={{ background: "#1c1a52", border: "1px solid rgba(98,197,209,0.25)", boxShadow: "0 8px 48px rgba(0,0,0,0.7), 0 0 40px rgba(98,197,209,0.2)" }}>
 
           {/* Header */}
