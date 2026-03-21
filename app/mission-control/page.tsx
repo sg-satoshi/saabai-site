@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -329,7 +329,7 @@ export default function MissionControl() {
 
         <nav className="flex flex-col gap-1 flex-1">
           {(["dashboard", "tools", "builder", "settings"] as Tab[]).map((tab) => {
-            const icons: Record<Tab, JSX.Element> = {
+            const icons: Record<Tab, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
               tools: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L9 5H13L10 7.5L11 12L7 9.5L3 12L4 7.5L1 5H5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>,
               builder: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /></svg>,
