@@ -12,7 +12,11 @@ export async function POST(req: Request) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return new Response("TTS not configured", { status: 500 });
 
-  const cleanText = text.replace(/\|\|\|/g, " ").slice(0, 1000);
+  const cleanText = text
+    .replace(/\|\|\|/g, " ")
+    .replace(/Saabai\.ai/gi, "Saarbye dot ai")
+    .replace(/Saabai/gi, "Saarbye")
+    .slice(0, 1000);
 
   for (const model_id of MODELS) {
     const res = await fetch(
