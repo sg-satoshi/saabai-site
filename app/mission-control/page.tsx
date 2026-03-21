@@ -232,6 +232,18 @@ interface ConversationRecord {
   createdAt: string;
 }
 
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 // ─── Growth View ──────────────────────────────────────────────────────────────
 
 function GrowthView() {
@@ -240,6 +252,7 @@ function GrowthView() {
   const [convs, setConvs] = useState<ConversationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<"leads" | "conversations">("leads");
+  const [outcomeFilter, setOutcomeFilter] = useState<"all" | "booked" | "lead_captured" | "qualified" | "browsing">("all");
 
   useEffect(() => {
     async function load() {
@@ -271,17 +284,13 @@ function GrowthView() {
     return "Browsing";
   }
 
-  function timeAgo(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  }
-
   const noRedis = stats === null && !loading;
+
+  const avgScore = leads.length > 0
+    ? (leads.reduce((s, l) => s + (Number(l.qualification_score) ?? 0), 0) / leads.length).toFixed(1)
+    : null;
+
+  const filteredLeads = outcomeFilter === "all" ? leads : leads.filter(l => l.outcome === outcomeFilter);
 
   return (
     <div className="p-8 max-w-5xl">
@@ -290,12 +299,29 @@ function GrowthView() {
           <h1 className="text-2xl font-semibold tracking-tight mb-1">Growth</h1>
           <p className="text-saabai-text-dim text-sm">Leads, conversations, and Mia&apos;s performance across all pages.</p>
         </div>
-        <button
-          onClick={() => { setLoading(true); fetch("/api/growth").then(r => r.json()).then(d => { setStats(d); setLoading(false); }); }}
-          className="text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors px-3 py-2 border border-saabai-border rounded-lg"
-        >
-          ↺ Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const headers = ["Name","Business","Industry","Team Size","Outcome","Score","Page","Messages","Date"];
+              const rows = leads.map(l => [l.name??"",l.business??"",l.industry??"",l.team_size??"",l.outcome,l.qualification_score??"",l.page??"",l.messages??"",l.createdAt]);
+              const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+              const blob = new Blob([csv],{type:"text/csv"});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href=url; a.download=`leads-${new Date().toISOString().split("T")[0]}.csv`; a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors px-3 py-2 border border-saabai-border rounded-lg"
+          >
+            ↓ Export CSV
+          </button>
+          <button
+            onClick={() => { setLoading(true); fetch("/api/growth").then(r => r.json()).then(d => { setStats(d); setLoading(false); }); }}
+            className="text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors px-3 py-2 border border-saabai-border rounded-lg"
+          >
+            ↺ Refresh
+          </button>
+        </div>
       </div>
 
       {noRedis && (
@@ -340,7 +366,7 @@ function GrowthView() {
 
         {/* Funnel diagram */}
         <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 flex flex-col">
-          <p className="text-[10px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4">Mia Funnel</p>
+          <p className="text-sm font-semibold text-saabai-text mb-4">Mia Funnel</p>
           {[
             { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-indigo-400/60", w: "100%" },
             { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-amber-400/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
@@ -359,14 +385,38 @@ function GrowthView() {
         </div>
       </div>
 
-      {/* Section tabs */}
-      <div className="flex items-center gap-1 mb-4 bg-saabai-surface border border-saabai-border rounded-xl p-1 w-fit">
-        {(["leads", "conversations"] as const).map((s) => (
-          <button key={s} onClick={() => setActiveSection(s)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s ? "bg-saabai-teal text-saabai-bg" : "text-saabai-text-dim hover:text-saabai-text"}`}>
-            {s === "leads" ? `Leads (${leads.length})` : `Conversations (${convs.length})`}
-          </button>
-        ))}
+      {avgScore && (
+        <div className="mt-3 bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />
+          <span className="text-[10px] font-medium text-pink-400">Avg Qualification Score</span>
+          <span className="text-lg font-semibold text-saabai-text ml-auto">{avgScore}<span className="text-[11px] text-saabai-text-dim">/3</span></span>
+        </div>
+      )}
+
+      {/* Section tabs + filters */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2 mt-6">
+        <div className="flex items-center gap-1 bg-saabai-surface border border-saabai-border rounded-xl p-1">
+          {(["leads", "conversations"] as const).map((s) => (
+            <button key={s} onClick={() => setActiveSection(s)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s ? "bg-saabai-teal text-saabai-bg" : "text-saabai-text-dim hover:text-saabai-text"}`}>
+              {s === "leads" ? `Leads (${leads.length})` : `Conversations (${convs.length})`}
+            </button>
+          ))}
+        </div>
+        {activeSection === "leads" && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {(["all", "booked", "qualified", "lead_captured", "browsing"] as const).map((f) => {
+              const count = f === "all" ? leads.length : leads.filter(l => l.outcome === f).length;
+              const labels: Record<string, string> = { all: "All", booked: "Booking", qualified: "Qualified", lead_captured: "Captured", browsing: "Browsing" };
+              return (
+                <button key={f} onClick={() => setOutcomeFilter(f)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${outcomeFilter === f ? "bg-saabai-teal text-saabai-bg" : "bg-saabai-surface border border-saabai-border text-saabai-text-dim hover:text-saabai-text"}`}>
+                  {labels[f]} {count > 0 ? `(${count})` : ""}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Leads list */}
@@ -376,7 +426,7 @@ function GrowthView() {
             <div className="flex flex-col gap-2">
               {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-saabai-surface border border-saabai-border rounded-xl animate-pulse" />)}
             </div>
-          ) : leads.length === 0 ? (
+          ) : filteredLeads.length === 0 ? (
             <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-12 text-center">
               <div className="w-12 h-12 rounded-full bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center mx-auto mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="var(--saabai-teal)" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -386,8 +436,8 @@ function GrowthView() {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {leads.map((lead) => (
-                <div key={lead.id} className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent transition-colors">
+              {filteredLeads.map((lead) => (
+                <div key={lead.id} className={`rounded-xl p-4 hover:border-saabai-border-accent transition-colors border ${(lead.qualification_score ?? 0) >= 2 ? "bg-amber-500/5 border-amber-500/25" : "bg-saabai-surface border-saabai-border"}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-saabai-teal/20 to-indigo-800/30 border border-saabai-teal/20 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0 mt-0.5">
@@ -547,6 +597,19 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
     return () => clearInterval(t);
   }, []);
 
+  const [activityLeads, setActivityLeads] = useState<LeadRecord[]>([]);
+  const [perfStats, setPerfStats] = useState<{totalLeads: number; booked: number; captured: number; qualified: number; totalConvs: number} | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/growth?type=leads").then(r => r.json()).catch(() => ({ leads: [] })),
+      fetch("/api/growth").then(r => r.json()).catch(() => null),
+    ]).then(([leadsRes, statsRes]) => {
+      setActivityLeads((leadsRes.leads ?? []).slice(0, 6));
+      setPerfStats(statsRes);
+    });
+  }, []);
+
   const hour = now.getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const dateStr = now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
@@ -614,9 +677,34 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         ))}
       </div>
 
+      {/* Mia Performance Bar */}
+      <div className="bg-saabai-surface border border-saabai-border rounded-2xl px-5 py-4 mb-6 flex items-center gap-5 flex-wrap">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-saabai-teal/30 to-indigo-700/40 border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal">M</div>
+          <div>
+            <p className="text-xs font-semibold text-saabai-text leading-none">Mia</p>
+            <p className="text-[10px] text-saabai-text-dim mt-0.5">Live performance</p>
+          </div>
+        </div>
+        <div className="w-px h-8 bg-saabai-border shrink-0" />
+        {[
+          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-indigo-400" },
+          { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-amber-400" },
+          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-green-400" },
+          { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-saabai-teal" },
+          { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-pink-400" },
+          { label: "Last Active", value: activityLeads[0] ? timeAgo(activityLeads[0].createdAt) : "—", color: "text-saabai-text-dim" },
+        ].map((m) => (
+          <div key={m.label} className="flex flex-col items-center min-w-[56px]">
+            <span className={`text-lg font-semibold ${m.color}`}>{m.value}</span>
+            <span className="text-[9px] text-saabai-text-dim mt-0.5 text-center">{m.label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Quick Actions */}
       <div className="mb-6">
-        <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">Quick Actions</h2>
+        <h2 className="text-sm font-semibold text-saabai-text mb-3">Quick Actions</h2>
         <div className="grid grid-cols-6 gap-2">
           {QUICK_ACTIONS.map((a) => (
             a.href ? (
@@ -643,7 +731,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* Venture Tracker */}
         <div>
-          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">Venture Tracker</h2>
+          <h2 className="text-sm font-semibold text-saabai-text mb-3">Venture Tracker</h2>
           <div className="flex flex-col gap-2">
             {VENTURES.map((v) => {
               const CardWrapper = v.url
@@ -693,7 +781,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* System Health */}
         <div>
-          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">System Health</h2>
+          <h2 className="text-sm font-semibold text-saabai-text mb-3">System Health</h2>
           <div className="bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden">
             {HEALTH_ITEMS.map((item, i) => {
               const ok = health?.[item.key];
@@ -732,35 +820,83 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         </div>
       </div>
 
-      {/* Active Tools */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider">Active Tools</h2>
-          <button onClick={() => onTabChange("tools")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
-        </div>
-        <div className="flex flex-col gap-2">
-          {tools.filter(t => t.status === "active").map((tool) => (
-            <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0`}>
-                  {tool.avatarInitials}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-saabai-text">{tool.name}</p>
-                    <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Live</span>
+      {/* Active Tools + Activity Feed */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Active Tools */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-saabai-text">Active Tools</h2>
+            <button onClick={() => onTabChange("tools")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {tools.filter(t => t.status === "active").map((tool) => (
+              <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0`}>
+                    {tool.avatarInitials}
                   </div>
-                  <p className="text-[11px] text-saabai-text-dim mt-0.5">{tool.role}</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-saabai-text">{tool.name}</p>
+                      <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Live</span>
+                    </div>
+                    <p className="text-[11px] text-saabai-text-dim mt-0.5">{tool.role}</p>
+                  </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.model.split("-")[1]}</span>
+                  {tool.voiceId && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 rounded-lg px-2 py-1">Voice</span>}
+                  <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.pages === "*" ? "All pages" : tool.pages}</span>
+                  <span className="text-[11px] text-saabai-teal group-hover:text-saabai-teal-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-saabai-text">Activity Feed</h2>
+            <button onClick={() => onTabChange("growth")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
+          </div>
+          {activityLeads.length === 0 ? (
+            <div className="bg-saabai-surface border border-saabai-border rounded-xl p-6 text-center">
+              <div className="w-8 h-8 rounded-full bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center mx-auto mb-3">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 8l3-3.5 2.5 2L9 3l4 5" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.model.split("-")[1]}</span>
-                {tool.voiceId && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 rounded-lg px-2 py-1">Voice</span>}
-                <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.pages === "*" ? "All pages" : tool.pages}</span>
-                <span className="text-[11px] text-saabai-teal group-hover:text-saabai-teal-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
-              </div>
-            </button>
-          ))}
+              <p className="text-xs text-saabai-text-dim">No activity yet — Mia conversations will appear here</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {activityLeads.slice(0, 5).map((lead) => {
+                const outcomeColor = lead.outcome === "booked" ? "text-green-400 bg-green-500/10 border-green-500/20"
+                  : lead.outcome === "lead_captured" ? "text-blue-400 bg-blue-500/10 border-blue-500/20"
+                  : lead.outcome === "qualified" ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
+                  : "text-saabai-text-dim bg-white/5 border-white/10";
+                const outcomeLabel = lead.outcome === "booked" ? "Booking" : lead.outcome === "lead_captured" ? "Captured" : lead.outcome === "qualified" ? "Qualified" : "Browsing";
+                const dotColor = lead.outcome === "booked" ? "bg-green-400" : lead.outcome === "lead_captured" ? "bg-blue-400" : lead.outcome === "qualified" ? "bg-amber-400" : "bg-white/20";
+                return (
+                  <div key={lead.id} className="bg-saabai-surface border border-saabai-border rounded-xl px-3 py-2.5 flex items-center gap-3 hover:border-saabai-border-accent transition-colors">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-saabai-text truncate">
+                        {lead.name ?? "Anonymous visitor"}{lead.business ? ` · ${lead.business}` : ""}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${outcomeColor}`}>{outcomeLabel}</span>
+                        {(lead.qualification_score ?? 0) > 0 && (
+                          <span className="text-[9px] text-saabai-text-dim">{lead.qualification_score}/3</span>
+                        )}
+                        {lead.industry && <span className="text-[9px] text-saabai-text-dim">{lead.industry}</span>}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-saabai-text-dim shrink-0">{timeAgo(lead.createdAt)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -971,6 +1107,21 @@ function AgentsView() {
     });
   }
 
+  const [agentNotes, setAgentNotes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("mc_agent_notes_v1");
+      if (stored) setAgentNotes(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function saveNote(agentId: string, note: string) {
+    const updated = { ...agentNotes, [agentId]: note };
+    setAgentNotes(updated);
+    localStorage.setItem("mc_agent_notes_v1", JSON.stringify(updated));
+  }
+
   const activeAgents = AGENTS.filter((a) => a.status === "active");
   const archivedAgents = AGENTS.filter((a) => a.status === "archived");
 
@@ -1075,6 +1226,22 @@ function AgentsView() {
                 <p className="text-[11px] text-saabai-text-dim italic">&ldquo;{agent.hardRule}&rdquo;</p>
               </div>
             )}
+
+            {/* Improvement Notes */}
+            <div className="mt-4 pt-3 border-t border-saabai-border/50">
+              <p className="text-[10px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-2">Improvement Notes</p>
+              <textarea
+                value={agentNotes[agent.id] ?? ""}
+                onChange={(e) => saveNote(agent.id, e.target.value)}
+                placeholder={`What should ${agent.name} learn or do better? Notes persist across sessions.`}
+                rows={2}
+                className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-saabai-text-dim/40 focus:outline-none focus:border-saabai-teal/40 transition-colors resize-none leading-relaxed"
+                onClick={(e) => e.stopPropagation()}
+              />
+              {agentNotes[agent.id] && (
+                <p className="text-[9px] text-green-400/70 mt-1">✓ Notes saved</p>
+              )}
+            </div>
           </div>
         )}
       </div>
