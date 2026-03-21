@@ -40,9 +40,9 @@ const DEFAULT_TOOLS: Tool[] = [
   },
   {
     id: "peter",
-    name: "Peter Shane",
+    name: "Pete",
     role: "Founder · Saabai.ai",
-    systemPrompt: "You are Peter Shane, founder of Saabai.ai...",
+    systemPrompt: "You are Pete, founder of Saabai.ai...",
     voiceId: "txdmFzaxxwmYbb99FY4D",
     model: "claude-sonnet-4-6",
     triggerText: "Talk to Peter",

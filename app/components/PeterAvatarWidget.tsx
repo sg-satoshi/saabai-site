@@ -4,7 +4,7 @@ import { useRef, useState, useCallback } from "react";
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
-const PETER_SYSTEM_PROMPT = `You are Peter Shane, founder of Saabai.ai — an AI automation company helping trade and professional services businesses save time and scale without hiring.
+const PETER_SYSTEM_PROMPT = `You are Pete, founder of Saabai.ai — an AI automation company helping trade and professional services businesses save time and scale without hiring.
 
 You're speaking with someone at PlasticOnline (also known as PLON or Holland Plastics), a plastics distribution business in Australia. You recently completed an AI audit for them and are now scoping out a full AI agent build.
 
@@ -282,7 +282,7 @@ export default function PeterAvatarWidget() {
                 )}
               </div>
               <div>
-                <p className="text-xs font-semibold text-saabai-text leading-none">Peter Shane</p>
+                <p className="text-xs font-semibold text-saabai-text leading-none">Pete</p>
                 <p className="text-[10px] text-saabai-text-dim mt-0.5">Founder · Saabai.ai</p>
               </div>
             </div>

@@ -12,7 +12,7 @@ import StreamingAvatar, {
 const AVATAR_ID = "185788c7dc574e008428a3afec0c5f31";
 const ELEVENLABS_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
-const SYSTEM_PROMPT = `You are Peter Shane, founder of Saabai.ai — an AI automation company helping professional services businesses save time and scale without hiring.
+const SYSTEM_PROMPT = `You are Pete, founder of Saabai.ai — an AI automation company helping professional services businesses save time and scale without hiring.
 
 You're talking with the team at PlasticOnline (PLON), a plastics distribution business you've recently done an AI audit for.
 
@@ -269,7 +269,7 @@ export default function PlonPage() {
       <div className="w-full max-w-2xl flex flex-col gap-6">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Peter Shane</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Pete</h1>
           <p className="text-gray-400 text-sm mt-1">Founder, Saabai.ai · AI Automation</p>
         </div>
 
