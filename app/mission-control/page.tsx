@@ -594,19 +594,23 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       {/* Stat cards */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
-          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", dot: "bg-green-400" },
-          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", dot: "bg-saabai-teal" },
-          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", dot: "bg-indigo-400" },
-          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", dot: "bg-amber-400" },
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", dot: "bg-green-400", tab: "tools" as Tab },
+          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", dot: "bg-saabai-teal", tab: "agents" as Tab },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", dot: "bg-indigo-400", tab: "tools" as Tab },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", dot: "bg-amber-400", tab: "growth" as Tab },
         ].map((s) => (
-          <div key={s.label} className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 hover:border-saabai-border-accent transition-colors">
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-              <span className={`text-[11px] font-medium ${s.color}`}>{s.label}</span>
+          <button key={s.label} onClick={() => onTabChange(s.tab)}
+            className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer text-left group">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                <span className={`text-[11px] font-medium ${s.color}`}>{s.label}</span>
+              </div>
+              <span className={`text-[10px] ${s.color} opacity-0 group-hover:opacity-100 transition-opacity`}>View →</span>
             </div>
             <div className="text-3xl font-semibold text-saabai-text stat-glow mb-0.5">{s.value}</div>
             <div className="text-[11px] text-saabai-text-dim">{s.sub}</div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -641,34 +645,49 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         <div>
           <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">Venture Tracker</h2>
           <div className="flex flex-col gap-2">
-            {VENTURES.map((v) => (
-              <div key={v.id} className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${v.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
-                      {v.initials}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-saabai-text">{v.name}</p>
-                        <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${v.stageColor}`}>{v.stage}</span>
+            {VENTURES.map((v) => {
+              const CardWrapper = v.url
+                ? ({ children }: { children: React.ReactNode }) => (
+                    <a href={v.url} target="_blank" rel="noopener noreferrer"
+                      className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer block group">
+                      {children}
+                    </a>
+                  )
+                : ({ children }: { children: React.ReactNode }) => (
+                    <button onClick={() => onTabChange("growth")}
+                      className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer w-full text-left block group">
+                      {children}
+                    </button>
+                  );
+              return (
+                <CardWrapper key={v.id}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${v.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                        {v.initials}
                       </div>
-                      <p className="text-[11px] text-saabai-text-dim mt-0.5">{v.type}</p>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-saabai-text">{v.name}</p>
+                          <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${v.stageColor}`}>{v.stage}</span>
+                        </div>
+                        <p className="text-[11px] text-saabai-text-dim mt-0.5">{v.type}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-semibold text-saabai-text">{v.value}</p>
+                      {v.url && (
+                        <span className="text-[10px] text-saabai-teal group-hover:text-saabai-teal-bright transition-colors">Open ↗</span>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold text-saabai-text">{v.value}</p>
-                    {v.url && (
-                      <a href={v.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">Open ↗</a>
-                    )}
+                  <div className="mt-3 pt-3 border-t border-saabai-border/50 flex items-start gap-1.5">
+                    <span className="text-[9px] text-saabai-teal uppercase font-semibold mt-0.5 shrink-0">Next</span>
+                    <p className="text-[11px] text-saabai-text-muted">{v.nextAction}</p>
                   </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-saabai-border/50 flex items-start gap-1.5">
-                  <span className="text-[9px] text-saabai-teal uppercase font-semibold mt-0.5 shrink-0">Next</span>
-                  <p className="text-[11px] text-saabai-text-muted">{v.nextAction}</p>
-                </div>
-              </div>
-            ))}
+                </CardWrapper>
+              );
+            })}
           </div>
         </div>
 
@@ -721,7 +740,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         </div>
         <div className="flex flex-col gap-2">
           {tools.filter(t => t.status === "active").map((tool) => (
-            <div key={tool.id} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-saabai-border-accent transition-colors group">
+            <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0`}>
                   {tool.avatarInitials}
@@ -738,9 +757,9 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                 <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.model.split("-")[1]}</span>
                 {tool.voiceId && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 rounded-lg px-2 py-1">Voice</span>}
                 <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.pages === "*" ? "All pages" : tool.pages}</span>
-                <button onClick={() => onEditTool(tool)} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</button>
+                <span className="text-[11px] text-saabai-teal group-hover:text-saabai-teal-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
