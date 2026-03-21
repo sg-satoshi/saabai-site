@@ -205,9 +205,412 @@ function Textarea({ label, value, onChange, placeholder, hint, rows = 6 }: {
   );
 }
 
+// ─── Agent Registry ───────────────────────────────────────────────────────────
+
+interface Agent {
+  id: string;
+  name: string;
+  role: string;
+  cluster: string;
+  status: "active" | "archived";
+  color: string;
+  initials: string;
+  mission: string;
+  skills: string[];
+  outputs: string[];
+  hardRule?: string;
+}
+
+const AGENT_CLUSTERS = [
+  {
+    id: "orchestrator",
+    label: "Orchestrator",
+    description: "Strategic oversight, capital allocation, operating rules",
+    color: "text-saabai-teal",
+    borderColor: "border-saabai-teal/40",
+    bgColor: "bg-saabai-teal/5",
+  },
+  {
+    id: "build",
+    label: "Build & Automation",
+    description: "Systems, infrastructure, workflows",
+    color: "text-indigo-400",
+    borderColor: "border-indigo-400/30",
+    bgColor: "bg-indigo-400/5",
+  },
+  {
+    id: "growth",
+    label: "Growth & Revenue",
+    description: "Demand generation, paid traffic, creative",
+    color: "text-emerald-400",
+    borderColor: "border-emerald-400/30",
+    bgColor: "bg-emerald-400/5",
+  },
+  {
+    id: "ops",
+    label: "Operations",
+    description: "Systems design, SOPs, delivery frameworks",
+    color: "text-amber-400",
+    borderColor: "border-amber-400/30",
+    bgColor: "bg-amber-400/5",
+  },
+  {
+    id: "archived",
+    label: "Archived",
+    description: "Inactive — available for reactivation",
+    color: "text-saabai-text-dim",
+    borderColor: "border-white/10",
+    bgColor: "bg-white/3",
+  },
+];
+
+const AGENTS: Agent[] = [
+  {
+    id: "atlas",
+    name: "Atlas",
+    role: "Orchestration Intelligence",
+    cluster: "orchestrator",
+    status: "active",
+    color: "from-saabai-teal/30 to-blue-700/40",
+    initials: "AT",
+    mission: "Build profitable automated ventures while minimising operator workload. Ask: what is the highest ROI action across all ventures right now?",
+    skills: ["Venture strategy", "Capital allocation", "Agent coordination", "Task routing", "Build execution", "Decision-making"],
+    outputs: ["Venture plans", "Agent task assignments", "Build decisions", "ROI assessments"],
+    hardRule: "Fix problems directly. Avoid partial solutions.",
+  },
+  {
+    id: "developer",
+    name: "Developer",
+    role: "Build & Infrastructure Agent",
+    cluster: "build",
+    status: "active",
+    color: "from-indigo-500/30 to-indigo-900/40",
+    initials: "DEV",
+    mission: "Execute validated opportunities into scalable, self-running systems. Configure before building. No-code before code.",
+    skills: ["Landing pages", "Cold email systems", "Zapier / Make workflows", "AI chatbots", "API integrations", "Scraping & data pipelines", "CRM setup", "Checkout flows"],
+    outputs: ["Build plans", "Live systems", "Integration specs", "Technical docs"],
+    hardRule: "No-code before code. Simple before scalable. New landing page < 4 hours.",
+  },
+  {
+    id: "automation-engineer",
+    name: "Automation Engineer",
+    role: "Workflow Reliability Agent",
+    cluster: "build",
+    status: "active",
+    color: "from-indigo-400/20 to-purple-800/40",
+    initials: "AE",
+    mission: "Eliminate manual operator work by building reliable, self-running workflows. Not product builders — reliability engineers.",
+    skills: ["Process auditing", "Make / Zapier / n8n", "CRM automation", "Payment triggers", "Lead routing", "Error monitoring", "SOP documentation"],
+    outputs: ["Automation specs", "Monitoring dashboards", "Failure alerts", "Process docs"],
+    hardRule: "If it needs babysitting, it is not done.",
+  },
+  {
+    id: "marketing",
+    name: "Marketing",
+    role: "Demand Generation Agent",
+    cluster: "growth",
+    status: "active",
+    color: "from-emerald-500/20 to-teal-900/40",
+    initials: "MKT",
+    mission: "Design how ventures attract attention, generate leads, and convert customers. Channel strategy, offer design, funnel design.",
+    skills: ["Cold email", "LinkedIn outreach", "Reddit / forums", "Positioning & messaging", "Funnel design", "Offer structuring", "Conversion optimisation", "Acquisition systems"],
+    outputs: ["Channel strategies", "Funnel maps", "Messaging frameworks", "Campaign briefs"],
+    hardRule: "No scaling without validated signal. Cheapest channel first.",
+  },
+  {
+    id: "paid-ads",
+    name: "Paid Ads Scientist",
+    role: "Paid Traffic & CAC Agent",
+    cluster: "growth",
+    status: "active",
+    color: "from-emerald-400/20 to-green-900/40",
+    initials: "PAS",
+    mission: "Design, test, and optimise paid traffic systems. Goal: profitable customer acquisition. No scaling before signal.",
+    skills: ["Meta Ads", "Google Search", "LinkedIn Ads", "TikTok Ads", "YouTube Ads", "Creative testing", "CAC modelling", "Audience strategy", "Landing page briefs"],
+    outputs: ["Test structures", "Campaign briefs", "Hook variants", "Scaling decisions"],
+    hardRule: "No scaling before signal. No signal before test structure.",
+  },
+  {
+    id: "creative-director",
+    name: "Creative Director",
+    role: "Brand & Messaging Agent",
+    cluster: "growth",
+    status: "active",
+    color: "from-pink-500/20 to-rose-900/40",
+    initials: "CD",
+    mission: "Ensure all external output is clear, persuasive, visually coherent, and aligned with Saabai's premium positioning.",
+    skills: ["Brand consistency", "Copywriting", "Website UX", "Ad creative", "Content creation", "Design direction", "Messaging strategy", "Competitive intelligence"],
+    outputs: ["Creative briefs", "Copy", "Design direction", "Brand audits", "UX feedback"],
+    hardRule: "Does NOT write production code. Proposes — does not deploy.",
+  },
+  {
+    id: "operations-architect",
+    name: "Operations Architect",
+    role: "Systems & SOP Agent",
+    cluster: "ops",
+    status: "active",
+    color: "from-amber-500/20 to-orange-900/40",
+    initials: "OA",
+    mission: "Design systems, SOPs, and operating frameworks that make ventures run without constant operator involvement.",
+    skills: ["SOP development", "Process mapping", "Operating rhythm design", "Delivery frameworks", "Tool stack design", "Role definition", "Reporting systems", "Onboarding design"],
+    outputs: ["SOPs", "Process maps", "Operating systems", "Delivery frameworks"],
+    hardRule: "Operational complexity must be justified by measurable leverage.",
+  },
+  {
+    id: "research",
+    name: "Research",
+    role: "Opportunity Intelligence Agent",
+    cluster: "archived",
+    status: "archived",
+    color: "from-gray-500/20 to-gray-800/40",
+    initials: "RES",
+    mission: "Intelligence arm identifying, surfacing, and validating profitable opportunities. Kills bad ideas fast.",
+    skills: ["Market research", "Demand validation", "Competitor analysis", "Market sizing", "Opportunity scoring", "ICP definition"],
+    outputs: ["Opportunity scores (/ 25)", "Market analysis", "ICP profiles", "Evidence reports"],
+  },
+  {
+    id: "finance",
+    name: "Finance",
+    role: "Capital Allocation Agent",
+    cluster: "archived",
+    status: "archived",
+    color: "from-gray-500/20 to-gray-800/40",
+    initials: "FIN",
+    mission: "Financial gatekeeper protecting resources. Evaluates opportunities and decides: INVEST / TEST SMALL / KILL.",
+    skills: ["Unit economics", "CAC modelling", "LTV analysis", "Break-even modelling", "Risk assessment", "Financial scoring", "Capital efficiency"],
+    outputs: ["INVEST / TEST / KILL decisions", "Financial models", "Unit economics", "Risk assessments"],
+    hardRule: "LTV:CAC > 3:1 minimum. All figures in AUD.",
+  },
+  {
+    id: "sales",
+    name: "Sales",
+    role: "Revenue Generation Agent",
+    cluster: "archived",
+    status: "archived",
+    color: "from-gray-500/20 to-gray-800/40",
+    initials: "SAL",
+    mission: "Generate revenue fast. Builds systematised sales assets, not one-off pitches.",
+    skills: ["Offer structuring", "Cold outreach", "LinkedIn DMs", "Funnel design", "Conversion optimisation", "Objection handling", "CRM pipeline", "Closing frameworks"],
+    outputs: ["Outreach sequences", "Sales funnels", "Offer docs", "Closing scripts"],
+  },
+];
+
+// ─── Agent Tree View ───────────────────────────────────────────────────────────
+
+function AgentsView() {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["atlas"]));
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const activeAgents = AGENTS.filter((a) => a.status === "active");
+  const archivedAgents = AGENTS.filter((a) => a.status === "archived");
+
+  const clusterMap = AGENT_CLUSTERS.reduce<Record<string, typeof AGENT_CLUSTERS[0]>>(
+    (acc, c) => ({ ...acc, [c.id]: c }),
+    {}
+  );
+
+  // Build tree: orchestrator → clusters → agents
+  const clusterGroups = ["build", "growth", "ops"].map((clusterId) => ({
+    cluster: clusterMap[clusterId],
+    agents: activeAgents.filter((a) => a.cluster === clusterId),
+  }));
+
+  function AgentCard({ agent, indent = 0 }: { agent: Agent; indent?: number }) {
+    const isExpanded = expanded.has(agent.id);
+    const cluster = clusterMap[agent.cluster];
+
+    return (
+      <div style={{ marginLeft: indent * 20 }}>
+        {/* Connector line */}
+        {indent > 0 && (
+          <div className="flex items-stretch" style={{ marginLeft: -20 }}>
+            <div className="w-5 flex flex-col items-center">
+              <div className="w-px flex-1 bg-saabai-border" />
+              <div className="w-3 h-px bg-saabai-border" />
+            </div>
+            <div className="flex-1">
+              <AgentCardInner agent={agent} cluster={cluster} isExpanded={isExpanded} onToggle={() => toggle(agent.id)} />
+            </div>
+          </div>
+        )}
+        {indent === 0 && (
+          <AgentCardInner agent={agent} cluster={cluster} isExpanded={isExpanded} onToggle={() => toggle(agent.id)} />
+        )}
+      </div>
+    );
+  }
+
+  function AgentCardInner({ agent, cluster, isExpanded, onToggle }: {
+    agent: Agent; cluster: typeof AGENT_CLUSTERS[0]; isExpanded: boolean; onToggle: () => void;
+  }) {
+    return (
+      <div className={`mb-2 rounded-xl border transition-colors ${agent.status === "archived" ? "border-white/8 opacity-60" : isExpanded ? cluster.borderColor : "border-saabai-border hover:border-saabai-border-accent"}`}>
+        {/* Header row */}
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center gap-3 p-4 text-left"
+        >
+          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${agent.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+            {agent.initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-saabai-text">{agent.name}</span>
+              {agent.status === "active" ? (
+                <span className="text-[9px] font-medium bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Active</span>
+              ) : (
+                <span className="text-[9px] font-medium bg-white/5 text-saabai-text-dim border border-white/10 rounded-full px-1.5 py-0.5">Archived</span>
+              )}
+            </div>
+            <p className="text-xs text-saabai-text-dim mt-0.5 truncate">{agent.role}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-[10px] font-medium ${cluster.color} hidden sm:block`}>{cluster.label}</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={`text-saabai-text-dim transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
+              <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </button>
+
+        {/* Expanded detail */}
+        {isExpanded && (
+          <div className="px-4 pb-4 border-t border-saabai-border/50 pt-4">
+            <p className="text-xs text-saabai-text-muted leading-relaxed mb-4">{agent.mission}</p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-2">Skills</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {agent.skills.map((s) => (
+                    <span key={s} className={`text-[10px] px-2 py-0.5 rounded-full border ${cluster.bgColor} ${cluster.borderColor} ${cluster.color}`}>{s}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-2">Outputs</p>
+                <div className="flex flex-col gap-1">
+                  {agent.outputs.map((o) => (
+                    <div key={o} className="flex items-center gap-1.5 text-[11px] text-saabai-text-muted">
+                      <span className={`w-1 h-1 rounded-full shrink-0 ${cluster.color.replace("text-", "bg-")}`} />
+                      {o}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {agent.hardRule && (
+              <div className="mt-4 pt-3 border-t border-saabai-border/50 flex items-start gap-2">
+                <span className="text-[10px] text-saabai-teal shrink-0 mt-0.5">RULE</span>
+                <p className="text-[11px] text-saabai-text-dim italic">&ldquo;{agent.hardRule}&rdquo;</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight mb-1">Agent Registry</h1>
+        <p className="text-saabai-text-dim text-sm">All active and archived agents — roles, skills, and hierarchy.</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-5">
+          <div className="text-xs font-medium text-green-400 mb-2">● Active Agents</div>
+          <div className="text-3xl font-semibold text-saabai-text stat-glow">{activeAgents.length}</div>
+        </div>
+        <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-5">
+          <div className="text-xs font-medium text-saabai-text-dim mb-2">◌ Archived</div>
+          <div className="text-3xl font-semibold text-saabai-text">{archivedAgents.length}</div>
+        </div>
+        <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-5">
+          <div className="text-xs font-medium text-saabai-teal mb-2">◆ Clusters</div>
+          <div className="text-3xl font-semibold text-saabai-text stat-glow">{clusterGroups.length}</div>
+        </div>
+      </div>
+
+      {/* Tree */}
+      <div>
+        {/* Orchestrator */}
+        <div className="mb-1">
+          <AgentCard agent={AGENTS.find((a) => a.id === "atlas")!} />
+        </div>
+
+        {/* Root connector */}
+        <div className="flex ml-4 mb-1">
+          <div className="w-px h-4 bg-saabai-border mx-auto" style={{ marginLeft: 0 }} />
+        </div>
+
+        {/* Cluster branches */}
+        <div className="flex flex-col gap-0">
+          {clusterGroups.map((group, gi) => {
+            const c = group.cluster;
+            const isLast = gi === clusterGroups.length - 1;
+            return (
+              <div key={c.id} className="flex">
+                {/* Vertical line from parent */}
+                <div className="flex flex-col items-center" style={{ width: 20 }}>
+                  <div className={`w-px ${isLast ? "h-4" : "flex-1"} bg-saabai-border`} />
+                  <div className="w-3 h-px bg-saabai-border" />
+                  {!isLast && <div className="w-px flex-1 bg-saabai-border" />}
+                </div>
+
+                <div className="flex-1 mb-4">
+                  {/* Cluster header */}
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${c.borderColor} ${c.bgColor} mb-2`}>
+                    <span className={`text-xs font-semibold ${c.color}`}>{c.label}</span>
+                    <span className="text-saabai-text-dim text-xs">—</span>
+                    <span className="text-xs text-saabai-text-dim">{c.description}</span>
+                    <span className={`ml-auto text-[10px] ${c.color} bg-white/5 rounded-full px-1.5 py-0.5`}>{group.agents.length} agents</span>
+                  </div>
+
+                  {/* Agents in cluster */}
+                  <div className="ml-3">
+                    {group.agents.map((agent) => (
+                      <AgentCard key={agent.id} agent={agent} indent={1} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Archived */}
+        <div className="mt-6 pt-6 border-t border-saabai-border">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/8 bg-white/3 mb-3">
+            <span className="text-xs font-semibold text-saabai-text-dim">Archived</span>
+            <span className="text-saabai-text-dim text-xs">—</span>
+            <span className="text-xs text-saabai-text-dim">Inactive agents — available for reactivation</span>
+            <span className="ml-auto text-[10px] text-saabai-text-dim bg-white/5 rounded-full px-1.5 py-0.5">{archivedAgents.length} agents</span>
+          </div>
+          <div className="flex flex-col gap-0">
+            {archivedAgents.map((agent) => (
+              <AgentCard key={agent.id} agent={agent} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "tools" | "builder" | "settings";
+type Tab = "dashboard" | "agents" | "tools" | "builder" | "settings";
 
 export default function MissionControl() {
   const [authed, setAuthed] = useState(false);
@@ -328,14 +731,15 @@ export default function MissionControl() {
         </div>
 
         <nav className="flex flex-col gap-1 flex-1">
-          {(["dashboard", "tools", "builder", "settings"] as Tab[]).map((tab) => {
+          {(["dashboard", "agents", "tools", "builder", "settings"] as Tab[]).map((tab) => {
             const icons: Record<Tab, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
+              agents: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" /><circle cx="10" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M1 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><path d="M10 7c1.7 0 3 1.3 3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
               tools: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L9 5H13L10 7.5L11 12L7 9.5L3 12L4 7.5L1 5H5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>,
               builder: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /></svg>,
               settings: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" /><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
             };
-            const labels: Record<Tab, string> = { dashboard: "Dashboard", tools: "Tools", builder: "Builder", settings: "Settings" };
+            const labels: Record<Tab, string> = { dashboard: "Dashboard", agents: "Agents", tools: "Tools", builder: "Builder", settings: "Settings" };
             const active = activeTab === tab;
             return (
               <button
@@ -345,6 +749,7 @@ export default function MissionControl() {
               >
                 {icons[tab]}
                 <span>{labels[tab]}</span>
+                {tab === "agents" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
                 {tab === "tools" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{tools.length}</span>}
               </button>
             );
@@ -413,6 +818,9 @@ export default function MissionControl() {
             </div>
           </div>
         )}
+
+        {/* ── Agents ── */}
+        {activeTab === "agents" && <AgentsView />}
 
         {/* ── Tools ── */}
         {activeTab === "tools" && (
