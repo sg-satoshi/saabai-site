@@ -222,7 +222,7 @@ export default function ChatWidget() {
     if (messages.length > 1) saveConversation(messages);
   }, [messages]);
 
-  // Response-length-aware thinking delay — short snappy replies come back fast, longer ones breathe
+  // Thinking delay + immediate TTS on ready
   useEffect(() => {
     if (status === "submitted") {
       setThinkingDelay(true);
@@ -230,18 +230,20 @@ export default function ChatWidget() {
       splitTimers.current.forEach(clearTimeout);
       splitTimers.current = [];
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      // Do NOT set a timer here — only "ready" clears thinkingDelay, ensuring
-      // messages are fully updated before voice/splits fire.
     }
     if (status === "ready") {
-      const latestMsg = [...messagesRef.current].reverse().find((m) => m.role === "assistant");
-      const len = latestMsg ? getMessageText(latestMsg).length : 0;
       if (thinkingTimer.current) clearTimeout(thinkingTimer.current);
-      const delay =
-        len < 80  ? 300 + Math.random() * 400
-        : len < 250 ? 700 + Math.random() * 700
-        : 1200 + Math.random() * 900;
-      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), delay);
+      // Fire TTS immediately — don't wait for the text-reveal delay
+      if (voiceEnabledRef.current) {
+        const latestMsg = [...messagesRef.current].reverse()
+          .find((m) => m.role === "assistant" && m.id !== "initial");
+        if (latestMsg) {
+          lastVoicedRef.current = { id: latestMsg.id, count: 1 };
+          playVoice(getMessageText(latestMsg));
+        }
+      }
+      // Short fixed delay for text bubble reveal — natural but not slow
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 150 + Math.random() * 150);
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -285,7 +287,7 @@ export default function ChatWidget() {
     }
   }
 
-  // When thinkingDelay clears — trigger split bubble reveal and a single TTS call for the full message
+  // When thinkingDelay clears — trigger split bubble reveal
   useEffect(() => {
     if (prevThinkingDelay.current && !thinkingDelay) {
       const latestMsg = [...messagesRef.current]
@@ -293,7 +295,6 @@ export default function ChatWidget() {
         .find((m) => m.role === "assistant" && m.id !== "initial");
       if (latestMsg) {
         const segments = getMessageText(latestMsg).split("|||").map((s) => s.trim()).filter(Boolean);
-        // Progressive bubble reveal for multi-segment messages
         if (segments.length > 1) {
           setSplitProgress({ id: latestMsg.id, count: 1, total: segments.length });
           splitTimers.current.forEach(clearTimeout);
@@ -304,11 +305,6 @@ export default function ChatWidget() {
             }, (i + 1) * (650 + Math.random() * 450));
             splitTimers.current.push(t);
           });
-        }
-        // Voice: always one TTS call for the full message (||| stripped server-side)
-        if (voiceEnabledRef.current) {
-          lastVoicedRef.current = { id: latestMsg.id, count: 1 };
-          playVoice(getMessageText(latestMsg));
         }
       }
     }
