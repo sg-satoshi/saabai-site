@@ -288,7 +288,7 @@ export default function ChatWidget() {
         if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
         // In voice mode, auto-start mic after Mia finishes speaking
         if (voiceModeRef.current) {
-          setTimeout(() => { if (voiceModeRef.current) toggleListening(); }, 300);
+          setTimeout(() => { if (voiceModeRef.current) startListening(); }, 300);
         }
       };
     } catch (err) {
@@ -569,12 +569,9 @@ export default function ChatWidget() {
     await sendMessage({ text });
   }
 
-  function toggleListening() {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
+  // startListening — safe to call from async callbacks (uses refs, not stale state)
+  function startListening() {
+    if (recognitionRef.current) return; // already running
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -586,21 +583,19 @@ export default function ChatWidget() {
 
     recognition.onstart = () => {
       setIsListening(true);
-      stopAudio(); // stop Mia speaking so mic picks up user, not echo
+      stopAudio();
     };
 
-    recognition.onresult = (event: { results: { isFinal: boolean; [k: number]: { transcript: string } }[] }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const results = Array.from(event.results as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transcript = results.map((r: any) => r[0].transcript).join("");
+      const transcript = Array.from(event.results as any).map((r: any) => r[0].transcript).join("");
       setInputValue(transcript);
     };
 
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
-      // Auto-submit when voice mode is on — hands-free loop
       if (voiceEnabledRef.current) {
         setInputValue((current) => {
           const text = current.trim();
@@ -617,6 +612,15 @@ export default function ChatWidget() {
 
     recognitionRef.current = recognition;
     recognition.start();
+  }
+
+  // toggleListening — for manual mic button press
+  function toggleListening() {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+    startListening();
   }
 
   async function submitLeadCapture() {
@@ -759,7 +763,7 @@ export default function ChatWidget() {
             </div>
             {/* Status */}
             <p className="text-sm text-saabai-text-muted tracking-wide text-center">
-              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong — tap mic to retry" : "Tap the mic to speak"}
+              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong — tap mic to retry" : "Mia is ready…"}
             </p>
             {voiceError && <p className="text-[10px] text-red-400 text-center">{voiceError}</p>}
           </div>
