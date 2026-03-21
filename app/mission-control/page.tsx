@@ -205,6 +205,272 @@ function Textarea({ label, value, onChange, placeholder, hint, rows = 6 }: {
   );
 }
 
+// ─── Ventures data ────────────────────────────────────────────────────────────
+
+const VENTURES = [
+  {
+    id: "saabai",
+    name: "Saabai.ai",
+    type: "Core Venture",
+    stage: "In Market",
+    stageColor: "text-green-400 bg-green-500/10 border-green-500/20",
+    value: "Ongoing",
+    nextAction: "Scale inbound — increase Mia conversations",
+    url: "https://www.saabai.ai",
+    color: "from-saabai-teal/20 to-blue-800/30",
+    initials: "SA",
+  },
+  {
+    id: "plon",
+    name: "PlasticOnline (PLON)",
+    type: "Client Engagement",
+    stage: "Scoping",
+    stageColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    value: "AUD $30–55k+",
+    nextAction: "Complete scoping form — build AI agent proposal",
+    url: "https://www.saabai.ai/onboarding/plon",
+    color: "from-amber-500/20 to-orange-900/30",
+    initials: "PL",
+  },
+  {
+    id: "builder",
+    name: "Builder Client",
+    type: "Client Engagement",
+    stage: "Qualifying",
+    stageColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+    value: "TBD",
+    nextAction: "Awaiting fact find return before scoping",
+    url: null,
+    color: "from-blue-500/20 to-indigo-900/30",
+    initials: "BC",
+  },
+];
+
+// ─── Dashboard View ────────────────────────────────────────────────────────────
+
+function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange }: {
+  tools: Tool[];
+  activeCount: number;
+  onEditTool: (t: Tool) => void;
+  onNewTool: () => void;
+  onTabChange: (tab: Tab) => void;
+}) {
+  const [health, setHealth] = useState<Record<string, boolean> | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    fetch("/api/mission-control/health")
+      .then((r) => r.json())
+      .then(setHealth)
+      .catch(() => setHealth(null));
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const dateStr = now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
+
+  const QUICK_ACTIONS = [
+    { label: "Saabai.ai", sub: "Main site", href: "https://www.saabai.ai", icon: "↗", color: "text-saabai-teal" },
+    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-amber-400" },
+    { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-indigo-400" },
+    { label: "Vercel", sub: "Deployments", href: "https://vercel.com/dashboard", icon: "↗", color: "text-white/70" },
+    { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-green-400", onClick: onNewTool },
+    { label: "View Agents", sub: "Registry", href: null, icon: "◆", color: "text-saabai-teal", onClick: () => onTabChange("agents") },
+  ];
+
+  const HEALTH_ITEMS = [
+    { key: "claude", label: "Claude API", desc: "AI brain" },
+    { key: "elevenlabs", label: "ElevenLabs", desc: "TTS voice" },
+    { key: "elevenlabsVoice", label: "Voice ID", desc: "Mia voice" },
+    { key: "heygen", label: "HeyGen", desc: "Video avatar" },
+    { key: "resend", label: "Resend", desc: "Email" },
+  ];
+
+  return (
+    <div className="p-8 max-w-5xl">
+
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <p className="text-xs text-saabai-text-dim uppercase tracking-wider mb-1">{dateStr}</p>
+          <h1 className="text-2xl font-semibold tracking-tight mb-1">{greeting}, Shane.</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
+            <p className="text-sm text-saabai-text-dim italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
+          </div>
+        </div>
+        <button
+          onClick={onNewTool}
+          className="flex items-center gap-2 px-4 py-2.5 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright transition-colors shrink-0"
+          style={{ boxShadow: "0 0 20px rgba(98,197,209,0.2)" }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          New Tool
+        </button>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {[
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", dot: "bg-green-400" },
+          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", dot: "bg-saabai-teal" },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", dot: "bg-indigo-400" },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", dot: "bg-amber-400" },
+        ].map((s) => (
+          <div key={s.label} className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 hover:border-saabai-border-accent transition-colors">
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+              <span className={`text-[11px] font-medium ${s.color}`}>{s.label}</span>
+            </div>
+            <div className="text-3xl font-semibold text-saabai-text stat-glow mb-0.5">{s.value}</div>
+            <div className="text-[11px] text-saabai-text-dim">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mb-6">
+        <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">Quick Actions</h2>
+        <div className="grid grid-cols-6 gap-2">
+          {QUICK_ACTIONS.map((a) => (
+            a.href ? (
+              <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer"
+                className="bg-saabai-surface border border-saabai-border rounded-xl p-3 hover:border-saabai-border-accent transition-colors group flex flex-col gap-1.5">
+                <span className={`text-base font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-xs font-medium text-saabai-text leading-tight">{a.label}</span>
+                <span className="text-[10px] text-saabai-text-dim">{a.sub}</span>
+              </a>
+            ) : (
+              <button key={a.label} onClick={a.onClick}
+                className="bg-saabai-surface border border-saabai-border rounded-xl p-3 hover:border-saabai-border-accent transition-colors group flex flex-col gap-1.5 text-left">
+                <span className={`text-base font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-xs font-medium text-saabai-text leading-tight">{a.label}</span>
+                <span className="text-[10px] text-saabai-text-dim">{a.sub}</span>
+              </button>
+            )
+          ))}
+        </div>
+      </div>
+
+      {/* Ventures + Health side by side */}
+      <div className="grid grid-cols-[1fr_220px] gap-4 mb-6">
+
+        {/* Venture Tracker */}
+        <div>
+          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">Venture Tracker</h2>
+          <div className="flex flex-col gap-2">
+            {VENTURES.map((v) => (
+              <div key={v.id} className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${v.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                      {v.initials}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium text-saabai-text">{v.name}</p>
+                        <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${v.stageColor}`}>{v.stage}</span>
+                      </div>
+                      <p className="text-[11px] text-saabai-text-dim mt-0.5">{v.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-semibold text-saabai-text">{v.value}</p>
+                    {v.url && (
+                      <a href={v.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">Open ↗</a>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-saabai-border/50 flex items-start gap-1.5">
+                  <span className="text-[9px] text-saabai-teal uppercase font-semibold mt-0.5 shrink-0">Next</span>
+                  <p className="text-[11px] text-saabai-text-muted">{v.nextAction}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* System Health */}
+        <div>
+          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-3">System Health</h2>
+          <div className="bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden">
+            {HEALTH_ITEMS.map((item, i) => {
+              const ok = health?.[item.key];
+              const loading = health === null;
+              return (
+                <div key={item.key} className={`flex items-center justify-between px-4 py-3 ${i < HEALTH_ITEMS.length - 1 ? "border-b border-saabai-border/50" : ""}`}>
+                  <div>
+                    <p className="text-xs font-medium text-saabai-text">{item.label}</p>
+                    <p className="text-[10px] text-saabai-text-dim">{item.desc}</p>
+                  </div>
+                  {loading ? (
+                    <div className="w-2 h-2 rounded-full bg-white/20 animate-pulse" />
+                  ) : ok ? (
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                      <span className="text-[10px] text-green-400">OK</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-red-400/60" />
+                      <span className="text-[10px] text-red-400/70">Missing</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div className="px-4 py-2 border-t border-saabai-border/50 bg-saabai-bg/40">
+              <button
+                onClick={() => fetch("/api/mission-control/health").then(r => r.json()).then(setHealth)}
+                className="text-[10px] text-saabai-text-dim hover:text-saabai-teal transition-colors"
+              >
+                ↺ Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Tools */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider">Active Tools</h2>
+          <button onClick={() => onTabChange("tools")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
+        </div>
+        <div className="flex flex-col gap-2">
+          {tools.filter(t => t.status === "active").map((tool) => (
+            <div key={tool.id} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-saabai-border-accent transition-colors group">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0`}>
+                  {tool.avatarInitials}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-saabai-text">{tool.name}</p>
+                    <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Live</span>
+                  </div>
+                  <p className="text-[11px] text-saabai-text-dim mt-0.5">{tool.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.model.split("-")[1]}</span>
+                {tool.voiceId && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 rounded-lg px-2 py-1">Voice</span>}
+                <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-saabai-text-dim">{tool.pages === "*" ? "All pages" : tool.pages}</span>
+                <button onClick={() => onEditTool(tool)} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Agent Registry ───────────────────────────────────────────────────────────
 
 interface Agent {
@@ -731,15 +997,13 @@ export default function MissionControl() {
         </div>
 
         <nav className="flex flex-col gap-1 flex-1">
-          {(["dashboard", "agents", "tools", "builder", "settings"] as Tab[]).map((tab) => {
-            const icons: Record<Tab, React.ReactElement> = {
+          <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mb-1">Workspace</p>
+          {(["dashboard", "agents"] as const).map((tab) => {
+            const icons: Record<string, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
               agents: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" /><circle cx="10" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M1 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><path d="M10 7c1.7 0 3 1.3 3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
-              tools: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L9 5H13L10 7.5L11 12L7 9.5L3 12L4 7.5L1 5H5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>,
-              builder: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /></svg>,
-              settings: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" /><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
             };
-            const labels: Record<Tab, string> = { dashboard: "Dashboard", agents: "Agents", tools: "Tools", builder: "Builder", settings: "Settings" };
+            const labels: Record<string, string> = { dashboard: "Dashboard", agents: "Agents" };
             const active = activeTab === tab;
             return (
               <button
@@ -750,6 +1014,27 @@ export default function MissionControl() {
                 {icons[tab]}
                 <span>{labels[tab]}</span>
                 {tab === "agents" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
+              </button>
+            );
+          })}
+
+          <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mt-4 mb-1">Build</p>
+          {(["tools", "builder", "settings"] as Tab[]).map((tab) => {
+            const icons: Record<string, React.ReactElement> = {
+              tools: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L9 5H13L10 7.5L11 12L7 9.5L3 12L4 7.5L1 5H5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>,
+              builder: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /></svg>,
+              settings: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" /><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.1 1.1M10.3 10.3l1.1 1.1M2.6 11.4l1.1-1.1M10.3 3.7l1.1-1.1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
+            };
+            const labels: Record<string, string> = { tools: "Tools", builder: "Builder", settings: "Settings" };
+            const active = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${active ? "bg-saabai-teal/10 text-saabai-teal border border-saabai-teal/20" : "text-saabai-text-muted hover:text-saabai-text hover:bg-white/5"}`}
+              >
+                {icons[tab]}
+                <span>{labels[tab]}</span>
                 {tab === "tools" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{tools.length}</span>}
               </button>
             );
@@ -771,53 +1056,7 @@ export default function MissionControl() {
       <main className="flex-1 min-w-0 overflow-y-auto">
 
         {/* ── Dashboard ── */}
-        {activeTab === "dashboard" && (
-          <div className="p-8 max-w-4xl">
-            <div className="mb-8">
-              <h1 className="text-2xl font-semibold tracking-tight mb-1">Dashboard</h1>
-              <p className="text-saabai-text-dim text-sm">Overview of your active AI tools and agents.</p>
-            </div>
-
-            {/* Stat cards */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              {[
-                { label: "Active Tools", value: activeCount, icon: "●", color: "text-green-400" },
-                { label: "Total Tools", value: tools.length, icon: "◆", color: "text-saabai-teal" },
-                { label: "Voices Configured", value: tools.filter(t => t.voiceId).length, icon: "♪", color: "text-indigo-400" },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-saabai-surface border border-saabai-border rounded-2xl p-5">
-                  <div className={`text-xs font-medium mb-3 ${stat.color}`}>{stat.icon} {stat.label}</div>
-                  <div className="text-3xl font-semibold text-saabai-text stat-glow">{stat.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Active tools */}
-            <h2 className="text-sm font-medium text-saabai-text-dim uppercase tracking-wider mb-4">Active Tools</h2>
-            <div className="flex flex-col gap-3">
-              {tools.filter(activeTool).map((tool) => (
-                <div key={tool.id} className="bg-saabai-surface border border-saabai-border rounded-2xl p-5 flex items-center justify-between group hover:border-saabai-border-accent transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tool.avatarColor} border border-saabai-teal/30 flex items-center justify-center text-xs font-bold text-saabai-teal`}>
-                      {tool.avatarInitials}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-sm font-medium text-saabai-text">{tool.name}</p>
-                        <StatusBadge status={tool.status} />
-                      </div>
-                      <p className="text-xs text-saabai-text-dim">{tool.role}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-saabai-text-dim">
-                    <span className="bg-white/5 rounded-lg px-2.5 py-1 font-mono">{tool.pages === "*" ? "All pages" : tool.pages}</span>
-                    <button onClick={() => editTool(tool)} className="text-saabai-teal hover:text-saabai-teal-bright transition-colors">Edit →</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeTab === "dashboard" && <DashboardView tools={tools} activeCount={activeCount} onEditTool={editTool} onNewTool={startNewTool} onTabChange={setActiveTab} />}
 
         {/* ── Agents ── */}
         {activeTab === "agents" && <AgentsView />}
