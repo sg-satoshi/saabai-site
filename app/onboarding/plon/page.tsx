@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import PeterAvatarWidget from "../../components/PeterAvatarWidget";
 
 const PRODUCT_CATEGORIES = [
   "Acrylic — cut to size",
@@ -505,6 +506,8 @@ export default function PlonOnboarding() {
 
         </div>
       </form>
+
+      <PeterAvatarWidget />
     </div>
   );
 }
