@@ -2,6 +2,7 @@ import { streamText, tool, stepCountIs, convertToModelMessages } from "ai";
 import { z } from "zod";
 import { getModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
+import { saveLead, saveConversation } from "../../../lib/redis";
 
 export const runtime = "edge";
 export const maxDuration = 30;
@@ -27,16 +28,56 @@ export async function POST(req: Request) {
 
   const model = getModel(tier as "default" | "premium");
 
+  // Accumulate tool results for storage after stream completes
+  const sessionData: {
+    visitorFacts: Record<string, unknown>;
+    qualScore?: number;
+    outcome?: "booked" | "lead_captured" | "browsing" | "qualified";
+    qualArgs?: Record<string, boolean>;
+    captureReason?: string;
+  } = { visitorFacts: {} };
+
   const result = streamText({
     model,
     system: buildSystemPrompt(pageContext, returningVisitor, visitorProfile),
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
+    onFinish: async () => {
+      // Save conversation + lead after stream completes
+      const msgCount = messages.length + 1;
+      const hasData = Object.keys(sessionData.visitorFacts).length > 0 || sessionData.qualScore !== undefined;
+
+      if (hasData || sessionData.outcome) {
+        // Save conversation summary
+        await saveConversation({
+          visitorFacts: sessionData.visitorFacts,
+          qualificationScore: sessionData.qualScore,
+          outcome: sessionData.outcome ?? "browsing",
+          messageCount: msgCount,
+          pageContext: pageContext ?? "/",
+          keyTopics: Object.keys(sessionData.visitorFacts).filter(k => sessionData.visitorFacts[k]),
+        });
+
+        // Save lead record if we have meaningful data
+        if (Object.keys(sessionData.visitorFacts).length > 0 || sessionData.outcome === "booked" || sessionData.outcome === "lead_captured") {
+          await saveLead({
+            name: sessionData.visitorFacts.name as string | undefined,
+            business: sessionData.visitorFacts.business as string | undefined,
+            industry: sessionData.visitorFacts.industry as string | undefined,
+            team_size: sessionData.visitorFacts.team_size as string | undefined,
+            pain_points: sessionData.visitorFacts.pain_points as string[] | undefined,
+            qualification_score: sessionData.qualScore,
+            business_fit: sessionData.qualArgs?.business_fit,
+            pain_point_named: sessionData.qualArgs?.pain_point_named,
+            automation_potential: sessionData.qualArgs?.automation_potential,
+            outcome: sessionData.outcome ?? "browsing",
+            page: pageContext ?? "/",
+            messages: msgCount,
+          });
+        }
+      }
+    },
     tools: {
-      /**
-       * remember_visitor — Save key facts about this visitor for future sessions.
-       * Call when you learn their name, business, industry, team size, or pain points.
-       */
       remember_visitor: tool({
         description:
           "Save key facts about this visitor to persistent memory so future conversations can reference them. " +
@@ -49,65 +90,45 @@ export async function POST(req: Request) {
           team_size: z.string().optional().describe("Their team size, e.g. '12 people', 'small team of 3'"),
           pain_points: z.array(z.string()).optional().describe("Key pain points or challenges they've mentioned"),
         }),
-        execute: async (args) => ({ saved: true, ...args }),
+        execute: async (args) => {
+          Object.assign(sessionData.visitorFacts, args);
+          return { saved: true, ...args };
+        },
       }),
 
-      /**
-       * qualify_lead — Record qualification signals.
-       * Score ≥2 → show_booking_cta. Score ≤1 → capture_lead.
-       */
       qualify_lead: tool({
         description:
           "Record your assessment of the 3 qualification signals for this visitor. " +
           "Call this before routing to show_booking_cta or capture_lead. " +
           "Only call show_booking_cta afterward if the score (number of true values) is 2 or 3.",
         inputSchema: z.object({
-          business_fit: z
-            .boolean()
-            .describe(
-              "True if the visitor runs or manages a professional services or operational business with a team."
-            ),
-          pain_point_named: z
-            .boolean()
-            .describe(
-              "True if a real operational pain point has been stated (admin, follow-up, reporting, scheduling, documents, etc.)."
-            ),
-          automation_potential: z
-            .boolean()
-            .describe(
-              "True if the described pain is clearly automatable — recurring, rule-based, or volume-driven."
-            ),
+          business_fit: z.boolean().describe("True if the visitor runs or manages a professional services or operational business with a team."),
+          pain_point_named: z.boolean().describe("True if a real operational pain point has been stated (admin, follow-up, reporting, scheduling, documents, etc.)."),
+          automation_potential: z.boolean().describe("True if the described pain is clearly automatable — recurring, rule-based, or volume-driven."),
         }),
-        execute: async (args) => ({
-          recorded: true,
-          score: [args.business_fit, args.pain_point_named, args.automation_potential].filter(
-            Boolean
-          ).length,
-          ...args,
-        }),
+        execute: async (args) => {
+          const score = [args.business_fit, args.pain_point_named, args.automation_potential].filter(Boolean).length;
+          sessionData.qualScore = score;
+          sessionData.qualArgs = args;
+          if (score >= 2) sessionData.outcome = "qualified";
+          return { recorded: true, score, ...args };
+        },
       }),
 
-      /**
-       * show_booking_cta — Surface the Calendly booking button.
-       * Only call when qualify_lead confirmed score ≥2.
-       */
       show_booking_cta: tool({
         description:
           "Show the Calendly booking button to the visitor. " +
           "Only call this after qualify_lead has confirmed a score of 2 or 3. " +
           "Do not call this if qualification score is ≤1.",
         inputSchema: z.object({
-          qualification_summary: z
-            .string()
-            .describe("One sentence summarising why this visitor is qualified."),
+          qualification_summary: z.string().describe("One sentence summarising why this visitor is qualified."),
         }),
-        execute: async (args) => ({ shown: true, ...args }),
+        execute: async (args) => {
+          sessionData.outcome = "booked";
+          return { shown: true, ...args };
+        },
       }),
 
-      /**
-       * fetch_webpage — Read the content of a URL shared by the visitor.
-       * Use when the visitor shares their website or a relevant page for context.
-       */
       fetch_webpage: tool({
         description:
           "Fetch and read the text content of a webpage URL shared by the visitor. " +
@@ -138,20 +159,18 @@ export async function POST(req: Request) {
         },
       }),
 
-      /**
-       * capture_lead — Trigger the lead capture form.
-       * Call when visitor is warm but not ready to book, or score ≤1.
-       */
       capture_lead: tool({
         description:
           "Trigger the lead capture form. " +
           "Use when the visitor is warm but not ready to book, or when qualification score is ≤1.",
         inputSchema: z.object({
-          reason: z
-            .string()
-            .describe("Why this visitor is going to lead capture instead of booking."),
+          reason: z.string().describe("Why this visitor is going to lead capture instead of booking."),
         }),
-        execute: async (args) => ({ triggered: true, ...args }),
+        execute: async (args) => {
+          sessionData.outcome = "lead_captured";
+          sessionData.captureReason = args.reason;
+          return { triggered: true, ...args };
+        },
       }),
     },
   });

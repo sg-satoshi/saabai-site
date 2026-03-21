@@ -205,6 +205,283 @@ function Textarea({ label, value, onChange, placeholder, hint, rows = 6 }: {
   );
 }
 
+// ─── Growth types (mirrors lib/redis.ts) ─────────────────────────────────────
+
+interface LeadRecord {
+  id: string;
+  name?: string;
+  business?: string;
+  industry?: string;
+  team_size?: string;
+  pain_points?: string[];
+  qualification_score?: number;
+  outcome: "booked" | "lead_captured" | "browsing" | "qualified";
+  page?: string;
+  messages?: number;
+  createdAt: string;
+}
+
+interface ConversationRecord {
+  id: string;
+  visitorFacts?: Record<string, unknown>;
+  qualificationScore?: number;
+  outcome?: string;
+  messageCount?: number;
+  pageContext?: string;
+  keyTopics?: string[];
+  createdAt: string;
+}
+
+// ─── Growth View ──────────────────────────────────────────────────────────────
+
+function GrowthView() {
+  const [stats, setStats] = useState<{ totalLeads: number; booked: number; captured: number; qualified: number; totalConvs: number } | null>(null);
+  const [leads, setLeads] = useState<LeadRecord[]>([]);
+  const [convs, setConvs] = useState<ConversationRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<"leads" | "conversations">("leads");
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const [statsRes, leadsRes, convsRes] = await Promise.all([
+        fetch("/api/growth").then(r => r.json()).catch(() => null),
+        fetch("/api/growth?type=leads").then(r => r.json()).catch(() => ({ leads: [] })),
+        fetch("/api/growth?type=conversations").then(r => r.json()).catch(() => ({ conversations: [] })),
+      ]);
+      setStats(statsRes);
+      setLeads(leadsRes.leads ?? []);
+      setConvs(convsRes.conversations ?? []);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  function outcomeStyle(outcome: string) {
+    if (outcome === "booked") return "bg-green-500/10 text-green-400 border-green-500/20";
+    if (outcome === "lead_captured") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    if (outcome === "qualified") return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    return "bg-white/5 text-saabai-text-dim border-white/10";
+  }
+
+  function outcomeLabel(outcome: string) {
+    if (outcome === "booked") return "Booking shown";
+    if (outcome === "lead_captured") return "Lead captured";
+    if (outcome === "qualified") return "Qualified";
+    return "Browsing";
+  }
+
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+
+  const noRedis = stats === null && !loading;
+
+  return (
+    <div className="p-8 max-w-5xl">
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight mb-1">Growth</h1>
+          <p className="text-saabai-text-dim text-sm">Leads, conversations, and Mia&apos;s performance across all pages.</p>
+        </div>
+        <button
+          onClick={() => { setLoading(true); fetch("/api/growth").then(r => r.json()).then(d => { setStats(d); setLoading(false); }); }}
+          className="text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors px-3 py-2 border border-saabai-border rounded-lg"
+        >
+          ↺ Refresh
+        </button>
+      </div>
+
+      {noRedis && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-6">
+          <p className="text-sm font-medium text-amber-400 mb-1">Redis not connected</p>
+          <p className="text-xs text-amber-400/70">Add <code className="bg-black/20 px-1 rounded">UPSTASH_REDIS_REST_URL</code> and <code className="bg-black/20 px-1 rounded">UPSTASH_REDIS_REST_TOKEN</code> to Vercel env vars to start capturing leads and conversations.</p>
+          <a href="https://upstash.com" target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 hover:text-amber-300 mt-2 inline-block">Set up Upstash Redis free →</a>
+        </div>
+      )}
+
+      {/* Stats + funnel side by side */}
+      <div className="grid grid-cols-[1fr_200px] gap-4 mb-6">
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Total Leads", value: stats?.totalLeads ?? 0, color: "text-saabai-teal", dot: "bg-saabai-teal", bar: "bg-saabai-teal" },
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "text-indigo-400", dot: "bg-indigo-400", bar: "bg-indigo-400" },
+            { label: "Qualified", value: stats?.qualified ?? 0, color: "text-amber-400", dot: "bg-amber-400", bar: "bg-amber-400" },
+            { label: "Booking Shown", value: stats?.booked ?? 0, color: "text-green-400", dot: "bg-green-400", bar: "bg-green-400" },
+            { label: "Lead Captured", value: stats?.captured ?? 0, color: "text-blue-400", dot: "bg-blue-400", bar: "bg-blue-400" },
+            { label: "Conv. Rate", value: stats?.totalConvs ? `${Math.round(((stats.booked + stats.captured) / stats.totalConvs) * 100)}%` : "—", color: "text-pink-400", dot: "bg-pink-400", bar: null },
+          ].map((s) => {
+            const max = stats?.totalConvs || 1;
+            const pct = typeof s.value === "number" ? Math.min((s.value / max) * 100, 100) : null;
+            return (
+              <div key={s.label} className="bg-saabai-surface border border-saabai-border rounded-xl p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                  <span className={`text-[10px] font-medium ${s.color}`}>{s.label}</span>
+                </div>
+                <div className={`text-2xl font-semibold mb-2 ${loading ? "text-saabai-text-dim animate-pulse" : "text-saabai-text"}`}>{s.value}</div>
+                {pct !== null && s.bar && (
+                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-700 ${s.bar}`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Funnel diagram */}
+        <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 flex flex-col">
+          <p className="text-[10px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4">Mia Funnel</p>
+          {[
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-indigo-400/60", w: "100%" },
+            { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-amber-400/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
+            { label: "Captured", value: stats?.captured ?? 0, color: "bg-blue-400/60", w: stats?.totalConvs ? `${Math.max(15, Math.round((stats.captured / stats.totalConvs) * 100))}%` : "45%" },
+            { label: "Booked", value: stats?.booked ?? 0, color: "bg-green-400/70", w: stats?.totalConvs ? `${Math.max(10, Math.round((stats.booked / stats.totalConvs) * 100))}%` : "30%" },
+          ].map((stage) => (
+            <div key={stage.label} className="mb-2 flex flex-col items-center">
+              <div className="w-full flex justify-center mb-0.5">
+                <div className={`h-6 rounded-md ${stage.color} flex items-center justify-center gap-1.5 transition-all duration-700`} style={{ width: stage.w }}>
+                  <span className="text-[9px] font-semibold text-white/90 whitespace-nowrap px-1">{stage.label}</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-saabai-text-dim">{loading ? "…" : stage.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section tabs */}
+      <div className="flex items-center gap-1 mb-4 bg-saabai-surface border border-saabai-border rounded-xl p-1 w-fit">
+        {(["leads", "conversations"] as const).map((s) => (
+          <button key={s} onClick={() => setActiveSection(s)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s ? "bg-saabai-teal text-saabai-bg" : "text-saabai-text-dim hover:text-saabai-text"}`}>
+            {s === "leads" ? `Leads (${leads.length})` : `Conversations (${convs.length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* Leads list */}
+      {activeSection === "leads" && (
+        <div>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-saabai-surface border border-saabai-border rounded-xl animate-pulse" />)}
+            </div>
+          ) : leads.length === 0 ? (
+            <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="var(--saabai-teal)" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              </div>
+              <p className="text-sm font-medium text-saabai-text mb-1">No leads yet</p>
+              <p className="text-xs text-saabai-text-dim">Leads appear here when Mia learns about a visitor — name, business, industry, or pain points.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {leads.map((lead) => (
+                <div key={lead.id} className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-saabai-teal/20 to-indigo-800/30 border border-saabai-teal/20 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0 mt-0.5">
+                        {(lead.name ?? "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <p className="text-sm font-medium text-saabai-text">{lead.name ?? "Anonymous visitor"}</p>
+                          <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${outcomeStyle(lead.outcome)}`}>{outcomeLabel(lead.outcome)}</span>
+                        </div>
+                        {lead.business && <p className="text-xs text-saabai-text-muted mb-1">{lead.business}</p>}
+                        <div className="flex flex-wrap gap-1.5">
+                          {lead.industry && <span className="text-[10px] bg-white/5 text-saabai-text-dim rounded px-1.5 py-0.5">{lead.industry}</span>}
+                          {lead.team_size && <span className="text-[10px] bg-white/5 text-saabai-text-dim rounded px-1.5 py-0.5">{lead.team_size}</span>}
+                          {lead.qualification_score !== undefined && <span className="text-[10px] bg-saabai-teal/10 text-saabai-teal rounded px-1.5 py-0.5">Score {lead.qualification_score}/3</span>}
+                          {lead.page && lead.page !== "/" && <span className="text-[10px] bg-white/5 text-saabai-text-dim rounded px-1.5 py-0.5 font-mono">{lead.page}</span>}
+                        </div>
+                        {lead.pain_points && lead.pain_points.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {lead.pain_points.slice(0, 3).map((p, i) => (
+                              <span key={i} className="text-[10px] bg-amber-500/10 text-amber-400/80 border border-amber-500/15 rounded px-1.5 py-0.5">{p}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] text-saabai-text-dim">{timeAgo(lead.createdAt)}</p>
+                      {lead.messages && <p className="text-[10px] text-saabai-text-dim mt-0.5">{lead.messages} msgs</p>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Conversations list */}
+      {activeSection === "conversations" && (
+        <div>
+          {loading ? (
+            <div className="flex flex-col gap-2">
+              {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-saabai-surface border border-saabai-border rounded-xl animate-pulse" />)}
+            </div>
+          ) : convs.length === 0 ? (
+            <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+              </div>
+              <p className="text-sm font-medium text-saabai-text mb-1">No conversations yet</p>
+              <p className="text-xs text-saabai-text-dim">Conversations appear here after Mia qualifies or captures a lead.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {convs.map((conv) => (
+                <div key={conv.id} className="bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3.5 hover:border-saabai-border-accent transition-colors">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-saabai-teal/15 to-indigo-800/20 border border-saabai-teal/20 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="var(--saabai-teal)" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinecap="round" /></svg>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-medium text-saabai-text">
+                            {conv.visitorFacts?.name as string ?? "Anonymous"}
+                            {conv.visitorFacts?.business ? ` · ${conv.visitorFacts.business as string}` : ""}
+                          </p>
+                          {conv.outcome && (
+                            <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${outcomeStyle(conv.outcome)}`}>{outcomeLabel(conv.outcome)}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {conv.qualificationScore !== undefined && <span className="text-[10px] text-saabai-text-dim">Qual: {conv.qualificationScore}/3</span>}
+                          {conv.messageCount ? <span className="text-[10px] text-saabai-text-dim">{conv.messageCount} msgs</span> : null}
+                          {conv.pageContext && conv.pageContext !== "/" && <span className="text-[10px] font-mono text-saabai-text-dim">{conv.pageContext}</span>}
+                          {conv.keyTopics && conv.keyTopics.slice(0, 3).map((t, i) => (
+                            <span key={i} className="text-[10px] bg-white/5 text-saabai-text-dim rounded px-1 py-0.5">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-saabai-text-dim shrink-0">{timeAgo(conv.createdAt)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Ventures data ────────────────────────────────────────────────────────────
 
 const VENTURES = [
@@ -876,7 +1153,7 @@ function AgentsView() {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "agents" | "tools" | "builder" | "settings";
+type Tab = "dashboard" | "agents" | "growth" | "tools" | "builder" | "settings";
 
 export default function MissionControl() {
   const [authed, setAuthed] = useState(false);
@@ -998,12 +1275,13 @@ export default function MissionControl() {
 
         <nav className="flex flex-col gap-1 flex-1">
           <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mb-1">Workspace</p>
-          {(["dashboard", "agents"] as const).map((tab) => {
+          {(["dashboard", "agents", "growth"] as const).map((tab) => {
             const icons: Record<string, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
               agents: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" /><circle cx="10" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M1 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><path d="M10 7c1.7 0 3 1.3 3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
+              growth: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 11l3.5-4 3 2.5L11 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /><path d="M9 4h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
             };
-            const labels: Record<string, string> = { dashboard: "Dashboard", agents: "Agents" };
+            const labels: Record<string, string> = { dashboard: "Dashboard", agents: "Agents", growth: "Growth" };
             const active = activeTab === tab;
             return (
               <button
@@ -1060,6 +1338,9 @@ export default function MissionControl() {
 
         {/* ── Agents ── */}
         {activeTab === "agents" && <AgentsView />}
+
+        {/* ── Growth ── */}
+        {activeTab === "growth" && <GrowthView />}
 
         {/* ── Tools ── */}
         {activeTab === "tools" && (
