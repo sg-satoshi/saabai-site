@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -366,7 +367,7 @@ function GrowthView() {
 
         {/* Funnel diagram */}
         <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 flex flex-col">
-          <p className="text-sm font-semibold text-saabai-text mb-4">Mia Funnel</p>
+          <p className="text-base font-semibold text-saabai-text mb-4">Mia Funnel</p>
           {[
             { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-indigo-400/60", w: "100%" },
             { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-amber-400/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
@@ -704,7 +705,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
       {/* Quick Actions */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-saabai-text mb-3">Quick Actions</h2>
+        <h2 className="text-base font-semibold text-saabai-text mb-3">Quick Actions</h2>
         <div className="grid grid-cols-6 gap-2">
           {QUICK_ACTIONS.map((a) => (
             a.href ? (
@@ -731,7 +732,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* Venture Tracker */}
         <div>
-          <h2 className="text-sm font-semibold text-saabai-text mb-3">Venture Tracker</h2>
+          <h2 className="text-base font-semibold text-saabai-text mb-3">Venture Tracker</h2>
           <div className="flex flex-col gap-2">
             {VENTURES.map((v) => {
               const CardWrapper = v.url
@@ -781,7 +782,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* System Health */}
         <div>
-          <h2 className="text-sm font-semibold text-saabai-text mb-3">System Health</h2>
+          <h2 className="text-base font-semibold text-saabai-text mb-3">System Health</h2>
           <div className="bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden">
             {HEALTH_ITEMS.map((item, i) => {
               const ok = health?.[item.key];
@@ -825,7 +826,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         {/* Active Tools */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-saabai-text">Active Tools</h2>
+            <h2 className="text-base font-semibold text-saabai-text">Active Tools</h2>
             <button onClick={() => onTabChange("tools")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
           </div>
           <div className="flex flex-col gap-2">
@@ -857,7 +858,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         {/* Activity Feed */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-saabai-text">Activity Feed</h2>
+            <h2 className="text-base font-semibold text-saabai-text">Activity Feed</h2>
             <button onClick={() => onTabChange("growth")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
           </div>
           {activityLeads.length === 0 ? (
@@ -1176,7 +1177,7 @@ function AgentsView() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-saabai-text">{agent.name}</span>
+              <span className="text-base font-semibold text-saabai-text">{agent.name}</span>
               {agent.status === "active" ? (
                 <span className="text-[9px] font-medium bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Active</span>
               ) : (
@@ -1445,17 +1446,19 @@ export default function MissionControl() {
 
       {/* Sidebar */}
       <aside className="w-56 shrink-0 border-r border-saabai-border flex flex-col py-6 px-4 sticky top-0 h-screen">
-        <div className="flex items-center gap-2.5 px-2 mb-8">
-          <div className="w-7 h-7 rounded-lg bg-saabai-teal/10 border border-saabai-teal/30 flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="7" cy="7" r="6" stroke="var(--saabai-teal)" strokeWidth="1.2" />
-              <circle cx="7" cy="7" r="2" fill="var(--saabai-teal)" />
-              <path d="M7 1v2M7 11v2M1 7h2M11 7h2" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-saabai-text leading-none">Mission Control</p>
-            <p className="text-[10px] text-saabai-text-dim mt-0.5">Saabai.ai</p>
+        <div className="flex flex-col gap-2 px-2 mb-6">
+          <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
+            <Image
+              src="/brand/saabai-logo-white-v2.png"
+              alt="Saabai.ai"
+              width={120}
+              height={32}
+              className="opacity-90 hover:opacity-100 transition-opacity"
+            />
+          </a>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
+            <p className="text-[10px] text-saabai-text-dim font-medium">Mission Control</p>
           </div>
         </div>
 
