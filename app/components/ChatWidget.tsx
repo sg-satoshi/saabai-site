@@ -290,8 +290,10 @@ export default function ChatWidget() {
         isMiaSpeakingRef.current = false;
         URL.revokeObjectURL(url);
         if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
-        if (voiceModeRef.current) {
-          setTimeout(() => { if (voiceModeRef.current) startListening(); }, 300);
+        if (voiceModeRef.current || voiceEnabledRef.current) {
+          setTimeout(() => {
+            if ((voiceModeRef.current || voiceEnabledRef.current) && !recognitionRef.current) startListening();
+          }, 300);
         }
       };
     } catch (err) {
@@ -1127,9 +1129,9 @@ export default function ChatWidget() {
                   title={isListening ? "Tap to stop" : "Tap to speak"}
                   className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
-                    background: isListening ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)",
-                    border: isListening ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                    color: isListening ? "#ef4444" : "rgba(255,255,255,0.4)",
+                    background: isListening ? "rgba(239,68,68,0.15)" : voiceEnabled ? "rgba(98,197,209,0.15)" : "rgba(255,255,255,0.06)",
+                    border: isListening ? "1px solid rgba(239,68,68,0.4)" : voiceEnabled ? "1px solid rgba(98,197,209,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    color: isListening ? "#ef4444" : voiceEnabled ? "var(--saabai-teal)" : "rgba(255,255,255,0.4)",
                     animation: isListening ? "pulse 1.2s ease-in-out infinite" : "none",
                   }}
                 >
