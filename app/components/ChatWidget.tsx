@@ -1061,12 +1061,57 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Voice speak bar — shown when voice is on */}
+          {!isEnded && voiceEnabled && (
+            <div className="px-4 pt-3 shrink-0">
+              {speechSupported ? (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={isLoading || thinkingDelay || splitInProgress}
+                  className="w-full rounded-2xl py-3 text-sm font-semibold flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: isListening ? "rgba(239,68,68,0.18)" : "rgba(98,197,209,0.12)",
+                    border: isListening ? "1.5px solid rgba(239,68,68,0.5)" : "1.5px solid rgba(98,197,209,0.4)",
+                    color: isListening ? "#ef4444" : "var(--saabai-teal)",
+                    boxShadow: isListening ? "0 0 16px rgba(239,68,68,0.15)" : "0 0 16px rgba(98,197,209,0.1)",
+                    animation: isListening ? "pulse 1.4s ease-in-out infinite" : "none",
+                  }}
+                >
+                  {isListening ? (
+                    <>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", display: "inline-block", flexShrink: 0 }} />
+                      Listening… tap to stop
+                    </>
+                  ) : (isLoading || thinkingDelay) ? (
+                    <span className="opacity-60">Mia is responding…</span>
+                  ) : (
+                    <>
+                      <svg width="15" height="15" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                        <rect x="4.5" y="1" width="5" height="7" rx="2.5" fill="currentColor"/>
+                        <path d="M2 6.5a5 5 0 0 0 10 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                        <line x1="7" y1="11.5" x2="7" y2="13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                        <line x1="4.5" y1="13" x2="9.5" y2="13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      </svg>
+                      Tap to speak
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="w-full rounded-2xl py-2.5 text-xs text-center"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "rgba(239,68,68,0.7)" }}>
+                  Microphone not supported in this browser — type below
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Input — hidden when conversation is ended */}
           {!isEnded && (
             <form
               onSubmit={onSubmit}
               className="px-4 py-3 flex items-center gap-2 shrink-0"
-              style={{ borderTop: "1px solid rgba(98,197,209,0.15)", background: "#201e5c" }}
+              style={{ borderTop: voiceEnabled ? "none" : "1px solid rgba(98,197,209,0.15)", background: "#201e5c", paddingTop: voiceEnabled ? "8px" : undefined }}
             >
               {/* Voice toggle */}
               <button
