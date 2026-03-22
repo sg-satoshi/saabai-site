@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import type { UIMessage } from "ai";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1338,9 +1341,543 @@ function AgentsView() {
   );
 }
 
+// ─── Edge — Performance Coach ─────────────────────────────────────────────────
+
+const EDGE_TRUTHS = [
+  "You don't rise to the level of your goals. You fall to the level of your systems.",
+  "Pressure is a privilege. Only people who matter to outcomes feel it.",
+  "The obstacle is not in the way. The obstacle is the way.",
+  "Comfort is the enemy of growth. Seek discomfort deliberately.",
+  "Your identity precedes your results. What you believe about yourself sets the ceiling.",
+  "Energy is not unlimited. Where you invest it reveals your real priorities.",
+  "Most people optimise for how they look. Optimise for what you produce.",
+  "The voice that says you can't is lying. The one that says it's fine when it's not — that one's dangerous.",
+  "You can be tired and still move. Tired is not the same as done.",
+  "If you wouldn't choose it today, why are you still carrying it?",
+  "Winning is a habit. So is losing. You're building one right now.",
+  "The gap between who you are and who you want to be is closed by action, not intention.",
+  "Standards you tolerate are standards you set.",
+  "Fear of failure is usually fear of judgement. Name it correctly.",
+  "The goal is not to feel motivated. The goal is to act whether you do or not.",
+];
+
+interface EdgeProfileData {
+  updatedAt?: string;
+  totalSessions?: number;
+  lastMood?: number;
+  lastSessionDate?: string;
+  coreGoals?: string;
+  currentFocus?: string;
+  patterns?: string;
+  strengths?: string;
+  challenges?: string;
+  breakthroughs?: string;
+  commitments?: string;
+  watchFor?: string;
+  worksWith?: string;
+  rawNotes?: string;
+}
+
+interface EdgeSessionData {
+  id: string;
+  createdAt: string;
+  mood?: number;
+  summary?: string;
+  topics?: string;
+  insights?: string;
+  newCommitments?: string;
+  messageCount?: number;
+}
+
+function moodColor(mood: number) {
+  if (mood >= 8) return "bg-green-400";
+  if (mood >= 5) return "bg-amber-400";
+  return "bg-red-400";
+}
+
+function moodLabel(mood: number) {
+  if (mood >= 9) return "Peak";
+  if (mood >= 7) return "Strong";
+  if (mood >= 5) return "Steady";
+  if (mood >= 3) return "Low";
+  return "Rough";
+}
+
+function getEdgeMessageText(message: UIMessage): string {
+  return message.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("\n\n");
+}
+
+function EdgeView() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const edgeChatOptions: any = {
+    transport: new DefaultChatTransport({ api: "/api/edge/chat" }),
+  };
+  const { messages, sendMessage, status, setMessages } = useChat(edgeChatOptions);
+  const isLoading = status === "submitted" || status === "streaming";
+
+  const [input, setInput] = React.useState("");
+  const [profile, setProfile] = React.useState<EdgeProfileData | null>(null);
+  const [sessions, setSessions] = React.useState<EdgeSessionData[]>([]);
+  const [mood, setMood] = React.useState<number | null>(null);
+  const [sessionStarted, setSessionStarted] = React.useState(false);
+  const [sessionEnding, setSessionEnding] = React.useState(false);
+  const [sessionEnded, setSessionEnded] = React.useState(false);
+  const [showProfile, setShowProfile] = React.useState(false);
+  const [voiceEnabled, setVoiceEnabled] = React.useState(false);
+  const [sessionStart] = React.useState(Date.now());
+  const [elapsed, setElapsed] = React.useState(0);
+  const [todayTruth] = React.useState(() => EDGE_TRUTHS[Math.floor(Date.now() / 86400000) % EDGE_TRUTHS.length]);
+  const [historyExpanded, setHistoryExpanded] = React.useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Load profile and sessions
+  React.useEffect(() => {
+    fetch("/api/edge/profile")
+      .then(r => r.json())
+      .then(d => {
+        setProfile(d.profile);
+        setSessions(d.sessions ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Session timer
+  React.useEffect(() => {
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - sessionStart) / 60000)), 30000);
+    return () => clearInterval(t);
+  }, [sessionStart]);
+
+  // Auto-scroll
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Voice: speak last Edge message
+  React.useEffect(() => {
+    if (!voiceEnabled || !messages.length) return;
+    const last = messages[messages.length - 1];
+    if (last.role !== "assistant") return;
+    const content = getEdgeMessageText(last);
+    if (!content) return;
+    fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: content.slice(0, 500) }),
+    }).then(r => r.arrayBuffer()).then(buf => {
+      const audio = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" })));
+      audio.play().catch(() => {});
+    }).catch(() => {});
+  }, [messages, voiceEnabled]);
+
+  // Auto-save to sessionStorage
+  React.useEffect(() => {
+    if (messages.length > 1) {
+      sessionStorage.setItem("edge_session_messages", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Restore from sessionStorage
+  React.useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("edge_session_messages");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 1) {
+          setMessages(parsed);
+          setSessionStarted(true);
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function startSession(selectedMood: number) {
+    setMood(selectedMood);
+    setSessionStarted(true);
+    await sendMessage({
+      text: `[Session start. My energy/mood today: ${selectedMood}/10 — ${moodLabel(selectedMood)}. Open this session based on what you know about me and where we left off. Keep it direct.]`,
+    });
+  }
+
+  async function endSession() {
+    if (messages.length < 2 || sessionEnding) return;
+    setSessionEnding(true);
+    // Flatten UIMessage parts to a simple {role, content} format for the summarise API
+    const flatMessages = messages.map(m => ({
+      role: m.role,
+      content: getEdgeMessageText(m),
+    }));
+    try {
+      await fetch("/api/edge/summarise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: flatMessages, mood }),
+      });
+      setSessionEnded(true);
+      sessionStorage.removeItem("edge_session_messages");
+      // Reload profile
+      fetch("/api/edge/profile").then(r => r.json()).then(d => {
+        setProfile(d.profile);
+        setSessions(d.sessions ?? []);
+      }).catch(() => {});
+    } catch {
+      setSessionEnding(false);
+    }
+    setSessionEnding(false);
+  }
+
+  const commitments = profile?.commitments ? profile.commitments.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const hasProfile = profile && Object.keys(profile).length > 1;
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+
+      {/* Left Panel */}
+      <div className="w-[260px] shrink-0 border-r border-saabai-border flex flex-col overflow-y-auto">
+
+        {/* Today's Truth */}
+        <div className="p-4 border-b border-saabai-border">
+          <p className="text-[9px] font-semibold text-saabai-teal uppercase tracking-widest mb-2">Truth of the Day</p>
+          <p className="text-xs text-saabai-text leading-relaxed italic">&ldquo;{todayTruth}&rdquo;</p>
+        </div>
+
+        {/* Edge's Current Read */}
+        {profile?.rawNotes && (
+          <div className="p-4 border-b border-saabai-border">
+            <p className="text-[9px] font-semibold text-amber-400 uppercase tracking-widest mb-2">Edge&apos;s Read on You</p>
+            <p className="text-[11px] text-saabai-text-muted leading-relaxed">{profile.rawNotes}</p>
+          </div>
+        )}
+
+        {/* Active Commitments */}
+        {commitments.length > 0 && (
+          <div className="p-4 border-b border-saabai-border">
+            <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest mb-2">Your Commitments</p>
+            <div className="flex flex-col gap-1.5">
+              {commitments.map((c, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className="w-3 h-3 rounded border border-saabai-teal/40 shrink-0 mt-0.5 flex items-center justify-center">
+                    <div className="w-1 h-1 rounded-full bg-saabai-teal/40" />
+                  </div>
+                  <p className="text-[11px] text-saabai-text-muted leading-tight">{c}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Patterns */}
+        {profile?.patterns && (
+          <div className="p-4 border-b border-saabai-border">
+            <p className="text-[9px] font-semibold text-pink-400 uppercase tracking-widest mb-2">Patterns Noticed</p>
+            <p className="text-[11px] text-saabai-text-muted leading-relaxed">{profile.patterns}</p>
+          </div>
+        )}
+
+        {/* Mood Trend */}
+        {sessions.filter(s => s.mood).length > 0 && (
+          <div className="p-4 border-b border-saabai-border">
+            <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest mb-3">Mood Trend</p>
+            <div className="flex items-end gap-1.5 h-8">
+              {sessions.filter(s => s.mood).slice(0, 10).reverse().map((s, i) => {
+                const h = Math.round(((s.mood ?? 5) / 10) * 100);
+                const col = (s.mood ?? 5) >= 8 ? "bg-green-400" : (s.mood ?? 5) >= 5 ? "bg-amber-400" : "bg-red-400";
+                return (
+                  <div key={i} title={`${s.mood}/10 — ${s.createdAt.split("T")[0]}`}
+                    className={`flex-1 rounded-sm ${col} opacity-80 min-h-[4px]`}
+                    style={{ height: `${h}%` }} />
+                );
+              })}
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[9px] text-saabai-text-dim">Older</span>
+              <span className="text-[9px] text-saabai-text-dim">Recent</span>
+            </div>
+          </div>
+        )}
+
+        {/* Session History */}
+        <div className="p-4 border-b border-saabai-border">
+          <button
+            onClick={() => setHistoryExpanded(p => !p)}
+            className="flex items-center justify-between w-full mb-2"
+          >
+            <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest">Session History</p>
+            <span className="text-[9px] text-saabai-text-dim">{historyExpanded ? "▲" : "▼"} {sessions.length}</span>
+          </button>
+          {historyExpanded && (
+            <div className="flex flex-col gap-2">
+              {sessions.slice(0, 8).map((s) => (
+                <div key={s.id} className="bg-saabai-bg rounded-lg p-2.5 border border-saabai-border">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-saabai-text-dim">{s.createdAt.split("T")[0]}</span>
+                    {s.mood && (
+                      <div className="flex items-center gap-1">
+                        <div className={`w-1.5 h-1.5 rounded-full ${moodColor(s.mood)}`} />
+                        <span className="text-[9px] text-saabai-text-dim">{s.mood}/10</span>
+                      </div>
+                    )}
+                  </div>
+                  {s.summary && <p className="text-[10px] text-saabai-text-muted leading-relaxed">{s.summary}</p>}
+                  {s.newCommitments && (
+                    <p className="text-[9px] text-saabai-teal mt-1">↳ {s.newCommitments}</p>
+                  )}
+                </div>
+              ))}
+              {sessions.length === 0 && (
+                <p className="text-[10px] text-saabai-text-dim">No sessions recorded yet.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* What Edge Knows */}
+        <div className="p-4">
+          <button
+            onClick={() => setShowProfile(p => !p)}
+            className="flex items-center justify-between w-full mb-2"
+          >
+            <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest">What Edge Knows</p>
+            <span className="text-[9px] text-saabai-text-dim">{showProfile ? "Hide" : hasProfile ? "Show" : "Empty"}</span>
+          </button>
+          {showProfile && (
+            <div className="flex flex-col gap-2">
+              {hasProfile ? (
+                [
+                  { key: "coreGoals", label: "Goals", color: "text-saabai-teal" },
+                  { key: "currentFocus", label: "Focus", color: "text-indigo-400" },
+                  { key: "strengths", label: "Strengths", color: "text-green-400" },
+                  { key: "challenges", label: "Challenges", color: "text-amber-400" },
+                  { key: "breakthroughs", label: "Breakthroughs", color: "text-pink-400" },
+                  { key: "watchFor", label: "Watch For", color: "text-red-400" },
+                  { key: "worksWith", label: "Works With", color: "text-blue-400" },
+                ].filter(f => profile?.[f.key as keyof EdgeProfileData]).map(f => (
+                  <div key={f.key}>
+                    <p className={`text-[9px] font-semibold ${f.color} uppercase tracking-wider mb-0.5`}>{f.label}</p>
+                    <p className="text-[10px] text-saabai-text-muted leading-relaxed">{profile?.[f.key as keyof EdgeProfileData] as string}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[10px] text-saabai-text-dim">Edge will build your profile as you talk.</p>
+              )}
+              {profile?.totalSessions ? (
+                <p className="text-[9px] text-saabai-text-dim mt-1">{profile.totalSessions} sessions recorded</p>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-saabai-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L10 6H14L11 8.5L12 13L8 10.5L4 13L5 8.5L2 6H6L8 2Z" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-saabai-text leading-none">Edge</p>
+              <p className="text-[10px] text-saabai-text-dim mt-0.5">Performance Coach · Truth over comfort</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {sessionStarted && !sessionEnded && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-[10px] text-saabai-text-dim">{elapsed > 0 ? `${elapsed}m` : "Live"}</span>
+              </div>
+            )}
+            {mood !== null && (
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-500/30 text-green-400 bg-green-500/5" : mood >= 5 ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-red-500/30 text-red-400 bg-red-500/5"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${moodColor(mood)}`} />
+                {mood}/10 · {moodLabel(mood)}
+              </div>
+            )}
+            <button
+              onClick={() => setVoiceEnabled(v => !v)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors ${voiceEnabled ? "border-indigo-500/40 text-indigo-400 bg-indigo-500/10" : "border-saabai-border text-saabai-text-dim hover:text-saabai-text"}`}
+            >
+              {voiceEnabled ? "Voice On" : "Voice Off"}
+            </button>
+            {sessionStarted && !sessionEnded && messages.length > 2 && (
+              <button
+                onClick={endSession}
+                disabled={sessionEnding}
+                className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-border text-saabai-text-dim hover:border-red-500/30 hover:text-red-400 transition-colors disabled:opacity-40"
+              >
+                {sessionEnding ? "Saving…" : "End Session"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Messages or Mood Check-in */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {sessionEnded ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center max-w-sm">
+                <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </div>
+                <p className="text-sm font-semibold text-saabai-text mb-2">Session saved.</p>
+                <p className="text-xs text-saabai-text-dim mb-4">Edge has updated your profile. Come back when you&apos;re ready.</p>
+                <button
+                  onClick={() => {
+                    setSessionEnded(false);
+                    setSessionStarted(false);
+                    setMood(null);
+                    setMessages([]);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-saabai-teal/10 border border-saabai-teal/30 text-saabai-teal text-xs hover:bg-saabai-teal/20 transition-colors"
+                >
+                  Start New Session
+                </button>
+              </div>
+            </div>
+          ) : !sessionStarted ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="max-w-md w-full">
+                <div className="text-center mb-8">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M10 2L13 8H19L14 11.5L16 18L10 14.5L4 18L6 11.5L1 8H7L10 2Z" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-semibold text-saabai-text mb-1">Ready to work?</h2>
+                  <p className="text-sm text-saabai-text-dim">Where are you at today? Be honest.</p>
+                </div>
+
+                <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-6">
+                  <p className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
+                  <div className="grid grid-cols-5 gap-2 mb-4">
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => startSession(n)}
+                        className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
+                          n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
+                          : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
+                          : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-[10px] text-saabai-text-dim">
+                    <span>Running on empty</span>
+                    <span>Locked in</span>
+                  </div>
+                </div>
+
+                {sessions.length > 0 && (
+                  <div className="mt-4 text-center">
+                    <p className="text-[11px] text-saabai-text-dim">
+                      Last session: {sessions[0]?.createdAt?.split("T")[0] ?? "—"}
+                      {sessions[0]?.mood ? ` · ${sessions[0].mood}/10` : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 max-w-2xl">
+              {messages.map((m) => {
+                const content = getEdgeMessageText(m);
+                if (!content || content.startsWith("[Session start.")) return null;
+                const isEdge = m.role === "assistant";
+                return (
+                  <div key={m.id} className={`flex ${isEdge ? "items-start gap-3" : "justify-end"}`}>
+                    {isEdge && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M6 1L7.5 4H11L8.5 5.8L9.5 9L6 7L2.5 9L3.5 5.8L1 4H4.5L6 1Z" stroke="var(--saabai-teal)" strokeWidth="1" strokeLinejoin="round" fill="none" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${isEdge ? "bg-saabai-surface border border-saabai-border text-saabai-text" : "bg-saabai-teal/10 border border-saabai-teal/20 text-saabai-text ml-auto"}`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {isLoading && (
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center shrink-0">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M6 1L7.5 4H11L8.5 5.8L9.5 9L6 7L2.5 9L3.5 5.8L1 4H4.5L6 1Z" stroke="var(--saabai-teal)" strokeWidth="1" strokeLinejoin="round" fill="none" />
+                    </svg>
+                  </div>
+                  <div className="bg-saabai-surface border border-saabai-border rounded-2xl px-4 py-3">
+                    <div className="flex gap-1">
+                      {[0,1,2].map(i => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-saabai-teal/50 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        {sessionStarted && !sessionEnded && (
+          <div className="px-6 py-4 border-t border-saabai-border shrink-0">
+            <div className="flex items-end gap-3">
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (input.trim() && !isLoading) {
+                      const text = input.trim();
+                      setInput("");
+                      sendMessage({ text });
+                    }
+                  }
+                }}
+                placeholder="Say what's on your mind…"
+                rows={2}
+                disabled={isLoading}
+                className="flex-1 bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (input.trim() && !isLoading) {
+                    const text = input.trim();
+                    setInput("");
+                    sendMessage({ text });
+                  }
+                }}
+                disabled={isLoading || !input.trim()}
+                className="px-4 py-3 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright disabled:opacity-40 transition-colors shrink-0"
+                style={{ boxShadow: "0 0 16px rgba(98,197,209,0.15)" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l12-6-5 6 5 6-12-6z" fill="currentColor" /></svg>
+              </button>
+            </div>
+            <p className="text-[10px] text-saabai-text-dim mt-2 text-center">Enter to send · Shift+Enter for new line · End session when done to save to Edge&apos;s memory</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "agents" | "growth" | "tools" | "builder" | "settings";
+type Tab = "dashboard" | "agents" | "growth" | "tools" | "builder" | "settings" | "coach";
 
 export default function MissionControl() {
   const [authed, setAuthed] = useState(false);
@@ -1464,13 +2001,14 @@ export default function MissionControl() {
 
         <nav className="flex flex-col gap-1 flex-1">
           <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mb-1">Workspace</p>
-          {(["dashboard", "agents", "growth"] as const).map((tab) => {
+          {(["dashboard", "agents", "growth", "coach"] as const).map((tab) => {
             const icons: Record<string, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
               agents: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" /><circle cx="10" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M1 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /><path d="M10 7c1.7 0 3 1.3 3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
               growth: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 11l3.5-4 3 2.5L11 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /><path d="M9 4h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+              coach: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.5 4H12L9.5 5.8L10.5 9L7 7L3.5 9L4.5 5.8L2 4H5.5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" fill="none" /></svg>,
             };
-            const labels: Record<string, string> = { dashboard: "Dashboard", agents: "Agents", growth: "Growth" };
+            const labels: Record<string, string> = { dashboard: "Dashboard", agents: "Agents", growth: "Growth", coach: "Edge" };
             const active = activeTab === tab;
             return (
               <button
@@ -1785,6 +2323,9 @@ export default function MissionControl() {
             </div>
           </div>
         )}
+
+        {/* ── Coach (Edge) ── */}
+        {activeTab === "coach" && <EdgeView />}
 
       </main>
     </div>

@@ -128,3 +128,95 @@ export async function getGrowthStats(): Promise<{
     totalConvs,
   };
 }
+
+// ─── Edge Profile (Performance Coach) ────────────────────────────────────────
+
+export interface EdgeProfile {
+  updatedAt: string;
+  totalSessions: number;
+  lastMood?: number;
+  lastSessionDate?: string;
+  coreGoals?: string;
+  currentFocus?: string;
+  patterns?: string;
+  strengths?: string;
+  challenges?: string;
+  breakthroughs?: string;
+  commitments?: string;
+  watchFor?: string;
+  worksWith?: string;
+  rawNotes?: string;
+}
+
+export interface EdgeSession {
+  id: string;
+  createdAt: string;
+  mood?: number;
+  summary?: string;
+  topics?: string;
+  insights?: string;
+  newCommitments?: string;
+  messageCount?: number;
+}
+
+export async function getEdgeProfile(): Promise<EdgeProfile | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const raw = await redis.hgetall("edge:profile") as Record<string, string> | null;
+  if (!raw || Object.keys(raw).length === 0) return null;
+  return {
+    ...raw,
+    totalSessions: Number(raw.totalSessions ?? 0),
+    lastMood: raw.lastMood ? Number(raw.lastMood) : undefined,
+  } as unknown as EdgeProfile;
+}
+
+export async function saveEdgeProfile(profile: Partial<EdgeProfile>): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  const flat: Record<string, string> = { updatedAt: new Date().toISOString() };
+  for (const [k, v] of Object.entries(profile)) {
+    if (v !== undefined && v !== null) flat[k] = String(v);
+  }
+  await redis.hset("edge:profile", flat);
+}
+
+export async function saveEdgeSession(session: Omit<EdgeSession, "id" | "createdAt">): Promise<string | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const id = `esess_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const record: EdgeSession = { ...session, id, createdAt: new Date().toISOString() };
+  const flat: Record<string, string> = {
+    id: record.id,
+    createdAt: record.createdAt,
+    messageCount: String(record.messageCount ?? 0),
+  };
+  if (record.mood !== undefined) flat.mood = String(record.mood);
+  if (record.summary) flat.summary = record.summary;
+  if (record.topics) flat.topics = record.topics;
+  if (record.insights) flat.insights = record.insights;
+  if (record.newCommitments) flat.newCommitments = record.newCommitments;
+  await redis.hset(`edge:session:${id}`, flat);
+  await redis.lpush("edge:sessions:list", id);
+  await redis.ltrim("edge:sessions:list", 0, 99);
+  return id;
+}
+
+export async function getEdgeSessions(limit = 20): Promise<EdgeSession[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("edge:sessions:list", 0, limit - 1) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map(async (id) => {
+      const raw = await redis.hgetall(`edge:session:${id}`) as Record<string, string> | null;
+      if (!raw) return null;
+      return {
+        ...raw,
+        messageCount: Number(raw.messageCount ?? 0),
+        mood: raw.mood ? Number(raw.mood) : undefined,
+      } as EdgeSession;
+    })
+  );
+  return records.filter((r): r is EdgeSession => r !== null);
+}
