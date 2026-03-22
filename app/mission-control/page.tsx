@@ -1432,6 +1432,7 @@ function EdgeView() {
   const [todayTruth] = React.useState(() => EDGE_TRUTHS[Math.floor(Date.now() / 86400000) % EDGE_TRUTHS.length]);
   const [historyExpanded, setHistoryExpanded] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Load profile and sessions
   React.useEffect(() => {
@@ -1454,6 +1455,13 @@ function EdgeView() {
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-focus input after Edge responds
+  React.useEffect(() => {
+    if (!isLoading && sessionStarted && !sessionEnded) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading, sessionStarted, sessionEnded]);
 
   // Voice: speak last Edge message
   React.useEffect(() => {
@@ -1846,6 +1854,7 @@ function EdgeView() {
                     }
                   }
                 }}
+                ref={inputRef}
                 placeholder="Say what's on your mind…"
                 rows={2}
                 disabled={isLoading}
