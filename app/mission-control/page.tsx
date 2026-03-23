@@ -1650,6 +1650,12 @@ function EdgeView() {
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  function exitWithoutSaving() {
+    setSessionEnded(true);
+    sessionStorage.removeItem("edge_session_messages");
+    setMessages([]);
+  }
+
   const commitments = profile?.commitments ? profile.commitments.split(",").map(s => s.trim()).filter(Boolean) : [];
   const hasProfile = profile && Object.keys(profile).length > 1;
 
@@ -1837,14 +1843,21 @@ function EdgeView() {
             {sessionStarted && !sessionEnded && messages.length > 2 && (
               <div className="flex items-center gap-2">
                 {endError && (
-                  <span className="text-[10px] text-red-400 max-w-[180px] truncate" title={endError}>{endError}</span>
+                  <span className="text-[10px] text-red-400 max-w-[140px] truncate" title={endError}>{endError}</span>
                 )}
+                <button
+                  onClick={exitWithoutSaving}
+                  disabled={sessionEnding}
+                  className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-border text-saabai-text-dim hover:border-saabai-border hover:text-saabai-text transition-colors disabled:opacity-40"
+                >
+                  Exit
+                </button>
                 <button
                   onClick={endSession}
                   disabled={sessionEnding}
-                  className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-border text-saabai-text-dim hover:border-red-500/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                  className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-teal/30 text-saabai-teal bg-saabai-teal/5 hover:bg-saabai-teal/10 transition-colors disabled:opacity-40"
                 >
-                  {sessionEnding ? "Saving…" : "End Session"}
+                  {sessionEnding ? "Saving…" : "Save & Exit"}
                 </button>
               </div>
             )}
