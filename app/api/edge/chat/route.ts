@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages } from "ai";
+import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { getEdgeProfile, getEdgeSessions } from "../../../../lib/redis";
 import type { EdgeProfile, EdgeSession } from "../../../../lib/redis";
@@ -95,7 +95,10 @@ export async function POST(req: Request) {
 
     coreMessages = [...history, { role: "user", content: userContent }];
   } else {
-    coreMessages = await convertToModelMessages(messages);
+    // messages arrive as flat {role, content} — valid CoreMessage format
+    coreMessages = (messages as Array<{ role: string; content: string }>)
+      .filter(m => m.role !== "system" && m.content?.trim())
+      .map(m => ({ role: m.role, content: m.content }));
   }
 
   const result = streamText({
