@@ -1428,8 +1428,8 @@ function EdgeView() {
   const edgeChatOptions: any = {
     transport: new DefaultChatTransport({ api: "/api/edge/chat" }),
   };
-  const { messages, sendMessage, status, setMessages } = useChat(edgeChatOptions);
-  const isLoading = status === "submitted" || status === "streaming";
+  const { messages, setMessages } = useChat(edgeChatOptions);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const [input, setInput] = React.useState("");
   const [profile, setProfile] = React.useState<EdgeProfileData | null>(null);
@@ -1561,76 +1561,36 @@ function EdgeView() {
     }
   }
 
-  async function handleEdgeSend() {
-    const text = input.trim();
-    if (!text && !pendingImage) return;
-    setInput("");
-    const img = pendingImage;
-    setPendingImage(null);
-
-    if (!img) {
-      await sendMessage({ text });
-      return;
-    }
-
-    // File message (image or PDF) — bypass sendMessage and make a direct streaming fetch.
-    const base64 = img.base64;
-
-    // Add user message to the conversation for display
-    const userMsgId = `user_img_${Date.now()}`;
+  // All Edge messages go through direct fetch — avoids convertToModelMessages
+  // failing on file parts when the hook tries to re-send injected messages.
+  async function streamEdgeResponse(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const withUser: any[] = [
-      ...messages,
-      {
-        id: userMsgId,
-        role: "user",
-        parts: [
-          ...(text ? [{ type: "text", text }] : []),
-          { type: "file", mediaType: img.mimeType, url: img.preview ?? "", fileName: img.fileName },
-        ],
-        createdAt: new Date(),
-      },
+    withUser: any[],
+    historyForApi: { role: string; content: string }[],
+    imageAttachment?: { base64: string; mimeType: string; text?: string },
+  ) {
+    const assistantMsgId = `edge_${Date.now()}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const withAssistant = (t: string): any[] => [
+      ...withUser,
+      { id: assistantMsgId, role: "assistant", parts: [{ type: "text", text: t }], createdAt: new Date() },
     ];
-    setMessages(withUser);
-
-    // Build flat history for API (text only — image is sent separately, skip empty-content messages)
-    const historyForApi = messages
-      .filter(m => m.role !== "system")
-      .map(m => ({ role: m.role, content: getEdgeMessageText(m) }))
-      .filter(m => m.content.trim() !== "");
-
+    setIsLoading(true);
+    setMessages(withAssistant(""));
     try {
       const res = await fetch("/api/edge/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: historyForApi,
-          imageAttachment: { base64, mimeType: img.mimeType, text: text || undefined },
-        }),
+        body: JSON.stringify({ messages: historyForApi, imageAttachment }),
       });
       if (!res.ok || !res.body) {
         const errText = await res.text().catch(() => "");
-        setMessages([
-          ...withUser,
-          { id: `edge_err_${Date.now()}`, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Image send failed${errText ? `: ${errText.slice(0, 120)}` : ""}]` }], createdAt: new Date() },
-        ]);
+        setMessages([...withUser, { id: assistantMsgId, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Failed: ${errText.slice(0, 120) || res.status}]` }], createdAt: new Date() }]);
         return;
       }
-
-      // Stream the response and build the assistant message incrementally
-      const assistantMsgId = `edge_img_${Date.now()}`;
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const withAssistant = (t: string): any[] => [
-        ...withUser,
-        { id: assistantMsgId, role: "assistant", parts: [{ type: "text", text: t }], createdAt: new Date() },
-      ];
-
-      setMessages(withAssistant(""));
-
       let streamError: string | null = null;
       while (true) {
         const { done, value } = await reader.read();
@@ -1640,22 +1600,58 @@ function EdgeView() {
           if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
           try {
             const parsed = JSON.parse(line.slice(6));
-            if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
-              fullText += parsed.delta;
-            } else if (parsed.type === "error") {
-              streamError = String(parsed.errorText ?? parsed.error ?? parsed.message ?? "Unknown error");
-            }
+            if (parsed.type === "text-delta" && typeof parsed.delta === "string") fullText += parsed.delta;
+            else if (parsed.type === "error") streamError = String(parsed.errorText ?? parsed.error ?? parsed.message ?? "Stream error");
           } catch { /* ignore malformed lines */ }
         }
         setMessages(withAssistant(fullText));
       }
-      // If nothing came back, show what went wrong
       if (!fullText) {
-        const fallback = streamError ?? "No response — image may be too large or in an unsupported format.";
+        const fallback = streamError ?? "No response received.";
         setMessages([...withUser, { id: assistantMsgId, role: "assistant" as const, parts: [{ type: "text" as const, text: `[${fallback}]` }], createdAt: new Date() }]);
       }
     } catch (err) {
-      setMessages([...withUser, { id: `edge_err_${Date.now()}`, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Error: ${err instanceof Error ? err.message : String(err)}]` }], createdAt: new Date() }]);
+      setMessages([...withUser, { id: assistantMsgId, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Error: ${err instanceof Error ? err.message : String(err)}]` }], createdAt: new Date() }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleEdgeSend() {
+    const text = input.trim();
+    if (!text && !pendingImage) return;
+    setInput("");
+    const img = pendingImage;
+    setPendingImage(null);
+
+    // Build text-only history from current messages (safe for all message types)
+    const historyForApi = messages
+      .filter(m => m.role !== "system")
+      .map(m => ({ role: m.role, content: getEdgeMessageText(m) }))
+      .filter(m => m.content.trim() !== "");
+
+    if (img) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const withUser: any[] = [...messages, {
+        id: `user_${Date.now()}`, role: "user",
+        parts: [
+          ...(text ? [{ type: "text", text }] : []),
+          { type: "file", mediaType: img.mimeType, url: img.preview ?? "", fileName: img.fileName },
+        ],
+        createdAt: new Date(),
+      }];
+      setMessages(withUser);
+      await streamEdgeResponse(withUser, historyForApi, { base64: img.base64, mimeType: img.mimeType, text: text || undefined });
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const withUser: any[] = [...messages, {
+        id: `user_${Date.now()}`, role: "user",
+        parts: [{ type: "text", text }],
+        createdAt: new Date(),
+      }];
+      setMessages(withUser);
+      const fullHistory = [...historyForApi, { role: "user", content: text }];
+      await streamEdgeResponse(withUser, fullHistory);
     }
   }
 
@@ -1665,9 +1661,11 @@ function EdgeView() {
     const moodStr = selectedMood != null
       ? `My energy/mood today: ${selectedMood}/10 — ${moodLabel(selectedMood)}.`
       : "No mood check-in this session.";
-    await sendMessage({
-      text: `[Session start. ${moodStr} Open this session based on what you know about me and where we left off. Keep it direct.]`,
-    });
+    const startText = `[Session start. ${moodStr} Open this session based on what you know about me and where we left off. Keep it direct.]`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const withUser: any[] = [{ id: `user_start_${Date.now()}`, role: "user", parts: [{ type: "text", text: startText }], createdAt: new Date() }];
+    setMessages(withUser);
+    await streamEdgeResponse(withUser, [{ role: "user", content: startText }]);
   }
 
   async function endSession() {
