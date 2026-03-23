@@ -202,6 +202,24 @@ export async function saveEdgeSession(session: Omit<EdgeSession, "id" | "created
   return id;
 }
 
+export async function saveEdgeTranscript(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.set(`edge:transcript:${sessionId}`, JSON.stringify(messages));
+}
+
+export async function getEdgeTranscript(sessionId: string): Promise<Array<{ role: string; content: string }> | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const raw = await redis.get(`edge:transcript:${sessionId}`) as string | null;
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export async function getEdgeSessions(limit = 20): Promise<EdgeSession[]> {
   const redis = getRedis();
   if (!redis) return [];

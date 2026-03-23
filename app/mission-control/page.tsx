@@ -1404,10 +1404,19 @@ function moodLabel(mood: number) {
 }
 
 function getEdgeMessageText(message: UIMessage): string {
-  return message.parts
-    .filter((p): p is { type: "text"; text: string } => p.type === "text")
-    .map((p) => p.text)
-    .join("\n\n");
+  // Handle AI SDK v5 parts array
+  if (Array.isArray(message.parts) && message.parts.length > 0) {
+    const fromParts = message.parts
+      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("\n\n");
+    if (fromParts) return fromParts;
+  }
+  // Fallback: content may be a plain string (e.g. from sessionStorage restore of older format)
+  if (typeof (message as unknown as { content: unknown }).content === "string") {
+    return (message as unknown as { content: string }).content;
+  }
+  return "";
 }
 
 function EdgeView() {
@@ -1430,9 +1439,17 @@ function EdgeView() {
   const [sessionStart] = React.useState(Date.now());
   const [elapsed, setElapsed] = React.useState(0);
   const [todayTruth] = React.useState(() => EDGE_TRUTHS[Math.floor(Date.now() / 86400000) % EDGE_TRUTHS.length]);
-  const [historyExpanded, setHistoryExpanded] = React.useState(false);
+  const [historyExpanded, setHistoryExpanded] = React.useState(true);
+  const [leftPanelOpen, setLeftPanelOpen] = React.useState(true);
+  const [endError, setEndError] = React.useState<string | null>(null);
+  const [viewingSessionId, setViewingSessionId] = React.useState<string | null>(null);
+  const [viewingSession, setViewingSession] = React.useState<EdgeSessionData | null>(null);
+  const [viewingTranscript, setViewingTranscript] = React.useState<Array<{ role: string; content: string }> | null>(null);
+  const [transcriptLoading, setTranscriptLoading] = React.useState(false);
+  const [pendingImage, setPendingImage] = React.useState<{ preview: string; dataUrl: string; mimeType: string } | null>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Load profile and sessions
   React.useEffect(() => {
@@ -1502,6 +1519,53 @@ function EdgeView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function resizeImage(dataUrl: string, maxPx = 1200): Promise<{ dataUrl: string; mimeType: string }> {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.82), mimeType: "image/jpeg" });
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const { dataUrl, mimeType } = await resizeImage(reader.result as string);
+      setPendingImage({ preview: dataUrl, dataUrl, mimeType });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleEdgeSend() {
+    const text = input.trim();
+    if (!text && !pendingImage) return;
+    setInput("");
+    const img = pendingImage;
+    setPendingImage(null);
+
+    if (img) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (sendMessage as any)({
+        parts: [
+          ...(text ? [{ type: "text", text }] : []),
+          { type: "file", mediaType: img.mimeType, url: img.dataUrl },
+        ],
+      });
+    } else {
+      await sendMessage({ text });
+    }
+  }
+
   async function startSession(selectedMood: number) {
     setMood(selectedMood);
     setSessionStarted(true);
@@ -1513,17 +1577,24 @@ function EdgeView() {
   async function endSession() {
     if (messages.length < 2 || sessionEnding) return;
     setSessionEnding(true);
+    setEndError(null);
     // Flatten UIMessage parts to a simple {role, content} format for the summarise API
     const flatMessages = messages.map(m => ({
       role: m.role,
       content: getEdgeMessageText(m),
     }));
     try {
-      await fetch("/api/edge/summarise", {
+      const res = await fetch("/api/edge/summarise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: flatMessages, mood }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        setEndError((errData as { error?: string }).error || `Save failed (${res.status})`);
+        setSessionEnding(false);
+        return;
+      }
       setSessionEnded(true);
       sessionStorage.removeItem("edge_session_messages");
       // Reload profile
@@ -1531,10 +1602,52 @@ function EdgeView() {
         setProfile(d.profile);
         setSessions(d.sessions ?? []);
       }).catch(() => {});
-    } catch {
+    } catch (e) {
+      setEndError(String(e).slice(0, 120));
       setSessionEnding(false);
+      return;
     }
     setSessionEnding(false);
+  }
+
+  async function loadSessionTranscript(session: EdgeSessionData) {
+    if (viewingSessionId === session.id) {
+      setViewingSessionId(null);
+      setViewingSession(null);
+      setViewingTranscript(null);
+      return;
+    }
+    setTranscriptLoading(true);
+    setViewingSessionId(session.id);
+    setViewingSession(session);
+    try {
+      const res = await fetch(`/api/edge/session/${session.id}`);
+      const data = await res.json();
+      setViewingTranscript(data.transcript ?? null);
+    } catch {
+      setViewingTranscript(null);
+    }
+    setTranscriptLoading(false);
+  }
+
+  function continueFromSession() {
+    if (!viewingTranscript) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reconstructed: any[] = viewingTranscript.map((m, i) => ({
+      id: `resumed_${i}`,
+      role: m.role,
+      parts: [{ type: "text", text: m.content }],
+      createdAt: new Date(),
+    }));
+    setMessages(reconstructed);
+    setSessionStarted(true);
+    setSessionEnded(false);
+    setMood(viewingSession?.mood ?? null);
+    setViewingSessionId(null);
+    setViewingSession(null);
+    setViewingTranscript(null);
+    sessionStorage.setItem("edge_session_messages", JSON.stringify(reconstructed));
+    setTimeout(() => inputRef.current?.focus(), 100);
   }
 
   const commitments = profile?.commitments ? profile.commitments.split(",").map(s => s.trim()).filter(Boolean) : [];
@@ -1544,7 +1657,7 @@ function EdgeView() {
     <div className="flex h-screen overflow-hidden">
 
       {/* Left Panel */}
-      <div className="w-[260px] shrink-0 border-r border-saabai-border flex flex-col overflow-y-auto">
+      {leftPanelOpen && <div className="w-[260px] shrink-0 border-r border-saabai-border hidden md:flex flex-col overflow-y-auto">
 
         {/* Today's Truth */}
         <div className="p-4 border-b border-saabai-border">
@@ -1618,22 +1731,29 @@ function EdgeView() {
           </button>
           {historyExpanded && (
             <div className="flex flex-col gap-2">
-              {sessions.slice(0, 8).map((s) => (
-                <div key={s.id} className="bg-saabai-bg rounded-lg p-2.5 border border-saabai-border">
+              {sessions.slice(0, 20).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => loadSessionTranscript(s)}
+                  className={`w-full text-left rounded-lg p-2.5 border transition-all hover:border-saabai-teal/40 ${viewingSessionId === s.id ? "bg-saabai-teal/5 border-saabai-teal/40" : "bg-saabai-bg border-saabai-border"}`}
+                >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-saabai-text-dim">{s.createdAt.split("T")[0]}</span>
-                    {s.mood && (
-                      <div className="flex items-center gap-1">
-                        <div className={`w-1.5 h-1.5 rounded-full ${moodColor(s.mood)}`} />
-                        <span className="text-[9px] text-saabai-text-dim">{s.mood}/10</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {s.mood && (
+                        <>
+                          <div className={`w-1.5 h-1.5 rounded-full ${moodColor(s.mood)}`} />
+                          <span className="text-[9px] text-saabai-text-dim">{s.mood}/10</span>
+                        </>
+                      )}
+                      <span className="text-[9px] text-saabai-teal/60">{viewingSessionId === s.id ? "▸" : "↗"}</span>
+                    </div>
                   </div>
                   {s.summary && <p className="text-[10px] text-saabai-text-muted leading-relaxed">{s.summary}</p>}
                   {s.newCommitments && (
                     <p className="text-[9px] text-saabai-teal mt-1">↳ {s.newCommitments}</p>
                   )}
-                </div>
+                </button>
               ))}
               {sessions.length === 0 && (
                 <p className="text-[10px] text-saabai-text-dim">No sessions recorded yet.</p>
@@ -1677,13 +1797,13 @@ function EdgeView() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-saabai-border shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-saabai-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -1695,7 +1815,7 @@ function EdgeView() {
               <p className="text-[10px] text-saabai-text-dim mt-0.5">Performance Coach · Truth over comfort</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {sessionStarted && !sessionEnded && (
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -1703,7 +1823,7 @@ function EdgeView() {
               </div>
             )}
             {mood !== null && (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-500/30 text-green-400 bg-green-500/5" : mood >= 5 ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-red-500/30 text-red-400 bg-red-500/5"}`}>
+              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-500/30 text-green-400 bg-green-500/5" : mood >= 5 ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-red-500/30 text-red-400 bg-red-500/5"}`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${moodColor(mood)}`} />
                 {mood}/10 · {moodLabel(mood)}
               </div>
@@ -1715,20 +1835,110 @@ function EdgeView() {
               {voiceEnabled ? "Voice On" : "Voice Off"}
             </button>
             {sessionStarted && !sessionEnded && messages.length > 2 && (
-              <button
-                onClick={endSession}
-                disabled={sessionEnding}
-                className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-border text-saabai-text-dim hover:border-red-500/30 hover:text-red-400 transition-colors disabled:opacity-40"
-              >
-                {sessionEnding ? "Saving…" : "End Session"}
-              </button>
+              <div className="flex items-center gap-2">
+                {endError && (
+                  <span className="text-[10px] text-red-400 max-w-[180px] truncate" title={endError}>{endError}</span>
+                )}
+                <button
+                  onClick={endSession}
+                  disabled={sessionEnding}
+                  className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-border text-saabai-text-dim hover:border-red-500/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                >
+                  {sessionEnding ? "Saving…" : "End Session"}
+                </button>
+              </div>
             )}
+            {/* Left panel toggle — desktop only */}
+            <button
+              onClick={() => setLeftPanelOpen(p => !p)}
+              title={leftPanelOpen ? "Hide panel" : "Show panel"}
+              className="hidden md:flex w-7 h-7 items-center justify-center rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                {leftPanelOpen
+                  ? <path d="M3 1v11M7 4l-3 3 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  : <path d="M3 1v11M6 4l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                }
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Messages or Mood Check-in */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {sessionEnded ? (
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
+          {viewingSessionId ? (
+            <div className="flex flex-col h-full">
+              {/* Session replay header */}
+              <div className="flex items-center justify-between mb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => { setViewingSessionId(null); setViewingSession(null); setViewingTranscript(null); }}
+                    className="flex items-center gap-1.5 text-[11px] text-saabai-text-dim hover:text-saabai-text transition-colors"
+                  >
+                    ← Back
+                  </button>
+                  <div className="h-3 w-px bg-saabai-border" />
+                  <p className="text-[11px] text-saabai-text-dim">
+                    Session · {viewingSession?.createdAt?.split("T")[0]}
+                    {viewingSession?.mood ? ` · ${viewingSession.mood}/10 ${moodLabel(viewingSession.mood)}` : ""}
+                    {viewingSession?.messageCount ? ` · ${viewingSession.messageCount} messages` : ""}
+                  </p>
+                </div>
+                {!sessionStarted && viewingTranscript && viewingTranscript.length > 0 && (
+                  <button
+                    onClick={continueFromSession}
+                    className="px-3 py-1.5 rounded-lg text-[11px] border border-saabai-teal/30 text-saabai-teal bg-saabai-teal/5 hover:bg-saabai-teal/10 transition-colors"
+                  >
+                    Continue this thread →
+                  </button>
+                )}
+              </div>
+              {/* Transcript */}
+              <div className="flex-1 overflow-y-auto">
+                {transcriptLoading ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="flex gap-1">
+                      {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-saabai-teal/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />)}
+                    </div>
+                  </div>
+                ) : viewingTranscript && viewingTranscript.length > 0 ? (
+                  <div className="flex flex-col gap-4 max-w-2xl pb-6">
+                    {viewingTranscript.filter(m => !m.content.startsWith("[Session start.")).map((m, i) => {
+                      const isEdge = m.role === "assistant";
+                      return (
+                        <div key={i} className={`flex ${isEdge ? "items-start gap-3" : "justify-end"}`}>
+                          {isEdge && (
+                            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M6 1L7.5 4H11L8.5 5.8L9.5 9L6 7L2.5 9L3.5 5.8L1 4H4.5L6 1Z" stroke="var(--saabai-teal)" strokeWidth="1" strokeLinejoin="round" fill="none" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${isEdge ? "bg-saabai-surface border border-saabai-border text-saabai-text" : "bg-saabai-teal/10 border border-saabai-teal/20 text-saabai-text ml-auto"}`}>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {!sessionStarted && (
+                      <div className="flex justify-center pt-4">
+                        <button
+                          onClick={continueFromSession}
+                          className="px-5 py-2.5 rounded-xl text-[11px] border border-saabai-teal/30 text-saabai-teal bg-saabai-teal/5 hover:bg-saabai-teal/10 transition-colors font-medium"
+                        >
+                          Continue this thread →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-saabai-text-dim mt-8 text-center">
+                    Transcript not available — only sessions saved after this update will have full replays.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : sessionEnded ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-sm">
                 <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
@@ -1799,8 +2009,13 @@ function EdgeView() {
             <div className="flex flex-col gap-4 max-w-2xl">
               {messages.map((m) => {
                 const content = getEdgeMessageText(m);
-                if (!content || content.startsWith("[Session start.")) return null;
+                if (!content && !m.parts?.some((p: {type:string}) => p.type === "file")) return null;
+                if (content.startsWith("[Session start.")) return null;
                 const isEdge = m.role === "assistant";
+                // Extract image parts
+                const imageParts = Array.isArray(m.parts)
+                  ? m.parts.filter((p: {type:string}) => p.type === "file")
+                  : [];
                 return (
                   <div key={m.id} className={`flex ${isEdge ? "items-start gap-3" : "justify-end"}`}>
                     {isEdge && (
@@ -1810,8 +2025,18 @@ function EdgeView() {
                         </svg>
                       </div>
                     )}
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${isEdge ? "bg-saabai-surface border border-saabai-border text-saabai-text" : "bg-saabai-teal/10 border border-saabai-teal/20 text-saabai-text ml-auto"}`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+                    <div className={`max-w-[80%] flex flex-col gap-1.5 ${isEdge ? "" : "items-end ml-auto"}`}>
+                      {imageParts.map((p: {type:string; url?: string}, i: number) => (
+                        <div key={i} className="rounded-xl overflow-hidden border border-saabai-teal/20 max-w-[220px]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={(p as {url?: string}).url} alt="Attached image" className="w-full block" />
+                        </div>
+                      ))}
+                      {content && (
+                        <div className={`rounded-2xl px-4 py-3 ${isEdge ? "bg-saabai-surface border border-saabai-border text-saabai-text" : "bg-saabai-teal/10 border border-saabai-teal/20 text-saabai-text"}`}>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1838,45 +2063,80 @@ function EdgeView() {
         </div>
 
         {/* Input */}
-        {sessionStarted && !sessionEnded && (
-          <div className="px-6 py-4 border-t border-saabai-border shrink-0">
-            <div className="flex items-end gap-3">
+        {sessionStarted && !sessionEnded && !viewingSessionId && (
+          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-saabai-border shrink-0">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+            {/* Image preview */}
+            {pendingImage && (
+              <div className="mb-2 flex items-center gap-2">
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-saabai-teal/30 shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={pendingImage.preview} alt="Attached" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setPendingImage(null)}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px] leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+                <p className="text-[10px] text-saabai-text-dim">Image attached — add a message or send as-is</p>
+              </div>
+            )}
+            <div className="flex items-end gap-2">
+              {/* Image upload button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                title="Attach image"
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                style={{
+                  background: pendingImage ? "rgba(98,197,209,0.15)" : "rgba(255,255,255,0.04)",
+                  border: pendingImage ? "1px solid rgba(98,197,209,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                  color: pendingImage ? "var(--saabai-teal)" : "rgba(255,255,255,0.3)",
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <rect x="1" y="3" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <circle cx="5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M8.5 7l2.5 3H5l1.5-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10.5 1.5v3M9 3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+              </button>
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    if (input.trim() && !isLoading) {
-                      const text = input.trim();
-                      setInput("");
-                      sendMessage({ text });
-                    }
+                    if (!isLoading) handleEdgeSend();
                   }
                 }}
                 ref={inputRef}
                 placeholder="Say what's on your mind…"
                 rows={2}
                 disabled={isLoading}
-                className="flex-1 bg-saabai-surface border border-saabai-border rounded-xl px-4 py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
+                className="flex-1 bg-saabai-surface border border-saabai-border rounded-xl px-3 py-2.5 md:px-4 md:py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
               />
               <button
                 type="button"
-                onClick={() => {
-                  if (input.trim() && !isLoading) {
-                    const text = input.trim();
-                    setInput("");
-                    sendMessage({ text });
-                  }
-                }}
-                disabled={isLoading || !input.trim()}
-                className="px-4 py-3 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright disabled:opacity-40 transition-colors shrink-0"
+                onClick={() => { if (!isLoading) handleEdgeSend(); }}
+                disabled={isLoading || (!input.trim() && !pendingImage)}
+                className="px-3 md:px-4 py-3 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright disabled:opacity-40 transition-colors shrink-0"
                 style={{ boxShadow: "0 0 16px rgba(98,197,209,0.15)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l12-6-5 6 5 6-12-6z" fill="currentColor" /></svg>
               </button>
             </div>
-            <p className="text-[10px] text-saabai-text-dim mt-2 text-center">Enter to send · Shift+Enter for new line · End session when done to save to Edge&apos;s memory</p>
+            <p className="text-[10px] text-saabai-text-dim mt-2 text-center hidden md:block">Enter to send · Shift+Enter for new line · End session when done to save to Edge&apos;s memory</p>
           </div>
         )}
       </div>
@@ -1891,15 +2151,24 @@ type Tab = "dashboard" | "agents" | "growth" | "tools" | "builder" | "settings" 
 export default function MissionControl() {
   const [authed, setAuthed] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [navCollapsed, setNavCollapsed] = useState(false);
   const [tools, setTools] = useState<Tool[]>(DEFAULT_TOOLS);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
   const [draftTool, setDraftTool] = useState<Partial<Tool>>(BLANK_TOOL);
   const [saved, setSaved] = useState(false);
 
-  // Check session
+  // Check session + default to Edge on mobile + restore nav state
   useEffect(() => {
     if (sessionStorage.getItem(MC_KEY) === "1") setAuthed(true);
+    if (window.innerWidth < 768) setActiveTab("coach");
+    if (localStorage.getItem("mc_nav_collapsed") === "1") setNavCollapsed(true);
   }, []);
+
+  function toggleNav() {
+    const next = !navCollapsed;
+    setNavCollapsed(next);
+    localStorage.setItem("mc_nav_collapsed", next ? "1" : "0");
+  }
 
   // Load saved tools from localStorage
   useEffect(() => {
@@ -1990,26 +2259,30 @@ export default function MissionControl() {
   return (
     <div className="min-h-screen bg-saabai-bg text-saabai-text font-[family-name:var(--font-geist-sans)] flex">
 
-      {/* Sidebar */}
-      <aside className="w-56 shrink-0 border-r border-saabai-border flex flex-col py-6 px-4 sticky top-0 h-screen">
-        <div className="flex flex-col gap-2 px-2 mb-6">
-          <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
-            <Image
-              src="/brand/saabai-logo.png"
-              alt="Saabai.ai"
-              width={120}
-              height={32}
-              className="opacity-90 hover:opacity-100 transition-opacity"
-            />
-          </a>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
-            <p className="text-[10px] text-saabai-text-dim font-medium">Mission Control</p>
-          </div>
+      {/* Sidebar — hidden on mobile, collapsible on desktop */}
+      <aside className={`shrink-0 border-r border-saabai-border hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
+
+        {/* Logo / header */}
+        <div className={`mb-5 ${navCollapsed ? "flex justify-center" : "px-2"}`}>
+          {navCollapsed ? (
+            <div className="w-6 h-6 rounded-md bg-saabai-teal/20 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal" />
+            </div>
+          ) : (
+            <>
+              <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
+                <Image src="/brand/saabai-logo.png" alt="Saabai.ai" width={110} height={30} className="opacity-90 hover:opacity-100 transition-opacity" />
+              </a>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
+                <p className="text-[10px] text-saabai-text-dim font-medium">Mission Control</p>
+              </div>
+            </>
+          )}
         </div>
 
-        <nav className="flex flex-col gap-1 flex-1">
-          <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mb-1">Workspace</p>
+        <nav className="flex flex-col gap-0.5 flex-1">
+          {!navCollapsed && <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mb-1">Workspace</p>}
           {(["dashboard", "agents", "growth", "coach"] as const).map((tab) => {
             const icons: Record<string, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
@@ -2023,16 +2296,18 @@ export default function MissionControl() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${active ? "bg-saabai-teal/10 text-saabai-teal border border-saabai-teal/20" : "text-saabai-text-muted hover:text-saabai-text hover:bg-white/5"}`}
+                title={navCollapsed ? labels[tab] : undefined}
+                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-saabai-teal/10 text-saabai-teal border border-saabai-teal/20" : "text-saabai-text-muted hover:text-saabai-text hover:bg-white/5"}`}
               >
                 {icons[tab]}
-                <span>{labels[tab]}</span>
-                {tab === "agents" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
+                {!navCollapsed && <span>{labels[tab]}</span>}
+                {!navCollapsed && tab === "agents" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
               </button>
             );
           })}
 
-          <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mt-4 mb-1">Build</p>
+          {!navCollapsed && <p className="text-[9px] font-semibold text-saabai-text-dim uppercase tracking-widest px-3 mt-4 mb-1">Build</p>}
+          {navCollapsed && <div className="my-2 h-px bg-saabai-border mx-1" />}
           {(["tools", "builder", "settings"] as Tab[]).map((tab) => {
             const icons: Record<string, React.ReactElement> = {
               tools: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L9 5H13L10 7.5L11 12L7 9.5L3 12L4 7.5L1 5H5L7 1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></svg>,
@@ -2045,23 +2320,36 @@ export default function MissionControl() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${active ? "bg-saabai-teal/10 text-saabai-teal border border-saabai-teal/20" : "text-saabai-text-muted hover:text-saabai-text hover:bg-white/5"}`}
+                title={navCollapsed ? labels[tab] : undefined}
+                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-saabai-teal/10 text-saabai-teal border border-saabai-teal/20" : "text-saabai-text-muted hover:text-saabai-text hover:bg-white/5"}`}
               >
                 {icons[tab]}
-                <span>{labels[tab]}</span>
-                {tab === "tools" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{tools.length}</span>}
+                {!navCollapsed && <span>{labels[tab]}</span>}
+                {!navCollapsed && tab === "tools" && <span className="ml-auto text-[10px] bg-saabai-teal/10 text-saabai-teal rounded-full px-1.5 py-0.5">{tools.length}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div className="pt-4 border-t border-saabai-border">
+        <div className={`pt-3 border-t border-saabai-border flex flex-col gap-2 ${navCollapsed ? "items-center" : ""}`}>
+          {!navCollapsed && (
+            <button onClick={startNewTool} className="w-full flex items-center justify-center gap-2 py-2 bg-saabai-teal text-saabai-bg rounded-lg text-xs font-semibold hover:bg-saabai-teal-bright transition-colors">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              New Tool
+            </button>
+          )}
+          {/* Collapse toggle */}
           <button
-            onClick={startNewTool}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-saabai-teal text-saabai-bg rounded-lg text-xs font-semibold hover:bg-saabai-teal-bright transition-colors"
+            onClick={toggleNav}
+            title={navCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors mx-auto"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-            New Tool
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              {navCollapsed
+                ? <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                : <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              }
+            </svg>
           </button>
         </div>
       </aside>

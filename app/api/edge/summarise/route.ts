@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { saveEdgeSession, saveEdgeProfile, getEdgeProfile } from "../../../../lib/redis";
+import { saveEdgeSession, saveEdgeProfile, getEdgeProfile, saveEdgeTranscript } from "../../../../lib/redis";
 
 export const runtime = "edge";
 export const maxDuration = 60;
@@ -65,20 +65,29 @@ Return ONLY valid JSON. No markdown. No explanation.`,
   };
 
   try {
-    parsed = JSON.parse(text);
+    // Strip markdown code fences if Claude wraps the JSON
+    let jsonText = text.trim();
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+    }
+    parsed = JSON.parse(jsonText);
   } catch {
-    return Response.json({ error: "Failed to parse summary" }, { status: 500 });
+    return Response.json({ error: "Failed to parse summary", raw: text.slice(0, 200) }, { status: 500 });
   }
 
-  // Save session
+  // Save session + full transcript
+  const nonSystemMessages = messages.filter((m: { role: string }) => m.role !== "system");
   const sessionId = await saveEdgeSession({
     mood,
     summary: parsed.summary,
     topics: parsed.topics,
     insights: parsed.insights,
     newCommitments: parsed.newCommitments,
-    messageCount: messages.filter((m: { role: string }) => m.role !== "system").length,
+    messageCount: nonSystemMessages.length,
   });
+  if (sessionId) {
+    await saveEdgeTranscript(sessionId, nonSystemMessages);
+  }
 
   // Update profile
   if (parsed.profileUpdates) {
