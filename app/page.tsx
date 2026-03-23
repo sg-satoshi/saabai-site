@@ -349,6 +349,88 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Before / After ──────────────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          What Changes
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
+          What automation actually looks like in practice.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-20 leading-relaxed">
+          Not theory. Specific workflows — before and after a well-built system is in place.
+        </p>
+
+        <div className="flex flex-col gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.35), 0 0 32px rgba(98,197,209,0.18)" }}>
+          {[
+            {
+              scenario: "New client enquiry — after hours",
+              before: "Partner checks emails at 8am. Client enquiry from the night before. Sends a manual reply, attaches intake form, waits for it back.",
+              after: "Enquiry triggers automated response within 2 minutes. Client receives personalised acknowledgement, structured intake form, and calendar link. Partner opens their inbox to a completed intake and a booked appointment.",
+              recovered: "2–3 hrs/week",
+            },
+            {
+              scenario: "Matter status updates — law firm",
+              before: "Fee earner drafts individual status update emails each week. Checks matter notes, writes update, sends to each client. Repeated across 20+ active matters.",
+              after: "Status updates generated automatically from practice management data and sent on schedule. Fee earner reviews exceptions only.",
+              recovered: "4–6 hrs/week",
+            },
+            {
+              scenario: "Document chasing — accounting firm",
+              before: "Admin staff manually follow up clients for missing documents by phone and email. Chasing continues until lodgement deadline. Partner escalates the stragglers.",
+              after: "Automated sequence sends reminders at set intervals, escalating in tone. Exceptions flagged to admin only when the sequence fails to get a response.",
+              recovered: "5–8 hrs/week",
+            },
+            {
+              scenario: "Annual review scheduling — financial advisory",
+              before: "Practice coordinator emails clients individually to schedule annual reviews. Back-and-forth to find a time. Pre-meeting data collected manually.",
+              after: "Review invitations sent automatically at the right intervals. Clients self-schedule via calendar link. Pre-meeting questionnaire collected and summarised before the appointment.",
+              recovered: "3–5 hrs/week",
+            },
+          ].map(({ scenario, before, after, recovered }) => (
+            <div key={scenario} className="bg-saabai-surface p-10 md:p-12 group hover:bg-saabai-surface-raised transition-colors relative">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-border to-transparent" />
+              <div className="flex flex-col md:flex-row md:items-start gap-10">
+                {/* Label */}
+                <div className="md:w-48 shrink-0">
+                  <p className="text-[11px] font-medium tracking-[0.15em] text-saabai-text-dim uppercase mb-2">Scenario</p>
+                  <p className="text-sm font-semibold text-saabai-text leading-snug">{scenario}</p>
+                  <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.12em] text-saabai-teal uppercase">
+                    <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
+                    {recovered} recovered
+                  </div>
+                </div>
+
+                {/* Before / After */}
+                <div className="flex-1 grid md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-[10px] font-bold tracking-[0.2em] text-saabai-text-dim uppercase mb-3">Before</p>
+                    <p className="text-sm text-saabai-text-muted leading-relaxed">{before}</p>
+                  </div>
+                  <div className="relative">
+                    <div className="hidden md:block absolute -left-3 top-0 bottom-0 w-px bg-saabai-teal/20" />
+                    <p className="text-[10px] font-bold tracking-[0.2em] text-saabai-teal uppercase mb-3">After</p>
+                    <p className="text-sm text-saabai-text-muted leading-relaxed">{after}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <a
+            href="https://calendly.com/shanegoldberg/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors group"
+          >
+            See what this could look like for your firm
+            <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
+          </a>
+        </div>
+      </section>
+
       <CalculatorSection />
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}

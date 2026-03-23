@@ -6,6 +6,7 @@ const footerLinks = [
   { label: "Process", href: "/process" },
   { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/shanegoldberg-ai" },
 ];
 
 export default function Footer() {
