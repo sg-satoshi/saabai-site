@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     }
     userContent.push({
       type: "image",
-      image: `data:${imageAttachment.mimeType};base64,${imageAttachment.base64}`,
+      image: imageAttachment.base64,
       mediaType: imageAttachment.mimeType,
     });
 
