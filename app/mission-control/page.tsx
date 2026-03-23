@@ -2491,21 +2491,43 @@ export default function MissionControl() {
       <aside className={`shrink-0 border-r border-saabai-border hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
 
         {/* Logo / header */}
-        <div className={`mb-5 ${navCollapsed ? "flex justify-center" : "px-2"}`}>
+        <div className={`mb-5 ${navCollapsed ? "flex flex-col items-center gap-3" : "px-2"}`}>
           {navCollapsed ? (
-            <div className="w-6 h-6 rounded-md bg-saabai-teal/20 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal" />
-            </div>
-          ) : (
             <>
-              <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
-                <Image src="/brand/saabai-logo.png" alt="Saabai.ai" width={110} height={30} className="opacity-90 hover:opacity-100 transition-opacity" />
-              </a>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
-                <p className="text-[10px] text-saabai-text-dim font-medium">Mission Control</p>
+              <div className="w-6 h-6 rounded-md bg-saabai-teal/20 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal" />
               </div>
+              <button
+                onClick={toggleNav}
+                title="Expand sidebar"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             </>
+          ) : (
+            <div className="flex items-start justify-between">
+              <div>
+                <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
+                  <Image src="/brand/saabai-logo.png" alt="Saabai.ai" width={110} height={30} className="opacity-90 hover:opacity-100 transition-opacity" />
+                </a>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
+                  <p className="text-[10px] text-saabai-text-dim font-medium">Mission Control</p>
+                </div>
+              </div>
+              <button
+                onClick={toggleNav}
+                title="Collapse sidebar"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors mt-0.5"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
           )}
         </div>
 
@@ -2566,19 +2588,6 @@ export default function MissionControl() {
               New Tool
             </button>
           )}
-          {/* Collapse toggle */}
-          <button
-            onClick={toggleNav}
-            title={navCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors mx-auto"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              {navCollapsed
-                ? <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                : <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-              }
-            </svg>
-          </button>
         </div>
       </aside>
 
