@@ -1584,10 +1584,11 @@ function EdgeView() {
     ];
     setMessages(withUser);
 
-    // Build flat history for API (text only — image is sent separately)
+    // Build flat history for API (text only — image is sent separately, skip empty-content messages)
     const historyForApi = messages
       .filter(m => m.role !== "system")
-      .map(m => ({ role: m.role, content: getEdgeMessageText(m) }));
+      .map(m => ({ role: m.role, content: getEdgeMessageText(m) }))
+      .filter(m => m.content.trim() !== "");
 
     try {
       const res = await fetch("/api/edge/chat", {
@@ -1621,23 +1622,32 @@ function EdgeView() {
 
       setMessages(withAssistant(""));
 
+      let streamError: string | null = null;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
         for (const line of chunk.split("\n")) {
-          if (line.startsWith("data: ") && line !== "data: [DONE]") {
-            try {
-              const parsed = JSON.parse(line.slice(6));
-              if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
-                fullText += parsed.delta;
-              }
-            } catch { /* ignore malformed lines */ }
-          }
+          if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
+              fullText += parsed.delta;
+            } else if (parsed.type === "error") {
+              streamError = String(parsed.error ?? parsed.message ?? "Stream error");
+            }
+          } catch { /* ignore malformed lines */ }
         }
         setMessages(withAssistant(fullText));
       }
-    } catch { /* silently fail — user can retry */ }
+      // If nothing came back, show what went wrong
+      if (!fullText) {
+        const fallback = streamError ?? "No response — image may be too large or in an unsupported format.";
+        setMessages([...withUser, { id: assistantMsgId, role: "assistant" as const, parts: [{ type: "text" as const, text: `[${fallback}]` }], createdAt: new Date() }]);
+      }
+    } catch (err) {
+      setMessages([...withUser, { id: `edge_err_${Date.now()}`, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Error: ${err instanceof Error ? err.message : String(err)}]` }], createdAt: new Date() }]);
+    }
   }
 
   async function startSession(selectedMood: number | null) {
