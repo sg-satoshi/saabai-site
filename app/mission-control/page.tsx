@@ -1619,10 +1619,12 @@ function EdgeView() {
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
         for (const line of chunk.split("\n")) {
-          if (line.startsWith("0:")) {
+          if (line.startsWith("data: ") && line !== "data: [DONE]") {
             try {
-              const parsed = JSON.parse(line.slice(2));
-              if (typeof parsed === "string") fullText += parsed;
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
+                fullText += parsed.delta;
+              }
             } catch { /* ignore malformed lines */ }
           }
         }
