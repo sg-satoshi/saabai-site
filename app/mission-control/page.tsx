@@ -1634,7 +1634,7 @@ function EdgeView() {
             if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
               fullText += parsed.delta;
             } else if (parsed.type === "error") {
-              streamError = String(parsed.error ?? parsed.message ?? "Stream error");
+              streamError = JSON.stringify(parsed).slice(0, 200);
             }
           } catch { /* ignore malformed lines */ }
         }
