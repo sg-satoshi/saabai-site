@@ -1451,7 +1451,7 @@ function EdgeView() {
   const [viewingSession, setViewingSession] = React.useState<EdgeSessionData | null>(null);
   const [viewingTranscript, setViewingTranscript] = React.useState<Array<{ role: string; content: string }> | null>(null);
   const [transcriptLoading, setTranscriptLoading] = React.useState(false);
-  const [pendingImage, setPendingImage] = React.useState<{ preview: string; dataUrl: string; mimeType: string } | null>(null);
+  const [pendingImage, setPendingImage] = React.useState<{ preview: string | null; base64: string; mimeType: string; fileName: string } | null>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -1544,11 +1544,21 @@ function EdgeView() {
     if (!file) return;
     e.target.value = "";
     const reader = new FileReader();
-    reader.onload = async () => {
-      const { dataUrl, mimeType } = await resizeImage(reader.result as string);
-      setPendingImage({ preview: dataUrl, dataUrl, mimeType });
-    };
-    reader.readAsDataURL(file);
+    if (file.type === "application/pdf") {
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const base64 = dataUrl.split(",")[1];
+        setPendingImage({ preview: null, base64, mimeType: "application/pdf", fileName: file.name });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      reader.onload = async () => {
+        const { dataUrl, mimeType } = await resizeImage(reader.result as string);
+        const base64 = dataUrl.split(",")[1];
+        setPendingImage({ preview: dataUrl, base64, mimeType, fileName: file.name });
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   async function handleEdgeSend() {
@@ -1563,9 +1573,8 @@ function EdgeView() {
       return;
     }
 
-    // Image message — bypass sendMessage (it doesn't forward file parts to the server)
-    // and make a direct streaming fetch instead.
-    const base64 = img.dataUrl.split(",")[1];
+    // File message (image or PDF) — bypass sendMessage and make a direct streaming fetch.
+    const base64 = img.base64;
 
     // Add user message to the conversation for display
     const userMsgId = `user_img_${Date.now()}`;
@@ -1577,7 +1586,7 @@ function EdgeView() {
         role: "user",
         parts: [
           ...(text ? [{ type: "text", text }] : []),
-          { type: "file", mediaType: img.mimeType, url: img.dataUrl },
+          { type: "file", mediaType: img.mimeType, url: img.preview ?? "", fileName: img.fileName },
         ],
         createdAt: new Date(),
       },
@@ -2187,8 +2196,8 @@ function EdgeView() {
                 if (!content && !m.parts?.some((p: {type:string}) => p.type === "file")) return null;
                 if (content.startsWith("[Session start.")) return null;
                 const isEdge = m.role === "assistant";
-                // Extract image parts
-                const imageParts = Array.isArray(m.parts)
+                // Extract file parts (images and PDFs)
+                const fileParts = Array.isArray(m.parts)
                   ? m.parts.filter((p: {type:string}) => p.type === "file")
                   : [];
                 return (
@@ -2201,11 +2210,22 @@ function EdgeView() {
                       </div>
                     )}
                     <div className={`max-w-[80%] flex flex-col gap-1.5 ${isEdge ? "" : "items-end ml-auto"}`}>
-                      {imageParts.map((p: {type:string; url?: string}, i: number) => (
-                        <div key={i} className="rounded-xl overflow-hidden border border-saabai-teal/20 max-w-[220px]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={(p as {url?: string}).url} alt="Attached image" className="w-full block" />
-                        </div>
+                      {fileParts.map((p: {type:string; url?: string; mediaType?: string; fileName?: string}, i: number) => (
+                        p.mediaType === "application/pdf" ? (
+                          <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-saabai-teal/20 bg-saabai-teal/5">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                              <rect x="2" y="1" width="10" height="13" rx="1.5" stroke="var(--saabai-teal)" strokeWidth="1.2"/>
+                              <path d="M9 1v4h4" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinecap="round"/>
+                              <path d="M4.5 8h5M4.5 10.5h3" stroke="var(--saabai-teal)" strokeWidth="1.1" strokeLinecap="round"/>
+                            </svg>
+                            <span className="text-[11px] text-saabai-teal">{p.fileName ?? "document.pdf"}</span>
+                          </div>
+                        ) : (
+                          <div key={i} className="rounded-xl overflow-hidden border border-saabai-teal/20 max-w-[220px]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={p.url} alt="Attached image" className="w-full block" />
+                          </div>
+                        )
                       ))}
                       {content && (
                         <div className={`rounded-2xl px-4 py-3 ${isEdge ? "bg-saabai-surface border border-saabai-border text-saabai-text" : "bg-saabai-teal/10 border border-saabai-teal/20 text-saabai-text"}`}>
@@ -2244,25 +2264,35 @@ function EdgeView() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               className="hidden"
               onChange={handleImageSelect}
             />
-            {/* Image preview */}
+            {/* File preview */}
             {pendingImage && (
               <div className="mb-2 flex items-center gap-2">
-                <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-saabai-teal/30 shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={pendingImage.preview} alt="Attached" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setPendingImage(null)}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px] leading-none"
-                  >
-                    ×
-                  </button>
-                </div>
-                <p className="text-[10px] text-saabai-text-dim">Image attached — add a message or send as-is</p>
+                {pendingImage.preview ? (
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-saabai-teal/30 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={pendingImage.preview} alt="Attached" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setPendingImage(null)}
+                      className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px] leading-none">×</button>
+                  </div>
+                ) : (
+                  <div className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-saabai-teal/30 bg-saabai-teal/5 shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="1" width="10" height="13" rx="1.5" stroke="var(--saabai-teal)" strokeWidth="1.2"/>
+                      <path d="M9 1v4h4" stroke="var(--saabai-teal)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <path d="M4.5 8h5M4.5 10.5h3" stroke="var(--saabai-teal)" strokeWidth="1.1" strokeLinecap="round"/>
+                    </svg>
+                    <span className="text-[11px] text-saabai-teal max-w-[140px] truncate">{pendingImage.fileName}</span>
+                    <button type="button" onClick={() => setPendingImage(null)}
+                      className="w-4 h-4 rounded-full bg-black/40 flex items-center justify-center text-white text-[10px] leading-none ml-1">×</button>
+                  </div>
+                )}
+                <p className="text-[10px] text-saabai-text-dim">
+                  {pendingImage.mimeType === "application/pdf" ? "PDF attached — add a message or send as-is" : "Image attached — add a message or send as-is"}
+                </p>
               </div>
             )}
             <div className="flex items-end gap-2">
@@ -2271,7 +2301,7 @@ function EdgeView() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                title="Attach image (or paste one)"
+                title="Attach image or PDF (or paste an image)"
                 className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-150 disabled:opacity-40 active:scale-95"
                 style={{
                   background: pendingImage
@@ -2315,7 +2345,8 @@ function EdgeView() {
                   const reader = new FileReader();
                   reader.onload = async () => {
                     const { dataUrl, mimeType } = await resizeImage(reader.result as string);
-                    setPendingImage({ preview: dataUrl, dataUrl, mimeType });
+                    const base64 = dataUrl.split(",")[1];
+                    setPendingImage({ preview: dataUrl, base64, mimeType, fileName: "pasted-image.jpg" });
                   };
                   reader.readAsDataURL(file);
                 }}

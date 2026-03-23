@@ -81,16 +81,17 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system")
       .map(m => ({ role: m.role, content: m.content || "" }));
 
-    // Build the final user message with image + optional text
-    const userContent: Array<{ type: string; text?: string; image?: string; mimeType?: string; mediaType?: string }> = [];
+    // Build the final user message with file + optional text
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userContent: any[] = [];
     if (imageAttachment.text?.trim()) {
       userContent.push({ type: "text", text: imageAttachment.text.trim() });
     }
-    userContent.push({
-      type: "image",
-      image: imageAttachment.base64,
-      mediaType: imageAttachment.mimeType,
-    });
+    if (imageAttachment.mimeType === "application/pdf") {
+      userContent.push({ type: "file", data: imageAttachment.base64, mediaType: "application/pdf" });
+    } else {
+      userContent.push({ type: "image", image: imageAttachment.base64, mediaType: imageAttachment.mimeType });
+    }
 
     coreMessages = [...history, { role: "user", content: userContent }];
   } else {
