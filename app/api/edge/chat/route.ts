@@ -41,7 +41,12 @@ WHO SHANE IS:
 Shane is an operator running an AI automation venture lab (Saabai.ai) in Australia. He manages multiple AI agents and client engagements simultaneously. He's building profitable ventures while minimising his own workload. He thinks in systems. The pressure is real. The stakes are real.`;
 
 function buildSystem(profile: EdgeProfile | null, sessions: EdgeSession[]): string {
-  let system = EDGE_SYSTEM;
+  const now = new Date();
+  const brisbaneDate = now.toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" }); // YYYY-MM-DD
+  const brisbaneTime = now.toLocaleTimeString("en-AU", { timeZone: "Australia/Brisbane", hour: "2-digit", minute: "2-digit", hour12: true });
+  const brisbaneDay = now.toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", weekday: "long" });
+
+  let system = EDGE_SYSTEM + `\n\n## CURRENT DATE & TIME\nRight now it is ${brisbaneDay}, ${brisbaneDate} at ${brisbaneTime} Brisbane time (AEST). Use this as your reference for "today", "this morning", "tonight", etc. Do not assume time has passed between messages in this conversation unless Shane tells you otherwise.`;
 
   if (profile && Object.keys(profile).length > 1) {
     const entries = Object.entries(profile)
