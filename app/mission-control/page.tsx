@@ -2332,7 +2332,7 @@ function EdgeView() {
                 className="px-3 md:px-4 py-3 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright disabled:opacity-40 transition-colors shrink-0"
                 style={{ boxShadow: "0 0 16px rgba(98,197,209,0.15)" }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l12-6-5 6 5 6-12-6z" fill="currentColor" /></svg>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8L2 2l5 6-5 6 12-6z" fill="currentColor" /></svg>
               </button>
             </div>
             <p className="text-[10px] text-saabai-text-dim mt-2 text-center hidden md:block">Enter to send · Shift+Enter for new line · End session when done to save to Edge&apos;s memory</p>
