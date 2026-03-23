@@ -1553,17 +1553,77 @@ function EdgeView() {
     const img = pendingImage;
     setPendingImage(null);
 
-    if (img) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (sendMessage as any)({
+    if (!img) {
+      await sendMessage({ text });
+      return;
+    }
+
+    // Image message — bypass sendMessage (it doesn't forward file parts to the server)
+    // and make a direct streaming fetch instead.
+    const base64 = img.dataUrl.split(",")[1];
+
+    // Add user message to the conversation for display
+    const userMsgId = `user_img_${Date.now()}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const withUser: any[] = [
+      ...messages,
+      {
+        id: userMsgId,
+        role: "user",
         parts: [
           ...(text ? [{ type: "text", text }] : []),
           { type: "file", mediaType: img.mimeType, url: img.dataUrl },
         ],
+        createdAt: new Date(),
+      },
+    ];
+    setMessages(withUser);
+
+    // Build flat history for API (text only — image is sent separately)
+    const historyForApi = messages
+      .filter(m => m.role !== "system")
+      .map(m => ({ role: m.role, content: getEdgeMessageText(m) }));
+
+    try {
+      const res = await fetch("/api/edge/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: historyForApi,
+          imageAttachment: { base64, mimeType: img.mimeType, text: text || undefined },
+        }),
       });
-    } else {
-      await sendMessage({ text });
-    }
+      if (!res.ok || !res.body) return;
+
+      // Stream the response and build the assistant message incrementally
+      const assistantMsgId = `edge_img_${Date.now()}`;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const withAssistant = (t: string): any[] => [
+        ...withUser,
+        { id: assistantMsgId, role: "assistant", parts: [{ type: "text", text: t }], createdAt: new Date() },
+      ];
+
+      setMessages(withAssistant(""));
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split("\n")) {
+          if (line.startsWith("0:")) {
+            try {
+              const parsed = JSON.parse(line.slice(2));
+              if (typeof parsed === "string") fullText += parsed;
+            } catch { /* ignore malformed lines */ }
+          }
+        }
+        setMessages(withAssistant(fullText));
+      }
+    } catch { /* silently fail — user can retry */ }
   }
 
   async function startSession(selectedMood: number) {

@@ -65,17 +65,42 @@ function buildSystem(profile: EdgeProfile | null, sessions: EdgeSession[]): stri
 }
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, imageAttachment } = await req.json();
 
   const [profile, sessions] = await Promise.all([
     getEdgeProfile(),
     getEdgeSessions(5),
   ]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let coreMessages: any[];
+
+  if (imageAttachment?.base64) {
+    // Build history from flat {role, content} messages (exclude the last user message — we'll build it with the image)
+    const history = (messages as Array<{ role: string; content: string }>)
+      .filter(m => m.role !== "system")
+      .map(m => ({ role: m.role, content: m.content || "" }));
+
+    // Build the final user message with image + optional text
+    const userContent: Array<{ type: string; text?: string; image?: string; mimeType?: string }> = [];
+    if (imageAttachment.text?.trim()) {
+      userContent.push({ type: "text", text: imageAttachment.text.trim() });
+    }
+    userContent.push({
+      type: "image",
+      image: `data:${imageAttachment.mimeType};base64,${imageAttachment.base64}`,
+      mimeType: imageAttachment.mimeType,
+    });
+
+    coreMessages = [...history, { role: "user", content: userContent }];
+  } else {
+    coreMessages = await convertToModelMessages(messages);
+  }
+
   const result = streamText({
     model: anthropic("claude-opus-4-6"),
     system: buildSystem(profile, sessions),
-    messages: await convertToModelMessages(messages),
+    messages: coreMessages,
   });
 
   return result.toUIMessageStreamResponse();
