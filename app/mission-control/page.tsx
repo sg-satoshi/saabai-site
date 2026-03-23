@@ -1403,6 +1403,10 @@ function moodLabel(mood: number) {
   return "Rough";
 }
 
+function dateBrisbane(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "Australia/Brisbane" });
+}
+
 function getEdgeMessageText(message: UIMessage): string {
   // Handle AI SDK v5 parts array
   if (Array.isArray(message.parts) && message.parts.length > 0) {
@@ -1430,6 +1434,7 @@ function EdgeView() {
   const [input, setInput] = React.useState("");
   const [profile, setProfile] = React.useState<EdgeProfileData | null>(null);
   const [sessions, setSessions] = React.useState<EdgeSessionData[]>([]);
+  const hasTodaySession = sessions.some(s => dateBrisbane(new Date(s.createdAt)) === dateBrisbane(new Date()));
   const [mood, setMood] = React.useState<number | null>(null);
   const [sessionStarted, setSessionStarted] = React.useState(false);
   const [sessionEnding, setSessionEnding] = React.useState(false);
@@ -1626,11 +1631,14 @@ function EdgeView() {
     } catch { /* silently fail — user can retry */ }
   }
 
-  async function startSession(selectedMood: number) {
+  async function startSession(selectedMood: number | null) {
     setMood(selectedMood);
     setSessionStarted(true);
+    const moodStr = selectedMood != null
+      ? `My energy/mood today: ${selectedMood}/10 — ${moodLabel(selectedMood)}.`
+      : "No mood check-in this session.";
     await sendMessage({
-      text: `[Session start. My energy/mood today: ${selectedMood}/10 — ${moodLabel(selectedMood)}. Open this session based on what you know about me and where we left off. Keep it direct.]`,
+      text: `[Session start. ${moodStr} Open this session based on what you know about me and where we left off. Keep it direct.]`,
     });
   }
 
@@ -2041,32 +2049,96 @@ function EdgeView() {
                       <path d="M10 2L13 8H19L14 11.5L16 18L10 14.5L4 18L6 11.5L1 8H7L10 2Z" stroke="var(--saabai-teal)" strokeWidth="1.3" strokeLinejoin="round" fill="none" />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-semibold text-saabai-text mb-1">Ready to work?</h2>
-                  <p className="text-sm text-saabai-text-dim">Where are you at today? Be honest.</p>
+                  {hasTodaySession ? (
+                    <>
+                      <h2 className="text-lg font-semibold text-saabai-text mb-1">Back again.</h2>
+                      <p className="text-sm text-saabai-text-dim">You&apos;ve already checked in today.</p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-lg font-semibold text-saabai-text mb-1">Ready to work?</h2>
+                      <p className="text-sm text-saabai-text-dim">Where are you at today? Be honest.</p>
+                    </>
+                  )}
                 </div>
 
-                <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-6">
-                  <p className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
-                  <div className="grid grid-cols-5 gap-2 mb-4">
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                {hasTodaySession ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <button
+                      onClick={() => startSession(null)}
+                      className="w-full py-3.5 rounded-xl text-sm font-semibold border border-saabai-teal/30 text-saabai-teal bg-saabai-teal/5 hover:bg-saabai-teal/10 transition-all"
+                    >
+                      Jump back in →
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Show the rating grid anyway
+                        const el = document.getElementById("edge-mood-grid");
+                        if (el) el.style.display = "block";
+                      }}
+                      className="text-[11px] text-saabai-text-dim hover:text-saabai-text transition-colors"
+                    >
+                      Rate your mood anyway
+                    </button>
+                    <div id="edge-mood-grid" style={{ display: "none" }} className="w-full">
+                      <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-6 mt-2">
+                        <p className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
+                        <div className="grid grid-cols-5 gap-2 mb-4">
+                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                            <button
+                              key={n}
+                              onClick={() => startSession(n)}
+                              className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
+                                n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
+                                : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
+                                : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-saabai-text-dim">
+                          <span>Running on empty</span>
+                          <span>Locked in</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-6">
+                      <p className="text-[11px] font-semibold text-saabai-text-dim uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
+                      <div className="grid grid-cols-5 gap-2 mb-4">
+                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                          <button
+                            key={n}
+                            onClick={() => startSession(n)}
+                            className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
+                              n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
+                              : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
+                              : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-[10px] text-saabai-text-dim">
+                        <span>Running on empty</span>
+                        <span>Locked in</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-center">
                       <button
-                        key={n}
-                        onClick={() => startSession(n)}
-                        className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
-                          n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
-                          : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
-                          : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
-                        }`}
+                        onClick={() => startSession(null)}
+                        className="text-[11px] text-saabai-text-dim hover:text-saabai-text transition-colors"
                       >
-                        {n}
+                        Skip, just chat →
                       </button>
-                    ))}
-                  </div>
-                  <div className="flex justify-between text-[10px] text-saabai-text-dim">
-                    <span>Running on empty</span>
-                    <span>Locked in</span>
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
 
                 {sessions.length > 0 && (
                   <div className="mt-4 text-center">
