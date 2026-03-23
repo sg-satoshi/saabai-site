@@ -2091,25 +2091,35 @@ function EdgeView() {
               </div>
             )}
             <div className="flex items-end gap-2">
-              {/* Image upload button */}
+              {/* + attach button */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                title="Attach image"
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                title="Attach image (or paste one)"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-150 disabled:opacity-40 active:scale-95"
                 style={{
-                  background: pendingImage ? "rgba(98,197,209,0.15)" : "rgba(255,255,255,0.04)",
-                  border: pendingImage ? "1px solid rgba(98,197,209,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                  color: pendingImage ? "var(--saabai-teal)" : "rgba(255,255,255,0.3)",
+                  background: pendingImage
+                    ? "rgba(98,197,209,0.18)"
+                    : "linear-gradient(135deg,rgba(98,197,209,0.12),rgba(99,102,241,0.10))",
+                  border: pendingImage
+                    ? "1.5px solid rgba(98,197,209,0.55)"
+                    : "1.5px solid rgba(98,197,209,0.25)",
+                  color: pendingImage ? "var(--saabai-teal)" : "rgba(98,197,209,0.7)",
+                  boxShadow: pendingImage ? "0 0 12px rgba(98,197,209,0.25)" : "none",
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <rect x="1" y="3" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                  <circle cx="5" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                  <path d="M8.5 7l2.5 3H5l1.5-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10.5 1.5v3M9 3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
+                {pendingImage ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="1" y="2.5" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <circle cx="4.5" cy="6.5" r="1.2" fill="currentColor"/>
+                    <path d="M8 6.5l2.5 3H3.5L5.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                )}
               </button>
               <textarea
                 value={input}
@@ -2120,8 +2130,22 @@ function EdgeView() {
                     if (!isLoading) handleEdgeSend();
                   }
                 }}
+                onPaste={async (e) => {
+                  const items = Array.from(e.clipboardData.items);
+                  const imageItem = items.find(it => it.type.startsWith("image/"));
+                  if (!imageItem) return;
+                  e.preventDefault();
+                  const file = imageItem.getAsFile();
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    const { dataUrl, mimeType } = await resizeImage(reader.result as string);
+                    setPendingImage({ preview: dataUrl, dataUrl, mimeType });
+                  };
+                  reader.readAsDataURL(file);
+                }}
                 ref={inputRef}
-                placeholder="Say what's on your mind…"
+                placeholder="Say what's on your mind… (paste a screenshot anytime)"
                 rows={2}
                 disabled={isLoading}
                 className="flex-1 bg-saabai-surface border border-saabai-border rounded-xl px-3 py-2.5 md:px-4 md:py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
