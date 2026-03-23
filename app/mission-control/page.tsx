@@ -1767,9 +1767,9 @@ function EdgeView() {
               <button
                 onClick={() => setLeftPanelOpen(false)}
                 title="Collapse panel"
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+                className="w-5 h-5 flex items-center justify-center rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
@@ -1914,9 +1914,9 @@ function EdgeView() {
             <button
               onClick={() => setLeftPanelOpen(true)}
               title="Expand panel"
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+              className="w-5 h-5 flex items-center justify-center rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                 <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
@@ -2500,9 +2500,9 @@ export default function MissionControl() {
               <button
                 onClick={toggleNav}
                 title="Expand sidebar"
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+                className="flex items-center justify-center w-5 h-5 rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
@@ -2521,9 +2521,9 @@ export default function MissionControl() {
               <button
                 onClick={toggleNav}
                 title="Collapse sidebar"
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors mt-0.5"
+                className="flex items-center justify-center w-5 h-5 rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors mt-0.5"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
