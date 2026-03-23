@@ -1598,7 +1598,14 @@ function EdgeView() {
           imageAttachment: { base64, mimeType: img.mimeType, text: text || undefined },
         }),
       });
-      if (!res.ok || !res.body) return;
+      if (!res.ok || !res.body) {
+        const errText = await res.text().catch(() => "");
+        setMessages([
+          ...withUser,
+          { id: `edge_err_${Date.now()}`, role: "assistant" as const, parts: [{ type: "text" as const, text: `[Image send failed${errText ? `: ${errText.slice(0, 120)}` : ""}]` }], createdAt: new Date() },
+        ]);
+        return;
+      }
 
       // Stream the response and build the assistant message incrementally
       const assistantMsgId = `edge_img_${Date.now()}`;
@@ -1733,13 +1740,25 @@ function EdgeView() {
     <div className="flex h-screen overflow-hidden">
 
       {/* Left Panel */}
-      {leftPanelOpen && <div className="w-[260px] shrink-0 border-r border-saabai-border hidden md:flex flex-col overflow-y-auto">
+      {leftPanelOpen
+        ? <div className="w-[260px] shrink-0 border-r border-saabai-border hidden md:flex flex-col overflow-y-auto">
 
-        {/* Today's Truth */}
-        <div className="p-4 border-b border-saabai-border">
-          <p className="text-[9px] font-semibold text-saabai-teal uppercase tracking-widest mb-2">Truth of the Day</p>
-          <p className="text-xs text-saabai-text leading-relaxed italic">&ldquo;{todayTruth}&rdquo;</p>
-        </div>
+          {/* Today's Truth */}
+          <div className="p-4 border-b border-saabai-border">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] font-semibold text-saabai-teal uppercase tracking-widest">Truth of the Day</p>
+              <button
+                onClick={() => setLeftPanelOpen(false)}
+                title="Collapse panel"
+                className="w-5 h-5 flex items-center justify-center rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M6 2L3 5l3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <p className="text-xs text-saabai-text leading-relaxed italic">&ldquo;{todayTruth}&rdquo;</p>
+          </div>
 
         {/* Edge's Current Read */}
         {profile?.rawNotes && (
@@ -1873,7 +1892,19 @@ function EdgeView() {
             </div>
           )}
         </div>
-      </div>}
+        </div>
+        : <div className="hidden md:flex w-8 shrink-0 border-r border-saabai-border flex-col items-center pt-4">
+            <button
+              onClick={() => setLeftPanelOpen(true)}
+              title="Expand panel"
+              className="w-6 h-6 flex items-center justify-center rounded text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M4 2l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+      }
 
       {/* Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -1931,19 +1962,6 @@ function EdgeView() {
                 </button>
               </div>
             )}
-            {/* Left panel toggle — desktop only */}
-            <button
-              onClick={() => setLeftPanelOpen(p => !p)}
-              title={leftPanelOpen ? "Hide panel" : "Show panel"}
-              className="hidden md:flex w-7 h-7 items-center justify-center rounded-lg text-saabai-text-dim hover:text-saabai-text hover:bg-white/5 transition-colors"
-            >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                {leftPanelOpen
-                  ? <path d="M3 1v11M7 4l-3 3 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  : <path d="M3 1v11M6 4l3 3-3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                }
-              </svg>
-            </button>
           </div>
         </div>
 

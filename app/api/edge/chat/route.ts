@@ -82,14 +82,14 @@ export async function POST(req: Request) {
       .map(m => ({ role: m.role, content: m.content || "" }));
 
     // Build the final user message with image + optional text
-    const userContent: Array<{ type: string; text?: string; image?: string; mimeType?: string }> = [];
+    const userContent: Array<{ type: string; text?: string; image?: string; mimeType?: string; mediaType?: string }> = [];
     if (imageAttachment.text?.trim()) {
       userContent.push({ type: "text", text: imageAttachment.text.trim() });
     }
     userContent.push({
       type: "image",
       image: `data:${imageAttachment.mimeType};base64,${imageAttachment.base64}`,
-      mimeType: imageAttachment.mimeType,
+      mediaType: imageAttachment.mimeType,
     });
 
     coreMessages = [...history, { role: "user", content: userContent }];
