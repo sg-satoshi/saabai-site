@@ -1,8 +1,7 @@
-import { streamText, tool } from "ai";
-import { z } from "zod";
+import { streamText, tool, jsonSchema, stepCountIs } from "ai";
 import { getModel } from "../../../lib/chat-config";
 import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
-import { searchProducts } from "../../../lib/woo-client";
+import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 
 export const maxDuration = 60;
 
@@ -20,18 +19,18 @@ TONE — this is non-negotiable:
 Bad: "Acrylic is a fantastic material that offers excellent optical clarity, UV resistance, and is available in a wide range of colours and thicknesses to suit your project needs."
 Good: "Yep, we've got acrylic in 15 thicknesses — crystal clear, weathers well, easy to cut. What size are you after?"
 
-PRICING — critical:
-- ALWAYS use searchProducts when asked about price or a specific product
-- If the product has a price in the results, say it out loud: "That's AUD $42 for a 3mm sheet" — don't send them somewhere to find it
-- If the product is cut-to-size (no fixed price), give the starting price or typical price range from your knowledge base — e.g. "Acrylic cut-to-size starts around $30–$60 depending on size and thickness" — never say "I can't give a price, use the calculator"
-- For variable products, give the range: "3mm to 25mm, starting from $X"
-- Always include a markdown link [Product name](url) so they can go straight to it
+PRICING — how it works:
+- When a customer asks about price for cut-to-size, ask for their material, color, thickness, width and height (in mm) if you don't already have them
+- Once you have all five, call searchProducts to get the product_id and variation_id, then call calculatePrice with those details and their dimensions
+- Quote the exact price back: "That'll be AUD $XX.XX for that cut." Then link to the product.
+- If they don't know their size yet, give them a rough ballpark from your knowledge base to help them decide, then nudge for dimensions
+- Never say "use the calculator" — you ARE the calculator now
 
 LINKS:
-- In text: use markdown links e.g. [our website](https://plasticonline.com.au/)
-- When speaking: say "tap the button below" or "check our site" — NEVER read out a URL, NEVER say "https" or "www" or spell out a domain name
+- In text: use markdown links e.g. [view product](url)
+- When speaking: say "tap the button below" — NEVER read out a URL, never say "https" or spell out a domain
 
-If genuinely nothing comes up, say something like "I don't have that one in front of me — tap the button below and our team can sort you out." and link to [our contact page](https://plasticonline.com.au/contact/).
+If something goes wrong with the tools, say so briefly and offer to connect them with the team via [our contact page](https://plasticonline.com.au/contact/).
 
 ---
 
@@ -39,6 +38,17 @@ If genuinely nothing comes up, say something like "I don't have that one in fron
 
 ${REX_KNOWLEDGE}
 `;
+
+type SearchInput = { query: string };
+type CalcInput = {
+  productId: number;
+  variationId: number;
+  color: string;
+  thickness: string;
+  widthMm: number;
+  heightMm: number;
+  quantity?: number;
+};
 
 export async function POST(req: Request) {
   try {
@@ -52,14 +62,36 @@ export async function POST(req: Request) {
       model: getModel("default"),
       system: PETE_SYSTEM,
       messages: coreMessages,
-      maxSteps: 3,
+      stopWhen: stepCountIs(5),
       tools: {
-        searchProducts: tool({
-          description: "Search the live PlasticOnline store for products, pricing, and direct links. Use this whenever a customer asks about a specific material, product, or price.",
-          parameters: z.object({
-            query: z.string().describe("The material or product to search for, e.g. 'acrylic sheet', 'HDPE', 'polycarbonate 6mm'"),
+        searchProducts: tool<SearchInput, Awaited<ReturnType<typeof searchProducts>>>({
+          description: "Search the live PlasticOnline store to find a product and its variation IDs. Use this first to get product_id and variation_id for calculatePrice.",
+          inputSchema: jsonSchema<SearchInput>({
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Material/product to search, e.g. 'clear acrylic 6mm', 'HDPE sheet'" },
+            },
+            required: ["query"],
           }),
           execute: async ({ query }) => searchProducts(query),
+        }),
+
+        calculatePrice: tool<CalcInput, Awaited<ReturnType<typeof calculateCutToSizePrice>>>({
+          description: "Calculate the exact cut-to-size price via the PlasticOnline calculator. Call searchProducts first to get product_id and variation_id.",
+          inputSchema: jsonSchema<CalcInput>({
+            type: "object",
+            properties: {
+              productId: { type: "number", description: "WooCommerce product ID from searchProducts" },
+              variationId: { type: "number", description: "Variation ID matching the customer's thickness and color" },
+              color: { type: "string", description: "Color attribute exactly as returned, e.g. 'Clear 000'" },
+              thickness: { type: "string", description: "Thickness attribute exactly as returned, e.g. '6.0mm'" },
+              widthMm: { type: "number", description: "Required width in millimetres" },
+              heightMm: { type: "number", description: "Required height in millimetres" },
+              quantity: { type: "number", description: "Number of pieces, default 1" },
+            },
+            required: ["productId", "variationId", "color", "thickness", "widthMm", "heightMm"],
+          }),
+          execute: async (params) => calculateCutToSizePrice(params),
         }),
       },
     });
