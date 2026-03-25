@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import Image from "next/image";
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
@@ -219,6 +220,10 @@ export default function PeterAvatarWidget() {
     await playVoice(greeting);
   }
 
+  function handleMinimise() {
+    setIsOpen(false);
+  }
+
   function handleClose() {
     stopAudio();
     stopListening();
@@ -250,8 +255,8 @@ export default function PeterAvatarWidget() {
           style={{ boxShadow: "0 0 24px rgba(98,197,209,0.15)" }}
         >
           {/* Avatar circle */}
-          <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-saabai-teal/30 to-indigo-700/40 border border-saabai-teal/40 flex items-center justify-center text-xs font-bold text-saabai-teal shrink-0 overflow-hidden">
-            PS
+          <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
+            <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
           </div>
           <div className="text-left">
             <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Peter</p>
@@ -269,8 +274,8 @@ export default function PeterAvatarWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border">
             <div className="flex items-center gap-2.5">
-              <div className="relative w-7 h-7 rounded-full bg-gradient-to-br from-saabai-teal/30 to-indigo-700/40 border border-saabai-teal/40 flex items-center justify-center text-[10px] font-bold text-saabai-teal shrink-0">
-                PS
+              <div className="relative w-7 h-7 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
+                <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
                 {isStarted && (
                   <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-saabai-surface ${statusColor} transition-colors`} />
                 )}
@@ -280,11 +285,26 @@ export default function PeterAvatarWidget() {
                 <p className="text-[10px] text-saabai-text-dim mt-0.5">Founder · Saabai.ai</p>
               </div>
             </div>
-            <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {isStarted && (
+                <button
+                  onClick={handleClose}
+                  className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
+                >
+                  End chat
+                </button>
+              )}
+              <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Close">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Avatar area */}
@@ -297,8 +317,8 @@ export default function PeterAvatarWidget() {
               {/* Mid ring */}
               <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
               {/* Avatar circle */}
-              <div className={`relative w-16 h-16 rounded-full bg-gradient-to-br from-saabai-teal/20 to-indigo-700/30 border-2 flex items-center justify-center font-bold text-xl text-saabai-teal transition-all duration-300 overflow-hidden ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
-                PS
+              <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
               </div>
             </div>
 
