@@ -31,6 +31,7 @@ export default function PlonPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = useState<string>("");
+  const [micBlocked, setMicBlocked] = useState(false);
 
   const avatarRef = useRef<StreamingAvatar | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -235,10 +236,13 @@ export default function PlonPage() {
       });
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
       setIsListening(false);
       listeningRef.current = false;
       recognitionRef.current = null;
+      if (event.error === "not-allowed" || event.error === "permission-denied") {
+        setMicBlocked(true);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -349,6 +353,17 @@ export default function PlonPage() {
             >
               End
             </button>
+          </div>
+        )}
+
+        {/* Mic blocked warning */}
+        {micBlocked && (
+          <div className="flex items-start gap-3 bg-amber-950/40 border border-amber-700/50 rounded-xl px-4 py-3">
+            <span className="text-amber-400 mt-0.5 shrink-0">⚠</span>
+            <div>
+              <p className="text-sm text-amber-300 font-medium">Microphone access required</p>
+              <p className="text-xs text-amber-400/80 mt-0.5">Click the camera/microphone icon in your browser address bar and allow access, then refresh the page to use voice.</p>
+            </div>
           </div>
         )}
 
