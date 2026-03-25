@@ -150,19 +150,15 @@ export default function PlonPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/plon/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: updated,
-          tier: "default",
-          // Override system prompt via a special field — or we use the chat route as-is
-        }),
+        body: JSON.stringify({ messages: updated }),
       });
 
       if (!res.ok) throw new Error(`Chat error ${res.status}`);
 
-      // Read the AI SDK stream
+      // Parse AI SDK v6 SSE stream: data: {"type":"text-delta","delta":"..."}
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
@@ -172,15 +168,13 @@ export default function PlonPage() {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
-          // AI SDK streams text parts prefixed with "0:"
           const lines = chunk.split("\n");
           for (const line of lines) {
-            if (line.startsWith("0:")) {
-              try {
-                const parsed = JSON.parse(line.slice(2));
-                if (typeof parsed === "string") fullText += parsed;
-              } catch {}
-            }
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.type === "text-delta" && parsed.delta) fullText += parsed.delta;
+            } catch {}
           }
         }
       }
