@@ -87,11 +87,21 @@ async function fetchVariations(productId: number) {
     const res = await fetch(url, { headers: { Authorization: auth() } });
     if (!res.ok) return [];
     const vars = await res.json() as any[];
-    return vars.map((v) => ({
-      variation_id: v.id,
-      attributes: (v.attributes as any[]).map((a) => ({ name: a.name, option: a.option })),
-      in_stock: v.stock_status === "instock",
-    }));
+    return vars.map((v) => {
+      // Extract CPC unit price from meta_data if present
+      const meta: Record<string, any> = {};
+      if (Array.isArray(v.meta_data)) {
+        for (const m of v.meta_data) {
+          meta[m.key] = m.value;
+        }
+      }
+      return {
+        variation_id: v.id,
+        attributes: (v.attributes as any[]).map((a) => ({ name: a.name, option: a.option })),
+        in_stock: v.stock_status === "instock",
+        meta,
+      };
+    });
   } catch {
     return [];
   }
