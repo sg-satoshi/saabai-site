@@ -128,6 +128,8 @@ export default function PeterAvatarWidget() {
     // Remove any bare URLs (https:// or www.)
     out = out.replace(/https?:\/\/\S+/g, "");
     out = out.replace(/www\.\S+/g, "");
+    // Dimensions: 600x1200 or 600×1200 → "600 by 1200"
+    out = out.replace(/(\d+)\s*[x×]\s*(\d+)/gi, "$1 by $2");
     return out.trim();
   }
 

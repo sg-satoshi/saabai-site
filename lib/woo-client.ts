@@ -7,18 +7,78 @@ function auth() {
   return "Basic " + Buffer.from(`${WOO_KEY}:${WOO_SECRET}`).toString("base64");
 }
 
-// Fetch a fresh nonce from the calculator page (valid ~12h in WordPress)
-async function fetchNonce(): Promise<string | null> {
+const AJAX_HEADERS = {
+  "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+  "Origin": PLON_ORIGIN,
+  "Referer": `${PLON_ORIGIN}/pricing-calculator/`,
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "X-Requested-With": "XMLHttpRequest",
+  "Accept": "application/json, text/javascript, */*; q=0.01",
+};
+
+// Try to call cpc_get_unit_price — first without nonce (some plugins skip nonce for read ops),
+// then with a nonce scraped from the page HTML
+async function callPriceAjax(params: {
+  productId: number;
+  variationId: number;
+  color: string;
+  thickness: string;
+}): Promise<{ unit_price: number; constraints: any } | { error: string }> {
+  const buildBody = (nonce?: string) => {
+    const p: Record<string, string> = {
+      action: "cpc_get_unit_price",
+      product_id: String(params.productId),
+      color: params.color,
+      thickness: params.thickness,
+      variation_id: String(params.variationId),
+    };
+    if (nonce) p.nonce = nonce;
+    return new URLSearchParams(p).toString();
+  };
+
+  // Attempt 1: no nonce
   try {
-    const res = await fetch(`${PLON_ORIGIN}/pricing-calculator/`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+    const res = await fetch(`${PLON_ORIGIN}/wp-admin/admin-ajax.php`, {
+      method: "POST",
+      headers: AJAX_HEADERS,
+      body: buildBody(),
     });
-    const html = await res.text();
-    const match = html.match(/["']nonce["']\s*:\s*["']([a-f0-9]+)["']/);
-    return match?.[1] ?? null;
-  } catch {
-    return null;
+    if (res.ok) {
+      const json = await res.json() as any;
+      if (json.success && json.data?.unit_price) return json.data;
+    }
+  } catch { /* fall through */ }
+
+  // Attempt 2: scrape nonce from page
+  try {
+    const pageRes = await fetch(`${PLON_ORIGIN}/pricing-calculator/`, {
+      headers: {
+        "User-Agent": AJAX_HEADERS["User-Agent"],
+        "Accept": "text/html,application/xhtml+xml",
+      },
+    });
+    if (pageRes.ok) {
+      const html = await pageRes.text();
+      const match = html.match(/["']nonce["']\s*:\s*["']([a-f0-9]{8,12})["']/);
+      const nonce = match?.[1];
+      if (nonce) {
+        const res = await fetch(`${PLON_ORIGIN}/wp-admin/admin-ajax.php`, {
+          method: "POST",
+          headers: AJAX_HEADERS,
+          body: buildBody(nonce),
+        });
+        if (res.ok) {
+          const json = await res.json() as any;
+          if (json.success && json.data?.unit_price) return json.data;
+          return { error: `Calculator rejected request: ${JSON.stringify(json)}` };
+        }
+      }
+    }
+  } catch (err) {
+    return { error: `Page scrape failed: ${String(err)}` };
   }
+
+  return { error: "Could not reach the pricing calculator — try again in a moment." };
 }
 
 async function fetchVariations(productId: number) {
@@ -57,7 +117,6 @@ export async function searchProducts(query: string) {
         in_stock: p.stock_status === "instock",
         url: p.permalink,
         categories: (p.categories as any[])?.map((c) => c.name).join(", ") ?? "",
-        // Each variation includes variation_id + attributes (color, thickness etc.)
         variations: variations.slice(0, 20),
       };
     }));
@@ -77,63 +136,33 @@ export async function calculateCutToSizePrice(params: {
   heightMm: number;
   quantity?: number;
 }) {
-  try {
-    const nonce = await fetchNonce();
-    if (!nonce) return { error: "Could not fetch pricing nonce from site" };
+  const result = await callPriceAjax(params);
+  if ("error" in result) return result;
 
-    const qty = params.quantity ?? 1;
+  const { unit_price, constraints } = result;
+  const qty = params.quantity ?? 1;
 
-    const body = new URLSearchParams({
-      action: "cpc_get_unit_price",
-      nonce,
-      product_id: String(params.productId),
-      color: params.color,
-      thickness: params.thickness,
-      variation_id: String(params.variationId),
-    });
-
-    const res = await fetch(`${PLON_ORIGIN}/wp-admin/admin-ajax.php`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Origin": PLON_ORIGIN,
-        "Referer": `${PLON_ORIGIN}/pricing-calculator/`,
-        "User-Agent": "Mozilla/5.0",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: body.toString(),
-    });
-
-    if (!res.ok) return { error: `Calculator error ${res.status}` };
-
-    const json = await res.json() as any;
-    if (!json.success) return { error: "Calculator returned an error" };
-
-    const { unit_price, constraints } = json.data;
-
-    // Validate dimensions against sheet constraints
-    const maxW = constraints?.max_width ?? 9999;
-    const maxH = constraints?.max_height ?? 9999;
-    if (params.widthMm > maxW || params.heightMm > maxH) {
-      return {
-        error: `Dimensions exceed maximum sheet size (${maxW}mm × ${maxH}mm). Our team can quote for larger cuts.`,
-      };
-    }
-
-    const areaSqm = (params.widthMm / 1000) * (params.heightMm / 1000);
-    const unitTotal = unit_price * areaSqm;
-    const total = Math.round(unitTotal * qty * 100) / 100;
-
+  // Validate dimensions
+  const maxW = constraints?.max_width ?? 9999;
+  const maxH = constraints?.max_height ?? 9999;
+  if (params.widthMm > maxW || params.heightMm > maxH) {
     return {
-      price_per_sqm: `AUD $${unit_price.toFixed(2)}`,
-      area_sqm: Math.round(areaSqm * 1000) / 1000,
-      quantity: qty,
-      unit_total: `AUD $${unitTotal.toFixed(2)}`,
-      total: `AUD $${total.toFixed(2)}`,
-      note: "Pricing is ex-GST. GST will be added at checkout.",
-      product_url: `${PLON_ORIGIN}/?p=${params.productId}`,
+      error: `That exceeds our max sheet size of ${maxW} by ${maxH}mm — our team can quote for larger cuts.`,
     };
-  } catch (err) {
-    return { error: String(err) };
   }
+
+  const areaSqm = (params.widthMm / 1000) * (params.heightMm / 1000);
+  const unitTotal = unit_price * areaSqm;
+  const total = Math.round(unitTotal * qty * 100) / 100;
+
+  return {
+    price_per_sqm: `AUD $${unit_price.toFixed(2)}`,
+    dimensions: `${params.widthMm} by ${params.heightMm}mm`,
+    area_sqm: Math.round(areaSqm * 1000) / 1000,
+    quantity: qty,
+    unit_total: `AUD $${unitTotal.toFixed(2)}`,
+    total: `AUD $${total.toFixed(2)}`,
+    note: "Ex-GST. GST added at checkout.",
+    product_url: `${PLON_ORIGIN}/?p=${params.productId}`,
+  };
 }
