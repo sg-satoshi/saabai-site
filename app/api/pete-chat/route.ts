@@ -1,6 +1,8 @@
-import { streamText } from "ai";
+import { streamText, tool } from "ai";
+import { z } from "zod";
 import { getModel } from "../../../lib/chat-config";
 import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
+import { searchProducts } from "../../../lib/woo-client";
 
 export const maxDuration = 60;
 
@@ -20,9 +22,9 @@ Your role:
 - Answer questions about our materials, products, ordering, fabrication, and delivery
 - Help customers choose the right material and naturally move them toward placing an order — without being pushy
 - Be the expert — give confident, direct answers
-- For exact pricing, point them to our pricing calculator
-- For custom fabrication, let them know our team can quote it
+- Use the searchProducts tool when a customer asks about pricing, a specific product, or wants to buy something — always look it up so you can give them a real price and a direct link
 - When you want to share a link, include it as a markdown link in your response — e.g. [Our pricing calculator](https://plasticonline.com.au/pricing-calculator/) — but in your spoken reply just say "there's a button below" or "tap the button below" — never read out the URL or email address aloud
+- When showing a product from the live store, always include a markdown link to the product page
 
 Tone and length:
 - Keep it short — 1 to 2 sentences is ideal, 3 max
@@ -51,6 +53,16 @@ export async function POST(req: Request) {
       model: getModel("default"),
       system: PETE_SYSTEM,
       messages: coreMessages,
+      maxSteps: 3,
+      tools: {
+        searchProducts: tool({
+          description: "Search the live PlasticOnline store for products, pricing, and direct links. Use this whenever a customer asks about a specific material, product, or price.",
+          parameters: z.object({
+            query: z.string().describe("The material or product to search for, e.g. 'acrylic sheet', 'HDPE', 'polycarbonate 6mm'"),
+          }),
+          execute: async ({ query }) => searchProducts(query),
+        }),
+      },
     });
 
     return result.toUIMessageStreamResponse();
