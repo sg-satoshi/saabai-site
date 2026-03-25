@@ -1,7 +1,27 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+
+// Render text with markdown links → clickable <a> tags
+function renderText(text: string) {
+  const parts: React.ReactNode[] = [];
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g;
+  let last = 0;
+  let match;
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    parts.push(
+      <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer"
+        className="text-saabai-teal underline underline-offset-2 hover:text-saabai-teal-bright transition-colors">
+        {match[1]}
+      </a>
+    );
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
@@ -21,6 +41,8 @@ export default function PeterAvatarWidget() {
   const [endSubmitting, setEndSubmitting] = useState(false);
   const [endSubmitted, setEndSubmitted] = useState(false);
 
+  const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
   const recognitionRef = useRef<any>(null);
@@ -28,6 +50,11 @@ export default function PeterAvatarWidget() {
   const isStartedRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
   const transcriptSentRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayMessages]);
 
   function stopAudio() {
     if (audioRef.current) {
@@ -154,6 +181,7 @@ export default function PeterAvatarWidget() {
 
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
+    setDisplayMessages([...updated]);
     setIsThinking(true);
     stopListening();
 
@@ -187,7 +215,9 @@ export default function PeterAvatarWidget() {
       }
 
       if (fullText.trim()) {
-        messagesRef.current = [...updated, { role: "assistant", content: fullText.trim() }];
+        const withReply = [...updated, { role: "assistant" as const, content: fullText.trim() }];
+        messagesRef.current = withReply;
+        setDisplayMessages([...withReply]);
         setIsThinking(false);
         await playVoice(fullText.trim());
       } else {
@@ -215,6 +245,7 @@ export default function PeterAvatarWidget() {
     // Greeting
     const greeting = "Hey — I'm Rex, your AI agent from PlasticOnline. I'm here if you have any questions while you're filling in the form. What are you thinking so far?";
     messagesRef.current = [{ role: "assistant", content: greeting }];
+    setDisplayMessages([{ role: "assistant", content: greeting }]);
     await playVoice(greeting);
   }
 
@@ -235,6 +266,7 @@ export default function PeterAvatarWidget() {
     transcriptSentRef.current = false;
     setError(null);
     setInputValue("");
+    setDisplayMessages([]);
     messagesRef.current = [];
   }
 
@@ -303,7 +335,7 @@ export default function PeterAvatarWidget() {
       {/* Widget */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
+          className="fixed bottom-6 right-6 z-50 w-80 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{ boxShadow: "0 0 60px rgba(98,197,209,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
         >
           {/* Header */}
@@ -407,42 +439,73 @@ export default function PeterAvatarWidget() {
             </div>
           ) : (
             /* ── Live avatar area ── */
-            <div className="flex flex-col items-center justify-center gap-4 px-6 py-8 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+            <div className="flex flex-col bg-gradient-to-b from-saabai-bg to-saabai-surface">
 
-              {/* Pulsing rings + avatar */}
-              <div className="relative flex items-center justify-center">
-                {/* Outer ring — visible when speaking */}
-                <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
-                {/* Mid ring */}
-                <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
-                {/* Avatar circle */}
-                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
-                  <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="h-5 flex items-center">
-                {statusLabel ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${(isSpeaking || isListening || isThinking) ? "animate-pulse" : ""}`} />
-                    <span className="text-xs text-saabai-text-dim">{statusLabel}</span>
+              {/* Compact status bar when active, full avatar when not started */}
+              {isStarted ? (
+                <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-saabai-border/50">
+                  {/* Small pulsing avatar */}
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <div className={`absolute w-10 h-10 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "opacity-0"}`} />
+                    <div className={`relative w-8 h-8 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_12px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                      <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+                    </div>
                   </div>
-                ) : null}
-              </div>
-
-              {/* Start button */}
-              {!isStarted && (
-                <button
-                  onClick={handleStart}
-                  className="px-5 py-2.5 bg-saabai-teal text-saabai-bg rounded-full text-xs font-semibold hover:bg-saabai-teal-bright transition-colors tracking-wide"
-                  style={{ boxShadow: "0 0 16px rgba(98,197,209,0.3)" }}
-                >
-                  Start conversation
-                </button>
+                  {statusLabel ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${(isSpeaking || isListening || isThinking) ? "animate-pulse" : ""}`} />
+                      <span className="text-[11px] text-saabai-text-dim">{statusLabel}</span>
+                    </div>
+                  ) : <span className="text-[11px] text-saabai-text-dim">Rex</span>}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-4 px-6 py-8">
+                  <div className="relative flex items-center justify-center">
+                    <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
+                    <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
+                    <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                      <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleStart}
+                    className="px-5 py-2.5 bg-saabai-teal text-saabai-bg rounded-full text-xs font-semibold hover:bg-saabai-teal-bright transition-colors tracking-wide"
+                    style={{ boxShadow: "0 0 16px rgba(98,197,209,0.3)" }}
+                  >
+                    Start conversation
+                  </button>
+                  {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
+                </div>
               )}
 
-              {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
+              {/* Message history */}
+              {isStarted && displayMessages.length > 0 && (
+                <div className="flex flex-col gap-2 px-3 py-3 max-h-52 overflow-y-auto">
+                  {displayMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                        msg.role === "user"
+                          ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
+                          : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
+                      }`}>
+                        {msg.role === "assistant" ? renderText(msg.content) : msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isThinking && (
+                    <div className="flex justify-start">
+                      <div className="bg-saabai-surface-raised border border-saabai-border/60 px-3 py-2 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+
+              {error && isStarted && <p className="text-red-400 text-[10px] text-center px-4 pb-2">{error}</p>}
             </div>
           )}
 
