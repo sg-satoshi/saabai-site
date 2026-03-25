@@ -122,6 +122,15 @@ export default function PeterAvatarWidget() {
     setIsListening(false);
   }
 
+  function toSpeakable(text: string): string {
+    // Replace markdown links [label](url) with just the label
+    let out = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    // Remove any bare URLs (https:// or www.)
+    out = out.replace(/https?:\/\/\S+/g, "");
+    out = out.replace(/www\.\S+/g, "");
+    return out.trim();
+  }
+
   async function playVoice(text: string) {
     if (!text.trim()) return;
     stopAudio();
@@ -217,7 +226,7 @@ export default function PeterAvatarWidget() {
         setActionLinks(extractLinks(cleaned));
         if (isTypedModeRef.current) setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
         setIsThinking(false);
-        await playVoice(cleaned);
+        await playVoice(toSpeakable(cleaned));
       } else {
         setIsThinking(false);
         startListening();
