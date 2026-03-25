@@ -159,20 +159,15 @@ export default function PeterAvatarWidget() {
     stopListening();
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/pete-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: PETER_SYSTEM_PROMPT },
-            ...updated,
-          ],
-          tier: "default",
-        }),
+        body: JSON.stringify({ messages: updated }),
       });
 
-      if (!res.ok) throw new Error(`Chat error ${res.status}`);
+      if (!res.ok) throw new Error(`Chat error ${res.status}: ${await res.text()}`);
 
+      // AI SDK v6 SSE format: data: {"type":"text-delta","delta":"..."}
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
@@ -183,12 +178,11 @@ export default function PeterAvatarWidget() {
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           for (const line of chunk.split("\n")) {
-            if (line.startsWith("0:")) {
-              try {
-                const parsed = JSON.parse(line.slice(2));
-                if (typeof parsed === "string") fullText += parsed;
-              } catch {}
-            }
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.type === "text-delta" && parsed.delta) fullText += parsed.delta;
+            } catch {}
           }
         }
       }
