@@ -1,7 +1,7 @@
 import { streamText } from "ai";
-import { getModel } from "../../../../lib/chat-config";
+import { anthropic } from "@ai-sdk/anthropic";
 
-export const runtime = "edge";
+// Note: no edge runtime — standard serverless to isolate edge runtime issues
 export const maxDuration = 30;
 
 const PETE_SYSTEM = `You are Pete, founder of Saabai.ai — an AI automation company helping professional services businesses save time and scale without hiring.
@@ -14,22 +14,26 @@ Keep responses concise — 1–3 sentences max. You're in a live video call.`;
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const messages = body.messages ?? [];
 
-    // Messages arrive as flat {role, content} — valid CoreMessage format, no conversion needed
     const coreMessages = (messages as Array<{ role: string; content: string }>)
-      .filter(m => m.role !== "system" && m.content?.trim())
+      .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+    if (coreMessages.length === 0) {
+      return new Response("No messages", { status: 400 });
+    }
+
     const result = streamText({
-      model: getModel("default"),
+      model: anthropic("claude-sonnet-4-6"),
       system: PETE_SYSTEM,
       messages: coreMessages,
     });
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    console.error("[plon/chat]", err);
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
+    console.error("[plon/chat] error:", err);
+    return new Response(String(err), { status: 500 });
   }
 }
