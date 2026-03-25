@@ -296,6 +296,35 @@ export default function PeterAvatarWidget() {
     setDisplayMessages([greetingMsg]);
   }
 
+  function switchToText() {
+    stopAudio();
+    stopListening();
+    chatModeRef.current = "text";
+    setChatMode("text");
+    // Populate displayMessages from full history if not already shown
+    setDisplayMessages([...messagesRef.current]);
+  }
+
+  function switchToVoice() {
+    // Unlock audio during this user gesture
+    if (!audioRef.current) {
+      const audio = new Audio();
+      audio.volume = 0;
+      audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
+      audio.play().catch(() => {});
+      audio.volume = 1;
+      audioRef.current = audio;
+    }
+    chatModeRef.current = "voice";
+    setChatMode("voice");
+    // Start listening right away
+    setTimeout(() => {
+      if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
+        startListening();
+      }
+    }, 300);
+  }
+
   function handleMinimise() {
     setIsOpen(false);
   }
@@ -378,12 +407,38 @@ export default function PeterAvatarWidget() {
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {isStarted && !isEnded && chatMode === "voice" && (
+          <button
+            onClick={switchToText}
+            title="Switch to text"
+            className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M2 3h8M2 6.5h5M2 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            Text
+          </button>
+        )}
+        {isStarted && !isEnded && chatMode === "text" && speechSupported && (
+          <button
+            onClick={switchToVoice}
+            title="Switch to voice"
+            className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors"
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <rect x="4" y="1" width="4" height="6" rx="2" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M2 6.5A4 4 0 0 0 6 10.5a4 4 0 0 0 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M6 10.5V12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Voice
+          </button>
+        )}
         {isStarted && !isEnded && (
           <button
             onClick={handleEndChat}
             className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
           >
-            End chat
+            End
           </button>
         )}
         <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
