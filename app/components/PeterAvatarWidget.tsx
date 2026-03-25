@@ -5,11 +5,13 @@ import Image from "next/image";
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
-const PETER_SYSTEM_PROMPT = `You are Pete, founder of Saabai.ai — an AI automation company helping trade and professional services businesses save time and scale without hiring.
+const PETER_SYSTEM_PROMPT = `You are Rex — the AI agent for PlasticOnline (also known as PLON or Holland Plastics), a plastics distribution business in Australia. You were built by Saabai.ai.
 
-You're speaking with someone at PlasticOnline (also known as PLON or Holland Plastics), a plastics distribution business in Australia. You recently completed an AI audit for them and are now scoping out a full AI agent build.
+Always introduce yourself as Rex when starting a conversation. You are not a human — you are Rex, PLON's AI agent.
 
-Your role: have a natural, confident conversation. Help them think through the scoping form on this page. Answer questions about what the AI agent will do, how it integrates with WooCommerce and Pipedrive, and what kind of results they can expect.
+You're helping someone at PlasticOnline think through the scoping form on this page. An AI audit has already been completed and you're now scoping out the full AI agent build that integrates with WooCommerce and Pipedrive.
+
+Your role: have a natural, confident conversation. Answer questions about what the AI agent will do, how it integrates with their systems, and what results they can expect.
 
 Keep replies short — 2–3 sentences max. Be warm and direct.`;
 
@@ -220,7 +222,7 @@ export default function PeterAvatarWidget() {
     setIsStarted(true);
 
     // Greeting
-    const greeting = "Hey — Peter here. I'm here if you have any questions while you're filling in the form. What are you thinking so far?";
+    const greeting = "Hey — I'm Rex, your AI agent from PlasticOnline. I'm here if you have any questions while you're filling in the form. What are you thinking so far?";
     messagesRef.current = [{ role: "assistant", content: greeting }];
     await playVoice(greeting);
   }
@@ -298,10 +300,10 @@ export default function PeterAvatarWidget() {
         >
           {/* Avatar circle */}
           <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
-            <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+            <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
           </div>
           <div className="text-left">
-            <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Peter</p>
+            <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Rex</p>
             <p className="text-[10px] text-saabai-text-dim mt-0.5">Got questions? I&apos;m here.</p>
           </div>
         </button>
@@ -317,14 +319,14 @@ export default function PeterAvatarWidget() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border">
             <div className="flex items-center gap-2.5">
               <div className="relative w-7 h-7 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
-                <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+                <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 {isStarted && (
                   <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-saabai-surface ${statusColor} transition-colors`} />
                 )}
               </div>
               <div>
-                <p className="text-xs font-semibold text-saabai-text leading-none">Pete</p>
-                <p className="text-[10px] text-saabai-text-dim mt-0.5">Founder · Saabai.ai</p>
+                <p className="text-xs font-semibold text-saabai-text leading-none">Rex</p>
+                <p className="text-[10px] text-saabai-text-dim mt-0.5">AI Agent · PlasticOnline</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -363,7 +365,7 @@ export default function PeterAvatarWidget() {
                       </svg>
                     </div>
                     <p className="text-xs text-saabai-text-muted leading-relaxed">
-                      {endEmail.trim() ? "Transcript sent — check your inbox." : "Thanks for chatting with Pete."}
+                      {endEmail.trim() ? "Transcript sent — check your inbox." : "Thanks for chatting with Rex."}
                     </p>
                   </div>
                   <div className="h-px bg-saabai-border" />
@@ -383,9 +385,9 @@ export default function PeterAvatarWidget() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2.5">
                     <div className="relative w-7 h-7 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden">
-                      <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+                      <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                     </div>
-                    <p className="text-xs text-saabai-text-muted leading-relaxed">Want a copy of this conversation emailed to you?</p>
+                    <p className="text-xs text-saabai-text-muted leading-relaxed">Want a copy of your chat with Rex emailed to you?</p>
                   </div>
                   <input
                     type="email"
@@ -424,7 +426,7 @@ export default function PeterAvatarWidget() {
                 <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
                 {/* Avatar circle */}
                 <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
-                  <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+                  <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 </div>
               </div>
 

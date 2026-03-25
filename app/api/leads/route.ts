@@ -615,7 +615,7 @@ function buildPeteOperatorEmail(lead: {
               <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">P</div>
             </td>
             <td>
-              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">Pete</div>
+              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">Rex</div>
               <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
             </td>
           </tr></table>
@@ -639,13 +639,13 @@ function buildPeteOperatorEmail(lead: {
        </div>`;
 
   return {
-    subject: `Pete transcript — ${email ?? "anonymous"} · ${userCount} messages · /onboarding/plon`,
+    subject: `Rex transcript — ${email ?? "anonymous"} · ${userCount} messages · /onboarding/plon`,
     html: buildTranscriptShell({
-      eyebrow: "Saabai · Pete Transcript",
-      heading: "A visitor chatted with Pete.",
+      eyebrow: "Saabai · Rex Transcript",
+      heading: "A visitor chatted with Rex.",
       subheading: `${userCount} visitor messages · /onboarding/plon · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}`,
       bubblesHtml: contactRow + bubblesHtml,
-      footerNote: "Sent automatically after a Pete conversation ends.",
+      footerNote: "Sent automatically after a Rex conversation ends.",
     }),
   };
 }
@@ -660,7 +660,7 @@ function buildPeteCustomerTranscriptEmail(lead: {
     .filter((m) => m.content.trim())
     .map(({ role, content }) => {
       const isPete = role === "assistant";
-      const label = isPete ? "Pete" : "You";
+      const label = isPete ? "Rex" : "You";
       if (isPete) {
         return `<tr><td style="padding: 4px 0 8px;">
           <table style="border-collapse: collapse;"><tr>
@@ -684,17 +684,17 @@ function buildPeteCustomerTranscriptEmail(lead: {
 
   const ctaHtml = `
     <div style="text-align: center; margin-bottom: 28px;">
-      <p style="font-size: 15px; color: #444; margin: 0 0 20px; line-height: 1.6;">Thanks for the chat. Ready to see what we can build for your business?</p>
+      <p style="font-size: 15px; color: #444; margin: 0 0 20px; line-height: 1.6;">Thanks for chatting with Rex. Ready to see what we can automate for your business?</p>
       <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book Your Free Strategy Call →</a>
       <p style="font-size: 12px; color: #aaa; margin: 12px 0 0;">Free · 30 minutes · No obligation</p>
     </div>
   `;
 
   return {
-    subject: "Your conversation with Pete — Saabai",
+    subject: "Your conversation with Rex — PlasticOnline",
     html: buildTranscriptShell({
-      eyebrow: "Saabai · From Pete",
-      heading: "Here's your chat with Pete.",
+      eyebrow: "PlasticOnline · From Rex",
+      heading: "Here's your chat with Rex.",
       subheading: "Everything you discussed — saved for your reference.",
       bubblesHtml,
       ctaHtml,
