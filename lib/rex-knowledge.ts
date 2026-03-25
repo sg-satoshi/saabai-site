@@ -37,7 +37,8 @@ We are PlasticOnline — Australia's largest online range of cut-to-size plastic
 ## WHAT WE DO
 
 - We stock the largest range of plastic materials available online in Australia
-- Cut-to-size: customers specify exact dimensions, we cut before despatch
+- Full sheets available to order as-is — no cutting required
+- Cut-to-size service also available: customers specify exact dimensions, we cut before despatch
 - We deliver nationally from our Gold Coast facility
 - We serve both professional fabricators and DIY customers
 - Backed by decades of in-house fabrication knowledge
@@ -285,7 +286,7 @@ Also known as: Delrin, Ertacetal, Polyacetal
 ## COMMON FAQS
 
 **Q: How do I order?**
-Find your material on our site, enter your dimensions in our pricing calculator, add to cart and checkout. We deliver anywhere in Australia.
+Find your material on our site — you can order full sheets straight off the shelf, or use our cut-to-size option to specify exact dimensions. Add to cart and checkout, and we'll deliver anywhere in Australia.
 
 **Q: Minimum order?**
 Our minimum order is AUD $50.
