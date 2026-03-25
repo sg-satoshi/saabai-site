@@ -4,8 +4,9 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 
 type ActionLink = { label: string; href: string };
+type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatMode = "text" | "voice" | null;
 
-// Extract markdown links [text](url) and mailto:[text](mailto:...) from text
 function extractLinks(text: string): ActionLink[] {
   const links: ActionLink[] = [];
   const regex = /\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\)/g;
@@ -17,12 +18,11 @@ function extractLinks(text: string): ActionLink[] {
 }
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
-
-
-type ChatMessage = { role: "user" | "assistant"; content: string };
+const GREETING = "Hey — I'm Rex from PlasticOnline. Ask me anything about our materials, pricing, or sizing and I'll sort you out.";
 
 export default function PeterAvatarWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [chatMode, setChatMode] = useState<ChatMode>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -33,19 +33,24 @@ export default function PeterAvatarWidget() {
   const [endEmail, setEndEmail] = useState("");
   const [endSubmitting, setEndSubmitting] = useState(false);
   const [endSubmitted, setEndSubmitted] = useState(false);
-
   const [actionLinks, setActionLinks] = useState<ActionLink[]>([]);
   const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([]);
+  const [speechSupported, setSpeechSupported] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const isSpeakingRef = useRef(false);
   const isStartedRef = useRef(false);
+  const chatModeRef = useRef<ChatMode>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
   const transcriptSentRef = useRef(false);
-  const isTypedModeRef = useRef(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSpeechSupported(!!SR);
+  }, []);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,7 +97,6 @@ export default function PeterAvatarWidget() {
           handleUserMessage(text);
           return "";
         }
-        // Silence timeout — restart
         if (isStartedRef.current && !isSpeakingRef.current) {
           setTimeout(() => {
             if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
@@ -123,12 +127,9 @@ export default function PeterAvatarWidget() {
   }
 
   function toSpeakable(text: string): string {
-    // Replace markdown links [label](url) with just the label
     let out = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-    // Remove any bare URLs (https:// or www.)
     out = out.replace(/https?:\/\/\S+/g, "");
     out = out.replace(/www\.\S+/g, "");
-    // Dimensions: 600x1200 or 600×1200 → "600 by 1200"
     out = out.replace(/(\d+)\s*[x×]\s*(\d+)/gi, "$1 by $2");
     return out.trim();
   }
@@ -152,8 +153,6 @@ export default function PeterAvatarWidget() {
 
       const url = URL.createObjectURL(blob);
       audioBlobUrlRef.current = url;
-
-      // Ensure audio element is unlocked (created during user gesture in handleStart)
       const audio = audioRef.current!;
       audio.src = url;
       isSpeakingRef.current = true;
@@ -166,7 +165,6 @@ export default function PeterAvatarWidget() {
         setIsSpeaking(false);
         URL.revokeObjectURL(url);
         if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
-        // Auto-listen after speaking
         if (isStartedRef.current) {
           setTimeout(() => {
             if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
@@ -182,16 +180,16 @@ export default function PeterAvatarWidget() {
     }
   }
 
-  async function handleUserMessage(text: string, isTyped = false) {
+  async function handleUserMessage(text: string) {
     if (!text.trim()) return;
+    const isText = chatModeRef.current === "text";
 
-    if (isTyped) isTypedModeRef.current = true;
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setActionLinks([]);
-    if (isTypedModeRef.current) setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
+    setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
     setIsThinking(true);
-    stopListening();
+    if (!isText) stopListening();
 
     try {
       const res = await fetch("/api/pete-chat", {
@@ -202,7 +200,6 @@ export default function PeterAvatarWidget() {
 
       if (!res.ok) throw new Error(`Chat error ${res.status}: ${await res.text()}`);
 
-      // AI SDK v6 SSE format: data: {"type":"text-delta","delta":"..."}
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
@@ -226,12 +223,12 @@ export default function PeterAvatarWidget() {
         const cleaned = fullText.trim();
         messagesRef.current = [...updated, { role: "assistant", content: cleaned }];
         setActionLinks(extractLinks(cleaned));
-        if (isTypedModeRef.current) setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
+        setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
         setIsThinking(false);
-        await playVoice(toSpeakable(cleaned));
+        if (!isText) await playVoice(toSpeakable(cleaned));
       } else {
         setIsThinking(false);
-        startListening();
+        if (!isText) startListening();
       }
     } catch (err) {
       setError(String(err).slice(0, 120));
@@ -239,8 +236,8 @@ export default function PeterAvatarWidget() {
     }
   }
 
-  async function handleStart() {
-    // Pre-unlock audio element during user gesture
+  async function selectVoiceMode() {
+    // Unlock audio during user gesture
     const audio = new Audio();
     audio.volume = 0;
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
@@ -248,13 +245,22 @@ export default function PeterAvatarWidget() {
     audio.volume = 1;
     audioRef.current = audio;
 
+    chatModeRef.current = "voice";
+    setChatMode("voice");
     isStartedRef.current = true;
     setIsStarted(true);
+    messagesRef.current = [{ role: "assistant", content: GREETING }];
+    await playVoice(GREETING);
+  }
 
-    // Greeting
-    const greeting = "Hey — I'm Rex, your AI agent from PlasticOnline. I'm here if you have any questions while you're filling in the form. What are you thinking so far?";
-    messagesRef.current = [{ role: "assistant", content: greeting }];
-    await playVoice(greeting);
+  function selectTextMode() {
+    chatModeRef.current = "text";
+    setChatMode("text");
+    isStartedRef.current = true;
+    setIsStarted(true);
+    const greetingMsg: ChatMessage = { role: "assistant", content: GREETING };
+    messagesRef.current = [greetingMsg];
+    setDisplayMessages([greetingMsg]);
   }
 
   function handleMinimise() {
@@ -265,8 +271,10 @@ export default function PeterAvatarWidget() {
     stopAudio();
     stopListening();
     isStartedRef.current = false;
+    chatModeRef.current = null;
     setIsStarted(false);
     setIsOpen(false);
+    setChatMode(null);
     setIsEnded(false);
     setEndEmail("");
     setEndSubmitted(false);
@@ -276,7 +284,6 @@ export default function PeterAvatarWidget() {
     setInputValue("");
     setActionLinks([]);
     setDisplayMessages([]);
-    isTypedModeRef.current = false;
     messagesRef.current = [];
   }
 
@@ -306,7 +313,7 @@ export default function PeterAvatarWidget() {
       });
       setEndSubmitted(true);
     } catch {
-      setEndSubmitted(true); // fail silently, don't block UX
+      setEndSubmitted(true);
     } finally {
       setEndSubmitting(false);
     }
@@ -316,11 +323,69 @@ export default function PeterAvatarWidget() {
     const text = inputValue.trim();
     if (!text) return;
     setInputValue("");
-    await handleUserMessage(text, true);
+    await handleUserMessage(text);
   }
 
   const statusLabel = isSpeaking ? "Speaking" : isListening ? "Listening" : isThinking ? "Thinking…" : isStarted ? "Ready" : "";
   const statusColor = isSpeaking ? "bg-saabai-teal" : isListening ? "bg-green-400" : isThinking ? "bg-yellow-400" : "bg-white/20";
+
+  // ── Shared header ──────────────────────────────────────────────────────────
+  const Header = (
+    <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border shrink-0">
+      <div className="flex items-center gap-2.5">
+        <div className="relative w-7 h-7 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
+          <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+          {isStarted && !isEnded && (
+            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-saabai-surface ${statusColor} transition-colors`} />
+          )}
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-saabai-text leading-none">Rex</p>
+          <p className="text-[10px] text-saabai-text-dim mt-0.5">AI Agent · PlasticOnline</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {isStarted && !isEnded && (
+          <button
+            onClick={handleEndChat}
+            className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
+          >
+            End chat
+          </button>
+        )}
+        <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Action link chips ──────────────────────────────────────────────────────
+  const ActionChips = actionLinks.length > 0 && (
+    <div className="flex flex-col gap-2 w-full px-4 pb-3">
+      {actionLinks.map((link, i) => (
+        <a
+          key={i}
+          href={link.href}
+          target={link.href.startsWith("mailto") ? undefined : "_blank"}
+          rel="noopener noreferrer"
+          className="flex items-center justify-between w-full px-3 py-2.5 bg-saabai-teal/10 border border-saabai-teal/30 rounded-xl text-xs font-medium text-saabai-teal hover:bg-saabai-teal/20 hover:border-saabai-teal/50 transition-all"
+        >
+          <span>{link.label}</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-60">
+            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </a>
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -331,7 +396,6 @@ export default function PeterAvatarWidget() {
           className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 shadow-lg hover:border-saabai-teal/60 transition-all"
           style={{ boxShadow: "0 0 24px rgba(98,197,209,0.15)" }}
         >
-          {/* Avatar circle */}
           <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
             <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
           </div>
@@ -342,54 +406,17 @@ export default function PeterAvatarWidget() {
         </button>
       )}
 
-      {/* Widget */}
       {isOpen && (
         <div
           className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{ boxShadow: "0 0 60px rgba(98,197,209,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border">
-            <div className="flex items-center gap-2.5">
-              <div className="relative w-7 h-7 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
-                <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
-                {isStarted && (
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-saabai-surface ${statusColor} transition-colors`} />
-                )}
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-saabai-text leading-none">Rex</p>
-                <p className="text-[10px] text-saabai-text-dim mt-0.5">AI Agent · PlasticOnline</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isStarted && !isEnded && (
-                <button
-                  onClick={handleEndChat}
-                  className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
-                >
-                  End chat
-                </button>
-              )}
-              <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Close">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
+          {Header}
 
-          {/* Avatar area */}
-          {isEnded ? (
-            /* ── End panel ── */
+          {/* ── End panel ─────────────────────────────────────────────────── */}
+          {isEnded && (
             <div className="px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
               {endSubmitted ? (
-                /* Confirmation */
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-saabai-teal/20 flex items-center justify-center shrink-0">
@@ -414,7 +441,6 @@ export default function PeterAvatarWidget() {
                   <p className="text-[10px] text-saabai-text-dim text-center">Free · 30 minutes · No obligation</p>
                 </div>
               ) : (
-                /* Email capture */
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2.5">
                     <div className="relative w-7 h-7 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden">
@@ -447,10 +473,56 @@ export default function PeterAvatarWidget() {
                 </div>
               )}
             </div>
-          ) : (
-            /* ── Live avatar area ── */
-            <div className="flex flex-col items-center justify-center gap-4 px-6 py-8 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+          )}
 
+          {/* ── Mode picker ────────────────────────────────────────────────── */}
+          {!isEnded && !chatMode && (
+            <div className="px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface flex flex-col gap-3">
+              <p className="text-[11px] text-saabai-text-dim tracking-wide">How would you like to chat?</p>
+              {/* Text option */}
+              <button
+                onClick={selectTextMode}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(98,197,209,0.18)" }}
+              >
+                <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 3h10M2 7h7M2 11h5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-saabai-text leading-none mb-1">Text Chat</p>
+                  <p className="text-[10px] text-saabai-text-dim leading-relaxed">Type your questions, get instant answers</p>
+                </div>
+              </button>
+              {/* Voice option */}
+              <button
+                onClick={speechSupported ? selectVoiceMode : undefined}
+                disabled={!speechSupported}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(98,197,209,0.18)" }}
+              >
+                <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="5" y="1" width="4" height="7" rx="2" stroke="var(--saabai-teal)" strokeWidth="1.4"/>
+                    <path d="M2.5 7.5A4.5 4.5 0 0 0 7 12a4.5 4.5 0 0 0 4.5-4.5" stroke="var(--saabai-teal)" strokeWidth="1.4" strokeLinecap="round"/>
+                    <path d="M7 12v1.5" stroke="var(--saabai-teal)" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-saabai-text leading-none mb-1">
+                    Voice Chat
+                    {!speechSupported && <span className="text-[9px] font-normal text-saabai-text-dim ml-1.5">(not supported)</span>}
+                  </p>
+                  <p className="text-[10px] text-saabai-text-dim leading-relaxed">Speak naturally with Rex</p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* ── Voice mode ─────────────────────────────────────────────────── */}
+          {!isEnded && chatMode === "voice" && (
+            <div className="flex flex-col items-center justify-center gap-4 px-6 py-6 bg-gradient-to-b from-saabai-bg to-saabai-surface">
               {/* Pulsing rings + avatar */}
               <div className="relative flex items-center justify-center">
                 <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
@@ -459,31 +531,18 @@ export default function PeterAvatarWidget() {
                   <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 </div>
               </div>
-
               {/* Status */}
               <div className="h-5 flex items-center">
-                {statusLabel ? (
+                {statusLabel && (
                   <div className="flex items-center gap-1.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${(isSpeaking || isListening || isThinking) ? "animate-pulse" : ""}`} />
                     <span className="text-xs text-saabai-text-dim">{statusLabel}</span>
                   </div>
-                ) : null}
+                )}
               </div>
-
-              {/* Start button */}
-              {!isStarted && (
-                <button
-                  onClick={handleStart}
-                  className="px-5 py-2.5 bg-saabai-teal text-saabai-bg rounded-full text-xs font-semibold hover:bg-saabai-teal-bright transition-colors tracking-wide"
-                  style={{ boxShadow: "0 0 16px rgba(98,197,209,0.3)" }}
-                >
-                  Start conversation
-                </button>
-              )}
-
-              {/* Typed chat history — only shown when user has typed */}
-              {displayMessages.length > 0 && (
-                <div className="w-full flex flex-col gap-2 max-h-48 overflow-y-auto px-1">
+              {/* Chat bubbles if user has typed in voice mode */}
+              {displayMessages.filter(m => m.role === "user").length > 0 && (
+                <div className="w-full flex flex-col gap-2 max-h-36 overflow-y-auto px-1">
                   {displayMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
@@ -507,40 +566,77 @@ export default function PeterAvatarWidget() {
                   <div ref={chatBottomRef} />
                 </div>
               )}
+              {ActionChips}
+              {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
+            </div>
+          )}
 
-              {/* Action link chips — appear when Rex mentions a link */}
+          {/* ── Text mode ──────────────────────────────────────────────────── */}
+          {!isEnded && chatMode === "text" && (
+            <div className="flex flex-col" style={{ height: 380 }}>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+                {displayMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {msg.role === "assistant" && (
+                      <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
+                        <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+                      </div>
+                    )}
+                    <div className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                      msg.role === "user"
+                        ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
+                        : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
+                    }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isThinking && (
+                  <div className="flex justify-start">
+                    <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
+                      <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+                    </div>
+                    <div className="bg-saabai-surface-raised border border-saabai-border/60 px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={chatBottomRef} />
+              </div>
+              {/* Action chips in text mode */}
               {actionLinks.length > 0 && (
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-1.5 px-4 py-2 border-t border-saabai-border bg-saabai-surface">
                   {actionLinks.map((link, i) => (
                     <a
                       key={i}
                       href={link.href}
                       target={link.href.startsWith("mailto") ? undefined : "_blank"}
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between w-full px-3 py-2.5 bg-saabai-teal/10 border border-saabai-teal/30 rounded-xl text-xs font-medium text-saabai-teal hover:bg-saabai-teal/20 hover:border-saabai-teal/50 transition-all"
+                      className="flex items-center justify-between w-full px-3 py-2 bg-saabai-teal/10 border border-saabai-teal/30 rounded-lg text-xs font-medium text-saabai-teal hover:bg-saabai-teal/20 transition-all"
                     >
                       <span>{link.label}</span>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-60">
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-60">
                         <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </a>
                   ))}
                 </div>
               )}
-
-              {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
             </div>
           )}
 
-          {/* Text input — hidden when ended */}
-          {isStarted && !isEnded && (
-            <div className="p-3 border-t border-saabai-border flex gap-2">
+          {/* ── Text input (voice + text modes) ───────────────────────────── */}
+          {!isEnded && chatMode && (
+            <div className="p-3 border-t border-saabai-border flex gap-2 shrink-0">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Or type a message…"
+                placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
                 className="flex-1 bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
               />
               <button
