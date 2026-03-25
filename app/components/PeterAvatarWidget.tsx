@@ -18,7 +18,38 @@ function extractLinks(text: string): ActionLink[] {
 }
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
-const GREETING = "Hey — I'm Rex from PlasticOnline. Ask me anything about our materials, pricing, or sizing and I'll sort you out.";
+
+const GREETINGS = [
+  "Hey, I'm Rex — PlasticOnline's AI. What are you cutting today?",
+  "G'day — Rex here. Materials, pricing, sizing — ask away.",
+  "Rex here. If it's plastic, I know it. What do you need?",
+  "Hey! Rex from PlasticOnline. I've got the whole range in my head — what are you working on?",
+  "Hi there — Rex here. Think of me as the bloke at the trade counter who actually knows his stuff.",
+  "Rex here. Whether it's a tiny bracket or a full sheet, I can help. What's the job?",
+  "G'day — Rex from PlasticOnline. I won't make you wait on hold. What do you need?",
+  "Hey — Rex here. I can quote, advise, and point you straight to the right product. What's the project?",
+  "Hi! Rex here — the plastic expert who's always available. What are you building?",
+  "G'day — Rex from PlasticOnline. Ask me anything. Seriously, anything plastic-related.",
+  "Hey there — Rex here. I know our entire range, every thickness, every colour. What do you need?",
+  "Rex here. No hold music, no wait times — just answers. What can I help with?",
+  "Hi — Rex from PlasticOnline. I've been trained on every product we stock. Fire away.",
+  "G'day! Rex here. I can price up a cut right now if you've got dimensions — what are you after?",
+  "Hey — Rex here. Acrylic, HDPE, polycarbonate — you name it, I know it. What's the go?",
+  "Rex here. I'm basically a plastics encyclopaedia with a better personality. What do you need?",
+  "Hi there — Rex from PlasticOnline. Got a project in mind? Let's get you sorted.",
+  "G'day — Rex here. Most questions I can answer in one sentence. Try me.",
+  "Hey! Rex from PlasticOnline. I can give you a price before you even finish your coffee. What size?",
+  "Rex here — your shortcut to getting the right plastic at the right price. What are you after?",
+  "G'day — Rex from PlasticOnline. Tell me what you're making and I'll tell you exactly what you need.",
+  "Hey there — Rex here. If you've got dimensions, I've got a price. What's the material?",
+  "Hi — Rex from PlasticOnline. I don't do small talk, but I do do great prices. What do you need?",
+  "Rex here. I know more about plastic than most people know about anything. What's the project?",
+  "G'day! Rex from PlasticOnline — I'm here to make sure you order the right thing the first time.",
+];
+
+function randomGreeting(): string {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
 
 export default function PeterAvatarWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -245,20 +276,22 @@ export default function PeterAvatarWidget() {
     audio.volume = 1;
     audioRef.current = audio;
 
+    const greeting = randomGreeting();
     chatModeRef.current = "voice";
     setChatMode("voice");
     isStartedRef.current = true;
     setIsStarted(true);
-    messagesRef.current = [{ role: "assistant", content: GREETING }];
-    await playVoice(GREETING);
+    messagesRef.current = [{ role: "assistant", content: greeting }];
+    await playVoice(greeting);
   }
 
   function selectTextMode() {
+    const greeting = randomGreeting();
     chatModeRef.current = "text";
     setChatMode("text");
     isStartedRef.current = true;
     setIsStarted(true);
-    const greetingMsg: ChatMessage = { role: "assistant", content: GREETING };
+    const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
     messagesRef.current = [greetingMsg];
     setDisplayMessages([greetingMsg]);
   }
