@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 
 type ActionLink = { label: string; href: string };
@@ -35,6 +35,7 @@ export default function PeterAvatarWidget() {
   const [endSubmitted, setEndSubmitted] = useState(false);
 
   const [actionLinks, setActionLinks] = useState<ActionLink[]>([]);
+  const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -43,6 +44,12 @@ export default function PeterAvatarWidget() {
   const isStartedRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
   const transcriptSentRef = useRef(false);
+  const isTypedModeRef = useRef(false);
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayMessages]);
 
   function stopAudio() {
     if (audioRef.current) {
@@ -164,12 +171,14 @@ export default function PeterAvatarWidget() {
     }
   }
 
-  async function handleUserMessage(text: string) {
+  async function handleUserMessage(text: string, isTyped = false) {
     if (!text.trim()) return;
 
+    if (isTyped) isTypedModeRef.current = true;
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setActionLinks([]);
+    if (isTypedModeRef.current) setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
     setIsThinking(true);
     stopListening();
 
@@ -203,10 +212,12 @@ export default function PeterAvatarWidget() {
       }
 
       if (fullText.trim()) {
-        messagesRef.current = [...updated, { role: "assistant", content: fullText.trim() }];
-        setActionLinks(extractLinks(fullText));
+        const cleaned = fullText.trim();
+        messagesRef.current = [...updated, { role: "assistant", content: cleaned }];
+        setActionLinks(extractLinks(cleaned));
+        if (isTypedModeRef.current) setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
         setIsThinking(false);
-        await playVoice(fullText.trim());
+        await playVoice(cleaned);
       } else {
         setIsThinking(false);
         startListening();
@@ -253,6 +264,8 @@ export default function PeterAvatarWidget() {
     setError(null);
     setInputValue("");
     setActionLinks([]);
+    setDisplayMessages([]);
+    isTypedModeRef.current = false;
     messagesRef.current = [];
   }
 
@@ -292,7 +305,7 @@ export default function PeterAvatarWidget() {
     const text = inputValue.trim();
     if (!text) return;
     setInputValue("");
-    await handleUserMessage(text);
+    await handleUserMessage(text, true);
   }
 
   const statusLabel = isSpeaking ? "Speaking" : isListening ? "Listening" : isThinking ? "Thinking…" : isStarted ? "Ready" : "";
@@ -455,6 +468,33 @@ export default function PeterAvatarWidget() {
                 >
                   Start conversation
                 </button>
+              )}
+
+              {/* Typed chat history — only shown when user has typed */}
+              {displayMessages.length > 0 && (
+                <div className="w-full flex flex-col gap-2 max-h-48 overflow-y-auto px-1">
+                  {displayMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                        msg.role === "user"
+                          ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
+                          : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
+                      }`}>
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isThinking && (
+                    <div className="flex justify-start">
+                      <div className="bg-saabai-surface-raised border border-saabai-border/60 px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatBottomRef} />
+                </div>
               )}
 
               {/* Action link chips — appear when Rex mentions a link */}
