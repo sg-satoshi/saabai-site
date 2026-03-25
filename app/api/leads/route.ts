@@ -594,6 +594,115 @@ function buildCustomerTranscriptEmail(lead: {
   };
 }
 
+// ── Pete chat transcript emails ───────────────────────────────────────────────
+
+function buildPeteOperatorEmail(lead: {
+  timestamp: string;
+  email?: string;
+  conversation?: { role: string; content: string }[];
+}) {
+  const { timestamp, email, conversation = [] } = lead;
+  const userCount = conversation.filter((m) => m.role === "user").length;
+
+  const bubblesHtml = conversation
+    .filter((m) => m.content.trim())
+    .map(({ role, content }) => {
+      const isPete = role === "assistant";
+      if (isPete) {
+        return `<tr><td style="padding: 4px 0 8px;">
+          <table style="border-collapse: collapse;"><tr>
+            <td style="vertical-align: bottom; padding-right: 8px; width: 28px;">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">P</div>
+            </td>
+            <td>
+              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">Pete</div>
+              <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
+            </td>
+          </tr></table>
+        </td></tr>`;
+      } else {
+        return `<tr><td style="padding: 4px 0 8px; text-align: right;">
+          <div style="font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; text-align: right;">${email ?? "Visitor"}</div>
+          <div style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 11px 15px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; text-align: left;">${content}</div>
+        </td></tr>`;
+      }
+    })
+    .join("");
+
+  const contactRow = email
+    ? `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+        <span style="font-size:12px;color:#999;">Visitor email: </span>
+        <a href="mailto:${email}" style="font-size:14px;font-weight:600;color:#62c5d1;text-decoration:none;">${email}</a>
+       </div>`
+    : `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+        <span style="font-size:12px;color:#bbb;">No email provided</span>
+       </div>`;
+
+  return {
+    subject: `Pete transcript — ${email ?? "anonymous"} · ${userCount} messages · /onboarding/plon`,
+    html: buildTranscriptShell({
+      eyebrow: "Saabai · Pete Transcript",
+      heading: "A visitor chatted with Pete.",
+      subheading: `${userCount} visitor messages · /onboarding/plon · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}`,
+      bubblesHtml: contactRow + bubblesHtml,
+      footerNote: "Sent automatically after a Pete conversation ends.",
+    }),
+  };
+}
+
+function buildPeteCustomerTranscriptEmail(lead: {
+  email: string;
+  conversation?: { role: string; content: string }[];
+}) {
+  const { email, conversation = [] } = lead;
+
+  const bubblesHtml = conversation
+    .filter((m) => m.content.trim())
+    .map(({ role, content }) => {
+      const isPete = role === "assistant";
+      const label = isPete ? "Pete" : "You";
+      if (isPete) {
+        return `<tr><td style="padding: 4px 0 8px;">
+          <table style="border-collapse: collapse;"><tr>
+            <td style="vertical-align: bottom; padding-right: 8px; width: 28px;">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">P</div>
+            </td>
+            <td>
+              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">${label}</div>
+              <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
+            </td>
+          </tr></table>
+        </td></tr>`;
+      } else {
+        return `<tr><td style="padding: 4px 0 8px; text-align: right;">
+          <div style="font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; text-align: right;">${label}</div>
+          <div style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 11px 15px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; text-align: left;">${content}</div>
+        </td></tr>`;
+      }
+    })
+    .join("");
+
+  const ctaHtml = `
+    <div style="text-align: center; margin-bottom: 28px;">
+      <p style="font-size: 15px; color: #444; margin: 0 0 20px; line-height: 1.6;">Thanks for the chat. Ready to see what we can build for your business?</p>
+      <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book Your Free Strategy Call →</a>
+      <p style="font-size: 12px; color: #aaa; margin: 12px 0 0;">Free · 30 minutes · No obligation</p>
+    </div>
+  `;
+
+  return {
+    subject: "Your conversation with Pete — Saabai",
+    html: buildTranscriptShell({
+      eyebrow: "Saabai · From Pete",
+      heading: "Here's your chat with Pete.",
+      subheading: "Everything you discussed — saved for your reference.",
+      bubblesHtml,
+      ctaHtml,
+      footerNote: "You requested this transcript during your chat. Questions? Reply to this email.",
+    }),
+  };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -603,10 +712,41 @@ export async function POST(req: Request) {
 
   const isCalculator = lead.source?.startsWith("calculator");
   const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";
+  const isPeteClosed = lead.source === "pete_ended";
 
   if (process.env.RESEND_API_KEY) {
 
-    if (isChatClosed) {
+    if (isPeteClosed) {
+      // Operator transcript — always send for Pete (client onboarding context)
+      const { subject, html } = buildPeteOperatorEmail(lead);
+      try {
+        await resend.emails.send({
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
+        });
+      } catch (err) {
+        console.error("[resend pete operator error]", err);
+      }
+
+      // Customer transcript — only if they opted in
+      if (lead.sendTranscript && lead.email) {
+        const { subject: txSubject, html: txHtml } = buildPeteCustomerTranscriptEmail(lead);
+        try {
+          await resend.emails.send({
+            from: "Shane at Saabai.ai <hello@saabai.ai>",
+            to: [lead.email],
+            subject: txSubject,
+            html: txHtml,
+            replyTo: "hello@saabai.ai",
+          });
+        } catch (err) {
+          console.error("[resend pete customer transcript error]", err);
+        }
+      }
+
+    } else if (isChatClosed) {
       // Operator transcript — skip for short conversations
       if (lead.source !== "chat_ended_short") {
         // Generate AI analysis before building the email

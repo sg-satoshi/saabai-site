@@ -23,6 +23,10 @@ export default function PeterAvatarWidget() {
   const [isThinking, setIsThinking] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isEnded, setIsEnded] = useState(false);
+  const [endEmail, setEndEmail] = useState("");
+  const [endSubmitting, setEndSubmitting] = useState(false);
+  const [endSubmitted, setEndSubmitted] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -30,6 +34,7 @@ export default function PeterAvatarWidget() {
   const isSpeakingRef = useRef(false);
   const isStartedRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
+  const transcriptSentRef = useRef(false);
 
   function stopAudio() {
     if (audioRef.current) {
@@ -230,9 +235,46 @@ export default function PeterAvatarWidget() {
     isStartedRef.current = false;
     setIsStarted(false);
     setIsOpen(false);
+    setIsEnded(false);
+    setEndEmail("");
+    setEndSubmitted(false);
+    setEndSubmitting(false);
+    transcriptSentRef.current = false;
     setError(null);
     setInputValue("");
     messagesRef.current = [];
+  }
+
+  function handleEndChat() {
+    stopAudio();
+    stopListening();
+    isStartedRef.current = false;
+    setIsStarted(false);
+    setIsEnded(true);
+  }
+
+  async function submitEndPanel(skipEmail: boolean) {
+    if (transcriptSentRef.current) return;
+    transcriptSentRef.current = true;
+    setEndSubmitting(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "pete_ended",
+          email: skipEmail ? undefined : endEmail.trim() || undefined,
+          sendTranscript: !skipEmail && !!endEmail.trim(),
+          timestamp: new Date().toISOString(),
+          conversation: messagesRef.current,
+        }),
+      });
+      setEndSubmitted(true);
+    } catch {
+      setEndSubmitted(true); // fail silently, don't block UX
+    } finally {
+      setEndSubmitting(false);
+    }
   }
 
   async function handleSend() {
@@ -286,9 +328,9 @@ export default function PeterAvatarWidget() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isStarted && (
+              {isStarted && !isEnded && (
                 <button
-                  onClick={handleClose}
+                  onClick={handleEndChat}
                   className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
                 >
                   End chat
@@ -308,46 +350,111 @@ export default function PeterAvatarWidget() {
           </div>
 
           {/* Avatar area */}
-          <div className="flex flex-col items-center justify-center gap-4 px-6 py-8 bg-gradient-to-b from-saabai-bg to-saabai-surface">
-
-            {/* Pulsing rings + avatar */}
-            <div className="relative flex items-center justify-center">
-              {/* Outer ring — visible when speaking */}
-              <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
-              {/* Mid ring */}
-              <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
-              {/* Avatar circle */}
-              <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
-                <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="h-5 flex items-center">
-              {statusLabel ? (
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${(isSpeaking || isListening || isThinking) ? "animate-pulse" : ""}`} />
-                  <span className="text-xs text-saabai-text-dim">{statusLabel}</span>
+          {isEnded ? (
+            /* ── End panel ── */
+            <div className="px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+              {endSubmitted ? (
+                /* Confirmation */
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-full bg-saabai-teal/20 flex items-center justify-center shrink-0">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M1 6l3.5 3.5L11 2" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-saabai-text-muted leading-relaxed">
+                      {endEmail.trim() ? "Transcript sent — check your inbox." : "Thanks for chatting with Pete."}
+                    </p>
+                  </div>
+                  <div className="h-px bg-saabai-border" />
+                  <p className="text-xs text-saabai-text-dim leading-relaxed">Want to explore what we can automate for your business?</p>
+                  <a
+                    href="https://calendly.com/shanegoldberg/30min"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide"
+                  >
+                    Book a Free Strategy Call →
+                  </a>
+                  <p className="text-[10px] text-saabai-text-dim text-center">Free · 30 minutes · No obligation</p>
                 </div>
-              ) : null}
+              ) : (
+                /* Email capture */
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative w-7 h-7 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden">
+                      <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+                    </div>
+                    <p className="text-xs text-saabai-text-muted leading-relaxed">Want a copy of this conversation emailed to you?</p>
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="Your email address"
+                    value={endEmail}
+                    onChange={(e) => setEndEmail(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && endEmail.trim()) submitEndPanel(false); }}
+                    className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                  />
+                  <button
+                    onClick={() => submitEndPanel(false)}
+                    disabled={!endEmail.trim() || endSubmitting}
+                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {endSubmitting ? "Sending…" : "Send me the transcript"}
+                  </button>
+                  <button
+                    onClick={() => submitEndPanel(true)}
+                    disabled={endSubmitting}
+                    className="text-[11px] text-saabai-text-dim hover:text-saabai-text-muted transition-colors text-center"
+                  >
+                    No thanks
+                  </button>
+                </div>
+              )}
             </div>
+          ) : (
+            /* ── Live avatar area ── */
+            <div className="flex flex-col items-center justify-center gap-4 px-6 py-8 bg-gradient-to-b from-saabai-bg to-saabai-surface">
 
-            {/* Start button */}
-            {!isStarted && (
-              <button
-                onClick={handleStart}
-                className="px-5 py-2.5 bg-saabai-teal text-saabai-bg rounded-full text-xs font-semibold hover:bg-saabai-teal-bright transition-colors tracking-wide"
-                style={{ boxShadow: "0 0 16px rgba(98,197,209,0.3)" }}
-              >
-                Start conversation
-              </button>
-            )}
+              {/* Pulsing rings + avatar */}
+              <div className="relative flex items-center justify-center">
+                {/* Outer ring — visible when speaking */}
+                <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
+                {/* Mid ring */}
+                <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
+                {/* Avatar circle */}
+                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(98,197,209,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                  <Image src="/shane-goldberg.png" alt="Pete" fill className="object-cover" />
+                </div>
+              </div>
 
-            {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
-          </div>
+              {/* Status */}
+              <div className="h-5 flex items-center">
+                {statusLabel ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${(isSpeaking || isListening || isThinking) ? "animate-pulse" : ""}`} />
+                    <span className="text-xs text-saabai-text-dim">{statusLabel}</span>
+                  </div>
+                ) : null}
+              </div>
 
-          {/* Text input */}
-          {isStarted && (
+              {/* Start button */}
+              {!isStarted && (
+                <button
+                  onClick={handleStart}
+                  className="px-5 py-2.5 bg-saabai-teal text-saabai-bg rounded-full text-xs font-semibold hover:bg-saabai-teal-bright transition-colors tracking-wide"
+                  style={{ boxShadow: "0 0 16px rgba(98,197,209,0.3)" }}
+                >
+                  Start conversation
+                </button>
+              )}
+
+              {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
+            </div>
+          )}
+
+          {/* Text input — hidden when ended */}
+          {isStarted && !isEnded && (
             <div className="p-3 border-t border-saabai-border flex gap-2">
               <input
                 type="text"
