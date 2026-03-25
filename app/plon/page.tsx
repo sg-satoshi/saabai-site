@@ -156,7 +156,10 @@ export default function PlonPage() {
         body: JSON.stringify({ messages: updated }),
       });
 
-      if (!res.ok) throw new Error(`Chat error ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Chat error ${res.status}: ${errText}`);
+      }
 
       // Parse AI SDK v6 SSE stream: data: {"type":"text-delta","delta":"..."}
       const reader = res.body?.getReader();
