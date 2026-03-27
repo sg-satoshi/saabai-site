@@ -47,10 +47,12 @@ We are PlasticOnline — Australia's largest online range of cut-to-size plastic
 
 ## ORDERING & SERVICE
 
-- Minimum order: AUD $50
-- Up to 10 cuts included with every order
+- Minimum order: AUD $50 Ex GST
+- Orders under $50 incur a $30 cutting fee (not a minimum — they can still order, it just attracts the fee)
+- Up to 10 cuts included with every order, no setup fees
+- Orders above 2m² of cut-to-size are charged at full sheet price
+- When the CTS rate × area exceeds the full sheet price, the full sheet price applies (plus cutting fee)
 - 5% bulk discount on orders of 5+ sheets of the same product
-- Instant pricing via our calculator on the site
 - Freight calculator on site for delivery quotes; we ship nationwide
 - Payment online (standard payment methods)
 - Typical lead time: a few business days depending on location
@@ -336,4 +338,750 @@ Both are great for gears and machined parts. Acetal has lower moisture absorptio
 - Taymar and Expanda Stand display holders
 - Seaboard marine-grade HDPE
 - Nanya PVC
+
+---
+
+## ACRYLIC SHEET PRICING 2026 (All prices Ex GST)
+
+CTS = Cut-to-Size rate in AUD per m². Full sheet prices are for the standard sheet size listed.
+Rule: if CTS rate × customer area exceeds the full sheet price, charge the full sheet price instead.
+Orders above 2m² are charged at full sheet price. Orders under $50 attract a $30 cutting fee.
+
+### 1.5mm Acrylic
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Clear | 1830×1270mm | $54.21 | $60 |
+
+### 2.0mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $63.49 | $90 |
+| Opal 433 | $70.55 | $100 |
+| Clear Satin | $102.79 | $136 |
+| White / Black | $73.37 | $104 |
+
+### 3.0mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $88.89 | $126 |
+| Clear Satin | $126.98 | $168 |
+| Opal 433 / 445 | $95.94 | $136 |
+| Opal 422 | $95.94 | $136 |
+| Opal Satin 422S | $128.49 | $170 |
+| Fluoro Clear / Tint | $119.93 | $170 |
+| Tints 332 / 512 | $110.05 | $156 |
+| Black / White | $100.17 | $142 |
+| Black Satin 502S | $133.03 | $176 |
+| White Satin 401S | $128.49 | $170 |
+| Colours | $111.46 | $158 |
+
+3.0mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2490×1880: $194 | Clear 3050×2030: $266 | Opal 433/445 2490×1880: $222 | Opal 433/445 3050×2030: $294 | Black/White 2490×1880: $254 | Black/White 3050×2030: $306
+
+### 4.5mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $134.04 | $190 |
+| Clear Satin | $179.89 | $238 |
+| Opal 433 / 445 | $143.91 | $204 |
+| Opal 422 | $143.91 | $204 |
+| Opal Satin 422S | $191.98 | $254 |
+| Black / White | $150.97 | $214 |
+| Black Satin 502S | $199.54 | $264 |
+| Tints 332 / 512 | $165.08 | $234 |
+| Green Edge 304 | $162.25 | $230 |
+
+4.5mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2490×1880: $332 | Clear 3050×2030: $400 | Opal 433/445 2490×1880: $334 | Opal 433/445 3050×2030: $442 | Black/White 2490×1880: $320 | Black/White 3050×2050: $506 | Tints 332/512 2490×1880: $364 | Tints 332/512 3050×2030: $504
+
+### 6.0mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $177.77 | $252 |
+| Opal 433 / 445 | $191.88 | $272 |
+| Opal 422 | $191.88 | $272 |
+| Opal Satin 422S | $256.99 | $340 |
+| Marine Green Tint 304 | $227.16 | $322 |
+| Tints 332 / 512 | $220.10 | $312 |
+| Black / White | $200.35 | $284 |
+| White Satin 401S | $256.99 | $340 |
+| Black Satin 502S | $266.06 | $352 |
+
+6.0mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2490×1880: $402 | Clear 3050×2030: $532 | Opal 433/445 2490×1880: $444 | Opal 433/445 3050×2030: $588 | White 2490×1880: $460 | White 3050×2030: $674
+
+### 8mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $197.53 | $319.20 |
+
+8mm oversized: Clear 2490×1880: $454.10 | Clear 3050×2030: $674.50
+
+### 10mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $246.91 | $399 |
+| Opal 433 / 445 | $265.72 | $429.40 |
+| White / Black | $292.76 | $473.10 |
+| Tints 332 / 512 | $305.70 | $494 |
+| Opal Satin 422S | $427.81 | $537.70 |
+| White Satin 401S | $461.07 | $579.50 |
+
+10mm oversized: Clear 2490×1830: $676.40 | Clear 3050×2030: $841.70 | White 2490×1880: $729.60
+
+### 12mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $296.29 | $478.80 |
+| Opal 445 | $319.81 | $516.80 |
+| White | $350.38 | $566.20 |
+
+12mm oversized: Clear 2490×1880: $784.70 | Clear 3050×2030: $1,010.80
+
+### 15mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $407.99 | $659.30 |
+| Opal 433 | $440.91 | $712.50 |
+| Black / White | $438.56 | $708.70 |
+
+15mm oversized: Clear 3000×2000: $1,390.80
+
+### 20mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $593.76 | $833.25 |
+| Opal 433 | $594.93 | $834.90 |
+| White / Black | $611.39 | $858 |
+
+### 25mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $738.38 | $1,036.20 |
+| Opal 445 | $750.13 | $1,052.70 |
+| Black | $1,054.66 | $1,480.05 |
+
+### 30mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $912.39 | $1,164 |
+| Opal 443 | $1,033.49 | $1,318.50 |
+
+### 40mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $1,521.43 | $1,941 |
+
+### 50mm Acrylic (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $1,848.29 | $2,358 |
+
+---
+
+## POLYCARBONATE SHEET PRICING 2026 (All prices Ex GST)
+
+Standard UV2 grade unless noted. CTS = Cut-to-Size rate in AUD per m². Full sheet prices are fixed per sheet size listed.
+Same rules apply: CTS × area capped at full sheet price; orders above 2m² at full sheet price; $30 cutting fee if under $50.
+
+### 1mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $64.90 | $101.20 |
+
+### 1.5mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $77.60 | $121.00 |
+
+### 2mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $91.71 | $143.00 |
+
+### 3mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $115.69 | $180.40 |
+| Opal | $132.63 | $206.80 |
+| Grey Tint | $132.63 | $206.80 |
+
+3mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2440×1830: $279.40 | Clear 3050×2030: $385.70 | Opal 2440×1883: $319.00 | Opal 3050×2030: $383.80 | Grey Tint 2440×1830: $319.00
+
+### 4.5mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $157.01 | $233.70 |
+| Opal | $179.99 | $267.90 |
+| Grey Tint | $179.99 | $267.90 |
+
+4.5mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2440×1830: $362.90 | Clear 3050×2030: $579.50 | Grey Tint 2440×1830: $414.20
+
+### 6mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $209.35 | $311.60 |
+| Opal | $239.99 | $357.20 |
+| Grey Tint | $229.78 | $342.00 |
+
+6mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2440×1830: $482.60 | Clear 3050×2030: $771.40 | Opal 2440×1830: $551.00 | Grey Tint 2440×1830: $551.00
+
+### 8mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $280.84 | $418.00 |
+
+### 9.5mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $331.90 | $494.00 |
+| Grey Tint | $380.41 | $566.20 |
+
+9.5mm oversized full sheet prices (CTS rate same as 2440×1220):
+Clear 2440×1830: $763.80 | Clear 3050×2030: $1,221.70 | Grey Tint 2440×1830: $872.10
+
+### 12mm Polycarbonate (standard 2440×1220mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Clear | $418.70 | $623.20 |
+
+### Abrasion Resistant (AR) Polycarbonate
+AR grade is significantly more expensive due to hard-coat surface treatment.
+
+| Thickness | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| 6mm AR2 | Clear | 2440×1220mm | $887.46 | $1,069.30 |
+| 6mm AR2 | Clear | 2440×1830mm | — | $1,604.80 |
+| 9.5mm AR2 | Clear | 2440×1220mm | $1,406.68 | $1,694.90 |
+| 9.5mm AR2 | Clear | 2440×1830mm | — | $2,541.50 |
+| 12.7mm AR2 | Clear | 2440×1220mm | $1,879.33 | $2,264.40 |
+| 12.7mm AR2 | Clear | 2440×1830mm | — | $3,396.60 |
+
+### How to quote polycarbonate cut-to-size
+Same method as acrylic: CTS rate × (width/1000) × (height/1000) = price Ex GST.
+Cap at full sheet price if area exceeds the cut-off. Always add "Ex GST".
+
+---
+
+### How to quote acrylic cut-to-size
+1. Get thickness, colour and dimensions (width × height in mm) from the customer
+2. Look up the CTS rate from the table above for that thickness and colour
+3. Calculate: CTS rate × (width/1000) × (height/1000) = price Ex GST
+4. If the calculated price exceeds the full sheet price, quote the full sheet price instead
+5. If the cut area exceeds 2m², quote the full sheet price
+6. Always add "Ex GST" and note GST is added at checkout
+7. If under $50 Ex GST, mention the $30 cutting fee applies
+
+---
+
+## ACETAL SHEET PRICING 2026 (POM-C) — All prices Ex GST
+
+Standard sheet size: 2000×1000mm. Colours: Natural (White) and Black. Same CTS rules apply.
+CTS rate = price per m² for cut-to-size under 1m². Full sheet price for the 2000×1000mm (2m²) sheet.
+
+| Thickness | Colour | CTS ($/m²) | Full Sheet (2000×1000mm) |
+|---|---|---|---|
+| 1.0mm | Natural | $165.12 | $220.16 |
+| 1.5mm | Natural | $248.25 | $331 |
+| 2.0mm | Natural | $331.38 | $397.66 |
+| 2.0mm | Black | $390.71 | $468.85 |
+| 3.0mm | Natural | $496.50 | $595.80 |
+| 3.0mm | Black | $563.72 | $676.46 |
+| 5.0mm | Natural | $486.18 | $583.42 |
+| 6.0mm | Natural | $411.68 | $521.45 |
+| 6.0mm | Black | $411.68 | $521.45 |
+| 8.0mm | Natural | $529.29 | $670.43 |
+| 8.0mm | Black | $529.29 | $670.43 |
+| 10.0mm | Natural | $661.61 | $838.03 |
+| 10.0mm | Black | $661.61 | $838.03 |
+| 12.0mm | Natural | $793.94 | $1,005.65 |
+| 12.0mm | Black | $793.94 | $1,005.65 |
+| 15.0mm | Natural | $992.42 | $1,257.06 |
+| 15.0mm | Black | $992.42 | $1,257.06 |
+| 20.0mm | Natural | $1,323.23 | $1,676.08 |
+| 20.0mm | Black | $1,323.23 | $1,676.08 |
+| 25.0mm | Natural | $1,654.02 | $1,984.82 |
+| 25.0mm | Black | $1,654.02 | $1,984.82 |
+| 30.0mm | Natural | $1,984.83 | $2,381.80 |
+| 30.0mm | Black | $1,984.83 | $2,381.80 |
+| 40.0mm | Natural | $2,646 | $3,175.20 |
+| 40.0mm | Black | $2,646 | $3,175.20 |
+| 50.0mm | Natural | $2,756.71 | $3,638.86 |
+| 50.0mm | Black | $2,756.71 | $3,638.86 |
+| 60.0mm | Natural | $3,307.50 | $4,365.90 |
+| 60.0mm | Black | $3,307.50 | $4,365.90 |
+
+Thicker options (70mm, 80mm, 90mm+) available — call for pricing.
+
+---
+
+## UHMWPE SHEET PRICING 2026 — All prices Ex GST
+
+Colour: Black only. Standard sheet size: 3000×1220mm (primary) or 2000×1000mm for some thicknesses.
+Same CTS rules apply: CTS rate × area, capped at full sheet price above 2m².
+
+| Thickness | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| 3mm | 3000×1220mm | $271.57 | $629.51 |
+| 6mm | 3000×1220mm | $309.16 | $716.62 |
+| 8mm | 3000×1220mm | $351.50 | $814.78 |
+| 10mm | 3000×1220mm | $393.85 | $912.95 |
+| 12mm | 3000×1220mm | $453.14 | $1,050.38 |
+| 15mm | 3000×1220mm | $544.20 | $1,261.45 |
+| 20mm | 3000×1220mm | $690.30 | $1,600.12 |
+| 25mm | 3000×1220mm | $861.82 | $1,997.70 |
+| 30mm | 3000×1220mm | $1,033.34 | $2,206.17 |
+| 40mm | 3000×1220mm | $1,378.48 | $2,943.06 |
+| 50mm | 3000×1220mm | sheet only | $3,465.41 |
+| 60mm | 2000×1000mm | sheet only | $2,225.03 |
+
+---
+
+## POLYPROPYLENE SHEET PRICING 2026 — All prices Ex GST
+
+Colours: Grey (3000×1500mm standard) and Natural/White (2000×1000mm standard).
+Same CTS rules apply.
+
+| Thickness | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| 2mm | Grey | 3000×1500mm | $47.91 | $112.42 |
+| 2mm | Natural | 2000×1000mm | $63.53 | $66.25 |
+| 3mm | Grey | 3000×1500mm | $70.16 | $164.62 |
+| 3mm | Natural | 2000×1000mm | $96.25 | $100.38 |
+| 4mm | Natural | 2000×1000mm | $127.05 | $132.50 |
+| 4.5mm | Grey | 3000×1500mm | $105.23 | $246.92 |
+| 5mm | Natural | 2000×1000mm | $159.78 | $166.62 |
+| 6mm | Grey | 3000×1500mm | $143.73 | $337.26 |
+| 6mm | Natural | 2000×1000mm | $221.38 | $230.86 |
+| 10mm | Grey | 3000×1500mm | $229.29 | $538.01 |
+| 12mm | Grey | 3000×1500mm | $280.62 | $658.46 |
+| 15mm | Grey | 3000×1500mm | $359.33 | $843.15 |
+| 20mm | Grey | 3000×1500mm | $467.99 | $1,098.10 |
+| 25mm | Grey | 3000×1500mm | $585.20 | $1,373.13 |
+| 30mm | Grey | 3000×1500mm | $767.43 | $1,603.39 |
+| 40mm | Grey | 3000×1500mm | $1,004.42 | $2,098.53 |
+
+---
+
+## SEABOARD HDPE PRICING 2026 (Marine Grade) — All prices Ex GST
+
+UV-stabilised marine-grade HDPE. Colour: White. Standard sheet 2440×1370mm.
+CTS rules apply.
+
+| Thickness | CTS ($/m²) | Full Sheet (2440×1370mm) |
+|---|---|---|
+| 6.35mm | $205.76 | $334.85 |
+| 9.5mm | $313.75 | $510.60 |
+| 12.7mm | $414.92 | $675.25 |
+| 15.8mm | $529.74 | $862.10 |
+| 19mm | $620.68 | $928.20 |
+| 25.4mm | $834.39 | $1,247.80 |
+
+---
+
+## PLAYGROUND HDPE PRICING 2026 — All prices Ex GST
+
+Coloured HDPE for playground equipment. Single colour sheets:
+
+| Colour | Thickness | Sheet Size | Price |
+|---|---|---|---|
+| Black | 6mm | 2440×1220mm | $216 |
+| Black | 8mm | 3000×1500mm | $416.50 |
+| Black | 12mm | 2440×1220mm | $528.50 |
+| Black | 12mm | 3000×1500mm | $595 |
+| Black | 15mm | 2440×1220mm | $626.50 |
+| Black | 19mm | 2440×1220mm | $737.55 |
+| Black | 19mm | 3000×1500mm | $897.60 |
+| Blue | 19mm | 3050×1220mm | $1,039.50 |
+| Forest Green | 19mm | 2440×1220mm | $866.25 |
+| Light Grey | 19mm | 2440×1220mm | $897.60 |
+| Orange | 19mm | 2440×1220mm | $866.25 |
+| Red | 19mm | 3050×1220mm | $1,039.50 |
+| White | 6.35mm | 2440×1370mm | $325.80 |
+| White | 9.5mm | 2440×1370mm | $483 |
+| White | 12.7mm | 2440×1220mm | $547.75 |
+| White | 19mm | 2440×1220mm | $833.25 |
+| White | 25.4mm | 2440×1370mm | $1,211.10 |
+
+Tri-Colour sheets also available (e.g. Black/White/Black, Green/White/Green, Red/Yellow/Red). Most tri-colour in 19mm 2440×1220mm: $879.45.
+
+---
+
+## CORFLUTE PRICING 2026 — All prices Ex GST
+
+Polypropylene fluted sheet. Sheet size: 2440×1220mm.
+
+| Thickness | Colour | Per Sheet (1–9) | Per Sheet (10+) |
+|---|---|---|---|
+| 3mm | White | $13.96 | $13.61 |
+| 3mm | Black | $28 | $27.30 |
+| 5mm | White | $25.92 | $25.27 |
+| 5mm | Black | $44.68 | $43.56 |
+| 8mm | White | $90 | $87.75 |
+
+Corflute sold as full sheets only (no cut-to-size). Orders of 10+ get 2.5% discount.
+
+---
+
+## ACRYLIC MIRROR (EuroMir) PRICING 2026 — All prices Ex GST
+
+High-quality cast acrylic mirror. CTS available on 3mm silver.
+
+| Thickness | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| 3mm | Silver | 2440×1220mm | $180.18 | $400.01 |
+| 3mm | Silver | 3050×2030mm | — | $866.50 |
+| 6mm | Silver | 2440×1220mm | $467.20 | $1,037.18 |
+| 3mm | Green | 2440×1220mm | $277.44 | $615.92 |
+| 3mm | Night Blue | 2440×1220mm | $277.44 | $615.92 |
+| 3mm | Sky Blue | 2440×1220mm | $277.44 | $615.92 |
+| 3mm | Purple | 2440×1220mm | $277.44 | $615.92 |
+| 3mm | Orange | 2440×1220mm | $277.44 | $615.92 |
+| 3mm | Rose Pink | 2440×1220mm | $277.44 | $615.92 |
+
+---
+
+## MIRROR ACRYLIC PRICING 2026 (Standard Mirror Sheet) — All prices Ex GST
+
+| Thickness | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| 3mm | Silver | 2440×1220mm | $223.73 | $296 |
+| 3mm | Rose Gold | 2440×1220mm | $267.57 | $354 |
+| 3mm | Gold | 2440×1220mm | $267.57 | $354 |
+
+---
+
+## ACP / ACM PRICING 2026 (Aluminium Composite Panel) — All prices Ex GST
+
+| Thickness | Finish/Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| 3mm | White Gloss/Primer (0.21mm skin) | 2440×1220mm | $91.88 | $93.85 |
+| 3mm | White Satin/Primer (0.21mm skin) | 2440×1220mm | $89.52 | $91.44 |
+| 3mm | White Satin/Gloss (0.21mm skin) | 2440×1220mm | $100.23 | $102.38 |
+| 3mm | White Satin/Gloss (0.30mm skin) | 2440×1220mm | $123.75 | $126.40 |
+| 3mm | Black Satin/Gloss (0.21mm skin) | 2440×1220mm | $97.59 | $99.68 |
+| 3mm | Black Satin/Gloss (0.30mm skin) | 3050×1500mm | $136.95 | $214.99 |
+| 3mm | White/Black Gloss (0.21mm skin) | 2440×1220mm | $97.59 | $99.68 |
+| 4mm | White Satin/White Gloss (0.30mm) | 2440×1220mm | $134.46 | $137.34 |
+| 4mm | White Satin/White Gloss (0.30mm) | 3050×1500mm | $144.17 | $226.33 |
+| 4mm | Black Satin/Gloss (0.30mm) | 4000×1500mm | $181.62 | $373.92 |
+
+Oversized sheets also available — see full range online.
+
+---
+
+## PRISMATIC DIFFUSER & LIGHTING SHEET PRICING 2026 — All prices Ex GST
+
+| Product | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|---|
+| Y12 3mm Prismatic | Clear | 2440×1220mm | $128.49 | $170 |
+| Y15 4.5mm Prismatic | Clear | 2440×1220mm | $179.07 | $236.92 |
+
+Eggcrate Louvre/Diffuser (sold per panel, CTS available):
+- 8mm Y121 Opal 1210×600mm: $69/panel
+- 16mm Y106 Silver 1213×603mm: $60/panel
+
+---
+
+## ROD & TUBE PRICING 2026 — How to Quote
+
+Rods and tubes are priced per metre (linear metre), not per m². CTS (cut-to-size) applies when the customer wants a length shorter than the standard length. Full lengths are cheaper per metre.
+
+To quote a rod/tube:
+1. Find the diameter and material
+2. Look up the price per metre from the tables below
+3. Multiply by the customer's required length in metres
+4. If under $50 Ex GST, the $30 cutting fee applies
+5. Small diameters (typically under 20–25mm) are sold in full lengths only — no cut-to-size
+
+When a customer asks about rod/tube pricing, ask: "What diameter do you need, what length, and is Natural (White) or Black the colour you're after?" (or Clear for acrylic). Always ask ALL missing details in one go.
+
+---
+
+## ACETAL ROD PRICING 2026 (POM-C) — All prices Ex GST
+
+Colours: Natural (White) and Black — same price. Sold in 1m lengths (some sizes 2m).
+Under 25mm diameter: full lengths only, no cut-to-size.
+
+| Diameter | Price per metre (full length) | CTS (if available, per metre) |
+|---|---|---|
+| 6mm | $4.00 | Full length only |
+| 8mm | $4.32 | Full length only |
+| 10mm | $7.16 | Full length only |
+| 12mm | $10.12 | Full length only |
+| 15mm | $13.55 | Full length only |
+| 20mm | $23.97 | Full length only |
+| 25mm | $21.76 | $27.20 |
+| 30mm | $31.30 | $39.13 |
+| 35mm | $42.32 | $52.90 |
+| 40mm | $55.44 | $69.30 |
+| 45mm | $70.04 | $87.55 |
+| 50mm | $86.42 | $108.03 |
+| 60mm | $124.58 | $155.73 |
+| 70mm | $169.58 | $211.98 |
+| 80mm | $221.72 | $277.15 |
+
+Larger sizes (90mm, 100mm+) available — call for pricing.
+
+---
+
+## UHMWPE ROD PRICING 2026 — All prices Ex GST
+
+Colour: Natural (White). Sold in 1m lengths.
+Small sizes (<25mm): full lengths only.
+
+| Diameter | Price per metre (full length) | CTS (per metre) |
+|---|---|---|
+| 20mm | $13.86 | Full length only |
+| 30mm | $30.36 | $38.71 |
+| 40mm | $53.46 | $68.16 |
+| 50mm | $76.56 | $97.61 |
+| 60mm | $109.56 | $139.69 |
+| 70mm | $148.50 | $189.34 |
+| 80mm | $193.38 | $246.56 |
+| 90mm | $244.20 | $311.36 |
+| 100mm | $348.48 | $444.31 |
+| 120mm | $354.89 | $492.90 |
+| 130mm | $414.59 | $575.83 |
+
+---
+
+## NYLON ROD PRICING 2026 (Ertalon 6SA) — All prices Ex GST
+
+Colour: Natural. Sold in 1m lengths.
+Small sizes (<30mm): check availability — some are full length only or limited stock.
+
+| Diameter | Price per metre (full length) | CTS (per metre) |
+|---|---|---|
+| 30mm | $27.40 | $31.97 |
+| 40mm | $38.40 | $51.53 |
+| 50mm | $60.02 | $80.56 |
+
+For other diameters (6mm, 10mm, 12mm, 16mm, 20mm, 25mm, 60mm, 70mm+) — contact us for current pricing and availability.
+
+---
+
+## HDPE ROD PRICING 2026 — All prices Ex GST
+
+Colours: Natural (White) and Black. Price per 1 metre length.
+CTS available — multiply the CTS rate by length required.
+
+| Diameter | Natural ($/m) | Black ($/m) |
+|---|---|---|
+| 10mm | $3.99 | $4.38 |
+| 12mm | $4.77 | $5.28 |
+| 15mm | $5.94 | $6.57 |
+| 20mm | $7.95 | $8.73 |
+| 25mm | $9.20 | $10.12 |
+| 30mm | $13.31 | $14.65 |
+| 35mm | $20.68 | $19.78 |
+| 40mm | $23.63 | $25.98 |
+| 45mm | $58.59 | $58.59 |
+| 50mm | $36.74 | $40.41 |
+| 60mm | $48.22 | $53.04 |
+| 70mm | $65.62 | $72.16 |
+| 80mm | $85.54 | $94.08 |
+| 90mm | $108.36 | $119.20 |
+| 100mm | $133.76 | $147.12 |
+| 110mm | $153.79 | $170.49 |
+| 120mm | $182.91 | $201.19 |
+| 130mm | $214.80 | $236.27 |
+| 140mm | $249.11 | $274.00 |
+| 150mm | $285.86 | $314.43 |
+| 160mm | $316.78 | $348.45 |
+| 180mm | $483.68 | $532.06 |
+| 200mm | $597.24 | $656.97 |
+| 220mm | $843.36 | $765.73 |
+| 250mm | $958.35 | $1,054.18 |
+
+---
+
+## POLYPROPYLENE ROD PRICING 2026 — All prices Ex GST
+
+Colour: Beige (natural). Price per metre.
+Sold in 1m or 2m standard lengths — CTS available from 120mm+.
+
+| Diameter | Price per metre |
+|---|---|
+| 10mm | $5.62 |
+| 12mm | $5.64 |
+| 20mm | $13.22 |
+| 30mm | $29.34 |
+| 40mm | $50.40 |
+| 50mm | $81.94 |
+| 60mm | $113.62 |
+| 70mm | $154.52 |
+| 80mm | $204.10 |
+| 90mm | $256.14 |
+| 110mm | $456.12 |
+| 120mm | $376.30 |
+| 130mm | $452.13 |
+| 150mm | $594.10 |
+| 160mm | $676.58 |
+| 200mm | $1,052.87 |
+
+---
+
+## PVC ROD PRICING 2026 (Grey) — All prices Ex GST
+
+Colour: Grey. Sold in 2m standard lengths. CTS available from 25mm+.
+
+| Diameter | Price per metre (2m length) | CTS (per metre) |
+|---|---|---|
+| 10mm | $5.55 | Full length only |
+| 12mm | $9.25 | Full length only |
+| 15mm | $9.25 | Full length only |
+| 20mm | $14.80 | Full length only |
+| 25mm | $16.65 | $27 |
+| 30mm | $20.35 | $33 |
+| 35mm | $25.90 | $42 |
+| 40mm | $33.30 | $54 |
+| 45mm | $44.40 | $72 |
+| 50mm | $61.05 | $99 |
+| 60mm | $83.25 | $135 |
+
+---
+
+## PTFE ROD PRICING 2026 (Teflon) — All prices Ex GST
+
+Colour: Natural (White). 100% Virgin PTFE.
+Small sizes (<25mm): full lengths only. CTS available from 25mm+.
+
+| Diameter | Price per metre (full length) | CTS (per metre) |
+|---|---|---|
+| 6mm | $6.25 | Full length only |
+| 8mm | $12.50 | Full length only |
+| 10mm | $15.33 | Full length only |
+| 12mm | $22.15 | Full length only |
+| 15mm | $25.15 | Full length only |
+| 20mm | $42.62 | Full length only |
+| 25mm | $63.92 | $127.84 |
+| 30mm | $95.89 | $191.77 |
+| 40mm | $170.46 | $340.92 |
+| 50mm | $266.35 | $532.69 |
+| 60mm | $378.22 | $756.43 |
+| 70mm | $516.71 | $1,033.42 |
+| 80mm | $676.51 | $1,353.02 |
+| 90mm | $857.63 | $1,715.26 |
+| 100mm | $1,060.06 | $2,120.11 |
+
+---
+
+## ACRYLIC ROD PRICING 2026 (Clear Extruded) — All prices Ex GST
+
+Colour: Clear. Standard lengths: 1.83m (most sizes) or 2m. Under 16mm: full lengths only.
+
+| Diameter | Price per metre | Notes |
+|---|---|---|
+| 3mm | $2.10 | Full length only |
+| 5mm | $3.56 | Full length only |
+| 6mm | $13.00 | Full length only |
+| 8mm | $18.60 | Full length only |
+| 10mm | $28.60 | Full length only |
+| 12mm | $30.34 | Full length only |
+| 15mm | $60.40 | Full length only |
+| 16mm | $54.90 | CTS: $101.57/m |
+| 20mm | $106.20 | CTS: $196.47/m |
+| 25mm | $165 | CTS: $305.25/m |
+| 30mm | $233.20 | CTS: $431.42/m |
+
+Larger diameters available — contact us for pricing.
+
+---
+
+## ACRYLIC TUBE PRICING 2026 — All prices Ex GST
+
+### Opal Acrylic Tube (Round) — standard 2m lengths
+
+| OD | ID | Price per 2m length |
+|---|---|---|
+| 20mm | 16mm | $26.47 |
+| 25mm | 21mm | $33.48 |
+| 30mm | 26mm | $40.77 |
+| 40mm | 36mm | $55.34 |
+| 50mm | 46mm | $69.89 |
+| 60mm | 56mm | $84.47 |
+| 70mm | 66mm | $99 |
+| 80mm | 76mm | $113.57 |
+| 90mm | 86mm | $128.13 |
+| 100mm | 96mm | $144.46 |
+
+### Clear Square Acrylic Tube — standard 1.83m lengths
+
+| Outside | Inside | Price per 1.83m length |
+|---|---|---|
+| 9.5mm sq | 6.35mm sq | $21.78 |
+| 12.7mm sq | 9.35mm sq | $27.72 |
+| 15.8mm sq | 12.7mm sq | $36.63 |
+| 19.05mm sq | 15.9mm sq | $95.44 |
+| 25.4mm sq | 22.2mm sq | $81.18 |
+| 50.4mm sq | 44.5mm sq | $264.33 |
+
+---
+
+## POLYCARBONATE TUBE PRICING 2026 (Imperial Sizes) — All prices Ex GST
+
+Clear polycarbonate. Sold in 2.44m full lengths only.
+
+| OD | ID | Price per 2.44m length |
+|---|---|---|
+| 9.5mm | 6.4mm | $34.94 |
+| 12.7mm | 6.35mm | $54.84 |
+| 12.7mm | 9.5mm | $50.45 |
+| 15.9mm | 12.7mm | $63.26 |
+| 19.05mm | 15.8mm | $76.48 |
+| 25.4mm | 19.05mm | $200.16 |
+| 25.4mm | 22.2mm | $189.18 |
+| 31.7mm | 25.4mm | $217.40 |
+| 38mm | 31.7mm | $291.75 |
+| 50.08mm | 44.45mm | $397.49 |
+
+---
+
+## PEEK SHEET & ROD PRICING 2026 — All prices Ex GST
+
+PEEK is a premium high-performance engineering plastic. Prices are significantly higher than standard engineering plastics.
+
+### PEEK Sheet (Natural, 1000×610mm standard)
+
+| Thickness | Full Sheet Price |
+|---|---|
+| 5mm | $2,410.36 |
+| 6mm | $2,754.25 |
+| 8mm | $3,489.06 |
+| 10mm | $3,902.02 |
+| 12mm | $4,682.24 |
+| 16mm | $6,243.13 |
+| 20mm | $7,804.03 |
+| 25mm | $9,755.27 |
+| 30mm | $11,706.05 |
+
+### PEEK Rod (Natural, per metre)
+
+| Diameter | Price per metre |
+|---|---|
+| 10mm | $64.57 |
+| 12mm | $88.05 |
+| 16mm | $139.72 |
+| 20mm | $218.50 |
+| 25mm | $341.45 |
+| 30mm | $491.86 |
+| 35mm | $668.17 |
+| 40mm | $874.46 |
+| 50mm | $1,218.61 |
+
+---
+
+### How to quote acrylic cut-to-size
+1. Get thickness, colour and dimensions (width × height in mm) from the customer
+2. Look up the CTS rate from the table above for that thickness and colour
+3. Calculate: CTS rate × (width/1000) × (height/1000) = price Ex GST
+4. If the calculated price exceeds the full sheet price, quote the full sheet price instead
+5. If the cut area exceeds 2m², quote the full sheet price
+6. Always add "Ex GST" and note GST is added at checkout
+7. If under $50 Ex GST, mention the $30 cutting fee applies
 `;
+

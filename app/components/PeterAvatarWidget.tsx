@@ -3,48 +3,79 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 
-type ActionLink = { label: string; href: string };
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatMode = "text" | "voice" | null;
 
-function extractLinks(text: string): ActionLink[] {
-  const links: ActionLink[] = [];
-  const regex = /\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\)/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    links.push({ label: match[1], href: match[2] });
+
+function renderContent(text: string) {
+  // Split into paragraphs on double newlines, then lines on single newlines
+  const paragraphs = text.split(/\n{2,}/);
+  const result: React.ReactNode[] = [];
+
+  function processLine(line: string, lineKey: string) {
+    const linkRegex = /(\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\))/g;
+    const nodes: React.ReactNode[] = [];
+    let last = 0;
+    let match: RegExpExecArray | null;
+    let key = 0;
+    while ((match = linkRegex.exec(line)) !== null) {
+      if (match.index > last) nodes.push(line.slice(last, match.index));
+      if (match[0].startsWith("**")) {
+        nodes.push(<strong key={`b-${lineKey}-${key++}`}>{match[2]}</strong>);
+      } else {
+        nodes.push(
+          <a key={`a-${lineKey}-${key++}`} href={match[4]} target="_blank" rel="noopener noreferrer"
+            className="underline text-saabai-teal hover:opacity-80">
+            {match[3]}
+          </a>
+        );
+      }
+      last = match.index + match[0].length;
+    }
+    if (last < line.length) nodes.push(line.slice(last));
+    return nodes;
   }
-  return links;
+
+  paragraphs.forEach((para, pIdx) => {
+    if (pIdx > 0) result.push(<div key={`gap-${pIdx}`} className="h-2" />);
+    const lines = para.split("\n");
+    lines.forEach((line, lIdx) => {
+      if (lIdx > 0) result.push(<br key={`br-${pIdx}-${lIdx}`} />);
+      result.push(...processLine(line, `${pIdx}-${lIdx}`));
+    });
+  });
+
+  return result;
 }
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 
 const GREETINGS = [
-  "Hey, I'm Rex — PlasticOnline's AI. What are you cutting today?",
-  "G'day — Rex here. Materials, pricing, sizing — ask away.",
+  "Hey, I'm Rex. PlasticOnline's AI. What are you cutting today?",
+  "G'day! Rex here. Materials, pricing, sizing. Ask away.",
   "Rex here. If it's plastic, I know it. What do you need?",
-  "Hey! Rex from PlasticOnline. I've got the whole range in my head — what are you working on?",
-  "Hi there — Rex here. Think of me as the bloke at the trade counter who actually knows his stuff.",
-  "Rex here. Whether it's a tiny bracket or a full sheet, I can help. What's the job?",
-  "G'day — Rex from PlasticOnline. I won't make you wait on hold. What do you need?",
-  "Hey — Rex here. I can quote, advise, and point you straight to the right product. What's the project?",
-  "Hi! Rex here — the plastic expert who's always available. What are you building?",
-  "G'day — Rex from PlasticOnline. Ask me anything. Seriously, anything plastic-related.",
-  "Hey there — Rex here. I know our entire range, every thickness, every colour. What do you need?",
-  "Rex here. No hold music, no wait times — just answers. What can I help with?",
-  "Hi — Rex from PlasticOnline. I've been trained on every product we stock. Fire away.",
-  "G'day! Rex here. I can price up a cut right now if you've got dimensions — what are you after?",
-  "Hey — Rex here. Acrylic, HDPE, polycarbonate — you name it, I know it. What's the go?",
+  "Hey! Rex from PlasticOnline. I've got the whole range in my head. What are you working on?",
+  "Hi there, Rex here. Think of me as the bloke at the trade counter who actually knows his stuff.",
+  "Rex here. Tiny bracket or a full sheet, I can help. What's the job?",
+  "G'day! Rex from PlasticOnline. No hold music, no wait times. What do you need?",
+  "Hey, Rex here. I can quote, advise and point you straight to the right product. What's the project?",
+  "Hi! Rex here, the plastic expert who's always available. What are you building?",
+  "G'day! Rex from PlasticOnline. Ask me anything. Seriously, anything plastic-related.",
+  "Hey there, Rex here. I know our entire range, every thickness, every colour. What do you need?",
+  "Rex here. No hold music, no wait times, just answers. What can I help with?",
+  "Hi, Rex from PlasticOnline. I've been trained on every product we stock. Fire away.",
+  "G'day! Rex here. I can price up a cut right now if you've got dimensions. What are you after?",
+  "Hey, Rex here. Acrylic, HDPE, polycarbonate. You name it, I know it. What's the go?",
   "Rex here. I'm basically a plastics encyclopaedia with a better personality. What do you need?",
-  "Hi there — Rex from PlasticOnline. Got a project in mind? Let's get you sorted.",
-  "G'day — Rex here. Most questions I can answer in one sentence. Try me.",
+  "Hi there, Rex from PlasticOnline. Got a project in mind? Let's get you sorted.",
+  "G'day! Rex here. Most questions I can answer in one sentence. Try me.",
   "Hey! Rex from PlasticOnline. I can give you a price before you even finish your coffee. What size?",
-  "Rex here — your shortcut to getting the right plastic at the right price. What are you after?",
-  "G'day — Rex from PlasticOnline. Tell me what you're making and I'll tell you exactly what you need.",
-  "Hey there — Rex here. If you've got dimensions, I've got a price. What's the material?",
-  "Hi — Rex from PlasticOnline. I don't do small talk, but I do do great prices. What do you need?",
+  "Rex here. Your shortcut to getting the right plastic at the right price. What are you after?",
+  "G'day! Rex from PlasticOnline. Tell me what you're making and I'll tell you exactly what you need.",
+  "Hey there, Rex here. If you've got dimensions, I've got a price. What's the material?",
+  "Hi, Rex from PlasticOnline. I don't do small talk, but I do do great prices. What do you need?",
   "Rex here. I know more about plastic than most people know about anything. What's the project?",
-  "G'day! Rex from PlasticOnline — I'm here to make sure you order the right thing the first time.",
+  "G'day! Rex from PlasticOnline. I'm here to make sure you order the right thing the first time.",
 ];
 
 function randomGreeting(): string {
@@ -64,9 +95,9 @@ export default function PeterAvatarWidget() {
   const [endEmail, setEndEmail] = useState("");
   const [endSubmitting, setEndSubmitting] = useState(false);
   const [endSubmitted, setEndSubmitted] = useState(false);
-  const [actionLinks, setActionLinks] = useState<ActionLink[]>([]);
   const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([]);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -162,6 +193,7 @@ export default function PeterAvatarWidget() {
     out = out.replace(/https?:\/\/\S+/g, "");
     out = out.replace(/www\.\S+/g, "");
     out = out.replace(/(\d+)\s*[x×]\s*(\d+)/gi, "$1 by $2");
+    out = out.replace(/(\d+(?:\.\d+)?)\s*mm\b/gi, "$1 millimetres");
     return out.trim();
   }
 
@@ -215,9 +247,9 @@ export default function PeterAvatarWidget() {
     if (!text.trim()) return;
     const isText = chatModeRef.current === "text";
 
+    setShowQuickReplies(false);
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
-    setActionLinks([]);
     setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
     setIsThinking(true);
     if (!isText) stopListening();
@@ -234,29 +266,63 @@ export default function PeterAvatarWidget() {
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
+      let buffer = "";
+      let streamingStarted = false;
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          for (const line of chunk.split("\n")) {
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
             try {
               const parsed = JSON.parse(line.slice(6));
-              if (parsed.type === "text-delta" && parsed.delta) fullText += parsed.delta;
+              if (parsed.type === "text-delta" && parsed.delta) {
+                fullText += parsed.delta;
+                // Stream text live in text mode
+                if (isText) {
+                  if (!streamingStarted) {
+                    streamingStarted = true;
+                    setIsThinking(false);
+                    setDisplayMessages(prev => [...prev, { role: "assistant", content: fullText }]);
+                  } else {
+                    setDisplayMessages(prev => {
+                      const msgs = [...prev];
+                      msgs[msgs.length - 1] = { role: "assistant", content: fullText };
+                      return msgs;
+                    });
+                  }
+                }
+              }
             } catch {}
           }
+        }
+        if (buffer.startsWith("data: ")) {
+          try {
+            const parsed = JSON.parse(buffer.slice(6));
+            if (parsed.type === "text-delta" && parsed.delta) fullText += parsed.delta;
+          } catch {}
         }
       }
 
       if (fullText.trim()) {
         const cleaned = fullText.trim();
         messagesRef.current = [...updated, { role: "assistant", content: cleaned }];
-        setActionLinks(extractLinks(cleaned));
-        setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
-        setIsThinking(false);
-        if (!isText) await playVoice(toSpeakable(cleaned));
+        if (isText) {
+          // Final update to ensure complete text is shown
+          setDisplayMessages(prev => {
+            const msgs = [...prev];
+            msgs[msgs.length - 1] = { role: "assistant", content: cleaned };
+            return msgs;
+          });
+        } else {
+          setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
+          setIsThinking(false);
+          await playVoice(toSpeakable(cleaned));
+        }
       } else {
         setIsThinking(false);
         if (!isText) startListening();
@@ -294,6 +360,7 @@ export default function PeterAvatarWidget() {
     const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
     messagesRef.current = [greetingMsg];
     setDisplayMessages([greetingMsg]);
+    setShowQuickReplies(true);
   }
 
   function switchToText() {
@@ -344,8 +411,8 @@ export default function PeterAvatarWidget() {
     transcriptSentRef.current = false;
     setError(null);
     setInputValue("");
-    setActionLinks([]);
     setDisplayMessages([]);
+    setShowQuickReplies(false);
     messagesRef.current = [];
   }
 
@@ -455,25 +522,6 @@ export default function PeterAvatarWidget() {
     </div>
   );
 
-  // ── Action link chips ──────────────────────────────────────────────────────
-  const ActionChips = actionLinks.length > 0 && (
-    <div className="flex flex-col gap-2 w-full px-4 pb-3">
-      {actionLinks.map((link, i) => (
-        <a
-          key={i}
-          href={link.href}
-          target={link.href.startsWith("mailto") ? undefined : "_blank"}
-          rel="noopener noreferrer"
-          className="flex items-center justify-between w-full px-3 py-2.5 bg-saabai-teal/10 border border-saabai-teal/30 rounded-xl text-xs font-medium text-saabai-teal hover:bg-saabai-teal/20 hover:border-saabai-teal/50 transition-all"
-        >
-          <span>{link.label}</span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-60">
-            <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </a>
-      ))}
-    </div>
-  );
 
   return (
     <>
@@ -484,20 +532,23 @@ export default function PeterAvatarWidget() {
           className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 shadow-lg hover:border-saabai-teal/60 transition-all"
           style={{ boxShadow: "0 0 24px rgba(98,197,209,0.15)" }}
         >
-          <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
-            <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+          <div className="relative w-9 h-9 shrink-0">
+            <span className="absolute inset-0 rounded-full border border-saabai-teal/40 animate-ping opacity-50" style={{ animationDuration: "2.5s" }} />
+            <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 overflow-hidden">
+              <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+            </div>
           </div>
           <div className="text-left">
             <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Rex</p>
-            <p className="text-[10px] text-saabai-text-dim mt-0.5">Got questions? I&apos;m here.</p>
+            <p className="text-[10px] text-saabai-text-dim mt-0.5">Get a cut-to-size quote now.</p>
           </div>
         </button>
       )}
 
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
-          style={{ boxShadow: "0 0 60px rgba(98,197,209,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
+          className="fixed bottom-6 right-3 z-50 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
+          style={{ width: "min(340px, calc(100vw - 24px))", boxShadow: "0 0 60px rgba(98,197,209,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
         >
           {Header}
 
@@ -628,33 +679,19 @@ export default function PeterAvatarWidget() {
                   </div>
                 )}
               </div>
-              {/* Chat bubbles if user has typed in voice mode */}
-              {displayMessages.filter(m => m.role === "user").length > 0 && (
-                <div className="w-full flex flex-col gap-2 max-h-36 overflow-y-auto px-1">
-                  {displayMessages.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[88%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-                        msg.role === "user"
-                          ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
-                          : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
-                      }`}>
-                        {msg.content}
-                      </div>
+              {/* Actionable info card — only shown in voice mode when last reply has a price or link */}
+              {(() => {
+                const lastAssistant = [...displayMessages].reverse().find(m => m.role === "assistant");
+                const isActionable = lastAssistant && /AUD|\$|\[/.test(lastAssistant.content);
+                if (!isActionable) return null;
+                return (
+                  <div className="w-full px-1">
+                    <div className="bg-saabai-surface-raised border border-saabai-teal/30 rounded-xl px-3 py-2.5 text-xs leading-relaxed break-words text-saabai-text">
+                      {renderContent(lastAssistant.content)}
                     </div>
-                  ))}
-                  {isThinking && (
-                    <div className="flex justify-start">
-                      <div className="bg-saabai-surface-raised border border-saabai-border/60 px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatBottomRef} />
-                </div>
-              )}
-              {ActionChips}
+                  </div>
+                );
+              })()}
               {error && <p className="text-red-400 text-[10px] text-center px-2">{error}</p>}
             </div>
           )}
@@ -676,7 +713,7 @@ export default function PeterAvatarWidget() {
                         ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
                         : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
                     }`}>
-                      {msg.content}
+                      {renderContent(msg.content)}
                     </div>
                   </div>
                 ))}
@@ -694,22 +731,18 @@ export default function PeterAvatarWidget() {
                 )}
                 <div ref={chatBottomRef} />
               </div>
-              {/* Action chips in text mode */}
-              {actionLinks.length > 0 && (
-                <div className="flex flex-col gap-1.5 px-4 py-2 border-t border-saabai-border bg-saabai-surface">
-                  {actionLinks.map((link, i) => (
-                    <a
-                      key={i}
-                      href={link.href}
-                      target={link.href.startsWith("mailto") ? undefined : "_blank"}
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between w-full px-3 py-2 bg-saabai-teal/10 border border-saabai-teal/30 rounded-lg text-xs font-medium text-saabai-teal hover:bg-saabai-teal/20 transition-all"
+              {/* Quick reply chips — shown after greeting, hidden once user sends */}
+              {showQuickReplies && (
+                <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                  <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
+                  {["Get a price quote", "What materials do you stock?", "Do you deliver nationally?"].map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => { setInputValue(""); handleUserMessage(q); }}
+                      className="text-left px-3 py-2 rounded-lg border border-saabai-teal/25 bg-saabai-teal/5 text-xs text-saabai-teal hover:bg-saabai-teal/15 hover:border-saabai-teal/50 transition-all"
                     >
-                      <span>{link.label}</span>
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-60">
-                        <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </a>
+                      {q}
+                    </button>
                   ))}
                 </div>
               )}
@@ -730,9 +763,12 @@ export default function PeterAvatarWidget() {
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isThinking}
-                className="px-3 py-2 bg-saabai-teal text-saabai-bg rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors"
+                className="w-8 h-8 flex items-center justify-center bg-saabai-teal text-saabai-bg rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors shrink-0"
+                aria-label="Send"
               >
-                Send
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
             </div>
           )}

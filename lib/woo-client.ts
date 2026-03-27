@@ -2,83 +2,33 @@ const WOO_URL = process.env.WOOCOMMERCE_URL!;
 const WOO_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY!;
 const WOO_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET!;
 const PLON_ORIGIN = "https://www.plasticonline.com.au";
+const PLON_PRICE_API = `${PLON_ORIGIN}/wp-json/plon/v1/price`;
 
 function auth() {
   return "Basic " + Buffer.from(`${WOO_KEY}:${WOO_SECRET}`).toString("base64");
 }
 
-const AJAX_HEADERS = {
-  "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-  "Origin": PLON_ORIGIN,
-  "Referer": `${PLON_ORIGIN}/pricing-calculator/`,
-  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "X-Requested-With": "XMLHttpRequest",
-  "Accept": "application/json, text/javascript, */*; q=0.01",
-};
-
-// Try to call cpc_get_unit_price — first without nonce (some plugins skip nonce for read ops),
-// then with a nonce scraped from the page HTML
-async function callPriceAjax(params: {
+async function callPriceApi(params: {
   productId: number;
   variationId: number;
   color: string;
   thickness: string;
 }): Promise<{ unit_price: number; constraints: any } | { error: string }> {
-  const buildBody = (nonce?: string) => {
-    const p: Record<string, string> = {
-      action: "cpc_get_unit_price",
+  try {
+    const qs = new URLSearchParams({
       product_id: String(params.productId),
+      variation_id: String(params.variationId),
       color: params.color,
       thickness: params.thickness,
-      variation_id: String(params.variationId),
-    };
-    if (nonce) p.nonce = nonce;
-    return new URLSearchParams(p).toString();
-  };
-
-  // Attempt 1: no nonce
-  try {
-    const res = await fetch(`${PLON_ORIGIN}/wp-admin/admin-ajax.php`, {
-      method: "POST",
-      headers: AJAX_HEADERS,
-      body: buildBody(),
     });
-    if (res.ok) {
-      const json = await res.json() as any;
-      if (json.success && json.data?.unit_price) return json.data;
-    }
-  } catch { /* fall through */ }
-
-  // Attempt 2: scrape nonce from page
-  try {
-    const pageRes = await fetch(`${PLON_ORIGIN}/pricing-calculator/`, {
-      headers: {
-        "User-Agent": AJAX_HEADERS["User-Agent"],
-        "Accept": "text/html,application/xhtml+xml",
-      },
-    });
-    if (pageRes.ok) {
-      const html = await pageRes.text();
-      const match = html.match(/["']nonce["']\s*:\s*["']([a-f0-9]{8,12})["']/);
-      const nonce = match?.[1];
-      if (nonce) {
-        const res = await fetch(`${PLON_ORIGIN}/wp-admin/admin-ajax.php`, {
-          method: "POST",
-          headers: AJAX_HEADERS,
-          body: buildBody(nonce),
-        });
-        if (res.ok) {
-          const json = await res.json() as any;
-          if (json.success && json.data?.unit_price) return json.data;
-          return { error: `Calculator rejected request: ${JSON.stringify(json)}` };
-        }
-      }
-    }
+    const res = await fetch(`${PLON_PRICE_API}?${qs}`);
+    if (!res.ok) return { error: `Price API returned ${res.status}` };
+    const json = await res.json() as any;
+    if (json.unit_price) return { unit_price: json.unit_price, constraints: json.constraints };
+    return { error: `Unexpected response: ${JSON.stringify(json)}` };
   } catch (err) {
-    return { error: `Page scrape failed: ${String(err)}` };
+    return { error: `Price API call failed: ${String(err)}` };
   }
-
-  return { error: "Could not reach the pricing calculator — try again in a moment." };
 }
 
 async function fetchVariations(productId: number) {
@@ -146,7 +96,7 @@ export async function calculateCutToSizePrice(params: {
   heightMm: number;
   quantity?: number;
 }) {
-  const result = await callPriceAjax(params);
+  const result = await callPriceApi(params);
   if ("error" in result) return result;
 
   const { unit_price, constraints } = result;
@@ -166,13 +116,13 @@ export async function calculateCutToSizePrice(params: {
   const total = Math.round(unitTotal * qty * 100) / 100;
 
   return {
-    price_per_sqm: `AUD $${unit_price.toFixed(2)}`,
-    dimensions: `${params.widthMm} by ${params.heightMm}mm`,
+    price_per_sqm: `AUD $${unit_price.toFixed(2)} /m²`,
+    dimensions: `${params.widthMm}mm by ${params.heightMm}mm`,
     area_sqm: Math.round(areaSqm * 1000) / 1000,
     quantity: qty,
-    unit_total: `AUD $${unitTotal.toFixed(2)}`,
-    total: `AUD $${total.toFixed(2)}`,
-    note: "Ex-GST. GST added at checkout.",
+    unit_total: `AUD $${unitTotal.toFixed(2)} Ex GST`,
+    total: `AUD $${total.toFixed(2)} Ex GST`,
+    note: "GST added at checkout.",
     product_url: `${PLON_ORIGIN}/?p=${params.productId}`,
   };
 }
