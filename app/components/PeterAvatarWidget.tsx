@@ -542,7 +542,7 @@ export default function PeterAvatarWidget() {
   } as React.CSSProperties;
 
   return (
-    <div style={plonVars}>
+    <div style={{ ...plonVars, pointerEvents: "auto" }}>
       {/* Launcher */}
       {!isOpen && (
         <button
