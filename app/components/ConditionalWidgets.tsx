@@ -6,7 +6,7 @@ import MobileCtaBar from "./MobileCtaBar";
 import NewsTicker from "./NewsTicker";
 
 // Pages where Mia (ChatWidget) should be suppressed — they have their own experience
-const SUPPRESS_PATHS = ["/onboarding/plon", "/mission-control", "/plon"];
+const SUPPRESS_PATHS = ["/onboarding/plon", "/mission-control", "/plon", "/rex-widget"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();
