@@ -341,6 +341,51 @@ Both are great for gears and machined parts. Acetal has lower moisture absorptio
 
 ---
 
+## PRODUCT PAGE URLS — plasticonline.com.au
+
+Always end every quote with a link to the relevant product page below. Use the exact URL.
+
+### Sheets
+- Acrylic Sheet: https://www.plasticonline.com.au/product/acrylic-sheet/
+- Polycarbonate Sheet: https://www.plasticonline.com.au/product/polycarbonate-sheet/
+- HDPE Sheet (cutting board): https://www.plasticonline.com.au/product/hdpe-polyethylene-cutting-board/
+- PVC Rigid Sheet: https://www.plasticonline.com.au/product/pvc-sheet/
+- Nylon Sheet: https://www.plasticonline.com.au/product/nylon-sheet/
+- Acetal Sheet (POM-C): https://www.plasticonline.com.au/product/acetal-pom-c-plastic-sheet/
+- Polypropylene Sheet: https://www.plasticonline.com.au/product/polypropylene/
+- Corflute: https://www.plasticonline.com.au/product/corflute-corragatted-flute-board/
+- ACP / ACM Panel: https://www.plasticonline.com.au/product/acm/
+- PTFE Sheet: https://www.plasticonline.com.au/product/ptfe-teflon-sheet/
+- UHMWPE Sheet: https://www.plasticonline.com.au/product/uhmwpe-sheet/
+- PETG Sheet: https://www.plasticonline.com.au/product/petg-polyethylene-terephthalate-glycol-modified-sheet/
+- ABS Sheet: https://www.plasticonline.com.au/product/abs-sheet/
+- Foam PVC Sheet: https://www.plasticonline.com.au/product/foam-pvc/
+- PEEK Sheet: https://www.plasticonline.com.au/product/peek-polyether-ether-ketone-sheet/
+- HIPS Sheet: https://www.plasticonline.com.au/product/hips-sheet/
+- Playground HDPE: https://www.plasticonline.com.au/product/hdpe-playground-board/
+- Seaboard HDPE (marine): https://www.plasticonline.com.au/product/seaboard-hdpe-marine-grade/
+- Acrylic Mirror (Silver/Gold): https://www.plasticonline.com.au/product/silver-gold-commercial-acrylic-mirror/
+- EuroMir Acrylic Mirror: https://www.plasticonline.com.au/product/euromir-acrylic-mirror/
+
+### Rods
+- Acrylic Rod: https://www.plasticonline.com.au/product/acrylic-clear-rod/
+- Acetal Rod (POM-C): https://www.plasticonline.com.au/product/acetal-rod/
+- Nylon Rod: https://www.plasticonline.com.au/product/nylon-rod/
+- HDPE Rod: https://www.plasticonline.com.au/product/hdpe-high-density-polyethylene-rod/
+- UHMWPE Rod: https://www.plasticonline.com.au/product/uhmwpe-rod-natural-only-white/
+- Polypropylene Rod: https://www.plasticonline.com.au/product/polypropylene-pp-rod/
+- PVC Rod: https://www.plasticonline.com.au/product/grey-pvc-rod/
+- PTFE Rod: https://www.plasticonline.com.au/product/ptfe-teflon-virgin-rod/
+- PEEK Rod: https://www.plasticonline.com.au/product/peek-rod/
+
+### Tubes
+- Acrylic Clear Tube: https://www.plasticonline.com.au/product/acrylic-clear-tubes/
+- Acrylic Square Tube: https://www.plasticonline.com.au/product/acrylic-square-tubes/
+- Acrylic Opal Tube: https://www.plasticonline.com.au/product/acrylic-opal-tube/
+- Polycarbonate Tube: https://www.plasticonline.com.au/product/polycarbonate-tube/
+
+---
+
 ## ACRYLIC SHEET PRICING 2026 (All prices Ex GST)
 
 CTS = Cut-to-Size rate in AUD per m². Full sheet prices are for the standard sheet size listed.
