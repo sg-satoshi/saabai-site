@@ -710,6 +710,99 @@ Same CTS rules apply.
 
 ---
 
+## HDPE SHEET PRICING 2026 (Standard / Cutting Board Grade) — All prices Ex GST
+
+Colours: Black (PE-100) — high UV resistance. Natural (PE-HWST) — NOT UV resistant.
+CTS = Cut-to-Size rate for cuts under 1m². Full sheet price applies when CTS × area exceeds the full sheet price.
+Orders under $50 attract a $30 cutting fee.
+
+### Thin sheets (full sheet only — no CTS available)
+| Thickness | Colour | Sheet Size | Full Sheet |
+|---|---|---|---|
+| 1mm | Black | 2000×1000mm | $46 |
+| 1.5mm | Black | 2000×1000mm | $60 |
+| 1.5mm | Natural | 2000×1000mm | $60 |
+| 2mm | Natural | 2000×1000mm | $76 |
+
+### 3mm HDPE (standard 3000×1500mm)
+| Colour | CTS ($/m²) | Full Sheet | Also available |
+|---|---|---|---|
+| Black | $66.67 | $158 | 2000×1000mm full sheet $70 |
+| Natural | $64.87 | $153 | 2000×1000mm full sheet $70 |
+
+### 4.5mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $118.04 | $279 |
+| Black | 2000×1000mm | — | $160 |
+| Natural | 3000×1500mm | $108.15 | $256 |
+
+### 6mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $137.78 | $326 |
+| Black | 2000×1000mm | — | $326 |
+| Natural | 3000×1500mm | $129.80 | $307 |
+
+### 8mm HDPE (standard 3000×1500mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Black | $182.22 | $369 |
+| Natural | $173.02 | $350 |
+
+### 10mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $217.78 | $441 |
+| Black | 4000×2000mm | — | $792 |
+| Natural | 3000×1500mm | $216.30 | $438 |
+| Light Grey (UV) | 3000×1500mm | — | $489 |
+| Black Checker Plate | 3000×2000mm | — | $737 |
+
+### 12mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 4000×2000mm | — | $936 |
+| Natural | 3000×1500mm | $227.10 | $526 |
+| Light Grey | 3000×1500mm | — | $586 |
+| Black Checker Plate | 3000×2000mm | — | $853 |
+| Signal Grey Checker UV | 3000×2000mm | — | $853 |
+
+### 15mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $291.67 | $675 |
+| Black | 4000×2000mm | — | $1,206 |
+| Natural | 3000×1500mm | $283.90 | $657 |
+| Light Grey (UV) | 3000×1500mm | — | $733 |
+| Black Checker Plate | 3000×2000mm | — | $1,067 |
+| Signal Grey Checker UV | 3000×2000mm | — | $1,067 |
+
+### 20mm HDPE
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $385 | $891 |
+| Black | 4000×2000mm | — | $1,566 |
+| Natural | 3000×1500mm | $378.53 | $876 |
+| Light Grey (UV) | 3000×1500mm | — | $1,056 |
+| Black Checker UV | 3000×2000mm | — | $1,422 |
+| Signal Grey Checker UV | 3000×2000mm | — | $1,422 |
+| Yellow Checker UV | 3000×2000mm | — | $1,659 |
+
+### 25mm HDPE (standard 3000×1500mm)
+| Colour | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| Black | $501.67 | $1,161 |
+| Natural | $473.12 | $1,095 |
+
+### 30mm HDPE (standard 3000×1500mm — full sheet pricing only)
+| Colour | Full Sheet |
+|---|---|
+| Black | $1,243 |
+| Natural | $1,243 |
+
+---
+
 ## SEABOARD HDPE PRICING 2026 (Marine Grade) — All prices Ex GST
 
 UV-stabilised marine-grade HDPE. Colour: White. Standard sheet 2440×1370mm.
@@ -911,27 +1004,30 @@ For other diameters (6mm, 10mm, 12mm, 16mm, 20mm, 25mm, 60mm, 70mm+) — contact
 ## HDPE ROD PRICING 2026 — All prices Ex GST
 
 Colours: Natural (White) and Black. Price per 1 metre length.
-CTS available — multiply the CTS rate by length required.
+CTS available — multiply the rate by length required.
 
 | Diameter | Natural ($/m) | Black ($/m) |
 |---|---|---|
-| 10mm | $3.99 | $4.38 |
-| 12mm | $4.77 | $5.28 |
-| 15mm | $5.94 | $6.57 |
-| 20mm | $7.95 | $8.73 |
-| 25mm | $9.20 | $10.12 |
-| 30mm | $13.31 | $14.65 |
-| 35mm | $20.68 | $19.78 |
-| 40mm | $23.63 | $25.98 |
-| 45mm | $58.59 | $58.59 |
-| 50mm | $36.74 | $40.41 |
-| 60mm | $48.22 | $53.04 |
-| 70mm | $65.62 | $72.16 |
-| 80mm | $85.54 | $94.08 |
-| 90mm | $108.36 | $119.20 |
-| 100mm | $133.76 | $147.12 |
+| 10mm | $5.32 | $5.84 |
+| 12mm | $6.36 | $7.04 |
+| 15mm | $7.92 | $8.76 |
+| 20mm | $10.60 | $11.64 |
+| 25mm | $10.45 | $11.50 |
+| 30mm | $15.13 | $16.65 |
+| 35mm | $23.50 | $22.48 |
+| 40mm | $26.85 | $29.53 |
+| 45mm | $66.58 | $66.58 |
+| 50mm | $41.75 | $45.93 |
+| 60mm | $55.45 | $61.00 |
+| 70mm | $75.46 | $82.98 |
+| 75mm | $170.84 | — |
+| 80mm | $98.37 | $108.19 |
+| 90mm | $124.61 | $137.08 |
+| 100mm | $153.82 | $169.19 |
 | 110mm | $153.79 | $170.49 |
+| 115mm | — | $314.34 |
 | 120mm | $182.91 | $201.19 |
+| 125mm | $390.09 | $387.90 |
 | 130mm | $214.80 | $236.27 |
 | 140mm | $249.11 | $274.00 |
 | 150mm | $285.86 | $314.43 |
@@ -939,7 +1035,14 @@ CTS available — multiply the CTS rate by length required.
 | 180mm | $483.68 | $532.06 |
 | 200mm | $597.24 | $656.97 |
 | 220mm | $843.36 | $765.73 |
+| 225mm | — | $1,257.97 |
+| 230mm | $881.70 | $909.97 |
 | 250mm | $958.35 | $1,054.18 |
+| 280mm | $1,073.43 | $1,286.18 |
+| 300mm | $1,380.10 | $1,518.13 |
+| 320mm | $1,472.17 | $1,619.35 |
+| 350mm | $1,610.19 | $1,770.34 |
+| 400mm | $1,840.14 | $2,023.25 |
 
 ---
 
