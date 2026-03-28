@@ -83,7 +83,7 @@ Signage, Marine, Industrial/Mining, Engineering/Electrical/Plumbing/Civil, Retai
 | Polycarbonate UV | 1220×2440mm | 1mm–12.5mm (39 options) | Clear, opal, tint | $101–$1,125 |
 | ABS Sheet | 1350×3050mm | 1mm–12mm (13 options) | Black, white, grey | $95–$340 |
 | PVC Rigid Sheet | 1220×2440mm | Multiple (20 options) | Clear, white, light grey, grey | $82–$2,178 |
-| HDPE White (Cutting Board) | 1220×2440mm | Multiple (34 options) | White | $56–$6,000 |
+| HDPE Sheet (Black or Natural) | 2000×1000mm (thin) / 3000×1500mm (standard) | 1mm–30mm | Black (UV), Natural | $46–$1,243 |
 | Seaboard HDPE (Marine UV) | 1220×2440mm | 15mm+ (7 options) | Natural/White | $351–$1,029 |
 | Nylon Sheet | 1220×3050mm | Multiple (27 options) | Black, natural | $234–$3,978 |
 | Polypropylene Sheet | 1500×3000mm | 2mm–50mm (18 options) | Natural, grey, black, white | $1–$2,692 |

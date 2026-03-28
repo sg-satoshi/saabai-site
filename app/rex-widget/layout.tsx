@@ -10,6 +10,7 @@ export default function RexWidgetLayout({ children }: { children: React.ReactNod
           margin: 0;
           padding: 0;
           overflow: hidden;
+          max-width: 100vw;
         }
       `}</style>
       {children}

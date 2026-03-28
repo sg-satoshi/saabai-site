@@ -73,7 +73,7 @@ const GREETINGS = [
   "Rex here. Your shortcut to getting the right plastic at the right price. What are you after?",
   "G'day! Rex from PlasticOnline. Tell me what you're making and I'll tell you exactly what you need.",
   "Hey there, Rex here. If you've got dimensions, I've got a price. What's the material?",
-  "Hi, Rex from PlasticOnline. I don't do small talk, but I do do great prices. What do you need?",
+  "Hi, Rex from PlasticOnline. Not big on small talk, but I am big on great prices. What do you need?",
   "Rex here. I know more about plastic than most people know about anything. What's the project?",
   "G'day! Rex from PlasticOnline. I'm here to make sure you order the right thing the first time.",
 ];
@@ -551,7 +551,7 @@ export default function PeterAvatarWidget() {
           style={{ boxShadow: "0 0 24px rgba(225,63,0,0.15)" }}
         >
           <div className="relative w-9 h-9 shrink-0">
-            <span className="absolute inset-0 rounded-full border border-saabai-teal/40 animate-ping opacity-50" style={{ animationDuration: "2.5s" }} />
+            <span className="absolute inset-0 rounded-full border border-saabai-teal/40 opacity-50" style={{ animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) 3" }} />
             <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 overflow-hidden">
               <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
             </div>
@@ -586,14 +586,14 @@ export default function PeterAvatarWidget() {
                     </p>
                   </div>
                   <div className="h-px bg-saabai-border" />
-                  <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to order or need more help? Our team is happy to assist.</p>
+                  <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to place your order? Browse the full range and add to cart.</p>
                   <a
-                    href="https://www.plasticonline.com.au/contact/"
+                    href="https://www.plasticonline.com.au/shop/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide"
                   >
-                    Get in Touch →
+                    Shop Our Range →
                   </a>
                 </div>
               ) : (
@@ -752,7 +752,7 @@ export default function PeterAvatarWidget() {
               {showQuickReplies && (
                 <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
                   <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
-                  {["Get a price quote", "What materials do you stock?", "Do you deliver nationally?"].map((q) => (
+                  {["How much for acrylic cut to size?", "Acrylic vs polycarbonate — which do I need?", "Do you deliver Australia-wide?"].map((q) => (
                     <button
                       key={q}
                       onClick={() => { setInputValue(""); handleUserMessage(q); }}
