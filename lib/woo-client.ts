@@ -124,5 +124,6 @@ export async function calculateCutToSizePrice(params: {
     total: `AUD $${total.toFixed(2)} Ex GST`,
     note: "GST added at checkout.",
     product_url: `${PLON_ORIGIN}/?p=${params.productId}`,
+    add_to_cart_url: `${PLON_ORIGIN}/?add-to-cart=${params.variationId}`,
   };
 }
