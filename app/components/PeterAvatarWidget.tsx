@@ -429,7 +429,7 @@ export default function PeterAvatarWidget() {
     transcriptSentRef.current = true;
     setEndSubmitting(true);
     try {
-      await fetch("/api/leads", {
+      await fetch("/api/rex-leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
