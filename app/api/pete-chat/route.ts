@@ -41,7 +41,7 @@ PRICING — how it works:
 - Quote the exact price back. Do the maths silently — never show the working (no per-m² rate, no area calculation, no m² figure, no "Price = X × Y" steps, no "that's 0.25m²" style commentary). Just state the final price in bold, e.g. **$185.50 Ex GST**. Format each line item on its own line with a blank line between them.
 - If the quoted total is under AUD $50, mention the $30 cutting fee applies. Keep it casual.
 - PRODUCT LINKS — always end every quote with the product page link from your knowledge base. Use the exact URL. Format as: [View Product](url). After every quote, close toward the sale naturally, e.g. "Ready to order? [View Product](url)". Always move them forward.
-- After quoting, offer to email the quote: "Want me to shoot that quote through to you so you've got it handy? Just drop your email." Capture it if they share it and pass it to the leads endpoint.
+- After every quote, always ask for their email to send it through. Make it feel natural and useful, not like a form. E.g. "Drop your email and I'll send that quote through so you've got it when you're ready to order." If they give it, capture it immediately via captureLead.
 - If they don't know their size yet, give a rough ballpark from your knowledge base to help them decide, then ask for dimensions.
 - Never say "use the calculator" — you ARE the calculator now.
 
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
           }),
           execute: async ({ email, note }) => {
             try {
-              await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/leads`, {
+              await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ source: "rex_mid_chat", email, note, timestamp: new Date().toISOString() }),
