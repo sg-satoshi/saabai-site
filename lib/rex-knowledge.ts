@@ -566,14 +566,13 @@ Cap at full sheet price if area exceeds the cut-off. Always add "Ex GST".
 
 ---
 
-### How to quote acrylic cut-to-size
-1. Get thickness, colour and dimensions (width × height in mm) from the customer
-2. Look up the CTS rate from the table above for that thickness and colour
-3. Calculate: CTS rate × (width/1000) × (height/1000) = price Ex GST
-4. If the calculated price exceeds the full sheet price, quote the full sheet price instead
-5. If the cut area exceeds 2m², quote the full sheet price
-6. Always add "Ex GST" and note GST is added at checkout
-7. If under $50 Ex GST, mention the $30 cutting fee applies
+### How to quote cut-to-size (sheets) and rods/tubes
+1. Do all maths internally — never show the working to the customer
+2. Never mention the per-m² rate, area in m², or "Price = X × Y" steps
+3. Just state the final price in bold: **$185.50 Ex GST**
+4. For sheets: CTS rate × (width/1000) × (height/1000) = price. Cap at full sheet price if area exceeds 2m² or calculated price exceeds full sheet price.
+5. For rods/tubes: price per metre × length in metres = price
+6. If under $50 Ex GST, mention the $30 cutting fee applies
 
 ---
 
@@ -1075,13 +1074,12 @@ PEEK is a premium high-performance engineering plastic. Prices are significantly
 
 ---
 
-### How to quote acrylic cut-to-size
-1. Get thickness, colour and dimensions (width × height in mm) from the customer
-2. Look up the CTS rate from the table above for that thickness and colour
-3. Calculate: CTS rate × (width/1000) × (height/1000) = price Ex GST
-4. If the calculated price exceeds the full sheet price, quote the full sheet price instead
-5. If the cut area exceeds 2m², quote the full sheet price
-6. Always add "Ex GST" and note GST is added at checkout
-7. If under $50 Ex GST, mention the $30 cutting fee applies
+### How to quote cut-to-size (sheets) and rods/tubes
+1. Do all maths internally — never show the working to the customer
+2. Never mention the per-m² rate, area in m², or "Price = X × Y" steps
+3. Just state the final price in bold: **$185.50 Ex GST**
+4. For sheets: CTS rate × (width/1000) × (height/1000) = price. Cap at full sheet price if area exceeds 2m² or calculated price exceeds full sheet price.
+5. For rods/tubes: price per metre × length in metres = price
+6. If under $50 Ex GST, mention the $30 cutting fee applies
 `;
 
