@@ -586,16 +586,15 @@ export default function PeterAvatarWidget() {
                     </p>
                   </div>
                   <div className="h-px bg-saabai-border" />
-                  <p className="text-xs text-saabai-text-dim leading-relaxed">Want to explore what we can automate for your business?</p>
+                  <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to order or need more help? Our team is happy to assist.</p>
                   <a
-                    href="https://calendly.com/shanegoldberg/30min"
+                    href="https://www.plasticonline.com.au/contact/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide"
                   >
-                    Book a Free Strategy Call →
+                    Get in Touch →
                   </a>
-                  <p className="text-[10px] text-saabai-text-dim text-center">Free · 30 minutes · No obligation</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
