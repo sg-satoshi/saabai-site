@@ -6,6 +6,26 @@ import Image from "next/image";
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatMode = "text" | "voice" | null;
 
+const QUICK_REPLY_POOL = [
+  "How much for acrylic cut to size?",
+  "What would 6mm clear acrylic cost me?",
+  "Can you quote me on polycarbonate sheet?",
+  "Acrylic vs polycarbonate — which do I need?",
+  "What's the best plastic for outdoor use?",
+  "What's the toughest plastic you stock?",
+  "What plastic is food safe for a cutting board?",
+  "What do I need for a fish tank?",
+  "What's best for signage?",
+  "Do you deliver Australia-wide?",
+  "How long does delivery take?",
+  "Can I pick up from the Gold Coast?",
+];
+
+function pickQuickReplies(): string[] {
+  const shuffled = [...QUICK_REPLY_POOL].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3);
+}
+
 
 function renderContent(text: string) {
   // Split into paragraphs on double newlines, then lines on single newlines
@@ -98,6 +118,7 @@ export default function PeterAvatarWidget() {
   const [displayMessages, setDisplayMessages] = useState<ChatMessage[]>([]);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -360,7 +381,20 @@ export default function PeterAvatarWidget() {
     const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
     messagesRef.current = [greetingMsg];
     setDisplayMessages([greetingMsg]);
+    setQuickReplies(pickQuickReplies());
     setShowQuickReplies(true);
+  }
+
+  function trackQuickReply(question: string) {
+    fetch("/api/rex-leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "rex_quick_reply",
+        note: question,
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {});
   }
 
   function switchToText() {
@@ -413,6 +447,7 @@ export default function PeterAvatarWidget() {
     setInputValue("");
     setDisplayMessages([]);
     setShowQuickReplies(false);
+    setQuickReplies([]);
     messagesRef.current = [];
   }
 
@@ -752,10 +787,10 @@ export default function PeterAvatarWidget() {
               {showQuickReplies && (
                 <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
                   <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
-                  {["How much for acrylic cut to size?", "Acrylic vs polycarbonate — which do I need?", "Do you deliver Australia-wide?"].map((q) => (
+                  {quickReplies.map((q) => (
                     <button
                       key={q}
-                      onClick={() => { setInputValue(""); handleUserMessage(q); }}
+                      onClick={() => { trackQuickReply(q); setInputValue(""); handleUserMessage(q); }}
                       className="text-left px-3 py-2 rounded-lg border border-saabai-teal/25 bg-saabai-teal/5 text-xs text-saabai-teal hover:bg-saabai-teal/15 hover:border-saabai-teal/50 transition-all"
                     >
                       {q}
