@@ -1,291 +1,210 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Rex Changelog — PlasticOnline AI Updates",
-  description: "Live development log for Rex, the AI agent built for PlasticOnline by Saabai.",
+  title: "Rex Changelog — PlasticOnline AI",
+  description: "Full development history for Rex, the AI sales agent built for PlasticOnline by Saabai.",
 };
 
-type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT";
+type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT" | "DEBUG";
 
 interface Entry {
+  time: string;
   tag: Tag;
   title: string;
-  detail: string;
 }
 
 interface Day {
   date: string;
-  label: string;
+  label?: string;
   entries: Entry[];
 }
 
-const TAG_STYLES: Record<Tag, { bg: string; text: string; dot: string }> = {
-  NEW:         { bg: "rgba(37,211,102,0.12)",  text: "#25D366", dot: "#25D366" },
-  FIX:         { bg: "rgba(96,165,250,0.12)",  text: "#60a5fa", dot: "#60a5fa" },
-  IMPROVEMENT: { bg: "rgba(251,191,36,0.12)",  text: "#fbbf24", dot: "#fbbf24" },
-  PRICING:     { bg: "rgba(167,139,250,0.12)", text: "#a78bfa", dot: "#a78bfa" },
-  UI:          { bg: "rgba(244,114,182,0.12)", text: "#f472b6", dot: "#f472b6" },
-  DEPLOYMENT:  { bg: "rgba(251,146,60,0.12)",  text: "#fb923c", dot: "#fb923c" },
+const TAG_STYLES: Record<Tag, { bg: string; text: string }> = {
+  NEW:         { bg: "rgba(37,211,102,0.12)",  text: "#25D366" },
+  FIX:         { bg: "rgba(96,165,250,0.12)",  text: "#60a5fa" },
+  IMPROVEMENT: { bg: "rgba(251,191,36,0.12)",  text: "#fbbf24" },
+  PRICING:     { bg: "rgba(167,139,250,0.12)", text: "#a78bfa" },
+  UI:          { bg: "rgba(244,114,182,0.12)", text: "#f472b6" },
+  DEPLOYMENT:  { bg: "rgba(251,146,60,0.12)",  text: "#fb923c" },
+  DEBUG:       { bg: "rgba(156,163,175,0.10)", text: "#9ca3af" },
 };
 
 const CHANGELOG: Day[] = [
   {
-    date: "2026-03-29",
+    date: "29 Mar 2026",
     label: "Today",
     entries: [
-      {
-        tag: "UI",
-        title: "Messenger green rebrand",
-        detail: "Rex widget colour changed from PlasticOnline orange to #25D366 — the macOS Messages green. Applied across widget, glows, borders, buttons, and email templates.",
-      },
-      {
-        tag: "FIX",
-        title: "\"Lock it in →\" order CTA",
-        detail: "Replaced generic 'View Product' and 'Click here to Order Now' with 'Lock it in →' — sharper, more conversational, Gold Coast trade counter energy.",
-      },
-      {
-        tag: "NEW",
-        title: "Conversation persistence across page navigations",
-        detail: "Rex now saves the full conversation to localStorage. Users can browse the site, come back, and the chat is exactly where they left it. 24hr TTL. Clears on explicit close.",
-      },
-      {
-        tag: "NEW",
-        title: "Quick reply randomisation + click tracking",
-        detail: "12-question pool covering price intent, material comparison, use-cases, and logistics. 3 shown randomly each session. Every click tracked to Make.com for conversion analysis.",
-      },
-      {
-        tag: "NEW",
-        title: "Lead capture — instant quote email + 22hr follow-up",
-        detail: "When a customer shares their email, Rex fires an immediate branded quote email and schedules a follow-up 22 hours later via Resend. Team notification also sent.",
-      },
-      {
-        tag: "NEW",
-        title: "Pipedrive CRM integration",
-        detail: "Every captured email automatically creates a person + deal in Pipedrive. Activates once PIPEDRIVE_API_TOKEN is set in Vercel env vars.",
-      },
-      {
-        tag: "IMPROVEMENT",
-        title: "12-point stress test applied",
-        detail: "Narration rule extended to internal calcs. Em dash contradiction fixed in system prompt. HDPE colour aliases added. Quantity multiplier rule. Don't-re-ask rule. Quick replies updated. Mobile iframe fix. Ping stops after 3 pulses. End CTA improved. stepCountIs bumped 6→8. Greeting fix.",
-      },
-      {
-        tag: "PRICING",
-        title: "HDPE sheet full pricing table loaded",
-        detail: "Standard HDPE (Black PE-100 + Natural PE-HWST) pricing added across all thicknesses from 1mm–30mm. Rex now quotes HDPE instantly from the knowledge base — no WooCommerce API call needed.",
-      },
-      {
-        tag: "PRICING",
-        title: "HDPE rod prices updated to March 2026",
-        detail: "All rod prices refreshed from the March 2026 supplier spreadsheet. 10 new sizes added including 75mm, 115mm, 125mm, 230mm, 280mm, 300mm, 320mm, 350mm, 400mm.",
-      },
-      {
-        tag: "DEPLOYMENT",
-        title: "Rex live on plasticonline.com.au",
-        detail: "Widget deployed via iframe embed using functions.php in the child theme. WP Rocket exclusion rule added to prevent lazy-load interference. Cloudflare cache purged.",
-      },
+      { time: "21:10", tag: "UI",          title: "Rex assistant chat bubbles changed to iMessage blue (#0B93F6)" },
+      { time: "21:09", tag: "NEW",         title: "Rex changelog page launched at saabai.ai/rex-changelog" },
+      { time: "21:05", tag: "UI",          title: "Full rebrand to messenger green (#25D366) — widget, glows, borders, email templates" },
+      { time: "12:29", tag: "FIX",         title: "Product CTA changed to 'Lock it in →' — sharper, Gold Coast trade counter tone" },
+      { time: "12:27", tag: "FIX",         title: "Removed conflicting 'View Product' reference that was overriding CTA rule" },
+      { time: "12:25", tag: "FIX",         title: "Product link enforced on every quote — no bare text references allowed" },
+      { time: "12:25", tag: "IMPROVEMENT", title: "Email capture line: 'Drop your email — I'll send the quote and you can have it ordered today'" },
+      { time: "11:39", tag: "NEW",         title: "Conversation persistence across page navigations via localStorage — 24hr TTL, clears on explicit close" },
+      { time: "00:14", tag: "NEW",         title: "Quick reply randomisation — 12-question pool, 3 shown per session, click tracking to Make.com" },
+      { time: "00:06", tag: "FIX",         title: "Rex end-panel leads routed to /api/rex-leads endpoint" },
+      { time: "00:03", tag: "NEW",         title: "Rex lead capture system — instant quote email + 22hr follow-up via Resend + Pipedrive CRM + Make.com webhook" },
     ],
   },
   {
-    date: "2026-03-28",
-    label: "Yesterday",
+    date: "28 Mar 2026",
     entries: [
-      {
-        tag: "PRICING",
-        title: "All 35 pricing spreadsheets loaded into knowledge base",
-        detail: "Full 2026 pricing extracted from Excel files via Python/openpyxl: acetal, UHMWPE, polypropylene, seaboard HDPE, playground HDPE, corflute, mirror acrylic, ACP, prismatic, all rods and tubes. Rex quotes every material instantly.",
-      },
-      {
-        tag: "UI",
-        title: "PlasticOnline brand colours applied",
-        detail: "All Saabai teal replaced with PlasticOnline orange (#e13f00) scoped via CSS variables on the widget wrapper. Saabai site colours unaffected.",
-      },
-      {
-        tag: "NEW",
-        title: "/rex-widget embeddable page created",
-        detail: "Transparent iframe page at saabai.ai/rex-widget. Body background transparent, overflow hidden. Designed to be dropped into any website via a single script tag.",
-      },
-      {
-        tag: "FIX",
-        title: "Mia and Saabai widgets suppressed on /rex-widget",
-        detail: "Added /rex-widget to ConditionalWidgets suppress list. Mia, MobileCtaBar, and NewsTicker no longer load on the embed page.",
-      },
-      {
-        tag: "FIX",
-        title: "Product page links fixed",
-        detail: "Replaced broken ?add-to-cart={variationId} WooCommerce URLs with real product page URLs sourced from the plasticonline.com.au sitemap. 40+ product URLs added to knowledge base.",
-      },
-      {
-        tag: "FIX",
-        title: "Saabai strategy call CTA removed from Rex end panel",
-        detail: "Shane's Calendly link was appearing after Rex conversations. Replaced with 'Shop Our Range →' linking to plasticonline.com.au/shop/.",
-      },
-      {
-        tag: "NEW",
-        title: "Mode picker — Text Chat or Voice",
-        detail: "Rex opens with a choice screen. Text mode: live streaming bubbles. Voice mode: ElevenLabs TTS with speech recognition. Users can switch modes mid-conversation.",
-      },
-      {
-        tag: "NEW",
-        title: "25 random greeting messages",
-        detail: "Rex picks a different opening line every session — from 'G\'day! Rex here' to 'I\'m basically a plastics encyclopaedia with a better personality'. Keeps it fresh.",
-      },
-      {
-        tag: "FIX",
-        title: "Quote working removed from responses",
-        detail: "Rex no longer shows per-m² rates, area calculations, or 'Price = X × Y' steps. Final price in bold only. m² commentary explicitly blocked.",
-      },
+      { time: "23:53", tag: "IMPROVEMENT", title: "12-point stress test: narration rule, em dashes, HDPE aliases, quantity multiplier, don't-re-ask, mobile fix, ping stops after 3 pulses, stepCountIs 6→8" },
+      { time: "22:27", tag: "PRICING",     title: "HDPE sheet full pricing table added (1mm–30mm, Black + Natural) — instant quotes, no API delay" },
+      { time: "22:27", tag: "PRICING",     title: "HDPE rod prices updated to March 2026 rates — 10 new sizes including up to 400mm" },
+      { time: "21:52", tag: "FIX",         title: "No-working rule tightened — m² figures, area calculations, and commentary explicitly banned" },
+      { time: "21:48", tag: "FIX",         title: "Saabai strategy call CTA removed from Rex end panel — replaced with 'Shop Our Range'" },
+      { time: "21:48", tag: "FIX",         title: "iframe pointer-events fixed — launcher and chat window now fully clickable" },
+      { time: "18:53", tag: "FIX",         title: "Product page links fixed — real plasticonline.com.au URLs from sitemap, 40+ products mapped" },
+      { time: "18:44", tag: "FIX",         title: "Mia, MobileCtaBar, NewsTicker suppressed on /rex-widget page" },
+      { time: "18:39", tag: "NEW",         title: "/rex-widget embeddable iframe page created — transparent background, pointer-events shell" },
+      { time: "18:33", tag: "FIX",         title: "Add to Cart links pointed to correct product variation URLs" },
+      { time: "18:22", tag: "UI",          title: "PlasticOnline brand colours applied — orange #e13f00 scoped via CSS variables on widget wrapper" },
+      { time: "06:58", tag: "PRICING",     title: "Full 2026 pricing loaded from 35 Excel spreadsheets — all rods, tubes, acetal, UHMWPE, polypropylene, seaboard, playground, corflute, mirror, ACP, prismatic" },
     ],
   },
   {
-    date: "2026-03-25",
-    label: "Earlier this week",
+    date: "25 Mar 2026",
     entries: [
-      {
-        tag: "NEW",
-        title: "WooCommerce live pricing integration",
-        detail: "Rex connects to plasticonline.com.au WooCommerce REST API. searchProducts finds product and variation IDs. calculateCutToSizePrice returns exact cut-to-size price from the live calculator.",
-      },
-      {
-        tag: "NEW",
-        title: "Voice mode with ElevenLabs TTS",
-        detail: "Rex speaks responses aloud using ElevenLabs voice synthesis. Speech recognition via Web Speech API (Chrome/Android). Dimensions spoken as '600 by 1200 millimetres' not '600x1200'.",
-      },
-      {
-        tag: "NEW",
-        title: "Full PlasticOnline knowledge base",
-        detail: "Comprehensive training data loaded: company history, locations, fabrication capabilities, material science for 15+ plastics, comparison tables, FAQs, product range, accessories.",
-      },
-      {
-        tag: "IMPROVEMENT",
-        title: "Rex speaks as part of the team",
-        detail: "Rewritten to use 'we/our/us' always. Never refers to PlasticOnline in third person. Tone: knowledgeable trade counter mate, not a brochure. Em dashes banned.",
-      },
-      {
-        tag: "NEW",
-        title: "Lead capture endpoint",
-        detail: "captureLead tool silently fires when a customer shares their email. Sends to Make.com webhook for CRM and follow-up automation.",
-      },
+      { time: "23:27", tag: "NEW",         title: "Mode switcher — toggle between Text and Voice mid-conversation" },
+      { time: "23:23", tag: "NEW",         title: "25 random greeting messages — fresh opening line every session" },
+      { time: "23:21", tag: "NEW",         title: "Mode picker — choose Text Chat or Voice before starting" },
+      { time: "23:13", tag: "FIX",         title: "Calculator nonce fallback + dimensions spoken as 'by' not 'x'" },
+      { time: "23:01", tag: "NEW",         title: "Live pricing calculator integration — exact cut-to-size quotes via WooCommerce AJAX" },
+      { time: "22:47", tag: "FIX",         title: "Rex quotes prices directly — strips URLs and markdown from voice output" },
+      { time: "22:41", tag: "IMPROVEMENT", title: "Rex personality overhaul — tighter responses, dry humour, no brochure speak" },
+      { time: "22:33", tag: "NEW",         title: "WooCommerce pricing integration — live product lookup via REST API + direct product links" },
+      { time: "22:23", tag: "NEW",         title: "Typed chat mode — message bubbles visible while typing, hidden in voice-only mode" },
+      { time: "19:17", tag: "FIX",         title: "Rex now knows full sheets are available, not just cut-to-size" },
+      { time: "19:17", tag: "FIX",         title: "Rex never reads URLs aloud — says 'tap the button below' instead" },
+      { time: "19:11", tag: "NEW",         title: "Voice-first mode — link chips replace chat history in voice sessions" },
+      { time: "19:01", tag: "IMPROVEMENT", title: "Shorter answers, natural sales nudges added to Rex behaviour" },
+      { time: "18:59", tag: "NEW",         title: "Chat history with clickable links rendered in text mode" },
+      { time: "18:57", tag: "FIX",         title: "Rex speaks as part of the team — 'we/our/us' always, never third person" },
+      { time: "18:46", tag: "NEW",         title: "Full PlasticOnline knowledge base loaded — company history, materials science, FAQs, product range, fabrication capabilities" },
+      { time: "17:20", tag: "IMPROVEMENT", title: "Renamed Pete → Rex across all widget, system prompts, and email references" },
+      { time: "17:17", tag: "NEW",         title: "Pete/Rex widget — end panel with transcript email capture" },
+      { time: "17:10", tag: "NEW",         title: "Pete/Rex widget — avatar photo, minimise and end chat buttons" },
+      { time: "17:06", tag: "FIX",         title: "Removed stale /plon chat route that was causing 500 errors" },
+      { time: "17:02", tag: "FIX",         title: "Widget now uses /api/pete-chat with correct AI SDK stream parser" },
+      { time: "16:53", tag: "FIX",         title: "Mia/ChatWidget suppressed on /plon page" },
+      { time: "16:47", tag: "NEW",         title: "Mic permission blocked warning shown on /plon voice mode" },
+      { time: "16:37", tag: "FIX",         title: "Plon chat route — removed edge runtime, switched to claude-sonnet-4-6 directly" },
+      { time: "16:13", tag: "FIX",         title: "Pete on /plon now uses dedicated route with correct stream parsing" },
+    ],
+  },
+  {
+    date: "21 Mar 2026",
+    label: "Day 1 — Rex born",
+    entries: [
+      { time: "16:40", tag: "NEW",         title: "HeyGen avatar replaced with static photo + ElevenLabs voice — faster, more reliable" },
+      { time: "16:10", tag: "NEW",         title: "Peter Shane video avatar widget launched on /onboarding/plon" },
+      { time: "16:07", tag: "NEW",         title: "HeyGen AI video avatar chatbot first deployed on /plon page" },
+      { time: "14:17", tag: "FIX",         title: "Phonetic pronunciation fix — 'Saabai' → 'Saarbye' for TTS accuracy" },
     ],
   },
 ];
 
 const STATS = [
-  { value: "29", label: "Updates shipped" },
-  { value: "7",  label: "Days in dev" },
-  { value: "35", label: "Pricing sheets loaded" },
+  { value: "52",  label: "Total updates" },
+  { value: "9",   label: "Days in development" },
+  { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
 ];
 
 export default function RexChangelog() {
+  const totalEntries = CHANGELOG.reduce((sum, d) => sum + d.entries.length, 0);
+  void totalEntries;
+
   return (
     <div style={{ minHeight: "100vh", background: "#06070d", color: "#e8e8f0", fontFamily: "var(--font-geist-sans)" }}>
 
-      {/* ── Ambient background ─────────────────────────────────────────────── */}
+      {/* Ambient glow */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div style={{
-          position: "absolute", top: "-20%", left: "50%", transform: "translateX(-50%)",
-          width: "800px", height: "600px", borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(37,211,102,0.07) 0%, transparent 70%)",
-        }} />
-        <div style={{
-          position: "absolute", bottom: "10%", right: "-10%",
-          width: "500px", height: "500px", borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(96,165,250,0.05) 0%, transparent 70%)",
-        }} />
+        <div style={{ position: "absolute", top: "-15%", left: "50%", transform: "translateX(-50%)", width: "900px", height: "600px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(37,211,102,0.06) 0%, transparent 65%)" }} />
+        <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(11,147,246,0.05) 0%, transparent 65%)" }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: "860px", margin: "0 auto", padding: "0 24px 80px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: "820px", margin: "0 auto", padding: "0 24px 100px" }}>
 
-        {/* ── Hero ───────────────────────────────────────────────────────────── */}
-        <div style={{ paddingTop: "72px", paddingBottom: "56px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-
-          {/* Back link */}
-          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#555", fontSize: "13px", textDecoration: "none", marginBottom: "40px" }}>
+        {/* ── Hero ───────────────────────────────────────────────────── */}
+        <div style={{ paddingTop: "64px", paddingBottom: "48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none", marginBottom: "36px" }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             saabai.ai
           </a>
 
-          {/* Client badge */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(37,211,102,0.08)", border: "1px solid rgba(37,211,102,0.2)", borderRadius: "100px", padding: "5px 14px 5px 8px", marginBottom: "24px" }}>
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#25D366", display: "inline-block", boxShadow: "0 0 8px #25D366" }} />
-            <span style={{ fontSize: "12px", color: "#25D366", fontWeight: 600, letterSpacing: "0.05em" }}>LIVE · PlasticOnline</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(37,211,102,0.07)", border: "1px solid rgba(37,211,102,0.18)", borderRadius: "100px", padding: "4px 14px 4px 8px", marginBottom: "22px" }}>
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#25D366", display: "inline-block", boxShadow: "0 0 8px rgba(37,211,102,0.8)", animation: "pulse 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: "11px", color: "#25D366", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Active · PlasticOnline</span>
           </div>
 
-          <h1 style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, margin: "0 0 16px", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 700, margin: "0 0 14px", lineHeight: 1.1, letterSpacing: "-0.025em" }}>
             Rex{" "}
-            <span style={{ background: "linear-gradient(135deg, #25D366 0%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ background: "linear-gradient(135deg, #25D366 0%, #0B93F6 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Changelog
             </span>
           </h1>
-          <p style={{ fontSize: "17px", color: "#7a7a9a", margin: 0, lineHeight: 1.6, maxWidth: "520px" }}>
-            Development log for Rex — the AI sales agent built for PlasticOnline by{" "}
-            <a href="/" style={{ color: "#25D366", textDecoration: "none" }}>Saabai</a>.
-            Every update, fix, and improvement tracked in real time.
+          <p style={{ fontSize: "16px", color: "#555", margin: 0, lineHeight: 1.7, maxWidth: "480px" }}>
+            Every build, fix, and improvement made to Rex — the AI sales agent for{" "}
+            <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" style={{ color: "#25D366", textDecoration: "none" }}>PlasticOnline</a>.
+            Built and maintained by <a href="/" style={{ color: "#0B93F6", textDecoration: "none" }}>Saabai</a>.
           </p>
         </div>
 
-        {/* ── Stats ──────────────────────────────────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", background: "rgba(255,255,255,0.06)", borderRadius: "16px", overflow: "hidden", margin: "40px 0 64px" }}>
+        {/* ── Stats ──────────────────────────────────────────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", background: "rgba(255,255,255,0.04)", borderRadius: "14px", overflow: "hidden", margin: "36px 0 60px" }}>
           {STATS.map((s) => (
-            <div key={s.label} style={{ background: "#0d0f1a", padding: "24px 20px", textAlign: "center" }}>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#25D366", letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: "12px", color: "#555", marginTop: "6px", letterSpacing: "0.03em" }}>{s.label}</div>
+            <div key={s.label} style={{ background: "#0b0d16", padding: "22px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: "26px", fontWeight: 700, color: "#e8e8f0", letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: "11px", color: "#444", marginTop: "5px", letterSpacing: "0.04em" }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* ── Timeline ───────────────────────────────────────────────────────── */}
-        <div style={{ position: "relative" }}>
+        {/* ── Legend ─────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "48px" }}>
+          {(Object.entries(TAG_STYLES) as [Tag, typeof TAG_STYLES[Tag]][]).filter(([t]) => t !== "DEBUG").map(([tag, s]) => (
+            <span key={tag} style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", background: s.bg, color: s.text, padding: "3px 10px", borderRadius: "6px" }}>
+              {tag}
+            </span>
+          ))}
+        </div>
 
-          {/* Vertical line */}
-          <div style={{ position: "absolute", left: "7px", top: "8px", bottom: 0, width: "1px", background: "linear-gradient(to bottom, rgba(37,211,102,0.4), rgba(37,211,102,0.05) 80%, transparent)" }} />
+        {/* ── Timeline ───────────────────────────────────────────────── */}
+        <div style={{ position: "relative" }}>
+          <div style={{ position: "absolute", left: "7px", top: "6px", bottom: "0", width: "1px", background: "linear-gradient(to bottom, rgba(37,211,102,0.5), rgba(11,147,246,0.15) 60%, transparent)" }} />
 
           {CHANGELOG.map((day) => (
-            <div key={day.date} style={{ marginBottom: "56px" }}>
+            <div key={day.date} style={{ marginBottom: "52px" }}>
 
-              {/* Date header */}
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "28px" }}>
-                <div style={{ width: "15px", height: "15px", borderRadius: "50%", background: "#25D366", border: "3px solid #06070d", boxShadow: "0 0 12px rgba(37,211,102,0.6)", flexShrink: 0 }} />
-                <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-                  <span style={{ fontSize: "18px", fontWeight: 700, color: "#e8e8f0" }}>{day.label}</span>
-                  <span style={{ fontSize: "13px", color: "#444", letterSpacing: "0.04em" }}>{day.date}</span>
+              {/* Day header */}
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+                <div style={{ width: "15px", height: "15px", borderRadius: "50%", background: "#25D366", border: "3px solid #06070d", boxShadow: "0 0 14px rgba(37,211,102,0.5)", flexShrink: 0 }} />
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
+                  {day.label && <span style={{ fontSize: "17px", fontWeight: 700, color: "#e8e8f0" }}>{day.label}</span>}
+                  <span style={{ fontSize: "13px", color: "#333", letterSpacing: "0.04em" }}>{day.date}</span>
                 </div>
               </div>
 
               {/* Entries */}
-              <div style={{ marginLeft: "31px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ marginLeft: "30px", display: "flex", flexDirection: "column", gap: "2px" }}>
                 {day.entries.map((entry, i) => {
-                  const style = TAG_STYLES[entry.tag];
+                  const s = TAG_STYLES[entry.tag];
                   return (
-                    <div
-                      key={i}
-                      style={{
-                        background: "#0d0f1a",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                        borderRadius: "14px",
-                        padding: "18px 22px",
-                        transition: "border-color 0.2s, transform 0.2s",
-                      }}
-                      onMouseEnter={e => {
-                        (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.1)";
-                        (e.currentTarget as HTMLDivElement).style.transform = "translateX(4px)";
-                      }}
-                      onMouseLeave={e => {
-                        (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.05)";
-                        (e.currentTarget as HTMLDivElement).style.transform = "translateX(0)";
-                      }}
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "10px 14px", borderRadius: "10px", transition: "background 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                        <span style={{
-                          fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em",
-                          background: style.bg, color: style.text,
-                          padding: "3px 8px", borderRadius: "6px",
-                        }}>
-                          {entry.tag}
-                        </span>
-                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#e8e8f0" }}>{entry.title}</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: "13px", color: "#666", lineHeight: 1.65 }}>{entry.detail}</p>
+                      {/* Time */}
+                      <span style={{ fontSize: "11px", color: "#333", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "38px" }}>{entry.time}</span>
+                      {/* Tag */}
+                      <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.07em", background: s.bg, color: s.text, padding: "2px 7px", borderRadius: "5px", flexShrink: 0, marginTop: "1px" }}>
+                        {entry.tag}
+                      </span>
+                      {/* Title */}
+                      <span style={{ fontSize: "13px", color: "#aaa", lineHeight: 1.55 }}>{entry.title}</span>
                     </div>
                   );
                 })}
@@ -294,15 +213,22 @@ export default function RexChangelog() {
             </div>
           ))}
 
-          {/* End of timeline */}
-          <div style={{ marginLeft: "31px", display: "flex", alignItems: "center", gap: "12px", paddingTop: "8px" }}>
-            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, rgba(255,255,255,0.06), transparent)" }} />
-            <span style={{ fontSize: "12px", color: "#333", letterSpacing: "0.05em" }}>Rex v1 · Built by Saabai</span>
-            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, rgba(255,255,255,0.06), transparent)" }} />
+          {/* Footer */}
+          <div style={{ marginLeft: "30px", paddingTop: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, rgba(255,255,255,0.05), transparent)" }} />
+            <span style={{ fontSize: "11px", color: "#2a2a2a", letterSpacing: "0.05em" }}>Rex inception · 21 Mar 2026 · Built by Saabai</span>
+            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, rgba(255,255,255,0.05), transparent)" }} />
           </div>
-
         </div>
+
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   );
 }
