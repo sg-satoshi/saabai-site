@@ -106,6 +106,7 @@ function randomGreeting(): string {
 
 export default function PeterAvatarWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [pulsing, setPulsing] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -177,6 +178,16 @@ export default function PeterAvatarWidget() {
     try {
       window.parent.postMessage({ rexWidget: isOpen ? "open" : "closed" }, "*");
     } catch {}
+  }, [isOpen]);
+
+  // Pulse launcher glow every 10s (same as Mia)
+  useEffect(() => {
+    if (isOpen) return;
+    const interval = setInterval(() => {
+      setPulsing(true);
+      setTimeout(() => setPulsing(false), 900);
+    }, 10000);
+    return () => clearInterval(interval);
   }, [isOpen]);
 
   function stopAudio() {
@@ -623,8 +634,13 @@ export default function PeterAvatarWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 shadow-lg hover:border-saabai-teal/60 transition-all"
-          style={{ boxShadow: "0 0 24px rgba(37,211,102,0.15)" }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/60 transition-all duration-300 hover:-translate-y-0.5"
+          style={{
+            boxShadow: pulsing
+              ? "0 0 0 5px rgba(37,211,102,0.12), 0 8px 36px rgba(37,211,102,0.45), 0 4px 16px rgba(0,0,0,0.35)"
+              : "0 0 28px rgba(37,211,102,0.28), 0 4px 16px rgba(0,0,0,0.3)",
+            transform: pulsing ? "scale(1.025) translateY(-1px)" : undefined,
+          }}
         >
           <div className="relative w-9 h-9 shrink-0">
             <span className="absolute inset-0 rounded-full border border-saabai-teal/40 opacity-50" style={{ animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) 3" }} />
