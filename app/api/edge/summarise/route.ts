@@ -12,8 +12,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "Not enough messages to summarise" }, { status: 400 });
   }
 
-  const transcript = messages
-    .filter((m: { role: string }) => m.role !== "system")
+  const nonSystemMessages = messages.filter((m: { role: string }) => m.role !== "system");
+
+  const transcript = nonSystemMessages
     .map((m: { role: string; content: unknown }) => {
       const content = typeof m.content === "string" ? m.content
         : Array.isArray(m.content) ? m.content.map((p: { type: string; text?: string }) => p.type === "text" ? p.text : "").join("") : "";
@@ -21,10 +22,11 @@ export async function POST(req: Request) {
     })
     .join("\n\n");
 
+  // Fetch profile once — reused for both the prompt and the profile update
   const existingProfile = await getEdgeProfile();
 
   const { text } = await generateText({
-    model: anthropic("claude-sonnet-4-6"),
+    model: anthropic("claude-haiku-4-5-20251001"),
     prompt: `You are analysing a coaching session between Edge (performance coach) and Shane (operator/entrepreneur).
 
 TRANSCRIPT:
@@ -75,9 +77,8 @@ Return ONLY valid JSON. No markdown. No explanation.`,
     return Response.json({ error: "Failed to parse summary", raw: text.slice(0, 200) }, { status: 500 });
   }
 
-  // Save session + full transcript
-  const nonSystemMessages = messages.filter((m: { role: string }) => m.role !== "system");
-  const sessionId = await saveEdgeSession({
+  // Save session, transcript, and profile all in parallel
+  const sessionSavePromise = saveEdgeSession({
     mood,
     summary: parsed.summary,
     topics: parsed.topics,
@@ -85,19 +86,20 @@ Return ONLY valid JSON. No markdown. No explanation.`,
     newCommitments: parsed.newCommitments,
     messageCount: nonSystemMessages.length,
   });
+
+  const profileSavePromise = parsed.profileUpdates
+    ? saveEdgeProfile({
+        ...parsed.profileUpdates,
+        totalSessions: (existingProfile?.totalSessions ?? 0) + 1,
+        lastMood: mood,
+        lastSessionDate: new Date().toISOString().split("T")[0],
+      })
+    : Promise.resolve();
+
+  const [sessionId] = await Promise.all([sessionSavePromise, profileSavePromise]);
+
   if (sessionId) {
     await saveEdgeTranscript(sessionId, nonSystemMessages);
-  }
-
-  // Update profile
-  if (parsed.profileUpdates) {
-    const currentProfile = await getEdgeProfile();
-    await saveEdgeProfile({
-      ...parsed.profileUpdates,
-      totalSessions: (currentProfile?.totalSessions ?? 0) + 1,
-      lastMood: mood,
-      lastSessionDate: new Date().toISOString().split("T")[0],
-    });
   }
 
   return Response.json({ sessionId, summary: parsed.summary });
