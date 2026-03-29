@@ -41,7 +41,7 @@ function renderContent(text: string) {
     while ((match = linkRegex.exec(line)) !== null) {
       if (match.index > last) nodes.push(line.slice(last, match.index));
       if (match[0].startsWith("**")) {
-        nodes.push(<strong key={`b-${lineKey}-${key++}`}>{match[2]}</strong>);
+        nodes.push(<strong key={`b-${lineKey}-${key++}`} style={{ color: "#FFD700" }}>{match[2]}</strong>);
       } else {
         nodes.push(
           <a key={`a-${lineKey}-${key++}`} href={match[4]} target="_blank" rel="noopener noreferrer"

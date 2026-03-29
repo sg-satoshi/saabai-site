@@ -29,7 +29,8 @@ const CHANGELOG: Day[] = [
     date: "29 Mar 2026",
     label: "Today",
     entries: [
-      { time: "22:45", tag: "IMPROVEMENT", title: "Price itself is now a hyperlink to the product page — no separate CTA needed" },
+      { time: "23:00", tag: "UI",          title: "Bold prices render in yellow #FFD700 — stands out clearly in blue assistant bubbles" },
+      { time: "22:58", tag: "IMPROVEMENT", title: "Price shown as bold yellow text, Lock it in → link follows on its own line" },
       { time: "22:30", tag: "UI",          title: "Chat links changed to bold yellow #FFD700 — high contrast against blue and grey bubbles" },
       { time: "22:15", tag: "UI",          title: "Rex launcher glow added — ambient green halo + 10s pulse interval matching Mia" },
       { time: "22:10", tag: "FIX",         title: "Changelog auto-update rule added to CLAUDE.md — all future Rex changes logged automatically" },
@@ -113,7 +114,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "65",  label: "Total updates" },
+  { value: "67",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
