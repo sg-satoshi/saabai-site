@@ -26,8 +26,16 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "29 Mar 2026",
+    date: "30 Mar 2026",
     label: "Today",
+    entries: [
+      { time: "10:00", tag: "FIX", title: "Mobile full-screen layout fixed — messages area now fills available height instead of leaving empty black space below" },
+      { time: "09:50", tag: "FIX", title: "iframe click-blocking fixed — full-page pointer-events:none shell + pointer-events:auto iframe so page buttons stay clickable when Rex is open" },
+      { time: "09:50", tag: "UI",  title: "Mobile view goes full-screen (100vw × 100dvh) — chat fills the whole screen, no border radius on mobile" },
+    ],
+  },
+  {
+    date: "29 Mar 2026",
     entries: [
       { time: "23:30", tag: "NEW",         title: "7-point optimisation pass: typing delay, slide-up animation, sound, re-engagement nudge, inline email capture, contextual chips, end panel call/WhatsApp" },
       { time: "23:30", tag: "NEW",         title: "Inline quote email capture — 'Send me this quote' appears after every price, one-tap email input" },

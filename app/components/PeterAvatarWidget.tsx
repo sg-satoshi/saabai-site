@@ -945,7 +945,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
-            <div className="flex flex-col" style={{ height: 380 }}>
+            <div className="flex flex-col" style={isMobile ? { flex: 1, minHeight: 0 } : { height: 380 }}>
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
                 {displayMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
