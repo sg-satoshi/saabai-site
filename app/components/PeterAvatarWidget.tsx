@@ -784,6 +784,7 @@ export default function PeterAvatarWidget() {
           className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{
             inset: 0,
+            borderRadius: "1rem",
             boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
             animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
@@ -866,7 +867,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Mode picker ─────────────────────────────────────────────────── */}
           {!isEnded && !chatMode && (
-            <div className="flex-1 flex flex-col justify-center px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface gap-3">
+            <div className="flex-1 flex flex-col px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface gap-3">
               <p className="text-[11px] text-saabai-text-dim tracking-wide">How would you like to chat?</p>
               <button onClick={selectTextMode}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
