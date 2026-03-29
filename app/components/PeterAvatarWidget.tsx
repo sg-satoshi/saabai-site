@@ -175,6 +175,7 @@ function randomGreeting(): string {
 export default function PeterAvatarWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -213,6 +214,10 @@ export default function PeterAvatarWidget() {
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSpeechSupported(!!SR);
+    const checkMobile = () => setIsMobile(window.innerWidth < 480);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Restore conversation from localStorage on mount
@@ -250,10 +255,14 @@ export default function PeterAvatarWidget() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages]);
 
-  // Notify parent page to resize iframe
+  // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
     try {
-      window.parent.postMessage({ rexWidget: isOpen ? "open" : "closed" }, "*");
+      if (isOpen) {
+        window.parent.postMessage({ rexWidget: "open" }, "*");
+      } else {
+        window.parent.postMessage({ rexWidget: "closed" }, "*");
+      }
     } catch {}
   }, [isOpen]);
 
@@ -777,9 +786,13 @@ export default function PeterAvatarWidget() {
       {/* Improvement #5: slide-up entrance animation */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-3 z-50 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
+          className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{
-            width: "min(340px, calc(100vw - 24px))",
+            bottom: isMobile ? 0 : "24px",
+            right: isMobile ? 0 : "12px",
+            width: isMobile ? "100vw" : "340px",
+            height: isMobile ? "100dvh" : undefined,
+            borderRadius: isMobile ? 0 : "1rem",
             boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
             animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
