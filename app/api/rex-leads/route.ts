@@ -56,22 +56,22 @@ function quoteEmailHtml(note: string) {
       <table width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
 
         <!-- Header -->
-        <tr><td style="background:#e13f00;padding:28px 32px;">
+        <tr><td style="background:#25D366;padding:28px 32px;">
           <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">PlasticOnline</p>
-          <p style="margin:4px 0 0;color:#ffcbb8;font-size:13px;">Your quote from Rex</p>
+          <p style="margin:4px 0 0;color:#b7f5d0;font-size:13px;">Your quote from Rex</p>
         </td></tr>
 
         <!-- Body -->
         <tr><td style="padding:32px;">
           <p style="margin:0 0 16px;color:#111;font-size:16px;font-weight:600;">Here's the quote Rex put together for you.</p>
-          <div style="background:#fff8f6;border:1px solid #f0cfc7;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+          <div style="background:#f2fef6;border:1px solid #c8f0d8;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
             <p style="margin:0;color:#444;font-size:14px;line-height:1.6;">${note || "Custom cut-to-size order"}</p>
           </div>
           <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6;">
             When you're ready to order, just head to the shop and add it to your cart.
             Up to 10 cuts are included with every order.
           </p>
-          <a href="${SHOP_URL}" style="display:inline-block;background:#e13f00;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+          <a href="${SHOP_URL}" style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
             Place Your Order →
           </a>
         </td></tr>
@@ -101,9 +101,9 @@ function followUpEmailHtml(note: string) {
       <table width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
 
         <!-- Header -->
-        <tr><td style="background:#e13f00;padding:28px 32px;">
+        <tr><td style="background:#25D366;padding:28px 32px;">
           <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">PlasticOnline</p>
-          <p style="margin:4px 0 0;color:#ffcbb8;font-size:13px;">Rex here, just checking in</p>
+          <p style="margin:4px 0 0;color:#b7f5d0;font-size:13px;">Rex here, just checking in</p>
         </td></tr>
 
         <!-- Body -->
@@ -111,17 +111,17 @@ function followUpEmailHtml(note: string) {
           <p style="margin:0 0 16px;color:#111;font-size:15px;line-height:1.6;">
             Hey, Rex here from PlasticOnline. Just checking in on that quote from yesterday.
           </p>
-          <div style="background:#fff8f6;border:1px solid #f0cfc7;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
+          <div style="background:#f2fef6;border:1px solid #c8f0d8;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
             <p style="margin:0;color:#444;font-size:14px;line-height:1.6;">${note || "Your custom cut-to-size order"}</p>
           </div>
           <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6;">
             Your order is ready to go whenever you are. If anything changed or you need a different size, just reply here and I'll sort it.
           </p>
-          <a href="${SHOP_URL}" style="display:inline-block;background:#e13f00;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+          <a href="${SHOP_URL}" style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
             Complete Your Order →
           </a>
           <p style="margin:20px 0 0;color:#888;font-size:13px;">
-            Not ready yet? No worries. <a href="${CONTACT_URL}" style="color:#e13f00;">Get in touch</a> if you have any questions.
+            Not ready yet? No worries. <a href="${CONTACT_URL}" style="color:#25D366;">Get in touch</a> if you have any questions.
           </p>
         </td></tr>
 
@@ -144,7 +144,7 @@ function teamNotificationHtml(email: string, note: string, source: string) {
   return `<!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;padding:24px;color:#333;">
-  <h2 style="color:#e13f00;margin:0 0 16px;">New Rex Lead</h2>
+  <h2 style="color:#25D366;margin:0 0 16px;">New Rex Lead</h2>
   <table style="border-collapse:collapse;width:100%;max-width:500px;">
     <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;width:120px;">Email</td><td style="padding:8px 12px;">${email}</td></tr>
     <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Quote</td><td style="padding:8px 12px;">${note || "No quote details"}</td></tr>

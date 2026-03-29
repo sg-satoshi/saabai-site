@@ -598,13 +598,13 @@ export default function PeterAvatarWidget() {
     "--saabai-bg":             "#111111",
     "--saabai-surface":        "#1a1a1a",
     "--saabai-surface-raised": "#222222",
-    "--saabai-teal":           "#e13f00",
-    "--saabai-teal-bright":    "#f85a20",
-    "--saabai-border":         "#e13f001a",
-    "--saabai-border-accent":  "#e13f0040",
-    "--saabai-glow":           "#e13f0018",
-    "--saabai-glow-mid":       "#e13f002e",
-    "--saabai-glow-strong":    "#e13f003d",
+    "--saabai-teal":           "#25D366",
+    "--saabai-teal-bright":    "#2EE675",
+    "--saabai-border":         "#25D3661a",
+    "--saabai-border-accent":  "#25D36640",
+    "--saabai-glow":           "#25D36618",
+    "--saabai-glow-mid":       "#25D3662e",
+    "--saabai-glow-strong":    "#25D3663d",
     "--saabai-text":           "#f0f0f0",
     "--saabai-text-muted":     "#aaaaaa",
     "--saabai-text-dim":       "#888888",
@@ -617,7 +617,7 @@ export default function PeterAvatarWidget() {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 shadow-lg hover:border-saabai-teal/60 transition-all"
-          style={{ boxShadow: "0 0 24px rgba(225,63,0,0.15)" }}
+          style={{ boxShadow: "0 0 24px rgba(37,211,102,0.15)" }}
         >
           <div className="relative w-9 h-9 shrink-0">
             <span className="absolute inset-0 rounded-full border border-saabai-teal/40 opacity-50" style={{ animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) 3" }} />
@@ -635,7 +635,7 @@ export default function PeterAvatarWidget() {
       {isOpen && (
         <div
           className="fixed bottom-6 right-3 z-50 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
-          style={{ width: "min(340px, calc(100vw - 24px))", boxShadow: "0 0 60px rgba(225,63,0,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
+          style={{ width: "min(340px, calc(100vw - 24px))", boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
         >
           {Header}
 
@@ -708,7 +708,7 @@ export default function PeterAvatarWidget() {
               <button
                 onClick={selectTextMode}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(225,63,0,0.18)" }}
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}
               >
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -725,7 +725,7 @@ export default function PeterAvatarWidget() {
                 onClick={speechSupported ? selectVoiceMode : undefined}
                 disabled={!speechSupported}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(225,63,0,0.18)" }}
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}
               >
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -752,7 +752,7 @@ export default function PeterAvatarWidget() {
               <div className="relative flex items-center justify-center">
                 <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
                 <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
-                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(225,63,0,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(37,211,102,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
                   <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 </div>
               </div>
