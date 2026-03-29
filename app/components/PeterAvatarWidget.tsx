@@ -975,7 +975,7 @@ export default function PeterAvatarWidget() {
                       className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-yellow-400/30 bg-yellow-400/8 hover:bg-yellow-400/15 transition-colors"
                       style={{ color: "#FFD700" }}
                     >
-                      📧 Send me this quote →
+                      Send me this quote →
                     </button>
                   ) : (
                     <div className="flex gap-1.5">
