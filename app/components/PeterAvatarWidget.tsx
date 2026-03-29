@@ -783,7 +783,9 @@ export default function PeterAvatarWidget() {
         <div
           className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{
-            inset: 0,
+            bottom: 0,
+            right: 0,
+            width: "100%",
             borderRadius: "1rem",
             boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
             animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -793,7 +795,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── End panel ──────────────────────────────────────────────────── */}
           {isEnded && (
-            <div className="flex-1 overflow-y-auto px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+            <div className="overflow-y-auto px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
               {endSubmitted ? (
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-2.5">
@@ -867,7 +869,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Mode picker ─────────────────────────────────────────────────── */}
           {!isEnded && !chatMode && (
-            <div className="flex-1 flex flex-col px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface gap-3">
+            <div className="flex flex-col px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface gap-3">
               <p className="text-[11px] text-saabai-text-dim tracking-wide">How would you like to chat?</p>
               <button onClick={selectTextMode}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
@@ -903,7 +905,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Voice mode ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "voice" && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 py-6 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+            <div className="flex flex-col items-center justify-center gap-4 px-6 py-6 bg-gradient-to-b from-saabai-bg to-saabai-surface">
               <div className="relative flex items-center justify-center">
                 <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
                 <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
@@ -937,7 +939,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col" style={{ height: 380 }}>
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
                 {displayMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
