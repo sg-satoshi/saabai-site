@@ -115,7 +115,7 @@ export default function ChangelogClient() {
       {/* Ambient glow */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "-15%", left: "50%", transform: "translateX(-50%)", width: "900px", height: "600px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(37,211,102,0.06) 0%, transparent 65%)" }} />
-        <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(11,147,246,0.05) 0%, transparent 65%)" }} />
+        <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(8,116,200,0.05) 0%, transparent 65%)" }} />
       </div>
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "820px", margin: "0 auto", padding: "0 24px 100px" }}>
@@ -134,14 +134,14 @@ export default function ChangelogClient() {
 
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 700, margin: "0 0 14px", lineHeight: 1.1, letterSpacing: "-0.025em" }}>
             Rex{" "}
-            <span style={{ background: "linear-gradient(135deg, #25D366 0%, #0B93F6 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            <span style={{ background: "linear-gradient(135deg, #25D366 0%, #0874C8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
               Changelog
             </span>
           </h1>
           <p style={{ fontSize: "16px", color: "#555", margin: 0, lineHeight: 1.7, maxWidth: "480px" }}>
             Every build, fix, and improvement made to Rex — the AI sales agent for{" "}
             <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" style={{ color: "#25D366", textDecoration: "none" }}>PlasticOnline</a>.
-            Built and maintained by <a href="/" style={{ color: "#0B93F6", textDecoration: "none" }}>Saabai</a>.
+            Built and maintained by <a href="/" style={{ color: "#0874C8", textDecoration: "none" }}>Saabai</a>.
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export default function ChangelogClient() {
 
         {/* Timeline */}
         <div style={{ position: "relative" }}>
-          <div style={{ position: "absolute", left: "7px", top: "6px", bottom: "0", width: "1px", background: "linear-gradient(to bottom, rgba(37,211,102,0.5), rgba(11,147,246,0.15) 60%, transparent)" }} />
+          <div style={{ position: "absolute", left: "7px", top: "6px", bottom: "0", width: "1px", background: "linear-gradient(to bottom, rgba(37,211,102,0.5), rgba(8,116,200,0.15) 60%, transparent)" }} />
 
           {CHANGELOG.map((day) => (
             <div key={day.date} style={{ marginBottom: "52px" }}>
