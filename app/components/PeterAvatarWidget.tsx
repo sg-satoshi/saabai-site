@@ -797,10 +797,10 @@ export default function PeterAvatarWidget() {
                     <div
                       className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
                         msg.role === "user"
-                          ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
+                          ? "rounded-br-sm"
                           : "rounded-bl-sm text-white"
                       }`}
-                      style={msg.role === "assistant" ? { background: "#0B93F6" } : undefined}
+                      style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
                     >
                       {renderContent(msg.content)}
                     </div>
