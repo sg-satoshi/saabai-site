@@ -172,6 +172,13 @@ export default function PeterAvatarWidget() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages]);
 
+  // Notify parent page so it can resize the iframe (open = full, closed = bubble only)
+  useEffect(() => {
+    try {
+      window.parent.postMessage({ rexWidget: isOpen ? "open" : "closed" }, "*");
+    } catch {}
+  }, [isOpen]);
+
   function stopAudio() {
     if (audioRef.current) {
       audioRef.current.pause();
