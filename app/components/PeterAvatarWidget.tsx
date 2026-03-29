@@ -847,7 +847,7 @@ export default function PeterAvatarWidget() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
-                className="flex-1 border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-gray-400 focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                className="flex-1 border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-gray-500 focus:outline-none focus:border-saabai-teal/60 transition-colors"
                 style={{ background: "#f0f0f0", color: "#111" }}
               />
               <button
