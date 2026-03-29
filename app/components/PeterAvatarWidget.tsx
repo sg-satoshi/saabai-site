@@ -775,7 +775,7 @@ export default function PeterAvatarWidget() {
           style={{
             width: "min(340px, calc(100vw - 24px))",
             boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
-            animation: "rexSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
           {Header}
@@ -1055,7 +1055,7 @@ export default function PeterAvatarWidget() {
       {/* Improvement #5: slide-up keyframe */}
       <style>{`
         @keyframes rexSlideUp {
-          from { transform: translateY(16px) scale(0.98); opacity: 0; }
+          from { transform: translateY(40px) scale(0.94); opacity: 0; }
           to   { transform: translateY(0)    scale(1);    opacity: 1; }
         }
       `}</style>

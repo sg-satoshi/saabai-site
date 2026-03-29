@@ -34,6 +34,7 @@ const CHANGELOG: Day[] = [
       { time: "23:30", tag: "NEW",         title: "Contextual follow-up chips — smart suggestions after every Rex response based on topic" },
       { time: "23:30", tag: "NEW",         title: "Call + WhatsApp buttons added to end panel — fallback for unconverted leads" },
       { time: "23:30", tag: "NEW",         title: "Re-engagement nudge — Rex sends 'Still there?' after 45s inactivity mid-conversation" },
+      { time: "23:40", tag: "UI",          title: "Slide-up animation made more pronounced — 40px rise, 0.94→1 scale, 0.4s spring" },
       { time: "23:30", tag: "UI",          title: "Slide-up entrance animation — chat window springs open with cubic-bezier ease" },
       { time: "23:30", tag: "IMPROVEMENT", title: "Message sound — subtle Web Audio API ding when Rex responds" },
       { time: "23:35", tag: "FIX",         title: "Price is now a clickable yellow hyperlink — markdown link format [$price](url) renders clean, no brackets shown" },
@@ -123,7 +124,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "77",  label: "Total updates" },
+  { value: "78",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
