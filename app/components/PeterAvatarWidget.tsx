@@ -833,7 +833,8 @@ export default function PeterAvatarWidget() {
                     value={endEmail}
                     onChange={(e) => setEndEmail(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && endEmail.trim()) submitEndPanel(false); }}
-                    className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                    className="w-full border border-saabai-border rounded-lg px-3 py-2 text-xs placeholder:text-gray-400 focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                    style={{ background: "#ffffff", color: "#111" }}
                   />
                   <button onClick={() => submitEndPanel(false)} disabled={!endEmail.trim() || endSubmitting}
                     className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
