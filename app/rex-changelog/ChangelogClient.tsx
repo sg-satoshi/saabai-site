@@ -29,6 +29,15 @@ const CHANGELOG: Day[] = [
     date: "29 Mar 2026",
     label: "Today",
     entries: [
+      { time: "23:30", tag: "NEW",         title: "7-point optimisation pass: typing delay, slide-up animation, sound, re-engagement nudge, inline email capture, contextual chips, end panel call/WhatsApp" },
+      { time: "23:30", tag: "NEW",         title: "Inline quote email capture — 'Send me this quote' appears after every price, one-tap email input" },
+      { time: "23:30", tag: "NEW",         title: "Contextual follow-up chips — smart suggestions after every Rex response based on topic" },
+      { time: "23:30", tag: "NEW",         title: "Call + WhatsApp buttons added to end panel — fallback for unconverted leads" },
+      { time: "23:30", tag: "NEW",         title: "Re-engagement nudge — Rex sends 'Still there?' after 45s inactivity mid-conversation" },
+      { time: "23:30", tag: "UI",          title: "Slide-up entrance animation — chat window springs open with cubic-bezier ease" },
+      { time: "23:30", tag: "IMPROVEMENT", title: "Message sound — subtle Web Audio API ding when Rex responds" },
+      { time: "23:35", tag: "FIX",         title: "Price is now a clickable yellow hyperlink — markdown link format [$price](url) renders clean, no brackets shown" },
+      { time: "23:30", tag: "IMPROVEMENT", title: "Typing delay — 500–800ms pause before Rex responds, feels more human" },
       { time: "23:00", tag: "UI",          title: "Bold prices render in yellow #FFD700 — stands out clearly in blue assistant bubbles" },
       { time: "22:58", tag: "IMPROVEMENT", title: "Price shown as bold yellow text, Lock it in → link follows on its own line" },
       { time: "22:30", tag: "UI",          title: "Chat links changed to bold yellow #FFD700 — high contrast against blue and grey bubbles" },
@@ -114,7 +123,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "67",  label: "Total updates" },
+  { value: "77",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },

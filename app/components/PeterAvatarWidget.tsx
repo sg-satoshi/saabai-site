@@ -26,9 +26,77 @@ function pickQuickReplies(): string[] {
   return shuffled.slice(0, 3);
 }
 
+// ── Improvement #2: Contextual follow-up chips ──────────────────────────────
+function getFollowUpChips(response: string): string[] {
+  const lower = response.toLowerCase();
+  const shuffle = (arr: string[]) => [...arr].sort(() => Math.random() - 0.5);
+  if (/\$\d/.test(response)) {
+    return shuffle([
+      "What about 5 sheets?",
+      "Can I pick it up from the Gold Coast?",
+      "How long for delivery?",
+      "Can you quote a different size?",
+      "What's included in the price?",
+    ]).slice(0, 3);
+  }
+  if (/acrylic/.test(lower)) {
+    return shuffle([
+      "How does acrylic compare to polycarbonate?",
+      "What thickness do I need?",
+      "Do you cut it to size?",
+      "What colours do you stock?",
+    ]).slice(0, 3);
+  }
+  if (/polycarbonate|poly/.test(lower)) {
+    return shuffle([
+      "What thickness for a roof panel?",
+      "Is it UV stabilised?",
+      "How does price compare to acrylic?",
+    ]).slice(0, 2);
+  }
+  if (/hdpe|cutting board/.test(lower)) {
+    return shuffle([
+      "What colours does HDPE come in?",
+      "Is it food safe?",
+      "What sizes are available?",
+    ]).slice(0, 2);
+  }
+  if (/deliver|shipping|freight/.test(lower)) {
+    return shuffle([
+      "How long to Brisbane?",
+      "Do you deliver to Melbourne?",
+      "What's the freight cost?",
+    ]).slice(0, 2);
+  }
+  return shuffle([
+    "Can you give me a price?",
+    "What materials do you stock?",
+    "Do you deliver Australia-wide?",
+  ]).slice(0, 2);
+}
+
+// ── Improvement #6: Subtle message sound via Web Audio API ──────────────────
+function playMessageSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+    setTimeout(() => ctx.close(), 400);
+  } catch {}
+}
 
 function renderContent(text: string) {
-  // Split into paragraphs on double newlines, then lines on single newlines
   const paragraphs = text.split(/\n{2,}/);
   const result: React.ReactNode[] = [];
 
@@ -70,7 +138,7 @@ function renderContent(text: string) {
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 const STORAGE_KEY = "rex_conversation";
-const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const TTL_MS = 24 * 60 * 60 * 1000;
 
 const GREETINGS = [
   "Hey, I'm Rex. PlasticOnline's AI. What are you cutting today?",
@@ -122,6 +190,12 @@ export default function PeterAvatarWidget() {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  // Improvement #2: contextual follow-up chips
+  const [followUpChips, setFollowUpChips] = useState<string[]>([]);
+  // Improvement #1: inline quote email capture
+  const [quoteEmailOpen, setQuoteEmailOpen] = useState(false);
+  const [quoteEmail, setQuoteEmail] = useState("");
+  const [quoteEmailSent, setQuoteEmailSent] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -132,6 +206,9 @@ export default function PeterAvatarWidget() {
   const messagesRef = useRef<ChatMessage[]>([]);
   const transcriptSentRef = useRef(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  // Improvement #4: re-engagement
+  const lastActivityRef = useRef<number>(Date.now());
+  const reEngagementFiredRef = useRef(false);
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -157,7 +234,7 @@ export default function PeterAvatarWidget() {
     } catch {}
   }, []);
 
-  // Save conversation to localStorage on every message change
+  // Save conversation to localStorage
   useEffect(() => {
     if (displayMessages.length === 0) return;
     try {
@@ -173,14 +250,14 @@ export default function PeterAvatarWidget() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages]);
 
-  // Notify parent page so it can resize the iframe (open = full, closed = bubble only)
+  // Notify parent page to resize iframe
   useEffect(() => {
     try {
       window.parent.postMessage({ rexWidget: isOpen ? "open" : "closed" }, "*");
     } catch {}
   }, [isOpen]);
 
-  // Pulse launcher glow every 10s (same as Mia)
+  // Pulse launcher glow every 10s
   useEffect(() => {
     if (isOpen) return;
     const interval = setInterval(() => {
@@ -189,6 +266,23 @@ export default function PeterAvatarWidget() {
     }, 10000);
     return () => clearInterval(interval);
   }, [isOpen]);
+
+  // Improvement #4: re-engagement nudge after 45s inactivity
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isOpen || !isStarted || isEnded || isThinking || reEngagementFiredRef.current) return;
+      if (chatModeRef.current !== "text") return;
+      if (Date.now() - lastActivityRef.current > 45000) {
+        reEngagementFiredRef.current = true;
+        const nudge = "Still there? Happy to lock that quote in whenever you're ready.";
+        const nudgeMsg: ChatMessage = { role: "assistant", content: nudge };
+        messagesRef.current = [...messagesRef.current, nudgeMsg];
+        setDisplayMessages(prev => [...prev, nudgeMsg]);
+        playMessageSound();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isOpen, isStarted, isEnded, isThinking]);
 
   function stopAudio() {
     if (audioRef.current) {
@@ -320,11 +414,18 @@ export default function PeterAvatarWidget() {
     const isText = chatModeRef.current === "text";
 
     setShowQuickReplies(false);
+    setFollowUpChips([]);
+    setQuoteEmailOpen(false);
+    lastActivityRef.current = Date.now();
+
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
     setIsThinking(true);
     if (!isText) stopListening();
+
+    // Improvement #7: typing delay — feels more human
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
 
     try {
       const res = await fetch("/api/pete-chat", {
@@ -354,7 +455,6 @@ export default function PeterAvatarWidget() {
               const parsed = JSON.parse(line.slice(6));
               if (parsed.type === "text-delta" && parsed.delta) {
                 fullText += parsed.delta;
-                // Stream text live in text mode
                 if (isText) {
                   if (!streamingStarted) {
                     streamingStarted = true;
@@ -384,12 +484,18 @@ export default function PeterAvatarWidget() {
         const cleaned = fullText.trim();
         messagesRef.current = [...updated, { role: "assistant", content: cleaned }];
         if (isText) {
-          // Final update to ensure complete text is shown
           setDisplayMessages(prev => {
             const msgs = [...prev];
             msgs[msgs.length - 1] = { role: "assistant", content: cleaned };
             return msgs;
           });
+          // Improvement #6: sound on new message
+          playMessageSound();
+          // Improvement #2: contextual follow-up chips
+          setFollowUpChips(getFollowUpChips(cleaned));
+          // Reset email capture for new response
+          setQuoteEmailSent(false);
+          lastActivityRef.current = Date.now();
         } else {
           setDisplayMessages(prev => [...prev, { role: "assistant", content: cleaned }]);
           setIsThinking(false);
@@ -406,7 +512,6 @@ export default function PeterAvatarWidget() {
   }
 
   async function selectVoiceMode() {
-    // Unlock audio during user gesture
     const audio = new Audio();
     audio.volume = 0;
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
@@ -419,6 +524,8 @@ export default function PeterAvatarWidget() {
     setChatMode("voice");
     isStartedRef.current = true;
     setIsStarted(true);
+    lastActivityRef.current = Date.now();
+    reEngagementFiredRef.current = false;
     messagesRef.current = [{ role: "assistant", content: greeting }];
     await playVoice(greeting);
   }
@@ -429,6 +536,8 @@ export default function PeterAvatarWidget() {
     setChatMode("text");
     isStartedRef.current = true;
     setIsStarted(true);
+    lastActivityRef.current = Date.now();
+    reEngagementFiredRef.current = false;
     const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
     messagesRef.current = [greetingMsg];
     setDisplayMessages([greetingMsg]);
@@ -453,12 +562,10 @@ export default function PeterAvatarWidget() {
     stopListening();
     chatModeRef.current = "text";
     setChatMode("text");
-    // Populate displayMessages from full history if not already shown
     setDisplayMessages([...messagesRef.current]);
   }
 
   function switchToVoice() {
-    // Unlock audio during this user gesture
     if (!audioRef.current) {
       const audio = new Audio();
       audio.volume = 0;
@@ -469,7 +576,6 @@ export default function PeterAvatarWidget() {
     }
     chatModeRef.current = "voice";
     setChatMode("voice");
-    // Start listening right away
     setTimeout(() => {
       if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
         startListening();
@@ -494,11 +600,16 @@ export default function PeterAvatarWidget() {
     setEndSubmitted(false);
     setEndSubmitting(false);
     transcriptSentRef.current = false;
+    reEngagementFiredRef.current = false;
     setError(null);
     setInputValue("");
     setDisplayMessages([]);
     setShowQuickReplies(false);
     setQuickReplies([]);
+    setFollowUpChips([]);
+    setQuoteEmailOpen(false);
+    setQuoteEmail("");
+    setQuoteEmailSent(false);
     messagesRef.current = [];
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
@@ -535,6 +646,26 @@ export default function PeterAvatarWidget() {
     }
   }
 
+  // Improvement #1: inline quote email capture
+  async function submitQuoteEmail() {
+    if (!quoteEmail.trim()) return;
+    const lastAssistant = [...messagesRef.current].reverse().find(m => m.role === "assistant");
+    try {
+      await fetch("/api/rex-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "rex_quote_email",
+          email: quoteEmail.trim(),
+          note: lastAssistant?.content.slice(0, 300) ?? "Quote request",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+    setQuoteEmailSent(true);
+    setQuoteEmailOpen(false);
+  }
+
   async function handleSend() {
     const text = inputValue.trim();
     if (!text) return;
@@ -545,7 +676,11 @@ export default function PeterAvatarWidget() {
   const statusLabel = isSpeaking ? "Speaking" : isListening ? "Listening" : isThinking ? "Thinking…" : isStarted ? "Ready" : "";
   const statusColor = isSpeaking ? "bg-saabai-teal" : isListening ? "bg-green-400" : isThinking ? "bg-yellow-400" : "bg-white/20";
 
-  // ── Shared header ──────────────────────────────────────────────────────────
+  // Determine if inline email capture should show
+  const lastMsg = displayMessages[displayMessages.length - 1];
+  const showQuoteCapture = !isThinking && lastMsg?.role === "assistant" && /\$\d/.test(lastMsg.content);
+
+  // ── Shared header ───────────────────────────────────────────────────────────
   const Header = (
     <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border shrink-0">
       <div className="flex items-center gap-2.5">
@@ -562,23 +697,13 @@ export default function PeterAvatarWidget() {
       </div>
       <div className="flex items-center gap-2">
         {isStarted && !isEnded && chatMode === "voice" && (
-          <button
-            onClick={switchToText}
-            title="Switch to text"
-            className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors"
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <path d="M2 3h8M2 6.5h5M2 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
+          <button onClick={switchToText} title="Switch to text" className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M2 6.5h5M2 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
             Text
           </button>
         )}
         {isStarted && !isEnded && chatMode === "text" && speechSupported && (
-          <button
-            onClick={switchToVoice}
-            title="Switch to voice"
-            className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors"
-          >
+          <button onClick={switchToVoice} title="Switch to voice" className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <rect x="4" y="1" width="4" height="6" rx="2" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M2 6.5A4 4 0 0 0 6 10.5a4 4 0 0 0 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -588,30 +713,18 @@ export default function PeterAvatarWidget() {
           </button>
         )}
         {isStarted && !isEnded && (
-          <button
-            onClick={handleEndChat}
-            className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
-          >
-            End
-          </button>
+          <button onClick={handleEndChat} className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide">End</button>
         )}
         <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
         <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </div>
     </div>
   );
 
-
-  // PLON brand colour overrides — applied to the widget wrapper so all
-  // saabai-* CSS tokens inside automatically render in PlasticOnline colours.
   const plonVars = {
     "--saabai-bg":             "#111111",
     "--saabai-surface":        "#1a1a1a",
@@ -655,14 +768,19 @@ export default function PeterAvatarWidget() {
         </button>
       )}
 
+      {/* Improvement #5: slide-up entrance animation */}
       {isOpen && (
         <div
           className="fixed bottom-6 right-3 z-50 rounded-2xl overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
-          style={{ width: "min(340px, calc(100vw - 24px))", boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)" }}
+          style={{
+            width: "min(340px, calc(100vw - 24px))",
+            boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
+            animation: "rexSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
         >
           {Header}
 
-          {/* ── End panel ─────────────────────────────────────────────────── */}
+          {/* ── End panel ──────────────────────────────────────────────────── */}
           {isEnded && (
             <div className="px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
               {endSubmitted ? (
@@ -679,14 +797,21 @@ export default function PeterAvatarWidget() {
                   </div>
                   <div className="h-px bg-saabai-border" />
                   <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to place your order? Browse the full range and add to cart.</p>
-                  <a
-                    href="https://www.plasticonline.com.au/shop/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide"
-                  >
+                  <a href="https://www.plasticonline.com.au/shop/" target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide">
                     Shop Our Range →
                   </a>
+                  {/* Improvement #3: speak to someone */}
+                  <div className="flex gap-2">
+                    <a href="tel:0755646744" className="flex-1 flex items-center justify-center gap-1.5 border border-saabai-border rounded-lg py-2 text-[11px] text-saabai-text-dim hover:text-saabai-text hover:border-saabai-teal/40 transition-colors">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 2h2.5l1 2.5-1.5 1a7 7 0 0 0 3 3l1-1.5L10.5 8V10.5A1.5 1.5 0 0 1 9 12 10 10 0 0 1 0 3 1.5 1.5 0 0 1 2 1.5V2z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Call us
+                    </a>
+                    <a href="https://wa.me/61755646744" target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 border border-saabai-border rounded-lg py-2 text-[11px] text-saabai-text-dim hover:text-saabai-text hover:border-saabai-teal/40 transition-colors">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.57A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.22-3.48-8.52z" fill="currentColor" opacity=".15"/><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.6-.92-2.19-.24-.57-.49-.5-.67-.5-.17 0-.37-.02-.57-.02s-.52.07-.8.37c-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" fill="currentColor"/></svg>
+                      WhatsApp
+                    </a>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -704,18 +829,23 @@ export default function PeterAvatarWidget() {
                     onKeyDown={(e) => { if (e.key === "Enter" && endEmail.trim()) submitEndPanel(false); }}
                     className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
                   />
-                  <button
-                    onClick={() => submitEndPanel(false)}
-                    disabled={!endEmail.trim() || endSubmitting}
-                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
+                  <button onClick={() => submitEndPanel(false)} disabled={!endEmail.trim() || endSubmitting}
+                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     {endSubmitting ? "Sending…" : "Send me the transcript"}
                   </button>
-                  <button
-                    onClick={() => submitEndPanel(true)}
-                    disabled={endSubmitting}
-                    className="text-[11px] text-saabai-text-dim hover:text-saabai-text-muted transition-colors text-center"
-                  >
+                  {/* Improvement #3: speak to someone */}
+                  <div className="flex gap-2 mt-1">
+                    <a href="tel:0755646744" className="flex-1 flex items-center justify-center gap-1.5 border border-saabai-border rounded-lg py-2 text-[11px] text-saabai-text-dim hover:text-saabai-text hover:border-saabai-teal/40 transition-colors">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 2h2.5l1 2.5-1.5 1a7 7 0 0 0 3 3l1-1.5L10.5 8V10.5A1.5 1.5 0 0 1 9 12 10 10 0 0 1 0 3 1.5 1.5 0 0 1 2 1.5V2z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Call (07) 5564 6744
+                    </a>
+                    <a href="https://wa.me/61755646744" target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 border border-saabai-border rounded-lg py-2 text-[11px] text-saabai-text-dim hover:text-saabai-text hover:border-saabai-teal/40 transition-colors">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.57A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.22-3.48-8.52z" fill="currentColor" opacity=".15"/><path d="M17.47 14.38c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.6-.92-2.19-.24-.57-.49-.5-.67-.5-.17 0-.37-.02-.57-.02s-.52.07-.8.37c-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35z" fill="currentColor"/></svg>
+                      WhatsApp
+                    </a>
+                  </div>
+                  <button onClick={() => submitEndPanel(true)} disabled={endSubmitting}
+                    className="text-[11px] text-saabai-text-dim hover:text-saabai-text-muted transition-colors text-center">
                     No thanks
                   </button>
                 </div>
@@ -723,33 +853,24 @@ export default function PeterAvatarWidget() {
             </div>
           )}
 
-          {/* ── Mode picker ────────────────────────────────────────────────── */}
+          {/* ── Mode picker ─────────────────────────────────────────────────── */}
           {!isEnded && !chatMode && (
             <div className="px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface flex flex-col gap-3">
               <p className="text-[11px] text-saabai-text-dim tracking-wide">How would you like to chat?</p>
-              {/* Text option */}
-              <button
-                onClick={selectTextMode}
+              <button onClick={selectTextMode}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}
-              >
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}>
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 3h10M2 7h7M2 11h5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h7M2 11h5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-saabai-text leading-none mb-1">Text Chat</p>
                   <p className="text-[10px] text-saabai-text-dim leading-relaxed">Type your questions, get instant answers</p>
                 </div>
               </button>
-              {/* Voice option */}
-              <button
-                onClick={speechSupported ? selectVoiceMode : undefined}
-                disabled={!speechSupported}
+              <button onClick={speechSupported ? selectVoiceMode : undefined} disabled={!speechSupported}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}
-              >
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}>
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="5" y="1" width="4" height="7" rx="2" stroke="var(--saabai-teal)" strokeWidth="1.4"/>
@@ -768,10 +889,9 @@ export default function PeterAvatarWidget() {
             </div>
           )}
 
-          {/* ── Voice mode ─────────────────────────────────────────────────── */}
+          {/* ── Voice mode ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "voice" && (
             <div className="flex flex-col items-center justify-center gap-4 px-6 py-6 bg-gradient-to-b from-saabai-bg to-saabai-surface">
-              {/* Pulsing rings + avatar */}
               <div className="relative flex items-center justify-center">
                 <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
                 <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
@@ -779,7 +899,6 @@ export default function PeterAvatarWidget() {
                   <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 </div>
               </div>
-              {/* Status */}
               <div className="h-5 flex items-center">
                 {statusLabel && (
                   <div className="flex items-center gap-1.5">
@@ -788,7 +907,6 @@ export default function PeterAvatarWidget() {
                   </div>
                 )}
               </div>
-              {/* Actionable info card — only shown in voice mode when last reply has a price or link */}
               {(() => {
                 const lastAssistant = [...displayMessages].reverse().find(m => m.role === "assistant");
                 const isActionable = lastAssistant && /AUD|\$|\[/.test(lastAssistant.content);
@@ -805,10 +923,9 @@ export default function PeterAvatarWidget() {
             </div>
           )}
 
-          {/* ── Text mode ──────────────────────────────────────────────────── */}
+          {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
             <div className="flex flex-col" style={{ height: 380 }}>
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
                 {displayMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -819,9 +936,7 @@ export default function PeterAvatarWidget() {
                     )}
                     <div
                       className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-                        msg.role === "user"
-                          ? "rounded-br-sm"
-                          : "rounded-bl-sm text-white"
+                        msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm text-white"
                       }`}
                       style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
                     >
@@ -843,16 +958,65 @@ export default function PeterAvatarWidget() {
                 )}
                 <div ref={chatBottomRef} />
               </div>
-              {/* Quick reply chips — shown after greeting, hidden once user sends */}
+
+              {/* Improvement #1: inline quote email capture */}
+              {showQuoteCapture && (
+                <div className="px-4 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                  {quoteEmailSent ? (
+                    <p className="text-[11px] text-saabai-teal font-medium">Quote sent! Check your inbox.</p>
+                  ) : !quoteEmailOpen ? (
+                    <button
+                      onClick={() => setQuoteEmailOpen(true)}
+                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-yellow-400/30 bg-yellow-400/8 hover:bg-yellow-400/15 transition-colors"
+                      style={{ color: "#FFD700" }}
+                    >
+                      📧 Send me this quote →
+                    </button>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={quoteEmail}
+                        onChange={e => setQuoteEmail(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && submitQuoteEmail()}
+                        autoFocus
+                        className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60"
+                        style={{ background: "#f0f0f0", color: "#111" }}
+                      />
+                      <button
+                        onClick={submitQuoteEmail}
+                        disabled={!quoteEmail.trim()}
+                        className="px-3 py-1.5 bg-saabai-teal text-saabai-bg text-[11px] font-bold rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Quick reply chips — initial greeting */}
               {showQuickReplies && (
                 <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
                   <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
                   {quickReplies.map((q) => (
-                    <button
-                      key={q}
+                    <button key={q}
                       onClick={() => { trackQuickReply(q); setInputValue(""); handleUserMessage(q); }}
-                      className="text-left px-3 py-2 rounded-lg border border-saabai-teal/25 bg-saabai-teal/5 text-xs text-saabai-teal hover:bg-saabai-teal/15 hover:border-saabai-teal/50 transition-all"
-                    >
+                      className="text-left px-3 py-2 rounded-lg border border-saabai-teal/25 bg-saabai-teal/5 text-xs text-saabai-teal hover:bg-saabai-teal/15 hover:border-saabai-teal/50 transition-all">
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Improvement #2: contextual follow-up chips */}
+              {!showQuickReplies && followUpChips.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                  {followUpChips.map((q) => (
+                    <button key={q}
+                      onClick={() => { setFollowUpChips([]); handleUserMessage(q); }}
+                      className="text-left px-2.5 py-1.5 rounded-lg border border-saabai-border/60 bg-saabai-surface-raised text-[11px] text-saabai-text-muted hover:border-saabai-teal/40 hover:text-saabai-text transition-all">
                       {q}
                     </button>
                   ))}
@@ -861,7 +1025,7 @@ export default function PeterAvatarWidget() {
             </div>
           )}
 
-          {/* ── Text input (voice + text modes) ───────────────────────────── */}
+          {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
             <div className="p-3 border-t border-saabai-border flex gap-2 shrink-0">
               <input
@@ -887,6 +1051,14 @@ export default function PeterAvatarWidget() {
           )}
         </div>
       )}
+
+      {/* Improvement #5: slide-up keyframe */}
+      <style>{`
+        @keyframes rexSlideUp {
+          from { transform: translateY(16px) scale(0.98); opacity: 0; }
+          to   { transform: translateY(0)    scale(1);    opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
