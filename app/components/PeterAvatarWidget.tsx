@@ -274,6 +274,7 @@ export default function PeterAvatarWidget() {
       if (chatModeRef.current !== "text") return;
       if (Date.now() - lastActivityRef.current > 45000) {
         reEngagementFiredRef.current = true;
+        lastActivityRef.current = Date.now(); // prevent re-trigger
         const nudge = "Still there? Happy to lock that quote in whenever you're ready.";
         const nudgeMsg: ChatMessage = { role: "assistant", content: nudge };
         messagesRef.current = [...messagesRef.current, nudgeMsg];
