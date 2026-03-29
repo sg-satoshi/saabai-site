@@ -29,6 +29,15 @@ const CHANGELOG: Day[] = [
     date: "29 Mar 2026",
     label: "Today",
     entries: [
+      { time: "22:15", tag: "UI",          title: "Rex launcher glow added — ambient green halo + 10s pulse interval matching Mia" },
+      { time: "22:10", tag: "FIX",         title: "Changelog auto-update rule added to CLAUDE.md — all future Rex changes logged automatically" },
+      { time: "22:05", tag: "FIX",         title: "iframe embed resizes dynamically via postMessage — starts 88x88px (bubble only), expands to 420x720px on open" },
+      { time: "22:00", tag: "UI",          title: "Input box placeholder text darkened for better contrast on light grey background" },
+      { time: "21:55", tag: "UI",          title: "Message input box set to light grey #f0f0f0 background to stand out from dark widget" },
+      { time: "21:50", tag: "UI",          title: "User chat bubbles changed to light grey #e9e9eb with black text" },
+      { time: "21:48", tag: "UI",          title: "Rex chat bubbles changed to Facebook Messenger blue #0084FF" },
+      { time: "21:20", tag: "FIX",         title: "Rex changelog 404 fixed — split into server page + ChangelogClient 'use client' component" },
+      { time: "21:15", tag: "UI",          title: "Blue accent on changelog page darkened to #0874C8" },
       { time: "21:10", tag: "UI",          title: "Rex assistant chat bubbles changed to iMessage blue (#0B93F6)" },
       { time: "21:09", tag: "NEW",         title: "Rex changelog page launched at saabai.ai/rex-changelog" },
       { time: "21:05", tag: "UI",          title: "Full rebrand to messenger green (#25D366) — widget, glows, borders, email templates" },
@@ -102,7 +111,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "52",  label: "Total updates" },
+  { value: "63",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
