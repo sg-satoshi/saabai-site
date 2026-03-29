@@ -45,7 +45,7 @@ function renderContent(text: string) {
       } else {
         nodes.push(
           <a key={`a-${lineKey}-${key++}`} href={match[4]} target="_blank" rel="noopener noreferrer"
-            className="underline text-saabai-teal hover:opacity-80">
+            className="underline font-bold hover:opacity-80" style={{ color: "#FFD700" }}>
             {match[3]}
           </a>
         );

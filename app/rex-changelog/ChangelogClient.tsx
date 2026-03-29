@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "29 Mar 2026",
     label: "Today",
     entries: [
+      { time: "22:30", tag: "UI",          title: "Chat links changed to bold yellow #FFD700 — high contrast against blue and grey bubbles" },
       { time: "22:15", tag: "UI",          title: "Rex launcher glow added — ambient green halo + 10s pulse interval matching Mia" },
       { time: "22:10", tag: "FIX",         title: "Changelog auto-update rule added to CLAUDE.md — all future Rex changes logged automatically" },
       { time: "22:05", tag: "FIX",         title: "iframe embed resizes dynamically via postMessage — starts 88x88px (bubble only), expands to 420x720px on open" },
@@ -111,7 +112,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "63",  label: "Total updates" },
+  { value: "64",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
