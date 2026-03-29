@@ -360,6 +360,11 @@ export default function PeterAvatarWidget() {
     out = out.replace(/www\.\S+/g, "");
     out = out.replace(/(\d+)\s*[x×]\s*(\d+)/gi, "$1 by $2");
     out = out.replace(/(\d+(?:\.\d+)?)\s*mm\b/gi, "$1 millimetres");
+    // Convert $126 → "126 dollars", $126.50 → "126 dollars 50"
+    out = out.replace(/\$(\d+)\.(\d+)/g, (_, dollars, cents) =>
+      cents === "00" ? `${dollars} dollars` : `${dollars} dollars ${cents}`
+    );
+    out = out.replace(/\$(\d+)/g, "$1 dollars");
     return out.trim();
   }
 
