@@ -69,6 +69,8 @@ function renderContent(text: string) {
 }
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
+const STORAGE_KEY = "rex_conversation";
+const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const GREETINGS = [
   "Hey, I'm Rex. PlasticOnline's AI. What are you cutting today?",
@@ -134,6 +136,37 @@ export default function PeterAvatarWidget() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSpeechSupported(!!SR);
   }, []);
+
+  // Restore conversation from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (Date.now() - saved.savedAt > TTL_MS) { localStorage.removeItem(STORAGE_KEY); return; }
+      if (saved.messages?.length > 0) {
+        messagesRef.current = saved.messages;
+        setDisplayMessages(saved.messages);
+        chatModeRef.current = "text";
+        setChatMode("text");
+        isStartedRef.current = true;
+        setIsStarted(true);
+        if (saved.isOpen) setIsOpen(true);
+      }
+    } catch {}
+  }, []);
+
+  // Save conversation to localStorage on every message change
+  useEffect(() => {
+    if (displayMessages.length === 0) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: displayMessages,
+        isOpen,
+        savedAt: Date.now(),
+      }));
+    } catch {}
+  }, [displayMessages, isOpen]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -449,6 +482,7 @@ export default function PeterAvatarWidget() {
     setShowQuickReplies(false);
     setQuickReplies([]);
     messagesRef.current = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
 
   function handleEndChat() {
