@@ -38,6 +38,7 @@ const CHANGELOG: Day[] = [
       { time: "23:40", tag: "UI",          title: "Slide-up animation made more pronounced — 40px rise, 0.94→1 scale, 0.4s spring" },
       { time: "23:30", tag: "UI",          title: "Slide-up entrance animation — chat window springs open with cubic-bezier ease" },
       { time: "23:30", tag: "IMPROVEMENT", title: "Message sound — subtle Web Audio API ding when Rex responds" },
+      { time: "09:00", tag: "IMPROVEMENT", title: "Bulk discount shows dollar saving in bold — e.g. 'saving $22.50' — and no duplicate price after linked total" },
       { time: "23:35", tag: "FIX",         title: "Price is now a clickable yellow hyperlink — markdown link format [$price](url) renders clean, no brackets shown" },
       { time: "23:30", tag: "IMPROVEMENT", title: "Typing delay — 500–800ms pause before Rex responds, feels more human" },
       { time: "23:00", tag: "UI",          title: "Bold prices render in yellow #FFD700 — stands out clearly in blue assistant bubbles" },
@@ -125,7 +126,7 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "79",  label: "Total updates" },
+  { value: "80",  label: "Total updates" },
   { value: "9",   label: "Days in development" },
   { value: "35",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
