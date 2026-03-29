@@ -175,7 +175,6 @@ function randomGreeting(): string {
 export default function PeterAvatarWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -214,10 +213,6 @@ export default function PeterAvatarWidget() {
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     setSpeechSupported(!!SR);
-    const checkMobile = () => setIsMobile(window.innerWidth < 480);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Restore conversation from localStorage on mount
@@ -788,11 +783,7 @@ export default function PeterAvatarWidget() {
         <div
           className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{
-            bottom: isMobile ? 0 : "24px",
-            right: isMobile ? 0 : "12px",
-            width: isMobile ? "100vw" : "340px",
-            height: isMobile ? "100dvh" : undefined,
-            borderRadius: isMobile ? 0 : "1rem",
+            inset: 0,
             boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
             animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
@@ -945,7 +936,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
-            <div className="flex flex-col" style={isMobile ? { flex: 1, minHeight: 0 } : { height: 380 }}>
+            <div className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
                 {displayMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>

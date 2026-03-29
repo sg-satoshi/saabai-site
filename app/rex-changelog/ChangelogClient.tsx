@@ -29,9 +29,9 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "10:30", tag: "FIX", title: "Chat window no longer goes massive on desktop — removed isMobile detection (iframe is always 356px, fooling the check). Widget now fills its iframe container via inset:0." },
       { time: "10:00", tag: "FIX", title: "Mobile full-screen layout fixed — messages area now fills available height instead of leaving empty black space below" },
       { time: "09:50", tag: "FIX", title: "iframe click-blocking fixed — full-page pointer-events:none shell + pointer-events:auto iframe so page buttons stay clickable when Rex is open" },
-      { time: "09:50", tag: "UI",  title: "Mobile view goes full-screen (100vw × 100dvh) — chat fills the whole screen, no border radius on mobile" },
     ],
   },
   {
