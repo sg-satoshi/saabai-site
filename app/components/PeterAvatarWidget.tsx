@@ -794,11 +794,14 @@ export default function PeterAvatarWidget() {
                         <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                       </div>
                     )}
-                    <div className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-                      msg.role === "user"
-                        ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
-                        : "bg-saabai-surface-raised text-saabai-text rounded-bl-sm border border-saabai-border/60"
-                    }`}>
+                    <div
+                      className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                        msg.role === "user"
+                          ? "bg-saabai-teal text-saabai-bg rounded-br-sm"
+                          : "rounded-bl-sm text-white"
+                      }`}
+                      style={msg.role === "assistant" ? { background: "#0B93F6" } : undefined}
+                    >
                       {renderContent(msg.content)}
                     </div>
                   </div>
