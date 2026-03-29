@@ -230,6 +230,8 @@ export default function PeterAvatarWidget() {
         isStartedRef.current = true;
         setIsStarted(true);
         if (saved.isOpen) setIsOpen(true);
+        // Don't re-fire the nudge after restoring a saved conversation
+        reEngagementFiredRef.current = true;
       }
     } catch {}
   }, []);
@@ -238,8 +240,9 @@ export default function PeterAvatarWidget() {
   useEffect(() => {
     if (displayMessages.length === 0) return;
     try {
+      const messagesToSave = displayMessages.filter(m => m.content !== "Still there? Happy to lock that quote in whenever you're ready.");
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        messages: displayMessages,
+        messages: messagesToSave,
         isOpen,
         savedAt: Date.now(),
       }));
