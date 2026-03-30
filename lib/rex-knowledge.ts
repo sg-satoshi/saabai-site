@@ -933,12 +933,12 @@ CTS rate applies for cut-to-size pieces. Cap at full sheet price if CTS × area 
 
 | Thickness | CTS ($/m²) | Full Sheet (1220×2440mm) |
 |---|---|---|
-| 0.5mm | $27.04 | $52.33 |
-| 0.75mm | $27.51 | $53.24 |
-| 1mm | $36.30 | $56.18 |
-| 1.5mm | $51.91 | $80.35 |
-| 2mm | $69.15 | $107.03 |
-| 3mm | $99.36 | $153.81 |
+| 0.5mm | $27.04 | $57.50 |
+| 0.75mm | $27.51 | $58.50 |
+| 1mm | $36.30 | $61.74 |
+| 1.5mm | $51.91 | $88.30 |
+| 2mm | $69.15 | $117.62 |
+| 3mm | $99.36 | $169.02 |
 
 ---
 
@@ -949,18 +949,18 @@ Standard sheet size: 1220×2440mm. Full sheet only — no cut-to-size available.
 ### HIPS Black (Hi Gloss)
 | Thickness | Full Sheet (1220×2440mm) |
 |---|---|
-| 1mm | $43.50 |
-| 1.5mm | $66.36 |
-| 2mm | $86.99 |
-| 3mm | $128.69 |
+| 1mm | $47.80 |
+| 1.5mm | $72.92 |
+| 2mm | $95.60 |
+| 3mm | $141.42 |
 
 ### HIPS White (Hi Gloss)
 | Thickness | Full Sheet (1220×2440mm) |
 |---|---|
-| 1mm | $43.50 |
-| 1.5mm | $65.19 |
-| 2mm | $86.09 |
-| 3mm | $129.84 |
+| 1mm | $47.80 |
+| 1.5mm | $71.64 |
+| 2mm | $94.60 |
+| 3mm | $142.68 |
 
 ---
 
