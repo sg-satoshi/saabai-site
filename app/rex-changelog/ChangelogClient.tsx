@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "13:45", tag: "UI", title: "Launcher bubble repositioned — bottom-4/right-4 offset to give glow/shadow room within iframe bounds" },
       { time: "13:30", tag: "UI", title: "Teal button icons and text changed to white — arrow and label now visible in both active and disabled states" },
       { time: "13:15", tag: "PRICING", title: "Full sheet price cap enforced across all materials — if CTS × area exceeds full sheet price, Rex always quotes the full sheet price instead" },
       { time: "13:00", tag: "PRICING", title: "Acetal sheet pricing updated — two-tier CTS rates added (<1m² and >1m²), plus 45mm–100mm thicknesses now fully priced (were 'call for pricing')" },

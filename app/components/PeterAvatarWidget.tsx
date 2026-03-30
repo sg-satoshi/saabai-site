@@ -760,7 +760,7 @@ export default function PeterAvatarWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/60 transition-all duration-300 hover:-translate-y-0.5"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/60 transition-all duration-300 hover:-translate-y-0.5"
           style={{
             boxShadow: pulsing
               ? "0 0 0 5px rgba(37,211,102,0.12), 0 8px 36px rgba(37,211,102,0.45), 0 4px 16px rgba(0,0,0,0.35)"
