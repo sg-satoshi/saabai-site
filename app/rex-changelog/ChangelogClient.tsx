@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "13:15", tag: "PRICING", title: "Full sheet price cap enforced across all materials — if CTS × area exceeds full sheet price, Rex always quotes the full sheet price instead" },
       { time: "13:00", tag: "PRICING", title: "Acetal sheet pricing updated — two-tier CTS rates added (<1m² and >1m²), plus 45mm–100mm thicknesses now fully priced (were 'call for pricing')" },
       { time: "12:00", tag: "FIX", title: "Re-engagement nudge firing 3x — nudge now excluded from localStorage so it can't accumulate across reloads. Restored sessions mark nudge as already fired." },
       { time: "11:30", tag: "FIX", title: "Chat window height now natural/auto on desktop — no longer fills entire 670px iframe. Text mode 380px, mode picker shrinks to content." },
