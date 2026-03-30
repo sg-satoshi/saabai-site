@@ -623,42 +623,58 @@ Cap at full sheet price if area exceeds the cut-off. Always add "Ex GST".
 
 ## ACETAL SHEET PRICING 2026 (POM-C) — All prices Ex GST
 
-Standard sheet size: 2000×1000mm. Colours: Natural (White) and Black. Same CTS rules apply.
-CTS rate = price per m² for cut-to-size under 1m². Full sheet price for the 2000×1000mm (2m²) sheet.
+Standard sheet size: 2000×1000mm (= 2m²). Colours: Natural (White) and Black.
 
-| Thickness | Colour | CTS ($/m²) | Full Sheet (2000×1000mm) |
-|---|---|---|---|
-| 1.0mm | Natural | $165.12 | $220.16 |
-| 1.5mm | Natural | $248.25 | $331 |
-| 2.0mm | Natural | $331.38 | $397.66 |
-| 2.0mm | Black | $390.71 | $468.85 |
-| 3.0mm | Natural | $496.50 | $595.80 |
-| 3.0mm | Black | $563.72 | $676.46 |
-| 5.0mm | Natural | $486.18 | $583.42 |
-| 6.0mm | Natural | $411.68 | $521.45 |
-| 6.0mm | Black | $411.68 | $521.45 |
-| 8.0mm | Natural | $529.29 | $670.43 |
-| 8.0mm | Black | $529.29 | $670.43 |
-| 10.0mm | Natural | $661.61 | $838.03 |
-| 10.0mm | Black | $661.61 | $838.03 |
-| 12.0mm | Natural | $793.94 | $1,005.65 |
-| 12.0mm | Black | $793.94 | $1,005.65 |
-| 15.0mm | Natural | $992.42 | $1,257.06 |
-| 15.0mm | Black | $992.42 | $1,257.06 |
-| 20.0mm | Natural | $1,323.23 | $1,676.08 |
-| 20.0mm | Black | $1,323.23 | $1,676.08 |
-| 25.0mm | Natural | $1,654.02 | $1,984.82 |
-| 25.0mm | Black | $1,654.02 | $1,984.82 |
-| 30.0mm | Natural | $1,984.83 | $2,381.80 |
-| 30.0mm | Black | $1,984.83 | $2,381.80 |
-| 40.0mm | Natural | $2,646 | $3,175.20 |
-| 40.0mm | Black | $2,646 | $3,175.20 |
-| 50.0mm | Natural | $2,756.71 | $3,638.86 |
-| 50.0mm | Black | $2,756.71 | $3,638.86 |
-| 60.0mm | Natural | $3,307.50 | $4,365.90 |
-| 60.0mm | Black | $3,307.50 | $4,365.90 |
+TWO-TIER CTS PRICING — critical:
+- Area < 1m²: use the "CTS <1m²" rate × area
+- Area ≥ 1m² and < 2m²: use the "CTS >1m²" rate × area
+- Area ≥ 2m² (full sheet or larger): charge the Full Sheet price
+- Always cap at Full Sheet price — never quote more than the sheet cost
 
-Thicker options (70mm, 80mm, 90mm+) available — call for pricing.
+Example: 10mm Natural, 890×445mm → area = 0.396m² (<1m²) → $661.61 × 0.396 = $261.90 Ex GST
+
+| Thickness | Colour | CTS <1m² ($/m²) | CTS >1m² ($/m²) | Full Sheet (2000×1000mm) |
+|---|---|---|---|---|
+| 1.0mm | Natural | $165.12 | $137.60 | $220.16 |
+| 1.5mm | Natural | $248.25 | $206.88 | $331.00 |
+| 2.0mm | Natural | $331.38 | $276.15 | $397.66 |
+| 2.0mm | Black | $390.71 | $325.59 | $468.85 |
+| 3.0mm | Natural | $496.50 | $413.75 | $595.80 |
+| 3.0mm | Black | $563.72 | $469.76 | $676.46 |
+| 5.0mm | Natural | $486.18 | $405.15 | $583.42 |
+| 6.0mm | Natural | $411.68 | $343.06 | $521.45 |
+| 6.0mm | Black | $411.68 | $343.06 | $521.45 |
+| 8.0mm | Natural | $529.29 | $441.08 | $670.43 |
+| 8.0mm | Black | $529.29 | $441.08 | $670.43 |
+| 10.0mm | Natural | $661.61 | $551.34 | $838.03 |
+| 10.0mm | Black | $661.61 | $551.34 | $838.03 |
+| 12.0mm | Natural | $793.94 | $661.61 | $1,005.65 |
+| 12.0mm | Black | $793.94 | $661.61 | $1,005.65 |
+| 15.0mm | Natural | $992.42 | $827.01 | $1,257.06 |
+| 15.0mm | Black | $992.42 | $827.01 | $1,257.06 |
+| 20.0mm | Natural | $1,323.23 | $1,102.69 | $1,676.08 |
+| 20.0mm | Black | $1,323.23 | $1,102.69 | $1,676.08 |
+| 25.0mm | Natural | $1,654.02 | $1,212.95 | $1,984.82 |
+| 25.0mm | Black | $1,654.02 | $1,212.95 | $1,984.82 |
+| 30.0mm | Natural | $1,984.83 | $1,455.54 | $2,381.80 |
+| 30.0mm | Black | $1,984.83 | $1,455.54 | $2,381.80 |
+| 40.0mm | Natural | $2,646.00 | $1,940.40 | $3,175.20 |
+| 40.0mm | Black | $2,646.00 | $1,940.40 | $3,175.20 |
+| 45.0mm | Black only | $2,480.00 | — | $3,571.20 |
+| 50.0mm | Natural | $2,756.71 | $2,425.91 | $3,638.86 |
+| 50.0mm | Black | $2,756.71 | $2,425.91 | $3,638.86 |
+| 60.0mm | Natural | $3,307.50 | — | $4,365.90 |
+| 60.0mm | Black | $3,307.50 | — | $4,365.90 |
+| 70.0mm | Natural | $3,859.40 | — | $5,094.41 |
+| 70.0mm | Black | $3,859.40 | — | $5,094.41 |
+| 80.0mm | Natural | $4,410.00 | — | $5,821.20 |
+| 80.0mm | Black | $4,410.00 | — | $5,821.20 |
+| 90.0mm | Natural | $4,961.25 | — | $6,548.85 |
+| 90.0mm | Black | $4,961.25 | — | $6,548.85 |
+| 100.0mm | Natural | $5,512.50 | — | $7,276.50 |
+| 100.0mm | Black | $5,512.50 | — | $7,276.50 |
+
+Note: "—" in CTS >1m² column means only CTS <1m² rate or full sheet applies (no mid-range rate for that thickness).
 
 ---
 
