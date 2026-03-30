@@ -814,7 +814,7 @@ export default function PeterAvatarWidget() {
                   <div className="h-px bg-saabai-border" />
                   <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to place your order? Browse the full range and add to cart.</p>
                   <a href="https://www.plasticonline.com.au/shop/" target="_blank" rel="noopener noreferrer"
-                    className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide">
+                    className="block w-full text-center bg-saabai-teal text-white px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide">
                     Shop Our Range →
                   </a>
                   {/* Improvement #3: speak to someone */}
@@ -847,7 +847,7 @@ export default function PeterAvatarWidget() {
                     style={{ background: "#ffffff", color: "#111" }}
                   />
                   <button onClick={() => submitEndPanel(false)} disabled={!endEmail.trim() || endSubmitting}
-                    className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    className="w-full bg-saabai-teal text-white px-4 py-2.5 rounded-lg font-semibold text-xs hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                     {endSubmitting ? "Sending…" : "Send me the transcript"}
                   </button>
                   {/* Improvement #3: speak to someone */}
@@ -1004,7 +1004,7 @@ export default function PeterAvatarWidget() {
                       <button
                         onClick={submitQuoteEmail}
                         disabled={!quoteEmail.trim()}
-                        className="px-3 py-1.5 bg-saabai-teal text-saabai-bg text-[11px] font-bold rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors"
+                        className="px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors"
                       >
                         Send
                       </button>
@@ -1057,7 +1057,7 @@ export default function PeterAvatarWidget() {
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isThinking}
-                className="w-8 h-8 flex items-center justify-center bg-saabai-teal text-saabai-bg rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors shrink-0"
+                className="w-8 h-8 flex items-center justify-center bg-saabai-teal text-white rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors shrink-0"
                 aria-label="Send"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
