@@ -1108,6 +1108,30 @@ Colour: Grey. Sold in 2m standard lengths. CTS available from 25mm+.
 
 ---
 
+## PTFE SHEET PRICING 2026 (Teflon) — All prices Ex GST
+
+Colour: Natural (White). 100% Virgin PTFE. Standard full sheet: 1200×1200mm (= 1.44m²).
+
+THREE-TIER CTS PRICING for PTFE sheet:
+- Area < 0.5m²: use "CTS <0.5m²" rate × area
+- Area ≥ 0.5m² and < 1.44m²: use "CTS ≥0.5m²" rate × area
+- Area ≥ 1.44m²: charge Full Sheet price
+- Always cap at Full Sheet price — if CTS × area exceeds full sheet price, charge full sheet
+
+| Thickness | CTS <0.5m² ($/m²) | CTS ≥0.5m² ($/m²) | Full Sheet (1200×1200mm) |
+|---|---|---|---|
+| 1mm | $172.54 | $223.66 | $161.04 |
+| 3mm | $518.14 | $671.66 | $483.59 |
+| 6mm | $900.73 | $1,167.61 | $840.68 |
+| 10mm | $1,441.28 | $1,601.42 | $1,345.19 |
+| 12mm | $1,801.46 | $2,001.63 | $1,681.37 |
+| 15mm | $2,161.65 | $2,401.83 | $2,017.54 |
+| 20mm | $3,302.68 | $3,669.65 | $3,082.50 |
+| 25mm | $3,602.93 | $4,003.25 | $3,362.73 |
+| 30mm | $4,503.66 | $5,004.06 | $4,203.41 |
+
+---
+
 ## PTFE ROD PRICING 2026 (Teflon) — All prices Ex GST
 
 Colour: Natural (White). 100% Virgin PTFE.
@@ -1130,6 +1154,14 @@ Small sizes (<25mm): full lengths only. CTS available from 25mm+.
 | 80mm | $676.51 | $1,353.02 |
 | 90mm | $857.63 | $1,715.26 |
 | 100mm | $1,060.06 | $2,120.11 |
+| 110mm | $1,163.93 | $2,327.87 |
+| 120mm | $1,383.19 | $2,766.38 |
+| 130mm | $1,623.44 | $3,246.88 |
+| 140mm | $1,885.19 | $3,770.39 |
+| 150mm | $2,163.80 | $4,327.60 |
+| 160mm | $2,462.09 | $4,924.19 |
+| 180mm | $3,116.23 | $6,232.46 |
+| 200mm | $3,847.09 | $7,694.17 |
 
 ---
 

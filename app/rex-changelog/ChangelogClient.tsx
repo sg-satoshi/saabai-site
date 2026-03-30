@@ -29,6 +29,8 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "14:00", tag: "PRICING", title: "PTFE sheet pricing added — full three-tier CTS structure (<0.5m², ≥0.5m², full sheet 1200×1200mm) across 9 thicknesses 1mm–30mm" },
+      { time: "14:00", tag: "PRICING", title: "PTFE rod extended — added 110mm through 200mm diameters (were missing from knowledge base)" },
       { time: "13:45", tag: "UI", title: "Launcher bubble repositioned — bottom-4/right-4 offset to give glow/shadow room within iframe bounds" },
       { time: "13:30", tag: "UI", title: "Teal button icons and text changed to white — arrow and label now visible in both active and disabled states" },
       { time: "13:15", tag: "PRICING", title: "Full sheet price cap enforced across all materials — if CTS × area exceeds full sheet price, Rex always quotes the full sheet price instead" },
