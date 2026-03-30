@@ -29,6 +29,8 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "14:30", tag: "PRICING", title: "PETG sheet pricing added — 6 thicknesses 0.5mm–3mm, CTS rate + full sheet (1220×2440mm)" },
+      { time: "14:30", tag: "PRICING", title: "HIPS sheet pricing added — Black and White, 4 thicknesses each, full sheet only (no CTS)" },
       { time: "14:00", tag: "PRICING", title: "PTFE sheet pricing added — full three-tier CTS structure (<0.5m², ≥0.5m², full sheet 1200×1200mm) across 9 thicknesses 1mm–30mm" },
       { time: "14:00", tag: "PRICING", title: "PTFE rod extended — added 110mm through 200mm diameters (were missing from knowledge base)" },
       { time: "13:45", tag: "UI", title: "Launcher bubble repositioned — bottom-4/right-4 offset to give glow/shadow room within iframe bounds" },

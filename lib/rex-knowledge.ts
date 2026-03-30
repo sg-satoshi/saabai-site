@@ -926,6 +926,44 @@ Oversized sheets also available — see full range online.
 
 ---
 
+## PETG SHEET PRICING 2026 — All prices Ex GST
+
+Colour: Clear Gloss. Standard sheet size: 1220×2440mm (= 2.977m²).
+CTS rate applies for cut-to-size pieces. Cap at full sheet price if CTS × area exceeds it.
+
+| Thickness | CTS ($/m²) | Full Sheet (1220×2440mm) |
+|---|---|---|
+| 0.5mm | $27.04 | $52.33 |
+| 0.75mm | $27.51 | $53.24 |
+| 1mm | $36.30 | $56.18 |
+| 1.5mm | $51.91 | $80.35 |
+| 2mm | $69.15 | $107.03 |
+| 3mm | $99.36 | $153.81 |
+
+---
+
+## HIPS SHEET PRICING 2026 (High Impact Polystyrene) — All prices Ex GST
+
+Standard sheet size: 1220×2440mm. Full sheet only — no cut-to-size available.
+
+### HIPS Black (Hi Gloss)
+| Thickness | Full Sheet (1220×2440mm) |
+|---|---|
+| 1mm | $43.50 |
+| 1.5mm | $66.36 |
+| 2mm | $86.99 |
+| 3mm | $128.69 |
+
+### HIPS White (Hi Gloss)
+| Thickness | Full Sheet (1220×2440mm) |
+|---|---|
+| 1mm | $43.50 |
+| 1.5mm | $65.19 |
+| 2mm | $86.09 |
+| 3mm | $129.84 |
+
+---
+
 ## PRISMATIC DIFFUSER & LIGHTING SHEET PRICING 2026 — All prices Ex GST
 
 | Product | Colour | Sheet Size | CTS ($/m²) | Full Sheet |
