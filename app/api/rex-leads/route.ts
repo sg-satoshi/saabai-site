@@ -11,7 +11,25 @@ const CONTACT_URL = "https://www.plasticonline.com.au/contact/";
 
 // ── Pipedrive ─────────────────────────────────────────────────────────────────
 
-async function createPipedriveLead(email: string, note: string, mobile?: string, despatch?: string) {
+function extractPrice(text: string): string | null {
+  // Match markdown link price [$185.50 Ex GST](url) or plain $185.50
+  const match = text.match(/\[(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)\]/i) || text.match(/(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)/i);
+  return match ? match[1] : null;
+}
+
+function formatTranscript(messages: Array<{ role: string; content: string }>): string {
+  return messages
+    .filter(m => m.role === "user" || m.role === "assistant")
+    .map(m => {
+      const label = m.role === "user" ? "Customer" : "Rex";
+      // Strip markdown links from Rex messages for cleaner transcript
+      const content = m.content.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
+      return `${label}: ${content}`;
+    })
+    .join("\n\n");
+}
+
+async function createPipedriveLead(email: string, note: string, mobile?: string, despatch?: string, messages?: Array<{ role: string; content: string }>) {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return;
 
@@ -50,11 +68,10 @@ async function createPipedriveLead(email: string, note: string, mobile?: string,
     }
 
     const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : null;
-    const dealTitle = [
-      "Rex Lead",
-      despatchLabel,
-      note ? `— ${note.slice(0, 80)}` : `— ${email}`,
-    ].filter(Boolean).join(" ");
+
+    // Build clean deal title: "Rex New Lead - [$185.50 Ex GST]"
+    const price = extractPrice(note);
+    const dealTitle = price ? `Rex New Lead - [${price}]` : "Rex New Lead";
 
     // Create deal
     const deal: Record<string, unknown> = {
@@ -71,14 +88,17 @@ async function createPipedriveLead(email: string, note: string, mobile?: string,
     const dealData = await dealRes.json();
     const dealId = dealData?.data?.id;
 
-    // Add note with full details
+    // Add note with full conversation transcript
     if (dealId) {
+      const transcript = messages && messages.length > 0 ? formatTranscript(messages) : note;
       const noteLines = [
         `Source: Rex chat widget`,
         mobile ? `Mobile: ${mobile}` : null,
         despatchLabel ? `Despatch: ${despatchLabel}` : null,
-        `Quote: ${note}`,
-      ].filter(Boolean).join("\n");
+        ``,
+        `--- Conversation ---`,
+        transcript,
+      ].filter(s => s !== null).join("\n");
       await fetch(`https://api.pipedrive.com/v1/notes?api_token=${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -208,7 +228,7 @@ function teamNotificationHtml(email: string, note: string, source: string, mobil
 
 export async function POST(req: Request) {
   try {
-    const { source, email, note, mobile, despatch, timestamp } = await req.json();
+    const { source, email, note, mobile, despatch, messages, timestamp } = await req.json();
 
     const tasks: Promise<unknown>[] = [];
 
@@ -236,7 +256,7 @@ export async function POST(req: Request) {
       );
 
       // 3. Pipedrive lead
-      tasks.push(createPipedriveLead(email, note ?? "", mobile, despatch));
+      tasks.push(createPipedriveLead(email, note ?? "", mobile, despatch, messages));
     }
 
     // 4. Team notification (always)

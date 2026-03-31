@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "17:30", tag: "IMPROVEMENT", title: "Pipedrive deal title now 'Rex New Lead - [$xxx.xx]'; note contains full conversation transcript with Customer/Rex dialogue" },
       { time: "17:00", tag: "NEW", title: "Lead capture upgraded — mobile number + Pick up/Delivery toggle added to quote email form; Pipedrive dedupes by email, links to existing contact, adds note with full details" },
       { time: "16:30", tag: "UI", title: "Email send button upgraded — spinner during send, press animation, hover brightness, checkmark confirmation on success" },
       { time: "15:00", tag: "PRICING", title: "HIPS sheet prices corrected — Black and White updated to SHEET column values (not web price)" },

@@ -679,6 +679,7 @@ export default function PeterAvatarWidget() {
           mobile: quoteMobile.trim() || undefined,
           despatch: quoteDesspatch ?? undefined,
           note: lastAssistant?.content.slice(0, 300) ?? "Quote request",
+          messages: messagesRef.current,
           timestamp: new Date().toISOString(),
         }),
       });
