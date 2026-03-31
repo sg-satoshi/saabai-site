@@ -705,28 +705,28 @@ export default function PeterAvatarWidget() {
 
   // ── Shared header ───────────────────────────────────────────────────────────
   const Header = (
-    <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#0084FF" }}>
+    <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#e8f1ff", borderBottom: "1px solid #c8dcff" }}>
       <div className="flex items-center gap-2.5">
-        <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden border-2 border-white/30">
+        <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden border-2 border-saabai-teal/20">
           <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
           {isStarted && !isEnded && (
             <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${statusColor} transition-colors`} />
           )}
         </div>
         <div>
-          <p className="text-xs font-bold text-white leading-none">Rex</p>
-          <p className="text-[10px] text-white/70 mt-0.5">AI Agent · PlasticOnline</p>
+          <p className="text-xs font-bold leading-none" style={{ color: "#0084FF" }}>Rex</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "#65676b" }}>AI Agent · PlasticOnline</p>
         </div>
       </div>
       <div className="flex items-center gap-1.5">
         {isStarted && !isEnded && chatMode === "voice" && (
-          <button onClick={switchToText} title="Switch to text" className="flex items-center gap-1 text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15">
+          <button onClick={switchToText} title="Switch to text" className="flex items-center gap-1 text-[10px] font-medium transition-colors px-2 py-1 rounded-md hover:bg-saabai-teal/10" style={{ color: "#0084FF" }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M2 6.5h5M2 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
             Text
           </button>
         )}
         {isStarted && !isEnded && chatMode === "text" && speechSupported && (
-          <button onClick={switchToVoice} title="Switch to voice" className="flex items-center gap-1 text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15">
+          <button onClick={switchToVoice} title="Switch to voice" className="flex items-center gap-1 text-[10px] font-medium transition-colors px-2 py-1 rounded-md hover:bg-saabai-teal/10" style={{ color: "#0084FF" }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <rect x="4" y="1" width="4" height="6" rx="2" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M2 6.5A4 4 0 0 0 6 10.5a4 4 0 0 0 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -736,12 +736,12 @@ export default function PeterAvatarWidget() {
           </button>
         )}
         {isStarted && !isEnded && (
-          <button onClick={handleEndChat} className="text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15 tracking-wide">End</button>
+          <button onClick={handleEndChat} className="text-[10px] font-medium transition-colors px-2 py-1 rounded-md hover:bg-saabai-teal/10 tracking-wide" style={{ color: "#0084FF" }}>End</button>
         )}
-        <button onClick={handleMinimise} className="text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/15" aria-label="Minimise">
+        <button onClick={handleMinimise} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Minimise">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        <button onClick={handleClose} className="text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/15" aria-label="Close">
+        <button onClick={handleClose} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Close">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </div>
@@ -770,22 +770,23 @@ export default function PeterAvatarWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-white border border-saabai-border rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/40 transition-all duration-300 hover:-translate-y-0.5"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-full pl-3 pr-5 py-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110"
           style={{
+            background: "#0084FF",
             boxShadow: pulsing
-              ? "0 0 0 4px rgba(0,132,255,0.12), 0 8px 24px rgba(0,0,0,0.15)"
-              : "0 4px 20px rgba(0,0,0,0.12)",
+              ? "0 0 0 4px rgba(0,132,255,0.2), 0 8px 24px rgba(0,132,255,0.35)"
+              : "0 4px 20px rgba(0,132,255,0.4)",
             transform: pulsing ? "scale(1.025) translateY(-1px)" : undefined,
           }}
         >
           <div className="relative w-9 h-9 shrink-0">
-            <div className="relative w-9 h-9 rounded-full border border-saabai-border overflow-hidden">
+            <div className="relative w-9 h-9 rounded-full border-2 border-white/30 overflow-hidden">
               <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
             </div>
           </div>
           <div className="text-left">
-            <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Rex</p>
-            <p className="text-[10px] text-saabai-text-dim mt-0.5">Cut-to-size quote in seconds.</p>
+            <p className="text-xs font-semibold text-white leading-none">Talk to Rex</p>
+            <p className="text-[10px] text-white/75 mt-0.5">Cut-to-size quote in seconds.</p>
           </div>
         </button>
       )}
