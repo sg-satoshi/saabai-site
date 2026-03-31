@@ -23,7 +23,9 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return { found: false, error: "Order lookup unavailable" };
 
-  const term = orderNumber.trim().toUpperCase();
+  const raw = orderNumber.trim().toUpperCase();
+  // Normalise — prepend PLON- if customer omitted the prefix
+  const term = raw.startsWith("PLON-") ? raw : `PLON-${raw}`;
 
   try {
     // Search for deal by title
