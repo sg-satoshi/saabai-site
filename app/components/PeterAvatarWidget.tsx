@@ -1001,7 +1001,7 @@ export default function PeterAvatarWidget() {
                       onClick={() => setQuoteEmailOpen(true)}
                       className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-saabai-teal/30 bg-saabai-teal/8 hover:bg-saabai-teal/15 active:scale-[0.98] transition-all duration-150 text-saabai-teal"
                     >
-                      Send me this quote →
+                      Email my quote →
                     </button>
                   ) : (
                     <div className="flex flex-col gap-1.5">
