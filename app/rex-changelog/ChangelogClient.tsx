@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "20:30", tag: "UI", title: "Quick reply and follow-up chips redesigned — white background, solid blue border and text, subtle shadow. Stand out clearly against the light blue footer." },
       { time: "20:00", tag: "UI", title: "Launcher pill now solid #0084FF blue with white text. Header lightened to match footer (#e8f1ff) — blue name/buttons, consistent light-blue top and bottom frame." },
       { time: "19:30", tag: "UI", title: "Header and footer polished — solid blue header with white text/icons, light blue (#e8f1ff) footer tint, rounded pill input, darker readable text throughout" },
       { time: "19:00", tag: "UI", title: "Complete colour scheme overhaul — Messenger light theme: white background, #0084FF blue accents, grey bubbles for customer, blue for Rex. Removed all green glows and dark gradients." },

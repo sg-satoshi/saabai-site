@@ -1060,12 +1060,13 @@ export default function PeterAvatarWidget() {
 
               {/* Quick reply chips — initial greeting */}
               {showQuickReplies && (
-                <div className="flex flex-col gap-1.5 px-3 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
-                  <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
+                <div className="flex flex-col gap-1.5 px-3 pt-2 pb-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
+                  <p className="text-[10px] font-semibold px-0.5 pb-0.5" style={{ color: "#0084FF" }}>Where would you like to start?</p>
                   {quickReplies.map((q) => (
                     <button key={q}
                       onClick={() => { trackQuickReply(q); setInputValue(""); handleUserMessage(q); }}
-                      className="text-left px-3 py-2 rounded-lg border border-saabai-teal/25 bg-saabai-teal/5 text-xs text-saabai-teal hover:bg-saabai-teal/15 hover:border-saabai-teal/50 transition-all">
+                      className="text-left px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] hover:-translate-y-px"
+                      style={{ background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 4px rgba(0,132,255,0.12)" }}>
                       {q}
                     </button>
                   ))}
@@ -1078,7 +1079,8 @@ export default function PeterAvatarWidget() {
                   {followUpChips.map((q) => (
                     <button key={q}
                       onClick={() => { setFollowUpChips([]); handleUserMessage(q); }}
-                      className="text-left px-2.5 py-1.5 rounded-lg border border-saabai-border/60 bg-saabai-surface-raised text-[11px] text-saabai-text-muted hover:border-saabai-teal/40 hover:text-saabai-text transition-all">
+                      className="text-left px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-150 active:scale-[0.97] hover:-translate-y-px"
+                      style={{ background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 4px rgba(0,132,255,0.12)" }}>
                       {q}
                     </button>
                   ))}
