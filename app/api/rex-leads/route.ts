@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { generateText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const runtime = "edge";
 
@@ -27,6 +29,36 @@ function formatTranscript(messages: Array<{ role: string; content: string }>): s
       return `${label}: ${content}`;
     })
     .join("\n\n");
+}
+
+interface ConversationAnalysis {
+  quoteDetails: string;
+  price: string;
+  summary: string;
+}
+
+async function analyseConversation(transcript: string): Promise<ConversationAnalysis | null> {
+  try {
+    const { text } = await generateText({
+      model: anthropic("claude-haiku-4-5-20251001"),
+      prompt: `You are analysing a sales chat between Rex (AI sales agent at PlasticOnline) and a customer.
+
+TRANSCRIPT:
+${transcript}
+
+Extract the following and return as JSON only — no markdown, no explanation:
+{
+  "quoteDetails": "The specific product(s) quoted — material, colour, thickness, dimensions, quantity. E.g. '3mm Grey Polycarbonate 1200×600mm x2'. If multiple items, list each on a new line. If no quote was given, write 'No quote provided'.",
+  "price": "The final quoted price including Ex GST. E.g. '$185.50 Ex GST'. If multiple prices, list the total. If no price, write 'Not quoted'.",
+  "summary": "2-3 sentence plain English summary of what the customer was after, what Rex quoted, and any next steps or customer intent."
+}`,
+    });
+    let json = text.trim();
+    if (json.startsWith("```")) json = json.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+    return JSON.parse(json) as ConversationAnalysis;
+  } catch {
+    return null;
+  }
 }
 
 async function createPipedriveLead(email: string, note: string, mobile?: string, despatch?: string, messages?: Array<{ role: string; content: string }>) {
@@ -68,9 +100,15 @@ async function createPipedriveLead(email: string, note: string, mobile?: string,
     }
 
     const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : null;
+    const transcript = messages && messages.length > 0 ? formatTranscript(messages) : note;
 
-    // Build clean deal title: "Rex New Lead - [$185.50 Ex GST]"
-    const price = extractPrice(note);
+    // Run AI analysis and price extraction in parallel
+    const [analysis, fallbackPrice] = await Promise.all([
+      messages && messages.length > 0 ? analyseConversation(transcript) : Promise.resolve(null),
+      Promise.resolve(extractPrice(note)),
+    ]);
+
+    const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : fallbackPrice;
     const dealTitle = price ? `Rex New Lead - [${price}]` : "Rex New Lead";
 
     // Create deal
@@ -88,15 +126,23 @@ async function createPipedriveLead(email: string, note: string, mobile?: string,
     const dealData = await dealRes.json();
     const dealId = dealData?.data?.id;
 
-    // Add note with full conversation transcript
+    // Add note with AI summary + full transcript
     if (dealId) {
-      const transcript = messages && messages.length > 0 ? formatTranscript(messages) : note;
       const noteLines = [
         `Source: Rex chat widget`,
         mobile ? `Mobile: ${mobile}` : null,
         despatchLabel ? `Despatch: ${despatchLabel}` : null,
         ``,
-        `--- Conversation ---`,
+        analysis ? `--- Quote Details ---` : null,
+        analysis ? analysis.quoteDetails : null,
+        ``,
+        analysis ? `--- Price ---` : null,
+        analysis ? analysis.price : null,
+        ``,
+        analysis ? `--- Summary ---` : null,
+        analysis ? analysis.summary : null,
+        ``,
+        `--- Full Conversation ---`,
         transcript,
       ].filter(s => s !== null).join("\n");
       await fetch(`https://api.pipedrive.com/v1/notes?api_token=${token}`, {
