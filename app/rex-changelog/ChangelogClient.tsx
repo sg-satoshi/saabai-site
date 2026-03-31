@@ -31,7 +31,8 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
-      { time: "12:30", tag: "FIX", title: "Order status showing 'Unknown' — fixed stage name lookup by fetching all pipeline stages and matching by ID, rather than single-stage endpoint which was failing silently" },
+      { time: "12:45", tag: "FIX", title: "Order status 'Unknown' root cause fixed — stage name is returned directly in the Pipedrive search result (item.stage.name); removed unnecessary extra API calls that were failing" },
+      { time: "12:30", tag: "DEBUG", title: "Added /api/pipedrive-debug endpoint to inspect raw Pipedrive responses — identified that stage.name is available in search payload" },
       { time: "12:15", tag: "FIX", title: "Order lookup now accepts bare numbers — customer can type '36135' or 'PLON-36135', both resolve correctly via PLON- prefix normalisation" },
       { time: "12:00", tag: "NEW", title: "Order status lookup via Pipedrive — customers can ask Rex about their order (e.g. PLON-36135) and Rex calls the Pipedrive API to return the current stage: New Order, Waiting On Material, Production, Ready for Pick Up/Delivery, Dropship, or Completed" },
       { time: "11:30", tag: "FIX", title: "Nylon rod 60mm still quoting wrong price ($117.51 = 70mm) — added explicit system prompt rule: match EXACT diameter, never adjacent row; 60mm 1m = $86.21 anchored with example. Reinforced in knowledge base table." },

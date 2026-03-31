@@ -19,16 +19,6 @@ export interface OrderStatus {
   error?: string;
 }
 
-async function resolveStageNameById(stageId: number, token: string): Promise<string | null> {
-  // Fetch all stages and find the matching one — more reliable than a single-stage endpoint
-  const res = await fetch(`${PIPEDRIVE_BASE}/stages?api_token=${token}`);
-  if (!res.ok) return null;
-  const data = await res.json();
-  const stages: any[] = data?.data ?? [];
-  const stage = stages.find((s: any) => s.id === stageId);
-  return stage?.name ?? null;
-}
-
 export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return { found: false, error: "Order lookup unavailable" };
@@ -38,7 +28,6 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   const term = raw.startsWith("PLON-") ? raw : `PLON-${raw}`;
 
   try {
-    // Search for deal by title
     const searchRes = await fetch(
       `${PIPEDRIVE_BASE}/deals/search?term=${encodeURIComponent(term)}&fields=title&exact_match=false&api_token=${token}`
     );
@@ -55,28 +44,19 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
 
     if (!match) return { found: false };
 
-    const deal = match.item;
-    const stageId: number = deal.stage_id;
-
-    // Resolve stage name by fetching all stages
-    const stageName = await resolveStageNameById(stageId, token);
+    // Stage name is returned directly in the search result — no extra API call needed
+    const stageName: string = match.item?.stage?.name ?? "";
 
     if (!stageName) {
-      // Fall back to fetching the deal directly which may include more detail
-      const dealRes = await fetch(`${PIPEDRIVE_BASE}/deals/${deal.id}?api_token=${token}`);
-      const dealData = await dealRes.json();
-      const fallbackStageId: number = dealData?.data?.stage_id ?? stageId;
-      const fallbackName = await resolveStageNameById(fallbackStageId, token);
-      if (!fallbackName) return { found: true, orderNumber: term, status: "Unknown", message: `Order ${term} was found but we couldn't retrieve the current status — please call us on (07) 5564 6744 for an update.` };
+      return { found: true, orderNumber: term, status: "Unknown", message: `Order ${term} was found but we couldn't read the current status — please call us on (07) 5564 6744 for a quick update.` };
     }
 
-    const name = stageName!;
-    const detail = STAGE_MESSAGES[name];
+    const detail = STAGE_MESSAGES[stageName];
     const message = detail
       ? `Order ${term} ${detail}.`
-      : `Order ${term} is currently at: ${name}.`;
+      : `Order ${term} is currently at: ${stageName}.`;
 
-    return { found: true, orderNumber: term, status: name, message };
+    return { found: true, orderNumber: term, status: stageName, message };
   } catch (err) {
     return { found: false, error: String(err) };
   }
