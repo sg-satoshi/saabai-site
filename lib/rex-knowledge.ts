@@ -1119,16 +1119,38 @@ Small sizes (<25mm): full lengths only.
 
 ## NYLON ROD PRICING 2026 (Ertalon 6SA) — All prices Ex GST
 
-Colour: Natural. Sold in 1m lengths.
-Small sizes (<30mm): check availability — some are full length only or limited stock.
+Colour: Natural. Sold in 1m lengths (except 230mm–300mm which are 0.6m lengths).
+CTS = cut-to-size rate per metre (for lengths shorter than the standard length).
+Small sizes below 30mm (6mm, 10mm, 12mm, 16mm, 20mm, 25mm): full length only or contact us for availability.
 
-| Diameter | Price per metre (full length) | CTS (per metre) |
+| Diameter | Price (full length) | CTS (per metre) |
 |---|---|---|
 | 30mm | $27.40 | $31.97 |
 | 40mm | $38.40 | $51.53 |
 | 50mm | $60.02 | $80.56 |
+| 60mm | $86.21 | $115.71 |
+| 70mm | $117.51 | $157.70 |
+| 80mm | $153.36 | $205.82 |
+| 90mm | $194.05 | $260.44 |
+| 100mm | $239.59 | $321.55 |
+| 110mm | $259.43 | $312.84 |
+| 120mm | $308.58 | $372.11 |
+| 125mm | $334.98 | $403.95 |
+| 130mm | $404.91 | $543.43 |
+| 140mm | $469.51 | $630.13 |
+| 150mm | $482.44 | $581.77 |
+| 160mm | $548.89 | $661.90 |
+| 170mm | $692.31 | $929.15 |
+| 180mm | $694.53 | $837.53 |
+| 200mm | $857.47 | $1,034.01 |
 
-For other diameters (6mm, 10mm, 12mm, 16mm, 20mm, 25mm, 60mm, 70mm+) — contact us for current pricing and availability.
+230mm–300mm: standard length is 0.6m (price is per 0.6m piece):
+| Diameter | Price (0.6m length) | CTS (per metre) |
+|---|---|---|
+| 230mm | $759.43 | $820.50 |
+| 250mm | $897.35 | $969.51 |
+| 280mm | $1,125.44 | $1,215.95 |
+| 300mm | $1,292.06 | $1,395.96 |
 
 ---
 

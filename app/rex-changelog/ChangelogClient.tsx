@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "11:00", tag: "PRICING", title: "Nylon rod pricing fixed — 60mm was missing from table (causing Rex to fall back to polypropylene price $113.62 instead of correct $86.21). Added full nylon rod range: 60mm–300mm with 1m and CTS rates." },
       { time: "10:30", tag: "NEW", title: "Rex trained with advanced plastics technical depth — cast vs extruded laser/engraving differences, PC stress cracking chemicals, HDPE HACCP colour coding, acetal POM-C rod specification, UHMWPE vs PTFE comparison, PTFE cold flow limitation, PETG vs PET/CPET distinction, material selection decision trees, QLD climate-specific recommendations" },
       { time: "10:00", tag: "IMPROVEMENT", title: "Changelog redesigned — auto-computed stats, animated counters, interactive tag filters, search, and entry counts per day" },
     ],
