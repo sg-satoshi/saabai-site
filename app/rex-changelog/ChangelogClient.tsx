@@ -155,9 +155,9 @@ const CHANGELOG: Day[] = [
 ];
 
 const STATS = [
-  { value: "80",  label: "Total updates" },
-  { value: "9",   label: "Days in development" },
-  { value: "35",  label: "Pricing sheets loaded" },
+  { value: "100", label: "Total updates" },
+  { value: "11",  label: "Days in development" },
+  { value: "38",  label: "Pricing sheets loaded" },
   { value: "40+", label: "Product URLs mapped" },
 ];
 
