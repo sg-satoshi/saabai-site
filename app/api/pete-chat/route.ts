@@ -2,6 +2,7 @@ import { streamText, tool, jsonSchema, stepCountIs } from "ai";
 import { getModel } from "../../../lib/chat-config";
 import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
+import { lookupOrder } from "../../../lib/pipedrive-client";
 
 export const maxDuration = 60;
 
@@ -61,6 +62,9 @@ PRICE OBJECTIONS:
 DELIVERY:
 - If a customer asks about timing or seems ready to order, mention that most orders go out within a few business days from the Gold Coast. Keep it casual and confident.
 
+ORDER STATUS:
+- If a customer gives an order number (format: PLON-XXXXX), call lookupOrder immediately with that number. Read back the status in plain conversational English — do not quote raw stage names. If the order is not found, apologise briefly and suggest they call (07) 5564 6744 or email enquiries@plasticonline.com.au.
+
 LINKS:
 - In text: use markdown links e.g. [Lock it in →](url) or [Get in Touch](url)
 - When speaking: say "tap the button below" — NEVER read out a URL, never say "https" or spell out a domain
@@ -85,6 +89,8 @@ type CalcInput = {
   heightMm: number;
   quantity?: number;
 };
+
+type OrderInput = { orderNumber: string };
 
 export async function POST(req: Request) {
   try {
@@ -132,6 +138,18 @@ export async function POST(req: Request) {
             } catch {}
             return { ok: true };
           },
+        }),
+
+        lookupOrder: tool<OrderInput, Awaited<ReturnType<typeof lookupOrder>>>({
+          description: "Look up the status of a customer's order in Pipedrive by order number (format: PLON-XXXXX). Call this whenever a customer provides an order number.",
+          inputSchema: jsonSchema<OrderInput>({
+            type: "object",
+            properties: {
+              orderNumber: { type: "string", description: "The order number exactly as given by the customer, e.g. PLON-36135" },
+            },
+            required: ["orderNumber"],
+          }),
+          execute: async ({ orderNumber }) => lookupOrder(orderNumber),
         }),
 
         calculatePrice: tool<CalcInput, Awaited<ReturnType<typeof calculateCutToSizePrice>>>({

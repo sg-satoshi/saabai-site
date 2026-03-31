@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "12:00", tag: "NEW", title: "Order status lookup via Pipedrive — customers can ask Rex about their order (e.g. PLON-36135) and Rex calls the Pipedrive API to return the current stage: New Order, Waiting On Material, Production, Ready for Pick Up/Delivery, Dropship, or Completed" },
       { time: "11:30", tag: "FIX", title: "Nylon rod 60mm still quoting wrong price ($117.51 = 70mm) — added explicit system prompt rule: match EXACT diameter, never adjacent row; 60mm 1m = $86.21 anchored with example. Reinforced in knowledge base table." },
       { time: "11:00", tag: "PRICING", title: "Nylon rod pricing fixed — 60mm was missing from table (causing Rex to fall back to polypropylene price $113.62 instead of correct $86.21). Added full nylon rod range: 60mm–300mm with 1m and CTS rates." },
       { time: "10:30", tag: "NEW", title: "Rex trained with advanced plastics technical depth — cast vs extruded laser/engraving differences, PC stress cracking chemicals, HDPE HACCP colour coding, acetal POM-C rod specification, UHMWPE vs PTFE comparison, PTFE cold flow limitation, PETG vs PET/CPET distinction, material selection decision trees, QLD climate-specific recommendations" },
