@@ -999,7 +999,8 @@ export default function PeterAvatarWidget() {
                   ) : !quoteEmailOpen ? (
                     <button
                       onClick={() => setQuoteEmailOpen(true)}
-                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-saabai-teal/30 bg-saabai-teal/8 hover:bg-saabai-teal/15 active:scale-[0.98] transition-all duration-150 text-saabai-teal"
+                      className="w-full text-left text-[11px] font-semibold py-2 px-3 rounded-xl transition-all duration-150 active:scale-[0.98] hover:-translate-y-px"
+                      style={{ background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 4px rgba(0,132,255,0.12)" }}
                     >
                       Email my quote →
                     </button>
