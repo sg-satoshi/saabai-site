@@ -1014,7 +1014,7 @@ export default function PeterAvatarWidget() {
                           onChange={e => setQuoteEmail(e.target.value)}
                           autoFocus
                           disabled={quoteEmailSending}
-                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors placeholder:text-gray-400"
+                          className="rex-input flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors"
                           style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
                         />
                         <input
@@ -1023,7 +1023,7 @@ export default function PeterAvatarWidget() {
                           value={quoteMobile}
                           onChange={e => setQuoteMobile(e.target.value)}
                           disabled={quoteEmailSending}
-                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors placeholder:text-gray-400"
+                          className="rex-input flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors"
                           style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
                         />
                       </div>
@@ -1106,7 +1106,7 @@ export default function PeterAvatarWidget() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
-                className="flex-1 rounded-full px-4 py-2 text-xs focus:outline-none transition-colors"
+                className="rex-input flex-1 rounded-full px-4 py-2 text-xs focus:outline-none transition-colors"
                 style={{ background: "#ffffff", color: "#111", border: "1px solid #c8dcff" }}
               />
               <button
@@ -1125,12 +1125,13 @@ export default function PeterAvatarWidget() {
         </div>
       )}
 
-      {/* Improvement #5: slide-up keyframe */}
+      {/* Improvement #5: slide-up keyframe + placeholder colours */}
       <style>{`
         @keyframes rexSlideUp {
           from { transform: translateY(40px) scale(0.94); opacity: 0; }
           to   { transform: translateY(0)    scale(1);    opacity: 1; }
         }
+        .rex-input::placeholder { color: #444950; opacity: 1; }
       `}</style>
     </div>
   );
