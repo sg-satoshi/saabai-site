@@ -11,34 +11,80 @@ const CONTACT_URL = "https://www.plasticonline.com.au/contact/";
 
 // ── Pipedrive ─────────────────────────────────────────────────────────────────
 
-async function createPipedriveLead(email: string, note: string) {
+async function createPipedriveLead(email: string, note: string, mobile?: string, despatch?: string) {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return;
 
   try {
-    // Create person
-    const personRes = await fetch(`https://api.pipedrive.com/v1/persons?api_token=${token}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: email.split("@")[0],
-        email: [{ value: email, primary: true }],
-      }),
-    });
-    const personData = await personRes.json();
-    const personId = personData?.data?.id;
+    // Search for existing person by email
+    let personId: number | undefined;
+    const searchRes = await fetch(
+      `https://api.pipedrive.com/v1/persons/search?term=${encodeURIComponent(email)}&fields=email&exact_match=true&api_token=${token}`
+    );
+    const searchData = await searchRes.json();
+    const existingPerson = searchData?.data?.items?.[0]?.item;
+
+    if (existingPerson) {
+      personId = existingPerson.id;
+      // Update mobile if provided and not already set
+      if (mobile) {
+        await fetch(`https://api.pipedrive.com/v1/persons/${personId}?api_token=${token}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: [{ value: mobile, primary: true }] }),
+        });
+      }
+    } else {
+      // Create new person
+      const personRes = await fetch(`https://api.pipedrive.com/v1/persons?api_token=${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: email.split("@")[0],
+          email: [{ value: email, primary: true }],
+          ...(mobile && { phone: [{ value: mobile, primary: true }] }),
+        }),
+      });
+      const personData = await personRes.json();
+      personId = personData?.data?.id;
+    }
+
+    const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : null;
+    const dealTitle = [
+      "Rex Lead",
+      despatchLabel,
+      note ? `— ${note.slice(0, 80)}` : `— ${email}`,
+    ].filter(Boolean).join(" ");
 
     // Create deal
-    await fetch(`https://api.pipedrive.com/v1/deals?api_token=${token}`, {
+    const deal: Record<string, unknown> = {
+      title: dealTitle,
+      person_id: personId,
+      ...(process.env.PIPEDRIVE_PIPELINE_ID && { pipeline_id: Number(process.env.PIPEDRIVE_PIPELINE_ID) }),
+      ...(process.env.PIPEDRIVE_STAGE_ID && { stage_id: Number(process.env.PIPEDRIVE_STAGE_ID) }),
+    };
+    const dealRes = await fetch(`https://api.pipedrive.com/v1/deals?api_token=${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: note ? `Rex Lead — ${note}` : `Rex Lead — ${email}`,
-        person_id: personId,
-        ...(process.env.PIPEDRIVE_PIPELINE_ID && { pipeline_id: Number(process.env.PIPEDRIVE_PIPELINE_ID) }),
-        ...(process.env.PIPEDRIVE_STAGE_ID && { stage_id: Number(process.env.PIPEDRIVE_STAGE_ID) }),
-      }),
+      body: JSON.stringify(deal),
     });
+    const dealData = await dealRes.json();
+    const dealId = dealData?.data?.id;
+
+    // Add note with full details
+    if (dealId) {
+      const noteLines = [
+        `Source: Rex chat widget`,
+        mobile ? `Mobile: ${mobile}` : null,
+        despatchLabel ? `Despatch: ${despatchLabel}` : null,
+        `Quote: ${note}`,
+      ].filter(Boolean).join("\n");
+      await fetch(`https://api.pipedrive.com/v1/notes?api_token=${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: noteLines, deal_id: dealId }),
+      });
+    }
   } catch {
     // Non-fatal — don't block the response
   }
@@ -140,13 +186,16 @@ function followUpEmailHtml(note: string) {
 </html>`;
 }
 
-function teamNotificationHtml(email: string, note: string, source: string) {
+function teamNotificationHtml(email: string, note: string, source: string, mobile?: string, despatch?: string) {
+  const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : "Not specified";
   return `<!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;padding:24px;color:#333;">
   <h2 style="color:#25D366;margin:0 0 16px;">New Rex Lead</h2>
   <table style="border-collapse:collapse;width:100%;max-width:500px;">
     <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;width:120px;">Email</td><td style="padding:8px 12px;">${email}</td></tr>
+    <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Mobile</td><td style="padding:8px 12px;">${mobile || "Not provided"}</td></tr>
+    <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;">Despatch</td><td style="padding:8px 12px;">${despatchLabel}</td></tr>
     <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Quote</td><td style="padding:8px 12px;">${note || "No quote details"}</td></tr>
     <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;">Source</td><td style="padding:8px 12px;">${source}</td></tr>
     <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Time</td><td style="padding:8px 12px;">${new Date().toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })} AEST</td></tr>
@@ -159,7 +208,7 @@ function teamNotificationHtml(email: string, note: string, source: string) {
 
 export async function POST(req: Request) {
   try {
-    const { source, email, note, timestamp } = await req.json();
+    const { source, email, note, mobile, despatch, timestamp } = await req.json();
 
     const tasks: Promise<unknown>[] = [];
 
@@ -187,7 +236,7 @@ export async function POST(req: Request) {
       );
 
       // 3. Pipedrive lead
-      tasks.push(createPipedriveLead(email, note ?? ""));
+      tasks.push(createPipedriveLead(email, note ?? "", mobile, despatch));
     }
 
     // 4. Team notification (always)
@@ -196,7 +245,7 @@ export async function POST(req: Request) {
         from: FROM_EMAIL,
         to: TEAM_EMAIL,
         subject: `Rex lead: ${email ?? "anonymous"} — ${note ?? "no quote"}`,
-        html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown"),
+        html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch),
       })
     );
 

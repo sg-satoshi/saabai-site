@@ -195,6 +195,8 @@ export default function PeterAvatarWidget() {
   // Improvement #1: inline quote email capture
   const [quoteEmailOpen, setQuoteEmailOpen] = useState(false);
   const [quoteEmail, setQuoteEmail] = useState("");
+  const [quoteMobile, setQuoteMobile] = useState("");
+  const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
   const [quoteEmailSending, setQuoteEmailSending] = useState(false);
 
@@ -623,6 +625,8 @@ export default function PeterAvatarWidget() {
     setFollowUpChips([]);
     setQuoteEmailOpen(false);
     setQuoteEmail("");
+    setQuoteMobile("");
+    setQuoteDesspatch(null);
     setQuoteEmailSent(false);
     messagesRef.current = [];
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
@@ -672,6 +676,8 @@ export default function PeterAvatarWidget() {
         body: JSON.stringify({
           source: "rex_quote_email",
           email: quoteEmail.trim(),
+          mobile: quoteMobile.trim() || undefined,
+          despatch: quoteDesspatch ?? undefined,
           note: lastAssistant?.content.slice(0, 300) ?? "Quote request",
           timestamp: new Date().toISOString(),
         }),
@@ -998,30 +1004,55 @@ export default function PeterAvatarWidget() {
                       Send me this quote →
                     </button>
                   ) : (
-                    <div className="flex gap-1.5">
-                      <input
-                        type="email"
-                        placeholder="your@email.com"
-                        value={quoteEmail}
-                        onChange={e => setQuoteEmail(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && submitQuoteEmail()}
-                        autoFocus
-                        disabled={quoteEmailSending}
-                        className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
-                        style={{ background: "#f0f0f0", color: "#111" }}
-                      />
-                      <button
-                        onClick={submitQuoteEmail}
-                        disabled={!quoteEmail.trim() || quoteEmailSending}
-                        className="relative px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
-                      >
-                        {quoteEmailSending ? (
-                          <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
-                            <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                          </svg>
-                        ) : "Send"}
-                      </button>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex gap-1.5">
+                        <input
+                          type="email"
+                          placeholder="Email address"
+                          value={quoteEmail}
+                          onChange={e => setQuoteEmail(e.target.value)}
+                          autoFocus
+                          disabled={quoteEmailSending}
+                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
+                          style={{ background: "#f0f0f0", color: "#111" }}
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Mobile (optional)"
+                          value={quoteMobile}
+                          onChange={e => setQuoteMobile(e.target.value)}
+                          disabled={quoteEmailSending}
+                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
+                          style={{ background: "#f0f0f0", color: "#111" }}
+                        />
+                      </div>
+                      <div className="flex gap-1.5 items-center">
+                        <span className="text-[10px] text-saabai-text-dim shrink-0">Despatch:</span>
+                        <button
+                          onClick={() => setQuoteDesspatch("pickup")}
+                          className={`text-[10px] font-semibold px-2.5 py-1 rounded-md border transition-all duration-150 ${quoteDesspatch === "pickup" ? "bg-saabai-teal text-white border-saabai-teal" : "border-saabai-teal/30 text-saabai-teal hover:bg-saabai-teal/10"}`}
+                        >
+                          Pick up
+                        </button>
+                        <button
+                          onClick={() => setQuoteDesspatch("delivery")}
+                          className={`text-[10px] font-semibold px-2.5 py-1 rounded-md border transition-all duration-150 ${quoteDesspatch === "delivery" ? "bg-saabai-teal text-white border-saabai-teal" : "border-saabai-teal/30 text-saabai-teal hover:bg-saabai-teal/10"}`}
+                        >
+                          Delivery
+                        </button>
+                        <button
+                          onClick={submitQuoteEmail}
+                          disabled={!quoteEmail.trim() || quoteEmailSending}
+                          className="ml-auto relative px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
+                        >
+                          {quoteEmailSending ? (
+                            <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
+                              <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                            </svg>
+                          ) : "Send"}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
