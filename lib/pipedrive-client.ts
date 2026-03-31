@@ -19,6 +19,16 @@ export interface OrderStatus {
   error?: string;
 }
 
+async function resolveStageNameById(stageId: number, token: string): Promise<string | null> {
+  // Fetch all stages and find the matching one — more reliable than a single-stage endpoint
+  const res = await fetch(`${PIPEDRIVE_BASE}/stages?api_token=${token}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const stages: any[] = data?.data ?? [];
+  const stage = stages.find((s: any) => s.id === stageId);
+  return stage?.name ?? null;
+}
+
 export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return { found: false, error: "Order lookup unavailable" };
@@ -48,19 +58,25 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
     const deal = match.item;
     const stageId: number = deal.stage_id;
 
-    // Resolve stage name
-    const stageRes = await fetch(
-      `${PIPEDRIVE_BASE}/stages/${stageId}?api_token=${token}`
-    );
-    const stageData = await stageRes.json();
-    const stageName: string = stageData?.data?.name ?? "Unknown";
+    // Resolve stage name by fetching all stages
+    const stageName = await resolveStageNameById(stageId, token);
 
-    const detail = STAGE_MESSAGES[stageName];
+    if (!stageName) {
+      // Fall back to fetching the deal directly which may include more detail
+      const dealRes = await fetch(`${PIPEDRIVE_BASE}/deals/${deal.id}?api_token=${token}`);
+      const dealData = await dealRes.json();
+      const fallbackStageId: number = dealData?.data?.stage_id ?? stageId;
+      const fallbackName = await resolveStageNameById(fallbackStageId, token);
+      if (!fallbackName) return { found: true, orderNumber: term, status: "Unknown", message: `Order ${term} was found but we couldn't retrieve the current status — please call us on (07) 5564 6744 for an update.` };
+    }
+
+    const name = stageName!;
+    const detail = STAGE_MESSAGES[name];
     const message = detail
       ? `Order ${term} ${detail}.`
-      : `Order ${term} is currently at: ${stageName}.`;
+      : `Order ${term} is currently at: ${name}.`;
 
-    return { found: true, orderNumber: term, status: stageName, message };
+    return { found: true, orderNumber: term, status: name, message };
   } catch (err) {
     return { found: false, error: String(err) };
   }
