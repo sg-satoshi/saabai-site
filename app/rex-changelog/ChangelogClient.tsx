@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
+
 type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT" | "DEBUG";
 
 interface Entry {
@@ -14,20 +16,26 @@ interface Day {
   entries: Entry[];
 }
 
-const TAG_STYLES: Record<Tag, { bg: string; text: string }> = {
-  NEW:         { bg: "rgba(37,211,102,0.12)",  text: "#25D366" },
-  FIX:         { bg: "rgba(96,165,250,0.12)",  text: "#60a5fa" },
-  IMPROVEMENT: { bg: "rgba(251,191,36,0.12)",  text: "#fbbf24" },
-  PRICING:     { bg: "rgba(167,139,250,0.12)", text: "#a78bfa" },
-  UI:          { bg: "rgba(244,114,182,0.12)", text: "#f472b6" },
-  DEPLOYMENT:  { bg: "rgba(251,146,60,0.12)",  text: "#fb923c" },
-  DEBUG:       { bg: "rgba(156,163,175,0.10)", text: "#9ca3af" },
+const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
+  NEW:         { bg: "rgba(37,211,102,0.10)",  text: "#25D366", border: "rgba(37,211,102,0.25)" },
+  FIX:         { bg: "rgba(96,165,250,0.10)",  text: "#60a5fa", border: "rgba(96,165,250,0.25)" },
+  IMPROVEMENT: { bg: "rgba(251,191,36,0.10)",  text: "#fbbf24", border: "rgba(251,191,36,0.25)" },
+  PRICING:     { bg: "rgba(167,139,250,0.10)", text: "#a78bfa", border: "rgba(167,139,250,0.25)" },
+  UI:          { bg: "rgba(244,114,182,0.10)", text: "#f472b6", border: "rgba(244,114,182,0.25)" },
+  DEPLOYMENT:  { bg: "rgba(251,146,60,0.10)",  text: "#fb923c", border: "rgba(251,146,60,0.25)" },
+  DEBUG:       { bg: "rgba(156,163,175,0.08)", text: "#9ca3af", border: "rgba(156,163,175,0.20)" },
 };
 
 const CHANGELOG: Day[] = [
   {
-    date: "30 Mar 2026",
+    date: "2 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "10:00", tag: "IMPROVEMENT", title: "Changelog redesigned — auto-computed stats, animated counters, interactive tag filters, search, and entry counts per day" },
+    ],
+  },
+  {
+    date: "30 Mar 2026",
     entries: [
       { time: "21:30", tag: "NEW", title: "7 elite UX upgrades: welcome-back greeting, message entrance animations, avatar grouping, contextual thinking labels, sticky price card, scroll-to-bottom button" },
       { time: "20:30", tag: "UI", title: "Quick reply and follow-up chips redesigned — white background, solid blue border and text, subtle shadow. Stand out clearly against the light blue footer." },
@@ -154,14 +162,92 @@ const CHANGELOG: Day[] = [
   },
 ];
 
-const STATS = [
-  { value: "100", label: "Total updates" },
-  { value: "11",  label: "Days in development" },
-  { value: "38",  label: "Pricing sheets loaded" },
-  { value: "40+", label: "Product URLs mapped" },
-];
+// ── Auto-computed stats ────────────────────────────────────────────────────────
+
+function parseChangelogDate(s: string): Date {
+  return new Date(s);
+}
+
+const allDates = CHANGELOG.map(d => parseChangelogDate(d.date));
+const minDate = allDates.reduce((a, b) => (a < b ? a : b));
+const maxDate = allDates.reduce((a, b) => (a > b ? a : b));
+const DAYS_IN_DEV = Math.floor((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+const TOTAL_UPDATES = CHANGELOG.reduce((acc, d) => acc + d.entries.length, 0);
+
+// ── Animated stat card ─────────────────────────────────────────────────────────
+
+function StatCard({ value, suffix = "", label }: { value: number; suffix?: string; label: string }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const duration = 1600;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCount(Math.round(eased * value));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    const id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [value]);
+  return (
+    <div style={{ background: "#0b0d16", padding: "24px 16px", textAlign: "center" }}>
+      <div style={{ fontSize: "34px", fontWeight: 800, color: "#e8e8f0", letterSpacing: "-0.03em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+        {count}{suffix}
+      </div>
+      <div style={{ fontSize: "11px", color: "#444", marginTop: "7px", letterSpacing: "0.05em", textTransform: "uppercase" }}>{label}</div>
+    </div>
+  );
+}
+
+// ── Search highlight ───────────────────────────────────────────────────────────
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const q = query.toLowerCase();
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark style={{ background: "rgba(8,116,200,0.35)", color: "#7bc8ff", borderRadius: "2px", padding: "0 2px" }}>
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function ChangelogClient() {
+  const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
+  const [search, setSearch] = useState("");
+
+  const tagCounts = useMemo(() => {
+    const counts: Partial<Record<Tag, number>> = {};
+    for (const day of CHANGELOG) {
+      for (const entry of day.entries) {
+        counts[entry.tag] = (counts[entry.tag] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return CHANGELOG.map(day => ({
+      ...day,
+      entries: day.entries.filter(e =>
+        (!activeFilter || e.tag === activeFilter) &&
+        (!q || e.title.toLowerCase().includes(q))
+      ),
+    })).filter(day => day.entries.length > 0);
+  }, [activeFilter, search]);
+
+  const totalFiltered = filtered.reduce((acc, d) => acc + d.entries.length, 0);
+  const isFiltering = !!activeFilter || search.trim().length > 0;
+
   return (
     <div style={{ minHeight: "100vh", background: "#06070d", color: "#e8e8f0", fontFamily: "var(--font-geist-sans)" }}>
 
@@ -180,10 +266,15 @@ export default function ChangelogClient() {
             saabai.ai
           </a>
 
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(37,211,102,0.07)", border: "1px solid rgba(37,211,102,0.18)", borderRadius: "100px", padding: "4px 14px 4px 8px", marginBottom: "22px" }}>
+          <a
+            href="https://www.plasticonline.com.au"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(37,211,102,0.07)", border: "1px solid rgba(37,211,102,0.18)", borderRadius: "100px", padding: "4px 14px 4px 8px", marginBottom: "22px", textDecoration: "none" }}
+          >
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#25D366", display: "inline-block", boxShadow: "0 0 8px rgba(37,211,102,0.8)", animation: "pulse 2s ease-in-out infinite" }} />
             <span style={{ fontSize: "11px", color: "#25D366", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Active · PlasticOnline</span>
-          </div>
+          </a>
 
           <h1 style={{ fontSize: "clamp(28px, 5vw, 48px)", fontWeight: 700, margin: "0 0 14px", lineHeight: 1.1, letterSpacing: "-0.025em" }}>
             Rex{" "}
@@ -198,38 +289,112 @@ export default function ChangelogClient() {
           </p>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", background: "rgba(255,255,255,0.04)", borderRadius: "14px", overflow: "hidden", margin: "36px 0 60px" }}>
-          {STATS.map((s) => (
-            <div key={s.label} style={{ background: "#0b0d16", padding: "22px 16px", textAlign: "center" }}>
-              <div style={{ fontSize: "26px", fontWeight: 700, color: "#e8e8f0", letterSpacing: "-0.02em", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: "11px", color: "#444", marginTop: "5px", letterSpacing: "0.04em" }}>{s.label}</div>
-            </div>
-          ))}
+        {/* Stats — auto-computed + animated */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", background: "rgba(255,255,255,0.04)", borderRadius: "14px", overflow: "hidden", margin: "36px 0 44px" }}>
+          <StatCard value={TOTAL_UPDATES} label="Total updates" />
+          <StatCard value={DAYS_IN_DEV} label="Days in development" />
+          <StatCard value={38} label="Pricing sheets" />
+          <StatCard value={40} suffix="+" label="Product URLs" />
         </div>
 
-        {/* Legend */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "48px" }}>
-          {(Object.entries(TAG_STYLES) as [Tag, typeof TAG_STYLES[Tag]][]).filter(([t]) => t !== "DEBUG").map(([tag, s]) => (
-            <span key={tag} style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", background: s.bg, color: s.text, padding: "3px 10px", borderRadius: "6px" }}>
-              {tag}
-            </span>
-          ))}
+        {/* Tag filters */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "16px" }}>
+          <button
+            onClick={() => { setActiveFilter(null); setSearch(""); }}
+            style={{
+              fontSize: "11px", fontWeight: 600, letterSpacing: "0.05em",
+              background: !activeFilter && !search ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.03)",
+              color: !activeFilter && !search ? "#e8e8f0" : "#555",
+              border: `1px solid ${!activeFilter && !search ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`,
+              padding: "4px 11px", borderRadius: "7px", cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            All <span style={{ opacity: 0.6 }}>{TOTAL_UPDATES}</span>
+          </button>
+          {(Object.entries(TAG_STYLES) as [Tag, typeof TAG_STYLES[Tag]][]).map(([tag, s]) => {
+            const count = tagCounts[tag] ?? 0;
+            if (!count) return null;
+            const isActive = activeFilter === tag;
+            return (
+              <button
+                key={tag}
+                onClick={() => setActiveFilter(isActive ? null : tag)}
+                style={{
+                  fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em",
+                  background: isActive ? s.bg : "rgba(255,255,255,0.03)",
+                  color: isActive ? s.text : "#444",
+                  border: `1px solid ${isActive ? s.border : "rgba(255,255,255,0.06)"}`,
+                  padding: "4px 11px", borderRadius: "7px", cursor: "pointer", transition: "all 0.15s",
+                }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.color = s.text; (e.currentTarget as HTMLButtonElement).style.borderColor = s.border; }}}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.color = "#444"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.06)"; }}}
+              >
+                {tag} <span style={{ opacity: 0.7 }}>{count}</span>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Search */}
+        <div style={{ position: "relative", marginBottom: "48px" }}>
+          <svg style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="#444" strokeWidth="1.3"/>
+            <path d="M9.5 9.5l2.5 2.5" stroke="#444" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search updates…"
+            style={{
+              width: "100%", boxSizing: "border-box",
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: "10px", padding: "9px 36px 9px 36px",
+              color: "#c8c8d8", fontSize: "13px", outline: "none",
+              transition: "border-color 0.15s",
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = "rgba(37,211,102,0.3)")}
+            onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#555", cursor: "pointer", padding: "2px", fontSize: "16px", lineHeight: 1 }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Filter results summary */}
+        {isFiltering && (
+          <div style={{ marginBottom: "28px", color: "#555", fontSize: "12px", letterSpacing: "0.03em" }}>
+            {totalFiltered === 0 ? "No results" : `${totalFiltered} update${totalFiltered !== 1 ? "s" : ""}${activeFilter ? ` tagged ${activeFilter}` : ""}${search.trim() ? ` matching "${search.trim()}"` : ""}`}
+          </div>
+        )}
 
         {/* Timeline */}
         <div style={{ position: "relative" }}>
           <div style={{ position: "absolute", left: "7px", top: "6px", bottom: "0", width: "1px", background: "linear-gradient(to bottom, rgba(37,211,102,0.5), rgba(8,116,200,0.15) 60%, transparent)" }} />
 
-          {CHANGELOG.map((day) => (
+          {filtered.length === 0 && (
+            <div style={{ marginLeft: "30px", padding: "40px 0", color: "#333", fontSize: "14px" }}>
+              No updates found. <button onClick={() => { setActiveFilter(null); setSearch(""); }} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", textDecoration: "underline", fontSize: "14px", padding: 0 }}>Clear filters</button>
+            </div>
+          )}
+
+          {filtered.map((day) => (
             <div key={day.date} style={{ marginBottom: "52px" }}>
 
               {/* Day header */}
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
                 <div style={{ width: "15px", height: "15px", borderRadius: "50%", background: "#25D366", border: "3px solid #06070d", boxShadow: "0 0 14px rgba(37,211,102,0.5)", flexShrink: 0 }} />
-                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap", flex: 1 }}>
                   {day.label && <span style={{ fontSize: "17px", fontWeight: 700, color: "#e8e8f0" }}>{day.label}</span>}
                   <span style={{ fontSize: "13px", color: "#333", letterSpacing: "0.04em" }}>{day.date}</span>
+                  <span style={{ marginLeft: "auto", fontSize: "10px", color: "#2a2a2a", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "5px", padding: "2px 8px", letterSpacing: "0.04em", flexShrink: 0 }}>
+                    {day.entries.length} update{day.entries.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
               </div>
 
@@ -244,11 +409,13 @@ export default function ChangelogClient() {
                       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                     >
-                      <span style={{ fontSize: "11px", color: "#333", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "38px" }}>{entry.time}</span>
-                      <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.07em", background: s.bg, color: s.text, padding: "2px 7px", borderRadius: "5px", flexShrink: 0, marginTop: "1px" }}>
+                      <span style={{ fontSize: "11px", color: "#2e2e2e", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "38px" }}>{entry.time}</span>
+                      <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.07em", background: s.bg, color: s.text, border: `1px solid ${s.border}`, padding: "2px 7px", borderRadius: "5px", flexShrink: 0, marginTop: "1px" }}>
                         {entry.tag}
                       </span>
-                      <span style={{ fontSize: "13px", color: "#aaa", lineHeight: 1.55 }}>{entry.title}</span>
+                      <span style={{ fontSize: "13px", color: "#c8c8d8", lineHeight: 1.6 }}>
+                        <Highlight text={entry.title} query={search.trim()} />
+                      </span>
                     </div>
                   );
                 })}
@@ -258,11 +425,13 @@ export default function ChangelogClient() {
           ))}
 
           {/* Footer */}
-          <div style={{ marginLeft: "30px", paddingTop: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, rgba(255,255,255,0.05), transparent)" }} />
-            <span style={{ fontSize: "11px", color: "#2a2a2a", letterSpacing: "0.05em" }}>Rex inception · 21 Mar 2026 · Built by Saabai</span>
-            <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, rgba(255,255,255,0.05), transparent)" }} />
-          </div>
+          {!isFiltering && (
+            <div style={{ marginLeft: "30px", paddingTop: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, rgba(255,255,255,0.05), transparent)" }} />
+              <span style={{ fontSize: "11px", color: "#2a2a2a", letterSpacing: "0.05em" }}>Rex inception · 21 Mar 2026 · Built by Saabai</span>
+              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, rgba(255,255,255,0.05), transparent)" }} />
+            </div>
+          )}
         </div>
 
       </div>
@@ -272,6 +441,7 @@ export default function ChangelogClient() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
         }
+        input::placeholder { color: #333; }
       `}</style>
     </div>
   );
