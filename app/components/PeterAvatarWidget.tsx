@@ -705,28 +705,28 @@ export default function PeterAvatarWidget() {
 
   // ── Shared header ───────────────────────────────────────────────────────────
   const Header = (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-saabai-border shrink-0">
+    <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ background: "#0084FF" }}>
       <div className="flex items-center gap-2.5">
-        <div className="relative w-7 h-7 rounded-full border border-saabai-teal/40 shrink-0 overflow-hidden">
+        <div className="relative w-8 h-8 rounded-full shrink-0 overflow-hidden border-2 border-white/30">
           <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
           {isStarted && !isEnded && (
-            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-saabai-surface ${statusColor} transition-colors`} />
+            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${statusColor} transition-colors`} />
           )}
         </div>
         <div>
-          <p className="text-xs font-semibold text-saabai-text leading-none">Rex</p>
-          <p className="text-[10px] text-saabai-text-dim mt-0.5">AI Agent · PlasticOnline</p>
+          <p className="text-xs font-bold text-white leading-none">Rex</p>
+          <p className="text-[10px] text-white/70 mt-0.5">AI Agent · PlasticOnline</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {isStarted && !isEnded && chatMode === "voice" && (
-          <button onClick={switchToText} title="Switch to text" className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors">
+          <button onClick={switchToText} title="Switch to text" className="flex items-center gap-1 text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M2 6.5h5M2 10h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
             Text
           </button>
         )}
         {isStarted && !isEnded && chatMode === "text" && speechSupported && (
-          <button onClick={switchToVoice} title="Switch to voice" className="flex items-center gap-1 text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors">
+          <button onClick={switchToVoice} title="Switch to voice" className="flex items-center gap-1 text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15">
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <rect x="4" y="1" width="4" height="6" rx="2" stroke="currentColor" strokeWidth="1.3"/>
               <path d="M2 6.5A4 4 0 0 0 6 10.5a4 4 0 0 0 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
@@ -736,12 +736,12 @@ export default function PeterAvatarWidget() {
           </button>
         )}
         {isStarted && !isEnded && (
-          <button onClick={handleEndChat} className="text-[10px] font-medium text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide">End</button>
+          <button onClick={handleEndChat} className="text-[10px] font-medium text-white/80 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/15 tracking-wide">End</button>
         )}
-        <button onClick={handleMinimise} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Minimise">
+        <button onClick={handleMinimise} className="text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/15" aria-label="Minimise">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        <button onClick={handleClose} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1 rounded-lg hover:bg-saabai-surface-raised" aria-label="Close">
+        <button onClick={handleClose} className="text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/15" aria-label="Close">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
       </div>
@@ -760,8 +760,8 @@ export default function PeterAvatarWidget() {
     "--saabai-glow-mid":       "#0084FF20",
     "--saabai-glow-strong":    "#0084FF30",
     "--saabai-text":           "#050505",
-    "--saabai-text-muted":     "#65676b",
-    "--saabai-text-dim":       "#8a8d91",
+    "--saabai-text-muted":     "#444950",
+    "--saabai-text-dim":       "#65676b",
   } as React.CSSProperties;
 
   return (
@@ -987,7 +987,7 @@ export default function PeterAvatarWidget() {
 
               {/* Improvement #1: inline quote email capture */}
               {showQuoteCapture && (
-                <div className="px-4 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                <div className="px-4 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   {quoteEmailSent ? (
                     <div className="flex items-center gap-2 py-1">
                       <span className="flex items-center justify-center w-5 h-5 rounded-full bg-saabai-teal/15">
@@ -1059,7 +1059,7 @@ export default function PeterAvatarWidget() {
 
               {/* Quick reply chips — initial greeting */}
               {showQuickReplies && (
-                <div className="flex flex-col gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                <div className="flex flex-col gap-1.5 px-3 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   <p className="text-[10px] text-saabai-text-dim px-1 pb-0.5">Not sure where to start?</p>
                   {quickReplies.map((q) => (
                     <button key={q}
@@ -1073,7 +1073,7 @@ export default function PeterAvatarWidget() {
 
               {/* Improvement #2: contextual follow-up chips */}
               {!showQuickReplies && followUpChips.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 px-3 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
+                <div className="flex flex-wrap gap-1.5 px-3 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   {followUpChips.map((q) => (
                     <button key={q}
                       onClick={() => { setFollowUpChips([]); handleUserMessage(q); }}
@@ -1088,20 +1088,21 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
-            <div className="p-3 border-t border-saabai-border flex gap-2 shrink-0">
+            <div className="px-3 py-2.5 flex gap-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
-                className="flex-1 border border-saabai-border rounded-lg px-3 py-2 text-xs text-saabai-text placeholder:text-gray-500 focus:outline-none focus:border-saabai-teal/60 transition-colors"
-                style={{ background: "#f0f0f0", color: "#111" }}
+                className="flex-1 rounded-full px-4 py-2 text-xs focus:outline-none transition-colors"
+                style={{ background: "#ffffff", color: "#111", border: "1px solid #c8dcff" }}
               />
               <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isThinking}
-                className="w-8 h-8 flex items-center justify-center bg-saabai-teal text-white rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors shrink-0"
+                className="w-8 h-8 flex items-center justify-center text-white rounded-full disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all shrink-0"
+                style={{ background: "#0084FF" }}
                 aria-label="Send"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
