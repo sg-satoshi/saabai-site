@@ -749,19 +749,19 @@ export default function PeterAvatarWidget() {
   );
 
   const plonVars = {
-    "--saabai-bg":             "#111111",
-    "--saabai-surface":        "#1a1a1a",
-    "--saabai-surface-raised": "#222222",
-    "--saabai-teal":           "#25D366",
-    "--saabai-teal-bright":    "#2EE675",
-    "--saabai-border":         "#25D3661a",
-    "--saabai-border-accent":  "#25D36640",
-    "--saabai-glow":           "#25D36618",
-    "--saabai-glow-mid":       "#25D3662e",
-    "--saabai-glow-strong":    "#25D3663d",
-    "--saabai-text":           "#f0f0f0",
-    "--saabai-text-muted":     "#aaaaaa",
-    "--saabai-text-dim":       "#888888",
+    "--saabai-bg":             "#ffffff",
+    "--saabai-surface":        "#ffffff",
+    "--saabai-surface-raised": "#f0f2f5",
+    "--saabai-teal":           "#0084FF",
+    "--saabai-teal-bright":    "#0095FF",
+    "--saabai-border":         "#e4e6eb",
+    "--saabai-border-accent":  "#0084FF40",
+    "--saabai-glow":           "#0084FF10",
+    "--saabai-glow-mid":       "#0084FF20",
+    "--saabai-glow-strong":    "#0084FF30",
+    "--saabai-text":           "#050505",
+    "--saabai-text-muted":     "#65676b",
+    "--saabai-text-dim":       "#8a8d91",
   } as React.CSSProperties;
 
   return (
@@ -770,23 +770,22 @@ export default function PeterAvatarWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/60 transition-all duration-300 hover:-translate-y-0.5"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-3 bg-white border border-saabai-border rounded-full pl-3 pr-5 py-2.5 hover:border-saabai-teal/40 transition-all duration-300 hover:-translate-y-0.5"
           style={{
             boxShadow: pulsing
-              ? "0 0 0 5px rgba(37,211,102,0.12), 0 8px 36px rgba(37,211,102,0.45), 0 4px 16px rgba(0,0,0,0.35)"
-              : "0 0 28px rgba(37,211,102,0.28), 0 4px 16px rgba(0,0,0,0.3)",
+              ? "0 0 0 4px rgba(0,132,255,0.12), 0 8px 24px rgba(0,0,0,0.15)"
+              : "0 4px 20px rgba(0,0,0,0.12)",
             transform: pulsing ? "scale(1.025) translateY(-1px)" : undefined,
           }}
         >
           <div className="relative w-9 h-9 shrink-0">
-            <span className="absolute inset-0 rounded-full border border-saabai-teal/40 opacity-50" style={{ animation: "ping 2.5s cubic-bezier(0, 0, 0.2, 1) 3" }} />
-            <div className="relative w-9 h-9 rounded-full border border-saabai-teal/40 overflow-hidden">
+            <div className="relative w-9 h-9 rounded-full border border-saabai-border overflow-hidden">
               <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
             </div>
           </div>
           <div className="text-left">
             <p className="text-xs font-semibold text-saabai-text leading-none">Talk to Rex</p>
-            <p className="text-[10px] text-saabai-text-dim mt-0.5">Get a cut-to-size quote now.</p>
+            <p className="text-[10px] text-saabai-text-dim mt-0.5">Cut-to-size quote in seconds.</p>
           </div>
         </button>
       )}
@@ -800,7 +799,7 @@ export default function PeterAvatarWidget() {
             right: 0,
             width: "100%",
             borderRadius: "1rem",
-            boxShadow: "0 0 60px rgba(37,211,102,0.12), 0 20px 40px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
             animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
@@ -808,7 +807,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── End panel ──────────────────────────────────────────────────── */}
           {isEnded && (
-            <div className="overflow-y-auto px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+            <div className="overflow-y-auto px-4 py-5 bg-saabai-bg">
               {endSubmitted ? (
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-2.5">
@@ -882,11 +881,11 @@ export default function PeterAvatarWidget() {
 
           {/* ── Mode picker ─────────────────────────────────────────────────── */}
           {!isEnded && !chatMode && (
-            <div className="flex flex-col px-4 py-5 bg-gradient-to-b from-saabai-bg to-saabai-surface gap-3">
+            <div className="flex flex-col px-4 py-5 bg-saabai-bg gap-3">
               <p className="text-[11px] text-saabai-text-dim tracking-wide">How would you like to chat?</p>
               <button onClick={selectTextMode}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}>
+                style={{ background: "#f0f2f5", border: "1px solid #e4e6eb" }}>
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3h10M2 7h7M2 11h5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round"/></svg>
                 </div>
@@ -897,7 +896,7 @@ export default function PeterAvatarWidget() {
               </button>
               <button onClick={speechSupported ? selectVoiceMode : undefined} disabled={!speechSupported}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all hover:border-saabai-teal/50 hover:bg-saabai-surface-raised disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(37,211,102,0.18)" }}>
+                style={{ background: "#f0f2f5", border: "1px solid #e4e6eb" }}>
                 <div className="w-8 h-8 rounded-lg bg-saabai-teal/10 border border-saabai-teal/20 flex items-center justify-center shrink-0">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="5" y="1" width="4" height="7" rx="2" stroke="var(--saabai-teal)" strokeWidth="1.4"/>
@@ -918,11 +917,11 @@ export default function PeterAvatarWidget() {
 
           {/* ── Voice mode ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "voice" && (
-            <div className="flex flex-col items-center justify-center gap-4 px-6 py-6 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+            <div className="flex flex-col items-center justify-center gap-4 px-6 py-6 bg-saabai-bg">
               <div className="relative flex items-center justify-center">
                 <div className={`absolute w-24 h-24 rounded-full border border-saabai-teal/20 transition-all duration-300 ${isSpeaking ? "scale-125 opacity-100 animate-ping" : "scale-100 opacity-0"}`} />
                 <div className={`absolute w-20 h-20 rounded-full border border-saabai-teal/30 transition-all duration-300 ${isSpeaking ? "scale-110 opacity-100" : isListening ? "scale-105 opacity-60" : "scale-100 opacity-0"}`} />
-                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(37,211,102,0.4)]" : isListening ? "border-green-400/60" : "border-saabai-teal/30"}`}>
+                <div className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition-all duration-300 ${isSpeaking ? "border-saabai-teal shadow-[0_0_20px_rgba(0,132,255,0.35)]" : isListening ? "border-saabai-teal/60" : "border-saabai-border"}`}>
                   <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                 </div>
               </div>
@@ -953,7 +952,7 @@ export default function PeterAvatarWidget() {
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
             <div className="flex flex-col" style={{ height: 380 }}>
-              <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-gradient-to-b from-saabai-bg to-saabai-surface">
+              <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-saabai-bg">
                 {displayMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "assistant" && (
@@ -976,7 +975,7 @@ export default function PeterAvatarWidget() {
                     <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
                       <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                     </div>
-                    <div className="bg-saabai-surface-raised border border-saabai-border/60 px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                    <div className="bg-saabai-surface-raised border border-saabai-border px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
@@ -992,15 +991,14 @@ export default function PeterAvatarWidget() {
                   {quoteEmailSent ? (
                     <div className="flex items-center gap-2 py-1">
                       <span className="flex items-center justify-center w-5 h-5 rounded-full bg-saabai-teal/15">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#25D366" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0084FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </span>
                       <p className="text-[11px] text-saabai-teal font-semibold">Quote sent — check your inbox.</p>
                     </div>
                   ) : !quoteEmailOpen ? (
                     <button
                       onClick={() => setQuoteEmailOpen(true)}
-                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-yellow-400/30 bg-yellow-400/8 hover:bg-yellow-400/20 active:scale-[0.98] transition-all duration-150"
-                      style={{ color: "#FFD700" }}
+                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-saabai-teal/30 bg-saabai-teal/8 hover:bg-saabai-teal/15 active:scale-[0.98] transition-all duration-150 text-saabai-teal"
                     >
                       Send me this quote →
                     </button>

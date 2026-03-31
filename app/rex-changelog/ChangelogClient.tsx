@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "19:00", tag: "UI", title: "Complete colour scheme overhaul — Messenger light theme: white background, #0084FF blue accents, grey bubbles for customer, blue for Rex. Removed all green glows and dark gradients." },
       { time: "18:00", tag: "IMPROVEMENT", title: "Pipedrive note now AI-generated: quote details (material/size/qty), price, conversation summary, plus full transcript — all via Haiku analysis" },
       { time: "17:30", tag: "IMPROVEMENT", title: "Pipedrive deal title now 'Rex New Lead - [$xxx.xx]'; note contains full conversation transcript with Customer/Rex dialogue" },
       { time: "17:00", tag: "NEW", title: "Lead capture upgraded — mobile number + Pick up/Delivery toggle added to quote email form; Pipedrive dedupes by email, links to existing contact, adds note with full details" },
