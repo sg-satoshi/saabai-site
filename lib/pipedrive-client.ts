@@ -51,10 +51,12 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
       return { found: true, orderNumber: term, status: "Unknown", message: `Order ${term} was found but we couldn't read the current status — please call us on (07) 5564 6744 for a quick update.` };
     }
 
+    // Title-case the stage name and bold both order number and status
+    const titleCased = stageName.replace(/\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
     const detail = STAGE_MESSAGES[stageName];
     const message = detail
-      ? `Order ${term} ${detail}.`
-      : `Order ${term} is currently at: ${stageName}.`;
+      ? `Order **${term}** — **${titleCased}** — ${detail}.`
+      : `Order **${term}** is currently **${titleCased}**.`;
 
     return { found: true, orderNumber: term, status: stageName, message };
   } catch (err) {

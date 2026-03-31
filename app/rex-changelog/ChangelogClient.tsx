@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "13:00", tag: "UI", title: "Order status response — order number now bold, status label title-cased and bold (e.g. Order **PLON-36135** — **Ready For Pick Up/Delivery**)" },
       { time: "12:45", tag: "FIX", title: "Order status 'Unknown' root cause fixed — stage name is returned directly in the Pipedrive search result (item.stage.name); removed unnecessary extra API calls that were failing" },
       { time: "12:30", tag: "DEBUG", title: "Added /api/pipedrive-debug endpoint to inspect raw Pipedrive responses — identified that stage.name is available in search payload" },
       { time: "12:15", tag: "FIX", title: "Order lookup now accepts bare numbers — customer can type '36135' or 'PLON-36135', both resolve correctly via PLON- prefix normalisation" },
