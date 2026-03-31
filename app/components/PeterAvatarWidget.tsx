@@ -1014,8 +1014,8 @@ export default function PeterAvatarWidget() {
                           onChange={e => setQuoteEmail(e.target.value)}
                           autoFocus
                           disabled={quoteEmailSending}
-                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
-                          style={{ background: "#f0f0f0", color: "#111" }}
+                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors placeholder:text-gray-400"
+                          style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
                         />
                         <input
                           type="tel"
@@ -1023,28 +1023,35 @@ export default function PeterAvatarWidget() {
                           value={quoteMobile}
                           onChange={e => setQuoteMobile(e.target.value)}
                           disabled={quoteEmailSending}
-                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
-                          style={{ background: "#f0f0f0", color: "#111" }}
+                          className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors placeholder:text-gray-400"
+                          style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
                         />
                       </div>
                       <div className="flex gap-1.5 items-center">
-                        <span className="text-[10px] text-saabai-text-dim shrink-0">Despatch:</span>
+                        <span className="text-[10px] font-semibold shrink-0" style={{ color: "#444950" }}>Despatch:</span>
                         <button
                           onClick={() => setQuoteDesspatch("pickup")}
-                          className={`text-[10px] font-semibold px-2.5 py-1 rounded-md border transition-all duration-150 ${quoteDesspatch === "pickup" ? "bg-saabai-teal text-white border-saabai-teal" : "border-saabai-teal/30 text-saabai-teal hover:bg-saabai-teal/10"}`}
+                          className="text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95"
+                          style={quoteDesspatch === "pickup"
+                            ? { background: "#0084FF", color: "#fff", border: "1.5px solid #0084FF" }
+                            : { background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 3px rgba(0,132,255,0.12)" }}
                         >
                           Pick up
                         </button>
                         <button
                           onClick={() => setQuoteDesspatch("delivery")}
-                          className={`text-[10px] font-semibold px-2.5 py-1 rounded-md border transition-all duration-150 ${quoteDesspatch === "delivery" ? "bg-saabai-teal text-white border-saabai-teal" : "border-saabai-teal/30 text-saabai-teal hover:bg-saabai-teal/10"}`}
+                          className="text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95"
+                          style={quoteDesspatch === "delivery"
+                            ? { background: "#0084FF", color: "#fff", border: "1.5px solid #0084FF" }
+                            : { background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 3px rgba(0,132,255,0.12)" }}
                         >
                           Delivery
                         </button>
                         <button
                           onClick={submitQuoteEmail}
                           disabled={!quoteEmail.trim() || quoteEmailSending}
-                          className="ml-auto relative px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
+                          className="ml-auto relative px-3 py-1.5 text-white text-[11px] font-bold rounded-full disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
+                          style={{ background: "#0084FF" }}
                         >
                           {quoteEmailSending ? (
                             <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
