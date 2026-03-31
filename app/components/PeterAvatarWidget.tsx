@@ -138,6 +138,12 @@ function renderContent(text: string) {
 
 const PETER_VOICE_ID = "txdmFzaxxwmYbb99FY4D";
 const STORAGE_KEY = "rex_conversation";
+
+const WELCOME_BACK = [
+  "Welcome back! Still working on that project?",
+  "Hey, welcome back! Want to pick up where we left off?",
+  "Good to see you again. Ready to get that order sorted?",
+];
 const TTL_MS = 24 * 60 * 60 * 1000;
 
 const GREETINGS = [
@@ -199,6 +205,12 @@ export default function PeterAvatarWidget() {
   const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
   const [quoteEmailSending, setQuoteEmailSending] = useState(false);
+  // Improvement: welcome back state
+  const [isReturning, setIsReturning] = useState(false);
+  // Improvement #5: contextual thinking label
+  const [thinkingLabel, setThinkingLabel] = useState("Thinking…");
+  // Improvement #7: scroll-to-bottom button
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -209,6 +221,7 @@ export default function PeterAvatarWidget() {
   const messagesRef = useRef<ChatMessage[]>([]);
   const transcriptSentRef = useRef(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   // Improvement #4: re-engagement
   const lastActivityRef = useRef<number>(Date.now());
   const reEngagementFiredRef = useRef(false);
@@ -226,8 +239,12 @@ export default function PeterAvatarWidget() {
       const saved = JSON.parse(raw);
       if (Date.now() - saved.savedAt > TTL_MS) { localStorage.removeItem(STORAGE_KEY); return; }
       if (saved.messages?.length > 0) {
-        messagesRef.current = saved.messages;
-        setDisplayMessages(saved.messages);
+        const welcomeBack = WELCOME_BACK[Math.floor(Math.random() * WELCOME_BACK.length)];
+        const welcomeMsg: ChatMessage = { role: "assistant", content: welcomeBack };
+        const restoredWithWelcome = [...saved.messages, welcomeMsg];
+        messagesRef.current = restoredWithWelcome;
+        setDisplayMessages(restoredWithWelcome);
+        setIsReturning(true);
         chatModeRef.current = "text";
         setChatMode("text");
         isStartedRef.current = true;
@@ -253,8 +270,10 @@ export default function PeterAvatarWidget() {
   }, [displayMessages, isOpen]);
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayMessages]);
+    if (!showScrollBtn) {
+      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [displayMessages, showScrollBtn]);
 
   // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
@@ -437,6 +456,19 @@ export default function PeterAvatarWidget() {
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
+
+    // Improvement #5: contextual thinking label
+    const lower = text.toLowerCase();
+    if (/\$|\d+\s*[x×]\s*\d+|price|cost|quote|how much|cheap|expensive/.test(lower)) {
+      setThinkingLabel("Calculating your price…");
+    } else if (/stock|do you have|range|available|colour|color|thick/.test(lower)) {
+      setThinkingLabel("Checking our range…");
+    } else if (/deliver|ship|freight|postage|how long/.test(lower)) {
+      setThinkingLabel("Checking delivery…");
+    } else {
+      setThinkingLabel("Thinking…");
+    }
+
     setIsThinking(true);
     if (!isText) stopListening();
 
@@ -952,43 +984,82 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
-            <div className="flex flex-col" style={{ height: 380 }}>
-              <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-saabai-bg">
-                {displayMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "assistant" && (
-                      <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
-                        <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+            <div className="flex flex-col relative" style={{ height: 380 }}>
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-saabai-bg"
+                onScroll={() => {
+                  const el = messagesContainerRef.current;
+                  if (!el) return;
+                  setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 80);
+                }}
+              >
+                {displayMessages.map((msg, i) => {
+                  const isLastInGroup = displayMessages[i + 1]?.role !== "assistant";
+                  return (
+                    <div key={i} className={`rex-msg flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      {msg.role === "assistant" && isLastInGroup && (
+                        <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
+                          <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
+                        </div>
+                      )}
+                      {msg.role === "assistant" && !isLastInGroup && (
+                        <div className="w-5 h-5 mr-1.5 shrink-0" />
+                      )}
+                      <div
+                        className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                          msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm text-white"
+                        }`}
+                        style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
+                      >
+                        {renderContent(msg.content)}
                       </div>
-                    )}
-                    <div
-                      className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-                        msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm text-white"
-                      }`}
-                      style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
-                    >
-                      {renderContent(msg.content)}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {isThinking && (
                   <div className="flex justify-start">
                     <div className="relative w-5 h-5 rounded-full border border-saabai-teal/30 shrink-0 overflow-hidden mr-1.5 mt-1 self-start">
                       <Image src="/shane-goldberg.png" alt="Rex" fill className="object-cover" />
                     </div>
-                    <div className="bg-saabai-surface-raised border border-saabai-border px-3 py-2.5 rounded-2xl rounded-bl-sm flex gap-1 items-center">
+                    <div className="bg-saabai-surface-raised border border-saabai-border px-3 py-2 rounded-2xl rounded-bl-sm flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-saabai-text-dim animate-bounce" style={{ animationDelay: "300ms" }} />
+                      <span className="text-[10px] ml-1" style={{ color: "#65676b" }}>{thinkingLabel}</span>
                     </div>
                   </div>
                 )}
                 <div ref={chatBottomRef} />
               </div>
 
+              {/* Improvement #7: scroll-to-bottom button */}
+              {showScrollBtn && (
+                <button
+                  onClick={() => chatBottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                  className="absolute right-3 flex items-center justify-center w-7 h-7 rounded-full shadow-md transition-all hover:brightness-110 active:scale-95"
+                  style={{ bottom: "120px", background: "#0084FF", color: "#fff", zIndex: 10 }}
+                  aria-label="Scroll to bottom"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              )}
+
               {/* Improvement #1: inline quote email capture */}
               {showQuoteCapture && (
                 <div className="px-4 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
+                  {/* Improvement #6: sticky price card */}
+                  {(() => {
+                    const lastAssistantMsg = displayMessages.filter(m => m.role === "assistant").slice(-1)[0];
+                    const priceMatch = lastAssistantMsg?.content.match(/\[(\$[\d,]+\.?\d*\s*Ex\s*GST)\]/i) || lastAssistantMsg?.content.match(/(\$[\d,]+\.?\d*\s*Ex\s*GST)/i);
+                    if (!priceMatch) return null;
+                    return (
+                      <div className="flex items-center justify-between px-1 pb-1.5">
+                        <span className="text-[10px] font-medium" style={{ color: "#65676b" }}>Your quote</span>
+                        <span className="text-sm font-bold" style={{ color: "#0084FF" }}>{priceMatch[1]}</span>
+                      </div>
+                    );
+                  })()}
                   {quoteEmailSent ? (
                     <div className="flex items-center gap-2 py-1">
                       <span className="flex items-center justify-center w-5 h-5 rounded-full bg-saabai-teal/15">
@@ -1132,6 +1203,11 @@ export default function PeterAvatarWidget() {
           to   { transform: translateY(0)    scale(1);    opacity: 1; }
         }
         .rex-input::placeholder { color: #444950; opacity: 1; }
+        @keyframes msgIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .rex-msg { animation: msgIn 0.18s ease-out forwards; }
       `}</style>
     </div>
   );
