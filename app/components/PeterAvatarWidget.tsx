@@ -196,6 +196,7 @@ export default function PeterAvatarWidget() {
   const [quoteEmailOpen, setQuoteEmailOpen] = useState(false);
   const [quoteEmail, setQuoteEmail] = useState("");
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
+  const [quoteEmailSending, setQuoteEmailSending] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioBlobUrlRef = useRef<string | null>(null);
@@ -661,7 +662,8 @@ export default function PeterAvatarWidget() {
 
   // Improvement #1: inline quote email capture
   async function submitQuoteEmail() {
-    if (!quoteEmail.trim()) return;
+    if (!quoteEmail.trim() || quoteEmailSending) return;
+    setQuoteEmailSending(true);
     const lastAssistant = [...messagesRef.current].reverse().find(m => m.role === "assistant");
     try {
       await fetch("/api/rex-leads", {
@@ -675,6 +677,7 @@ export default function PeterAvatarWidget() {
         }),
       });
     } catch {}
+    setQuoteEmailSending(false);
     setQuoteEmailSent(true);
     setQuoteEmailOpen(false);
   }
@@ -980,11 +983,16 @@ export default function PeterAvatarWidget() {
               {showQuoteCapture && (
                 <div className="px-4 py-2 border-t border-saabai-border/50 bg-saabai-surface shrink-0">
                   {quoteEmailSent ? (
-                    <p className="text-[11px] text-saabai-teal font-medium">Quote sent! Check your inbox.</p>
+                    <div className="flex items-center gap-2 py-1">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-saabai-teal/15">
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#25D366" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </span>
+                      <p className="text-[11px] text-saabai-teal font-semibold">Quote sent — check your inbox.</p>
+                    </div>
                   ) : !quoteEmailOpen ? (
                     <button
                       onClick={() => setQuoteEmailOpen(true)}
-                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-yellow-400/30 bg-yellow-400/8 hover:bg-yellow-400/15 transition-colors"
+                      className="w-full text-left text-[11px] font-semibold py-1.5 px-3 rounded-lg border border-yellow-400/30 bg-yellow-400/8 hover:bg-yellow-400/20 active:scale-[0.98] transition-all duration-150"
                       style={{ color: "#FFD700" }}
                     >
                       Send me this quote →
@@ -998,15 +1006,21 @@ export default function PeterAvatarWidget() {
                         onChange={e => setQuoteEmail(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && submitQuoteEmail()}
                         autoFocus
-                        className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60"
+                        disabled={quoteEmailSending}
+                        className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-saabai-teal/30 focus:outline-none focus:border-saabai-teal/60 disabled:opacity-60 transition-colors"
                         style={{ background: "#f0f0f0", color: "#111" }}
                       />
                       <button
                         onClick={submitQuoteEmail}
-                        disabled={!quoteEmail.trim()}
-                        className="px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:bg-saabai-teal-bright transition-colors"
+                        disabled={!quoteEmail.trim() || quoteEmailSending}
+                        className="relative px-3 py-1.5 bg-saabai-teal text-white text-[11px] font-bold rounded-lg disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
                       >
-                        Send
+                        {quoteEmailSending ? (
+                          <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                          </svg>
+                        ) : "Send"}
                       </button>
                     </div>
                   )}

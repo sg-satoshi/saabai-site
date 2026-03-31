@@ -29,6 +29,7 @@ const CHANGELOG: Day[] = [
     date: "30 Mar 2026",
     label: "Today",
     entries: [
+      { time: "16:30", tag: "UI", title: "Email send button upgraded — spinner during send, press animation, hover brightness, checkmark confirmation on success" },
       { time: "15:00", tag: "PRICING", title: "HIPS sheet prices corrected — Black and White updated to SHEET column values (not web price)" },
       { time: "14:30", tag: "PRICING", title: "PETG sheet prices corrected — updated to SHEET column values for full sheet; CTS column for cut-to-size" },
       { time: "14:30", tag: "PRICING", title: "HIPS sheet pricing added — Black and White, 4 thicknesses each, full sheet only (no CTS)" },
