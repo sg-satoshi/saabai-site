@@ -138,7 +138,10 @@ Prismatic Diffuser Sheet (Y12, Y15, Y19), Skylight Diffuser panels, Eggcrate Lou
 ### ACRYLIC (PMMA — Polymethyl Methacrylate)
 Also known as: Perspex, Plexiglass, Oroglas
 - 92% light transmission — higher than glass; 17× stronger than glass; lighter
-- Cast vs extruded: cast = superior optical quality, better chemical/heat resistance; extruded = consistent thickness, lower cost, easier to thermoform
+- Cast vs extruded: cast = superior optical quality, longer polymer chains, harder, more scratch-resistant, better solvent bonding, available up to 50mm+; extruded = tighter thickness tolerance, lower cost, lower forming temp (~100°C vs 120°C for cast)
+- LASER CUTTING: cast acrylic gives a flame-polished clear edge + bright white engraving — preferred for signs and display work; extruded cuts adequately but engraves with a smoky, less defined result
+- AQUARIUMS: always specify cast acrylic — extruded is craze-prone with solvent cement and not suitable for water-pressure applications
+- SOLVENT CEMENT (capillary method): hold parts in tight contact with jig → apply water-thin cement (Quick Bond 5) to joint gap with needle syringe → capillary action draws it along → hold 60 seconds → don't stress-load for 10 minutes → full cure 24hrs. Do NOT use acetone — it crazes acrylic rather than bonding it
 - Impact-modified (HIA): blended for toughness; used in thermoforming, sneeze guards
 - UV-resistant grades for outdoor use; opal/diffusion grades for light panels; frosted/satin for decorative screens; mirrored grades (85%+ reflectivity, 5-10× more impact-resistant than glass mirror)
 - Thermoforms at 160–180°C; solvent-cement bondable (Quick Bond range); machines well
@@ -149,7 +152,10 @@ Also known as: Perspex, Plexiglass, Oroglas
 Also known as: Lexan, Makrolon, Tuffak
 - 200–250× stronger than glass; ~30× stronger than acrylic; extremely high impact — virtually unbreakable
 - 88–90% light transmission (clear grades)
-- UV-stabilised coating required for outdoor use (prevents yellowing)
+- UV YELLOWING (QLD conditions without UV protection): 6–12 months first signs; 1–2 years noticeable; 3–5 years significant haze; QLD UV index (10–13) accelerates this 30–50% vs southern states — ALWAYS specify UV grade outdoors
+- UV-co-extruded grade: a cap layer of UV absorber co-extruded onto the surface — more durable than post-applied coatings; blocks 98–99% of UV below 385nm
+- SCRATCH RESISTANCE: PC scratches far more easily than acrylic despite being impact-resistant — uncoated PC is soft. Hard-coated PC improves this significantly. Acrylic is preferred for display cases and anywhere surface appearance matters
+- STRESS CRACKING CRITICAL: IPA (isopropyl alcohol), acetone, and aromatic solvents cause severe stress cracking on PC — even low-level residual stress + chemical contact = cracking. NEVER clean PC with IPA. Use mild soap and water or PC-safe cleaners only
 - Can be cold-bent without heating; continuous service temp up to ~120°C
 - Does NOT bond with standard solvent cement — use specific PC adhesives
 - Sign Grade: UV-stabilised surface optimised for outdoor signage and ink adhesion
@@ -159,9 +165,11 @@ Also known as: Lexan, Makrolon, Tuffak
 ### HDPE (High-Density Polyethylene)
 Also known as: Polyethylene HD; Seaboard (marine grade brand)
 Types stocked: Standard White (cutting board grade), Seaboard (marine UV-stabilised)
-- Food-safe: FDA-approved for food contact
+- Food-safe: FDA-approved (21 CFR 177.1520); NSF/ANSI 51 for commercial kitchen applications
+- COMMERCIAL KITCHEN COLOUR CODING (HACCP system): White = bakery/dairy/general; Yellow = raw poultry; Red = raw meat; Blue = raw fish; Green = fresh produce; Brown = root vegetables/cooked meats — HDPE cutting board sheet is available in all these colours
 - High impact strength; excellent chemical resistance to acids, bases, solvents
 - Very low moisture absorption; excellent abrasion resistance; low coefficient of friction
+- THERMAL EXPANSION WARNING (long panels): HDPE expands ~12–20mm per 3 metres across QLD's temperature range (15°C–40°C). Always advise slotted fastener holes (not round), 3mm gap per metre at joins, and NEVER rigidly glue HDPE panels to a frame
 - Does NOT paint or glue easily — use mechanical fastening or welding
 - Seaboard: UV-stabilised, resistant to sun, saltwater, marine environments
 - Applications: food cutting boards, marine components, conveyor wear strips, truck bin liners, fishing equipment, playground equipment, dock fenders
@@ -198,23 +206,30 @@ Brand stocked: Nanya PVC
 ### ACETAL / DELRIN (POM-C Polyoxymethylene Copolymer)
 Also known as: Delrin, Ertacetal, Polyacetal
 - Precision engineering plastic; exceptional stiffness, dimensional stability, low friction, machinability
-- Lower moisture absorption than nylon — better dimensional consistency in humid environments
-- Excellent fatigue resistance; very good chemical resistance to solvents, fuels, oils
+- Lower moisture absorption than nylon — better dimensional consistency in humid environments (important for QLD's humidity)
+- Excellent fatigue resistance — dominant material for plastic gears; handles millions of load cycles without crack initiation; self-lubricating (no oil required for many gear applications)
+- CENTERLINE POROSITY: POM-H (Delrin) rods above 25mm diameter can have a void along the centreline from cooling shrinkage. Always specify POM-C (copolymer) for rods >25mm — our standard acetal rod stock is POM-C, which avoids this problem
+- FLUID HANDLING: Good for water fittings, valve bodies, spray nozzles, pump components; dimensionally stable in water (unlike nylon which swells); NOT suitable for concentrated acids, strong oxidisers, or high-chlorine environments (swimming pool water)
 - FDA/USDA/NSF compliant grades available; natural (white) and black
 - Applications: precision gears, bushings, pulleys, rollers, wear strips, valve components, pump parts, food-contact machine components, CNC-machined precision parts
 - vs Nylon: lower moisture absorption, better dimensional stability; slightly lower impact strength
 
 ### PETG (Polyethylene Terephthalate Glycol-Modified)
-- Excellent optical clarity (comparable to acrylic); superior impact resistance vs standard acrylic
-- Food-safe (FDA-compliant); thermoforms at lower temperatures — great for vacuum forming
-- Limited UV resistance — UV-stabilised grades for outdoors
+- NOT the same as PET (drinks bottles) or CPET (dual-ovenable trays) — glycol modification keeps PETG amorphous (no sharp melt point), ideal for thermoforming; CPET crystallises and cannot thermoform to complex shapes
+- Excellent optical clarity (comparable to acrylic); 2–3× more impact resistant than acrylic in formed parts
+- Food-safe (FDA-compliant); thermoforms at 140–160°C — lower energy than PC, no pre-drying required
+- UV LIMITATION: PETG yellows and becomes brittle within 1–2 years outdoors — indoor use or UV-stabilised grade needed for outdoor
+- PETG vs Acrylic: PETG wins on impact resistance and thermoforming ease; acrylic wins on outdoor UV longevity (10+ years), scratch resistance, and optical precision
+- Chemical resistance: good for water, dilute acids/alkalis, oils; NOT resistant to acetone or aromatic solvents; limited tolerance to concentrated alcohols
 - Bonds with Quick Bond 20; avoid acetone (will craze)
-- Applications: protective barriers, display cases, safety guards, food packaging, machine covers
+- Applications: protective barriers, display cases, safety guards, food packaging, machine covers, vacuum-formed components
 
 ### UHMWPE (Ultra-High Molecular Weight Polyethylene)
+- Molecular weight 3.5–10+ million g/mol (vs 50,000–200,000 for standard HDPE) — chains so long they entangle, giving extraordinary wear resistance (100–250× better than HDPE, 4–6× better than nylon)
 - Exceptionally tough, wear-resistant, self-lubricating; one of the highest impact strengths of any plastic
-- Extremely low coefficient of friction (comparable to PTFE); better abrasion resistance than PTFE
+- UHMWPE vs PTFE: UHMWPE has better wear resistance (PTFE wears faster in sliding contact), higher compressive strength, and less creep — use UHMWPE for mechanical sliding wear at ambient temp; PTFE for chemical seals and high-temp applications
 - FDA-approved food contact; does NOT bond easily — mechanical fastening preferred
+- MARINE DOCK: dominant replacement for hardwood timber in dock construction — does not rot, splinter, or corrode; resists marine fouling; absorbs vessel impact without fracture; self-lubricating surface protects hull paint; zero maintenance. Available in black (most popular), natural, yellow/green
 - More difficult to machine than HDPE or acetal — requires sharp tooling
 - Applications: conveyor liners, wear strips, chute liners, marine dock fenders, food processing, cutting boards (premium), mining equipment liners
 
@@ -233,13 +248,19 @@ Also known as: Delrin, Ertacetal, Polyacetal
 - Extreme temperature range: −200°C to +260°C
 - Extreme chemical resistance — inert to virtually all chemicals
 - Lowest friction coefficient of any solid plastic; non-stick; non-toxic; FDA food-safe; excellent electrical insulation
+- CREEP (COLD FLOW) — critical limitation: PTFE slowly deforms under sustained load even at room temperature. A gasket under bolt compression will thin over months — bolts appear to "loosen". Never use virgin PTFE where sustained compressive load exceeds ~3–5 MPa; specify bronze-filled or glass-filled grades for loaded bearings and seats
+- VIRGIN vs REPROCESSED: Virgin PTFE = new resin, FDA/pharma/food compliant, white. Reprocessed PTFE = from machining waste, 20–40% cheaper, lower properties, grey tint, NOT suitable for food, pharma, or sealing — only for electrical insulation or thermal barriers. Always ask the application before selling reprocessed
 - Cannot be easily bonded; requires specialised processes
 - Applications: chemical processing seals/gaskets, valve seats, pump liners, bearing/bushing surfaces, lab equipment, high-temp industrial applications
 
 ### HIPS (High Impact Polystyrene)
-- Lighter and easier to thermoform than ABS; lower mechanical strength than ABS
-- Smooth surface for printing; food-grade varieties available; recyclable
-- Applications: food packaging, product housings, displays, refrigerator liners, POS, model making
+- Rubber-toughened polystyrene — polybutadiene rubber particles in the PS matrix absorb impact (4–10× tougher than standard PS); creates opacity as a tradeoff
+- Lighter and easier to thermoform than ABS — wide forming window (95–150°C), fast cycle times, excellent draw ratio; does not need pre-drying unlike PC
+- UV LIMITATION: HIPS will become brittle and yellow within 12–18 months of outdoor UV exposure — strictly indoor use only without UV laminate
+- HEAT LIMITATION: Do not use near heat sources or where temps exceed 60–70°C — will warp
+- FOOD GRADE: standard HIPS may contain residual styrene monomer; for food contact specify food-grade HIPS or switch to PETG/PP
+- Smooth surface for printing — accepts UV inks, screen inks, digital print; excellent adhesive vinyl substrate
+- Applications: food packaging, product housings, displays, refrigerator liners, POS, model making, thermoformed trays
 
 ### ACM (Aluminium Composite Material / Panel)
 - Sandwich panel: two thin aluminium skins + PE or mineral core
@@ -248,6 +269,62 @@ Also known as: Delrin, Ertacetal, Polyacetal
 - FR (fire-retardant mineral core): required for building facade/cladding — complies with fire regulations
 - V-routed and folded for 3D box forms; direct digital print or vinyl lamination
 - Applications: retail signage, shopfronts, fascia panels, wayfinding, exhibition displays, building cladding (FR grade only), vehicle graphics
+
+---
+
+## ADVANCED MATERIALS SELECTION REFERENCE
+
+### CLEAR PLASTIC DECISION GUIDE
+
+- Outdoor, long-term clarity → CAST ACRYLIC (UV-stabilised grade); inherent UV resistance, no yellowing for 10+ years
+- High impact / safety glazing / machine guard → POLYCARBONATE (UV co-extruded grade for outdoor); 30× more impact-resistant than acrylic
+- Aquarium or water feature → CAST ACRYLIC ONLY; never extruded acrylic, never PC as primary panels
+- Thermoforming — food contact, budget, good impact → PETG (no pre-drying, wide window, lower energy)
+- Thermoforming — outdoor final part + max clarity → EXTRUDED ACRYLIC (lower forming temp than cast)
+- Thermoforming — high impact in formed part → POLYCARBONATE (accept higher forming cost/complexity)
+- Display case / aquarium / POS (indoor) → CAST ACRYLIC (superior clarity, solvent bondable, polishes bright)
+- Price is priority, indoor only, no impact risk → PETG or EXTRUDED ACRYLIC
+
+### ENGINEERING PLASTIC SELECTION GUIDE
+
+| Application | First Choice | Second Choice | Key Reason |
+|---|---|---|---|
+| Precision machined gear | Acetal POM-C | Nylon PA66 | Acetal: fatigue resistance, no moisture swell |
+| Bearing / bushing (dry, ambient) | Acetal POM-C | UHMWPE | Both self-lubricate; acetal stronger; UHMWPE more wear-resistant |
+| High-wear conveyor/chute liner | UHMWPE | Acetal | UHMWPE wear resistance is 100–250× HDPE |
+| High-temp chemical seal/gasket | PTFE (virgin) | PVDF | PTFE: widest chemical/temp range |
+| Loaded bearing/valve seat | PTFE filled (bronze) | Acetal | Virgin PTFE creeps; filled grade resists deformation |
+| Food processing wear parts | UHMWPE | Acetal (natural) | UHMWPE for high-wear; acetal for precision |
+| Chemical storage tank/ducting | Polypropylene | HDPE | PP: better high-temp performance |
+| Marine wear pad / dock fender | UHMWPE | Seaboard HDPE | UHMWPE: zero rot, self-lubricating, impact-absorbing |
+| Cutting board (commercial kitchen) | HDPE food grade | UHMWPE | HDPE lower cost; UHMWPE for extreme-use commercial |
+| Pneumatic / hydraulic valve body | Acetal POM-C | Nylon | Acetal: dimensional stability in water/oils |
+| Fluid fittings (non-acid) | Acetal POM-C | Nylon | Water-stable, good for spray nozzles, valve bodies |
+
+### FABRICATION METHOD COMPATIBILITY
+
+| Fabrication | Best Materials | Avoid |
+|---|---|---|
+| CNC machining (precision) | Acetal, PTFE, Nylon, PC, Acrylic | UHMWPE deflects; HDPE not precise |
+| Thermoforming | PETG, Extruded Acrylic, HIPS, ABS, PP | PTFE, UHMWPE, HDPE |
+| Laser cutting | Cast Acrylic, ABS, HIPS, Foam PVC | PC (poor edge, fume risk), PTFE |
+| Laser engraving | Cast Acrylic (bright white result) | Extruded Acrylic (smoky result) |
+| Solvent cementing | Acrylic, ABS, PETG, PVC, HIPS | PC, HDPE, UHMWPE, Nylon, Acetal, PTFE |
+| Hot air welding | HDPE, PP, PVC, PVDF, ABS | Acrylic, PC, Acetal, PTFE |
+| Epoxy/adhesive bonding | PC, Nylon, Acetal | PTFE, HDPE, UHMWPE (low surface energy) |
+
+### QUEENSLAND CLIMATE MATERIAL NOTES
+
+QLD has one of the world's highest sustained UV indexes (10–14 in summer, extreme category). This accelerates UV degradation in plastics by 30–50% vs southern states.
+
+- ANY plastic without UV stabilisation outdoors in QLD will fail faster than manufacturer expectations based on temperate climate testing
+- Acrylic: inherently UV resistant for 10+ years outdoors — best outdoor clear plastic
+- Polycarbonate: MUST have UV co-extruded grade outdoors; standard PC will yellow in 6–12 months in QLD
+- HDPE/PP/ABS: require UV-stabilised grades for outdoor use
+- PETG, Nylon, HIPS: indoor use only in QLD without UV treatment
+- Nylon in coastal QLD: also absorbs moisture in humid conditions (60–80% RH average) — affects dimensional tolerances; account for this in precision parts
+- Long HDPE panels: QLD daily temperature swings of 15–20°C mean significant thermal expansion; always use slotted holes and expansion gaps
+- Coastal/marine QLD: salt-inert materials essential — UHMWPE, HDPE Seaboard, Acrylic, PC all perform; stainless steel hardware at all fastener points
 
 ---
 
