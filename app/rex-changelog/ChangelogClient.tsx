@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "13:30", tag: "IMPROVEMENT", title: "Order status sign-off changed to 'What else can I sort out for you?' — more on-brand than generic 'Got any other questions?'" },
+      { time: "13:30", tag: "UI", title: "Quick reply chip added — 'What's my order status?' added to the greeting prompt pool" },
       { time: "13:15", tag: "UI", title: "Order status display — 'Ready for Pick Up/Delivery' now shows as 'Ready For Pick-Up Or Delivery' with bold formatting" },
       { time: "13:00", tag: "UI", title: "Order status response — order number now bold, status label title-cased and bold (e.g. Order **PLON-36135** — **Ready For Pick Up/Delivery**)" },
       { time: "12:45", tag: "FIX", title: "Order status 'Unknown' root cause fixed — stage name is returned directly in the Pipedrive search result (item.stage.name); removed unnecessary extra API calls that were failing" },

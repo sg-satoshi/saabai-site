@@ -19,6 +19,7 @@ const QUICK_REPLY_POOL = [
   "Do you deliver Australia-wide?",
   "How long does delivery take?",
   "Can I pick up from the Gold Coast?",
+  "What's my order status?",
 ];
 
 function pickQuickReplies(): string[] {
