@@ -62,7 +62,7 @@ Extract the following and return as JSON only — no markdown, no explanation:
 
 // ── Email templates ───────────────────────────────────────────────────────────
 
-const LOGO_URL = "https://www.plasticonline.com.au/wp-content/uploads/2025/11/Plastic-Online-Red_black.png";
+const LOGO_HTML = `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Gold Coast</p>`;
 
 function cleanNote(raw: string): string {
   return (raw || "")
@@ -101,7 +101,7 @@ function emailShell(preheader: string, body: string) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="vertical-align:middle;">
-          <img src="${LOGO_URL}" width="180" alt="PlasticOnline" style="display:block;max-width:180px;height:auto;">
+          ${LOGO_HTML}
         </td>
         <td align="right" style="vertical-align:middle;">
           <p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.9;">
@@ -316,7 +316,7 @@ function teamNotificationHtml(
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="vertical-align:middle;">
-          <img src="${LOGO_URL}" width="160" alt="PlasticOnline" style="display:block;max-width:160px;height:auto;">
+          ${LOGO_HTML}
         </td>
         <td align="right" style="vertical-align:middle;">
           <p style="margin:0;font-size:11px;color:#666666;line-height:1.8;">Rex Chat Lead &nbsp;·&nbsp; ${timeStr} AEST</p>
@@ -452,7 +452,7 @@ export async function POST(req: Request) {
       resend.emails.send({
         from: FROM_EMAIL,
         to: TEAM_EMAIL,
-        replyTo: email ?? undefined,
+        replyTo: email ? [email] : undefined,
         subject: teamSubject,
         html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch, analysis, transcript),
       })
