@@ -19,38 +19,60 @@ export interface OrderStatus {
   error?: string;
 }
 
+/** Extract the numeric part from an order number, e.g. "HP-5089" → "5089", "PLON-36135" → "36135" */
+function extractNumber(raw: string): string {
+  const match = raw.match(/(\d+)$/);
+  return match ? match[1] : raw;
+}
+
+/** Known order prefixes — bare numbers default to PLON- */
+const KNOWN_PREFIXES = ["PLON-", "HP-", "EXP-"];
+
 export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   const token = process.env.PIPEDRIVE_API_TOKEN;
   if (!token) return { found: false, error: "Order lookup unavailable" };
 
   const raw = orderNumber.trim().toUpperCase();
-  // Normalise — keep known prefixes (PLON-, HP-, EXP-), otherwise assume PLON-
-  const term = (raw.startsWith("PLON-") || raw.startsWith("HP-") || raw.startsWith("EXP-"))
-    ? raw
-    : `PLON-${raw}`;
+  const hasPrefix = KNOWN_PREFIXES.some(p => raw.startsWith(p));
+  // Full normalised term (for display and fallback matching)
+  const term = hasPrefix ? raw : `PLON-${raw}`;
+  // Numeric part only — used as the search term to match across all order types
+  const numericPart = extractNumber(term);
 
   try {
+    // Search the full Pipedrive database (no fields filter) using just the number
+    // so HP-, EXP-, and PLON- deals all surface regardless of how their titles are structured
     const searchRes = await fetch(
-      `${PIPEDRIVE_BASE}/deals/search?term=${encodeURIComponent(term)}&fields=title&exact_match=false&api_token=${token}`
+      `${PIPEDRIVE_BASE}/deals/search?term=${encodeURIComponent(numericPart)}&exact_match=false&limit=20&api_token=${token}`
     );
     if (!searchRes.ok) return { found: false, error: `Search failed (${searchRes.status})` };
 
     const searchData = await searchRes.json();
     const items: any[] = searchData?.data?.items ?? [];
 
-    // Find first deal whose title contains the order number
-    const match = items.find(i =>
+    // Prefer a deal whose title contains the full term (e.g. "HP-5089")
+    // Fall back to any deal whose title contains just the numeric part
+    let match = items.find(i =>
       typeof i.item?.title === "string" &&
       i.item.title.toUpperCase().includes(term)
     );
+    if (!match) {
+      match = items.find(i =>
+        typeof i.item?.title === "string" &&
+        i.item.title.includes(numericPart)
+      );
+    }
 
     if (!match) return { found: false };
+
+    // Use the deal title as the display label if it's more descriptive than our normalised term
+    const dealTitle: string = match.item?.title ?? term;
 
     // Stage name is returned directly in the search result — no extra API call needed
     const stageName: string = match.item?.stage?.name ?? "";
 
     if (!stageName) {
-      return { found: true, orderNumber: term, status: "Unknown", message: `Order ${term} was found but we couldn't read the current status — please call us on (07) 5564 6744 for a quick update.` };
+      return { found: true, orderNumber: dealTitle, status: "Unknown", message: `Order ${dealTitle} was found but we couldn't read the current status — please call us on (07) 5564 6744 for a quick update.` };
     }
 
     // Display name overrides — fix formatting for stages with slashes or awkward casing
@@ -61,10 +83,10 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
       stageName.replace(/\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
     const detail = STAGE_MESSAGES[stageName];
     const message = detail
-      ? `Order **${term}** — **${titleCased}** — ${detail}.`
-      : `Order **${term}** is currently **${titleCased}**.`;
+      ? `Order **${dealTitle}** — **${titleCased}** — ${detail}.`
+      : `Order **${dealTitle}** is currently **${titleCased}**.`;
 
-    return { found: true, orderNumber: term, status: stageName, message };
+    return { found: true, orderNumber: dealTitle, status: stageName, message };
   } catch (err) {
     return { found: false, error: String(err) };
   }
