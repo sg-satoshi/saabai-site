@@ -107,6 +107,10 @@ function resolveProductUrl(text: string): string {
 
 const LOGO_HTML = `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Gold Coast</p>`;
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 function cleanNote(raw: string): string {
   return (raw || "")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -224,7 +228,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
     : quote;
 
   return emailShell("Your PlasticOnline quote is ready to order", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${name.split(" ")[0]}, your quote is ready.` : "Your quote is ready."}</h1>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.split(" ")[0])}, your quote is ready.` : "Your quote is ready."}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Lock it in when you're ready — we'll cut and dispatch within a few business days.</p>
 
     <!-- Quote card -->
@@ -273,7 +277,7 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, 
     : quote;
 
   return emailShell("Still need that plastic cut? Your quote is waiting.", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${name.split(" ")[0]}, still need that cut?` : "Still need that plastic cut?"}</h1>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.split(" ")[0])}, still need that cut?` : "Still need that plastic cut?"}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Rex here — just checking in on your quote from yesterday.</p>
 
     <!-- Quote card -->
@@ -389,7 +393,7 @@ function teamNotificationHtml(
       </td></tr>
       ${name ? `<tr>
         <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;">Name</td>
-        <td style="padding:12px 16px;font-size:15px;font-weight:800;color:#1a1a1a;border-bottom:1px solid #f2f2f2;">${name}</td>
+        <td style="padding:12px 16px;font-size:15px;font-weight:800;color:#1a1a1a;border-bottom:1px solid #f2f2f2;">${escapeHtml(name)}</td>
       </tr>` : ""}
       <tr>
         <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;">Email</td>
