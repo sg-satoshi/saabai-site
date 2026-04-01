@@ -31,6 +31,9 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "18:15", tag: "IMPROVEMENT", title: "Quote email CTA button links to the specific product page (e.g. Acrylic Sheet, HDPE, Polycarbonate) instead of generic shop — 30+ materials mapped" },
+      { time: "18:00", tag: "FIX", title: "Email logo replaced with HTML wordmark — white PlasticOnline text with red accent, renders correctly on dark header in all email clients" },
+      { time: "17:45", tag: "FIX", title: "Team notification replyTo passed as array (Resend v6 requirement) — hitting Reply now correctly addresses the customer" },
       { time: "17:30", tag: "FIX", title: "Team notification reply-to set to customer email — hitting Reply now goes straight to the customer, not back to enquiries@" },
       { time: "17:15", tag: "UI", title: "All emails fully redesigned — real PlasticOnline logo, dark header, red accent bar, rounded cards, full-width transcript bubbles with Rex/Customer colour coding, trust strip, branded dark footer" },
       { time: "16:45", tag: "UI", title: "Customer emails redesigned to PlasticOnline brand — dark #1a1a1a header, orange #e13f00 CTA buttons, trust bar, hyperlinked contact details, proper paragraph spacing" },

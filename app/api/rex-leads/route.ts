@@ -62,6 +62,49 @@ Extract the following and return as JSON only — no markdown, no explanation:
 
 // ── Email templates ───────────────────────────────────────────────────────────
 
+// Map keywords in quote note → product page URL
+const PRODUCT_URLS: Array<[RegExp, string]> = [
+  [/acrylic mirror|eurom(i|ir)/i,       "https://www.plasticonline.com.au/product/euromir-acrylic-mirror/"],
+  [/mirror/i,                            "https://www.plasticonline.com.au/product/silver-gold-commercial-acrylic-mirror/"],
+  [/acrylic.*rod|rod.*acrylic/i,         "https://www.plasticonline.com.au/product/acrylic-clear-rod/"],
+  [/acrylic.*tube|tube.*acrylic/i,       "https://www.plasticonline.com.au/product/acrylic-clear-tubes/"],
+  [/acrylic/i,                           "https://www.plasticonline.com.au/product/acrylic-sheet/"],
+  [/polycarbonate.*rod/i,                "https://www.plasticonline.com.au/product/polycarbonate-tube/"],
+  [/polycarbonate.*tube/i,               "https://www.plasticonline.com.au/product/polycarbonate-tube/"],
+  [/polycarbonate|perspex pc/i,          "https://www.plasticonline.com.au/product/polycarbonate-sheet/"],
+  [/seaboard|marine.*hdpe/i,             "https://www.plasticonline.com.au/product/seaboard-hdpe-marine-grade/"],
+  [/playground.*hdpe|hdpe.*playground/i, "https://www.plasticonline.com.au/product/hdpe-playground-board/"],
+  [/hdpe.*rod|rod.*hdpe/i,               "https://www.plasticonline.com.au/product/hdpe-high-density-polyethylene-rod/"],
+  [/hdpe|polyethylene|cutting board/i,   "https://www.plasticonline.com.au/product/hdpe-polyethylene-cutting-board/"],
+  [/uhmwpe.*rod/i,                       "https://www.plasticonline.com.au/product/uhmwpe-rod-natural-only-white/"],
+  [/uhmwpe/i,                            "https://www.plasticonline.com.au/product/uhmwpe-sheet/"],
+  [/acetal.*rod|pom.*rod/i,              "https://www.plasticonline.com.au/product/acetal-rod/"],
+  [/acetal|pom/i,                        "https://www.plasticonline.com.au/product/acetal-pom-c-plastic-sheet/"],
+  [/nylon.*rod/i,                        "https://www.plasticonline.com.au/product/nylon-rod/"],
+  [/nylon/i,                             "https://www.plasticonline.com.au/product/nylon-sheet/"],
+  [/ptfe.*rod|teflon.*rod/i,             "https://www.plasticonline.com.au/product/ptfe-teflon-virgin-rod/"],
+  [/ptfe|teflon/i,                       "https://www.plasticonline.com.au/product/ptfe-teflon-sheet/"],
+  [/peek.*rod/i,                         "https://www.plasticonline.com.au/product/peek-rod/"],
+  [/peek/i,                              "https://www.plasticonline.com.au/product/peek-polyether-ether-ketone-sheet/"],
+  [/pvc.*rod/i,                          "https://www.plasticonline.com.au/product/grey-pvc-rod/"],
+  [/foam.*pvc|pvc.*foam/i,               "https://www.plasticonline.com.au/product/foam-pvc/"],
+  [/pvc/i,                               "https://www.plasticonline.com.au/product/pvc-sheet/"],
+  [/polypropylene.*rod|pp.*rod/i,        "https://www.plasticonline.com.au/product/polypropylene-pp-rod/"],
+  [/polypropylene|pp sheet/i,            "https://www.plasticonline.com.au/product/polypropylene/"],
+  [/petg/i,                              "https://www.plasticonline.com.au/product/petg-polyethylene-terephthalate-glycol-modified-sheet/"],
+  [/abs/i,                               "https://www.plasticonline.com.au/product/abs-sheet/"],
+  [/hips/i,                              "https://www.plasticonline.com.au/product/hips-sheet/"],
+  [/corflute/i,                          "https://www.plasticonline.com.au/product/corflute-corragatted-flute-board/"],
+  [/acm|acp|aluminium composite/i,       "https://www.plasticonline.com.au/product/acm/"],
+];
+
+function resolveProductUrl(text: string): string {
+  for (const [pattern, url] of PRODUCT_URLS) {
+    if (pattern.test(text)) return url;
+  }
+  return SHOP_URL;
+}
+
 const LOGO_HTML = `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Gold Coast</p>`;
 
 function cleanNote(raw: string): string {
@@ -174,6 +217,7 @@ function emailShell(preheader: string, body: string) {
 /* ── Customer quote email ── */
 function quoteEmailHtml(note: string) {
   const quote = cleanNote(note) || "Custom cut-to-size order";
+  const productUrl = resolveProductUrl(quote);
 
   return emailShell("Your PlasticOnline quote is ready to order", `
     <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Your quote is ready.</h1>
@@ -200,7 +244,7 @@ function quoteEmailHtml(note: string) {
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
       <tr>
         <td style="background:#e13f00;border-radius:50px;mso-padding-alt:0;">
-          <a href="${SHOP_URL}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Place Your Order &rarr;</a>
+          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Place Your Order &rarr;</a>
         </td>
       </tr>
     </table>
@@ -220,6 +264,7 @@ function quoteEmailHtml(note: string) {
 /* ── Follow-up email (22hrs later) ── */
 function followUpEmailHtml(note: string) {
   const quote = cleanNote(note) || "Your custom cut-to-size order";
+  const productUrl = resolveProductUrl(quote);
 
   return emailShell("Still need that plastic cut? Your quote is waiting.", `
     <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Still need that plastic cut?</h1>
@@ -246,7 +291,7 @@ function followUpEmailHtml(note: string) {
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
       <tr>
         <td style="background:#e13f00;border-radius:50px;mso-padding-alt:0;">
-          <a href="${SHOP_URL}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Complete Your Order &rarr;</a>
+          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Complete Your Order &rarr;</a>
         </td>
       </tr>
     </table>
