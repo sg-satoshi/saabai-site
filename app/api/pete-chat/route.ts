@@ -130,13 +130,12 @@ export async function POST(req: Request) {
             required: ["email"],
           }),
           execute: async ({ email, note }) => {
-            try {
-              await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ source: "rex_mid_chat", email, note, timestamp: new Date().toISOString() }),
-              });
-            } catch {}
+            // Fire and forget — don't block the chat response waiting for emails to send
+            fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ source: "rex_mid_chat", email, note, timestamp: new Date().toISOString() }),
+            }).catch(() => {});
             return { ok: true };
           },
         }),
