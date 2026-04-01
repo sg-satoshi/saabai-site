@@ -1141,7 +1141,7 @@ export default function PeterAvatarWidget() {
               {/* Quick reply chips — initial greeting */}
               {showQuickReplies && (
                 <div className="flex flex-col gap-1.5 px-3 pt-2 pb-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
-                  <p className="text-[10px] font-semibold px-0.5 pb-0.5" style={{ color: "#0084FF" }}>Where would you like to start?</p>
+                  <p className="text-xs font-semibold px-0.5 pb-0.5" style={{ color: "#0084FF" }}>Where would you like to start?</p>
                   {quickReplies.map((q) => (
                     <button key={q}
                       onClick={() => { trackQuickReply(q); setInputValue(""); handleUserMessage(q); }}
