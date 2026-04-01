@@ -4,7 +4,8 @@ import { anthropic } from "@ai-sdk/anthropic";
 
 export const runtime = "edge";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Use the PlasticOnline-specific Resend account for all Rex emails
+const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>";
 const TEAM_EMAIL = process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.au";
