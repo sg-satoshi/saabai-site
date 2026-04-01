@@ -228,7 +228,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
     : quote;
 
   return emailShell("Your PlasticOnline quote is ready to order", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.split(" ")[0])}, your quote is ready.` : "Your quote is ready."}</h1>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.trim().split(/\s+/)[0] || name.trim())}, your quote is ready.` : "Your quote is ready."}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Lock it in when you're ready — we'll cut and dispatch within a few business days.</p>
 
     <!-- Quote card -->
@@ -277,7 +277,7 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, 
     : quote;
 
   return emailShell("Still need that plastic cut? Your quote is waiting.", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.split(" ")[0])}, still need that cut?` : "Still need that plastic cut?"}</h1>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${escapeHtml(name.trim().split(/\s+/)[0] || name.trim())}, still need that cut?` : "Still need that plastic cut?"}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Rex here — just checking in on your quote from yesterday.</p>
 
     <!-- Quote card -->
