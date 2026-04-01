@@ -204,8 +204,10 @@ export default function PeterAvatarWidget() {
   const [quoteEmail, setQuoteEmail] = useState("");
   const [quoteMobile, setQuoteMobile] = useState("");
   const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
+  const [quoteName, setQuoteName] = useState("");
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
   const [quoteEmailSending, setQuoteEmailSending] = useState(false);
+  const [endName, setEndName] = useState("");
   // Improvement: welcome back state
   const [isReturning, setIsReturning] = useState(false);
   // Improvement #5: contextual thinking label
@@ -660,6 +662,8 @@ export default function PeterAvatarWidget() {
     setQuoteEmail("");
     setQuoteMobile("");
     setQuoteDesspatch(null);
+    setQuoteName("");
+    setEndName("");
     setQuoteEmailSent(false);
     messagesRef.current = [];
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
@@ -683,6 +687,7 @@ export default function PeterAvatarWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: "pete_ended",
+          name: endName.trim() || undefined,
           email: skipEmail ? undefined : endEmail.trim() || undefined,
           sendTranscript: !skipEmail && !!endEmail.trim(),
           timestamp: new Date().toISOString(),
@@ -708,6 +713,7 @@ export default function PeterAvatarWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: "rex_quote_email",
+          name: quoteName.trim() || undefined,
           email: quoteEmail.trim(),
           mobile: quoteMobile.trim() || undefined,
           despatch: quoteDesspatch ?? undefined,
@@ -881,6 +887,14 @@ export default function PeterAvatarWidget() {
                     <p className="text-xs text-saabai-text-muted leading-relaxed">Want a copy of your chat with Rex emailed to you?</p>
                   </div>
                   <input
+                    type="text"
+                    placeholder="Your name (optional)"
+                    value={endName}
+                    onChange={(e) => setEndName(e.target.value)}
+                    className="w-full border border-saabai-border rounded-lg px-3 py-2 text-xs placeholder:text-gray-400 focus:outline-none focus:border-saabai-teal/60 transition-colors"
+                    style={{ background: "#ffffff", color: "#111" }}
+                  />
+                  <input
                     type="email"
                     placeholder="Your email address"
                     value={endEmail}
@@ -1046,100 +1060,164 @@ export default function PeterAvatarWidget() {
                 </button>
               )}
 
-              {/* Improvement #1: inline quote email capture */}
-              {showQuoteCapture && (
-                <div className="px-4 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
-                  {/* Improvement #6: sticky price card */}
-                  {(() => {
-                    const lastAssistantMsg = displayMessages.filter(m => m.role === "assistant").slice(-1)[0];
-                    const priceMatch = lastAssistantMsg?.content.match(/\[(\$[\d,]+\.?\d*\s*Ex\s*GST)\]/i) || lastAssistantMsg?.content.match(/(\$[\d,]+\.?\d*\s*Ex\s*GST)/i);
-                    if (!priceMatch) return null;
-                    return (
-                      <div className="flex items-center justify-between px-1 pb-1.5">
-                        <span className="text-[10px] font-medium" style={{ color: "#65676b" }}>Your quote</span>
-                        <span className="text-sm font-bold" style={{ color: "#0084FF" }}>{priceMatch[1]}</span>
+              {/* Quote capture — premium slide-up overlay */}
+              {showQuoteCapture && (() => {
+                const lastAssistantMsg = displayMessages.filter(m => m.role === "assistant").slice(-1)[0];
+                const priceMatch = lastAssistantMsg?.content.match(/\[(\$[\d,]+\.?\d*\s*Ex\s*GST)\]/i) || lastAssistantMsg?.content.match(/(\$[\d,]+\.?\d*\s*Ex\s*GST)/i);
+                const price = priceMatch?.[1] ?? null;
+
+                if (quoteEmailSent) {
+                  return (
+                    <div className="shrink-0 mx-3 mb-2 flex items-center gap-2.5 px-4 py-3 rounded-2xl" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "#22c55e" }}>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3.5 3.5 5.5-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                    );
-                  })()}
-                  {quoteEmailSent ? (
-                    <div className="flex items-center gap-2 py-1">
-                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-saabai-teal/15">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#0084FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </span>
-                      <p className="text-[11px] text-saabai-teal font-semibold">Quote sent — check your inbox.</p>
+                      <div>
+                        <p className="text-xs font-bold leading-none" style={{ color: "#15803d" }}>Quote sent — check your inbox!</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: "#16a34a" }}>We&apos;ll follow up shortly.</p>
+                      </div>
                     </div>
-                  ) : !quoteEmailOpen ? (
-                    <button
-                      onClick={() => setQuoteEmailOpen(true)}
-                      className="w-full text-left text-[11px] font-semibold py-2 px-3 rounded-xl transition-all duration-150 active:scale-[0.98] hover:-translate-y-px"
-                      style={{ background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 4px rgba(0,132,255,0.12)" }}
-                    >
-                      Email my quote →
-                    </button>
-                  ) : (
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex gap-1.5">
+                  );
+                }
+
+                if (!quoteEmailOpen) {
+                  return (
+                    <div className="shrink-0 px-3 pb-2 pt-1" style={{ background: "linear-gradient(to top, #fff 70%, transparent)" }}>
+                      <button
+                        onClick={() => setQuoteEmailOpen(true)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-150 active:scale-[0.98] hover:brightness-105"
+                        style={{ background: "#0084FF", boxShadow: "0 4px 16px rgba(0,132,255,0.35)" }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="10" rx="2" stroke="white" strokeWidth="1.4"/><path d="M1 5.5l6.5 4.5 6.5-4.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white leading-none">Email me this quote</p>
+                            {price && <p className="text-[10px] text-white/80 mt-0.5 leading-none">{price}</p>}
+                          </div>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    className="absolute left-0 right-0 bottom-0 z-10"
+                    style={{
+                      background: "white",
+                      borderRadius: "20px 20px 0 0",
+                      boxShadow: "0 -8px 40px rgba(0,0,0,0.14)",
+                      animation: "rexSlideUp 0.22s cubic-bezier(0.34,1.4,0.64,1)",
+                      padding: "16px 16px 12px",
+                    }}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#050505", letterSpacing: "-0.3px" }}>Where should we send it?</p>
+                        {price && <p style={{ margin: "2px 0 0", fontSize: 13, fontWeight: 700, color: "#0084FF" }}>{price}</p>}
+                      </div>
+                      <button
+                        onClick={() => setQuoteEmailOpen(false)}
+                        style={{ width: 26, height: 26, borderRadius: "50%", background: "#f0f2f5", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#65676b", fontSize: 18, lineHeight: 1 }}
+                      >×</button>
+                    </div>
+
+                    {/* Full Name */}
+                    <div style={{ marginBottom: 8 }}>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Full Name</label>
+                      <input
+                        type="text"
+                        placeholder="First and last name"
+                        value={quoteName}
+                        onChange={e => setQuoteName(e.target.value)}
+                        disabled={quoteEmailSending}
+                        className="rex-input"
+                        style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
+                      />
+                    </div>
+
+                    {/* Email + Mobile */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Email *</label>
                         <input
                           type="email"
-                          placeholder="Email address"
+                          placeholder="you@email.com"
                           value={quoteEmail}
                           onChange={e => setQuoteEmail(e.target.value)}
                           autoFocus
                           disabled={quoteEmailSending}
-                          className="rex-input flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors"
-                          style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
+                          className="rex-input"
+                          style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
                         />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Mobile</label>
                         <input
                           type="tel"
-                          placeholder="Mobile (optional)"
+                          placeholder="04XX XXX XXX"
                           value={quoteMobile}
                           onChange={e => setQuoteMobile(e.target.value)}
                           disabled={quoteEmailSending}
-                          className="rex-input flex-1 text-[11px] px-2.5 py-1.5 rounded-lg focus:outline-none disabled:opacity-60 transition-colors"
-                          style={{ background: "#ffffff", color: "#111", border: "1.5px solid #c8dcff" }}
+                          className="rex-input"
+                          style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
                         />
                       </div>
-                      <div className="flex gap-1.5 items-center">
-                        <span className="text-[10px] font-semibold shrink-0" style={{ color: "#444950" }}>Despatch:</span>
-                        <button
-                          onClick={() => setQuoteDesspatch("pickup")}
-                          className="text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95"
-                          style={quoteDesspatch === "pickup"
-                            ? { background: "#0084FF", color: "#fff", border: "1.5px solid #0084FF" }
-                            : { background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 3px rgba(0,132,255,0.12)" }}
-                        >
-                          Pick up
-                        </button>
-                        <button
-                          onClick={() => setQuoteDesspatch("delivery")}
-                          className="text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95"
-                          style={quoteDesspatch === "delivery"
-                            ? { background: "#0084FF", color: "#fff", border: "1.5px solid #0084FF" }
-                            : { background: "#ffffff", color: "#0084FF", border: "1.5px solid #0084FF", boxShadow: "0 1px 3px rgba(0,132,255,0.12)" }}
-                        >
-                          Delivery
-                        </button>
-                        <button
-                          onClick={submitQuoteEmail}
-                          disabled={!quoteEmail.trim() || quoteEmailSending}
-                          className="ml-auto relative px-3 py-1.5 text-white text-[11px] font-bold rounded-full disabled:opacity-40 hover:brightness-110 active:scale-95 transition-all duration-150 min-w-[52px] flex items-center justify-center"
-                          style={{ background: "#0084FF" }}
-                        >
-                          {quoteEmailSending ? (
-                            <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
-                              <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                            </svg>
-                          ) : "Send"}
-                        </button>
+                    </div>
+
+                    {/* Despatch */}
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 6 }}>Fulfilment</label>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {([ ["pickup", "🏪 Pick up — Gold Coast"], ["delivery", "🚚 Deliver to me"] ] as const).map(([v, label]) => (
+                          <button
+                            key={v}
+                            onClick={() => setQuoteDesspatch(v)}
+                            style={{
+                              flex: 1, padding: "8px 6px", borderRadius: 10, fontSize: 11, fontWeight: 600,
+                              border: "1.5px solid", cursor: "pointer", transition: "all 0.15s",
+                              ...(quoteDesspatch === v
+                                ? { background: "#0084FF", color: "white", borderColor: "#0084FF", boxShadow: "0 2px 8px rgba(0,132,255,0.3)" }
+                                : { background: "#fafafa", color: "#444950", borderColor: "#e4e6eb" }),
+                            }}
+                          >{label}</button>
+                        ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Submit */}
+                    <button
+                      onClick={submitQuoteEmail}
+                      disabled={!quoteEmail.trim() || quoteEmailSending}
+                      style={{
+                        width: "100%", padding: "12px", borderRadius: 12, fontSize: 13, fontWeight: 700,
+                        border: "none", cursor: !quoteEmail.trim() || quoteEmailSending ? "not-allowed" : "pointer",
+                        background: !quoteEmail.trim() || quoteEmailSending ? "#b0c8f0" : "#0084FF",
+                        color: "white",
+                        boxShadow: !quoteEmail.trim() ? "none" : "0 4px 16px rgba(0,132,255,0.3)",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s",
+                      }}
+                    >
+                      {quoteEmailSending ? (
+                        <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3"/>
+                          <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                        </svg>
+                      ) : (
+                        <>
+                          <svg width="14" height="14" viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="10" rx="2" stroke="white" strokeWidth="1.4"/><path d="M1 5.5l6.5 4.5 6.5-4.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/></svg>
+                          Send my quote →
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Quick reply chips — initial greeting */}
-              {showQuickReplies && (
+              {showQuickReplies && !quoteEmailOpen && (
                 <div className="flex flex-col gap-1.5 px-3 pt-2 pb-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   <p className="text-xs font-semibold px-0.5 pb-0.5" style={{ color: "#0084FF" }}>Where would you like to start?</p>
                   {quickReplies.map((q) => (
@@ -1154,7 +1232,7 @@ export default function PeterAvatarWidget() {
               )}
 
               {/* Improvement #2: contextual follow-up chips */}
-              {!showQuickReplies && followUpChips.length > 0 && (
+              {!showQuickReplies && followUpChips.length > 0 && !quoteEmailOpen && (
                 <div className="flex flex-wrap gap-1.5 px-3 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   {followUpChips.map((q) => (
                     <button key={q}

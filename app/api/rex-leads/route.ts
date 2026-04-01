@@ -215,7 +215,7 @@ function emailShell(preheader: string, body: string) {
 }
 
 /* ── Customer quote email ── */
-function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null) {
+function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string) {
   const quote = cleanNote(note) || "Custom cut-to-size order";
   const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
@@ -224,7 +224,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null) {
     : quote;
 
   return emailShell("Your PlasticOnline quote is ready to order", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Your quote is ready.</h1>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${name.split(" ")[0]}, your quote is ready.` : "Your quote is ready."}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Lock it in when you're ready — we'll cut and dispatch within a few business days.</p>
 
     <!-- Quote card -->
@@ -264,7 +264,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null) {
 }
 
 /* ── Follow-up email (22hrs later) ── */
-function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null) {
+function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string) {
   const quote = cleanNote(note) || "Your custom cut-to-size order";
   const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
@@ -273,8 +273,8 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null) 
     : quote;
 
   return emailShell("Still need that plastic cut? Your quote is waiting.", `
-    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Still need that plastic cut?</h1>
-    <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Rex here — just following up on your quote from yesterday.</p>
+    <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">${name ? `Hey ${name.split(" ")[0]}, still need that cut?` : "Still need that plastic cut?"}</h1>
+    <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Rex here — just checking in on your quote from yesterday.</p>
 
     <!-- Quote card -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
@@ -313,6 +313,7 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null) 
 }
 
 function teamNotificationHtml(
+  name: string | undefined,
   email: string,
   note: string,
   source: string,
@@ -386,6 +387,10 @@ function teamNotificationHtml(
       <tr><td colspan="2" style="background:#f8f8f8;padding:10px 16px;border-bottom:1px solid #ebebeb;">
         <p style="margin:0;font-size:11px;font-weight:800;color:#888888;text-transform:uppercase;letter-spacing:1px;">Customer Details</p>
       </td></tr>
+      ${name ? `<tr>
+        <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;">Name</td>
+        <td style="padding:12px 16px;font-size:15px;font-weight:800;color:#1a1a1a;border-bottom:1px solid #f2f2f2;">${name}</td>
+      </tr>` : ""}
       <tr>
         <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;">Email</td>
         <td style="padding:12px 16px;font-size:14px;font-weight:700;border-bottom:1px solid #f2f2f2;"><a href="mailto:${email}" style="color:#e13f00;text-decoration:none;">${email}</a></td>
@@ -454,7 +459,7 @@ function teamNotificationHtml(
 
 export async function POST(req: Request) {
   try {
-    const { source, email, note, mobile, despatch, messages, timestamp } = await req.json();
+    const { source, name, email, note, mobile, despatch, messages, timestamp } = await req.json();
 
     // Build transcript and run AI analysis upfront (used in team email)
     const transcript = messages && messages.length > 0 ? formatTranscript(messages) : "";
@@ -466,9 +471,11 @@ export async function POST(req: Request) {
     const productSnippet = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
       ? analysis.quoteDetails.split("\n")[0].slice(0, 60)
       : note?.slice(0, 60) ?? "Enquiry";
+    const leadName: string | null = name ?? null;
+    const displayName = leadName ? `${leadName} (${email ?? "anonymous"})` : (email ?? "anonymous");
     const teamSubject = price
-      ? `Rex Lead: ${email ?? "anonymous"} — ${productSnippet} — ${price}`
-      : `Rex Lead: ${email ?? "anonymous"} — ${productSnippet}`;
+      ? `Rex Lead: ${displayName} — ${productSnippet} — ${price}`
+      : `Rex Lead: ${displayName} — ${productSnippet}`;
 
     const tasks: Promise<unknown>[] = [];
 
@@ -479,7 +486,7 @@ export async function POST(req: Request) {
           from: FROM_EMAIL,
           to: email,
           subject: "Your quote from Rex at PlasticOnline",
-          html: quoteEmailHtml(note ?? "", analysis),
+          html: quoteEmailHtml(note ?? "", analysis, leadName ?? undefined),
         })
       );
 
@@ -490,7 +497,7 @@ export async function POST(req: Request) {
           from: FROM_EMAIL,
           to: email,
           subject: "Still need that plastic cut? Your quote is ready",
-          html: followUpEmailHtml(note ?? "", analysis),
+          html: followUpEmailHtml(note ?? "", analysis, leadName ?? undefined),
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );
@@ -502,8 +509,9 @@ export async function POST(req: Request) {
         from: FROM_EMAIL,
         to: TEAM_EMAIL,
         replyTo: email ? [email] : undefined,
+        headers: email ? { "Reply-To": email } : undefined,
         subject: teamSubject,
-        html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch, analysis, transcript),
+        html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch, analysis, transcript),
       })
     );
 

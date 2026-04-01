@@ -31,6 +31,11 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "19:30", tag: "FIX", title: "Reply-To header now set explicitly via Resend headers field — hitting Reply on team notification email now correctly addresses the customer, not enquiries@" },
+      { time: "19:25", tag: "NEW", title: "Lead capture form completely redesigned — premium slide-up overlay with Full Name, Email, Mobile, and Fulfilment toggle. Customer name captured for all lead types." },
+      { time: "19:20", tag: "IMPROVEMENT", title: "Customer emails personalised with first name — 'Hey Shane, your quote is ready.' and 'Hey Shane, still need that cut?' when name is captured" },
+      { time: "19:15", tag: "IMPROVEMENT", title: "Team notification subject line now includes customer name — 'Rex Lead: Shane Goldberg (email) — product — price' for faster triage" },
+      { time: "19:10", tag: "IMPROVEMENT", title: "Name field added to end-of-chat panel — captures name alongside email transcript request" },
       { time: "18:45", tag: "IMPROVEMENT", title: "Customer quote and follow-up emails now show the exact quoted price (e.g. $185.50 Ex GST) prominently in the quote card, extracted from AI conversation analysis" },
       { time: "18:40", tag: "IMPROVEMENT", title: "Customer emails tightened — one clean line of body copy before CTA, cleaner follow-up copy, product page URL resolved from AI quote details for accuracy" },
       { time: "18:15", tag: "IMPROVEMENT", title: "Quote email CTA button links to the specific product page (e.g. Acrylic Sheet, HDPE, Polycarbonate) instead of generic shop — 30+ materials mapped" },
