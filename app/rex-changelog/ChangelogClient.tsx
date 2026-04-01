@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "15:15", tag: "FIX", title: "Order not-found response no longer tells customers the number must start with PLON — Rex now just asks them to double-check it" },
       { time: "15:00", tag: "FIX", title: "Order lookup now searches full Pipedrive database using numeric part only — HP- and EXP- orders now resolve correctly regardless of how deal titles are structured" },
       { time: "14:30", tag: "NEW", title: "Order lookup now supports HP- and EXP- order number prefixes in addition to PLON- — all three formats resolve correctly via Pipedrive" },
       { time: "14:00", tag: "UI", title: "'Where would you like to start?' label font size increased to match quick reply chip text (12px)" },
