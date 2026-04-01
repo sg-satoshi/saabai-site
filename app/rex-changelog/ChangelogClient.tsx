@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:30", tag: "FIX", title: "Team notification reply-to set to customer email — hitting Reply now goes straight to the customer, not back to enquiries@" },
+      { time: "17:15", tag: "UI", title: "All emails fully redesigned — real PlasticOnline logo, dark header, red accent bar, rounded cards, full-width transcript bubbles with Rex/Customer colour coding, trust strip, branded dark footer" },
       { time: "16:45", tag: "UI", title: "Customer emails redesigned to PlasticOnline brand — dark #1a1a1a header, orange #e13f00 CTA buttons, trust bar, hyperlinked contact details, proper paragraph spacing" },
       { time: "16:30", tag: "FIX", title: "Sender changed from rex@plasticonline.com.au to enquiries@plasticonline.com.au so replies land in Pipedrive inbox" },
       { time: "16:15", tag: "IMPROVEMENT", title: "Lead capture — removed Pipedrive integration. Team now receives a rich email to enquiries@plasticonline.com.au with AI summary, quote details, price, and full conversation transcript" },
