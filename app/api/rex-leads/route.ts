@@ -201,7 +201,7 @@ function emailShell(preheader: string, body: string) {
           </p>
         </td>
         <td align="right" valign="bottom">
-          <a href="${CONTACT_URL}" style="font-size:11px;color:#444444;text-decoration:none;">Unsubscribe</a>
+          <p style="margin:0;font-size:11px;color:#444444;">Questions? Reply to this email.</p>
         </td>
       </tr>
     </table>
@@ -215,29 +215,31 @@ function emailShell(preheader: string, body: string) {
 }
 
 /* ── Customer quote email ── */
-function quoteEmailHtml(note: string) {
+function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null) {
   const quote = cleanNote(note) || "Custom cut-to-size order";
-  const productUrl = resolveProductUrl(quote);
+  const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
+  const quoteDetails = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
+    ? analysis.quoteDetails
+    : quote;
 
   return emailShell("Your PlasticOnline quote is ready to order", `
     <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Your quote is ready.</h1>
-    <p style="margin:0 0 32px;font-size:15px;color:#777777;line-height:1.6;">Rex has put this together for you — lock it in when you're ready.</p>
+    <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Lock it in when you're ready — we'll cut and dispatch within a few business days.</p>
 
     <!-- Quote card -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
       <tr>
         <td style="background:#fafafa;border:1px solid #ebebeb;border-left:5px solid #e13f00;border-radius:8px;padding:22px 24px;">
           <p style="margin:0 0 6px;font-size:11px;font-weight:800;color:#e13f00;text-transform:uppercase;letter-spacing:1.5px;">Your Quote</p>
-          <p style="margin:0;font-size:15px;font-weight:500;color:#1a1a1a;line-height:1.9;">${quote}</p>
+          <p style="margin:0 0 ${price ? "12px" : "0"};font-size:15px;font-weight:500;color:#1a1a1a;line-height:1.9;">${quoteDetails.replace(/\n/g, "<br>")}</p>
+          ${price ? `<p style="margin:0;font-size:22px;font-weight:800;color:#e13f00;letter-spacing:-0.5px;">${price}</p>` : ""}
         </td>
       </tr>
     </table>
 
-    <p style="margin:0 0 14px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Ready to order? Head to the shop, add your item to cart, and we'll have it cut and dispatched within a few business days.
-    </p>
-    <p style="margin:0 0 32px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Need a different size, thickness, or material? Just reply directly to this email and we'll re-quote in seconds.
+    <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
+      Size or material changed? Just reply to this email and we'll re-quote straight away.
     </p>
 
     <!-- CTA -->
@@ -256,35 +258,37 @@ function quoteEmailHtml(note: string) {
     <p style="margin:0;font-size:13px;color:#999999;line-height:1.9;">
       Questions? Call <a href="tel:0755646744" style="color:#e13f00;text-decoration:none;font-weight:600;">(07) 5564 6744</a>
       or <a href="${CONTACT_URL}" style="color:#e13f00;text-decoration:none;font-weight:600;">get in touch online</a>.
-      We're here Mon–Fri, 7:30am–4:00pm.
+      Mon–Fri 7:30am–4:00pm AEST.
     </p>
   `);
 }
 
 /* ── Follow-up email (22hrs later) ── */
-function followUpEmailHtml(note: string) {
+function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null) {
   const quote = cleanNote(note) || "Your custom cut-to-size order";
-  const productUrl = resolveProductUrl(quote);
+  const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
+  const quoteDetails = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
+    ? analysis.quoteDetails
+    : quote;
 
   return emailShell("Still need that plastic cut? Your quote is waiting.", `
     <h1 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;line-height:1.2;">Still need that plastic cut?</h1>
-    <p style="margin:0 0 32px;font-size:15px;color:#777777;line-height:1.6;">Hey, Rex here — just following up on your quote from yesterday.</p>
+    <p style="margin:0 0 28px;font-size:15px;color:#777777;line-height:1.6;">Rex here — just following up on your quote from yesterday.</p>
 
     <!-- Quote card -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
       <tr>
         <td style="background:#fafafa;border:1px solid #ebebeb;border-left:5px solid #e13f00;border-radius:8px;padding:22px 24px;">
           <p style="margin:0 0 6px;font-size:11px;font-weight:800;color:#e13f00;text-transform:uppercase;letter-spacing:1.5px;">Your Quote</p>
-          <p style="margin:0;font-size:15px;font-weight:500;color:#1a1a1a;line-height:1.9;">${quote}</p>
+          <p style="margin:0 0 ${price ? "12px" : "0"};font-size:15px;font-weight:500;color:#1a1a1a;line-height:1.9;">${quoteDetails.replace(/\n/g, "<br>")}</p>
+          ${price ? `<p style="margin:0;font-size:22px;font-weight:800;color:#e13f00;letter-spacing:-0.5px;">${price}</p>` : ""}
         </td>
       </tr>
     </table>
 
-    <p style="margin:0 0 14px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Everything is in stock and ready to cut. Your order will be dispatched within a few business days from our Gold Coast warehouse.
-    </p>
-    <p style="margin:0 0 32px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Size changed? Different material? Just reply to this email — happy to re-quote straight away.
+    <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
+      Everything's in stock. Just <a href="${productUrl}" style="color:#e13f00;font-weight:700;text-decoration:none;">place your order online</a> or reply here if anything's changed.
     </p>
 
     <!-- CTA -->
@@ -301,9 +305,9 @@ function followUpEmailHtml(note: string) {
     </table>
 
     <p style="margin:0;font-size:13px;color:#999999;line-height:1.9;">
-      Not ready yet? No worries at all.
-      <a href="${CONTACT_URL}" style="color:#e13f00;text-decoration:none;font-weight:600;">Get in touch</a> when the time is right,
-      or call us on <a href="tel:0755646744" style="color:#e13f00;text-decoration:none;font-weight:600;">(07) 5564 6744</a>.
+      Not ready yet? No worries.
+      <a href="${CONTACT_URL}" style="color:#e13f00;text-decoration:none;font-weight:600;">Get in touch</a> when the time's right,
+      or call <a href="tel:0755646744" style="color:#e13f00;text-decoration:none;font-weight:600;">(07) 5564 6744</a>.
     </p>
   `);
 }
@@ -475,7 +479,7 @@ export async function POST(req: Request) {
           from: FROM_EMAIL,
           to: email,
           subject: "Your quote from Rex at PlasticOnline",
-          html: quoteEmailHtml(note ?? ""),
+          html: quoteEmailHtml(note ?? "", analysis),
         })
       );
 
@@ -486,7 +490,7 @@ export async function POST(req: Request) {
           from: FROM_EMAIL,
           to: email,
           subject: "Still need that plastic cut? Your quote is ready",
-          html: followUpEmailHtml(note ?? ""),
+          html: followUpEmailHtml(note ?? "", analysis),
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );

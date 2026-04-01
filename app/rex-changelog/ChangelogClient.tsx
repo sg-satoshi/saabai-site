@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "18:45", tag: "IMPROVEMENT", title: "Customer quote and follow-up emails now show the exact quoted price (e.g. $185.50 Ex GST) prominently in the quote card, extracted from AI conversation analysis" },
+      { time: "18:40", tag: "IMPROVEMENT", title: "Customer emails tightened — one clean line of body copy before CTA, cleaner follow-up copy, product page URL resolved from AI quote details for accuracy" },
       { time: "18:15", tag: "IMPROVEMENT", title: "Quote email CTA button links to the specific product page (e.g. Acrylic Sheet, HDPE, Polycarbonate) instead of generic shop — 30+ materials mapped" },
       { time: "18:00", tag: "FIX", title: "Email logo replaced with HTML wordmark — white PlasticOnline text with red accent, renders correctly on dark header in all email clients" },
       { time: "17:45", tag: "FIX", title: "Team notification replyTo passed as array (Resend v6 requirement) — hitting Reply now correctly addresses the customer" },
