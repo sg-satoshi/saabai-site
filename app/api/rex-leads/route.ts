@@ -62,98 +62,200 @@ Extract the following and return as JSON only — no markdown, no explanation:
 
 // ── Email templates ───────────────────────────────────────────────────────────
 
-function quoteEmailHtml(note: string) {
+const EMAIL_STYLES = `
+  body { margin:0; padding:0; background:#f0f0f0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; }
+  a { color:#e13f00; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+`;
+
+function emailShell(headerSubtitle: string, body: string) {
   return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <style>${EMAIL_STYLES}</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f0f0;padding:40px 16px;">
+  <tr><td align="center">
+  <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
 
-        <!-- Header -->
-        <tr><td style="background:#25D366;padding:28px 32px;">
-          <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">PlasticOnline</p>
-          <p style="margin:4px 0 0;color:#b7f5d0;font-size:13px;">Your quote from Rex</p>
-        </td></tr>
-
-        <!-- Body -->
-        <tr><td style="padding:32px;">
-          <p style="margin:0 0 16px;color:#111;font-size:16px;font-weight:600;">Here's the quote Rex put together for you.</p>
-          <div style="background:#f2fef6;border:1px solid #c8f0d8;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
-            <p style="margin:0;color:#444;font-size:14px;line-height:1.6;">${note || "Custom cut-to-size order"}</p>
-          </div>
-          <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6;">
-            When you're ready to order, just head to the shop and add it to your cart.
-            Up to 10 cuts are included with every order.
-          </p>
-          <a href="${SHOP_URL}" style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
-            Place Your Order →
-          </a>
-        </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:20px 32px;border-top:1px solid #eee;">
-          <p style="margin:0;color:#888;font-size:12px;line-height:1.6;">
-            Questions? Reply to this email or call us on <strong>(07) 5564 6744</strong>.<br>
-            PlasticOnline · 13 Distribution Avenue, Molendinar QLD 4214 · Mon–Fri 7:30am–4:00pm
-          </p>
-        </td></tr>
-
+    <!-- Header -->
+    <tr><td style="background:#1a1a1a;padding:32px 40px 28px;border-radius:12px 12px 0 0;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <p style="margin:0;font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">Plastic<span style="color:#e13f00;">Online</span></p>
+            <p style="margin:6px 0 0;font-size:13px;color:#999999;letter-spacing:0.3px;">Australia's Largest Range of Cut-to-Size Plastics</p>
+          </td>
+          <td align="right" style="vertical-align:middle;">
+            <p style="margin:0;font-size:12px;color:#666666;line-height:1.8;">Gold Coast, QLD<br><a href="tel:0755646744" style="color:#e13f00;font-weight:600;">(07) 5564 6744</a></p>
+          </td>
+        </tr>
       </table>
     </td></tr>
+
+    <!-- Orange accent bar -->
+    <tr><td style="background:#e13f00;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+    <!-- Subtitle band -->
+    <tr><td style="background:#ffffff;padding:20px 40px 0;">
+      <p style="margin:0;font-size:13px;font-weight:700;color:#e13f00;text-transform:uppercase;letter-spacing:1px;">${headerSubtitle}</p>
+    </td></tr>
+
+    <!-- Body -->
+    <tr><td style="background:#ffffff;padding:24px 40px 40px;">
+      ${body}
+    </td></tr>
+
+    <!-- Trust bar -->
+    <tr><td style="background:#f7f7f7;padding:20px 40px;border-top:1px solid #e8e8e8;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="padding:0 8px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#1a1a1a;">Up to 10 free cuts</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#888;">included every order</p>
+          </td>
+          <td align="center" style="padding:0 8px;border-left:1px solid #ddd;border-right:1px solid #ddd;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#1a1a1a;">115+ materials</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#888;">in stock, Gold Coast</p>
+          </td>
+          <td align="center" style="padding:0 8px;">
+            <p style="margin:0;font-size:12px;font-weight:700;color:#1a1a1a;">Fast dispatch</p>
+            <p style="margin:2px 0 0;font-size:11px;color:#888;">ships within days</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+
+    <!-- Footer -->
+    <tr><td style="background:#1a1a1a;padding:24px 40px;border-radius:0 0 12px 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <p style="margin:0;font-size:12px;color:#888888;line-height:1.8;">
+              <a href="${SHOP_URL}" style="color:#e13f00;font-weight:600;">Shop</a> &nbsp;·&nbsp;
+              <a href="${CONTACT_URL}" style="color:#e13f00;font-weight:600;">Contact</a> &nbsp;·&nbsp;
+              <a href="tel:0755646744" style="color:#e13f00;font-weight:600;">(07) 5564 6744</a>
+            </p>
+            <p style="margin:8px 0 0;font-size:11px;color:#555555;">
+              13 Distribution Avenue, Molendinar QLD 4214 &nbsp;·&nbsp; Mon–Fri 7:30am–4:00pm
+            </p>
+          </td>
+          <td align="right" style="vertical-align:bottom;">
+            <a href="${CONTACT_URL}" style="font-size:11px;color:#444444;">Unsubscribe</a>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+
   </table>
+  </td></tr>
+</table>
 </body>
 </html>`;
 }
 
+function quoteEmailHtml(note: string) {
+  // Strip markdown price links [$xx](url) → just keep the price text
+  const cleanNote = (note || "Custom cut-to-size order")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*/g, "");
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;">Your quote is ready.</h1>
+    <p style="margin:0 0 28px;font-size:15px;color:#666666;">Rex has put together the following for you.</p>
+
+    <!-- Quote box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#f9f9f9;border-left:4px solid #e13f00;border-radius:0 8px 8px 0;padding:20px 24px;">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#e13f00;text-transform:uppercase;letter-spacing:1px;">Quote Details</p>
+          <p style="margin:0;font-size:15px;color:#1a1a1a;line-height:1.8;font-weight:500;">${cleanNote}</p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 12px;font-size:15px;color:#3e3e3e;line-height:1.8;">
+      When you're ready to lock it in, head to our shop and place your order. All cuts are included — no hidden setup fees.
+    </p>
+    <p style="margin:0 0 32px;font-size:15px;color:#3e3e3e;line-height:1.8;">
+      Need a different size or material? Just reply to this email and we'll sort it out.
+    </p>
+
+    <!-- CTA button -->
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+      <tr>
+        <td style="background:#e13f00;border-radius:40px;">
+          <a href="${SHOP_URL}" style="display:inline-block;padding:16px 36px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.3px;">Place Your Order &rarr;</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Divider -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td style="border-top:1px solid #eeeeee;font-size:0;line-height:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-size:13px;color:#888888;line-height:1.8;">
+      Questions? Call us on <a href="tel:0755646744" style="color:#e13f00;font-weight:600;">(07) 5564 6744</a> or
+      <a href="${CONTACT_URL}" style="color:#e13f00;font-weight:600;">get in touch online</a> — we're here Mon–Fri, 7:30am–4:00pm.
+    </p>
+  `;
+
+  return emailShell("Your Quote from Rex", body);
+}
+
 function followUpEmailHtml(note: string) {
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
+  const cleanNote = (note || "Your custom cut-to-size order")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*/g, "");
 
-        <!-- Header -->
-        <tr><td style="background:#25D366;padding:28px 32px;">
-          <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">PlasticOnline</p>
-          <p style="margin:4px 0 0;color:#b7f5d0;font-size:13px;">Rex here, just checking in</p>
-        </td></tr>
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1a1a;letter-spacing:-0.5px;">Still need that plastic cut?</h1>
+    <p style="margin:0 0 28px;font-size:15px;color:#666666;">Hey, Rex here — just checking in on your quote from yesterday.</p>
 
-        <!-- Body -->
-        <tr><td style="padding:32px;">
-          <p style="margin:0 0 16px;color:#111;font-size:15px;line-height:1.6;">
-            Hey, Rex here from PlasticOnline. Just checking in on that quote from yesterday.
-          </p>
-          <div style="background:#f2fef6;border:1px solid #c8f0d8;border-radius:8px;padding:16px 20px;margin-bottom:24px;">
-            <p style="margin:0;color:#444;font-size:14px;line-height:1.6;">${note || "Your custom cut-to-size order"}</p>
-          </div>
-          <p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6;">
-            Your order is ready to go whenever you are. If anything changed or you need a different size, just reply here and I'll sort it.
-          </p>
-          <a href="${SHOP_URL}" style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
-            Complete Your Order →
-          </a>
-          <p style="margin:20px 0 0;color:#888;font-size:13px;">
-            Not ready yet? No worries. <a href="${CONTACT_URL}" style="color:#25D366;">Get in touch</a> if you have any questions.
-          </p>
-        </td></tr>
+    <!-- Quote box -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#f9f9f9;border-left:4px solid #e13f00;border-radius:0 8px 8px 0;padding:20px 24px;">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#e13f00;text-transform:uppercase;letter-spacing:1px;">Your Quote</p>
+          <p style="margin:0;font-size:15px;color:#1a1a1a;line-height:1.8;font-weight:500;">${cleanNote}</p>
+        </td>
+      </tr>
+    </table>
 
-        <!-- Footer -->
-        <tr><td style="padding:20px 32px;border-top:1px solid #eee;">
-          <p style="margin:0;color:#888;font-size:12px;line-height:1.6;">
-            PlasticOnline · 13 Distribution Avenue, Molendinar QLD 4214 · (07) 5564 6744<br>
-            <a href="${CONTACT_URL}" style="color:#aaa;">Unsubscribe</a>
-          </p>
-        </td></tr>
+    <p style="margin:0 0 12px;font-size:15px;color:#3e3e3e;line-height:1.8;">
+      Your order is ready to go whenever you are. We've got everything in stock and it'll be cut and dispatched within a few business days.
+    </p>
+    <p style="margin:0 0 32px;font-size:15px;color:#3e3e3e;line-height:1.8;">
+      If the size changed or you need something different, just reply here — happy to re-quote in seconds.
+    </p>
 
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+    <!-- CTA button -->
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+      <tr>
+        <td style="background:#e13f00;border-radius:40px;">
+          <a href="${SHOP_URL}" style="display:inline-block;padding:16px 36px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.3px;">Complete Your Order &rarr;</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Divider -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <tr><td style="border-top:1px solid #eeeeee;font-size:0;line-height:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-size:13px;color:#888888;line-height:1.8;">
+      Not ready yet? No worries at all.
+      <a href="${CONTACT_URL}" style="color:#e13f00;font-weight:600;">Get in touch</a> when the time is right
+      or call us on <a href="tel:0755646744" style="color:#e13f00;font-weight:600;">(07) 5564 6744</a>.
+    </p>
+  `;
+
+  return emailShell("Following Up On Your Quote", body);
 }
 
 function teamNotificationHtml(
