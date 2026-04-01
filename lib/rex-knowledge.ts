@@ -83,7 +83,7 @@ Signage, Marine, Industrial/Mining, Engineering/Electrical/Plumbing/Civil, Retai
 | Polycarbonate UV | 1220×2440mm | 1mm–12.5mm (39 options) | Clear, opal, tint | $101–$1,125 |
 | ABS Sheet | 1350×3050mm | 1mm–12mm (13 options) | Black, white, grey | $95–$340 |
 | PVC Rigid Sheet | 1220×2440mm | Multiple (20 options) | Clear, white, light grey, grey | $82–$2,178 |
-| HDPE Sheet (Black or Natural) | 2000×1000mm (thin) / 3000×1500mm (standard) | 1mm–30mm | Black (UV), Natural | $46–$1,243 |
+| HDPE Sheet (Black or Natural) | 2000×1000mm (thin) / 3000×1500mm (standard) | 1mm–150mm | Black (UV), Natural, Yellow UV | $46–$6,076 |
 | Seaboard HDPE (Marine UV) | 1220×2440mm | 15mm+ (7 options) | Natural/White | $351–$1,029 |
 | Nylon Sheet | 1220×3050mm | Multiple (27 options) | Black, natural | $234–$3,978 |
 | Polypropylene Sheet | 1500×3000mm | 2mm–50mm (18 options) | Natural, grey, black, white | $1–$2,692 |
@@ -888,11 +888,52 @@ Orders under $50 attract a $30 cutting fee.
 | Black | $501.67 | $1,161 |
 | Natural | $473.12 | $1,095 |
 
-### 30mm HDPE (standard 3000×1500mm — full sheet pricing only)
-| Colour | Full Sheet |
+### 30mm HDPE (full sheet only)
+| Colour | Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|---|
+| Black | 3000×1500mm | $629 | $1,243 |
+| Black | 4000×2000mm | — | $2,145 |
+| Natural | 3000×1500mm | $600.20 | $1,186 |
+
+### 40mm HDPE (Black only)
+| Sheet Size | CTS ($/m²) | Full Sheet |
+|---|---|---|
+| 2000×1000mm | — | $845 |
+| 3000×1500mm | $970.22 | $1,918 |
+
+### 50mm HDPE (Black only — full sheet only)
+| Sheet Size | Full Sheet |
 |---|---|
-| Black | $1,243 |
-| Natural | $1,243 |
+| 2000×1000mm | $1,203 |
+| 4060×2030mm | $4,913 |
+
+### 60mm HDPE (Black only — full sheet only)
+| Sheet Size | Full Sheet |
+|---|---|
+| 2000×1000mm | $2,288 |
+
+### 100mm HDPE (Black only — full sheet only)
+| Sheet Size | Full Sheet |
+|---|---|
+| 2000×1000mm | $4,570 |
+
+### 140mm HDPE (Black only — full sheet only)
+| Sheet Size | Full Sheet |
+|---|---|
+| 2000×1000mm | $4,313 |
+
+### 150mm HDPE (Black only — full sheet only)
+| Sheet Size | Full Sheet |
+|---|---|
+| 2000×1000mm | $6,076 |
+
+### Yellow HDPE (PE-100 UV — full sheet only)
+UV-resistant yellow HDPE. Standard sheet 3000×1500mm.
+| Thickness | Full Sheet |
+|---|---|
+| 6mm | $390 |
+| 10mm | $557 |
+| 20mm | $1,142 |
 
 ---
 

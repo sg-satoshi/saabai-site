@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "15:45", tag: "PRICING", title: "HDPE pricing updated (March 2026) — added 40mm and 50mm Black sheets, plus 60mm/100mm/140mm/150mm and Yellow PE-100 UV range. Fixed 30mm Natural price ($1,186, was wrongly $1,243). Added missing Black 4000×2000 sizes." },
       { time: "15:15", tag: "FIX", title: "Order not-found response no longer tells customers the number must start with PLON — Rex now just asks them to double-check it" },
       { time: "15:00", tag: "FIX", title: "Order lookup now searches full Pipedrive database using numeric part only — HP- and EXP- orders now resolve correctly regardless of how deal titles are structured" },
       { time: "14:30", tag: "NEW", title: "Order lookup now supports HP- and EXP- order number prefixes in addition to PLON- — all three formats resolve correctly via Pipedrive" },
