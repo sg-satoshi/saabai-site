@@ -11,10 +11,9 @@ const TEAM_EMAIL = process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.a
 const SHOP_URL = "https://www.plasticonline.com.au/shop/";
 const CONTACT_URL = "https://www.plasticonline.com.au/contact/";
 
-// ── Pipedrive ─────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function extractPrice(text: string): string | null {
-  // Match markdown link price [$185.50 Ex GST](url) or plain $185.50
   const match = text.match(/\[(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)\]/i) || text.match(/(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)/i);
   return match ? match[1] : null;
 }
@@ -24,7 +23,6 @@ function formatTranscript(messages: Array<{ role: string; content: string }>): s
     .filter(m => m.role === "user" || m.role === "assistant")
     .map(m => {
       const label = m.role === "user" ? "Customer" : "Rex";
-      // Strip markdown links from Rex messages for cleaner transcript
       const content = m.content.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
       return `${label}: ${content}`;
     })
@@ -58,101 +56,6 @@ Extract the following and return as JSON only — no markdown, no explanation:
     return JSON.parse(json) as ConversationAnalysis;
   } catch {
     return null;
-  }
-}
-
-async function createPipedriveLead(email: string, note: string, mobile?: string, despatch?: string, messages?: Array<{ role: string; content: string }>) {
-  const token = process.env.PIPEDRIVE_API_TOKEN;
-  if (!token) return;
-
-  try {
-    // Search for existing person by email
-    let personId: number | undefined;
-    const searchRes = await fetch(
-      `https://api.pipedrive.com/v1/persons/search?term=${encodeURIComponent(email)}&fields=email&exact_match=true&api_token=${token}`
-    );
-    const searchData = await searchRes.json();
-    const existingPerson = searchData?.data?.items?.[0]?.item;
-
-    if (existingPerson) {
-      personId = existingPerson.id;
-      // Update mobile if provided and not already set
-      if (mobile) {
-        await fetch(`https://api.pipedrive.com/v1/persons/${personId}?api_token=${token}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: [{ value: mobile, primary: true }] }),
-        });
-      }
-    } else {
-      // Create new person
-      const personRes = await fetch(`https://api.pipedrive.com/v1/persons?api_token=${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: email.split("@")[0],
-          email: [{ value: email, primary: true }],
-          ...(mobile && { phone: [{ value: mobile, primary: true }] }),
-        }),
-      });
-      const personData = await personRes.json();
-      personId = personData?.data?.id;
-    }
-
-    const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : null;
-    const transcript = messages && messages.length > 0 ? formatTranscript(messages) : note;
-
-    // Run AI analysis and price extraction in parallel
-    const [analysis, fallbackPrice] = await Promise.all([
-      messages && messages.length > 0 ? analyseConversation(transcript) : Promise.resolve(null),
-      Promise.resolve(extractPrice(note)),
-    ]);
-
-    const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : fallbackPrice;
-    const dealTitle = price ? `Rex New Lead - [${price}]` : "Rex New Lead";
-
-    // Create deal
-    const deal: Record<string, unknown> = {
-      title: dealTitle,
-      person_id: personId,
-      ...(process.env.PIPEDRIVE_PIPELINE_ID && { pipeline_id: Number(process.env.PIPEDRIVE_PIPELINE_ID) }),
-      ...(process.env.PIPEDRIVE_STAGE_ID && { stage_id: Number(process.env.PIPEDRIVE_STAGE_ID) }),
-    };
-    const dealRes = await fetch(`https://api.pipedrive.com/v1/deals?api_token=${token}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(deal),
-    });
-    const dealData = await dealRes.json();
-    const dealId = dealData?.data?.id;
-
-    // Add note with AI summary + full transcript
-    if (dealId) {
-      const noteLines = [
-        `Source: Rex chat widget`,
-        mobile ? `Mobile: ${mobile}` : null,
-        despatchLabel ? `Despatch: ${despatchLabel}` : null,
-        ``,
-        analysis ? `--- Quote Details ---` : null,
-        analysis ? analysis.quoteDetails : null,
-        ``,
-        analysis ? `--- Price ---` : null,
-        analysis ? analysis.price : null,
-        ``,
-        analysis ? `--- Summary ---` : null,
-        analysis ? analysis.summary : null,
-        ``,
-        `--- Full Conversation ---`,
-        transcript,
-      ].filter(s => s !== null).join("\n");
-      await fetch(`https://api.pipedrive.com/v1/notes?api_token=${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: noteLines, deal_id: dealId }),
-      });
-    }
-  } catch {
-    // Non-fatal — don't block the response
   }
 }
 
@@ -252,19 +155,109 @@ function followUpEmailHtml(note: string) {
 </html>`;
 }
 
-function teamNotificationHtml(email: string, note: string, source: string, mobile?: string, despatch?: string) {
+function teamNotificationHtml(
+  email: string,
+  note: string,
+  source: string,
+  mobile: string | undefined,
+  despatch: string | undefined,
+  analysis: ConversationAnalysis | null,
+  transcript: string,
+) {
   const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : "Not specified";
+  const timeStr = new Date().toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
+
+  // Format transcript for HTML — each speaker block gets a coloured row
+  const transcriptHtml = transcript
+    ? transcript.split("\n\n").map(block => {
+        const isRex = block.startsWith("Rex:");
+        const bg = isRex ? "#f0f7ff" : "#f9f9f9";
+        const labelColour = isRex ? "#0077cc" : "#333";
+        const lines = block.split("\n");
+        const label = lines[0].split(":")[0];
+        const content = block.replace(/^(Rex|Customer): /, "").replace(/\n/g, "<br>");
+        return `<tr>
+          <td style="padding:10px 14px;background:${bg};vertical-align:top;width:80px;font-weight:700;color:${labelColour};font-size:12px;white-space:nowrap;">${label}</td>
+          <td style="padding:10px 14px;background:${bg};color:#333;font-size:13px;line-height:1.6;">${content}</td>
+        </tr>`;
+      }).join("")
+    : `<tr><td colspan="2" style="padding:12px;color:#888;font-size:13px;">No transcript available</td></tr>`;
+
   return `<!DOCTYPE html>
 <html>
-<body style="font-family:Arial,sans-serif;padding:24px;color:#333;">
-  <h2 style="color:#25D366;margin:0 0 16px;">New Rex Lead</h2>
-  <table style="border-collapse:collapse;width:100%;max-width:500px;">
-    <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;width:120px;">Email</td><td style="padding:8px 12px;">${email}</td></tr>
-    <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Mobile</td><td style="padding:8px 12px;">${mobile || "Not provided"}</td></tr>
-    <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;">Despatch</td><td style="padding:8px 12px;">${despatchLabel}</td></tr>
-    <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Quote</td><td style="padding:8px 12px;">${note || "No quote details"}</td></tr>
-    <tr><td style="padding:8px 12px;background:#f9f9f9;font-weight:600;">Source</td><td style="padding:8px 12px;">${source}</td></tr>
-    <tr><td style="padding:8px 12px;background:#f0f0f0;font-weight:600;">Time</td><td style="padding:8px 12px;">${new Date().toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })} AEST</td></tr>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:24px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:640px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e0e7ef;">
+
+        <!-- Header -->
+        <tr><td style="background:#0084FF;padding:20px 28px;">
+          <p style="margin:0;color:#fff;font-size:18px;font-weight:700;">New Rex Lead</p>
+          <p style="margin:4px 0 0;color:#b3d9ff;font-size:12px;">${timeStr} AEST · ${source}</p>
+        </td></tr>
+
+        <!-- Customer details -->
+        <tr><td style="padding:24px 28px 0;">
+          <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Customer</p>
+          <table style="border-collapse:collapse;width:100%;">
+            <tr>
+              <td style="padding:8px 12px;background:#f4f8ff;font-weight:600;font-size:13px;color:#555;width:110px;">Email</td>
+              <td style="padding:8px 12px;background:#f4f8ff;font-size:13px;"><a href="mailto:${email}" style="color:#0084FF;font-weight:700;">${email}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;font-weight:600;font-size:13px;color:#555;">Mobile</td>
+              <td style="padding:8px 12px;font-size:13px;color:#333;">${mobile || "Not provided"}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;background:#f4f8ff;font-weight:600;font-size:13px;color:#555;">Despatch</td>
+              <td style="padding:8px 12px;background:#f4f8ff;font-size:13px;color:#333;">${despatchLabel}</td>
+            </tr>
+          </table>
+        </td></tr>
+
+        ${analysis ? `
+        <!-- Quote summary -->
+        <tr><td style="padding:20px 28px 0;">
+          <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Quote</p>
+          <table style="border-collapse:collapse;width:100%;">
+            <tr>
+              <td style="padding:8px 12px;background:#f4f8ff;font-weight:600;font-size:13px;color:#555;width:110px;">Details</td>
+              <td style="padding:8px 12px;background:#f4f8ff;font-size:13px;color:#333;line-height:1.5;">${analysis.quoteDetails.replace(/\n/g, "<br>")}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;font-weight:600;font-size:13px;color:#555;">Price</td>
+              <td style="padding:8px 12px;font-size:14px;font-weight:700;color:#0084FF;">${analysis.price}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;background:#f4f8ff;font-weight:600;font-size:13px;color:#555;vertical-align:top;">Summary</td>
+              <td style="padding:8px 12px;background:#f4f8ff;font-size:13px;color:#333;line-height:1.6;">${analysis.summary}</td>
+            </tr>
+          </table>
+        </td></tr>
+        ` : note ? `
+        <!-- Fallback note -->
+        <tr><td style="padding:20px 28px 0;">
+          <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Note</p>
+          <div style="background:#f4f8ff;border-radius:6px;padding:12px 14px;font-size:13px;color:#333;line-height:1.6;">${note}</div>
+        </td></tr>
+        ` : ""}
+
+        <!-- Transcript -->
+        <tr><td style="padding:20px 28px 0;">
+          <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;">Full Conversation</p>
+          <table style="border-collapse:collapse;width:100%;border:1px solid #e0e7ef;border-radius:6px;overflow:hidden;">
+            ${transcriptHtml}
+          </table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:20px 28px 24px;">
+          <p style="margin:16px 0 0;color:#aaa;font-size:11px;">Rex chat widget · PlasticOnline</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
   </table>
 </body>
 </html>`;
@@ -275,6 +268,20 @@ function teamNotificationHtml(email: string, note: string, source: string, mobil
 export async function POST(req: Request) {
   try {
     const { source, email, note, mobile, despatch, messages, timestamp } = await req.json();
+
+    // Build transcript and run AI analysis upfront (used in team email)
+    const transcript = messages && messages.length > 0 ? formatTranscript(messages) : "";
+    const analysis = transcript ? await analyseConversation(transcript) : null;
+
+    // Build subject line from analysis or fallback to note price
+    const fallbackPrice = extractPrice(note ?? "");
+    const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : fallbackPrice;
+    const productSnippet = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
+      ? analysis.quoteDetails.split("\n")[0].slice(0, 60)
+      : note?.slice(0, 60) ?? "Enquiry";
+    const teamSubject = price
+      ? `Rex Lead: ${email ?? "anonymous"} — ${productSnippet} — ${price}`
+      : `Rex Lead: ${email ?? "anonymous"} — ${productSnippet}`;
 
     const tasks: Promise<unknown>[] = [];
 
@@ -300,22 +307,19 @@ export async function POST(req: Request) {
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );
-
-      // 3. Pipedrive lead
-      tasks.push(createPipedriveLead(email, note ?? "", mobile, despatch, messages));
     }
 
-    // 4. Team notification (always)
+    // 3. Team notification — rich email with AI summary + full transcript
     tasks.push(
       resend.emails.send({
         from: FROM_EMAIL,
         to: TEAM_EMAIL,
-        subject: `Rex lead: ${email ?? "anonymous"} — ${note ?? "no quote"}`,
-        html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch),
+        subject: teamSubject,
+        html: teamNotificationHtml(email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch, analysis, transcript),
       })
     );
 
-    // 5. Make.com webhook (existing)
+    // 4. Make.com webhook (if configured)
     if (process.env.LEAD_WEBHOOK_URL) {
       tasks.push(
         fetch(process.env.LEAD_WEBHOOK_URL, {
