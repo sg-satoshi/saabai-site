@@ -24,8 +24,10 @@ export async function lookupOrder(orderNumber: string): Promise<OrderStatus> {
   if (!token) return { found: false, error: "Order lookup unavailable" };
 
   const raw = orderNumber.trim().toUpperCase();
-  // Normalise — prepend PLON- if customer omitted the prefix
-  const term = raw.startsWith("PLON-") ? raw : `PLON-${raw}`;
+  // Normalise — keep known prefixes (PLON-, HP-, EXP-), otherwise assume PLON-
+  const term = (raw.startsWith("PLON-") || raw.startsWith("HP-") || raw.startsWith("EXP-"))
+    ? raw
+    : `PLON-${raw}`;
 
   try {
     const searchRes = await fetch(

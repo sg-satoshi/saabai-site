@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "14:30", tag: "NEW", title: "Order lookup now supports HP- and EXP- order number prefixes in addition to PLON- — all three formats resolve correctly via Pipedrive" },
       { time: "14:00", tag: "UI", title: "'Where would you like to start?' label font size increased to match quick reply chip text (12px)" },
       { time: "13:30", tag: "IMPROVEMENT", title: "Order status sign-off changed to 'What else can I sort out for you?' — more on-brand than generic 'Got any other questions?'" },
       { time: "13:30", tag: "UI", title: "Quick reply chip added — 'What's my order status?' added to the greeting prompt pool" },
