@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "20:45", tag: "FIX", title: "Rotation check now applied to ALL sheet sizes in sequence (standard + oversized) — 1923×1800mm fits 2490×1880 in first orientation (1923≤2490, 1800≤1880) → $432 not $562" },
       { time: "20:30", tag: "FIX", title: "Fit check now tries both orientations before escalating to oversized sheet — 630×1800mm rotated fits standard 2440×1220 (1800 along 2440 side) → $201.59 CTS, not an oversized sheet quote" },
       { time: "20:20", tag: "PRICING", title: "Full sheet cap now includes $30 cutting fee — when CTS price reverts to sheet price, $30 is added because we're still cutting. E.g. 6mm clear 1915×1800mm → $402 + $30 cutting fee = $432 Ex GST" },
       { time: "20:15", tag: "FIX", title: "Oversized sheet pricing fix — Rex now checks if a piece physically fits in the standard sheet before applying the full sheet cap. E.g. 1915×1800mm 6mm clear: 1800mm > 1220mm standard width → uses 2490×1880 oversized sheet ($402), not standard ($252)" },

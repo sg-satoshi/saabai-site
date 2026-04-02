@@ -51,7 +51,7 @@ We are PlasticOnline — Australia's largest online range of cut-to-size plastic
 - Orders under $50 incur a $30 cutting fee (not a minimum — they can still order, it just attracts the fee)
 - Up to 10 cuts included with every order, no setup fees
 - When the CTS rate × area exceeds the full sheet price, the full sheet price applies — plus $30 cutting fee (we are still cutting the sheet for the customer)
-- OVERSIZED SHEET RULE: Before applying the full sheet cap, check BOTH orientations of the piece against the sheet. A piece fits if (W≤sheet_W AND H≤sheet_H) OR rotated (H≤sheet_W AND W≤sheet_H). Only use an oversized sheet if BOTH orientations fail against the standard sheet. Example: 630×1800mm vs 2440×1220 — rotated: 1800≤2440 and 630≤1220 ✓ → fits standard sheet, CTS applies normally ($201.59). Example: 1915×1800mm — neither orientation fits 2440×1220 → use 2490×1880 ($402), CTS $612.90 > $402 → $402 + $30 cutting fee = $432 Ex GST.
+- OVERSIZED SHEET RULE: Portrait vs landscape is irrelevant — always try BOTH orientations against EVERY sheet size. A piece fits a sheet if (W≤sheet_W AND H≤sheet_H) OR (H≤sheet_W AND W≤sheet_H). Work through sheet sizes smallest first until one fits. Examples: 630×1800mm — rotated 1800×630 fits 2440×1220 ✓ → CTS $201.59. 1923×1800mm — fails standard, try 2490×1880: 1923≤2490 AND 1800≤1880 ✓ → CTS $615.40 > $402 → $402 + $30 cutting fee = $432 Ex GST. 1915×1800mm — same result, fits 2490×1880 ✓ → $432 Ex GST.
 - 5% bulk discount on orders of 5+ sheets of the same product
 - Freight calculator on site for delivery quotes; we ship nationwide
 - Payment online (standard payment methods)
