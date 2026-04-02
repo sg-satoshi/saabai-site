@@ -6,17 +6,6 @@ import DashboardClient from "./DashboardClient";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-async function setAuthCookie(password: string) {
-  "use server";
-  const cookieStore = await cookies();
-  cookieStore.set("rex_dash_auth", password, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60,
-    path: "/rex-dashboard",
-  });
-}
-
 export default async function RexDashboardPage({
   searchParams,
 }: {
@@ -37,7 +26,12 @@ export default async function RexDashboardPage({
 
   // Set cookie and redirect clean URL if pw came via query param
   if (queryAuth === PASSWORD && cookieAuth !== PASSWORD) {
-    await setAuthCookie(PASSWORD);
+    cookieStore.set("rex_dash_auth", PASSWORD, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/rex-dashboard",
+    });
     redirect("/rex-dashboard");
   }
 
