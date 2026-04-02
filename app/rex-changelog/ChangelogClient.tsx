@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "14:10", tag: "NEW", title: "Rex stats dashboard live at /rex-dashboard — total leads, email rate, avg quote value, 30-day chart, material mix, despatch split, sources breakdown, and recent leads table" },
       { time: "13:40", tag: "FIX", title: "Voice loop now recovers after API errors — catch block was missing startListening() call, permanently killing voice mode on any fetch failure" },
       { time: "13:35", tag: "FIX", title: "recognition.start() wrapped in try-catch — synchronous throw (permissions, already-running) no longer leaves a stale recognitionRef that blocks all future listen attempts" },
       { time: "13:30", tag: "FIX", title: "Voice loop also recovers after TTS failure — playVoice catch block now restarts listening so conversation continues even if ElevenLabs returns an error" },
@@ -305,10 +306,16 @@ export default function ChangelogClient() {
 
         {/* Hero */}
         <div style={{ paddingTop: "64px", paddingBottom: "48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none", marginBottom: "36px" }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            saabai.ai
-          </a>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "36px" }}>
+            <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none" }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              saabai.ai
+            </a>
+            <a href="/rex-dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none" }}>
+              Dashboard
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </a>
+          </div>
 
           <a
             href="https://www.plasticonline.com.au"

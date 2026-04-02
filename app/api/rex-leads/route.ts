@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { trackLead, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
 
 export const runtime = "edge";
 
@@ -473,6 +474,19 @@ export async function POST(req: Request) {
     // Build transcript and run AI analysis upfront (used in team email)
     const transcript = messages && messages.length > 0 ? formatTranscript(messages) : "";
     const analysis = transcript ? await analyseConversation(transcript) : null;
+
+    // Track to Redis (fire and forget — never blocks response)
+    const priceStr = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note ?? "") ?? undefined;
+    trackLead({
+      timestamp: timestamp ?? new Date().toISOString(),
+      source:    source ?? "unknown",
+      name:      name ?? undefined,
+      email:     email ?? undefined,
+      price:     priceStr,
+      priceValue: priceStr ? parsePriceValue(priceStr) : undefined,
+      material:  extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? undefined,
+      despatch:  despatch ?? undefined,
+    }).catch(() => {});
 
     // Build subject line from analysis or fallback to note price
     const fallbackPrice = extractPrice(note ?? "");
