@@ -322,6 +322,7 @@ function teamNotificationHtml(
   note: string,
   source: string,
   mobile: string | undefined,
+  address: string | undefined,
   despatch: string | undefined,
   analysis: ConversationAnalysis | null,
   transcript: string,
@@ -403,6 +404,10 @@ function teamNotificationHtml(
         <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;background:#fafafa;">Mobile</td>
         <td style="padding:12px 16px;font-size:14px;color:#1a1a1a;border-bottom:1px solid #f2f2f2;background:#fafafa;">${mobile || "<span style='color:#bbb;font-style:italic;'>Not provided</span>"}</td>
       </tr>
+      ${address ? `<tr>
+        <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;border-bottom:1px solid #f2f2f2;white-space:nowrap;">Address</td>
+        <td style="padding:12px 16px;font-size:14px;color:#1a1a1a;border-bottom:1px solid #f2f2f2;">${escapeHtml(address)}</td>
+      </tr>` : ""}
       <tr>
         <td style="padding:12px 16px;font-size:13px;font-weight:700;color:#888888;width:100px;white-space:nowrap;">Despatch</td>
         <td style="padding:12px 16px;font-size:14px;color:#1a1a1a;">${despatchLabel}</td>
@@ -463,7 +468,7 @@ function teamNotificationHtml(
 
 export async function POST(req: Request) {
   try {
-    const { source, name, email, note, mobile, despatch, messages, timestamp } = await req.json();
+    const { source, name, email, note, mobile, address, despatch, messages, timestamp } = await req.json();
 
     // Build transcript and run AI analysis upfront (used in team email)
     const transcript = messages && messages.length > 0 ? formatTranscript(messages) : "";
@@ -515,7 +520,7 @@ export async function POST(req: Request) {
         replyTo: email ? [email] : undefined,
         headers: email ? { "Reply-To": email } : undefined,
         subject: teamSubject,
-        html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, despatch, analysis, transcript),
+        html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, address, despatch, analysis, transcript),
       })
     );
 

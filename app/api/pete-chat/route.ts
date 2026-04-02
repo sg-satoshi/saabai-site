@@ -1,4 +1,4 @@
-import { streamText, tool, jsonSchema, stepCountIs } from "ai";
+import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getModel } from "../../../lib/chat-config";
 import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
@@ -47,20 +47,22 @@ PRICING — how it works:
   STEP 1 — FIT CHECK: Portrait vs landscape is irrelevant — a piece can always be rotated. A piece FITS in a sheet if EITHER (piece_W ≤ sheet_W AND piece_H ≤ sheet_H) OR (piece_H ≤ sheet_W AND piece_W ≤ sheet_H). Apply this SAME rotation test against EVERY sheet in sequence (standard first, then each oversized option). Use the smallest sheet where either orientation fits.
   STEP 2 — PRICE CAP: Compare CTS price (rate × area) against that sheet's price. If CTS > sheet price, apply the cap.
   STEP 3 — CUTTING FEE: Only add $30 cutting fee when the cap triggers (CTS price > sheet price). If CTS ≤ sheet price, quote CTS — no cutting fee unless total is under $50.
-  Example A: 6mm clear 630×1800mm vs standard 2440×1220. Try: (630≤2440 AND 1800≤1220)? No. Try rotated: (1800≤2440 AND 630≤1220)? Yes → fits standard. CTS = $201.59 < $252 → quote $201.59 Ex GST.
-  Example B: 6mm clear 1923×1800mm vs standard 2440×1220. (1923≤2440 AND 1800≤1220)? No. Rotated: (1800≤2440 AND 1923≤1220)? No → standard fails. Try oversized 2490×1880: (1923≤2490 AND 1800≤1880)? YES → fits. CTS = $615.40 > $402 → $402 + $30 cutting fee = $432 Ex GST.
-  Example C: 6mm clear 1915×1800mm vs standard 2440×1220. Both orientations fail. Try 2490×1880: (1915≤2490 AND 1800≤1880)? Yes → fits. CTS = $612.90 > $402 → $402 + $30 cutting fee = $432 Ex GST.
+  Example A: 6mm clear acrylic 630×1800mm vs standard 2440×1220. Try: (630≤2440 AND 1800≤1220)? No. Try rotated: (1800≤2440 AND 630≤1220)? Yes → fits standard. CTS = $201.59 < $252 → quote $201.59 Ex GST.
+  Example B: 6mm clear acrylic 1923×1800mm vs standard 2440×1220. (1923≤2440 AND 1800≤1220)? No. Rotated: (1800≤2440 AND 1923≤1220)? No → standard fails. Try oversized 2490×1880: (1923≤2490 AND 1800≤1880)? YES → fits. CTS = $615.40 > $402 → $402 + $30 cutting fee = $432 Ex GST.
+  Example C: 6mm clear acrylic 1915×1800mm vs standard 2440×1220. Both orientations fail. Try 2490×1880: (1915≤2490 AND 1800≤1880)? Yes → fits. CTS = $612.90 > $402 → $402 + $30 cutting fee = $432 Ex GST.
+  Example D (PC): 6mm clear polycarbonate 1800×2200mm vs PC standard 2440×1220. (1800≤2440 AND 2200≤1220)? No. Rotated: (2200≤2440 AND 1800≤1220)? No → standard fails. Try PC oversized 2440×1830 (NOT 2490×1880 — PC sheets differ from acrylic): (1800≤2440 AND 2200≤1830)? No. Rotated: (2200≤2440 AND 1800≤1830)? Yes → fits 2440×1830. CTS = $209.35 × 3.96m² = $829.03 > $482.60 → cap at $482.60 + $30 cutting fee = $512.60 Ex GST.
 - For sheet materials not in your knowledge base: call searchProducts, pick the matching variation, then call calculatePrice.
 - Quote the exact price back. Do the maths silently — never show the working (no per-m² rate, no area calculation, no m² figure, no "Price = X × Y" steps, no "that's 0.25m²" style commentary). Format each line item on its own line with a blank line between them.
 - PRICE FORMAT — make the final total a markdown hyperlink to the product page. Format: [$185.50 Ex GST](url). The brackets and URL are hidden in the chat — the customer only sees the yellow clickable price. E.g. [$473.10 Ex GST](https://www.plasticonline.com.au/product/acrylic-sheet/). Never use **bold** for the final price — use the link format instead. NEVER repeat the final price as plain text after showing it as a link — the linked price is the only place the total appears.
 - If the quoted total is under AUD $50, mention the $30 cutting fee applies. Keep it casual.
 - PRODUCT LINK — after the price, always add [Lock it in →](url) on its own line using the same URL. No exceptions. If you do not include both the price link and the Lock it in link, the response is incomplete.
-- After every quote, always ask for their email to send it through. Make it feel natural and urgent, not like a form. E.g. "Drop your email — I'll send the quote and you can have it ordered today." If they give it, capture it immediately via captureLead.
+- After every quote, ask for their name and email to send it through. Make it feel natural and urgent, not like a form. E.g. "What's your name and email? I'll shoot the quote through so you can lock it in today." If they give their email (name optional), capture immediately via captureLead — pass both name and email.
 - If they don't know their size yet, give a rough ballpark from your knowledge base to help them decide, then ask for dimensions.
 - Never say "use the calculator" — you ARE the calculator now.
 
 UPSELL:
 - After pricing a sheet, casually mention a relevant accessory if it makes sense. For acrylic: "If you're bonding it, our Quick Bond 5 is what most people reach for." For outdoor use: mention UV grade. Keep it one line, helpful not salesy.
+- If a customer asks for 4 or fewer sheets of the same product, mention that ordering 5 or more gets them 5% off. Keep it one casual sentence, e.g. "Worth knowing — 5+ sheets of the same product gets you 5% off." Only mention this once.
 
 PRICE OBJECTIONS:
 - If a customer says the price is too high or asks for a better deal, stay relaxed. Mention: we include up to 10 cuts in every order (no setup fees), 5% off when ordering 5 or more sheets of the same product, and the price already covers the cut. Don't discount further — just reframe the value.
@@ -86,7 +88,7 @@ ${REX_KNOWLEDGE}
 `;
 
 type SearchInput = { query: string };
-type LeadInput = { email: string; note?: string };
+type LeadInput = { email: string; name?: string; note?: string };
 type CalcInput = {
   productId: number;
   variationId: number;
@@ -107,9 +109,18 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+    // Cache the static system prompt (~20k tokens) — saves ~200ms+ per request on Anthropic
+    const cachedSystem: SystemModelMessage = {
+      role: "system",
+      content: PETE_SYSTEM,
+      providerOptions: {
+        anthropic: { cacheControl: { type: "ephemeral" } },
+      },
+    };
+
     const result = streamText({
       model: getModel("default"),
-      system: PETE_SYSTEM,
+      system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(8),
       tools: {
@@ -126,21 +137,22 @@ export async function POST(req: Request) {
         }),
 
         captureLead: tool<LeadInput, { ok: boolean }>({
-          description: "Save the customer's email address when they share it during the conversation. Call this silently as soon as an email is given.",
+          description: "Save the customer's name and email when they share them during the conversation. Call this silently as soon as an email is given.",
           inputSchema: jsonSchema<LeadInput>({
             type: "object",
             properties: {
               email: { type: "string", description: "Customer email address" },
+              name: { type: "string", description: "Customer's name if they gave it" },
               note: { type: "string", description: "Brief context, e.g. 'quote for 6mm clear acrylic 600x600mm'" },
             },
             required: ["email"],
           }),
-          execute: async ({ email, note }) => {
+          execute: async ({ email, name, note }) => {
             // Fire and forget — pass full conversation so AI can generate structured quote for emails
             fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ source: "rex_mid_chat", email, note, messages: coreMessages, timestamp: new Date().toISOString() }),
+              body: JSON.stringify({ source: "rex_mid_chat", email, name, note, messages: coreMessages, timestamp: new Date().toISOString() }),
             }).catch(() => {});
             return { ok: true };
           },

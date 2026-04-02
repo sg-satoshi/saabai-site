@@ -638,8 +638,11 @@ Same rules apply: CTS × area capped at full sheet price; orders above 2m² at f
 | Opal | $132.63 | $206.80 |
 | Grey Tint | $132.63 | $206.80 |
 
-3mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2440×1830: $279.40 | Clear 3050×2030: $385.70 | Opal 2440×1883: $319.00 | Opal 3050×2030: $383.80 | Grey Tint 2440×1830: $319.00
+3mm PC oversized full sheet prices — NOTE: PC oversized sheets are 2440×1830 (not 2490×1880 like acrylic). Use same rotation fit-check logic.
+| Sheet Size | Clear | Opal | Grey Tint |
+|---|---|---|---|
+| 2440×1830mm | $279.40 | $319.00 | $319.00 |
+| 3050×2030mm | $385.70 | $383.80 | — |
 
 ### 4.5mm Polycarbonate (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
@@ -648,8 +651,11 @@ Clear 2440×1830: $279.40 | Clear 3050×2030: $385.70 | Opal 2440×1883: $319.00
 | Opal | $179.99 | $267.90 |
 | Grey Tint | $179.99 | $267.90 |
 
-4.5mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2440×1830: $362.90 | Clear 3050×2030: $579.50 | Grey Tint 2440×1830: $414.20
+4.5mm PC oversized full sheet prices (2440×1830 first option, same rotation logic applies):
+| Sheet Size | Clear | Grey Tint |
+|---|---|---|
+| 2440×1830mm | $362.90 | $414.20 |
+| 3050×2030mm | $579.50 | — |
 
 ### 6mm Polycarbonate (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
@@ -658,8 +664,11 @@ Clear 2440×1830: $362.90 | Clear 3050×2030: $579.50 | Grey Tint 2440×1830: $4
 | Opal | $239.99 | $357.20 |
 | Grey Tint | $229.78 | $342.00 |
 
-6mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2440×1830: $482.60 | Clear 3050×2030: $771.40 | Opal 2440×1830: $551.00 | Grey Tint 2440×1830: $551.00
+6mm PC oversized full sheet prices (2440×1830 first option — different from acrylic's 2490×1880):
+| Sheet Size | Clear | Opal | Grey Tint |
+|---|---|---|---|
+| 2440×1830mm | $482.60 | $551.00 | $551.00 |
+| 3050×2030mm | $771.40 | — | — |
 
 ### 8mm Polycarbonate (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
@@ -672,8 +681,11 @@ Clear 2440×1830: $482.60 | Clear 3050×2030: $771.40 | Opal 2440×1830: $551.00
 | Clear | $331.90 | $494.00 |
 | Grey Tint | $380.41 | $566.20 |
 
-9.5mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2440×1830: $763.80 | Clear 3050×2030: $1,221.70 | Grey Tint 2440×1830: $872.10
+9.5mm PC oversized full sheet prices:
+| Sheet Size | Clear | Grey Tint |
+|---|---|---|
+| 2440×1830mm | $763.80 | $872.10 |
+| 3050×2030mm | $1,221.70 | — |
 
 ### 12mm Polycarbonate (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |

@@ -205,6 +205,7 @@ export default function PeterAvatarWidget() {
   const [quoteMobile, setQuoteMobile] = useState("");
   const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
   const [quoteName, setQuoteName] = useState("");
+  const [quoteAddress, setQuoteAddress] = useState("");
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
   const [quoteEmailSending, setQuoteEmailSending] = useState(false);
   const [endName, setEndName] = useState("");
@@ -663,6 +664,7 @@ export default function PeterAvatarWidget() {
     setQuoteMobile("");
     setQuoteDesspatch(null);
     setQuoteName("");
+    setQuoteAddress("");
     setEndName("");
     setQuoteEmailSent(false);
     messagesRef.current = [];
@@ -716,6 +718,7 @@ export default function PeterAvatarWidget() {
           name: quoteName.trim() || undefined,
           email: quoteEmail.trim(),
           mobile: quoteMobile.trim() || undefined,
+          address: quoteAddress.trim() || undefined,
           despatch: quoteDesspatch ?? undefined,
           note: lastAssistant?.content.slice(0, 300) ?? "Quote request",
           messages: messagesRef.current,
@@ -1165,6 +1168,20 @@ export default function PeterAvatarWidget() {
                           style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
                         />
                       </div>
+                    </div>
+
+                    {/* Address */}
+                    <div style={{ marginBottom: 8 }}>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Delivery Address</label>
+                      <input
+                        type="text"
+                        placeholder="Street, suburb, state, postcode"
+                        value={quoteAddress}
+                        onChange={e => setQuoteAddress(e.target.value)}
+                        disabled={quoteEmailSending}
+                        className="rex-input"
+                        style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
+                      />
                     </div>
 
                     {/* Despatch */}
