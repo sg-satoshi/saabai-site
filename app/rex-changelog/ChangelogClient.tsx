@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "20:15", tag: "FIX", title: "Oversized sheet pricing fix — Rex now checks if a piece physically fits in the standard sheet before applying the full sheet cap. E.g. 1915×1800mm 6mm clear: 1800mm > 1220mm standard width → uses 2490×1880 oversized sheet ($402), not standard ($252)" },
+      { time: "20:10", tag: "PRICING", title: "Oversized acrylic sheet tables reformatted from wall-of-text to markdown tables for 3mm, 4.5mm, 6mm — significantly improves Rex's ability to parse and apply correct cap prices" },
       { time: "19:30", tag: "FIX", title: "Reply-To header now set explicitly via Resend headers field — hitting Reply on team notification email now correctly addresses the customer, not enquiries@" },
       { time: "19:25", tag: "NEW", title: "Lead capture form completely redesigned — premium slide-up overlay with Full Name, Email, Mobile, and Fulfilment toggle. Customer name captured for all lead types." },
       { time: "19:20", tag: "IMPROVEMENT", title: "Customer emails personalised with first name — 'Hey Shane, your quote is ready.' and 'Hey Shane, still need that cut?' when name is captured" },

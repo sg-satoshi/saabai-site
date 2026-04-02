@@ -43,7 +43,11 @@ PRICING — how it works:
 - HIPS note: no cut-to-size available — full sheet only (1220×2440mm). Quote full sheet price regardless of size requested.
 - PTFE SHEET THREE-TIER PRICING: full sheet is 1200×1200mm (1.44m²). If area < 0.5m² use CTS <0.5m² rate. If area ≥ 0.5m² use CTS ≥0.5m² rate. If area ≥ 1.44m² or CTS price exceeds full sheet price, charge full sheet price.
 - ACETAL TWO-TIER PRICING — critical: acetal has two different CTS rates. Calculate area = width(m) × height(m). If area < 1m², use the "CTS <1m²" rate. If area ≥ 1m² and < 2m², use the "CTS >1m²" rate. If area ≥ 2m², charge the Full Sheet price. Always cap at Full Sheet price. Example: 10mm Natural 890×445mm → area 0.396m² (<1m²) → $661.61 × 0.396 = $261.90 Ex GST.
-- FULL SHEET CAP — applies to ALL materials: if CTS rate × area calculates to MORE than the full sheet price, always quote the full sheet price instead. Never quote a CTS price higher than the full sheet price for that product.
+- FULL SHEET CAP — critical two-step check:
+  STEP 1 — FIT CHECK: Does the customer's piece fit within the standard sheet dimensions? Check each dimension: if customer width > standard sheet width OR customer height > standard sheet height (in either orientation), the piece does NOT fit and you must use an oversized sheet.
+  STEP 2 — PRICE CAP: Compare CTS price (rate × area) against the correct sheet price. If the piece fits in the standard sheet, cap at standard full sheet price. If the piece requires an oversized sheet, cap at the smallest oversized sheet price it fits in. NEVER cap at a smaller sheet size than what the piece physically requires.
+  Example: 6mm clear acrylic 1915×1800mm. Standard sheet is 2440×1220mm. 1800mm > 1220mm → does NOT fit in standard sheet. Smallest oversized sheet it fits in: 2490×1880mm ($402). CTS = 1.915 × 1.800 × $177.77 = $612.90 > $402 → quote $402 Ex GST.
+  Example: 6mm clear acrylic 600×400mm. Fits in standard 2440×1220mm. CTS = 0.6 × 0.4 × $177.77 = $42.67. Under $50 → mention $30 cutting fee.
 - For sheet materials not in your knowledge base: call searchProducts, pick the matching variation, then call calculatePrice.
 - Quote the exact price back. Do the maths silently — never show the working (no per-m² rate, no area calculation, no m² figure, no "Price = X × Y" steps, no "that's 0.25m²" style commentary). Format each line item on its own line with a blank line between them.
 - PRICE FORMAT — make the final total a markdown hyperlink to the product page. Format: [$185.50 Ex GST](url). The brackets and URL are hidden in the chat — the customer only sees the yellow clickable price. E.g. [$473.10 Ex GST](https://www.plasticonline.com.au/product/acrylic-sheet/). Never use **bold** for the final price — use the link format instead. NEVER repeat the final price as plain text after showing it as a link — the linked price is the only place the total appears.
@@ -130,11 +134,11 @@ export async function POST(req: Request) {
             required: ["email"],
           }),
           execute: async ({ email, note }) => {
-            // Fire and forget — don't block the chat response waiting for emails to send
+            // Fire and forget — pass full conversation so AI can generate structured quote for emails
             fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ source: "rex_mid_chat", email, note, timestamp: new Date().toISOString() }),
+              body: JSON.stringify({ source: "rex_mid_chat", email, note, messages: coreMessages, timestamp: new Date().toISOString() }),
             }).catch(() => {});
             return { ok: true };
           },

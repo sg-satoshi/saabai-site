@@ -50,8 +50,8 @@ We are PlasticOnline — Australia's largest online range of cut-to-size plastic
 - Minimum order: AUD $50 Ex GST
 - Orders under $50 incur a $30 cutting fee (not a minimum — they can still order, it just attracts the fee)
 - Up to 10 cuts included with every order, no setup fees
-- Orders above 2m² of cut-to-size are charged at full sheet price
-- When the CTS rate × area exceeds the full sheet price, the full sheet price applies (plus cutting fee)
+- When the CTS rate × area exceeds the full sheet price, the full sheet price applies
+- OVERSIZED SHEET RULE: Before applying the full sheet cap, always check whether the customer's piece physically fits within the standard sheet dimensions. If either customer dimension exceeds the standard sheet dimension (in any orientation), the piece cannot come from the standard sheet — use the smallest oversized sheet that fits the piece, and cap at that oversized sheet price instead. Example: 6mm clear 1915×1800mm — 1800mm > 1220mm (standard width), so standard 2440×1220 ($252) cannot be used. Smallest oversized sheet it fits in: 2490×1880 ($402). CTS = $612.90 → cap at $402.
 - 5% bulk discount on orders of 5+ sheets of the same product
 - Freight calculator on site for delivery quotes; we ship nationwide
 - Payment online (standard payment methods)
@@ -497,8 +497,11 @@ Orders above 2m² are charged at full sheet price. Orders under $50 attract a $3
 | White Satin 401S | $128.49 | $170 |
 | Colours | $111.46 | $158 |
 
-3.0mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2490×1880: $194 | Clear 3050×2030: $266 | Opal 433/445 2490×1880: $222 | Opal 433/445 3050×2030: $294 | Black/White 2490×1880: $254 | Black/White 3050×2030: $306
+3.0mm oversized full sheet prices (use when piece exceeds 2440mm or 1220mm in any dimension):
+| Sheet Size | Clear | Opal 433/445 | Black/White |
+|---|---|---|---|
+| 2490×1880mm | $194 | $222 | $254 |
+| 3050×2030mm | $266 | $294 | $306 |
 
 ### 4.5mm Acrylic (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
@@ -513,8 +516,11 @@ Clear 2490×1880: $194 | Clear 3050×2030: $266 | Opal 433/445 2490×1880: $222 
 | Tints 332 / 512 | $165.08 | $234 |
 | Green Edge 304 | $162.25 | $230 |
 
-4.5mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2490×1880: $332 | Clear 3050×2030: $400 | Opal 433/445 2490×1880: $334 | Opal 433/445 3050×2030: $442 | Black/White 2490×1880: $320 | Black/White 3050×2050: $506 | Tints 332/512 2490×1880: $364 | Tints 332/512 3050×2030: $504
+4.5mm oversized full sheet prices (use when piece exceeds 2440mm or 1220mm in any dimension):
+| Sheet Size | Clear | Opal 433/445 | Black/White | Tints 332/512 |
+|---|---|---|---|---|
+| 2490×1880mm | $332 | $334 | $320 | $364 |
+| 3050×2030mm | $400 | $442 | $506 | $504 |
 
 ### 6.0mm Acrylic (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
@@ -529,8 +535,12 @@ Clear 2490×1880: $332 | Clear 3050×2030: $400 | Opal 433/445 2490×1880: $334 
 | White Satin 401S | $256.99 | $340 |
 | Black Satin 502S | $266.06 | $352 |
 
-6.0mm oversized full sheet prices (CTS rate same as 2440×1220):
-Clear 2490×1880: $402 | Clear 3050×2030: $532 | Opal 433/445 2490×1880: $444 | Opal 433/445 3050×2030: $588 | White 2490×1880: $460 | White 3050×2030: $674
+6.0mm oversized full sheet prices (CTS rate same as 2440×1220 — use when piece exceeds 2440mm or 1220mm in any dimension):
+| Sheet Size | Clear | Opal 433/445 | White |
+|---|---|---|---|
+| 2490×1880mm | $402 | $444 | $460 |
+| 3050×2030mm | $532 | $588 | $674 |
+Fit check: if customer piece ≤ 2490mm wide AND ≤ 1880mm tall → use 2490×1880 price. If larger → use 3050×2030 price.
 
 ### 8mm Acrylic (standard 2440×1220mm)
 | Colour | CTS ($/m²) | Full Sheet |
