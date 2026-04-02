@@ -375,8 +375,13 @@ export default function PeterAvatarWidget() {
       recognitionRef.current = null;
     };
 
-    recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      // start() threw (e.g. already started, permission denied) — clear ref so we can retry
+      recognitionRef.current = null;
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -445,6 +450,10 @@ export default function PeterAvatarWidget() {
       isSpeakingRef.current = false;
       setIsSpeaking(false);
       setError(String(err).slice(0, 100));
+      // Resume voice loop if TTS fails mid-conversation
+      setTimeout(() => {
+        if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) startListening();
+      }, 500);
     }
   }
 
@@ -560,6 +569,10 @@ export default function PeterAvatarWidget() {
     } catch (err) {
       setError(String(err).slice(0, 120));
       setIsThinking(false);
+      // Resume voice loop after any error — without this the conversation permanently dies
+      if (!isText) setTimeout(() => {
+        if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) startListening();
+      }, 1500);
     }
   }
 

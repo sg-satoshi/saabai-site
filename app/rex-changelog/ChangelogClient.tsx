@@ -31,6 +31,9 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "13:40", tag: "FIX", title: "Voice loop now recovers after API errors — catch block was missing startListening() call, permanently killing voice mode on any fetch failure" },
+      { time: "13:35", tag: "FIX", title: "recognition.start() wrapped in try-catch — synchronous throw (permissions, already-running) no longer leaves a stale recognitionRef that blocks all future listen attempts" },
+      { time: "13:30", tag: "FIX", title: "Voice loop also recovers after TTS failure — playVoice catch block now restarts listening so conversation continues even if ElevenLabs returns an error" },
       { time: "13:15", tag: "IMPROVEMENT", title: "Prompt caching enabled on Rex system prompt (~20k tokens) — static knowledge base now cached by Anthropic, reducing response latency on every request" },
       { time: "13:10", tag: "UI", title: "Delivery Address field added to quote capture form — team now receives full delivery address in lead notification email" },
       { time: "13:05", tag: "IMPROVEMENT", title: "Rex now asks for name alongside email after every quote — name passed through captureLead tool and email personalisation pipeline" },
