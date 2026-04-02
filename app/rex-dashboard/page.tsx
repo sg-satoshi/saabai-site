@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { fetchRexStats } from "../../lib/rex-stats";
 import DashboardClient from "./DashboardClient";
 
@@ -14,26 +13,15 @@ export default async function RexDashboardPage({
   const params = await searchParams;
   const PASSWORD = process.env.REX_DASHBOARD_PASSWORD ?? "";
 
-  // Check auth — cookie or query param
+  // Check auth — cookie or query param (read-only; writes go through /api/rex-dashboard-auth)
   const cookieStore = await cookies();
   const cookieAuth = cookieStore.get("rex_dash_auth")?.value;
   const queryAuth = params.pw;
 
   const isAuthed =
-    !PASSWORD || // if no password set, open access
+    !PASSWORD ||
     cookieAuth === PASSWORD ||
     queryAuth === PASSWORD;
-
-  // Set cookie and redirect clean URL if pw came via query param
-  if (queryAuth === PASSWORD && cookieAuth !== PASSWORD) {
-    cookieStore.set("rex_dash_auth", PASSWORD, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60,
-      path: "/rex-dashboard",
-    });
-    redirect("/rex-dashboard");
-  }
 
   if (!isAuthed) {
     return <LoginScreen />;
@@ -60,7 +48,7 @@ function LoginScreen() {
         <p style={{ margin: "0 0 32px", fontSize: 12, color: "#666", letterSpacing: 2, textTransform: "uppercase" }}>
           Rex Dashboard
         </p>
-        <form method="GET" action="/rex-dashboard">
+        <form method="POST" action="/api/rex-dashboard-auth">
           <input
             name="pw"
             type="password"
