@@ -1,10 +1,17 @@
 /**
  * Rex Knowledge Base — PlasticOnline (PLON)
  *
- * Architecture: sectioned retrieval
- * Rex sees only the KB_INDEX in the system prompt (~300 tokens).
- * It calls getKnowledge(section) to fetch a specific section (~500–900 tokens)
- * only when the query actually requires it.
+ * Architecture: sectioned modules, full-context injection
+ *
+ * The KB is split into 7 topic modules for maintainability and future RAG readiness.
+ * At current scale (~5k tokens), full-context injection with Anthropic prompt caching
+ * is faster than tool-based retrieval — cached tokens are read nearly instantly,
+ * while each getKnowledge tool call adds ~0.5–1s of round-trip latency.
+ *
+ * When the KB grows beyond ~15k tokens, flip to sectioned retrieval:
+ *   1. Replace REX_KNOWLEDGE with KB_INDEX in the system prompt
+ *   2. Register the getKnowledge tool in pete-chat/route.ts
+ *   3. The getKnowledgeSection() function and KB_INDEX export are already ready
  *
  * Sections: company | products | materials_clear | materials_engineering | materials_signage | selection | faqs
  */
@@ -482,3 +489,18 @@ Available sections:
 
 When in doubt about which section: materials questions → materials_clear / materials_engineering / materials_signage. Application/recommendation questions → selection. Company/logistics → company.
 `.trim();
+
+/**
+ * Full knowledge base — all sections combined.
+ * Used for full-context injection (fastest at current KB scale with prompt caching).
+ * Switch to KB_INDEX + getKnowledge tool when KB grows beyond ~15k tokens.
+ */
+export const REX_KNOWLEDGE = [
+  COMPANY,
+  PRODUCTS,
+  MATERIALS_CLEAR,
+  MATERIALS_ENGINEERING,
+  MATERIALS_SIGNAGE,
+  SELECTION,
+  FAQS,
+].map(s => s.trim()).join("\n\n---\n\n");

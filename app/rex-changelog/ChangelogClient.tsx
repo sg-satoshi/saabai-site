@@ -31,8 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
-      { time: "19:00", tag: "NEW", title: "Sectioned knowledge retrieval — Rex now loads a 300-token KB index per request and fetches only the relevant section via getKnowledge tool. System prompt down from ~10k to ~2k tokens." },
-      { time: "18:55", tag: "IMPROVEMENT", title: "KB split into 7 topic modules: company, products, materials_clear, materials_engineering, materials_signage, selection, faqs. Each section ~500-900 tokens, fetched only when needed." },
+      { time: "19:10", tag: "IMPROVEMENT", title: "KB refactored into 7 topic modules (company, products, materials_clear, materials_engineering, materials_signage, selection, faqs) — full-context injection retained for latency; sectioned retrieval infra ready to flip on when KB exceeds 15k tokens." },
       { time: "17:45", tag: "IMPROVEMENT", title: "Knowledge base final compression — removed 5 redundant sections (business identity, what we do, ordering examples, key brands, duplicate FAQs). ~30% further token reduction." },
       { time: "16:30", tag: "NEW", title: "Deterministic pricing engine launched — getPricing() TypeScript function covers all materials, CTS logic, oversized fit checks, bulk discounts, and min-order fees. Zero LLM arithmetic." },
       { time: "16:25", tag: "IMPROVEMENT", title: "getPrice registered as tool in pete-chat — Rex now calls getPricing() for all prices instead of calculating from knowledge base tables" },

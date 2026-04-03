@@ -1,6 +1,6 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getModel } from "../../../lib/chat-config";
-import { KB_INDEX, getKnowledgeSection } from "../../../lib/rex-knowledge";
+import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
 import { getPricing, type PricingInput, type PriceResult } from "../../../lib/rex-pricing-engine";
@@ -67,7 +67,7 @@ If something goes wrong with the tools, say so briefly and offer to connect them
 
 ---
 
-${KB_INDEX}
+${REX_KNOWLEDGE}
 `;
 
 type SearchInput = { query: string };
@@ -84,7 +84,6 @@ type CalcInput = {
 
 type OrderInput = { orderNumber: string };
 type GetPriceInput = PricingInput;
-type GetKnowledgeInput = { section: string };
 
 export async function POST(req: Request) {
   try {
@@ -94,7 +93,7 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-    // Cache the static system prompt (~2k tokens — KB now retrieved on demand via getKnowledge tool)
+    // Cache the static system prompt (~7k tokens) — full-context injection is faster than tool retrieval at this KB size
     const cachedSystem: SystemModelMessage = {
       role: "system",
       content: PETE_SYSTEM,
@@ -109,22 +108,6 @@ export async function POST(req: Request) {
       messages: coreMessages,
       stopWhen: stepCountIs(8),
       tools: {
-        getKnowledge: tool<GetKnowledgeInput, { section: string; content: string }>({
-          description: "Retrieve a section of the PlasticOnline knowledge base. Call this whenever you need detailed product, material, technical, selection, or company information. Do not guess — fetch the relevant section first.",
-          inputSchema: jsonSchema<GetKnowledgeInput>({
-            type: "object",
-            properties: {
-              section: {
-                type: "string",
-                enum: ["company", "products", "materials_clear", "materials_engineering", "materials_signage", "selection", "faqs"],
-                description: "Which section to retrieve: company (locations/ordering/fabrication), products (full range/URLs/accessories), materials_clear (acrylic/PC/PETG), materials_engineering (acetal/nylon/UHMWPE/PTFE/HDPE/PP), materials_signage (ABS/FoamPVC/Corflute/HIPS/ACM), selection (decision guides/compatibility/comparisons), faqs",
-              },
-            },
-            required: ["section"],
-          }),
-          execute: async ({ section }) => ({ section, content: getKnowledgeSection(section) }),
-        }),
-
         searchProducts: tool<SearchInput, Awaited<ReturnType<typeof searchProducts>>>({
           description: "Search the live PlasticOnline store to find a product and its variation IDs. Use this first to get product_id and variation_id for calculatePrice.",
           inputSchema: jsonSchema<SearchInput>({
