@@ -315,6 +315,122 @@ export async function updateFeedback(id: string, updates: Partial<FeedbackItem>)
   } catch { /* never throw */ }
 }
 
+// ── Weekly digest data ────────────────────────────────────────────────────────
+
+export interface WeeklyWindow {
+  leads: number;          // total lead events
+  withEmail: number;      // leads with email captured
+  withPrice: number;      // leads with a quoted price
+  quotedRevenue: number;  // sum of all quoted values (AUD)
+  avgQuote: number;       // avg quoted price (priced leads only)
+  emailCaptureRate: number; // 0-100
+  topMaterials: Array<{ name: string; count: number }>;
+  byDay: Array<{ date: string; label: string; count: number }>; // 7 days Mon→Sun
+}
+
+export interface WeeklyDigestData {
+  thisWeek: WeeklyWindow;
+  lastWeek: Pick<WeeklyWindow, "leads" | "withEmail" | "withPrice" | "quotedRevenue">;
+  allTime: { total: number; withEmail: number; avgPrice: number };
+  generatedAt: string; // ISO string — Brisbane time
+}
+
+export async function fetchWeeklyDigestData(): Promise<WeeklyDigestData> {
+  const redis = getRedis();
+
+  const now = Date.now();
+  const msPerDay = 24 * 60 * 60 * 1000;
+
+  // Last 14 day keys (this week + last week)
+  const days14 = Array.from({ length: 14 }, (_, i) => brisbaneDateString(-(13 - i)));
+  const thisWeekDates = days14.slice(7);  // most recent 7
+  const lastWeekDates = days14.slice(0, 7);
+
+  const thisWeekSet = new Set(thisWeekDates);
+  const lastWeekSet = new Set(lastWeekDates);
+
+  // Fetch day buckets + all-time stats + recent leads (100) in parallel
+  const [
+    totalAll, withEmailAll, withPriceAll, priceSumAll, priceCountAll,
+    recentRaw,
+    ...dayRaw
+  ] = await Promise.all([
+    redis!.get<number>(K.total),
+    redis!.get<number>(K.withEmail),
+    redis!.get<number>(K.withPrice),
+    redis!.get<string>(K.priceSum),
+    redis!.get<number>(K.priceCount),
+    redis!.lrange<string>(K.recent, 0, 99),
+    ...days14.map(d => redis!.get<number>(K.day(d))),
+  ]);
+
+  // All-time aggregates
+  const totalVal    = totalAll ?? 0;
+  const emailVal    = withEmailAll ?? 0;
+  const priceCountV = priceCountAll ?? 0;
+  const priceSumVal = parseFloat(String(priceSumAll ?? "0")) || 0;
+  const avgPriceAll = priceCountV > 0 ? Math.round(priceSumVal / priceCountV) : 0;
+
+  // Day bucket counts split by week
+  const dayCountsByDate: Record<string, number> = {};
+  days14.forEach((d, i) => { dayCountsByDate[d] = (dayRaw[i] as number | null) ?? 0; });
+
+  const thisWeekLeads = thisWeekDates.reduce((s, d) => s + dayCountsByDate[d], 0);
+  const lastWeekLeads = lastWeekDates.reduce((s, d) => s + dayCountsByDate[d], 0);
+
+  const thisWeekByDay = thisWeekDates.map(d => ({
+    date: d,
+    label: new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { weekday: "short" }),
+    count: dayCountsByDate[d],
+  }));
+
+  // Detailed stats from recent leads list (newest first)
+  const recentLeads: LeadEvent[] = (recentRaw ?? []).map(r => {
+    try { return typeof r === "string" ? JSON.parse(r) : r; } catch { return null; }
+  }).filter(Boolean) as LeadEvent[];
+
+  // Filter to this week's leads
+  const thisWeekStart = new Date(Date.now() - 7 * msPerDay).toISOString();
+  const thisWeekLeadsDetail = recentLeads.filter(l => l.timestamp >= thisWeekStart);
+  const lastWeekStart = new Date(Date.now() - 14 * msPerDay).toISOString();
+  const lastWeekLeadsDetail = recentLeads.filter(l => l.timestamp >= lastWeekStart && l.timestamp < thisWeekStart);
+
+  function windowFrom(leads: LeadEvent[], totalFromBuckets?: number): WeeklyWindow {
+    const withEmail = leads.filter(l => l.email).length;
+    const priced    = leads.filter(l => (l.priceValue ?? 0) > 0);
+    const revenue   = priced.reduce((s, l) => s + (l.priceValue ?? 0), 0);
+    const avgQuote  = priced.length > 0 ? Math.round(revenue / priced.length) : 0;
+    const total     = totalFromBuckets ?? leads.length;
+    const emailRate = total > 0 ? Math.round((withEmail / total) * 100) : 0;
+
+    // Top materials
+    const matCounts: Record<string, number> = {};
+    for (const l of leads) {
+      if (l.material) matCounts[l.material] = (matCounts[l.material] ?? 0) + 1;
+    }
+    const topMaterials = Object.entries(matCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }));
+
+    return { leads: total, withEmail, withPrice: priced.length, quotedRevenue: revenue, avgQuote, emailCaptureRate: emailRate, topMaterials, byDay: [] };
+  }
+
+  const thisWeek: WeeklyWindow = {
+    ...windowFrom(thisWeekLeadsDetail, thisWeekLeads),
+    byDay: thisWeekByDay,
+  };
+
+  const lastWeekSummary = windowFrom(lastWeekLeadsDetail, lastWeekLeads);
+
+  return {
+    thisWeek,
+    lastWeek: { leads: lastWeekSummary.leads, withEmail: lastWeekSummary.withEmail, withPrice: lastWeekSummary.withPrice, quotedRevenue: lastWeekSummary.quotedRevenue },
+    allTime: { total: totalVal, withEmail: emailVal, avgPrice: avgPriceAll },
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 // ── Transcript storage ────────────────────────────────────────────────────────
 
 export interface TranscriptMessage {

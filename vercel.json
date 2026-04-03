@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/rex-weekly-digest",
+      "schedule": "0 23 * * 0"
+    }
+  ]
+}
