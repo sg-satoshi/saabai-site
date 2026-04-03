@@ -1206,7 +1206,7 @@ export default function PeterAvatarWidget() {
                     <div style={{ marginBottom: 12 }}>
                       <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 6 }}>Fulfilment</label>
                       <div style={{ display: "flex", gap: 6 }}>
-                        {([ ["pickup", "🏪 Pick up — Gold Coast"], ["delivery", "🚚 Deliver to me"] ] as const).map(([v, label]) => (
+                        {([ ["pickup", "Pick up — Gold Coast"], ["delivery", "Deliver to me"] ] as const).map(([v, label]) => (
                           <button
                             key={v}
                             onClick={() => setQuoteDesspatch(v)}
