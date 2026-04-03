@@ -57,6 +57,37 @@ async function fetchVariations(productId: number) {
   }
 }
 
+export interface WooOrder {
+  id: number;
+  date_created: string;
+  status: string;
+  total: string;
+  currency: string;
+  billing: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  line_items: Array<{ name: string; quantity: number; total: string }>;
+  meta_data: Array<{ key: string; value: unknown }>;
+}
+
+export async function fetchRecentOrders(days = 60): Promise<WooOrder[]> {
+  try {
+    if (!WOO_URL || !WOO_KEY || !WOO_SECRET) return [];
+    const after = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const url = `${WOO_URL}/wp-json/wc/v3/orders?per_page=100&after=${encodeURIComponent(after)}&status=processing,completed&orderby=date&order=desc`;
+    const res = await fetch(url, {
+      headers: { Authorization: auth() },
+      next: { revalidate: 300 }, // cache 5 min
+    });
+    if (!res.ok) return [];
+    return res.json() as Promise<WooOrder[]>;
+  } catch {
+    return [];
+  }
+}
+
 export async function searchProducts(query: string) {
   try {
     const url = `${WOO_URL}/wp-json/wc/v3/products?search=${encodeURIComponent(query)}&per_page=5&status=publish`;

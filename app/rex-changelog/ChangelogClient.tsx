@@ -32,6 +32,9 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "14:00", tag: "NEW", title: "Revenue Attribution tab live — WooCommerce orders fetched (last 60 days), matched to Rex leads by SHA-256 email hash; shows total orders + revenue, Rex-attributed orders + revenue, attribution rate, and full order table with Rex badges" },
+      { time: "14:00", tag: "NEW", title: "Email hashing at lead capture — SHA-256 of billing email now stored with each Rex lead (Web Crypto, Edge-compatible); enables privacy-safe order matching without storing raw emails" },
+      { time: "14:00", tag: "IMPROVEMENT", title: "Lead analysis upgraded from Haiku to Sonnet 4.6 — conversation analysis (summary, price extraction, quote details) now uses claude-sonnet-4.6 for higher accuracy" },
       { time: "12:30", tag: "FIX", title: "Re-engagement nudge suppressed while quote email form is open — 'Still there?' message was firing mid-form, causing showQuoteCapture to go false and the form to disappear; now checks quoteEmailOpenRef before firing" },
       { time: "11:00", tag: "NEW", title: "Saabai Admin view live at /saabai-admin — shows all configured clients, per-client health status, Rex stats summary (leads, email capture rate, avg quote, top material/source), platform aggregate totals; admin-only access enforced via clientId check" },
       { time: "10:00", tag: "NEW", title: "Feedback notification emails — staff submission triggers instant email alert to Saabai team with category, message, Atlas review verdict, and link to dashboard" },

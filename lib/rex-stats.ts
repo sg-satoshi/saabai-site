@@ -39,6 +39,7 @@ export interface LeadEvent {
   source: string;
   name?: string;
   email?: string;
+  emailHash?: string;   // SHA-256 of lowercase email — used for order attribution matching
   price?: string;       // raw string e.g. "$185.50 Ex GST"
   priceValue?: number;  // parsed numeric
   material?: string;
@@ -171,6 +172,7 @@ export async function trackLead(event: LeadEvent): Promise<void> {
       source:     event.source,
       name:       event.name,
       email:      event.email ? event.email.replace(/(?<=.{2}).(?=.*@)/g, "*") : undefined,
+      emailHash:  event.emailHash, // privacy-safe matching key
       price:      event.price,
       priceValue: priceVal > 0 ? priceVal : undefined,
       material:   event.material,

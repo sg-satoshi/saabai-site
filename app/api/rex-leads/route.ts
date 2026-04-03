@@ -128,7 +128,7 @@ interface ConversationAnalysis {
 async function analyseConversation(transcript: string): Promise<ConversationAnalysis | null> {
   try {
     const { text } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic("claude-sonnet-4.6"),
       prompt: `You are analysing a sales chat between Rex (AI sales agent at PlasticOnline) and a customer.
 
 TRANSCRIPT:
@@ -779,12 +779,23 @@ export async function POST(req: Request) {
     const priceValue = priceStr ? parsePriceValue(priceStr) : 0;
     const scoredLead = scoreLead(priceValue, device);
 
+    // Compute email hash for revenue attribution matching (Web Crypto — Edge compatible)
+    let emailHash: string | undefined;
+    if (email) {
+      try {
+        const data = new TextEncoder().encode(email.toLowerCase().trim());
+        const buf = await crypto.subtle.digest("SHA-256", data);
+        emailHash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+      } catch { /* non-critical */ }
+    }
+
     // Track to Redis (fire and forget — never blocks response)
     trackLead({
       timestamp:  timestamp ?? new Date().toISOString(),
       source:     source ?? "unknown",
       name:       name ?? undefined,
       email:      email ?? undefined,
+      emailHash,
       price:      priceStr,
       priceValue: priceValue,
       material:   extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? undefined,

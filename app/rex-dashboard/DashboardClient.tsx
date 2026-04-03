@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { RexStats, LeadEvent, FeedbackItem, FeedbackCategory } from "../../lib/rex-stats";
+import type { AttributionStats, AttributedOrder } from "./page";
 import RexNav from "../components/RexNav";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -288,6 +289,142 @@ function LeadsTable({ leads, onSelect }: { leads: LeadEvent[]; onSelect: (lead: 
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ── Revenue Tab ───────────────────────────────────────────────────────────────
+
+function RevenueTab({ attribution }: { attribution: AttributionStats }) {
+  const fmt = (n: number) =>
+    `$${n.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+  const conversionRate = attribution.totalOrders > 0
+    ? Math.round((attribution.attributedOrders / attribution.totalOrders) * 100)
+    : 0;
+
+  const hasAttribution = attribution.attributedOrders > 0;
+  const hasOrders      = attribution.totalOrders > 0;
+
+  return (
+    <div>
+      {/* Stats strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+        {[
+          { label: "WooCommerce Orders (60d)", value: String(attribution.totalOrders),       sub: `${fmt(attribution.totalRevenue)} revenue` },
+          { label: "Rex-Attributed Orders",    value: String(attribution.attributedOrders),  sub: hasAttribution ? `${fmt(attribution.attributedRevenue)} revenue` : "No matches yet", accent: hasAttribution },
+          { label: "Attribution Rate",          value: hasOrders ? `${conversionRate}%` : "—", sub: "of orders matched to a Rex lead" },
+          { label: "Rex Revenue Impact",        value: hasAttribution ? fmt(attribution.attributedRevenue) : "—", sub: "ex GST, last 60 days", accent: hasAttribution },
+        ].map(({ label, value, sub, accent }) => (
+          <div key={label} style={{ ...T.card, padding: "20px 24px", borderTop: `3px solid ${accent ? "#e13f00" : "#e5e7eb"}` }}>
+            <p style={{ ...T.label, margin: "0 0 8px" }}>{label}</p>
+            <p style={{ margin: "0 0 4px", fontSize: 30, fontWeight: 800, color: accent ? "#e13f00" : "#111827", letterSpacing: -1, lineHeight: 1 }}>{value}</p>
+            <p style={{ ...T.muted, margin: 0 }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Attribution tracking notice */}
+      {!attribution.trackingFrom && (
+        <div style={{ ...T.card, padding: "20px 24px", marginBottom: 20, borderLeft: "3px solid #f59e0b", borderRadius: "0 16px 16px 0" }}>
+          <p style={{ ...T.heading, margin: "0 0 4px" }}>Attribution tracking just activated</p>
+          <p style={{ ...T.muted, margin: 0 }}>Email hashes are now stored with every new Rex lead. Matched orders will appear here as leads convert. Historical leads can&apos;t be matched retroactively.</p>
+        </div>
+      )}
+      {attribution.trackingFrom && !hasAttribution && (
+        <div style={{ ...T.card, padding: "20px 24px", marginBottom: 20 }}>
+          <p style={{ ...T.heading, margin: "0 0 4px" }}>No attributed orders yet</p>
+          <p style={{ ...T.muted, margin: 0 }}>Tracking from {new Date(attribution.trackingFrom).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}. Orders placed by Rex leads will appear here automatically.</p>
+        </div>
+      )}
+
+      {/* Attributed orders list */}
+      {hasAttribution && (
+        <Section title={`Rex-Attributed Orders (${attribution.attributedOrders})`}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr>
+                  {["Order", "Date", "Customer", "Items", "Value", "Lead"].map(h => (
+                    <th key={h} style={{ textAlign: "left", padding: "0 12px 10px 0", ...T.label, borderBottom: "2px solid #e5e7eb" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {attribution.attributed.map(order => (
+                  <tr key={order.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>#{order.id}</td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12, whiteSpace: "nowrap" }}>
+                      {new Date(order.date).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+                    </td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#111827", fontWeight: 600 }}>{order.customerName}</td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#374151", maxWidth: 240 }}>
+                      {order.items.slice(0, 2).join(", ")}{order.items.length > 2 ? ` +${order.items.length - 2}` : ""}
+                    </td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#e13f00", fontWeight: 700 }}>{fmt(order.total)}</td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12 }}>
+                      {order.leadTimestamp ? timeAgo(order.leadTimestamp) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
+
+      {/* All WooCommerce orders */}
+      {hasOrders && (
+        <div style={{ marginTop: 20 }}>
+          <Section title={`All WooCommerce Orders — Last 60 Days (${attribution.totalOrders})`}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    {["Order", "Date", "Customer", "Items", "Value", "Attribution"].map(h => (
+                      <th key={h} style={{ textAlign: "left", padding: "0 12px 10px 0", ...T.label, borderBottom: "2px solid #e5e7eb" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {attribution.orders.slice(0, 30).map(order => {
+                    const isAttributed = attribution.attributed.some(a => a.id === order.id);
+                    return (
+                      <tr key={order.id} style={{ borderBottom: "1px solid #f3f4f6", background: isAttributed ? "#fff5f2" : "transparent" }}>
+                        <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>#{order.id}</td>
+                        <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12, whiteSpace: "nowrap" }}>
+                          {new Date(order.date).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+                        </td>
+                        <td style={{ padding: "11px 12px 11px 0", color: "#111827", fontWeight: 600 }}>{order.customerName}</td>
+                        <td style={{ padding: "11px 12px 11px 0", color: "#374151", maxWidth: 220 }}>
+                          {order.items.slice(0, 2).join(", ")}{order.items.length > 2 ? ` +${order.items.length - 2}` : ""}
+                        </td>
+                        <td style={{ padding: "11px 12px 11px 0", fontWeight: 700, color: isAttributed ? "#e13f00" : "#111827" }}>{fmt(order.total)}</td>
+                        <td style={{ padding: "11px 12px 11px 0" }}>
+                          {isAttributed
+                            ? <span style={{ background: "#fff5f2", color: "#e13f00", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>Rex</span>
+                            : <span style={{ color: "#d1d5db", fontSize: 11 }}>—</span>
+                          }
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {attribution.totalOrders > 30 && (
+                <p style={{ ...T.muted, margin: "12px 0 0", textAlign: "center" }}>Showing 30 of {attribution.totalOrders} orders</p>
+              )}
+            </div>
+          </Section>
+        </div>
+      )}
+
+      {!hasOrders && (
+        <div style={{ ...T.card, padding: "32px", textAlign: "center" }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: "0 0 4px" }}>No WooCommerce orders found</p>
+          <p style={{ ...T.muted, margin: 0 }}>Check that WOOCOMMERCE_URL, WOOCOMMERCE_CONSUMER_KEY, and WOOCOMMERCE_CONSUMER_SECRET are set in Vercel.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -603,9 +740,9 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "leads" | "feedback";
+type Tab = "overview" | "leads" | "revenue" | "feedback";
 
-export default function DashboardClient({ stats }: { stats: RexStats }) {
+export default function DashboardClient({ stats, attribution }: { stats: RexStats; attribution: AttributionStats }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [selectedLead, setSelectedLead] = useState<LeadEvent | null>(null);
 
@@ -626,6 +763,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
   const TABS: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "leads",    label: `Leads${stats.recentLeads.length > 0 ? ` (${stats.recentLeads.length})` : ""}` },
+    { id: "revenue",  label: `Revenue${attribution.attributedOrders > 0 ? ` (${attribution.attributedOrders})` : ""}` },
     { id: "feedback", label: "Rex Feedback" },
   ];
 
@@ -739,6 +877,11 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
           <Section title={`All Recent Leads (${stats.recentLeads.length})`}>
             <LeadsTable leads={stats.recentLeads} onSelect={setSelectedLead} />
           </Section>
+        )}
+
+        {/* ── Revenue tab ── */}
+        {tab === "revenue" && (
+          <RevenueTab attribution={attribution} />
         )}
 
         {/* ── Feedback tab ── */}
