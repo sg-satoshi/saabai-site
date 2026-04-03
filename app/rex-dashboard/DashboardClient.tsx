@@ -343,7 +343,16 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
-    setItems(prev => prev.map(item => item.id === id ? { ...item, status: status as FeedbackItem["status"] } : item));
+    const now = new Date().toISOString();
+    setItems(prev => prev.map(item => {
+      if (item.id !== id) return item;
+      return {
+        ...item,
+        status: status as FeedbackItem["status"],
+        ...(status === "approved"    ? { approvedAt: now }    : {}),
+        ...(status === "implemented" ? { implementedAt: now } : {}),
+      };
+    }));
   }
 
   return (
@@ -440,6 +449,38 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
         </div>
       </div>
 
+      {/* Resolution stats */}
+      {items.length > 0 && (() => {
+        const valid       = items.filter(i => i.atlasReview?.valid);
+        const approved    = items.filter(i => i.status === "approved" || i.status === "implemented");
+        const implemented = items.filter(i => i.status === "implemented");
+        const resolutionRate = valid.length > 0 ? Math.round((implemented.length / valid.length) * 100) : 0;
+
+        const avgMs = implemented
+          .filter(i => i.approvedAt)
+          .map(i => new Date(i.approvedAt!).getTime() - new Date(i.submittedAt).getTime());
+        const avgHours = avgMs.length > 0
+          ? Math.round(avgMs.reduce((s, v) => s + v, 0) / avgMs.length / 3600000)
+          : null;
+
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+            {[
+              { label: "Total Reports",      value: String(items.length) },
+              { label: "Atlas Valid Issues",  value: String(valid.length) },
+              { label: "Approved / Acting",  value: String(approved.length) },
+              { label: "Implemented",        value: String(implemented.length), sub: avgHours !== null ? `avg ${avgHours}h to action` : resolutionRate > 0 ? `${resolutionRate}% resolved` : undefined },
+            ].map(({ label, value, sub }) => (
+              <div key={label} style={{ ...T.card, padding: "14px 18px" }}>
+                <p style={{ ...T.label, margin: "0 0 6px" }}>{label}</p>
+                <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#111827", letterSpacing: -1 }}>{value}</p>
+                {sub && <p style={{ ...T.muted, margin: "2px 0 0", fontSize: 11 }}>{sub}</p>}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Feedback list */}
       <div style={{ marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <p style={{ ...T.label, margin: 0 }}>Submitted Feedback ({items.length})</p>
@@ -477,6 +518,8 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
                     <Badge text={catMeta.label} color={catMeta.color} bg={catMeta.bg} />
                     <Badge text={statusMeta.label} color={statusMeta.color} bg={statusMeta.bg} />
                     <span style={{ ...T.muted }}>{timeAgo(item.submittedAt)}</span>
+                    {item.approvedAt    && <span style={{ ...T.muted, fontSize: 11 }}>· approved {timeAgo(item.approvedAt)}</span>}
+                    {item.implementedAt && <span style={{ ...T.muted, fontSize: 11 }}>· implemented {timeAgo(item.implementedAt)}</span>}
                   </div>
                   <p style={{ ...T.body, margin: 0, fontWeight: 500, lineHeight: 1.5 }}>{item.message}</p>
                 </div>

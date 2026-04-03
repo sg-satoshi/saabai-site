@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { Resend } from "resend";
 import {
   trackFeedback,
   fetchFeedback,
@@ -8,6 +9,10 @@ import {
 import type { FeedbackItem, FeedbackCategory, AtlasReview } from "../../../lib/rex-stats";
 
 export const runtime = "edge";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const NOTIFY_EMAIL = process.env.SAABAI_NOTIFY_EMAIL ?? "hello@saabai.ai";
+const FROM_EMAIL   = "Rex Feedback <alerts@saabai.ai>";
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   pricing_error:   "Pricing Error",
@@ -65,6 +70,55 @@ Return ONLY valid JSON — no markdown, no explanation:
   }
 }
 
+const CATEGORY_COLORS: Record<FeedbackCategory, string> = {
+  pricing_error:  "#dc2626",
+  wrong_material: "#d97706",
+  missed_upsell:  "#7c3aed",
+  bad_tone:       "#0369a1",
+  missing_info:   "#059669",
+  other:          "#6b7280",
+};
+
+async function sendFeedbackNotification(item: FeedbackItem): Promise<void> {
+  const catLabel = CATEGORY_LABELS[item.category];
+  const catColor = CATEGORY_COLORS[item.category];
+  const review   = item.atlasReview;
+
+  const atlasBlock = review ? `
+    <div style="margin-top:20px;padding:16px 20px;background:#f8fafc;border-left:3px solid ${review.valid ? "#059669" : "#6b7280"};border-radius:0 8px 8px 0;">
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7280;">Atlas Review · ${review.confidence} confidence</p>
+      <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${review.valid ? "#059669" : "#6b7280"};">${review.valid ? "✓ Genuine issue" : "✗ Not flagged as an issue"}</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#374151;"><strong>Root cause:</strong> ${review.rootCause}</p>
+      <p style="margin:0;font-size:13px;color:#374151;"><strong>Recommendation:</strong> ${review.recommendation}</p>
+    </div>` : "";
+
+  const leadLine = item.leadRef
+    ? `<p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Lead ref: <strong style="color:#374151;">${item.leadRef}</strong></p>`
+    : "";
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to:   NOTIFY_EMAIL,
+    subject: `Rex Feedback: ${catLabel}`,
+    html: `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 0;">
+      <div style="margin-bottom:24px;">
+        <span style="display:inline-block;padding:4px 10px;border-radius:6px;background:${catColor}18;color:${catColor};font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">${catLabel}</span>
+      </div>
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:800;color:#111827;">New Rex Feedback</h2>
+      <div style="padding:16px 20px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:4px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#374151;">${item.message}</p>
+      </div>
+      ${leadLine}
+      <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">${new Date(item.submittedAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} AEST</p>
+      ${atlasBlock}
+      <div style="margin-top:28px;">
+        <a href="https://saabai.ai/rex-dashboard" style="display:inline-block;padding:10px 20px;background:#e13f00;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">Review in Dashboard →</a>
+      </div>
+    </div>`,
+  });
+}
+
 // GET — fetch all feedback items
 export async function GET() {
   const items = await fetchFeedback();
@@ -102,18 +156,24 @@ export async function POST(req: Request) {
     // Run Atlas review (sync — takes ~2s, acceptable for staff tool)
     const atlasReview = await runAtlasReview(category, message.trim());
 
+    const finalItem: FeedbackItem = atlasReview
+      ? { ...item, status: "reviewed", atlasReview }
+      : item;
+
     if (atlasReview) {
       await updateFeedback(id, { status: "reviewed", atlasReview });
-      return Response.json({ ...item, status: "reviewed", atlasReview });
     }
 
-    return Response.json(item);
+    // Fire-and-forget notification email
+    sendFeedbackNotification(finalItem).catch(() => {});
+
+    return Response.json(finalItem);
   } catch (err) {
     return new Response(String(err), { status: 500 });
   }
 }
 
-// PATCH — update status (approve / mark implemented)
+// PATCH — update status (approve / mark implemented) with audit timestamps
 export async function PATCH(req: Request) {
   try {
     const { id, status } = await req.json() as { id: string; status: string };
@@ -122,7 +182,12 @@ export async function PATCH(req: Request) {
     const validStatuses = ["approved", "implemented", "reviewed", "submitted"];
     if (!validStatuses.includes(status)) return new Response("Invalid status", { status: 400 });
 
-    await updateFeedback(id, { status: status as FeedbackItem["status"] });
+    const now = new Date().toISOString();
+    const updates: Partial<FeedbackItem> = { status: status as FeedbackItem["status"] };
+    if (status === "approved")     updates.approvedAt     = now;
+    if (status === "implemented")  updates.implementedAt  = now;
+
+    await updateFeedback(id, updates);
     return Response.json({ ok: true });
   } catch (err) {
     return new Response(String(err), { status: 500 });

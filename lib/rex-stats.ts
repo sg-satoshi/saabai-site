@@ -72,6 +72,9 @@ export interface FeedbackItem {
   leadRef?: string;
   status: FeedbackStatus;
   atlasReview?: AtlasReview;
+  // Audit trail
+  approvedAt?: string;
+  implementedAt?: string;
 }
 
 export interface RexStats {

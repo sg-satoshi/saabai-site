@@ -29,8 +29,17 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "3 Apr 2026",
+    date: "4 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "10:00", tag: "NEW", title: "Feedback notification emails — staff submission triggers instant email alert to Saabai team with category, message, Atlas review verdict, and link to dashboard" },
+      { time: "10:00", tag: "NEW", title: "Feedback audit trail — approvedAt and implementedAt timestamps stamped on status transitions; displayed inline on each feedback item" },
+      { time: "10:00", tag: "NEW", title: "Feedback resolution stats — 4-stat bar shows Total Reports, Atlas Valid Issues, Approved/Acting, and Implemented with avg time-to-action" },
+      { time: "10:00", tag: "FIX", title: "Mia chatbot and marketing widgets suppressed on all portal pages (/rex-dashboard, /rex-analytics, /rex-changelog, /login)" },
+    ],
+  },
+  {
+    date: "3 Apr 2026",
     entries: [
       { time: "23:55", tag: "NEW", title: "Saabai Client Portal live at /login — HMAC-SHA256 session tokens, env-var client config (SAABAI_CLIENT_N_*), proxy.ts route protection on all /rex-* pages, Sign out in nav" },
       { time: "23:30", tag: "NEW", title: "Rex Feedback Panel live at /rex-dashboard — staff can report pricing errors, wrong materials, missed upsells, tone issues; Atlas (Sonnet 4.6) auto-reviews each submission with root cause + fix recommendation; Approve → Mark Implemented workflow built in" },
