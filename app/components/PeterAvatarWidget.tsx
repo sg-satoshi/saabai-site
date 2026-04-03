@@ -1105,7 +1105,21 @@ export default function PeterAvatarWidget() {
                   return (
                     <div className="shrink-0 px-3 pb-2 pt-1" style={{ background: "linear-gradient(to top, #fff 70%, transparent)" }}>
                       <button
-                        onClick={() => setQuoteEmailOpen(true)}
+                        onClick={() => {
+                          // Pre-fill email if customer already gave it in chat
+                          if (!quoteEmail) {
+                            const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+                            const userMessages = messagesRef.current.filter(m => m.role === "user");
+                            for (let i = userMessages.length - 1; i >= 0; i--) {
+                              const match = userMessages[i].content.match(emailPattern);
+                              if (match) {
+                                setQuoteEmail(match[0]);
+                                break;
+                              }
+                            }
+                          }
+                          setQuoteEmailOpen(true);
+                        }}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-150 active:scale-[0.98] hover:brightness-105"
                         style={{ background: "#0084FF", boxShadow: "0 4px 16px rgba(0,132,255,0.35)" }}
                       >
