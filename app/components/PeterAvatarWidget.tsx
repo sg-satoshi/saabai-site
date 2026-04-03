@@ -1284,7 +1284,7 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
-            <div className="px-3 py-2.5 flex gap-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
+            <div className="px-2 py-2.5 flex gap-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
               <input
                 type="text"
                 value={inputValue}
