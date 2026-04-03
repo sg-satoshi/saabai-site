@@ -16,16 +16,26 @@ import { type NextRequest } from "next/server";
 import { Resend } from "resend";
 import { fetchWeeklyDigestData } from "../../../lib/rex-stats";
 import { fetchRecentOrders } from "../../../lib/woo-client";
+import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
 import { createHash } from "crypto";
 
 export const runtime = "nodejs";
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
-function isAuthorized(req: NextRequest): boolean {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  // Vercel cron service
   if (req.headers.get("x-vercel-cron") === "1") return true;
+  // Manual trigger with secret
   const secret = req.headers.get("x-cron-secret");
-  return !!process.env.CRON_SECRET && secret === process.env.CRON_SECRET;
+  if (process.env.CRON_SECRET && secret === process.env.CRON_SECRET) return true;
+  // Logged-in portal session (browser testing)
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  if (token) {
+    const session = await verifySessionToken(token);
+    if (session) return true;
+  }
+  return false;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -335,7 +345,7 @@ function buildOperatorEmail(d: DigestEmailData, sent: boolean): string {
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!await isAuthorized(req)) {
     return new Response("Unauthorized", { status: 401 });
   }
 
