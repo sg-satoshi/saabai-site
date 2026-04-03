@@ -9,14 +9,17 @@
  *   PREMIUM_CHAT_MODEL=anthropic:claude-sonnet-4-6
  *   DEFAULT_CHAT_MODEL=openai:gpt-4o-mini
  *   PREMIUM_CHAT_MODEL=openai:gpt-4o
+ *   DEFAULT_CHAT_MODEL=google:gemini-2-0-flash-001
+ *   PREMIUM_CHAT_MODEL=google:gemini-2-0-pro-001
  *
- * Supported providers: "anthropic", "openai"
+ * Supported providers: "anthropic", "openai", "google"
  * The API route selects tier based on the `tier` field in the request body.
  * Default tier is "default" (cost-efficient). Use "premium" for qualified leads.
  */
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import type { LanguageModel } from "ai";
 
 function resolveModel(envKey: string, fallback: string): LanguageModel {
@@ -36,10 +39,12 @@ function resolveModel(envKey: string, fallback: string): LanguageModel {
       return anthropic(modelId);
     case "openai":
       return openai(modelId);
+    case "google":
+      return google(modelId);
     default:
       throw new Error(
         `[chat-config] Unknown provider "${provider}" in ${envKey}="${value}". ` +
-          `Supported: "anthropic", "openai".`
+          `Supported: "anthropic", "openai", "google".`
       );
   }
 }
