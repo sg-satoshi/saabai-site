@@ -203,6 +203,8 @@ export default function PeterAvatarWidget() {
   const [followUpChips, setFollowUpChips] = useState<string[]>([]);
   // Improvement #1: inline quote email capture
   const [quoteEmailOpen, setQuoteEmailOpen] = useState(false);
+  // Keep ref in sync so the re-engagement interval can read current value without stale closure
+  useEffect(() => { quoteEmailOpenRef.current = quoteEmailOpen; }, [quoteEmailOpen]);
   const [quoteEmail, setQuoteEmail] = useState("");
   const [quoteMobile, setQuoteMobile] = useState("");
   const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
@@ -231,6 +233,7 @@ export default function PeterAvatarWidget() {
   // Improvement #4: re-engagement
   const lastActivityRef = useRef<number>(Date.now());
   const reEngagementFiredRef = useRef(false);
+  const quoteEmailOpenRef = useRef(false);
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -336,6 +339,7 @@ export default function PeterAvatarWidget() {
     const interval = setInterval(() => {
       if (!isOpen || !isStarted || isEnded || isThinking || reEngagementFiredRef.current) return;
       if (chatModeRef.current !== "text") return;
+      if (quoteEmailOpenRef.current) return; // never interrupt while quote form is open
       if (Date.now() - lastActivityRef.current > 45000) {
         reEngagementFiredRef.current = true;
         lastActivityRef.current = Date.now(); // prevent re-trigger

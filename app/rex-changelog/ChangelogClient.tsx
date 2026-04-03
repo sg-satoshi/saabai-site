@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "12:30", tag: "FIX", title: "Re-engagement nudge suppressed while quote email form is open — 'Still there?' message was firing mid-form, causing showQuoteCapture to go false and the form to disappear; now checks quoteEmailOpenRef before firing" },
       { time: "11:00", tag: "NEW", title: "Saabai Admin view live at /saabai-admin — shows all configured clients, per-client health status, Rex stats summary (leads, email capture rate, avg quote, top material/source), platform aggregate totals; admin-only access enforced via clientId check" },
       { time: "10:00", tag: "NEW", title: "Feedback notification emails — staff submission triggers instant email alert to Saabai team with category, message, Atlas review verdict, and link to dashboard" },
       { time: "10:00", tag: "NEW", title: "Feedback audit trail — approvedAt and implementedAt timestamps stamped on status transitions; displayed inline on each feedback item" },
