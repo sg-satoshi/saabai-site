@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+import { track } from "../../lib/analytics";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatMode = "text" | "voice" | null;
@@ -466,6 +467,7 @@ export default function PeterAvatarWidget() {
     setQuoteEmailOpen(false);
     lastActivityRef.current = Date.now();
 
+    if (messagesRef.current.length === 0) track("first_message_sent");
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
@@ -543,6 +545,7 @@ export default function PeterAvatarWidget() {
 
       if (fullText.trim()) {
         const cleaned = fullText.trim();
+        if (/\$\d/.test(cleaned)) track("price_shown");
         messagesRef.current = [...updated, { role: "assistant", content: cleaned }];
         if (isText) {
           setDisplayMessages(prev => {
@@ -690,6 +693,7 @@ export default function PeterAvatarWidget() {
     isStartedRef.current = false;
     setIsStarted(false);
     setIsEnded(true);
+    track("conversation_ended", { messageCount: messagesRef.current.length });
   }
 
   async function submitEndPanel(skipEmail: boolean) {
@@ -742,6 +746,7 @@ export default function PeterAvatarWidget() {
     setQuoteEmailSending(false);
     setQuoteEmailSent(true);
     setQuoteEmailOpen(false);
+    track("lead_captured", { source: "rex_quote_email" });
   }
 
   async function handleSend() {
@@ -824,7 +829,7 @@ export default function PeterAvatarWidget() {
       {/* Launcher */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => { setIsOpen(true); track("widget_opened"); }}
           className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-full pl-3 pr-5 py-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110"
           style={{
             background: "#0084FF",

@@ -28,8 +28,16 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "2 Apr 2026",
+    date: "3 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "15:30", tag: "IMPROVEMENT", title: "Make.com webhook enriched — full payload now includes name, mobile, address, despatch, AI-analysed quote details, price, material, summary, and full transcript" },
+      { time: "15:25", tag: "NEW", title: "Analytics events wired into Rex widget — tracking widget_opened, first_message_sent, price_shown, lead_captured, and conversation_ended" },
+      { time: "15:20", tag: "IMPROVEMENT", title: "Automatic Sonnet upgrade for high-intent sessions — Rex switches to claude-sonnet-4-6 when pricing signals, engineering materials, or long conversations are detected" },
+    ],
+  },
+  {
+    date: "2 Apr 2026",
     entries: [
       { time: "19:10", tag: "IMPROVEMENT", title: "KB refactored into 7 topic modules (company, products, materials_clear, materials_engineering, materials_signage, selection, faqs) — full-context injection retained for latency; sectioned retrieval infra ready to flip on when KB exceeds 15k tokens." },
       { time: "17:45", tag: "IMPROVEMENT", title: "Knowledge base final compression — removed 5 redundant sections (business identity, what we do, ordering examples, key brands, duplicate FAQs). ~30% further token reduction." },

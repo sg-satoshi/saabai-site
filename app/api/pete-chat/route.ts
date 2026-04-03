@@ -93,6 +93,11 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+    // Upgrade to Sonnet for pricing, engineering materials, or longer conversations
+    const hasPrice       = coreMessages.some(m => /\$\d/.test(m.content));
+    const hasEngineering = coreMessages.some(m => /peek|ptfe|nylon|acetal|uhmwpe/i.test(m.content));
+    const tier = (hasPrice || hasEngineering || coreMessages.length > 6) ? "premium" : "default";
+
     // Cache the static system prompt (~7k tokens) — full-context injection is faster than tool retrieval at this KB size
     const cachedSystem: SystemModelMessage = {
       role: "system",
@@ -103,7 +108,7 @@ export async function POST(req: Request) {
     };
 
     const result = streamText({
-      model: getModel("default"),
+      model: getModel(tier),
       system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(8),

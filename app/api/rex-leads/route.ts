@@ -544,7 +544,22 @@ export async function POST(req: Request) {
         fetch(process.env.LEAD_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: source ?? "rex", email, note, timestamp }),
+          body: JSON.stringify({
+            source:       source ?? "rex",
+            email,
+            name,
+            mobile:       mobile ?? null,
+            address:      address ?? null,
+            despatch:     despatch ?? null,
+            note,
+            timestamp,
+            quoteDetails: analysis?.quoteDetails ?? null,
+            price:        analysis?.price ?? null,
+            priceParsed:  priceStr ? parsePriceValue(priceStr) : null,
+            material:     extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? null,
+            summary:      analysis?.summary ?? null,
+            transcript,
+          }),
         })
       );
     }
