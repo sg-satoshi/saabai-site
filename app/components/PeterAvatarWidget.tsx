@@ -1284,14 +1284,14 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
-            <div className="px-2 py-2.5 flex gap-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
+            <div className="px-3 py-2.5 flex gap-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
-                className="rex-input flex-1 rounded-full px-4 py-2 text-xs focus:outline-none transition-colors"
+                className="rex-input flex-1 rounded-full px-4 py-3 text-xs focus:outline-none transition-colors"
                 style={{ background: "#ffffff", color: "#111", border: "1px solid #c8dcff" }}
               />
               <button
