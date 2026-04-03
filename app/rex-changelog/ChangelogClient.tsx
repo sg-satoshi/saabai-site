@@ -32,6 +32,10 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "23:30", tag: "NEW", title: "Rex Feedback Panel live at /rex-dashboard — staff can report pricing errors, wrong materials, missed upsells, tone issues; Atlas (Sonnet 4.6) auto-reviews each submission with root cause + fix recommendation; Approve → Mark Implemented workflow built in" },
+      { time: "23:29", tag: "NEW", title: "Lead detail slide-out panel — click any lead row in dashboard to see full details: name, email, material, price, despatch, source, and AI conversation summary (new leads only)" },
+      { time: "23:28", tag: "IMPROVEMENT", title: "Conversation summary now stored per lead — Rex-analysed 2-3 sentence summary saved to Redis alongside each lead event for dashboard display" },
+      { time: "23:27", tag: "UI", title: "Dashboard readability overhaul — all label/body text darkened (#374151 body, #111827 headings), unified design token system (T.label, T.body, T.muted, T.card) across all components" },
       { time: "22:30", tag: "UI", title: "Shared navigation bar added across Dashboard, Analytics, and Changelog — RexNav component with active-state highlighting, PlasticOnline Rex branding, and live indicator; Dashboard converted to light theme matching Analytics" },
       { time: "22:08", tag: "NEW", title: "Mobile vs Desktop attribution tracking — utm_source=rex_mobile (55-65% traffic) vs rex_desktop (35-45% traffic), device-specific params in all emails, expected conversion 3-5% mobile / 6-10% desktop" },
       { time: "22:07", tag: "NEW", title: "Lead scoring & routing live — high-value leads (≥$200) marked priority in Pipedrive, low-value (<$200) routed to email nurture sequence" },

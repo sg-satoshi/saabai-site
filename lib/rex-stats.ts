@@ -18,15 +18,17 @@ function getRedis(): Redis | null {
 // ── Key names ─────────────────────────────────────────────────────────────────
 
 const K = {
-  total:       "rex:stats:total",
-  withEmail:   "rex:stats:with_email",
-  withPrice:   "rex:stats:with_price",
-  priceSum:    "rex:stats:price_sum",
-  priceCount:  "rex:stats:price_count",
-  materials:   "rex:hash:materials",
-  despatch:    "rex:hash:despatch",
-  sources:     "rex:hash:sources",
-  recent:      "rex:list:recent",
+  total:        "rex:stats:total",
+  withEmail:    "rex:stats:with_email",
+  withPrice:    "rex:stats:with_price",
+  priceSum:     "rex:stats:price_sum",
+  priceCount:   "rex:stats:price_count",
+  materials:    "rex:hash:materials",
+  despatch:     "rex:hash:despatch",
+  sources:      "rex:hash:sources",
+  recent:       "rex:list:recent",
+  feedbackHash: "rex:hash:feedback_items",
+  feedbackIds:  "rex:list:feedback_ids",
   day: (d: string) => `rex:day:${d}`,
 };
 
@@ -41,6 +43,35 @@ export interface LeadEvent {
   priceValue?: number;  // parsed numeric
   material?: string;
   despatch?: string;
+  summary?: string;     // AI-extracted 2-3 sentence conversation summary
+}
+
+export type FeedbackCategory =
+  | "pricing_error"
+  | "wrong_material"
+  | "missed_upsell"
+  | "bad_tone"
+  | "missing_info"
+  | "other";
+
+export type FeedbackStatus = "submitted" | "reviewed" | "approved" | "implemented";
+
+export interface AtlasReview {
+  valid: boolean;
+  rootCause: string;
+  recommendation: string;
+  confidence: "high" | "medium" | "low";
+  reviewedAt: string;
+}
+
+export interface FeedbackItem {
+  id: string;
+  submittedAt: string;
+  category: FeedbackCategory;
+  message: string;
+  leadRef?: string;
+  status: FeedbackStatus;
+  atlasReview?: AtlasReview;
 }
 
 export interface RexStats {
@@ -141,6 +172,7 @@ export async function trackLead(event: LeadEvent): Promise<void> {
       priceValue: priceVal > 0 ? priceVal : undefined,
       material:   event.material,
       despatch:   event.despatch,
+      summary:    event.summary,
     };
     pipeline.lpush(K.recent, JSON.stringify(record));
     pipeline.ltrim(K.recent, 0, 99); // keep last 100
@@ -234,4 +266,45 @@ function buildEmptyDays() {
 function formatDayLabel(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00+10:00");
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+}
+
+// ── Feedback CRUD ─────────────────────────────────────────────────────────────
+
+export async function trackFeedback(item: FeedbackItem): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const pipeline = redis.pipeline();
+    pipeline.hset(K.feedbackHash, { [item.id]: JSON.stringify(item) });
+    pipeline.lpush(K.feedbackIds, item.id);
+    pipeline.ltrim(K.feedbackIds, 0, 199); // keep last 200
+    await pipeline.exec();
+  } catch { /* never throw */ }
+}
+
+export async function fetchFeedback(): Promise<FeedbackItem[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  try {
+    const all = await redis.hgetall(K.feedbackHash) as Record<string, string> | null;
+    if (!all) return [];
+    const items = Object.values(all)
+      .map(v => { try { return typeof v === "string" ? JSON.parse(v) as FeedbackItem : null; } catch { return null; } })
+      .filter(Boolean) as FeedbackItem[];
+    // Sort newest first (ID is prefixed with timestamp)
+    items.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    return items.slice(0, 200);
+  } catch { return []; }
+}
+
+export async function updateFeedback(id: string, updates: Partial<FeedbackItem>): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const raw = await redis.hget(K.feedbackHash, id) as string | null;
+    if (!raw) return;
+    const item = JSON.parse(raw) as FeedbackItem;
+    const updated = { ...item, ...updates };
+    await redis.hset(K.feedbackHash, { [id]: JSON.stringify(updated) });
+  } catch { /* never throw */ }
 }

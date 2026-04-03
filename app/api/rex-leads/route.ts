@@ -781,14 +781,15 @@ export async function POST(req: Request) {
 
     // Track to Redis (fire and forget — never blocks response)
     trackLead({
-      timestamp: timestamp ?? new Date().toISOString(),
-      source:    source ?? "unknown",
-      name:      name ?? undefined,
-      email:     email ?? undefined,
-      price:     priceStr,
+      timestamp:  timestamp ?? new Date().toISOString(),
+      source:     source ?? "unknown",
+      name:       name ?? undefined,
+      email:      email ?? undefined,
+      price:      priceStr,
       priceValue: priceValue,
-      material:  extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? undefined,
-      despatch:  despatch ?? undefined,
+      material:   extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? undefined,
+      despatch:   despatch ?? undefined,
+      summary:    analysis?.summary ?? undefined,
     }).catch(() => {});
 
     // Build subject line from analysis or fallback to note price
