@@ -34,18 +34,19 @@ export default async function RexDashboardPage({
 function LoginScreen() {
   return (
     <div style={{
-      minHeight: "100vh", background: "#0d1117",
+      minHeight: "100vh", background: "#f9fafb",
       display: "flex", alignItems: "center", justifyContent: "center",
       fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
     }}>
       <div style={{
-        background: "#161b22", border: "1px solid #30363d",
+        background: "#fff", border: "1px solid #e5e7eb",
         borderRadius: 16, padding: "40px 48px", textAlign: "center", maxWidth: 360,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
       }}>
-        <p style={{ margin: "0 0 6px", fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: -1 }}>
+        <p style={{ margin: "0 0 6px", fontSize: 28, fontWeight: 900, color: "#111", letterSpacing: -1 }}>
           Plastic<span style={{ color: "#e13f00" }}>Online</span>
         </p>
-        <p style={{ margin: "0 0 32px", fontSize: 12, color: "#666", letterSpacing: 2, textTransform: "uppercase" }}>
+        <p style={{ margin: "0 0 32px", fontSize: 12, color: "#9ca3af", letterSpacing: 2, textTransform: "uppercase" }}>
           Rex Dashboard
         </p>
         <form method="POST" action="/api/rex-dashboard-auth">
@@ -56,9 +57,9 @@ function LoginScreen() {
             autoFocus
             style={{
               width: "100%", boxSizing: "border-box",
-              background: "#0d1117", border: "1px solid #30363d",
+              background: "#f9fafb", border: "1px solid #e5e7eb",
               borderRadius: 10, padding: "12px 16px", fontSize: 14,
-              color: "#fff", outline: "none", marginBottom: 12,
+              color: "#111", outline: "none", marginBottom: 12,
             }}
           />
           <button
