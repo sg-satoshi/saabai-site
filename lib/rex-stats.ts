@@ -326,6 +326,7 @@ export interface WeeklyWindow {
   emailCaptureRate: number; // 0-100
   topMaterials: Array<{ name: string; count: number }>;
   byDay: Array<{ date: string; label: string; count: number }>; // 7 days Mon→Sun
+  emailHashes: string[];  // SHA-256 hashes for this week's leads — used for WooCommerce order attribution
 }
 
 export interface WeeklyDigestData {
@@ -413,7 +414,10 @@ export async function fetchWeeklyDigestData(): Promise<WeeklyDigestData> {
       .slice(0, 3)
       .map(([name, count]) => ({ name, count }));
 
-    return { leads: total, withEmail, withPrice: priced.length, quotedRevenue: revenue, avgQuote, emailCaptureRate: emailRate, topMaterials, byDay: [] };
+    // Collect email hashes for WooCommerce attribution matching
+    const emailHashes = leads.map(l => l.emailHash).filter((h): h is string => !!h);
+
+    return { leads: total, withEmail, withPrice: priced.length, quotedRevenue: revenue, avgQuote, emailCaptureRate: emailRate, topMaterials, byDay: [], emailHashes };
   }
 
   const thisWeek: WeeklyWindow = {

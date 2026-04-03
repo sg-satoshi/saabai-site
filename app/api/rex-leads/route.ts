@@ -61,6 +61,31 @@ function getQuoteEmailSubject(email: string, price: string | null): string {
 }
 
 /**
+ * Add N business days to a date (Mon–Fri, skipping Sat/Sun)
+ */
+function addBusinessDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d;
+}
+
+/**
+ * Schedule Day-3 nurture email: 3 business days after capture, 10am Brisbane
+ */
+function getNurtureScheduleTime(captureTime: string | undefined): string {
+  const leadTime = captureTime ? new Date(captureTime) : new Date();
+  const brisbane = new Date(leadTime.toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }));
+  const target = addBusinessDays(brisbane, 3);
+  target.setHours(10, 0, 0, 0);
+  return target.toISOString();
+}
+
+/**
  * Calculate optimal follow-up email time
  * Logic: Check lead capture time → if after 4pm, queue for 9am next business day → else 9am same day
  * Only sends Mon-Fri 9am AEST (no weekend sends)
@@ -608,6 +633,70 @@ function followUpEmailHtml(
   `);
 }
 
+/* ── Day-3 nurture email ── */
+function nurtureEmailHtml(
+  note: string,
+  analysis: ConversationAnalysis | null,
+  name?: string,
+  customerData?: CheckoutData,
+  device: "mobile" | "desktop" = "desktop"
+) {
+  const quote = cleanNote(note) || "Your custom cut-to-size order";
+  let productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+
+  const cartUrl = extractCartUrl(note);
+  if (cartUrl && customerData && (customerData.name || customerData.email)) {
+    productUrl = enhanceUrlWithCheckout(cartUrl, customerData, device);
+  } else if (productUrl && !cartUrl) {
+    const url = new URL(productUrl);
+    url.searchParams.set("utm_source", device === "mobile" ? "rex_mobile_d3" : "rex_desktop_d3");
+    url.searchParams.set("utm_medium", "nurture");
+    url.searchParams.set("utm_campaign", "rex_day3");
+    productUrl = url.toString();
+  }
+
+  const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
+  const quoteDetails = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
+    ? analysis.quoteDetails
+    : quote;
+  const firstName = name ? name.trim().split(/\s+/)[0] : null;
+
+  return emailShell("Quick one from PlasticOnline", `
+    <p style="margin:0 0 20px;font-size:15px;color:#555555;line-height:1.8;">${firstName ? `Hey ${escapeHtml(firstName)},` : "Hey,"}</p>
+
+    <p style="margin:0 0 24px;font-size:15px;color:#1a1a1a;line-height:1.8;font-weight:500;">Rex here — just wanted to make sure your quote didn't slip through the cracks.</p>
+
+    <!-- Minimal quote recap -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#fafafa;border:1px solid #ebebeb;border-left:4px solid #1a1a1a;border-radius:6px;padding:18px 20px;">
+          <p style="margin:0 0 ${price ? "10px" : "0"};font-size:14px;color:#3e3e3e;line-height:1.7;">${quoteDetails.replace(/\n/g, "<br>")}</p>
+          ${price ? `<p style="margin:0;font-size:20px;font-weight:800;color:#e13f00;">${price}</p>` : ""}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 28px;font-size:15px;color:#555555;line-height:1.8;">
+      Stock's still good and your price is locked. If now's not the right time, no stress — reply here and I'll keep your quote on file.
+    </p>
+
+    <!-- CTA -->
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+      <tr>
+        <td style="background:#1a1a1a;border-radius:50px;mso-padding-alt:0;">
+          <a href="${productUrl}" style="display:inline-block;padding:14px 36px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.3px;border-radius:50px;">Place My Order &rarr;</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;font-size:13px;color:#999999;line-height:1.9;">
+      After this we'll leave you alone. Promise. But if you ever need another quote,
+      <a href="${CONTACT_URL}" style="color:#e13f00;text-decoration:none;font-weight:600;">you know where to find us</a>
+      or call <a href="tel:0755646744" style="color:#e13f00;text-decoration:none;font-weight:600;">(07) 5564 6744</a>.
+    </p>
+  `);
+}
+
 function teamNotificationHtml(
   name: string | undefined,
   email: string,
@@ -865,6 +954,21 @@ export async function POST(req: Request) {
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );
+
+      // 3. Day-3 nurture email — only for leads with a real quoted price (genuine intent signal)
+      // Fires 3 business days after capture at 10am Brisbane — final touch before going quiet
+      if (priceValue > 0) {
+        const nurtureAt = getNurtureScheduleTime(timestamp);
+        tasks.push(
+          resend.emails.send({
+            from: FROM_EMAIL,
+            to: email,
+            subject: "Quick one from PlasticOnline",
+            html: nurtureEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData, device),
+            scheduledAt: nurtureAt,
+          } as Parameters<typeof resend.emails.send>[0])
+        );
+      }
     }
 
     // 3. Team notification — Reply-To is set to the customer's actual email so hitting Reply

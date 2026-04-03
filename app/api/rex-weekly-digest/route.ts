@@ -356,26 +356,18 @@ export async function GET(req: NextRequest) {
       fetchRecentOrders(7),
     ]);
 
-    // Revenue attribution: match last 7 days orders against this week's Rex lead email hashes
-    const thisWeekLeadHashes = new Set<string>(
-      // We don't store hashes in the weekly window — rebuild from leads in recent list
-      // The WooCommerce matching is an approximation: any order from a known Rex lead email
-    );
-
-    // Simple attribution: check all orders against PLON's lead emails (same logic as dashboard)
-    // For the digest we just count matches + sum revenue
+    // Revenue attribution: match this week's Rex lead email hashes against WooCommerce orders
+    const thisWeekHashSet = new Set(weekly.thisWeek.emailHashes);
     let attributedOrders = 0;
     let attributedRevenue = 0;
 
-    if (orders.length > 0) {
-      // We don't have email hashes from the weekly window directly.
-      // Fall back to checking if order email is in any recent lead (all-time recent list).
-      // This is an approximation — good enough for a weekly digest.
-      const recentEmails = new Set<string>(); // placeholder — hashes not available in weekly window
-      // Skip precise attribution for the digest (dashboard has the full version)
-      // Instead use total orders as context
-      attributedOrders = 0; // will be populated when we add hash tracking to weekly window
-      attributedRevenue = 0;
+    for (const order of orders) {
+      if (!order.billing?.email) continue;
+      const hash = hashEmail(order.billing.email);
+      if (thisWeekHashSet.has(hash)) {
+        attributedOrders++;
+        attributedRevenue += parseFloat(order.total) || 0;
+      }
     }
 
     const range = weekRange();

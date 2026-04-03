@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ClientConfig } from "../../lib/clients";
 import type { RexStats } from "../../lib/rex-stats";
 
@@ -142,6 +143,65 @@ function GenericClientCard({ client }: { client: ClientConfig }) {
   );
 }
 
+// ── Digest trigger ────────────────────────────────────────────────────────────
+
+type DigestState = "idle" | "sending" | "sent" | "error";
+
+function DigestTrigger() {
+  const [state, setState] = useState<DigestState>("idle");
+  const [result, setResult] = useState<{ leads?: number; emailCaptureRate?: string } | null>(null);
+
+  async function fire() {
+    setState("sending");
+    setResult(null);
+    try {
+      const res = await fetch("/api/rex-weekly-digest");
+      const data = await res.json();
+      if (data.ok) {
+        setState("sent");
+        setResult(data.thisWeek);
+      } else {
+        setState("error");
+      }
+    } catch {
+      setState("error");
+    }
+    setTimeout(() => { setState("idle"); setResult(null); }, 8000);
+  }
+
+  const bgColor   = state === "sent" ? "#f0fdf4" : state === "error" ? "#fef2f2" : "#f9fafb";
+  const border    = state === "sent" ? "#bbf7d0" : state === "error" ? "#fecaca" : "#e5e7eb";
+  const textColor = state === "sent" ? "#059669" : state === "error" ? "#dc2626" : "#374151";
+
+  return (
+    <div style={{ ...T.card, background: bgColor, border: `1px solid ${border}`, padding: "20px 24px", marginTop: 28, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div>
+        <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 700, color: textColor }}>
+          {state === "idle"    && "Weekly Performance Digest"}
+          {state === "sending" && "Sending digest emails…"}
+          {state === "sent"    && `Sent! ${result?.leads ?? 0} leads · ${result?.emailCaptureRate ?? "—"} capture rate this week`}
+          {state === "error"   && "Send failed — check Resend + env vars"}
+        </p>
+        <p style={{ ...T.muted, margin: 0 }}>
+          {state === "idle" ? "Fires automatically every Monday 9am AEST via Vercel Cron" : ""}
+        </p>
+      </div>
+      <button
+        onClick={fire}
+        disabled={state === "sending"}
+        style={{
+          padding: "8px 18px", borderRadius: 8, border: "none", cursor: state === "sending" ? "not-allowed" : "pointer",
+          background: state === "sending" ? "#e5e7eb" : "#111827",
+          color: state === "sending" ? "#9ca3af" : "#ffffff",
+          fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" as const,
+        }}
+      >
+        {state === "sending" ? "Sending…" : "Send Now"}
+      </button>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function AdminClient({
@@ -220,6 +280,9 @@ export default function AdminClient({
               : <GenericClientCard key={client.id} client={client} />;
           })}
         </div>
+
+        {/* Actions */}
+        <DigestTrigger />
 
         {/* Footer */}
         <p style={{ marginTop: 40, textAlign: "center", ...T.muted }}>
