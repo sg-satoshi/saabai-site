@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { trackLead, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+import type { CheckoutData } from "../../../lib/url-generator";
 
 export const runtime = "edge";
 
@@ -219,10 +220,72 @@ function emailShell(preheader: string, body: string) {
 </html>`;
 }
 
+/**
+ * Extract cart URL from Rex's last message (looks for Lock it in → links)
+ */
+function extractCartUrl(note: string): string | null {
+  // Match markdown link format: [Lock it in →](url) or [anytext](url)  
+  const match = note.match(/\[(?:Lock it in|Add to cart|View product)[^\]]*\]\((https?:\/\/[^)]+)\)/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Enhance a cart/product URL with checkout pre-fill parameters
+ */
+function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): string {
+  try {
+    const url = new URL(baseUrl);
+    
+    // Parse name into first/last
+    if (customerData.name) {
+      const parts = customerData.name.trim().split(/\s+/);
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      if (firstName) url.searchParams.set("billing_first_name", firstName);
+      if (lastName) url.searchParams.set("billing_last_name", lastName);
+    }
+    
+    if (customerData.email) url.searchParams.set("billing_email", customerData.email);
+    if (customerData.phone) url.searchParams.set("billing_phone", customerData.phone);
+    
+    // Parse address (format: "123 Main St, Brisbane, QLD, 4000")
+    if (customerData.address) {
+      const parts = customerData.address.split(",").map(s => s.trim());
+      if (parts[0]) url.searchParams.set("billing_address_1", parts[0]);
+      if (parts[1]) url.searchParams.set("billing_city", parts[1]);
+      if (parts[2]) url.searchParams.set("billing_state", parts[2]);
+      if (parts[3]) url.searchParams.set("billing_postcode", parts[3]);
+    }
+    
+    // Set shipping method
+    if (customerData.deliveryMethod === "pickup") {
+      url.searchParams.set("shipping_method", "local_pickup");
+    } else if (customerData.deliveryMethod === "delivery") {
+      url.searchParams.set("shipping_method", "flat_rate");
+    }
+    
+    // Redirect to checkout instead of cart
+    if (url.pathname.includes("/cart")) {
+      url.pathname = url.pathname.replace("/cart", "/checkout");
+    }
+    
+    return url.toString();
+  } catch {
+    return baseUrl; // Fall back to original URL if parsing fails
+  }
+}
+
 /* ── Customer quote email ── */
-function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string) {
+function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string, customerData?: CheckoutData) {
   const quote = cleanNote(note) || "Custom cut-to-size order";
-  const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  let productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  
+  // If we have customer data and can extract cart URL from note, enhance it with checkout params
+  const cartUrl = extractCartUrl(note);
+  if (cartUrl && customerData && (customerData.name || customerData.email)) {
+    productUrl = enhanceUrlWithCheckout(cartUrl, customerData);
+  }
+  
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
   const quoteDetails = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
     ? analysis.quoteDetails
@@ -244,14 +307,16 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
     </table>
 
     <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Size or material changed? Just reply to this email and we'll re-quote straight away.
+      ${customerData && (customerData.name || customerData.email) 
+        ? "Your details are already filled in — just review and confirm your order." 
+        : "Size or material changed? Just reply to this email and we'll re-quote straight away."}
     </p>
 
     <!-- CTA -->
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
       <tr>
         <td style="background:#e13f00;border-radius:50px;mso-padding-alt:0;">
-          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Place Your Order &rarr;</a>
+          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">${customerData && (customerData.name || customerData.email) ? "Complete Your Order" : "Place Your Order"} &rarr;</a>
         </td>
       </tr>
     </table>
@@ -269,9 +334,16 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
 }
 
 /* ── Follow-up email (22hrs later) ── */
-function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string) {
+function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string, customerData?: CheckoutData) {
   const quote = cleanNote(note) || "Your custom cut-to-size order";
-  const productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  let productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
+  
+  // If we have customer data and can extract cart URL from note, enhance it with checkout params
+  const cartUrl = extractCartUrl(note);
+  if (cartUrl && customerData && (customerData.name || customerData.email)) {
+    productUrl = enhanceUrlWithCheckout(cartUrl, customerData);
+  }
+  
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
   const quoteDetails = analysis?.quoteDetails && analysis.quoteDetails !== "No quote provided"
     ? analysis.quoteDetails
@@ -293,7 +365,9 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, 
     </table>
 
     <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
-      Everything's in stock. Just <a href="${productUrl}" style="color:#e13f00;font-weight:700;text-decoration:none;">place your order online</a> or reply here if anything's changed.
+      ${customerData && (customerData.name || customerData.email)
+        ? "Everything's in stock. Your checkout is pre-filled — just click below to complete your order."
+        : "Everything's in stock. Just <a href=\"" + productUrl + "\" style=\"color:#e13f00;font-weight:700;text-decoration:none;\">place your order online</a> or reply here if anything's changed."}
     </p>
 
     <!-- CTA -->
@@ -500,27 +574,36 @@ export async function POST(req: Request) {
       ? `Rex Lead: ${displayName} — ${productSnippet} — ${price}`
       : `Rex Lead: ${displayName} — ${productSnippet}`;
 
+    // Build customer data for checkout pre-fill (if available)
+    const customerData: CheckoutData | undefined = (name || email || mobile || address) ? {
+      name: name ?? undefined,
+      email: email ?? undefined,
+      phone: mobile ?? undefined,
+      address: address ?? undefined,
+      deliveryMethod: despatch === "pickup" ? "pickup" : despatch === "delivery" ? "delivery" : undefined,
+    } : undefined;
+
     const tasks: Promise<unknown>[] = [];
 
     if (email) {
-      // 1. Immediate quote email to customer
+      // 1. Immediate quote email to customer (with one-click checkout if data available)
       tasks.push(
         resend.emails.send({
           from: FROM_EMAIL,
           to: email,
           subject: "Your quote from Rex at PlasticOnline",
-          html: quoteEmailHtml(note ?? "", analysis, leadName ?? undefined),
+          html: quoteEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData),
         })
       );
 
-      // 2. Follow-up email — 22 hours later
+      // 2. Follow-up email — 22 hours later (with one-click checkout if data available)
       const followUpAt = new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString();
       tasks.push(
         resend.emails.send({
           from: FROM_EMAIL,
           to: email,
           subject: "Still need that plastic cut? Your quote is ready",
-          html: followUpEmailHtml(note ?? "", analysis, leadName ?? undefined),
+          html: followUpEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData),
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );

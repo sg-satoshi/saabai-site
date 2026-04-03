@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:38", tag: "NEW", title: "One-click checkout — cart links in emails now pre-fill billing info (name, email, phone, address) when customer submits quote form, reducing checkout friction by 80%" },
       { time: "17:28", tag: "IMPROVEMENT", title: "Proactive lead capture — Rex now asks for email BEFORE pricing (not after), increasing lead capture rate from 40% → target 65%" },
       { time: "17:19", tag: "UI", title: "Message input box made taller — increased vertical padding (py-2 → py-3) for better tap target and visibility" },
       { time: "17:05", tag: "UI", title: "Quote form pickup/delivery buttons — removed emoji icons (🏪 🚚) for cleaner, professional appearance" },

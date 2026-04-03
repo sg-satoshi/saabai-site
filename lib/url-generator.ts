@@ -113,3 +113,75 @@ export function getCartUrl(productId: number, variationId?: number, quantity: nu
   
   return `${base}?${params.toString()}`;
 }
+
+export interface CheckoutData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  deliveryMethod?: "pickup" | "delivery";
+}
+
+/**
+ * Generate a pre-filled checkout URL for one-click purchase.
+ * Customer data from Rex quote form is passed through so WooCommerce checkout is pre-populated.
+ * 
+ * @param productId - WooCommerce product ID
+ * @param variationId - WooCommerce variation ID (if applicable)
+ * @param quantity - Quantity to add
+ * @param checkoutData - Customer details from quote form
+ * @returns Checkout URL with pre-filled fields
+ */
+export function getCheckoutUrl(
+  productId: number,
+  variationId: number | undefined,
+  quantity: number,
+  checkoutData: CheckoutData
+): string {
+  const params = new URLSearchParams({
+    "add-to-cart": String(productId),
+    quantity: String(quantity),
+  });
+  
+  if (variationId) {
+    params.append("variation_id", String(variationId));
+  }
+  
+  // Parse name into first/last if provided
+  if (checkoutData.name) {
+    const parts = checkoutData.name.trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
+    if (firstName) params.append("billing_first_name", firstName);
+    if (lastName) params.append("billing_last_name", lastName);
+  }
+  
+  if (checkoutData.email) {
+    params.append("billing_email", checkoutData.email);
+  }
+  
+  if (checkoutData.phone) {
+    params.append("billing_phone", checkoutData.phone);
+  }
+  
+  // Parse address string if provided (format: "123 Main St, Brisbane, QLD, 4000")
+  if (checkoutData.address) {
+    const addressParts = checkoutData.address.split(",").map(s => s.trim());
+    if (addressParts.length >= 1) params.append("billing_address_1", addressParts[0]);
+    if (addressParts.length >= 2) params.append("billing_city", checkoutData.city || addressParts[1]);
+    if (addressParts.length >= 3) params.append("billing_state", checkoutData.state || addressParts[2]);
+    if (addressParts.length >= 4) params.append("billing_postcode", checkoutData.postcode || addressParts[3]);
+  }
+  
+  // Set shipping method based on delivery preference
+  if (checkoutData.deliveryMethod === "pickup") {
+    params.append("shipping_method", "local_pickup");
+  } else if (checkoutData.deliveryMethod === "delivery") {
+    params.append("shipping_method", "flat_rate");
+  }
+  
+  return `https://www.plasticonline.com.au/checkout/?${params.toString()}`;
+}
