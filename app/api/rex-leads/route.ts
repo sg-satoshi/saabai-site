@@ -615,6 +615,7 @@ export async function POST(req: Request) {
         from: FROM_EMAIL,
         to: TEAM_EMAIL,
         replyTo: email ? [email] : undefined,
+        headers: email ? { "Reply-To": email } : undefined,
         subject: teamSubject,
         html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, address, despatch, analysis, transcript),
       })
