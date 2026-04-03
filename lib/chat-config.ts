@@ -73,3 +73,64 @@ export function getPremiumModel(): LanguageModel {
 export function getModel(tier: "default" | "premium" = "default"): LanguageModel {
   return tier === "premium" ? getPremiumModel() : getDefaultModel();
 }
+
+/**
+ * Analyze conversation depth to detect if escalation to premium model is needed.
+ * Returns "premium" if conversation shows technical complexity or length.
+ * Used for dynamic mid-conversation model switching (Gemini → Claude).
+ */
+export function analyzeConversationDepth(
+  messages: Array<{ role: string; content: string }>
+): "default" | "premium" {
+  if (messages.length === 0) return "default";
+
+  const allText = messages.map(m => m.content).join(" ").toLowerCase();
+
+  // Technical keywords that indicate complex material science questions
+  const technicalKeywords = [
+    // Bonding & adhesives
+    "bond", "solvent", "cement", "craze", "adhesive", "glue",
+    // Thermal & mechanical
+    "stress crack", "creep", "fatigue", "thermal", "expansion",
+    "thermoform", "forming", "heat",
+    // UV & weathering
+    "uv resist", "yellow", "degrad", "weather", "outdoor durability",
+    // Material properties
+    "galvan", "elastomer", "filler", "reinforc", "compos",
+    "hygrosc", "moisture absorb", "moisture content",
+    // Fabrication
+    "machine", "router", "laser cut", "cnc", "weld", "anneal",
+    // Specific materials requiring depth
+    "ptfe", "teflon", "creep", "virgin", "reprocess",
+    "uhmwpe", "wear resist",
+    "acetal", "delrin", "pom",
+    // Complex comparisons
+    "vs ", "versus", "difference between", "compare", "better for",
+  ];
+
+  const hasTechnicalKeyword = technicalKeywords.some(kw => allText.includes(kw));
+
+  // Long conversation → likely escalated to complex questions
+  const conversationLength = messages.length;
+  const isLongConversation = conversationLength > 8;
+
+  // Correction/confusion pattern → customer is pushing back or unclear
+  const lastUserMsg = messages
+    .filter(m => m.role === "user")
+    .pop()?.content.toLowerCase() ?? "";
+
+  const isCorrection =
+    lastUserMsg.includes("but ") ||
+    lastUserMsg.includes("actually") ||
+    lastUserMsg.includes("wait") ||
+    lastUserMsg.includes("no ") ||
+    lastUserMsg.includes("what about") ||
+    lastUserMsg.includes("instead");
+
+  // Escalate if any factor detected
+  if (hasTechnicalKeyword || isLongConversation || isCorrection) {
+    return "premium";
+  }
+
+  return "default";
+}

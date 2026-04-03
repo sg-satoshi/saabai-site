@@ -1,5 +1,5 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
-import { getModel } from "../../../lib/chat-config";
+import { getModel, analyzeConversationDepth } from "../../../lib/chat-config";
 import { getClientConfig } from "../../../lib/rex-config";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
@@ -49,10 +49,19 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-    // Proactive model selection based on intent
+    // Dynamic model selection: start with intent, then analyze full conversation depth
     const firstMsg = coreMessages[0]?.content || "";
     const intent = detectIntent(firstMsg);
-    const tier = (intent !== "general" || coreMessages.length > 6) ? "premium" : "default";
+    let tier: "default" | "premium" = (intent !== "general" || coreMessages.length > 6) ? "premium" : "default";
+
+    // Mid-conversation escalation: if conversation shows technical depth, switch to premium model
+    // This allows Gemini (default/cheap) for simple quotes, Claude (premium) for complex material questions
+    if (coreMessages.length > 1) {
+      const depthTier = analyzeConversationDepth(coreMessages);
+      if (depthTier === "premium") {
+        tier = "premium";
+      }
+    }
 
     // Cache the static system prompt (~7k tokens) — full-context injection is faster than tool retrieval at this KB size
     const cachedSystem: SystemModelMessage = {
