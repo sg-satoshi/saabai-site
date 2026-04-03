@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import RexNav from "../components/RexNav";
 
 type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT" | "DEBUG";
 
@@ -31,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "22:30", tag: "UI", title: "Shared navigation bar added across Dashboard, Analytics, and Changelog — RexNav component with active-state highlighting, PlasticOnline Rex branding, and live indicator; Dashboard converted to light theme matching Analytics" },
       { time: "22:08", tag: "NEW", title: "Mobile vs Desktop attribution tracking — utm_source=rex_mobile (55-65% traffic) vs rex_desktop (35-45% traffic), device-specific params in all emails, expected conversion 3-5% mobile / 6-10% desktop" },
       { time: "22:07", tag: "NEW", title: "Lead scoring & routing live — high-value leads (≥$200) marked priority in Pipedrive, low-value (<$200) routed to email nurture sequence" },
       { time: "22:06", tag: "NEW", title: "Follow-up email timing optimization — auto-scheduled for 9am business hours (Mon-Fri), weekend captures → Monday 9am, expected +10-20% CTR improvement" },
@@ -330,6 +332,8 @@ export default function ChangelogClient() {
   return (
     <div style={{ minHeight: "100vh", background: "#06070d", color: "#e8e8f0", fontFamily: "var(--font-geist-sans)" }}>
 
+      <RexNav />
+
       {/* Ambient glow */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "-15%", left: "50%", transform: "translateX(-50%)", width: "900px", height: "600px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(37,211,102,0.06) 0%, transparent 65%)" }} />
@@ -339,17 +343,7 @@ export default function ChangelogClient() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: "820px", margin: "0 auto", padding: "0 24px 100px" }}>
 
         {/* Hero */}
-        <div style={{ paddingTop: "64px", paddingBottom: "48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "36px" }}>
-            <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none" }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              saabai.ai
-            </a>
-            <a href="/rex-dashboard" style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#444", fontSize: "13px", textDecoration: "none" }}>
-              Dashboard
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </a>
-          </div>
+        <div style={{ paddingTop: "48px", paddingBottom: "48px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
 
           <a
             href="https://www.plasticonline.com.au"

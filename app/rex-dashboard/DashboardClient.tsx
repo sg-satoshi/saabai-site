@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RexStats, LeadEvent } from "../../lib/rex-stats";
+import RexNav from "../components/RexNav";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -42,15 +43,18 @@ function StatCard({
 }) {
   return (
     <div style={{
-      background: "#161b22", border: `1px solid ${accent ? "#e13f0040" : "#30363d"}`,
-      borderRadius: 14, padding: "20px 24px",
-      borderTop: accent ? "3px solid #e13f00" : "3px solid #30363d",
+      background: "#fff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 16,
+      padding: "20px 24px",
+      borderTop: accent ? "3px solid #e13f00" : "3px solid #e5e7eb",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
     }}>
-      <p style={{ margin: "0 0 4px", fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: 1.2 }}>{label}</p>
-      <p style={{ margin: "0 0 2px", fontSize: 32, fontWeight: 800, color: accent ? "#e13f00" : "#fff", letterSpacing: -1, lineHeight: 1 }}>
+      <p style={{ margin: "0 0 6px", fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 600 }}>{label}</p>
+      <p style={{ margin: "0 0 4px", fontSize: 34, fontWeight: 800, color: accent ? "#e13f00" : "#111827", letterSpacing: -1.5, lineHeight: 1 }}>
         {value}
       </p>
-      {sub && <p style={{ margin: 0, fontSize: 11, color: "#555" }}>{sub}</p>}
+      {sub && <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>{sub}</p>}
     </div>
   );
 }
@@ -68,15 +72,15 @@ function BarChart({ days }: { days: { label: string; count: number }[] }) {
               style={{
                 width: "100%",
                 height: `${Math.max((d.count / max) * 100, d.count > 0 ? 8 : 2)}%`,
-                background: d.count > 0 ? "#e13f00" : "#1e242c",
-                borderRadius: "3px 3px 0 0",
+                background: d.count > 0 ? "#e13f00" : "#f3f4f6",
+                borderRadius: "4px 4px 0 0",
                 transition: "height 0.3s ease",
                 minHeight: d.count > 0 ? 4 : 1,
               }}
             />
           </div>
           {i % 2 === 0 && (
-            <span style={{ fontSize: 9, color: "#444", whiteSpace: "nowrap", transform: "rotate(-35deg)", transformOrigin: "top center" }}>
+            <span style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap", transform: "rotate(-35deg)", transformOrigin: "top center" }}>
               {d.label}
             </span>
           )}
@@ -87,15 +91,15 @@ function BarChart({ days }: { days: { label: string; count: number }[] }) {
 }
 
 function HBar({ label, count, max, color = "#e13f00" }: { label: string; count: number; max: number; color?: string }) {
-  const pct = max > 0 ? (count / max) * 100 : 0;
+  const p = max > 0 ? (count / max) * 100 : 0;
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 12, color: "#ccc" }}>{label}</span>
-        <span style={{ fontSize: 12, color: "#666" }}>{count}</span>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+        <span style={{ fontSize: 12, color: "#374151", fontWeight: 500 }}>{label}</span>
+        <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600 }}>{count}</span>
       </div>
-      <div style={{ height: 6, background: "#1e242c", borderRadius: 3, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 3, transition: "width 0.4s ease" }} />
+      <div style={{ height: 6, background: "#f3f4f6", borderRadius: 99, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${p}%`, background: color, borderRadius: 99, transition: "width 0.4s ease" }} />
       </div>
     </div>
   );
@@ -103,9 +107,12 @@ function HBar({ label, count, max, color = "#e13f00" }: { label: string; count: 
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 14, padding: "20px 24px" }}>
+    <div style={{
+      background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16,
+      padding: "20px 24px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+    }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <p style={{ margin: 0, fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: 1.2 }}>{title}</p>
+        <p style={{ margin: 0, fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 600 }}>{title}</p>
         {action}
       </div>
       {children}
@@ -138,58 +145,43 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0d1117",
+      minHeight: "100vh", background: "#f9fafb",
       fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-      color: "#fff",
+      color: "#111827",
     }}>
 
-      {/* Header */}
-      <div style={{ background: "#161b22", borderBottom: "1px solid #30363d", padding: "0 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: -0.5 }}>
-              Plastic<span style={{ color: "#e13f00" }}>Online</span>
-              <span style={{ fontSize: 12, fontWeight: 400, color: "#555", marginLeft: 10, letterSpacing: 0 }}>Rex Dashboard</span>
-            </p>
-            <div style={{ display: "flex", gap: 2, marginLeft: 16 }}>
-              {(["overview", "leads"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  style={{
-                    padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                    border: "none", cursor: "pointer", transition: "all 0.15s",
-                    background: tab === t ? "#e13f0020" : "transparent",
-                    color: tab === t ? "#e13f00" : "#666",
-                  }}
-                >
-                  {t === "overview" ? "Overview" : "Recent Leads"}
-                </button>
-              ))}
-            </div>
-          </div>
-          <a
-            href="/rex-changelog"
-            style={{ fontSize: 12, color: "#555", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 1v5l3 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
-            </svg>
-            Changelog →
-          </a>
+      <RexNav />
+
+      {/* Sub-nav tabs */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "0 32px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 2, height: 44, alignItems: "center" }}>
+          {(["overview", "leads"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: "none", cursor: "pointer", transition: "all 0.15s",
+                background: tab === t ? "#e13f0010" : "transparent",
+                color: tab === t ? "#e13f00" : "#6b7280",
+              }}
+            >
+              {t === "overview" ? "Overview" : "Recent Leads"}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 32px 64px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 32px 64px" }}>
 
         {!hasData && (
           <div style={{
-            background: "#161b22", border: "1px solid #30363d", borderRadius: 14,
-            padding: "32px", textAlign: "center", marginBottom: 32,
+            background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16,
+            padding: "32px", textAlign: "center", marginBottom: 28,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
           }}>
-            <p style={{ margin: "0 0 8px", fontSize: 15, color: "#fff", fontWeight: 600 }}>Tracking is live</p>
-            <p style={{ margin: 0, fontSize: 13, color: "#555" }}>Stats will appear here as leads come in through Rex.</p>
+            <p style={{ margin: "0 0 6px", fontSize: 15, color: "#111827", fontWeight: 600 }}>Tracking is live</p>
+            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>Stats will appear here as leads come in through Rex.</p>
           </div>
         )}
 
@@ -210,7 +202,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
                   <BarChart days={stats.dailyCounts} />
                 ) : (
                   <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <p style={{ margin: 0, fontSize: 12, color: "#444" }}>No data yet</p>
+                    <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>No data yet</p>
                   </div>
                 )}
               </Section>
@@ -224,7 +216,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
                     max={topSources[0][1]}
                     color="#e13f00"
                   />
-                )) : <p style={{ margin: 0, fontSize: 12, color: "#444" }}>No data yet</p>}
+                )) : <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>No data yet</p>}
               </Section>
             </div>
 
@@ -233,7 +225,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
               <Section title="Material Mix">
                 {topMaterials.length > 0 ? topMaterials.map(([mat, count]) => (
                   <HBar key={mat} label={mat} count={count} max={maxMaterial} />
-                )) : <p style={{ margin: 0, fontSize: 12, color: "#444" }}>No data yet</p>}
+                )) : <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>No data yet</p>}
               </Section>
 
               <Section title="Fulfilment Preference">
@@ -241,32 +233,32 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
                   <>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
                       <div style={{ textAlign: "center" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#fff" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#111827" }}>
                           {Math.round((pickupCount / totalDespatch) * 100)}%
                         </p>
-                        <p style={{ margin: 0, fontSize: 11, color: "#555" }}>Pick Up</p>
+                        <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>Pick Up</p>
                       </div>
                       <div style={{ textAlign: "center" }}>
                         <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#e13f00" }}>
                           {Math.round((deliveryCount / totalDespatch) * 100)}%
                         </p>
-                        <p style={{ margin: 0, fontSize: 11, color: "#555" }}>Delivery</p>
+                        <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>Delivery</p>
                       </div>
                     </div>
-                    <div style={{ height: 8, background: "#1e242c", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: 8, background: "#f3f4f6", borderRadius: 99, overflow: "hidden" }}>
                       <div style={{
                         height: "100%",
                         width: `${(pickupCount / totalDespatch) * 100}%`,
-                        background: "linear-gradient(90deg, #666 0%, #e13f00 100%)",
+                        background: "linear-gradient(90deg, #d1d5db 0%, #e13f00 100%)",
                       }} />
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-                      <span style={{ fontSize: 10, color: "#444" }}>Pick Up ({pickupCount})</span>
-                      <span style={{ fontSize: 10, color: "#444" }}>Delivery ({deliveryCount})</span>
+                      <span style={{ fontSize: 10, color: "#9ca3af" }}>Pick Up ({pickupCount})</span>
+                      <span style={{ fontSize: 10, color: "#9ca3af" }}>Delivery ({deliveryCount})</span>
                     </div>
                   </>
                 ) : (
-                  <p style={{ margin: 0, fontSize: 12, color: "#444" }}>No data yet</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>No data yet</p>
                 )}
               </Section>
             </div>
@@ -275,7 +267,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
             <Section title="Recent Leads" action={
               <button
                 onClick={() => setTab("leads")}
-                style={{ fontSize: 11, color: "#555", background: "none", border: "none", cursor: "pointer" }}
+                style={{ fontSize: 11, color: "#6b7280", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
               >
                 View all →
               </button>
@@ -292,13 +284,13 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
         )}
 
         {/* Footer */}
-        <p style={{ marginTop: 32, textAlign: "center", fontSize: 11, color: "#333" }}>
+        <p style={{ marginTop: 32, textAlign: "center", fontSize: 11, color: "#9ca3af" }}>
           {stats.trackingSince
             ? `Tracking since ${new Date(stats.trackingSince).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`
             : "Tracking active"
           }
           {" · "}
-          <a href="/rex-dashboard" style={{ color: "#444", textDecoration: "none" }}>Refresh</a>
+          <a href="/rex-dashboard" style={{ color: "#6b7280", textDecoration: "none" }}>Refresh</a>
         </p>
       </div>
     </div>
@@ -307,7 +299,7 @@ export default function DashboardClient({ stats }: { stats: RexStats }) {
 
 function LeadsTable({ leads }: { leads: LeadEvent[] }) {
   if (!leads.length) {
-    return <p style={{ margin: 0, fontSize: 12, color: "#444" }}>No leads yet — they&apos;ll appear here as they come in.</p>;
+    return <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>No leads yet — they&apos;ll appear here as they come in.</p>;
   }
   return (
     <div style={{ overflowX: "auto" }}>
@@ -317,40 +309,40 @@ function LeadsTable({ leads }: { leads: LeadEvent[] }) {
             {["Time", "Name", "Email", "Material", "Price", "Despatch", "Source"].map(h => (
               <th key={h} style={{
                 textAlign: "left", padding: "0 12px 10px 0",
-                fontSize: 10, color: "#444", fontWeight: 700,
+                fontSize: 10, color: "#9ca3af", fontWeight: 700,
                 textTransform: "uppercase", letterSpacing: 1,
-                borderBottom: "1px solid #21262d",
+                borderBottom: "1px solid #f3f4f6",
               }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {leads.map((lead, i) => (
-            <tr key={i} style={{ borderBottom: "1px solid #21262d" }}>
-              <td style={{ padding: "10px 12px 10px 0", color: "#555", whiteSpace: "nowrap" }}>
+            <tr key={i} style={{ borderBottom: "1px solid #f9fafb" }}>
+              <td style={{ padding: "10px 12px 10px 0", color: "#9ca3af", whiteSpace: "nowrap" }}>
                 {timeAgo(lead.timestamp)}
               </td>
-              <td style={{ padding: "10px 12px 10px 0", color: "#ccc" }}>
-                {lead.name ?? <span style={{ color: "#333" }}>—</span>}
+              <td style={{ padding: "10px 12px 10px 0", color: "#111827", fontWeight: 500 }}>
+                {lead.name ?? <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
-              <td style={{ padding: "10px 12px 10px 0", color: "#666", fontFamily: "monospace", fontSize: 11 }}>
-                {lead.email ?? <span style={{ color: "#333" }}>—</span>}
+              <td style={{ padding: "10px 12px 10px 0", color: "#6b7280", fontFamily: "monospace", fontSize: 11 }}>
+                {lead.email ?? <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
               <td style={{ padding: "10px 12px 10px 0" }}>
                 {lead.material ? (
                   <span style={{
-                    background: "#e13f0015", color: "#e13f00",
-                    padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600,
+                    background: "#e13f0010", color: "#e13f00",
+                    padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                   }}>{lead.material}</span>
-                ) : <span style={{ color: "#333" }}>—</span>}
+                ) : <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
-              <td style={{ padding: "10px 12px 10px 0", color: lead.priceValue ? "#fff" : "#333", fontWeight: lead.priceValue ? 700 : 400 }}>
+              <td style={{ padding: "10px 12px 10px 0", color: lead.priceValue ? "#111827" : "#d1d5db", fontWeight: lead.priceValue ? 700 : 400 }}>
                 {lead.price ?? "—"}
               </td>
-              <td style={{ padding: "10px 12px 10px 0", color: "#666" }}>
-                {lead.despatch ?? <span style={{ color: "#333" }}>—</span>}
+              <td style={{ padding: "10px 12px 10px 0", color: "#6b7280" }}>
+                {lead.despatch ?? <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
-              <td style={{ padding: "10px 0 10px 0", color: "#444", fontSize: 11 }}>
+              <td style={{ padding: "10px 0 10px 0", color: "#9ca3af", fontSize: 11 }}>
                 {SOURCE_LABELS[lead.source ?? ""] ?? lead.source ?? "—"}
               </td>
             </tr>

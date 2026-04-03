@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { RealtimeMetrics } from "../api/rex-analytics/realtime/route";
+import RexNav from "../components/RexNav";
 
 const POLLING_INTERVAL = 5000; // 5 seconds
 
@@ -110,7 +111,9 @@ export default function RealtimeAnalytics() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50">
+      <RexNav />
+      <div className="p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -250,6 +253,7 @@ export default function RealtimeAnalytics() {
             </li>
           </ul>
         </div>
+      </div>
       </div>
     </div>
   );
