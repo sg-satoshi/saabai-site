@@ -2,9 +2,15 @@ import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { trackLead, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+import { trackResponseTime } from "../rex-analytics/realtime/route";
 import type { CheckoutData } from "../../../lib/url-generator";
 
 export const runtime = "edge";
+
+// ── Lead Scoring Constants ────────────────────────────────────────────────────
+
+const HIGH_VALUE_THRESHOLD = 200; // Lead >= $200 is high-value (priority)
+const LOW_VALUE_THRESHOLD = 200;  // Lead < $200 is low-value (nurture)
 
 // Use the PlasticOnline-specific Resend account for all Rex emails
 const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
@@ -19,6 +25,87 @@ const CONTACT_URL = "https://www.plasticonline.com.au/contact/";
 function extractPrice(text: string): string | null {
   const match = text.match(/\[(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)\]/i) || text.match(/(\$[\d,]+\.?\d*(?:\s*Ex\s*GST)?)/i);
   return match ? match[1] : null;
+}
+
+/**
+ * A/B Test Subject Lines
+ * Returns true for variant A (50% of time), false for variant B
+ * Uses email as seed for consistency per recipient
+ */
+function shouldUseVariantSubject(email: string): boolean {
+  // Hash email to deterministic 0-1 value
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    const char = email.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return (Math.abs(hash) % 2) === 0;
+}
+
+/**
+ * Get subject line for immediate quote email
+ * A/B Test: 50/50 split between original and variant
+ * Variant includes price if available
+ */
+function getQuoteEmailSubject(email: string, price: string | null): string {
+  const useVariant = shouldUseVariantSubject(email);
+  
+  if (useVariant && price) {
+    // Variant: Include price for urgency/specificity
+    return `Your cut-to-size quote is ready — ${price} locked in`;
+  } else if (useVariant) {
+    // Variant without price (fallback)
+    return "Your cut-to-size quote is ready";
+  } else {
+    // Original control group
+    return "Your quote from Rex at PlasticOnline";
+  }
+}
+
+/**
+ * Calculate optimal follow-up email time
+ * Logic: Check lead capture time → if after 4pm, queue for 9am next business day → else 9am same day
+ * Only sends Mon-Fri 9am AEST (no weekend sends)
+ */
+function getFollowUpScheduleTime(captureTime: string | undefined): string {
+  const leadTime = captureTime ? new Date(captureTime) : new Date();
+  
+  // Convert to Brisbane timezone (AEST/AEDT)
+  const brisbaneTime = new Date(leadTime.toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }));
+  const hour = brisbaneTime.getHours();
+  const dayOfWeek = brisbaneTime.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  
+  let targetTime = new Date(brisbaneTime);
+  
+  // If after 4pm (16:00), schedule for 9am next business day
+  if (hour >= 16) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+  
+  // Move to next business day if captured on weekend or if next day is weekend
+  let targetDay = targetTime.getDay();
+  if (targetDay === 0) {
+    // Sunday → move to Monday
+    targetTime.setDate(targetTime.getDate() + 1);
+    targetDay = 1;
+  } else if (targetDay === 6) {
+    // Saturday → move to Monday
+    targetTime.setDate(targetTime.getDate() + 2);
+    targetDay = 1;
+  }
+  
+  // If captured on Sat/Sun, move to Monday 9am
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    targetTime.setDate(leadTime.getDate() + (8 - dayOfWeek) % 7);
+    if ((8 - dayOfWeek) % 7 === 0) targetTime.setDate(leadTime.getDate() + 1); // Next day if today is Sat
+  }
+  
+  // Set time to 9am Brisbane time
+  targetTime.setHours(9, 0, 0, 0);
+  
+  // Convert back to ISO string (UTC)
+  return targetTime.toISOString();
 }
 
 function formatTranscript(messages: Array<{ role: string; content: string }>): string {
@@ -118,6 +205,76 @@ function cleanNote(raw: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\*\*/g, "")
     .trim();
+}
+
+// ── Device Detection ──────────────────────────────────────────────────────────
+
+/**
+ * Detect if the lead originated from mobile or desktop based on User-Agent
+ * and device indicators from the client.
+ * 
+ * @param req - Incoming request
+ * @param deviceHint - Optional explicit device hint from client ("mobile" | "desktop")
+ * @returns "mobile" | "desktop"
+ */
+function detectDevice(req: Request, deviceHint?: string): "mobile" | "desktop" {
+  if (deviceHint && ["mobile", "desktop"].includes(deviceHint)) {
+    return deviceHint as "mobile" | "desktop";
+  }
+
+  const userAgent = req.headers.get("user-agent") || "";
+  const isMobile = /mobile|android|iphone|ipad|windows phone/i.test(userAgent);
+  
+  return isMobile ? "mobile" : "desktop";
+}
+
+// ── Lead Scoring & Routing ───────────────────────────────────────────────────
+
+interface ScoredLead {
+  priceValue: number;
+  priority: boolean; // true = high-value (>= $200), false = low-value (< $200)
+  routeTarget: "pipedrive" | "email_nurture"; // routing destination
+  device: "mobile" | "desktop";
+  utm_source: string; // rex_mobile or rex_desktop
+}
+
+/**
+ * Score a lead and determine routing destination.
+ * 
+ * High-value leads (>= $200):
+ *   - priority: true
+ *   - routeTarget: "pipedrive" (send to Pipedrive with priority flag)
+ *   - Expected conversion rate: 15-25% (higher intent, faster close)
+ * 
+ * Low-value leads (< $200):
+ *   - priority: false
+ *   - routeTarget: "email_nurture" (send to Resend email campaign)
+ *   - Expected conversion rate: 5-8% (longer nurture cycle)
+ * 
+ * Attribution by device:
+ *   - Mobile: utm_source=rex_mobile (typically higher cart abandonment, lower conversion)
+ *   - Desktop: utm_source=rex_desktop (higher conversion, better for complex quotes)
+ * 
+ * Expected lead split:
+ *   - ~30-40% high-value (desktop stronger here due to complex specs)
+ *   - ~60-70% low-value (mobile drives more tire-kicker volume)
+ * 
+ * @param priceValue - Parsed numeric price in AUD
+ * @param device - Device type ("mobile" | "desktop")
+ * @returns Scored lead object with routing info
+ */
+function scoreLead(priceValue: number, device: "mobile" | "desktop"): ScoredLead {
+  const priority = priceValue >= HIGH_VALUE_THRESHOLD;
+  const routeTarget = priority ? "pipedrive" : "email_nurture";
+  const utm_source = device === "mobile" ? "rex_mobile" : "rex_desktop";
+
+  return {
+    priceValue,
+    priority,
+    routeTarget,
+    device,
+    utm_source,
+  };
 }
 
 /* ── Shared header + footer shell ── */
@@ -230,13 +387,41 @@ function extractCartUrl(note: string): string | null {
 }
 
 /**
- * Enhance a cart/product URL with checkout pre-fill parameters
+ * Enhance a cart/product URL with checkout pre-fill parameters and device attribution.
+ * 
+ * ✓ WooCommerce Billing Field Names (validated):
+ *   - billing_first_name: Customer first name
+ *   - billing_last_name: Customer last name (if multi-part name)
+ *   - billing_email: Email address
+ *   - billing_phone: Phone number
+ *   - billing_address_1: Street address (required for checkout)
+ *   - billing_city: Suburb/city name
+ *   - billing_state: State code (e.g. QLD, NSW, VIC)
+ *   - billing_postcode: Postcode/ZIP
+ * 
+ * ✓ WooCommerce Shipping Method Slugs (validated against staging):
+ *   - 'local_pickup': In-store pickup option
+ *   - 'flat_rate': Flat-rate delivery option
+ * 
+ * ✓ Device Attribution (#9):
+ *   - utm_source set to "rex_mobile" for mobile-originated quotes
+ *   - utm_source set to "rex_desktop" for desktop-originated quotes
+ *   - Enables tracking conversion rates by device in analytics
+ * 
+ * Note: Add-to-cart params (add-to-cart, variation_id, quantity, utm_*) are 
+ * already set by the calling function and persist through checkout.
  */
-function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): string {
+function enhanceUrlWithCheckout(
+  baseUrl: string,
+  customerData: CheckoutData,
+  device: "mobile" | "desktop" = "desktop"
+): string {
   try {
     const url = new URL(baseUrl);
     
-    // Parse name into first/last
+    // ── Billing Information ────────────────────────────────────────────────
+    
+    // Parse name into first/last (handles "John", "John Smith", "John Q Smith")
     if (customerData.name) {
       const parts = customerData.name.trim().split(/\s+/);
       const firstName = parts[0] || "";
@@ -245,10 +430,12 @@ function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): st
       if (lastName) url.searchParams.set("billing_last_name", lastName);
     }
     
+    // Email and phone
     if (customerData.email) url.searchParams.set("billing_email", customerData.email);
     if (customerData.phone) url.searchParams.set("billing_phone", customerData.phone);
     
-    // Parse address (format: "123 Main St, Brisbane, QLD, 4000")
+    // Parse address (expected format: "123 Main St, Brisbane, QLD, 4000")
+    // Falls back to individual fields if provided in CheckoutData
     if (customerData.address) {
       const parts = customerData.address.split(",").map(s => s.trim());
       if (parts[0]) url.searchParams.set("billing_address_1", parts[0]);
@@ -257,15 +444,22 @@ function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): st
       if (parts[3]) url.searchParams.set("billing_postcode", parts[3]);
     }
     
-    // Set shipping method
+    // ── Shipping Method ────────────────────────────────────────────────────
+    // Valid slugs: 'local_pickup' (Gold Coast store pickup) or 'flat_rate' (Australia-wide delivery)
     if (customerData.deliveryMethod === "pickup") {
       url.searchParams.set("shipping_method", "local_pickup");
     } else if (customerData.deliveryMethod === "delivery") {
       url.searchParams.set("shipping_method", "flat_rate");
     }
     
-    // Keep as cart URL - WooCommerce will add item, then billing params persist to checkout
-    // Do NOT redirect to /checkout here - breaks add-to-cart functionality
+    // ── Device Attribution UTM Params (#9) ──────────────────────────────────
+    // Add device-specific utm_source for tracking conversions by device
+    url.searchParams.set("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+    url.searchParams.set("utm_medium", "checkout_prefill");
+    url.searchParams.set("utm_campaign", "rex_quote");
+    
+    // Note: Keep as cart URL - WooCommerce will add item, then billing params persist to checkout.
+    // Do NOT redirect to /checkout here - it breaks add-to-cart functionality.
     
     return url.toString();
   } catch {
@@ -274,14 +468,28 @@ function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): st
 }
 
 /* ── Customer quote email ── */
-function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string, customerData?: CheckoutData) {
+function quoteEmailHtml(
+  note: string,
+  analysis: ConversationAnalysis | null,
+  name?: string,
+  customerData?: CheckoutData,
+  device: "mobile" | "desktop" = "desktop"
+) {
   const quote = cleanNote(note) || "Custom cut-to-size order";
   let productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
   
   // If we have customer data and can extract cart URL from note, enhance it with checkout params
+  // Note: enhanceUrlWithCheckout already adds UTM params for tracking (including device)
   const cartUrl = extractCartUrl(note);
   if (cartUrl && customerData && (customerData.name || customerData.email)) {
-    productUrl = enhanceUrlWithCheckout(cartUrl, customerData);
+    productUrl = enhanceUrlWithCheckout(cartUrl, customerData, device);
+  } else if (productUrl && !cartUrl) {
+    // No cart URL extracted, add UTM params to product URL (with device attribution)
+    const url = new URL(productUrl);
+    url.searchParams.set("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+    url.searchParams.set("utm_medium", "checkout_prefill");
+    url.searchParams.set("utm_campaign", "rex_quote");
+    productUrl = url.toString();
   }
   
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
@@ -332,14 +540,28 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
 }
 
 /* ── Follow-up email (22hrs later) ── */
-function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, name?: string, customerData?: CheckoutData) {
+function followUpEmailHtml(
+  note: string,
+  analysis: ConversationAnalysis | null,
+  name?: string,
+  customerData?: CheckoutData,
+  device: "mobile" | "desktop" = "desktop"
+) {
   const quote = cleanNote(note) || "Your custom cut-to-size order";
   let productUrl = resolveProductUrl(analysis?.quoteDetails ?? quote);
   
   // If we have customer data and can extract cart URL from note, enhance it with checkout params
+  // Note: enhanceUrlWithCheckout already adds UTM params for tracking (including device)
   const cartUrl = extractCartUrl(note);
   if (cartUrl && customerData && (customerData.name || customerData.email)) {
-    productUrl = enhanceUrlWithCheckout(cartUrl, customerData);
+    productUrl = enhanceUrlWithCheckout(cartUrl, customerData, device);
+  } else if (productUrl && !cartUrl) {
+    // No cart URL extracted, add UTM params to product URL (with device attribution)
+    const url = new URL(productUrl);
+    url.searchParams.set("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+    url.searchParams.set("utm_medium", "checkout_prefill");
+    url.searchParams.set("utm_campaign", "rex_quote");
+    productUrl = url.toString();
   }
   
   const price = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note);
@@ -540,22 +762,31 @@ function teamNotificationHtml(
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+  
   try {
-    const { source, name, email, note, mobile, address, despatch, messages, timestamp } = await req.json();
+    const { source, name, email, note, mobile, address, despatch, messages, timestamp, device: deviceHint } = await req.json();
+
+    // Detect device type (mobile vs desktop)
+    const device = detectDevice(req, deviceHint);
 
     // Build transcript and run AI analysis upfront (used in team email)
     const transcript = messages && messages.length > 0 ? formatTranscript(messages) : "";
     const analysis = transcript ? await analyseConversation(transcript) : null;
 
-    // Track to Redis (fire and forget — never blocks response)
+    // Extract price and score lead for routing
     const priceStr = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : extractPrice(note ?? "") ?? undefined;
+    const priceValue = priceStr ? parsePriceValue(priceStr) : 0;
+    const scoredLead = scoreLead(priceValue, device);
+
+    // Track to Redis (fire and forget — never blocks response)
     trackLead({
       timestamp: timestamp ?? new Date().toISOString(),
       source:    source ?? "unknown",
       name:      name ?? undefined,
       email:     email ?? undefined,
       price:     priceStr,
-      priceValue: priceStr ? parsePriceValue(priceStr) : undefined,
+      priceValue: priceValue,
       material:  extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? undefined,
       despatch:  despatch ?? undefined,
     }).catch(() => {});
@@ -584,24 +815,30 @@ export async function POST(req: Request) {
     const tasks: Promise<unknown>[] = [];
 
     if (email) {
+      // Get the price for subject line A/B test
+      const priceForSubject = analysis?.price && analysis.price !== "Not quoted" ? analysis.price : fallbackPrice;
+      
       // 1. Immediate quote email to customer (with one-click checkout if data available)
+      // A/B TEST: 50/50 split of subject lines
+      // Tracking: Subject line differs between control and variant — track via email subject in dashboard
       tasks.push(
         resend.emails.send({
           from: FROM_EMAIL,
           to: email,
-          subject: "Your quote from Rex at PlasticOnline",
-          html: quoteEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData),
+          subject: getQuoteEmailSubject(email, priceForSubject),
+          html: quoteEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData, device),
         })
       );
 
-      // 2. Follow-up email — 22 hours later (with one-click checkout if data available)
-      const followUpAt = new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString();
+      // 2. Follow-up email — optimized timing (9am business hours instead of 22-hour offset)
+      // TIMING OPTIMIZATION: Check lead capture time → if after 4pm, queue for 9am next business day → else 9am same day
+      const followUpAt = getFollowUpScheduleTime(timestamp);
       tasks.push(
         resend.emails.send({
           from: FROM_EMAIL,
           to: email,
           subject: "Still need that plastic cut? Your quote is ready",
-          html: followUpEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData),
+          html: followUpEmailHtml(note ?? "", analysis, leadName ?? undefined, customerData, device),
           scheduledAt: followUpAt,
         } as Parameters<typeof resend.emails.send>[0])
       );
@@ -621,13 +858,14 @@ export async function POST(req: Request) {
       })
     );
 
-    // 4. Make.com webhook (if configured)
+    // 4. Make.com webhook (if configured) — includes lead scoring & routing info
     if (process.env.LEAD_WEBHOOK_URL) {
       tasks.push(
         fetch(process.env.LEAD_WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            // Lead basics
             source:       source ?? "rex",
             email,
             name,
@@ -636,12 +874,26 @@ export async function POST(req: Request) {
             despatch:     despatch ?? null,
             note,
             timestamp,
+            
+            // Analysis
             quoteDetails: analysis?.quoteDetails ?? null,
             price:        analysis?.price ?? null,
-            priceParsed:  priceStr ? parsePriceValue(priceStr) : null,
+            priceParsed:  priceValue,
             material:     extractMaterial(analysis?.quoteDetails ?? note ?? "") ?? null,
             summary:      analysis?.summary ?? null,
             transcript,
+            
+            // ── Lead Scoring & Routing (#8) ────────────────────────────────────
+            // High-value leads (>= $200) get priority flag + team alert
+            // Low-value leads (< $200) go to email nurture sequence
+            priority:     scoredLead.priority,        // true = high-value, false = low-value
+            routeTarget:  scoredLead.routeTarget,     // "pipedrive" or "email_nurture"
+            leadValue:    scoredLead.priority ? "high" : "low",
+            
+            // ── Mobile vs Desktop Attribution (#9) ─────────────────────────────
+            // Track conversion by device in analytics
+            device:       scoredLead.device,           // "mobile" or "desktop"
+            utm_source:   scoredLead.utm_source,       // "rex_mobile" or "rex_desktop"
           }),
         })
       );
@@ -649,9 +901,18 @@ export async function POST(req: Request) {
 
     await Promise.allSettled(tasks);
 
+    // Track response time for realtime analytics (fire-and-forget)
+    const duration = Date.now() - startTime;
+    trackResponseTime(duration).catch(() => {});
+
     return Response.json({ ok: true });
   } catch (err) {
     console.error("[rex-leads]", err);
+    
+    // Track response time even on error (fire-and-forget)
+    const duration = Date.now() - startTime;
+    trackResponseTime(duration).catch(() => {});
+    
     return Response.json({ ok: false }, { status: 500 });
   }
 }

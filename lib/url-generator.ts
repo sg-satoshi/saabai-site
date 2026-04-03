@@ -76,31 +76,56 @@ const PRODUCT_URL_MAP: Record<string, string> = {
 
 /**
  * Generate a PlasticOnline product page URL from a material name.
+ * Includes UTM params for email tracking and device attribution.
  * 
  * @param material - Material name (e.g. "acrylic", "polycarbonate", "nylon rod")
+ * @param includeUtm - Whether to include UTM tracking params (default: true)
+ * @param device - Device type for attribution: "mobile" | "desktop" (default: "desktop")
  * @returns Full product page URL or shop fallback
  */
-export function getProductUrl(material: string): string {
+export function getProductUrl(
+  material: string,
+  includeUtm: boolean = true,
+  device: "mobile" | "desktop" = "desktop"
+): string {
   const normalized = material.toLowerCase().trim();
   const slug = PRODUCT_URL_MAP[normalized];
   
+  let baseUrl: string;
   if (!slug) {
     // Fallback to shop page if material not found
-    return "https://www.plasticonline.com.au/shop/";
+    baseUrl = "https://www.plasticonline.com.au/shop/";
+  } else {
+    baseUrl = `https://www.plasticonline.com.au/product/${slug}/`;
   }
   
-  return `https://www.plasticonline.com.au/product/${slug}/`;
+  if (!includeUtm) return baseUrl;
+  
+  // Add UTM params for email tracking and device attribution (#9)
+  const url = new URL(baseUrl);
+  url.searchParams.set("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+  url.searchParams.set("utm_medium", "checkout_prefill");
+  url.searchParams.set("utm_campaign", "rex_quote");
+  
+  return url.toString();
 }
 
 /**
  * Generate a cart URL with pre-filled product for WooCommerce.
+ * Includes UTM params for device attribution.
  * 
  * @param productId - WooCommerce product ID
  * @param variationId - WooCommerce variation ID (if applicable)
  * @param quantity - Quantity to add
+ * @param device - Device type for attribution: "mobile" | "desktop" (default: "desktop")
  * @returns Cart URL
  */
-export function getCartUrl(productId: number, variationId?: number, quantity: number = 1): string {
+export function getCartUrl(
+  productId: number,
+  variationId?: number,
+  quantity: number = 1,
+  device: "mobile" | "desktop" = "desktop"
+): string {
   const base = "https://www.plasticonline.com.au/cart/";
   const params = new URLSearchParams({
     "add-to-cart": String(productId),
@@ -110,6 +135,11 @@ export function getCartUrl(productId: number, variationId?: number, quantity: nu
   if (variationId) {
     params.append("variation_id", String(variationId));
   }
+  
+  // Add device attribution UTM params (#9)
+  params.append("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+  params.append("utm_medium", "checkout_prefill");
+  params.append("utm_campaign", "rex_quote");
   
   return `${base}?${params.toString()}`;
 }
@@ -128,18 +158,35 @@ export interface CheckoutData {
 /**
  * Generate a pre-filled checkout URL for one-click purchase.
  * Customer data from Rex quote form is passed through so WooCommerce checkout is pre-populated.
+ * Includes UTM params for email tracking, analytics, and device attribution.
+ * 
+ * WooCommerce field names:
+ *   - billing_first_name: Customer first name
+ *   - billing_last_name: Customer last name
+ *   - billing_email: Customer email address
+ *   - billing_phone: Customer phone number
+ *   - billing_address_1: Street address
+ *   - billing_city: Suburb/city name
+ *   - billing_state: State/territory code (e.g. QLD, NSW)
+ *   - billing_postcode: Postcode/ZIP
+ *   - shipping_method: 'local_pickup' or 'flat_rate' (must match WooCommerce slug)
+ *   - add-to-cart: WooCommerce product ID
+ *   - variation_id: Product variation ID (if applicable)
+ *   - quantity: Item quantity
  * 
  * @param productId - WooCommerce product ID
  * @param variationId - WooCommerce variation ID (if applicable)
  * @param quantity - Quantity to add
  * @param checkoutData - Customer details from quote form
- * @returns Checkout URL with pre-filled fields
+ * @param device - Device type for attribution: "mobile" | "desktop" (default: "desktop")
+ * @returns Checkout URL with pre-filled fields and UTM tracking params
  */
 export function getCheckoutUrl(
   productId: number,
   variationId: number | undefined,
   quantity: number,
-  checkoutData: CheckoutData
+  checkoutData: CheckoutData,
+  device: "mobile" | "desktop" = "desktop"
 ): string {
   const params = new URLSearchParams({
     "add-to-cart": String(productId),
@@ -177,11 +224,17 @@ export function getCheckoutUrl(
   }
   
   // Set shipping method based on delivery preference
+  // Valid WooCommerce shipping method slugs: 'local_pickup' (in-store), 'flat_rate' (delivery)
   if (checkoutData.deliveryMethod === "pickup") {
     params.append("shipping_method", "local_pickup");
   } else if (checkoutData.deliveryMethod === "delivery") {
     params.append("shipping_method", "flat_rate");
   }
+  
+  // Add UTM params for email tracking and device attribution (#9)
+  params.append("utm_source", device === "mobile" ? "rex_mobile" : "rex_desktop");
+  params.append("utm_medium", "checkout_prefill");
+  params.append("utm_campaign", "rex_quote");
   
   return `https://www.plasticonline.com.au/checkout/?${params.toString()}`;
 }
