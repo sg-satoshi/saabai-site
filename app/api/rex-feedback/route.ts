@@ -10,9 +10,9 @@ import type { FeedbackItem, FeedbackCategory, AtlasReview } from "../../../lib/r
 
 export const runtime = "edge";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const NOTIFY_EMAIL = process.env.SAABAI_NOTIFY_EMAIL ?? "hello@saabai.ai";
-const FROM_EMAIL   = "Rex Feedback <alerts@saabai.ai>";
+const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
+const NOTIFY_EMAIL = process.env.SAABAI_NOTIFY_EMAIL ?? process.env.PLON_TEAM_EMAIL ?? "hello@saabai.ai";
+const FROM_EMAIL   = process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>";
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   pricing_error:   "Pricing Error",
