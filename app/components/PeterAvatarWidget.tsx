@@ -191,6 +191,7 @@ export default function PeterAvatarWidget() {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isEnded, setIsEnded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [endEmail, setEndEmail] = useState("");
   const [endSubmitting, setEndSubmitting] = useState(false);
   const [endSubmitted, setEndSubmitted] = useState(false);
@@ -236,6 +237,34 @@ export default function PeterAvatarWidget() {
     setSpeechSupported(!!SR);
   }, []);
 
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Mobile: add viewport meta tag if not present (for safe areas, no zoom, etc)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement("meta") as HTMLMetaElement;
+      meta.name = "viewport";
+      meta.content = "width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=1, user-scalable=no";
+      document.head.appendChild(meta);
+    } else if (!meta.getAttribute("content")?.includes("viewport-fit")) {
+      // Update existing viewport meta to include viewport-fit
+      const current = meta.getAttribute("content");
+      if (current) {
+        meta.setAttribute("content", current + ", viewport-fit=cover");
+      }
+    }
+  }, []);
+
   // Restore conversation from localStorage on mount
   useEffect(() => {
     try {
@@ -275,10 +304,11 @@ export default function PeterAvatarWidget() {
   }, [displayMessages, isOpen]);
 
   useEffect(() => {
-    if (!showScrollBtn) {
+    if (!showScrollBtn && !isMobile) {
+      // Desktop: smooth scroll to bottom. On mobile, let user control scroll with scroll button
       chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [displayMessages, showScrollBtn]);
+  }, [displayMessages, showScrollBtn, isMobile]);
 
   // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
@@ -687,6 +717,8 @@ export default function PeterAvatarWidget() {
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
 
+
+
   function handleEndChat() {
     stopAudio();
     stopListening();
@@ -798,12 +830,18 @@ export default function PeterAvatarWidget() {
         {isStarted && !isEnded && (
           <button onClick={handleEndChat} className="text-[10px] font-medium transition-colors px-2 py-1 rounded-md hover:bg-saabai-teal/10 tracking-wide" style={{ color: "#0084FF" }}>End</button>
         )}
-        <button onClick={handleMinimise} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Minimise">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
-        <button onClick={handleClose} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-        </button>
+        {/* Mobile: minimize button only */}
+        {isMobile && (
+          <button onClick={handleMinimise} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Minimise">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 3l5 6 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        )}
+        {/* Desktop: close button only */}
+        {!isMobile && (
+          <button onClick={handleClose} className="transition-colors p-1.5 rounded-lg hover:bg-saabai-teal/10" style={{ color: "#65676b" }} aria-label="Close">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -856,12 +894,26 @@ export default function PeterAvatarWidget() {
         <div
           className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
           style={{
-            bottom: 0,
-            right: 0,
-            width: "100%",
-            borderRadius: "1rem",
+            ...(isMobile ? {
+              // Full-screen on mobile — covers entire viewport including notch/status bar
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100dvh", // Dynamic viewport height (accounts for mobile browser UI)
+              borderRadius: 0,
+              border: "none",
+              paddingTop: "max(0px, env(safe-area-inset-top))", // Notch/status bar safety
+              paddingBottom: 0, // Input handles its own safe-area-inset-bottom
+              maxWidth: "none",
+            } : {
+              // Bottom-right widget on desktop
+              bottom: 0,
+              right: 0,
+              width: "100%",
+              borderRadius: "1rem",
+            }),
             boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-            animation: "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            animation: isMobile ? "none" : "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
           {Header}
@@ -1020,7 +1072,14 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text mode ───────────────────────────────────────────────────── */}
           {!isEnded && chatMode === "text" && (
-            <div className="flex flex-col relative" style={{ height: 380 }}>
+            <div 
+              className="flex flex-col relative flex-1 overflow-hidden"
+              style={isMobile ? {
+                height: "calc(100dvh - env(safe-area-inset-top) - 60px - 64px)" // Full height minus header and input
+              } : { 
+                height: 380 
+              }}
+            >
               <div
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2 bg-saabai-bg"
@@ -1298,7 +1357,14 @@ export default function PeterAvatarWidget() {
 
           {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
-            <div className="px-3 py-2.5 flex gap-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
+            <div 
+              className="px-3 py-2.5 flex gap-2 shrink-0" 
+              style={{ 
+                background: "#e8f1ff", 
+                borderTop: "1px solid #c8dcff",
+                paddingBottom: isMobile ? "max(0.625rem, env(safe-area-inset-bottom))" : "0.625rem", // Keyboard safe area on mobile
+              }}
+            >
               <input
                 type="text"
                 value={inputValue}
@@ -1324,7 +1390,7 @@ export default function PeterAvatarWidget() {
         </div>
       )}
 
-      {/* Improvement #5: slide-up keyframe + placeholder colours */}
+      {/* Improvement #5: slide-up keyframe + placeholder colours + mobile viewport */}
       <style>{`
         @keyframes rexSlideUp {
           from { transform: translateY(40px) scale(0.94); opacity: 0; }
@@ -1336,6 +1402,17 @@ export default function PeterAvatarWidget() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .rex-msg { animation: msgIn 0.18s ease-out forwards; }
+        
+        /* Mobile viewport fix: prevent zoom on input focus, handle safe areas */
+        @media (max-width: 767px) {
+          .rex-input {
+            font-size: 16px !important; /* Prevent iOS auto-zoom on input focus */
+          }
+          body {
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+          }
+        }
       `}</style>
     </div>
   );
