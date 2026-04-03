@@ -607,16 +607,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Team notification — From is set to the customer's name so Pipedrive identifies the contact,
-    //    Reply-To is the customer's actual email so hitting Reply goes straight to them.
-    const teamFrom = email && leadName
-      ? `${leadName} via Rex <rex@plasticonline.com.au>`
-      : email
-      ? `${email} via Rex <rex@plasticonline.com.au>`
-      : FROM_EMAIL;
+    // 3. Team notification — Reply-To is set to the customer's actual email so hitting Reply
+    //    in any email client goes straight to them (not back to Rex).
+    //    Subject already includes customer name + email for visibility in Pipedrive.
     tasks.push(
       resend.emails.send({
-        from: teamFrom,
+        from: FROM_EMAIL,
         to: TEAM_EMAIL,
         replyTo: email ? [email] : undefined,
         subject: teamSubject,
