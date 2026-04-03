@@ -58,14 +58,31 @@ export default function RexNav() {
           </nav>
         </div>
 
-        {/* Live indicator */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9ca3af" }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: "50%", background: "#22c55e",
-            boxShadow: "0 0 0 2px #22c55e30",
-            display: "inline-block",
-          }} />
-          Live
+        {/* Right side — live indicator + sign out */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9ca3af" }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%", background: "#22c55e",
+              boxShadow: "0 0 0 2px #22c55e30",
+              display: "inline-block",
+            }} />
+            Live
+          </div>
+          <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
+            <button
+              type="submit"
+              style={{
+                fontSize: 11, fontWeight: 600, color: "#9ca3af",
+                background: "none", border: "none", cursor: "pointer",
+                padding: "4px 8px", borderRadius: 6,
+                transition: "color 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#374151")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#9ca3af")}
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </div>
     </div>

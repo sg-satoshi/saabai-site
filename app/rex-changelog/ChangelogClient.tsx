@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "23:55", tag: "NEW", title: "Saabai Client Portal live at /login — HMAC-SHA256 session tokens, env-var client config (SAABAI_CLIENT_N_*), proxy.ts route protection on all /rex-* pages, Sign out in nav" },
       { time: "23:30", tag: "NEW", title: "Rex Feedback Panel live at /rex-dashboard — staff can report pricing errors, wrong materials, missed upsells, tone issues; Atlas (Sonnet 4.6) auto-reviews each submission with root cause + fix recommendation; Approve → Mark Implemented workflow built in" },
       { time: "23:29", tag: "NEW", title: "Lead detail slide-out panel — click any lead row in dashboard to see full details: name, email, material, price, despatch, source, and AI conversation summary (new leads only)" },
       { time: "23:28", tag: "IMPROVEMENT", title: "Conversation summary now stored per lead — Rex-analysed 2-3 sentence summary saved to Redis alongside each lead event for dashboard display" },
