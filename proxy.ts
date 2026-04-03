@@ -8,7 +8,7 @@ import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
  * inside the function so static assets, login, and API routes are never blocked.
  */
 
-const PROTECTED = ["/rex-dashboard", "/rex-analytics", "/rex-changelog"];
+const PROTECTED = ["/rex-dashboard", "/rex-analytics", "/rex-changelog", "/saabai-admin"];
 const LEGACY_PW = process.env.REX_DASHBOARD_PASSWORD ?? "";
 
 async function isAuthenticated(req: NextRequest): Promise<boolean> {
@@ -45,5 +45,6 @@ export const proxyConfig = {
     "/rex-dashboard/:path*",
     "/rex-analytics/:path*",
     "/rex-changelog/:path*",
+    "/saabai-admin/:path*",
   ],
 };

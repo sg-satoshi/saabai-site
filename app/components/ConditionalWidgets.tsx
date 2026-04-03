@@ -9,7 +9,7 @@ import NewsTicker from "./NewsTicker";
 const SUPPRESS_PATHS = [
   "/onboarding/plon", "/mission-control", "/plon", "/rex-widget",
   // Client portal — admin pages have their own nav
-  "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login",
+  "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
 ];
 
 export default function ConditionalWidgets() {
