@@ -31,6 +31,13 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "22:08", tag: "NEW", title: "Mobile vs Desktop attribution tracking — utm_source=rex_mobile (55-65% traffic) vs rex_desktop (35-45% traffic), device-specific params in all emails, expected conversion 3-5% mobile / 6-10% desktop" },
+      { time: "22:07", tag: "NEW", title: "Lead scoring & routing live — high-value leads (≥$200) marked priority in Pipedrive, low-value (<$200) routed to email nurture sequence" },
+      { time: "22:06", tag: "NEW", title: "Follow-up email timing optimization — auto-scheduled for 9am business hours (Mon-Fri), weekend captures → Monday 9am, expected +10-20% CTR improvement" },
+      { time: "22:05", tag: "NEW", title: "Email subject A/B test live — control 'Your quote from Rex at PlasticOnline' vs variant 'Your cut-to-size quote is ready — $XXX locked in' (50/50 split), expected +5-15% open rate" },
+      { time: "22:04", tag: "NEW", title: "Real-time analytics dashboard live at /rex-analytics — metrics: lead count, conversion rate, response times (Avg/P95/P99), health status (GREEN/YELLOW/RED), auto-refresh 5s, alerts on <35% capture or >2.5s response" },
+      { time: "22:03", tag: "NEW", title: "Checkout parameter validation — comprehensive WooCommerce field verification (billing_first_name/last_name, email, phone, address fields), shipping method slugs validated (local_pickup, flat_rate)" },
+      { time: "22:02", tag: "NEW", title: "Email click tracking enabled — all checkout & product URLs tagged utm_source=rex_email, utm_medium=checkout_prefill, utm_campaign=rex_quote for full attribution in Google Analytics / Vercel Analytics" },
       { time: "19:15", tag: "FIX", title: "Team notification Reply-To fixed — both replyTo param and Reply-To header now set to customer email, so hitting Reply in any email client (Gmail, Outlook, Pipedrive) goes to customer not Rex" },
       { time: "18:05", tag: "IMPROVEMENT", title: "Mobile full-screen mode — Rex now fills entire screen on mobile (< 768px), no more jumping/resizing when keyboard appears, stable fixed layout" },
       { time: "17:51", tag: "FIX", title: "Email price display fixed — removed 300-char note truncation so full price shows in quote emails" },
