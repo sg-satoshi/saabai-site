@@ -264,10 +264,8 @@ function enhanceUrlWithCheckout(baseUrl: string, customerData: CheckoutData): st
       url.searchParams.set("shipping_method", "flat_rate");
     }
     
-    // Redirect to checkout instead of cart
-    if (url.pathname.includes("/cart")) {
-      url.pathname = url.pathname.replace("/cart", "/checkout");
-    }
+    // Keep as cart URL - WooCommerce will add item, then billing params persist to checkout
+    // Do NOT redirect to /checkout here - breaks add-to-cart functionality
     
     return url.toString();
   } catch {
@@ -308,7 +306,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
 
     <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
       ${customerData && (customerData.name || customerData.email) 
-        ? "Your details are already filled in — just review and confirm your order." 
+        ? "Your details are pre-filled at checkout — we'll add it to your cart, then you just confirm and you're done." 
         : "Size or material changed? Just reply to this email and we'll re-quote straight away."}
     </p>
 
@@ -316,7 +314,7 @@ function quoteEmailHtml(note: string, analysis: ConversationAnalysis | null, nam
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
       <tr>
         <td style="background:#e13f00;border-radius:50px;mso-padding-alt:0;">
-          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">${customerData && (customerData.name || customerData.email) ? "Complete Your Order" : "Place Your Order"} &rarr;</a>
+          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">${customerData && (customerData.name || customerData.email) ? "Add to Cart & Checkout" : "Place Your Order"} &rarr;</a>
         </td>
       </tr>
     </table>
@@ -366,7 +364,7 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, 
 
     <p style="margin:0 0 28px;font-size:15px;color:#3e3e3e;line-height:1.9;">
       ${customerData && (customerData.name || customerData.email)
-        ? "Everything's in stock. Your checkout is pre-filled — just click below to complete your order."
+        ? "Everything's in stock. We'll add it to your cart and your checkout is pre-filled — just confirm and you're done."
         : "Everything's in stock. Just <a href=\"" + productUrl + "\" style=\"color:#e13f00;font-weight:700;text-decoration:none;\">place your order online</a> or reply here if anything's changed."}
     </p>
 
@@ -374,7 +372,7 @@ function followUpEmailHtml(note: string, analysis: ConversationAnalysis | null, 
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
       <tr>
         <td style="background:#e13f00;border-radius:50px;mso-padding-alt:0;">
-          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">Complete Your Order &rarr;</a>
+          <a href="${productUrl}" style="display:inline-block;padding:16px 40px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;letter-spacing:0.4px;border-radius:50px;">${customerData && (customerData.name || customerData.email) ? "Add to Cart & Checkout" : "Complete Your Order"} &rarr;</a>
         </td>
       </tr>
     </table>

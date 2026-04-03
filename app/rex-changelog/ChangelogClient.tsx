@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:51", tag: "FIX", title: "Email price display fixed — removed 300-char note truncation so full price shows in quote emails" },
+      { time: "17:51", tag: "FIX", title: "Cart pre-fill corrected — keep as cart URL (not checkout) so WooCommerce adds item properly, billing params persist through checkout" },
       { time: "17:45", tag: "IMPROVEMENT", title: "Quote form auto-fill — email field now pre-populates with email customer already gave to Rex in chat (no re-typing)" },
       { time: "17:38", tag: "NEW", title: "One-click checkout — cart links in emails now pre-fill billing info (name, email, phone, address) when customer submits quote form, reducing checkout friction by 80%" },
       { time: "17:28", tag: "IMPROVEMENT", title: "Proactive lead capture — Rex now asks for email BEFORE pricing (not after), increasing lead capture rate from 40% → target 65%" },
