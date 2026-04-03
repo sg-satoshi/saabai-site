@@ -338,11 +338,15 @@ export default function ChangelogClient() {
               Changelog
             </span>
           </h1>
-          <p style={{ fontSize: "16px", color: "#555", margin: 0, lineHeight: 1.7, maxWidth: "480px" }}>
+          <p style={{ fontSize: "16px", color: "#555", margin: "0 0 14px", lineHeight: 1.7, maxWidth: "480px" }}>
             Every build, fix, and improvement made to Rex — the AI sales agent for{" "}
             <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" style={{ color: "#25D366", textDecoration: "none" }}>PlasticOnline</a>.
             Built and maintained by <a href="/" style={{ color: "#0874C8", textDecoration: "none" }}>Saabai</a>.
           </p>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#555", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "4px 10px", letterSpacing: "0.05em" }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            All times AEST — Brisbane, Australia (UTC+10)
+          </span>
         </div>
 
         {/* Stats — auto-computed + animated */}
@@ -465,7 +469,7 @@ export default function ChangelogClient() {
                       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                     >
-                      <span style={{ fontSize: "11px", color: "#2e2e2e", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "52px" }}>{entry.time} <span style={{ fontSize: "9px", color: "#222", letterSpacing: "0.05em" }}>AEST</span></span>
+                      <span style={{ fontSize: "11px", color: "#4a4a5a", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "52px" }}>{entry.time} <span style={{ fontSize: "9px", color: "#3a3a4a", letterSpacing: "0.05em" }}>AEST</span></span>
                       <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.07em", background: s.bg, color: s.text, border: `1px solid ${s.border}`, padding: "2px 7px", borderRadius: "5px", flexShrink: 0, marginTop: "1px" }}>
                         {entry.tag}
                       </span>
