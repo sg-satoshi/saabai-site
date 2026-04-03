@@ -31,6 +31,9 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "16:30", tag: "NEW", title: "Deterministic pricing engine launched — getPricing() TypeScript function covers all materials, CTS logic, oversized fit checks, bulk discounts, and min-order fees. Zero LLM arithmetic." },
+      { time: "16:25", tag: "IMPROVEMENT", title: "getPrice registered as tool in pete-chat — Rex now calls getPricing() for all prices instead of calculating from knowledge base tables" },
+      { time: "16:20", tag: "IMPROVEMENT", title: "~8,000 tokens of pricing tables stripped from system prompt — knowledge base compressed by ~50%; faster cache hits, lower latency under load" },
       { time: "14:10", tag: "NEW", title: "Rex stats dashboard live at /rex-dashboard — total leads, email rate, avg quote value, 30-day chart, material mix, despatch split, sources breakdown, and recent leads table" },
       { time: "13:40", tag: "FIX", title: "Voice loop now recovers after API errors — catch block was missing startListening() call, permanently killing voice mode on any fetch failure" },
       { time: "13:35", tag: "FIX", title: "recognition.start() wrapped in try-catch — synchronous throw (permissions, already-running) no longer leaves a stale recognitionRef that blocks all future listen attempts" },
@@ -460,7 +463,7 @@ export default function ChangelogClient() {
                       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
                     >
-                      <span style={{ fontSize: "11px", color: "#2e2e2e", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "38px" }}>{entry.time}</span>
+                      <span style={{ fontSize: "11px", color: "#2e2e2e", fontVariantNumeric: "tabular-nums", flexShrink: 0, marginTop: "2px", minWidth: "52px" }}>{entry.time} <span style={{ fontSize: "9px", color: "#222", letterSpacing: "0.05em" }}>AEST</span></span>
                       <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.07em", background: s.bg, color: s.text, border: `1px solid ${s.border}`, padding: "2px 7px", borderRadius: "5px", flexShrink: 0, marginTop: "1px" }}>
                         {entry.tag}
                       </span>

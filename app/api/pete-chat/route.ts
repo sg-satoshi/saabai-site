@@ -3,6 +3,7 @@ import { getModel } from "../../../lib/chat-config";
 import { REX_KNOWLEDGE } from "../../../lib/rex-knowledge";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
+import { getPricing, type PricingInput, type PriceResult } from "../../../lib/rex-pricing-engine";
 
 export const maxDuration = 60;
 
@@ -27,38 +28,22 @@ TOOL USE AND CALCULATIONS — critical:
 - If a tool call is in progress, do not output any text until you have the result.
 
 PRICING — how it works:
-- When a customer asks about price, ALWAYS gather ALL missing details in a single question before quoting. Never ask one at a time.
-  - For SHEETS: need material, colour, thickness, width, height. Ask all missing ones together. E.g. "What colour and thickness are you after, and what size do you need it cut to?"
-  - For RODS: need material, colour, diameter, length. Ask all missing ones together. E.g. "What diameter, colour, and length do you need?"
-  - For TUBES: need material (acrylic/PC), OD size, and length needed. Ask all missing ones together.
-  - Colour is ALWAYS required for rods, tubes, and sheets — always include it in your upfront question. Never skip asking for colour.
-- Orientation does NOT matter for cut-to-size. 900x600mm and 600x900mm are identical. Never ask which way around. Just use whichever dimensions they give you.
-- Never ask for information the customer has already given in this conversation. If material, colour, thickness, or dimensions were already stated, use them directly without asking again.
-- If a customer needs multiple pieces of the same cut, multiply the single piece price by the quantity and state the total clearly, e.g. "3 x **$45.20** = **$135.60 Ex GST**".
-- If a bulk discount applies (5+ sheets), show the calculation as: "5 x $90 = $450, minus 5% (saving **$22.50**) = " then the linked price. Always show the dollar saving in bold so it's clear what they're getting off.
-- HDPE colour note: if a customer says "white" for HDPE, that means Natural (PE-HWST). If they say "black", that is Black (PE-100). Thin HDPE (1mm, 1.5mm, 2mm) is full sheet only — no CTS rate. Heavy HDPE (50mm and above) is also full sheet only. 40mm Black has CTS available for the 3000×1500 sheet only.
-- For acrylic and polycarbonate sheets: calculate the price from your knowledge base. No tool call needed for the price.
-- For HDPE sheet (standard/cutting board), acetal sheet, PTFE sheet, PETG sheet, HIPS sheet, UHMWPE sheet, polypropylene sheet, seaboard HDPE, playground HDPE, corflute, ACP, mirror acrylic, EuroMir, prismatic, rods, and tubes: calculate the price from your knowledge base. No tool call needed.
-- ROD PRICING — critical: match the EXACT diameter the customer gives to the correct row in the pricing table. Never use an adjacent row. For a rod sold in 1m standard lengths, a customer requesting 1000mm or 1m length gets the "Price (full length)" column value — this is the 1m price. Only use the CTS rate for lengths shorter than the standard length. Example: 60mm Nylon rod, 1000mm = $86.21 (full length price). Double-check: if you are about to quote $117.51 for a 60mm Nylon rod, that is WRONG — $117.51 is the 70mm price.
-- HIPS note: no cut-to-size available — full sheet only (1220×2440mm). Quote full sheet price regardless of size requested.
-- PTFE SHEET THREE-TIER PRICING: full sheet is 1200×1200mm (1.44m²). If area < 0.5m² use CTS <0.5m² rate. If area ≥ 0.5m² use CTS ≥0.5m² rate. If area ≥ 1.44m² or CTS price exceeds full sheet price, charge full sheet price.
-- ACETAL TWO-TIER PRICING — critical: acetal has two different CTS rates. Calculate area = width(m) × height(m). If area < 1m², use the "CTS <1m²" rate. If area ≥ 1m² and < 2m², use the "CTS >1m²" rate. If area ≥ 2m², charge the Full Sheet price. Always cap at Full Sheet price. Example: 10mm Natural 890×445mm → area 0.396m² (<1m²) → $661.61 × 0.396 = $261.90 Ex GST.
-- FULL SHEET CAP — critical three-step check:
-  STEP 1 — FIT CHECK: Portrait vs landscape is irrelevant — a piece can always be rotated. A piece FITS in a sheet if EITHER (piece_W ≤ sheet_W AND piece_H ≤ sheet_H) OR (piece_H ≤ sheet_W AND piece_W ≤ sheet_H). Apply this SAME rotation test against EVERY sheet in sequence (standard first, then each oversized option). Use the smallest sheet where either orientation fits.
-  STEP 2 — PRICE CAP: Compare CTS price (rate × area) against that sheet's price. If CTS > sheet price, apply the cap.
-  STEP 3 — CUTTING FEE: Only add $30 cutting fee when the cap triggers (CTS price > sheet price). If CTS ≤ sheet price, quote CTS — no cutting fee unless total is under $50.
-  Example A: 6mm clear acrylic 630×1800mm vs standard 2440×1220. Try: (630≤2440 AND 1800≤1220)? No. Try rotated: (1800≤2440 AND 630≤1220)? Yes → fits standard. CTS = $201.59 < $252 → quote $201.59 Ex GST.
-  Example B: 6mm clear acrylic 1923×1800mm vs standard 2440×1220. (1923≤2440 AND 1800≤1220)? No. Rotated: (1800≤2440 AND 1923≤1220)? No → standard fails. Try oversized 2490×1880: (1923≤2490 AND 1800≤1880)? YES → fits. CTS = $615.40 > $402 → $402 + $30 cutting fee = $432 Ex GST.
-  Example C: 6mm clear acrylic 1915×1800mm vs standard 2440×1220. Both orientations fail. Try 2490×1880: (1915≤2490 AND 1800≤1880)? Yes → fits. CTS = $612.90 > $402 → $402 + $30 cutting fee = $432 Ex GST.
-  Example D (PC): 6mm clear polycarbonate 1800×2200mm vs PC standard 2440×1220. (1800≤2440 AND 2200≤1220)? No. Rotated: (2200≤2440 AND 1800≤1220)? No → standard fails. Try PC oversized 2440×1830 (NOT 2490×1880 — PC sheets differ from acrylic): (1800≤2440 AND 2200≤1830)? No. Rotated: (2200≤2440 AND 1800≤1830)? Yes → fits 2440×1830. CTS = $209.35 × 3.96m² = $829.03 > $482.60 → cap at $482.60 + $30 cutting fee = $512.60 Ex GST.
-- For sheet materials not in your knowledge base: call searchProducts, pick the matching variation, then call calculatePrice.
-- Quote the exact price back. Do the maths silently — never show the working (no per-m² rate, no area calculation, no m² figure, no "Price = X × Y" steps, no "that's 0.25m²" style commentary). Format each line item on its own line with a blank line between them.
-- PRICE FORMAT — make the final total a markdown hyperlink to the product page. Format: [$185.50 Ex GST](url). The brackets and URL are hidden in the chat — the customer only sees the yellow clickable price. E.g. [$473.10 Ex GST](https://www.plasticonline.com.au/product/acrylic-sheet/). Never use **bold** for the final price — use the link format instead. NEVER repeat the final price as plain text after showing it as a link — the linked price is the only place the total appears.
-- If the quoted total is under AUD $50, mention the $30 cutting fee applies. Keep it casual.
-- PRODUCT LINK — after the price, always add [Lock it in →](url) on its own line using the same URL. No exceptions. If you do not include both the price link and the Lock it in link, the response is incomplete.
-- After every quote, ask for their name and email to send it through. Make it feel natural and urgent, not like a form. E.g. "What's your name and email? I'll shoot the quote through so you can lock it in today." If they give their email (name optional), capture immediately via captureLead — pass both name and email.
-- If they don't know their size yet, give a rough ballpark from your knowledge base to help them decide, then ask for dimensions.
-- Never say "use the calculator" — you ARE the calculator now.
+- Call getPrice for ALL price requests. Never calculate prices yourself.
+- Before calling getPrice, gather ALL missing info in one question:
+  - Sheets: material, colour, thickness (mm), width (mm), height (mm)
+  - Rods: material, colour, diameter (mm), length (mm)
+  - Tubes: material, OD (mm), length (mm)
+- Colour is always required. Never skip asking for it.
+- Never ask for info the customer already gave.
+- Orientation doesn't matter — 900×600 and 600×900 are identical. Never ask which way around.
+- getPrice returns an exact price. Quote it exactly as returned — never re-calculate or second-guess it.
+- For materials not covered by getPrice (found: false), call searchProducts then calculatePrice instead.
+- Multiple pieces: state clearly e.g. "3 × **$45.20** = **$135.60 Ex GST**".
+- Bulk discount: if qty < 5, mention once that 5+ sheets = 5% off. If discount applied, show the dollar saving in bold.
+- PRICE FORMAT: make the total a markdown hyperlink. Format: [$185.50 Ex GST](url). Never bold the final price. Never repeat it as plain text after the link.
+- PRODUCT LINK: after every price, add [Lock it in →](url) on its own line using the same URL. No exceptions.
+- If total < $50, mention the $30 cutting fee casually.
+- After every quote, ask for name and email. Natural and urgent, not a form. E.g. "What's your name and email? I'll shoot the quote through so you can lock it in today." Capture via captureLead as soon as email is given.
 
 UPSELL:
 - After pricing a sheet, casually mention a relevant accessory if it makes sense. For acrylic: "If you're bonding it, our Quick Bond 5 is what most people reach for." For outdoor use: mention UV grade. Keep it one line, helpful not salesy.
@@ -100,6 +85,7 @@ type CalcInput = {
 };
 
 type OrderInput = { orderNumber: string };
+type GetPriceInput = PricingInput;
 
 export async function POST(req: Request) {
   try {
@@ -168,6 +154,26 @@ export async function POST(req: Request) {
             required: ["orderNumber"],
           }),
           execute: async ({ orderNumber }) => lookupOrder(orderNumber),
+        }),
+
+        getPrice: tool<GetPriceInput, PriceResult>({
+          description: "Get the exact price for any plastic product — sheets, rods, or tubes. Handles cut-to-size logic, oversized sheets, bulk discounts, and minimum order fees automatically. Call this for ALL price requests.",
+          inputSchema: jsonSchema<GetPriceInput>({
+            type: "object",
+            properties: {
+              type:        { type: "string", enum: ["sheet", "rod", "tube"], description: "Product type" },
+              material:    { type: "string", description: "Material name e.g. 'acrylic', 'polycarbonate', 'acetal', 'HDPE', 'PTFE', 'nylon', 'UHMWPE', 'polypropylene', 'PETG', 'HIPS', 'corflute', 'ACP', 'mirror acrylic', 'euromir', 'PEEK'" },
+              colour:      { type: "string", description: "Colour or grade e.g. 'clear', 'opal', 'white', 'black', 'natural', 'silver', 'gold', 'tint'" },
+              thicknessMm: { type: "number", description: "Sheet thickness in mm" },
+              diameterMm:  { type: "number", description: "Rod or tube outer diameter in mm" },
+              widthMm:     { type: "number", description: "Sheet width in mm" },
+              heightMm:    { type: "number", description: "Sheet height in mm" },
+              lengthMm:    { type: "number", description: "Rod or tube length in mm (omit or 0 for full standard length)" },
+              quantity:    { type: "number", description: "Number of pieces, default 1" },
+            },
+            required: ["type", "material"],
+          }),
+          execute: async (input) => getPricing(input),
         }),
 
         calculatePrice: tool<CalcInput, Awaited<ReturnType<typeof calculateCutToSizePrice>>>({
