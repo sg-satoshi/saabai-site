@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-    // Cache the static system prompt (~20k tokens) — saves ~200ms+ per request on Anthropic
+    // Cache the static system prompt (~10k tokens after pricing engine extraction) — saves ~200ms+ per request on Anthropic
     const cachedSystem: SystemModelMessage = {
       role: "system",
       content: PETE_SYSTEM,

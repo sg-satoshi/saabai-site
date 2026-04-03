@@ -31,6 +31,7 @@ const CHANGELOG: Day[] = [
     date: "2 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:45", tag: "IMPROVEMENT", title: "Knowledge base final compression — removed 5 redundant sections (business identity, what we do, ordering examples, key brands, duplicate FAQs). ~30% further token reduction." },
       { time: "16:30", tag: "NEW", title: "Deterministic pricing engine launched — getPricing() TypeScript function covers all materials, CTS logic, oversized fit checks, bulk discounts, and min-order fees. Zero LLM arithmetic." },
       { time: "16:25", tag: "IMPROVEMENT", title: "getPrice registered as tool in pete-chat — Rex now calls getPricing() for all prices instead of calculating from knowledge base tables" },
       { time: "16:20", tag: "IMPROVEMENT", title: "~8,000 tokens of pricing tables stripped from system prompt — knowledge base compressed by ~50%; faster cache hits, lower latency under load" },
