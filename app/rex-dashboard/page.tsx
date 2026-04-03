@@ -9,6 +9,7 @@ export const revalidate = 0;
 
 export interface AttributedOrder {
   id: number;
+  number: string;        // formatted e.g. "PLON-48376"
   date: string;
   customerName: string;
   total: number;
@@ -33,12 +34,13 @@ function hashEmail(email: string): string {
 
 function toAttributedOrder(o: WooOrder, leadTimestamp?: string): AttributedOrder {
   return {
-    id: o.id,
-    date: o.date_created,
+    id:           o.id,
+    number:       o.number || `#${o.id}`,
+    date:         o.date_created,
     customerName: [o.billing.first_name, o.billing.last_name].filter(Boolean).join(" ") || "Unknown",
-    total: parseFloat(o.total) || 0,
-    currency: o.currency,
-    items: o.line_items.map(l => l.name),
+    total:        parseFloat(o.total) || 0,
+    currency:     o.currency,
+    items:        o.line_items.map(l => l.name),
     leadTimestamp,
   };
 }

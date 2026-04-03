@@ -29,7 +29,8 @@ const K = {
   recent:       "rex:list:recent",
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
-  day: (d: string) => `rex:day:${d}`,
+  day:          (d: string) => `rex:day:${d}`,
+  transcript:   (ts: string) => `rex:transcript:${ts}`,
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -312,4 +313,35 @@ export async function updateFeedback(id: string, updates: Partial<FeedbackItem>)
     const updated = { ...item, ...updates };
     await redis.hset(K.feedbackHash, { [id]: JSON.stringify(updated) });
   } catch { /* never throw */ }
+}
+
+// ── Transcript storage ────────────────────────────────────────────────────────
+
+export interface TranscriptMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export async function storeTranscript(
+  timestamp: string,
+  messages: TranscriptMessage[]
+): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const key = K.transcript(timestamp);
+    await redis.set(key, JSON.stringify(messages), { ex: 90 * 24 * 3600 }); // 90-day TTL
+  } catch { /* never throw */ }
+}
+
+export async function fetchTranscript(
+  timestamp: string
+): Promise<TranscriptMessage[] | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  try {
+    const raw = await redis.get(K.transcript(timestamp)) as string | null;
+    if (!raw) return null;
+    return JSON.parse(raw) as TranscriptMessage[];
+  } catch { return null; }
 }

@@ -32,6 +32,8 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "15:00", tag: "NEW", title: "Conversation viewer in lead slide-out — click any lead row, toggle 'Conversation →' to read the full Rex chat transcript; transcripts stored in Redis (90-day TTL) at lead capture; protected API endpoint /api/rex-transcript" },
+      { time: "15:00", tag: "FIX", title: "Revenue tab order numbers now show PLON-xxxxx format instead of raw WooCommerce numeric IDs" },
       { time: "14:00", tag: "NEW", title: "Revenue Attribution tab live — WooCommerce orders fetched (last 60 days), matched to Rex leads by SHA-256 email hash; shows total orders + revenue, Rex-attributed orders + revenue, attribution rate, and full order table with Rex badges" },
       { time: "14:00", tag: "NEW", title: "Email hashing at lead capture — SHA-256 of billing email now stored with each Rex lead (Web Crypto, Edge-compatible); enables privacy-safe order matching without storing raw emails" },
       { time: "14:00", tag: "IMPROVEMENT", title: "Lead analysis upgraded from Haiku to Sonnet 4.6 — conversation analysis (summary, price extraction, quote details) now uses claude-sonnet-4.6 for higher accuracy" },

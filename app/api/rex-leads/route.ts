@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { trackLead, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
 import { trackResponseTime } from "../rex-analytics/realtime/route";
 import type { CheckoutData } from "../../../lib/url-generator";
 
@@ -802,6 +802,14 @@ export async function POST(req: Request) {
       despatch:   despatch ?? undefined,
       summary:    analysis?.summary ?? undefined,
     }).catch(() => {});
+
+    // Store full transcript for conversation viewer (fire and forget)
+    const leadTs = timestamp ?? new Date().toISOString();
+    if (messages && messages.length > 0) {
+      storeTranscript(leadTs, messages.filter((m: { role: string; content: string }) =>
+        m.role === "user" || m.role === "assistant"
+      )).catch(() => {});
+    }
 
     // Build subject line from analysis or fallback to note price
     const fallbackPrice = extractPrice(note ?? "");

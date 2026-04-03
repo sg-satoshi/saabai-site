@@ -156,7 +156,51 @@ function Badge({ text, color, bg }: { text: string; color: string; bg: string })
 
 // ── Lead Detail Panel ─────────────────────────────────────────────────────────
 
+interface TranscriptMsg { role: "user" | "assistant"; content: string }
+
+function TranscriptViewer({ timestamp }: { timestamp: string }) {
+  const [msgs, setMsgs] = useState<TranscriptMsg[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/rex-transcript?ts=${encodeURIComponent(timestamp)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: TranscriptMsg[] | null) => { setMsgs(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [timestamp]);
+
+  if (loading) return <p style={{ ...T.muted, margin: 0, fontStyle: "italic" }}>Loading transcript…</p>;
+  if (!msgs) return <p style={{ ...T.muted, margin: 0, fontStyle: "italic" }}>Transcript not available for this lead.</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {msgs.filter(m => m.role === "user" || m.role === "assistant").map((m, i) => {
+        const isRex = m.role === "assistant";
+        // Strip markdown links [text](url) → text
+        const content = m.content.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
+        return (
+          <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: isRex ? "flex-start" : "flex-end" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", marginBottom: 3, letterSpacing: 0.5 }}>
+              {isRex ? "Rex" : "Customer"}
+            </span>
+            <div style={{
+              maxWidth: "85%", padding: "9px 13px", borderRadius: isRex ? "4px 14px 14px 14px" : "14px 4px 14px 14px",
+              background: isRex ? "#f3f4f6" : "#e13f00",
+              color: isRex ? "#111827" : "#fff",
+              fontSize: 13, lineHeight: 1.6,
+            }}>
+              {content}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function LeadDetailPanel({ lead, onClose }: { lead: LeadEvent; onClose: () => void }) {
+  const [showTranscript, setShowTranscript] = useState(false);
+
   return (
     <>
       {/* Backdrop */}
@@ -184,14 +228,30 @@ function LeadDetailPanel({ lead, onClose }: { lead: LeadEvent; onClose: () => vo
             </p>
             <p style={{ ...T.muted, margin: 0 }}>{fullTime(lead.timestamp)}</p>
           </div>
-          <button
-            onClick={onClose}
-            style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e5e7eb", background: "#f9fafb", cursor: "pointer", fontSize: 16, color: "#6b7280", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >×</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => setShowTranscript(v => !v)}
+              style={{ padding: "5px 12px", borderRadius: 8, border: "1px solid #e5e7eb", background: showTranscript ? "#111827" : "#f9fafb", color: showTranscript ? "#fff" : "#374151", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+            >
+              {showTranscript ? "← Details" : "Conversation →"}
+            </button>
+            <button
+              onClick={onClose}
+              style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #e5e7eb", background: "#f9fafb", cursor: "pointer", fontSize: 16, color: "#6b7280", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >×</button>
+          </div>
         </div>
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+
+          {/* Transcript view */}
+          {showTranscript && (
+            <TranscriptViewer timestamp={lead.timestamp} />
+          )}
+
+          {/* Details view */}
+          {!showTranscript && <>
 
           {/* Key fields */}
           <div style={{ ...T.card, padding: "16px 20px", marginBottom: 16 }}>
@@ -226,6 +286,8 @@ function LeadDetailPanel({ lead, onClose }: { lead: LeadEvent; onClose: () => vo
               <p style={{ ...T.muted, margin: 0, fontStyle: "italic" }}>Conversation summary available for leads captured after the 3 Apr 2026 update.</p>
             </div>
           )}
+
+          </>}
         </div>
       </div>
     </>
@@ -353,7 +415,7 @@ function RevenueTab({ attribution }: { attribution: AttributionStats }) {
               <tbody>
                 {attribution.attributed.map(order => (
                   <tr key={order.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                    <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>#{order.id}</td>
+                    <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>{order.number}</td>
                     <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12, whiteSpace: "nowrap" }}>
                       {new Date(order.date).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
                     </td>
@@ -391,7 +453,7 @@ function RevenueTab({ attribution }: { attribution: AttributionStats }) {
                     const isAttributed = attribution.attributed.some(a => a.id === order.id);
                     return (
                       <tr key={order.id} style={{ borderBottom: "1px solid #f3f4f6", background: isAttributed ? "#fff5f2" : "transparent" }}>
-                        <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>#{order.id}</td>
+                        <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>{order.number}</td>
                         <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12, whiteSpace: "nowrap" }}>
                           {new Date(order.date).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
                         </td>

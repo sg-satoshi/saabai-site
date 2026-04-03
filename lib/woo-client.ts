@@ -59,6 +59,7 @@ async function fetchVariations(productId: number) {
 
 export interface WooOrder {
   id: number;
+  number: string;        // formatted order number e.g. "PLON-48376"
   date_created: string;
   status: string;
   total: string;
