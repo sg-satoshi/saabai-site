@@ -305,7 +305,7 @@ function LeadsTable({ leads, onSelect }: { leads: LeadEvent[]; onSelect: (lead: 
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr>
-            {["Time", "Name", "Email", "Material", "Price", "Despatch", "Source"].map(h => (
+            {["Time", "Name", "Email", "Material", "Price", "Despatch", "Source", ""].map(h => (
               <th key={h} style={{
                 textAlign: "left", padding: "0 12px 10px 0",
                 ...T.label, borderBottom: "2px solid #e5e7eb",
@@ -346,6 +346,13 @@ function LeadsTable({ leads, onSelect }: { leads: LeadEvent[]; onSelect: (lead: 
               </td>
               <td style={{ padding: "11px 0 11px 0", color: "#6b7280", fontSize: 12 }}>
                 {SOURCE_LABELS[lead.source ?? ""] ?? lead.source ?? "—"}
+              </td>
+              <td style={{ padding: "11px 0 11px 12px", whiteSpace: "nowrap" as const }}>
+                {(lead.priceValue ?? 0) >= 200
+                  ? <span style={{ background: "#fef2f2", color: "#dc2626", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 20, letterSpacing: 0.5 }}>PRIORITY</span>
+                  : (lead.priceValue ?? 0) > 0
+                  ? <span style={{ background: "#fffbeb", color: "#d97706", fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 20, letterSpacing: 0.5 }}>NURTURE</span>
+                  : null}
               </td>
             </tr>
           ))}

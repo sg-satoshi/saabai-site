@@ -18,6 +18,7 @@ export interface RexClientConfig {
   agentName: string;         // Name used in system prompt and UI
   systemPrompt: string;      // Full system prompt injected into the model
   tools: RexTool[];          // Which PLON-specific tools to enable (captureLead is always on)
+  quickReplies: string[];    // Opening question pool shown in the widget before first message
   email: {
     resendKeyEnvVar: string; // Name of the env var holding this client's Resend API key
     from: string;            // "Rex at Acme <rex@acme.com>"
@@ -70,6 +71,21 @@ const PLON: RexClientConfig = {
   agentName: "Rex",
   systemPrompt: PLON_SYSTEM,
   tools: ["searchProducts", "lookupOrder", "getPrice", "calculatePrice"],
+  quickReplies: [
+    "How much for acrylic cut to size?",
+    "What would 6mm clear acrylic cost me?",
+    "Can you quote me on polycarbonate sheet?",
+    "Acrylic vs polycarbonate — which do I need?",
+    "What's the best plastic for outdoor use?",
+    "What's the toughest plastic you stock?",
+    "What plastic is food safe for a cutting board?",
+    "What do I need for a fish tank?",
+    "What's best for signage?",
+    "Do you deliver Australia-wide?",
+    "How long does delivery take?",
+    "Can I pick up from the Gold Coast?",
+    "What's my order status?",
+  ],
   email: {
     resendKeyEnvVar: "PLON_RESEND_API_KEY",
     from: process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>",

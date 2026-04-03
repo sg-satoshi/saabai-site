@@ -32,6 +32,8 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "00:30", tag: "IMPROVEMENT", title: "Quick replies now client-aware — opening question pool moved into RexClientConfig.quickReplies; new clients can define their own opening prompts; widget reads pool from server config via page → prop, falls back to PLON pool if not set" },
+      { time: "00:30", tag: "UI", title: "Lead priority badges in dashboard table — PRIORITY badge (red) for leads ≥$200 (routed to Pipedrive), NURTURE badge (amber) for leads $1–$199 (email sequence); makes the lead scoring/routing decision visible at a glance" },
       { time: "23:30", tag: "NEW", title: "Day-3 lead nurture email — third email in quote sequence fires 3 business days after capture at 10am Brisbane; only for leads with a real quoted price (priceValue > 0); minimal tone ('Quick one from PlasticOnline'), quote recap with dark CTA, utm_source=rex_*_d3 attribution; closes with 'After this we'll leave you alone. Promise.'" },
       { time: "23:30", tag: "FIX", title: "Weekly digest revenue attribution now live — emailHashes from this week's Rex leads matched against WooCommerce order billing emails via SHA-256; attributed orders count and revenue now show in digest instead of '—'" },
       { time: "23:30", tag: "NEW", title: "'Send Now' button in Saabai Admin — triggers weekly digest immediately from admin UI; shows lead count + email capture rate on success; 8-second auto-reset; fires automatically via Vercel Cron every Monday 9am AEST" },

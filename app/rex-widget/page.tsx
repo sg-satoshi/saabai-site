@@ -1,4 +1,5 @@
 import PeterAvatarWidget from "../components/PeterAvatarWidget";
+import { getClientConfig } from "../../lib/rex-config";
 
 // This page is loaded inside a small bottom-right iframe on client websites.
 // The iframe is sized to fit the widget — no full-page overlay needed.
@@ -9,5 +10,6 @@ export default async function RexWidgetPage({
   searchParams: Promise<{ client?: string }>;
 }) {
   const { client } = await searchParams;
-  return <PeterAvatarWidget clientId={client} />;
+  const config = getClientConfig(client);
+  return <PeterAvatarWidget clientId={client} quickReplies={config.quickReplies} />;
 }

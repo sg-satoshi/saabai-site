@@ -23,8 +23,8 @@ const QUICK_REPLY_POOL = [
   "What's my order status?",
 ];
 
-function pickQuickReplies(): string[] {
-  const shuffled = [...QUICK_REPLY_POOL].sort(() => Math.random() - 0.5);
+function pickQuickRepliesFrom(pool: string[]): string[] {
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, 3);
 }
 
@@ -180,7 +180,7 @@ function randomGreeting(): string {
   return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 }
 
-export default function PeterAvatarWidget({ clientId }: { clientId?: string }) {
+export default function PeterAvatarWidget({ clientId, quickReplies: quickRepliesPool }: { clientId?: string; quickReplies?: string[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
@@ -643,7 +643,7 @@ export default function PeterAvatarWidget({ clientId }: { clientId?: string }) {
     const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
     messagesRef.current = [greetingMsg];
     setDisplayMessages([greetingMsg]);
-    setQuickReplies(pickQuickReplies());
+    setQuickReplies(pickQuickRepliesFrom(quickRepliesPool && quickRepliesPool.length > 0 ? quickRepliesPool : QUICK_REPLY_POOL));
     setShowQuickReplies(true);
   }
 
