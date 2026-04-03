@@ -41,7 +41,7 @@ interface ConversationAnalysis {
 async function analyseConversation(transcript: string): Promise<ConversationAnalysis | null> {
   try {
     const { text } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: anthropic("claude-haiku-4.5"),
       prompt: `You are analysing a sales chat between Rex (AI sales agent at PlasticOnline) and a customer.
 
 TRANSCRIPT:
@@ -607,13 +607,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Team notification — reply-to set to customer so hitting Reply goes straight to them
+    // 3. Team notification — From is set to the customer's name so Pipedrive identifies the contact,
+    //    Reply-To is the customer's actual email so hitting Reply goes straight to them.
+    const teamFrom = email && leadName
+      ? `${leadName} via Rex <rex@plasticonline.com.au>`
+      : email
+      ? `${email} via Rex <rex@plasticonline.com.au>`
+      : FROM_EMAIL;
     tasks.push(
       resend.emails.send({
-        from: FROM_EMAIL,
+        from: teamFrom,
         to: TEAM_EMAIL,
         replyTo: email ? [email] : undefined,
-        headers: email ? { "Reply-To": email } : undefined,
         subject: teamSubject,
         html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, address, despatch, analysis, transcript),
       })

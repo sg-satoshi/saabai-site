@@ -31,6 +31,8 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "19:15", tag: "FIX", title: "Team notification email From fixed — now shows customer name/email as sender so Pipedrive matches contact and Reply goes directly to customer, not back to Rex inbox" },
+      { time: "18:05", tag: "IMPROVEMENT", title: "Mobile full-screen mode — Rex now fills entire screen on mobile (< 768px), no more jumping/resizing when keyboard appears, stable fixed layout" },
       { time: "17:51", tag: "FIX", title: "Email price display fixed — removed 300-char note truncation so full price shows in quote emails" },
       { time: "17:51", tag: "FIX", title: "Cart pre-fill corrected — keep as cart URL (not checkout) so WooCommerce adds item properly, billing params persist through checkout" },
       { time: "17:45", tag: "IMPROVEMENT", title: "Quote form auto-fill — email field now pre-populates with email customer already gave to Rex in chat (no re-typing)" },
