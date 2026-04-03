@@ -8,6 +8,8 @@
  * Data last updated: April 2026.
  */
 
+import { getProductUrl } from "./url-generator";
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const MIN_ORDER    = 50;   // $50 Ex GST minimum; below this a $30 fee applies
@@ -99,40 +101,6 @@ interface TubeRow {
   lengthM: number;
   pricePerLength: number;
 }
-
-// ── Product URLs ───────────────────────────────────────────────────────────────
-
-const URL: Record<string, string> = {
-  acrylic:         "https://www.plasticonline.com.au/product/acrylic-sheet/",
-  polycarbonate:   "https://www.plasticonline.com.au/product/polycarbonate-sheet/",
-  hdpe:            "https://www.plasticonline.com.au/product/hdpe-polyethylene-cutting-board/",
-  seaboard:        "https://www.plasticonline.com.au/product/seaboard-hdpe-marine-grade/",
-  playground_hdpe: "https://www.plasticonline.com.au/product/hdpe-playground-board/",
-  acetal:          "https://www.plasticonline.com.au/product/acetal-pom-c-plastic-sheet/",
-  uhmwpe:          "https://www.plasticonline.com.au/product/uhmwpe-sheet/",
-  polypropylene:   "https://www.plasticonline.com.au/product/polypropylene/",
-  petg:            "https://www.plasticonline.com.au/product/petg-polyethylene-terephthalate-glycol-modified-sheet/",
-  hips:            "https://www.plasticonline.com.au/product/hips-sheet/",
-  ptfe:            "https://www.plasticonline.com.au/product/ptfe-teflon-sheet/",
-  mirror_acrylic:  "https://www.plasticonline.com.au/product/silver-gold-commercial-acrylic-mirror/",
-  euomir:          "https://www.plasticonline.com.au/product/euromir-acrylic-mirror/",
-  acp:             "https://www.plasticonline.com.au/product/acm/",
-  corflute:        "https://www.plasticonline.com.au/product/corflute-corragatted-flute-board/",
-  prismatic:       "https://www.plasticonline.com.au/product/acrylic-sheet/",
-  peek:            "https://www.plasticonline.com.au/product/peek-polyether-ether-ketone-sheet/",
-  acetal_rod:      "https://www.plasticonline.com.au/product/acetal-rod/",
-  uhmwpe_rod:      "https://www.plasticonline.com.au/product/uhmwpe-rod-natural-only-white/",
-  nylon_rod:       "https://www.plasticonline.com.au/product/nylon-rod/",
-  hdpe_rod:        "https://www.plasticonline.com.au/product/hdpe-high-density-polyethylene-rod/",
-  pp_rod:          "https://www.plasticonline.com.au/product/polypropylene-pp-rod/",
-  pvc_rod:         "https://www.plasticonline.com.au/product/grey-pvc-rod/",
-  ptfe_rod:        "https://www.plasticonline.com.au/product/ptfe-teflon-virgin-rod/",
-  acrylic_rod:     "https://www.plasticonline.com.au/product/acrylic-clear-rod/",
-  peek_rod:        "https://www.plasticonline.com.au/product/peek-rod/",
-  opal_tube:       "https://www.plasticonline.com.au/product/acrylic-opal-tube/",
-  sq_tube:         "https://www.plasticonline.com.au/product/acrylic-square-tubes/",
-  pc_tube:         "https://www.plasticonline.com.au/product/polycarbonate-tube/",
-};
 
 // ── Acrylic Sheet Data ─────────────────────────────────────────────────────────
 
@@ -860,7 +828,7 @@ function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, w
 }
 
 function priceAcrylicSheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
-  const url = URL.acrylic;
+  const url = getProductUrl("acrylic");
   const row = ACRYLIC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
   const std = calcStandardSheet(row, width, height);
@@ -869,7 +837,7 @@ function priceAcrylicSheet(col: string, thickness: number, width: number, height
 }
 
 function pricePCSheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
-  const url = URL.polycarbonate;
+  const url = getProductUrl("polycarbonate");
   const row = PC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
   const std = calcStandardSheet(row, width, height);
@@ -878,7 +846,7 @@ function pricePCSheet(col: string, thickness: number, width: number, height: num
 }
 
 function priceAcetalSheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
-  const url = URL.acetal;
+  const url = getProductUrl("acetal");
   const SHEET_W = 2000, SHEET_H = 1000;
   const row = ACETAL.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
@@ -909,7 +877,7 @@ function priceAcetalSheet(col: string, thickness: number, width: number, height:
 }
 
 function pricePTFESheet(thickness: number, width: number, height: number, qty: number): PriceResult {
-  const url = URL.ptfe;
+  const url = getProductUrl("ptfe");
   const SHEET_W = 1200, SHEET_H = 1200, FULL_AREA = 1.44;
   const row = PTFE_SHEETS.find(r => r.thicknessMm === thickness);
   if (!row) return notFound(url);
@@ -935,7 +903,7 @@ function pricePTFESheet(thickness: number, width: number, height: number, qty: n
 }
 
 function priceCorflute(col: string, thickness: number, qty: number): PriceResult {
-  const url = URL.corflute;
+  const url = getProductUrl("corflute");
   const row = CORFLUTE.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
   const priceEach = qty >= 10 ? row.priceQty10 : row.priceEach;
@@ -985,11 +953,11 @@ function priceTube(mat: string, od: number, lengthMm: number, qty: number): Pric
 
   const row = TUBES.find(r => r.material === tubeMat && r.od === od)
            ?? TUBES.find(r => r.material === "acrylic_sq" && r.od === od);
-  if (!row) return notFound(mat === "polycarbonate" ? URL.pc_tube : URL.opal_tube);
+  if (!row) return notFound(mat === "polycarbonate" ? getProductUrl("polycarbonate tube") : getProductUrl("acrylic opal tube"));
 
-  const url = row.material === "polycarbonate" ? URL.pc_tube
-    : row.material === "acrylic_sq" ? URL.sq_tube
-    : URL.opal_tube;
+  const url = row.material === "polycarbonate" ? getProductUrl("polycarbonate tube")
+    : row.material === "acrylic_sq" ? getProductUrl("acrylic square tube")
+    : getProductUrl("acrylic opal tube");
 
   // Tubes are full length only
   const lengths = lengthMm > 0 ? Math.ceil(lengthMm / (row.lengthM * 1000)) : 1;
@@ -1022,32 +990,32 @@ export function getPricing(input: PricingInput): PriceResult {
       case "acetal":          return priceAcetalSheet(col, thick, w, h, qty);
       case "ptfe":            return pricePTFESheet(thick, w, h, qty);
       case "corflute":        return priceCorflute(col, thick, qty);
-      case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, URL.uhmwpe);
-      case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, URL.polypropylene);
-      case "hdpe":            return priceGenericSheet(HDPE, hdpeCol, thick, w, h, qty, URL.hdpe);
-      case "seaboard":        return priceGenericSheet(SEABOARD, "white", thick, w, h, qty, URL.seaboard);
-      case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, URL.petg);
-      case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, URL.hips);
-      case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, URL.mirror_acrylic);
-      case "euomir":          return priceGenericSheet(EUOMIR, col, thick, w, h, qty, URL.euomir);
-      case "acp":             return priceGenericSheet(ACP, col, thick, w, h, qty, URL.acp);
-      case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, URL.prismatic);
-      case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, URL.peek);
+      case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"));
+      case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, getProductUrl("polypropylene"));
+      case "hdpe":            return priceGenericSheet(HDPE, hdpeCol, thick, w, h, qty, getProductUrl("hdpe"));
+      case "seaboard":        return priceGenericSheet(SEABOARD, "white", thick, w, h, qty, getProductUrl("seaboard"));
+      case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, getProductUrl("petg"));
+      case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, getProductUrl("hips"));
+      case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, getProductUrl("acrylic mirror"));
+      case "euomir":          return priceGenericSheet(EUOMIR, col, thick, w, h, qty, getProductUrl("euromir"));
+      case "acp":             return priceGenericSheet(ACP, col, thick, w, h, qty, getProductUrl("acp"));
+      case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, getProductUrl("acrylic"));
+      case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, getProductUrl("peek"));
       default:                return notFound();
     }
   }
 
   if (input.type === "rod") {
     switch (mat) {
-      case "acetal":        return priceRod(ACETAL_RODS, col, diam, len, qty, URL.acetal_rod);
-      case "uhmwpe":        return priceRod(UHMWPE_RODS, "natural", diam, len, qty, URL.uhmwpe_rod);
-      case "nylon":         return priceRod(NYLON_RODS, "natural", diam, len, qty, URL.nylon_rod);
-      case "hdpe":          return priceRod(HDPE_RODS, hdpeCol, diam, len, qty, URL.hdpe_rod);
-      case "polypropylene": return priceRod(PP_RODS, "beige", diam, len, qty, URL.pp_rod);
-      case "pvc":           return priceRod(PVC_RODS, "grey", diam, len, qty, URL.pvc_rod);
-      case "ptfe":          return priceRod(PTFE_RODS, "natural", diam, len, qty, URL.ptfe_rod);
-      case "acrylic":       return priceRod(ACRYLIC_RODS, "clear", diam, len, qty, URL.acrylic_rod);
-      case "peek":          return priceRod(PEEK_RODS, "natural", diam, len, qty, URL.peek_rod);
+      case "acetal":        return priceRod(ACETAL_RODS, col, diam, len, qty, getProductUrl("acetal rod"));
+      case "uhmwpe":        return priceRod(UHMWPE_RODS, "natural", diam, len, qty, getProductUrl("uhmwpe rod"));
+      case "nylon":         return priceRod(NYLON_RODS, "natural", diam, len, qty, getProductUrl("nylon rod"));
+      case "hdpe":          return priceRod(HDPE_RODS, hdpeCol, diam, len, qty, getProductUrl("hdpe rod"));
+      case "polypropylene": return priceRod(PP_RODS, "beige", diam, len, qty, getProductUrl("pp rod"));
+      case "pvc":           return priceRod(PVC_RODS, "grey", diam, len, qty, getProductUrl("pvc rod"));
+      case "ptfe":          return priceRod(PTFE_RODS, "natural", diam, len, qty, getProductUrl("ptfe rod"));
+      case "acrylic":       return priceRod(ACRYLIC_RODS, "clear", diam, len, qty, getProductUrl("acrylic rod"));
+      case "peek":          return priceRod(PEEK_RODS, "natural", diam, len, qty, getProductUrl("peek rod"));
       default:              return notFound();
     }
   }

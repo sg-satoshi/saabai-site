@@ -57,35 +57,13 @@ Signage, Marine, Industrial/Mining, Engineering/Electrical/Plumbing/Civil, Retai
 const PRODUCTS = `
 ## PRODUCTS
 
-### Sheet Range
+### What We Stock
 
-| Material | Standard Sheet Size | Thicknesses | Colours | Price Range |
-|---|---|---|---|---|
-| Acrylic (Perspex) | 2030×3050mm | 1–50mm (115 options) | Clear, opals, tints, frosted, mirrors, colours, fluorescent | $60–$2,358 |
-| Polycarbonate UV | 1220×2440mm | 1–12.5mm (39 options) | Clear, opal, tint | $101–$1,125 |
-| ABS Sheet | 1350×3050mm | 1–12mm (13 options) | Black, white, grey | $95–$340 |
-| PVC Rigid | 1220×2440mm | Multiple (20 options) | Clear, white, grey | $82–$2,178 |
-| HDPE (Black/Natural) | 2000×1000mm thin / 3000×1500mm std | 1–150mm | Black UV, Natural, Yellow UV | $46–$6,076 |
-| Seaboard HDPE Marine | 1220×2440mm | 15mm+ (7 options) | Natural/White | $351–$1,029 |
-| Nylon Sheet | 1220×3050mm | Multiple (27 options) | Black, natural | $234–$3,978 |
-| Polypropylene | 1500×3000mm | 2–50mm (18 options) | Natural, grey, black, white | $1–$2,692 |
-| Foam PVC | 1220×3050mm | Multiple (22 options) | Black, white | $22–$455 |
-| PETG | Various | 0.5–2mm+ (7 options) | Clear | $54–$361 |
-| PTFE (Teflon) | 600×600 or 1200×1200mm | 1–50mm (12 options) | White/natural | $178–$18,141 |
-| HIPS | 1500×3000mm | 3mm+ | Multiple | $9–$143 |
-| Acrylic Mirror | 1350×2540mm | 2mm, 3mm | Silver, Gold | $290–$329 |
-| ACM Panel | 2000×3050mm | 4mm standard (37 options) | Multiple colours | $100–$433 |
-| Corflute | 1830×3000mm | 3mm, 5mm, 8mm | White, black | $14–$36 |
+**Sheets:** Acrylic (Perspex), Polycarbonate, HDPE, Seaboard HDPE Marine, Playground HDPE, Nylon, Acetal (POM-C), Polypropylene, PTFE (Teflon), UHMWPE, PETG, HIPS, ABS, PVC Rigid, Foam PVC, Corflute, ACM/ACP Panel, Acrylic Mirror, EuroMir
 
-### Rods & Tubes
+**Rods:** Acrylic, Acetal (POM-C), Nylon, HDPE, UHMWPE, Polypropylene, PVC, PTFE (Teflon), PEEK
 
-| Material | Diameter Range | Lengths | Price Range |
-|---|---|---|---|
-| Acetal Rod (POM-C) | Small–250mm | 3000mm | $4–$2,361 |
-| UHMWPE Rod | To 200mm | 2000mm | $13–$4,698 |
-| PTFE Rod | 3–300mm | 1m or 2m | $5–$3,879 |
-| Polycarbonate Tube | Various | 2000mm | $0–$737 |
-| PVC Rod, Acrylic Rod/Tube, Nylon Rod | Various | Various | — |
+**Tubes:** Acrylic (clear, opal, square), Polycarbonate
 
 ### Accessories & Adhesives
 
@@ -104,14 +82,6 @@ We are the authorised Queensland reseller of the full Perspex® range: Fluoresce
 ### Lighting & Diffuser Products
 
 Prismatic Diffuser Sheet (Y12, Y15, Y19), Skylight Diffuser panels, Eggcrate Louvres, Slumped Acrylic panels, Acryplex Architectural Sheet
-
-### Product Page URLs
-
-**Sheets:** Acrylic https://www.plasticonline.com.au/product/acrylic-sheet/ · Polycarbonate https://www.plasticonline.com.au/product/polycarbonate-sheet/ · HDPE https://www.plasticonline.com.au/product/hdpe-polyethylene-cutting-board/ · PVC https://www.plasticonline.com.au/product/pvc-sheet/ · Nylon https://www.plasticonline.com.au/product/nylon-sheet/ · Acetal https://www.plasticonline.com.au/product/acetal-pom-c-plastic-sheet/ · Polypropylene https://www.plasticonline.com.au/product/polypropylene/ · Corflute https://www.plasticonline.com.au/product/corflute-corragatted-flute-board/ · ACP/ACM https://www.plasticonline.com.au/product/acm/ · PTFE https://www.plasticonline.com.au/product/ptfe-teflon-sheet/ · UHMWPE https://www.plasticonline.com.au/product/uhmwpe-sheet/ · PETG https://www.plasticonline.com.au/product/petg-polyethylene-terephthalate-glycol-modified-sheet/ · ABS https://www.plasticonline.com.au/product/abs-sheet/ · Foam PVC https://www.plasticonline.com.au/product/foam-pvc/ · PEEK https://www.plasticonline.com.au/product/peek-polyether-ether-ketone-sheet/ · HIPS https://www.plasticonline.com.au/product/hips-sheet/ · Playground HDPE https://www.plasticonline.com.au/product/hdpe-playground-board/ · Seaboard https://www.plasticonline.com.au/product/seaboard-hdpe-marine-grade/ · Acrylic Mirror https://www.plasticonline.com.au/product/silver-gold-commercial-acrylic-mirror/ · EuroMir https://www.plasticonline.com.au/product/euromir-acrylic-mirror/
-
-**Rods:** Acrylic https://www.plasticonline.com.au/product/acrylic-clear-rod/ · Acetal https://www.plasticonline.com.au/product/acetal-rod/ · Nylon https://www.plasticonline.com.au/product/nylon-rod/ · HDPE https://www.plasticonline.com.au/product/hdpe-high-density-polyethylene-rod/ · UHMWPE https://www.plasticonline.com.au/product/uhmwpe-rod-natural-only-white/ · PP https://www.plasticonline.com.au/product/polypropylene-pp-rod/ · PVC https://www.plasticonline.com.au/product/grey-pvc-rod/ · PTFE https://www.plasticonline.com.au/product/ptfe-teflon-virgin-rod/ · PEEK https://www.plasticonline.com.au/product/peek-rod/
-
-**Tubes:** Acrylic Clear https://www.plasticonline.com.au/product/acrylic-clear-tubes/ · Acrylic Square https://www.plasticonline.com.au/product/acrylic-square-tubes/ · Acrylic Opal https://www.plasticonline.com.au/product/acrylic-opal-tube/ · Polycarbonate https://www.plasticonline.com.au/product/polycarbonate-tube/
 `;
 
 const MATERIALS_CLEAR = `

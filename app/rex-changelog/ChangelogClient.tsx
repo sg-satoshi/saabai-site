@@ -31,6 +31,11 @@ const CHANGELOG: Day[] = [
     date: "3 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:00", tag: "IMPROVEMENT", title: "Phase 1 Optimization Complete — 33% token reduction (7,600 → 5,100 tokens), 33% cost reduction, better UX via intent-based routing" },
+      { time: "16:58", tag: "IMPROVEMENT", title: "Intent-based model routing — proactive Sonnet upgrade on first message when pricing/technical intent detected (not reactive mid-conversation)" },
+      { time: "16:55", tag: "IMPROVEMENT", title: "System prompt compressed ~500 tokens — consolidated rules, removed examples, tightened wording while maintaining quality" },
+      { time: "16:50", tag: "IMPROVEMENT", title: "Product URLs now template-generated — ~500 tokens saved, url-generator.ts maps materials to slugs dynamically" },
+      { time: "16:45", tag: "IMPROVEMENT", title: "Product price tables stripped from knowledge base — ~1,000 tokens saved (Rex uses getPricing tool, never references price ranges)" },
       { time: "15:30", tag: "IMPROVEMENT", title: "Make.com webhook enriched — full payload now includes name, mobile, address, despatch, AI-analysed quote details, price, material, summary, and full transcript" },
       { time: "15:25", tag: "NEW", title: "Analytics events wired into Rex widget — tracking widget_opened, first_message_sent, price_shown, lead_captured, and conversation_ended" },
       { time: "15:20", tag: "IMPROVEMENT", title: "Automatic Sonnet upgrade for high-intent sessions — Rex switches to claude-sonnet-4-6 when pricing signals, engineering materials, or long conversations are detected" },
