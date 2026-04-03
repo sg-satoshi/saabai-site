@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "16:30", tag: "NEW", title: "Multi-client Rex architecture — clientId flows from ?client= widget query param through all API calls; lib/rex-config.ts registry holds per-client system prompt, email config, and tool set; PLON-specific tools (searchProducts, lookupOrder, getPrice, calculatePrice) are opt-in; new clients get captureLead only until configured" },
       { time: "15:00", tag: "NEW", title: "Conversation viewer in lead slide-out — click any lead row, toggle 'Conversation →' to read the full Rex chat transcript; transcripts stored in Redis (90-day TTL) at lead capture; protected API endpoint /api/rex-transcript" },
       { time: "15:00", tag: "FIX", title: "Revenue tab order numbers now show PLON-xxxxx format instead of raw WooCommerce numeric IDs" },
       { time: "14:00", tag: "NEW", title: "Revenue Attribution tab live — WooCommerce orders fetched (last 60 days), matched to Rex leads by SHA-256 email hash; shows total orders + revenue, Rex-attributed orders + revenue, attribution rate, and full order table with Rex badges" },

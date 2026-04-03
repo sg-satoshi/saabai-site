@@ -180,7 +180,7 @@ function randomGreeting(): string {
   return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 }
 
-export default function PeterAvatarWidget() {
+export default function PeterAvatarWidget({ clientId }: { clientId?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
@@ -528,7 +528,7 @@ export default function PeterAvatarWidget() {
       const res = await fetch("/api/pete-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated }),
+        body: JSON.stringify({ messages: updated, clientId }),
       });
 
       if (!res.ok) throw new Error(`Chat error ${res.status}: ${await res.text()}`);
@@ -652,6 +652,7 @@ export default function PeterAvatarWidget() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        clientId,
         source: "rex_quick_reply",
         note: question,
         timestamp: new Date().toISOString(),
@@ -741,6 +742,7 @@ export default function PeterAvatarWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          clientId,
           source: "pete_ended",
           name: endName.trim() || undefined,
           email: skipEmail ? undefined : endEmail.trim() || undefined,
@@ -767,6 +769,7 @@ export default function PeterAvatarWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          clientId,
           source: "rex_quote_email",
           name: quoteName.trim() || undefined,
           email: quoteEmail.trim(),

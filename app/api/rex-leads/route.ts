@@ -3,6 +3,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
 import { trackResponseTime } from "../rex-analytics/realtime/route";
+import { getClientConfig, getResendKey } from "../../../lib/rex-config";
 import type { CheckoutData } from "../../../lib/url-generator";
 
 export const runtime = "edge";
@@ -12,11 +13,7 @@ export const runtime = "edge";
 const HIGH_VALUE_THRESHOLD = 200; // Lead >= $200 is high-value (priority)
 const LOW_VALUE_THRESHOLD = 200;  // Lead < $200 is low-value (nurture)
 
-// Use the PlasticOnline-specific Resend account for all Rex emails
-const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
-
-const FROM_EMAIL = process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>";
-const TEAM_EMAIL = process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.au";
+// Email config is now per-client — resolved inside the POST handler via getClientConfig()
 const SHOP_URL = "https://www.plasticonline.com.au/shop/";
 const CONTACT_URL = "https://www.plasticonline.com.au/contact/";
 
@@ -763,9 +760,15 @@ function teamNotificationHtml(
 
 export async function POST(req: Request) {
   const startTime = Date.now();
-  
+
   try {
-    const { source, name, email, note, mobile, address, despatch, messages, timestamp, device: deviceHint } = await req.json();
+    const { clientId, source, name, email, note, mobile, address, despatch, messages, timestamp, device: deviceHint } = await req.json();
+
+    // Resolve client config — defaults to PlasticOnline for backwards compatibility
+    const clientConfig = getClientConfig(clientId);
+    const resend = new Resend(getResendKey(clientConfig));
+    const FROM_EMAIL = clientConfig.email.from;
+    const TEAM_EMAIL = clientConfig.email.teamEmail;
 
     // Detect device type (mobile vs desktop)
     const device = detectDevice(req, deviceHint);
