@@ -58,8 +58,16 @@ export default function RexNav() {
           </nav>
         </div>
 
-        {/* Right side — live indicator + sign out */}
+        {/* Right side — admin back + live indicator + sign out */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <a
+            href="/saabai-admin"
+            style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", textDecoration: "none", padding: "4px 8px", borderRadius: 6 }}
+            onMouseEnter={e => (e.currentTarget.style.color = "#374151")}
+            onMouseLeave={e => (e.currentTarget.style.color = "#9ca3af")}
+          >
+            ← Admin
+          </a>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#9ca3af" }}>
             <span style={{
               width: 6, height: 6, borderRadius: "50%", background: "#22c55e",
