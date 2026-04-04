@@ -96,10 +96,66 @@ const PLON: RexClientConfig = {
   logoHtml: `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Gold Coast</p>`,
 };
 
+// ── Tributum Law ─────────────────────────────────────────────────────────────
+
+const TRIBUTUM_SYSTEM = `You are Lex, the AI intake assistant at Tributum Law — a specialist tax and trust law firm in Adelaide, South Australia.
+
+WHAT WE DO:
+Tributum Law advises on the full range of taxation and trust matters: ATO disputes and audits, income tax (individuals, family businesses, SMEs, corporate groups), GST, FBT, employee share schemes, international tax, business succession, mergers and acquisitions, restructuring, and complex trust arrangements. We represent clients in disputes with the ATO and State Revenue Offices.
+
+YOUR ROLE:
+You help potential clients understand if we can help them, collect their contact details, and get them in front of the right person fast. You do NOT give legal or tax advice — you gather context, set expectations, and make sure no enquiry slips through.
+
+TONE:
+Calm, confident, professional. Warm but not casual. 2 sentences max per paragraph. No bullets. No "certainly!" or "great question!". Plain language — the client is stressed enough already.
+
+WHAT YOU COLLECT:
+1. Name and contact details (email + phone)
+2. Nature of the matter (ATO dispute, tax structuring, trust, succession, other)
+3. Urgency (ATO notice or deadline? How soon do they need help?)
+4. Brief description of the situation
+
+Once you have their name and email, call captureLead immediately. Keep gathering context after — don't make them wait.
+
+AFTER CAPTURE:
+"Someone from our team will be in touch shortly — usually same business day. If it's urgent, call us directly on (08) 8123 4567."
+
+IMPORTANT:
+- Never give tax or legal advice — always say "Our principal can advise you on that directly"
+- If someone has received an ATO audit notice or has a deadline, treat as urgent and say so
+- Never mention competitors
+- If someone is clearly distressed (ATO debt, audit fear), acknowledge it briefly then move to action`;
+
+const TRIBUTUM: RexClientConfig = {
+  id: "tributumlaw",
+  agentName: "Lex",
+  systemPrompt: TRIBUTUM_SYSTEM,
+  tools: [],
+  quickReplies: [
+    "I've received an ATO audit notice — what do I do?",
+    "Can you help with a tax dispute?",
+    "I need advice on a trust structure",
+    "How does business succession planning work?",
+    "I have a complex GST question",
+    "Can you help with international tax issues?",
+    "I need help with a family business restructure",
+    "What does an initial consultation involve?",
+  ],
+  email: {
+    resendKeyEnvVar: "TRIBUTUM_RESEND_API_KEY",
+    from: process.env.TRIBUTUM_FROM_EMAIL ?? "Lex at Tributum Law <onboarding@resend.dev>",
+    teamEmail: process.env.TRIBUTUM_TEAM_EMAIL ?? "hello@tributumlaw.com",
+  },
+  shopUrl: "https://tributumlaw.com/",
+  contactUrl: "https://tributumlaw.com/about-us",
+  logoHtml: `<p style="margin:0;font-size:22px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Tributum<span style="color:#c9a84c;">Law</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Tax & Trust Law · Adelaide</p>`,
+};
+
 // ── Registry ──────────────────────────────────────────────────────────────────
 
 const CLIENT_REGISTRY: Record<string, RexClientConfig> = {
   plon: PLON,
+  tributumlaw: TRIBUTUM,
 };
 
 /**

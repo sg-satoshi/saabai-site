@@ -604,8 +604,6 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
           });
           // Improvement #6: sound on new message
           playMessageSound();
-          // Improvement #2: contextual follow-up chips
-          setFollowUpChips(getFollowUpChips(cleaned));
           // Reset email capture for new response
           setQuoteEmailSent(false);
           lastActivityRef.current = Date.now();
