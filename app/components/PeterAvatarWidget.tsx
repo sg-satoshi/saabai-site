@@ -209,6 +209,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   const [quoteMobile, setQuoteMobile] = useState("");
   const [quoteDesspatch, setQuoteDesspatch] = useState<"pickup" | "delivery" | null>(null);
   const [quoteName, setQuoteName] = useState("");
+  const [quoteCompany, setQuoteCompany] = useState("");
   const [quoteAddress, setQuoteAddress] = useState("");
   const [quoteEmailSent, setQuoteEmailSent] = useState(false);
   const [quoteEmailSending, setQuoteEmailSending] = useState(false);
@@ -715,6 +716,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     setQuoteMobile("");
     setQuoteDesspatch(null);
     setQuoteName("");
+    setQuoteCompany("");
     setQuoteAddress("");
     setEndName("");
     setQuoteEmailSent(false);
@@ -759,6 +761,65 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     }
   }
 
+  // Extract contact details Rex already gathered from the conversation
+  function extractConversationData() {
+    const msgs = messagesRef.current;
+    const userMsgs = msgs.filter(m => m.role === "user").map(m => m.content);
+    const assistantMsgs = msgs.filter(m => m.role === "assistant").map(m => m.content);
+    const allText = msgs.map(m => m.content).join(" ");
+
+    // Email — scan user messages first, fall back to all messages
+    let email = "";
+    const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
+    for (let i = userMsgs.length - 1; i >= 0; i--) {
+      const m = userMsgs[i].match(emailPattern);
+      if (m) { email = m[0]; break; }
+    }
+    if (!email) {
+      const m = allText.match(emailPattern);
+      if (m) email = m[0];
+    }
+
+    // Phone — Australian mobile/landline patterns from user messages
+    let phone = "";
+    const phonePattern = /(?:(?:\+?61|0)[ -]?)?(?:4\d{2}[ -]?\d{3}[ -]?\d{3}|\d{2}[ -]?\d{4}[ -]?\d{4})/;
+    for (const msg of userMsgs) {
+      const m = msg.replace(/[^\d+ -]/g, " ").match(phonePattern);
+      if (m) { phone = m[0].replace(/\s+/g, " ").trim(); break; }
+    }
+
+    // Name — Rex will address customer by name in assistant messages ("Hi Sarah," "Thanks John")
+    let name = "";
+    const nameInAssistant = /(?:^|[\s,!])(?:Hi|Hey|Thanks|Thank you|Sure|Great|No worries)[,!]?\s+([A-Z][a-z]{1,20})(?:[,!.\s]|$)/m;
+    for (let i = assistantMsgs.length - 1; i >= 0; i--) {
+      const m = assistantMsgs[i].match(nameInAssistant);
+      if (m?.[1]) { name = m[1]; break; }
+    }
+    // Fall back: user said "my name is X" or "I'm X"
+    if (!name) {
+      for (const msg of userMsgs) {
+        const m = msg.match(/(?:my name(?:'s| is)\s+|I(?:'m| am)\s+)([A-Z][a-z]{1,20}(?:\s+[A-Z][a-z]{1,20})?)/);
+        if (m?.[1]) { name = m[1]; break; }
+      }
+    }
+
+    // Company — user said "from X", "at X", "for X company/plastics/group/solutions"
+    let company = "";
+    const companyPatterns = [
+      /(?:from|at|for|with|represent(?:ing)?)\s+([A-Z][A-Za-z0-9 &'.,-]{1,50}?)(?:\s+(?:company|pty|ltd|limited|group|co\.|corp|solutions|plastics|industries|manufacturing))?(?:[,.\s]|$)/m,
+      /(?:company(?:'s| is| name is)?|business(?:'s| is| name is)?|organisation(?:'s| is)?)\s+(?:called\s+)?([A-Z][A-Za-z0-9 &'.,-]{1,50})(?:[,.\s]|$)/im,
+    ];
+    for (const msg of userMsgs) {
+      for (const pattern of companyPatterns) {
+        const m = msg.match(pattern);
+        if (m?.[1] && m[1].length > 2) { company = m[1].trim(); break; }
+      }
+      if (company) break;
+    }
+
+    return { email, phone, name, company };
+  }
+
   // Improvement #1: inline quote email capture
   async function submitQuoteEmail() {
     if (!quoteEmail.trim() || quoteEmailSending) return;
@@ -774,6 +835,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
           name: quoteName.trim() || undefined,
           email: quoteEmail.trim(),
           mobile: quoteMobile.trim() || undefined,
+          company: quoteCompany.trim() || undefined,
           address: quoteAddress.trim() || undefined,
           despatch: quoteDesspatch ?? undefined,
           note: lastAssistant?.content ?? "Quote request",
@@ -1172,18 +1234,12 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                     <div className="shrink-0 px-3 pb-2 pt-1" style={{ background: "linear-gradient(to top, #fff 70%, transparent)" }}>
                       <button
                         onClick={() => {
-                          // Pre-fill email if customer already gave it in chat
-                          if (!quoteEmail) {
-                            const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
-                            const userMessages = messagesRef.current.filter(m => m.role === "user");
-                            for (let i = userMessages.length - 1; i >= 0; i--) {
-                              const match = userMessages[i].content.match(emailPattern);
-                              if (match) {
-                                setQuoteEmail(match[0]);
-                                break;
-                              }
-                            }
-                          }
+                          // Pre-fill all fields from conversation data Rex already captured
+                          const extracted = extractConversationData();
+                          if (!quoteEmail && extracted.email) setQuoteEmail(extracted.email);
+                          if (!quoteName && extracted.name)   setQuoteName(extracted.name);
+                          if (!quoteMobile && extracted.phone) setQuoteMobile(extracted.phone);
+                          if (!quoteCompany && extracted.company) setQuoteCompany(extracted.company);
                           setQuoteEmailOpen(true);
                         }}
                         className="w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-150 active:scale-[0.98] hover:brightness-105"
@@ -1225,18 +1281,32 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                       >×</button>
                     </div>
 
-                    {/* Full Name */}
-                    <div style={{ marginBottom: 8 }}>
-                      <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Full Name</label>
-                      <input
-                        type="text"
-                        placeholder="First and last name"
-                        value={quoteName}
-                        onChange={e => setQuoteName(e.target.value)}
-                        disabled={quoteEmailSending}
-                        className="rex-input"
-                        style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
-                      />
+                    {/* Name + Company */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Full Name</label>
+                        <input
+                          type="text"
+                          placeholder="First and last name"
+                          value={quoteName}
+                          onChange={e => setQuoteName(e.target.value)}
+                          disabled={quoteEmailSending}
+                          className="rex-input"
+                          style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: "#65676b", textTransform: "uppercase" as const, letterSpacing: "0.9px", marginBottom: 4 }}>Company</label>
+                        <input
+                          type="text"
+                          placeholder="Business name (optional)"
+                          value={quoteCompany}
+                          onChange={e => setQuoteCompany(e.target.value)}
+                          disabled={quoteEmailSending}
+                          className="rex-input"
+                          style={{ width: "100%", boxSizing: "border-box" as const, padding: "9px 12px", borderRadius: 10, border: "1.5px solid #e4e6eb", fontSize: 12, color: "#050505", background: "#fafafa", outline: "none" }}
+                        />
+                      </div>
                     </div>
 
                     {/* Email + Mobile */}
