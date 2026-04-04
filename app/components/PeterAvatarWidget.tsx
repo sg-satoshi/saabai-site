@@ -373,69 +373,44 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     if (!SR) return;
 
     const recognition = new SR();
-    recognition.continuous = true;   // stay open — no no-speech timeout loop
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = "en-AU";
-
-    let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-    let finalTranscript = "";
 
     recognition.onstart = () => setIsListening(true);
 
     recognition.onresult = (event: any) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interim = event.results[i][0].transcript;
-        }
-      }
-      setInputValue(finalTranscript + interim);
-
-      // Stop listening 1.2s after the user finishes speaking (final result received)
-      if (finalTranscript) {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        silenceTimer = setTimeout(() => {
-          if (recognitionRef.current) recognitionRef.current.stop();
-        }, 1200);
-      }
+      const transcript = Array.from(event.results as any)
+        .map((r: any) => r[0].transcript)
+        .join("");
+      setInputValue(transcript);
     };
 
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
-      if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-      const text = finalTranscript.trim();
-      finalTranscript = "";
-      if (text) {
-        handleUserMessage(text);
-        setInputValue("");
-      } else if (isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
-        // No speech — restart and keep waiting
-        setTimeout(() => {
-          if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
-            startListening();
-          }
-        }, 500);
-      }
+      setInputValue((current) => {
+        const text = current.trim();
+        if (text) {
+          handleUserMessage(text);
+          return "";
+        }
+        // No speech captured — restart and keep waiting
+        if (isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
+          setTimeout(() => {
+            if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
+              startListening();
+            }
+          }, 400);
+        }
+        return current;
+      });
     };
 
+    // onerror always fires before onend — onend handles restarts, so only surface fatal errors here
     recognition.onerror = (event: any) => {
-      setIsListening(false);
-      recognitionRef.current = null;
-      const fatal = event.error === "not-allowed" || event.error === "service-not-allowed";
-      if (fatal) {
-        setError("Mic access blocked — please allow microphone permission and try again.");
-        return;
-      }
-      // Recoverable errors (no-speech, aborted, network) — restart silently
-      if (isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
-        setTimeout(() => {
-          if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
-            startListening();
-          }
-        }, 600);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setError("Mic blocked — allow microphone access and try again.");
       }
     };
 
@@ -445,18 +420,14 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     } catch (e: any) {
       recognitionRef.current = null;
       const msg = String(e?.message ?? e).toLowerCase();
-      const fatal = msg.includes("not-allowed") || msg.includes("permission") || msg.includes("denied");
-      if (fatal) {
-        setError("Mic access blocked — please allow microphone and try again.");
-        return;
-      }
-      // Non-fatal (e.g. InvalidStateError) — retry after a moment
-      if (isStartedRef.current && chatModeRef.current === "voice") {
+      if (msg.includes("not-allowed") || msg.includes("permission") || msg.includes("denied")) {
+        setError("Mic blocked — allow microphone access and try again.");
+      } else if (isStartedRef.current && chatModeRef.current === "voice") {
         setTimeout(() => {
           if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
             startListening();
           }
-        }, 800);
+        }, 600);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
