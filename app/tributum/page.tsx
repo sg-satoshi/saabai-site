@@ -58,7 +58,7 @@ export default function TributumPitchPage() {
   const [copied, setCopied] = useState(false);
 
   function copyEmail() {
-    navigator.clipboard.writeText("shane@saabai.ai").then(() => {
+    navigator.clipboard.writeText("hello@saabai.ai").then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -100,7 +100,7 @@ export default function TributumPitchPage() {
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <a
-            href="mailto:shane@saabai.ai?subject=Let's talk — Tributum Law AI Agent"
+            href="mailto:hello@saabai.ai?subject=Tributum Law — AI Agent"
             style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#c9a84c", color: "#0a0c10", padding: "14px 28px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none", letterSpacing: "-0.2px" }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/></svg>
@@ -248,7 +248,7 @@ export default function TributumPitchPage() {
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <a
-            href="mailto:shane@saabai.ai?subject=Let's talk — Tributum Law AI Agent"
+            href="mailto:hello@saabai.ai?subject=Tributum Law — AI Agent"
             style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#c9a84c", color: "#0a0c10", padding: "16px 32px", borderRadius: 12, fontWeight: 800, fontSize: 15, textDecoration: "none", letterSpacing: "-0.3px", boxShadow: "0 8px 32px rgba(201,168,76,0.3)" }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/></svg>
@@ -265,7 +265,7 @@ export default function TributumPitchPage() {
             )}
           </button>
         </div>
-        <p style={{ fontSize: 13, color: "#374151", marginTop: 24 }}>shane@saabai.ai · This page is private and was prepared specifically for Tributum Law.</p>
+        <p style={{ fontSize: 13, color: "#374151", marginTop: 24 }}>hello@saabai.ai · This page is private and was prepared specifically for Tributum Law.</p>
       </div>
 
     </div>
