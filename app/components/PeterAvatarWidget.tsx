@@ -406,9 +406,18 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       });
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
       setIsListening(false);
       recognitionRef.current = null;
+      // "no-speech" and "aborted" are recoverable — restart the loop so silence doesn't kill voice mode permanently
+      const fatal = event.error === "not-allowed" || event.error === "service-not-allowed";
+      if (!fatal && isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
+        setTimeout(() => {
+          if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
+            startListening();
+          }
+        }, 600);
+      }
     };
 
     try {
@@ -1481,7 +1490,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
         .rex-msg { animation: msgIn 0.18s ease-out forwards; }
         
         /* Mobile viewport fix: prevent zoom on input focus, handle safe areas */
-        @media (max-width: 767px) {
+        /* Use pointer:coarse (touch device) not width — the iframe is always narrow so width queries fire on desktop too */
+        @media (pointer: coarse) {
           .rex-input {
             font-size: 16px !important; /* Prevent iOS auto-zoom on input focus */
           }
