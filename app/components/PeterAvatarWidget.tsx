@@ -410,7 +410,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     // onerror always fires before onend — onend handles restarts, so only surface fatal errors here
     recognition.onerror = (event: any) => {
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setError("Mic blocked — allow microphone access and try again.");
+        setError("Mic blocked. Allow microphone in browser settings. On Mac, also check System Settings → Privacy → Microphone.");
       }
     };
 
@@ -629,6 +629,16 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   }
 
   async function selectVoiceMode() {
+    // Explicitly request mic via getUserMedia first — more reliable than relying on
+    // SpeechRecognition's own permission flow, which behaves inconsistently across browsers
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // permission confirmed — release stream immediately
+    } catch {
+      setError("Microphone blocked. Allow mic access in your browser, then try again. On Mac, also check System Settings → Privacy → Microphone.");
+      return;
+    }
+
     const audio = new Audio();
     audio.volume = 0;
     audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAFRWAAABAAgAZGF0YQAAAAA=";
