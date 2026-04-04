@@ -423,9 +423,18 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     try {
       recognitionRef.current = recognition;
       recognition.start();
-    } catch {
-      // start() threw (e.g. already started, permission denied) — clear ref so we can retry
+    } catch (e: any) {
+      // start() threw — clear ref and retry unless it's a hard permission denial
       recognitionRef.current = null;
+      const msg = String(e?.message ?? e).toLowerCase();
+      const fatal = msg.includes("not-allowed") || msg.includes("permission");
+      if (!fatal && isStartedRef.current && chatModeRef.current === "voice") {
+        setTimeout(() => {
+          if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
+            startListening();
+          }
+        }, 800);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -473,24 +482,26 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       audioBlobUrlRef.current = url;
       const audio = audioRef.current!;
       audio.src = url;
-      isSpeakingRef.current = true;
-      setIsSpeaking(true);
 
-      await audio.play();
-
+      // Set onended BEFORE play() — prevents race condition where short audio ends before handler is registered
       audio.onended = () => {
         isSpeakingRef.current = false;
         setIsSpeaking(false);
         URL.revokeObjectURL(url);
         if (audioBlobUrlRef.current === url) audioBlobUrlRef.current = null;
-        if (isStartedRef.current) {
+        if (isStartedRef.current && chatModeRef.current === "voice") {
+          // 800ms delay — gives audio system time to release mic after playback
           setTimeout(() => {
             if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
               startListening();
             }
-          }, 350);
+          }, 800);
         }
       };
+
+      isSpeakingRef.current = true;
+      setIsSpeaking(true);
+      await audio.play();
     } catch (err) {
       isSpeakingRef.current = false;
       setIsSpeaking(false);

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "16:00", tag: "FIX", title: "Voice mode — fixed race condition where audio.onended was registered after audio.play() meaning short audio could end before the handler was in place; moved handler registration before play(); increased post-audio delay 350ms→800ms to give audio system time to release mic; recognition.start() catch block now retries instead of silently dying" },
       { time: "15:30", tag: "FIX", title: "Voice mode — mic no longer dies after first exchange; 'no-speech' and 'aborted' SpeechRecognition errors now restart the listening loop automatically instead of silently killing it; fatal permission errors still exit cleanly" },
       { time: "15:30", tag: "FIX", title: "Input font size on desktop — text entry box placeholder and typed text was 16px on desktop because the iframe width (420px) triggered the mobile media query; switched from max-width:767px to pointer:coarse so 16px only applies on actual touch devices (iOS zoom prevention)" },
       { time: "13:00", tag: "IMPROVEMENT", title: "Quote form auto-fill — when customer clicks 'Email me this quote', all fields Rex already knows (name, email, phone, company) are pre-populated from the conversation; name extracted from how Rex addressed them, email/phone from what user typed, company from business mentions; user only fills what's missing" },
