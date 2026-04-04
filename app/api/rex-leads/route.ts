@@ -4,6 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
 import { trackResponseTime } from "../rex-analytics/realtime/route";
 import { getClientConfig, getResendKey } from "../../../lib/rex-config";
+import { createRexDeal } from "../../../lib/pipedrive-client";
 import type { CheckoutData } from "../../../lib/url-generator";
 
 export const runtime = "edge";
@@ -901,6 +902,21 @@ export async function POST(req: Request) {
       storeTranscript(leadTs, messages.filter((m: { role: string; content: string }) =>
         m.role === "user" || m.role === "assistant"
       )).catch(() => {});
+    }
+
+    // Auto-create Pipedrive deal for priority leads (>= $200) — fire and forget
+    if (scoredLead.priority && email) {
+      createRexDeal({
+        name:         name ?? undefined,
+        email:        email,
+        phone:        mobile ?? undefined,
+        quoteDetails: analysis?.quoteDetails ?? note ?? undefined,
+        price:        priceStr ?? undefined,
+        priceValue:   priceValue,
+        summary:      analysis?.summary ?? undefined,
+        source:       source ?? undefined,
+        device:       device,
+      }).catch(() => {});
     }
 
     // Build subject line from analysis or fallback to note price
