@@ -755,6 +755,38 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     track("conversation_ended", { messageCount: messagesRef.current.length });
   }
 
+  function handleNewChat() {
+    stopAudio();
+    stopListening();
+    isStartedRef.current = false;
+    chatModeRef.current = null;
+    reEngagementFiredRef.current = false;
+    transcriptSentRef.current = false;
+    setIsStarted(false);
+    setIsEnded(false);
+    setChatMode(null);
+    setDisplayMessages([]);
+    setInputValue("");
+    setQuoteEmail("");
+    setQuoteMobile("");
+    setQuoteDesspatch(null);
+    setQuoteName("");
+    setQuoteCompany("");
+    setQuoteAddress("");
+    setQuoteEmailOpen(false);
+    setQuoteEmailSent(false);
+    setEndEmail("");
+    setEndName("");
+    setEndSubmitted(false);
+    setEndSubmitting(false);
+    setShowQuickReplies(false);
+    setFollowUpChips([]);
+    setError(null);
+    messagesRef.current = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    track("new_chat_started");
+  }
+
   async function submitEndPanel(skipEmail: boolean) {
     if (transcriptSentRef.current) return;
     transcriptSentRef.current = true;
@@ -1024,6 +1056,14 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                   </div>
                   <div className="h-px bg-saabai-border" />
                   <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to place your order? Browse the full range and add to cart.</p>
+                  <button
+                    onClick={handleNewChat}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors"
+                    style={{ background: "#f0f2f5", color: "#0084FF", border: "1px solid #c8dcff" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M10 6A4 4 0 1 1 6 2M10 2v3H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Start a new chat
+                  </button>
                   <a href="https://www.plasticonline.com.au/shop/" target="_blank" rel="noopener noreferrer"
                     className="block w-full text-center bg-saabai-teal text-white px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-saabai-teal-bright transition-colors tracking-wide">
                     Shop Our Range →
@@ -1080,10 +1120,18 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                       WhatsApp
                     </a>
                   </div>
-                  <button onClick={() => submitEndPanel(true)} disabled={endSubmitting}
-                    className="text-[11px] text-saabai-text-dim hover:text-saabai-text-muted transition-colors text-center">
-                    No thanks
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => submitEndPanel(true)} disabled={endSubmitting}
+                      className="flex-1 text-[11px] text-saabai-text-dim hover:text-saabai-text-muted transition-colors text-center">
+                      No thanks
+                    </button>
+                    <button onClick={handleNewChat} disabled={endSubmitting}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium transition-colors"
+                      style={{ color: "#0084FF" }}>
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M10 6A4 4 0 1 1 6 2M10 2v3H7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      New chat
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

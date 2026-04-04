@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "16:15", tag: "UI", title: "Start new chat button on end panel — after ending a conversation, users can now start fresh without closing and reopening the widget; button appears in both the transcript-sent state and the pre-submit state alongside 'No thanks'; resets all conversation state, clears localStorage, returns to mode picker" },
       { time: "16:00", tag: "FIX", title: "Voice mode — fixed race condition where audio.onended was registered after audio.play() meaning short audio could end before the handler was in place; moved handler registration before play(); increased post-audio delay 350ms→800ms to give audio system time to release mic; recognition.start() catch block now retries instead of silently dying" },
       { time: "15:30", tag: "FIX", title: "Voice mode — mic no longer dies after first exchange; 'no-speech' and 'aborted' SpeechRecognition errors now restart the listening loop automatically instead of silently killing it; fatal permission errors still exit cleanly" },
       { time: "15:30", tag: "FIX", title: "Input font size on desktop — text entry box placeholder and typed text was 16px on desktop because the iframe width (420px) triggered the mobile media query; switched from max-width:767px to pointer:coarse so 16px only applies on actual touch devices (iOS zoom prevention)" },
