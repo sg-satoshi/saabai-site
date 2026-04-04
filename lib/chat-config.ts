@@ -52,7 +52,8 @@ function resolveModel(envKey: string, fallback: string): LanguageModel {
 /**
  * Cost-efficient model for all conversations.
  * Controlled by DEFAULT_CHAT_MODEL env var.
- * Fallback: claude-haiku-4-5-20251001
+ * Fallback: claude-haiku-4-5 (Anthropic) — set DEFAULT_CHAT_MODEL=google:gemini-2.5-flash-lite in Vercel for cheaper Google option.
+ * NOTE: gemini-2.0-flash is deprecated June 1 2026 — use gemini-2.5-flash-lite instead.
  */
 export function getDefaultModel(): LanguageModel {
   return resolveModel("DEFAULT_CHAT_MODEL", "anthropic:claude-haiku-4-5");
