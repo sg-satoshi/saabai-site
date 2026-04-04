@@ -373,37 +373,52 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     if (!SR) return;
 
     const recognition = new SR();
-    recognition.continuous = false;
+    recognition.continuous = true;   // stay open — no no-speech timeout loop
     recognition.interimResults = true;
     recognition.lang = "en-AU";
+
+    let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+    let finalTranscript = "";
 
     recognition.onstart = () => setIsListening(true);
 
     recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results as any)
-        .map((r: any) => r[0].transcript)
-        .join("");
-      setInputValue(transcript);
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interim = event.results[i][0].transcript;
+        }
+      }
+      setInputValue(finalTranscript + interim);
+
+      // Stop listening 1.2s after the user finishes speaking (final result received)
+      if (finalTranscript) {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => {
+          if (recognitionRef.current) recognitionRef.current.stop();
+        }, 1200);
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
       recognitionRef.current = null;
-      setInputValue((current) => {
-        const text = current.trim();
-        if (text) {
-          handleUserMessage(text);
-          return "";
-        }
-        if (isStartedRef.current && !isSpeakingRef.current) {
-          setTimeout(() => {
-            if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
-              startListening();
-            }
-          }, 500);
-        }
-        return current;
-      });
+      if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+      const text = finalTranscript.trim();
+      finalTranscript = "";
+      if (text) {
+        handleUserMessage(text);
+        setInputValue("");
+      } else if (isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
+        // No speech — restart and keep waiting
+        setTimeout(() => {
+          if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
+            startListening();
+          }
+        }, 500);
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -918,7 +933,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   }
 
   const statusLabel = isSpeaking ? "Speaking" : isListening ? "Listening" : isThinking ? "Thinking…" : isStarted ? "Ready" : "";
-  const statusColor = isSpeaking ? "bg-saabai-teal" : isListening ? "bg-green-400" : isThinking ? "bg-yellow-400" : "bg-white/20";
+  const statusColor = isSpeaking ? "bg-saabai-teal" : isListening ? "bg-green-400" : isThinking ? "bg-yellow-400" : (isStarted && chatMode === "voice") ? "bg-blue-300" : "bg-white/20";
 
   // Determine if inline email capture should show
   const lastMsg = displayMessages[displayMessages.length - 1];
