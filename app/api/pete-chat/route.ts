@@ -8,7 +8,7 @@ import { getPricing, type PricingInput, type PriceResult } from "../../../lib/re
 export const maxDuration = 60;
 
 type SearchInput = { query: string };
-type LeadInput = { email: string; name?: string; note?: string };
+type LeadInput = { email: string; name?: string; company?: string; note?: string };
 type CalcInput = {
   productId: number;
   variationId: number;
@@ -78,18 +78,19 @@ export async function POST(req: Request) {
       inputSchema: jsonSchema<LeadInput>({
         type: "object",
         properties: {
-          email: { type: "string", description: "Customer email address" },
-          name: { type: "string", description: "Customer's name if they gave it" },
-          note: { type: "string", description: "Brief context, e.g. 'quote for 6mm clear acrylic 600x600mm'" },
+          email:   { type: "string", description: "Customer email address" },
+          name:    { type: "string", description: "Customer's name if they gave it" },
+          company: { type: "string", description: "Company or business name if they mentioned it" },
+          note:    { type: "string", description: "Brief context, e.g. 'quote for 6mm clear acrylic 600x600mm'" },
         },
         required: ["email"],
       }),
-      execute: async ({ email, name, note }) => {
+      execute: async ({ email, name, company, note }) => {
         // Fire and forget — pass full conversation so AI can generate structured quote for emails
         fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clientId: config.id, source: "rex_mid_chat", email, name, note, messages: coreMessages, timestamp: new Date().toISOString() }),
+          body: JSON.stringify({ clientId: config.id, source: "rex_mid_chat", email, name, company, note, messages: coreMessages, timestamp: new Date().toISOString() }),
         }).catch(() => {});
         return { ok: true };
       },

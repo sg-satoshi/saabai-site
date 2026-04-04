@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "12:30", tag: "IMPROVEMENT", title: "Pipedrive enrichment — company/org name now captured by Rex mid-chat and passed through to Pipedrive; org is searched first (matched by name), created if not found, then linked to both the person record and the deal; company also appears in the pinned note; phone number wired through to person record" },
       { time: "09:00", tag: "NEW", title: "Auto-create Pipedrive deal for priority leads — any Rex lead with a quoted price ≥$200 now automatically creates a Pipedrive deal (or links to existing person by email), adds a pinned note with source, device, quote details, price, and AI summary; fire-and-forget so CRM write failure never blocks lead capture; controlled by PIPEDRIVE_PIPELINE_ID and PIPEDRIVE_STAGE_ID env vars" },
       { time: "00:30", tag: "IMPROVEMENT", title: "Quick replies now client-aware — opening question pool moved into RexClientConfig.quickReplies; new clients can define their own opening prompts; widget reads pool from server config via page → prop, falls back to PLON pool if not set" },
       { time: "00:30", tag: "UI", title: "Lead priority badges in dashboard table — PRIORITY badge (red) for leads ≥$200 (routed to Pipedrive), NURTURE badge (amber) for leads $1–$199 (email sequence); makes the lead scoring/routing decision visible at a glance" },

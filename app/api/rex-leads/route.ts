@@ -852,7 +852,7 @@ export async function POST(req: Request) {
   const startTime = Date.now();
 
   try {
-    const { clientId, source, name, email, note, mobile, address, despatch, messages, timestamp, device: deviceHint } = await req.json();
+    const { clientId, source, name, email, company, note, mobile, address, despatch, messages, timestamp, device: deviceHint } = await req.json();
 
     // Resolve client config — defaults to PlasticOnline for backwards compatibility
     const clientConfig = getClientConfig(clientId);
@@ -910,6 +910,7 @@ export async function POST(req: Request) {
         name:         name ?? undefined,
         email:        email,
         phone:        mobile ?? undefined,
+        company:      company ?? undefined,
         quoteDetails: analysis?.quoteDetails ?? note ?? undefined,
         price:        priceStr ?? undefined,
         priceValue:   priceValue,
