@@ -199,6 +199,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   const [speechSupported, setSpeechSupported] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
+  // Track if user has sent first message (hide chips once conversation starts)
+  const [hasUserResponded, setHasUserResponded] = useState(false);
   // Improvement #2: contextual follow-up chips
   const [followUpChips, setFollowUpChips] = useState<string[]>([]);
   // Improvement #1: inline quote email capture
@@ -511,12 +513,17 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     if (!text.trim()) return;
     const isText = chatModeRef.current === "text";
 
+    // Hide chips and email capture when user messages
     setShowQuickReplies(false);
     setFollowUpChips([]);
     setQuoteEmailOpen(false);
     lastActivityRef.current = Date.now();
 
-    if (messagesRef.current.length === 0) track("first_message_sent");
+    // Set flag on first user message — chips stay hidden for entire conversation
+    if (messagesRef.current.length === 0) {
+      setHasUserResponded(true);
+      track("first_message_sent");
+    }
     const updated: ChatMessage[] = [...messagesRef.current, { role: "user", content: text }];
     messagesRef.current = updated;
     setDisplayMessages(prev => [...prev, { role: "user", content: text }]);
@@ -733,6 +740,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     setShowQuickReplies(false);
     setQuickReplies([]);
     setFollowUpChips([]);
+    setHasUserResponded(false);  // Reset chip visibility flag for next conversation
     setQuoteEmailOpen(false);
     setQuoteEmail("");
     setQuoteMobile("");
@@ -1471,8 +1479,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                 );
               })()}
 
-              {/* Quick reply chips — initial greeting */}
-              {showQuickReplies && !quoteEmailOpen && (
+              {/* Quick reply chips — initial greeting (hidden once user responds) */}
+              {showQuickReplies && !quoteEmailOpen && !hasUserResponded && (
                 <div className="flex flex-col gap-1.5 px-3 pt-2 pb-1.5 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   <p className="text-xs font-semibold px-0.5 pb-0.5" style={{ color: "#0084FF" }}>Where would you like to start?</p>
                   {quickReplies.map((q) => (
@@ -1486,8 +1494,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                 </div>
               )}
 
-              {/* Improvement #2: contextual follow-up chips */}
-              {!showQuickReplies && followUpChips.length > 0 && !quoteEmailOpen && (
+              {/* Improvement #2: contextual follow-up chips (hidden once user responds) */}
+              {!showQuickReplies && followUpChips.length > 0 && !quoteEmailOpen && !hasUserResponded && (
                 <div className="flex flex-wrap gap-1.5 px-3 py-2 shrink-0" style={{ background: "#e8f1ff", borderTop: "1px solid #c8dcff" }}>
                   {followUpChips.map((q) => (
                     <button key={q}
