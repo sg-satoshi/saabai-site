@@ -409,9 +409,13 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     recognition.onerror = (event: any) => {
       setIsListening(false);
       recognitionRef.current = null;
-      // "no-speech" and "aborted" are recoverable — restart the loop so silence doesn't kill voice mode permanently
       const fatal = event.error === "not-allowed" || event.error === "service-not-allowed";
-      if (!fatal && isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
+      if (fatal) {
+        setError("Mic access blocked — please allow microphone permission and try again.");
+        return;
+      }
+      // Recoverable errors (no-speech, aborted, network) — restart silently
+      if (isStartedRef.current && !isSpeakingRef.current && chatModeRef.current === "voice") {
         setTimeout(() => {
           if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
             startListening();
@@ -424,11 +428,15 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       recognitionRef.current = recognition;
       recognition.start();
     } catch (e: any) {
-      // start() threw — clear ref and retry unless it's a hard permission denial
       recognitionRef.current = null;
       const msg = String(e?.message ?? e).toLowerCase();
-      const fatal = msg.includes("not-allowed") || msg.includes("permission");
-      if (!fatal && isStartedRef.current && chatModeRef.current === "voice") {
+      const fatal = msg.includes("not-allowed") || msg.includes("permission") || msg.includes("denied");
+      if (fatal) {
+        setError("Mic access blocked — please allow microphone and try again.");
+        return;
+      }
+      // Non-fatal (e.g. InvalidStateError) — retry after a moment
+      if (isStartedRef.current && chatModeRef.current === "voice") {
         setTimeout(() => {
           if (isStartedRef.current && !recognitionRef.current && !isSpeakingRef.current) {
             startListening();
@@ -1502,10 +1510,10 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
 
           {/* ── Text input ──────────────────────────────────────────────────── */}
           {!isEnded && chatMode && (
-            <div 
-              className="px-3 py-2.5 flex gap-2 shrink-0" 
-              style={{ 
-                background: "#e8f1ff", 
+            <div
+              className="px-3 py-2.5 flex gap-2 items-center shrink-0"
+              style={{
+                background: "#e8f1ff",
                 borderTop: "1px solid #c8dcff",
                 paddingBottom: isMobile ? "max(0.625rem, env(safe-area-inset-bottom))" : "0.625rem", // Keyboard safe area on mobile
               }}
