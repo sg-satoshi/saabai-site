@@ -1,6 +1,6 @@
 import { streamText, tool, stepCountIs, convertToModelMessages } from "ai";
 import { z } from "zod";
-import { getModel } from "../../../lib/chat-config";
+import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 import { saveLead, saveConversation } from "../../../lib/redis";
 
@@ -26,7 +26,7 @@ function buildSystemPrompt(pageContext?: string, returningVisitor?: boolean, vis
 export async function POST(req: Request) {
   const { messages, tier = "default", pageContext, returningVisitor, visitorProfile } = await req.json();
 
-  const model = getModel(tier as "default" | "premium");
+  const model = getSaabaiModel();
 
   // Accumulate tool results for storage after stream completes
   const sessionData: {

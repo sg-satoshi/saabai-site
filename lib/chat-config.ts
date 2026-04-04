@@ -55,7 +55,7 @@ function resolveModel(envKey: string, fallback: string): LanguageModel {
  * Fallback: claude-haiku-4-5-20251001
  */
 export function getDefaultModel(): LanguageModel {
-  return resolveModel("DEFAULT_CHAT_MODEL", "anthropic:claude-haiku-4-5-20251001");
+  return resolveModel("DEFAULT_CHAT_MODEL", "anthropic:claude-haiku-4.5");
 }
 
 /**
@@ -64,14 +64,23 @@ export function getDefaultModel(): LanguageModel {
  * Fallback: claude-sonnet-4-6
  */
 export function getPremiumModel(): LanguageModel {
-  return resolveModel("PREMIUM_CHAT_MODEL", "anthropic:claude-sonnet-4-6");
+  return resolveModel("PREMIUM_CHAT_MODEL", "anthropic:claude-sonnet-4.6");
 }
 
 /**
- * Select model by tier. Used in the API route.
+ * Select model by tier. Used in the Rex API route.
  */
 export function getModel(tier: "default" | "premium" = "default"): LanguageModel {
   return tier === "premium" ? getPremiumModel() : getDefaultModel();
+}
+
+/**
+ * Model for Saabai's own chat (Mia / Atlas).
+ * Controlled by SAABAI_CHAT_MODEL env var — completely independent of Rex model config.
+ * Fallback: claude-haiku-4.5 (Anthropic only, never Google).
+ */
+export function getSaabaiModel(): LanguageModel {
+  return resolveModel("SAABAI_CHAT_MODEL", "anthropic:claude-haiku-4.5");
 }
 
 /**
