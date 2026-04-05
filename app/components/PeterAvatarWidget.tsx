@@ -310,11 +310,9 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   }, [displayMessages, isOpen]);
 
   useEffect(() => {
-    if (!showScrollBtn && !isMobile) {
-      // Desktop: smooth scroll to bottom. On mobile, let user control scroll with scroll button
-      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [displayMessages, showScrollBtn, isMobile]);
+    // Always scroll to bottom on new messages — same behaviour as every chat app
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [displayMessages]);
 
   // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
