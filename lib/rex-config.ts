@@ -70,7 +70,7 @@ const PLON: RexClientConfig = {
   id: "plon",
   agentName: "Rex",
   systemPrompt: PLON_SYSTEM,
-  tools: ["searchProducts", "lookupOrder", "getPrice", "calculatePrice"],
+  tools: ["searchProducts", "lookupOrder", "getPrice"],
   quickReplies: [
     "How much for acrylic cut to size?",
     "What would 6mm clear acrylic cost me?",
