@@ -121,7 +121,7 @@ export default function Home() {
           background: "linear-gradient(to left, var(--saabai-bg), transparent)"
         }} />
         <div className="flex items-center justify-center flex-wrap gap-x-5 gap-y-3 px-4 sm:px-12 text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase">
-          {["Law Firms", "Real Estate Agencies", "Accounting Firms", "Financial Advisory", "Professional Services", "Advisory Businesses"].map((name, i, arr) => (
+          {["Law Firms", "Real Estate Agencies", "Accounting Firms", "Financial Advisory", "Professional Services", "Trade & E-commerce"].map((name, i, arr) => (
             <span key={name} className="whitespace-nowrap">
               {name}{i < arr.length - 1 && <span className="text-saabai-border mx-2.5">·</span>}
             </span>
@@ -190,8 +190,8 @@ export default function Home() {
             },
             {
               tag: null,
-              title: "AI Agents",
-              body: "Custom AI agents that handle client intake, follow-up, scheduling, internal queries, and 24/7 front-of-house — without adding headcount.",
+              title: "AI Chat Agents",
+              body: "Custom AI agents embedded on your website — handling enquiries, quotes, lead qualification, and client support 24/7. Currently live across specialist law firms, trade businesses, and professional services.",
               featured: false,
             },
             {
@@ -428,6 +428,63 @@ export default function Home() {
             See what this could look like for your firm
             <span className="group-hover:translate-x-0.5 transition-transform inline-block">→</span>
           </a>
+        </div>
+      </section>
+
+      {/* ── Live Deployments ────────────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          Live in Production
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
+          Already working. Right now.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-20 leading-relaxed">
+          Not demos. Not pilots. Production systems handling real enquiries, quotes, and clients — every day.
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
+
+          <div className="bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
+            <span className="inline-flex text-[10px] font-bold tracking-[0.18em] text-saabai-teal border border-saabai-teal/30 px-3 py-1 rounded-full uppercase mb-6">
+              Trade &amp; E-commerce
+            </span>
+            <h3 className="text-xl font-semibold mb-1 tracking-tight mt-6">National Plastics Supplier</h3>
+            <p className="text-sm text-saabai-text-dim mb-5">AI Agent: Rex</p>
+            <p className="text-base text-saabai-text-muted leading-relaxed mb-6">
+              Custom AI agent handling cut-to-size quotes across 100+ product variations, order status lookups, and product enquiries — 24 hours a day, without staff involvement. Qualified leads are automatically routed to CRM with full conversation context.
+            </p>
+            <ul className="flex flex-col gap-2.5">
+              {["Instant pricing for 100+ material and size variations", "Lead capture + CRM pipeline automated", "24/7 product Q&A with zero staff overhead"].map((b) => (
+                <li key={b} className="flex items-center gap-3 text-sm text-saabai-text-muted">
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
+            <span className="inline-flex text-[10px] font-bold tracking-[0.18em] text-saabai-teal border border-saabai-teal/30 px-3 py-1 rounded-full uppercase mb-6">
+              Specialist Law
+            </span>
+            <h3 className="text-xl font-semibold mb-1 tracking-tight mt-6">Tributum Law</h3>
+            <p className="text-sm text-saabai-text-dim mb-5">AI Agent: Lex</p>
+            <p className="text-base text-saabai-text-muted leading-relaxed mb-6">
+              AI intake agent qualifying ATO dispute enquiries, tax structuring matters, and trust law questions around the clock. Collects client context, flags urgent deadlines, and routes qualified leads to the principal — so no enquiry slips through after hours.
+            </p>
+            <ul className="flex flex-col gap-2.5">
+              {["24/7 intake across all tax and trust matter types", "Urgent ATO notices flagged and escalated immediately", "Qualified leads delivered with full conversation context"].map((b) => (
+                <li key={b} className="flex items-center gap-3 text-sm text-saabai-text-muted">
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+
         </div>
       </section>
 

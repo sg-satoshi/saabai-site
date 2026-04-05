@@ -125,6 +125,26 @@ export default function About() {
         </div>
       </section>
 
+      {/* ── Live Deployments ────────────────────────────────────────────── */}
+      <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
+        <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
+          <div>
+            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
+              Live in Production
+            </p>
+            <div className="w-8 h-px bg-saabai-teal/50 mt-4" />
+          </div>
+          <div className="flex flex-col gap-5">
+            <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a specialist tax and trust law firm in Adelaide.
+            </p>
+            <p className="text-lg text-saabai-text-muted leading-relaxed">
+              Neither client had to rip out their existing tools. Both were live within weeks of the initial audit.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ── Philosophy ──────────────────────────────────────────────────── */}
       <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">

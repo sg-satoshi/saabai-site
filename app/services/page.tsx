@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
 };
 
-const services = [
+const services: { title: string; description: string; benefits: string[]; wide?: boolean }[] = [
   {
     title: "Client Intake & Lead Qualification",
     description:
@@ -59,6 +59,18 @@ const services = [
       "Digital signature workflows",
       "Audit trail management",
     ],
+  },
+  {
+    title: "AI Chat Agents",
+    description:
+      "Custom AI agents embedded directly on your website — handling enquiries, quoting, lead qualification, and client support around the clock. Currently live across specialist law firms, trade businesses, and professional services. No staff required after hours.",
+    benefits: [
+      "Custom-trained on your products, services, and pricing",
+      "Captures and qualifies leads automatically",
+      "Instant responses — day, night, and weekends",
+      "CRM integration and email notification on every lead",
+    ],
+    wide: true,
   },
 ];
 
@@ -175,10 +187,10 @@ export default function Services() {
         </p>
 
         <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {services.map(({ title, description, benefits }) => (
+          {services.map(({ title, description, benefits, wide }) => (
             <div
               key={title}
-              className="bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group"
+              className={`bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group${wide ? " md:col-span-2" : ""}`}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-border to-transparent group-hover:via-saabai-teal/30 transition-all" />
               <h3 className="text-xl font-semibold mb-3 tracking-tight">{title}</h3>

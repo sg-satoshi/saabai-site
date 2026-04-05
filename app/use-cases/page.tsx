@@ -65,6 +65,18 @@ const useCases = [
     outcome: "More client-facing time for advisers. Compliance workflows running in the background.",
   },
   {
+    category: "Trade & E-commerce",
+    description:
+      "Product businesses with a high volume of inbound enquiries are leaving money on the table every hour they're not available to respond. An AI agent can quote, qualify, and capture leads instantly — without a sales team on standby.",
+    examples: [
+      "AI agent handles product Q&A, specifications, and pricing 24/7",
+      "Cut-to-size and custom quoting handled in real time from a chat window",
+      "Order status lookups without staff involvement",
+      "Qualified leads automatically routed to CRM with full conversation context",
+    ],
+    outcome: "Every inbound enquiry gets an instant, accurate response. Leads are captured and followed up automatically — day and night.",
+  },
+  {
     category: "Compliance & Document Automation",
     description:
       "Across every professional firm, there is a layer of compliance, documentation, and audit trail work that consumes hours and creates risk when it falls behind. Automation brings consistency and speed to this work.",

@@ -181,6 +181,10 @@ const faqs = [
         q: "We're a professional services or advisory business — not quite any of the above. Do you work with us?",
         a: "Yes. The specifics vary but the pattern is the same — high-value people spending too much time on low-value operational work. If your business runs on expertise and relationships, there's almost always an automation opportunity that frees up time without compromising the quality of your output.",
       },
+      {
+        q: "Do you work with e-commerce or product businesses, not just professional services?",
+        a: "Yes — and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups, and lead capture in real time — 24/7, without staff. A national plastics supplier is currently running one of these in production. If your business gets a lot of inbound enquiries that require a fast, accurate response, this is worth a conversation.",
+      },
     ],
   },
   {

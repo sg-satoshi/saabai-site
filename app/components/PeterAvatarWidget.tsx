@@ -1256,7 +1256,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                         <div className="w-5 h-5 mr-1.5 shrink-0" />
                       )}
                       <div
-                        className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words ${
+                        className={`max-w-[82%] px-3 py-2 rounded-2xl text-[15px] leading-relaxed break-words ${
                           msg.role === "user" ? "rounded-br-sm" : "rounded-bl-sm text-white"
                         }`}
                         style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
