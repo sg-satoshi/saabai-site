@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "4 Apr 2026",
     label: "Today",
     entries: [
+      { time: "18:00", tag: "UI", title: "New message sound changed to MSN Messenger-style two-note ascending chime (E5 → A5) — replaces generic descending sine blip; synthesised via Web Audio API, no audio file needed; fast attack, natural decay, second note slightly softer and longer" },
       { time: "17:30", tag: "FIX", title: "Rex now prices oversized sheets correctly — removed calculatePrice tool from PLON config; Rex was calling the WooCommerce API calculator which capped at 1220mm and returned 'oversized for automated pricing'; getPrice (local engine) handles all oversized sheet lookups including pieces up to 3050×2030mm" },
       { time: "16:15", tag: "UI", title: "Start new chat button on end panel — after ending a conversation, users can now start fresh without closing and reopening the widget; button appears in both the transcript-sent state and the pre-submit state alongside 'No thanks'; resets all conversation state, clears localStorage, returns to mode picker" },
       { time: "16:00", tag: "FIX", title: "Voice mode — fixed race condition where audio.onended was registered after audio.play() meaning short audio could end before the handler was in place; moved handler registration before play(); increased post-audio delay 350ms→800ms to give audio system time to release mic; recognition.start() catch block now retries instead of silently dying" },

@@ -77,24 +77,33 @@ function getFollowUpChips(response: string): string[] {
   ]).slice(0, 2);
 }
 
-// ── Improvement #6: Subtle message sound via Web Audio API ──────────────────
+// ── MSN Messenger-style incoming message chime via Web Audio API ─────────────
 function playMessageSound() {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.07, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.2);
-    setTimeout(() => ctx.close(), 400);
+
+    function playNote(freq: number, startTime: number, duration: number, volume: number) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.008); // fast attack
+      gain.gain.setValueAtTime(volume, startTime + duration * 0.4);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    // MSN Messenger type1.wav: two ascending notes, quick and soft
+    playNote(659, ctx.currentTime,        0.12, 0.09); // E5 — first chime
+    playNote(880, ctx.currentTime + 0.11, 0.18, 0.07); // A5 — second chime (slightly quieter, longer)
+
+    setTimeout(() => ctx.close(), 600);
   } catch {}
 }
 
