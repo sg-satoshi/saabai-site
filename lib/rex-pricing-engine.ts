@@ -806,9 +806,9 @@ function priceWithOversized(
     if (!fits(width, height, os.sheetW, os.sheetH)) continue;
     const osPrice = oversizedColourPrice(os, col);
     if (osPrice === null) continue;
-    // Use standard CTS rate × area, cap at oversized sheet price
+    // Oversized variations carry a 20% CTS rate premium (matches WooCommerce oversized variation pricing)
     const area = (width / 1000) * (height / 1000);
-    const ctsPrice = r2((stdRow.ctsRate ?? 0) * area);
+    const ctsPrice = r2((stdRow.ctsRate ?? 0) * 1.2 * area);
     if (ctsPrice >= osPrice) {
       return buildResult(r2(osPrice + CUTTING_FEE), qty, "oversized sheet + $30 cutting fee", url);
     }
@@ -831,6 +831,11 @@ function priceAcrylicSheet(col: string, thickness: number, width: number, height
   const url = getProductUrl("acrylic");
   const row = ACRYLIC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
+  // WooCommerce does not rotate pieces — if any dimension exceeds the standard sheet's short side,
+  // the calculator routes to the oversized variation (which carries a higher CTS rate)
+  if (Math.max(width, height) > row.sheetH) {
+    return priceWithOversized(row, ACRYLIC_OVERSIZED, col, width, height, qty, url);
+  }
   const std = calcStandardSheet(row, width, height);
   if (std) return buildResult(std.unitPrice, qty, std.note, url);
   return priceWithOversized(row, ACRYLIC_OVERSIZED, col, width, height, qty, url);
@@ -840,6 +845,9 @@ function pricePCSheet(col: string, thickness: number, width: number, height: num
   const url = getProductUrl("polycarbonate");
   const row = PC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
+  if (Math.max(width, height) > row.sheetH) {
+    return priceWithOversized(row, PC_OVERSIZED, col, width, height, qty, url);
+  }
   const std = calcStandardSheet(row, width, height);
   if (std) return buildResult(std.unitPrice, qty, std.note, url);
   return priceWithOversized(row, PC_OVERSIZED, col, width, height, qty, url);
