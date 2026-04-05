@@ -1533,7 +1533,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder={chatMode === "voice" ? "Or type a message…" : "Type a message…"}
-                className="rex-input flex-1 rounded-full px-4 py-3 text-xs focus:outline-none transition-colors"
+                className="rex-input flex-1 rounded-full px-4 py-3 text-[15px] focus:outline-none transition-colors"
                 style={{ background: "#ffffff", color: "#111", border: "1px solid #c8dcff" }}
               />
               <button
