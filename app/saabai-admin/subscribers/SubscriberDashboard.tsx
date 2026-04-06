@@ -128,6 +128,7 @@ export default function SubscriberDashboard() {
   const [sortBy, setSortBy] = useState<"date" | "name" | "industry">("date");
   const [exportMsg, setExportMsg] = useState("");
   const [chartDays, setChartDays] = useState(30);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/subscribers")
@@ -168,10 +169,33 @@ export default function SubscriberDashboard() {
       return (a.industry || "").localeCompare(b.industry || "");
     });
 
+  // Selection helpers
+  const allFilteredSelected = filtered.length > 0 && filtered.every(s => selected.has(s.email));
+  const someSelected = selected.size > 0;
+  const exportTarget = someSelected ? filtered.filter(s => selected.has(s.email)) : filtered;
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      const next = new Set(selected);
+      filtered.forEach(s => next.delete(s.email));
+      setSelected(next);
+    } else {
+      const next = new Set(selected);
+      filtered.forEach(s => next.add(s.email));
+      setSelected(next);
+    }
+  }
+
+  function toggleRow(email: string) {
+    const next = new Set(selected);
+    next.has(email) ? next.delete(email) : next.add(email);
+    setSelected(next);
+  }
+
   function exportCSV() {
     const rows = [
       ["First Name", "Email", "Industry", "Source", "Country", "City", "IP", "Subscribed At", "Status"],
-      ...filtered.map(s => [s.firstName, s.email, s.industry, s.source, s.country ?? "", s.city ?? "", s.ip ?? "", fmtDateTime(s.subscribedAt), s.status ?? "active"]),
+      ...exportTarget.map(s => [s.firstName, s.email, s.industry, s.source, s.country ?? "", s.city ?? "", s.ip ?? "", fmtDateTime(s.subscribedAt), s.status ?? "active"]),
     ];
     const csv = rows.map(r => r.map(v => `"${(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -181,7 +205,7 @@ export default function SubscriberDashboard() {
     a.download = `saabai-subscribers-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    setExportMsg(`${filtered.length} records exported`);
+    setExportMsg(`${exportTarget.length} records exported`);
     setTimeout(() => setExportMsg(""), 3000);
   }
 
@@ -220,6 +244,11 @@ export default function SubscriberDashboard() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {someSelected && (
+              <span style={{ fontSize: 12, color: "#00bfa5", fontWeight: 600 }}>
+                {selected.size} selected
+              </span>
+            )}
             {exportMsg && <span style={{ fontSize: 12, color: "#00bfa5" }}>{exportMsg}</span>}
             <button
               onClick={exportCSV}
@@ -229,7 +258,7 @@ export default function SubscriberDashboard() {
                 color: "#00bfa5", cursor: "pointer", letterSpacing: 0.3,
               }}
             >
-              ↓ Export CSV
+              ↓ {someSelected ? `Export ${selected.size} Selected` : "Export CSV"}
             </button>
           </div>
         </div>
@@ -331,7 +360,9 @@ export default function SubscriberDashboard() {
           <div style={{ padding: "20px 24px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const }}>
             <div>
               <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: "#111827" }}>All Subscribers</p>
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{filtered.length} of {subs.length} shown</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+                {filtered.length} of {subs.length} shown{someSelected ? ` · ${selected.size} selected` : ""}
+              </p>
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
               <input
@@ -353,7 +384,18 @@ export default function SubscriberDashboard() {
           </div>
 
           {/* Column headers */}
-          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 200px 130px 160px 160px 100px", padding: "10px 24px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px", padding: "10px 24px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6", alignItems: "center" }}>
+            {/* Select all checkbox */}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <input
+                type="checkbox"
+                checked={allFilteredSelected}
+                ref={el => { if (el) el.indeterminate = someSelected && !allFilteredSelected; }}
+                onChange={toggleSelectAll}
+                style={{ width: 15, height: 15, accentColor: "#00bfa5", cursor: "pointer" }}
+                title={allFilteredSelected ? "Deselect all" : "Select all"}
+              />
+            </div>
             {["", "Subscriber", "Email", "Industry", "Location", "Joined", "Status"].map(h => (
               <p key={h} style={{ margin: 0, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</p>
             ))}
@@ -383,14 +425,26 @@ export default function SubscriberDashboard() {
             return (
               <div
                 key={s.email}
+                onClick={() => toggleRow(s.email)}
                 style={{
-                  display: "grid", gridTemplateColumns: "40px 1fr 200px 130px 160px 160px 100px",
+                  display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px",
                   padding: "13px 24px", alignItems: "center",
                   borderBottom: i < filtered.length - 1 ? "1px solid #f9fafb" : "none",
-                  background: i % 2 === 0 ? "#fff" : "#fafafa",
+                  background: selected.has(s.email) ? "#f0fdf9" : i % 2 === 0 ? "#fff" : "#fafafa",
                   transition: "background 0.1s",
+                  cursor: "pointer",
                 }}
               >
+                {/* Checkbox */}
+                <div style={{ display: "flex", alignItems: "center" }} onClick={e => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(s.email)}
+                    onChange={() => toggleRow(s.email)}
+                    style={{ width: 15, height: 15, accentColor: "#00bfa5", cursor: "pointer" }}
+                  />
+                </div>
+
                 {/* Avatar */}
                 <div style={{ width: 30, height: 30, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>
                   {initials}
