@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ClientConfig } from "../../lib/clients";
 import type { RexStats } from "../../lib/rex-stats";
 
@@ -231,7 +231,7 @@ function LinkedInQueue() {
     }
   }
 
-  useState(() => { load(); });
+  useEffect(() => { load(); }, []);
 
   function startEdit(post: QueuedPost) {
     setEditingId(post.id);
