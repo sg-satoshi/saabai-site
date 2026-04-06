@@ -152,6 +152,24 @@ const WELCOME_EMAIL_HTML = (firstName: string) => `<!DOCTYPE html>
 </body>
 </html>`;
 
+async function getGeo(ip: string): Promise<{ country?: string; countryCode?: string; city?: string; region?: string }> {
+  // Skip private/loopback IPs
+  if (!ip || ip === "::1" || ip.startsWith("127.") || ip.startsWith("192.168.") || ip.startsWith("10.")) return {};
+  try {
+    const res = await fetch(`https://ipapi.co/${ip}/json/`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return {};
+    const d = await res.json();
+    return {
+      country:     d.country_name ?? undefined,
+      countryCode: d.country_code ?? undefined,
+      city:        d.city ?? undefined,
+      region:      d.region ?? undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -170,6 +188,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Extract real IP from Vercel headers
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim()
+      || req.headers.get("x-real-ip")
+      || "";
+
+    // Geo lookup (non-blocking — fires async, falls back gracefully)
+    const geo = await getGeo(ip);
+
     // 3. Normalise email
     const normalisedEmail = email.trim().toLowerCase();
 
@@ -179,6 +205,8 @@ export async function POST(req: NextRequest) {
       firstName: firstName.trim(),
       industry: industry?.trim() || "Other",
       source: source?.trim() || "website",
+      ip: ip || undefined,
+      ...geo,
     });
 
     // Silent duplicate — return ok without sending emails
@@ -221,6 +249,8 @@ export async function POST(req: NextRequest) {
   <li><strong>Email:</strong> ${normalisedEmail}</li>
   <li><strong>Industry:</strong> ${industry?.trim() || "Other"}</li>
   <li><strong>Source:</strong> ${source?.trim() || "website"}</li>
+  <li><strong>IP:</strong> ${ip || "unknown"}</li>
+  <li><strong>Location:</strong> ${[geo.city, geo.region, geo.country].filter(Boolean).join(", ") || "unknown"}</li>
 </ul>`,
         }),
       });

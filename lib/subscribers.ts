@@ -7,6 +7,11 @@ export interface Subscriber {
   source: string;
   subscribedAt: string;
   status: "active" | "unsubscribed";
+  ip?: string;
+  country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
 }
 
 export async function saveSubscriber(
@@ -19,13 +24,22 @@ export async function saveSubscriber(
   const exists = await redis.hexists(key, "email");
   if (exists) return { isNew: false };
 
-  const record: Subscriber = {
-    ...sub,
+  // Strip undefined fields so Redis doesn't store literal "undefined"
+  const record: Record<string, string> = {
+    email: sub.email,
+    firstName: sub.firstName,
+    industry: sub.industry,
+    source: sub.source,
     subscribedAt: new Date().toISOString(),
     status: "active",
   };
+  if (sub.ip)          record.ip          = sub.ip;
+  if (sub.country)     record.country     = sub.country;
+  if (sub.countryCode) record.countryCode = sub.countryCode;
+  if (sub.city)        record.city        = sub.city;
+  if (sub.region)      record.region      = sub.region;
 
-  await redis.hset(key, record as unknown as Record<string, unknown>);
+  await redis.hset(key, record);
   await redis.lpush("subscribers:list", sub.email);
   await redis.incr("subscribers:count");
 

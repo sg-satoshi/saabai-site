@@ -9,6 +9,11 @@ interface Subscriber {
   source: string;
   subscribedAt: string;
   status: string;
+  ip?: string;
+  country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
 }
 
 const INDUSTRY_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
@@ -165,8 +170,8 @@ export default function SubscriberDashboard() {
 
   function exportCSV() {
     const rows = [
-      ["First Name", "Email", "Industry", "Source", "Subscribed At", "Status"],
-      ...filtered.map(s => [s.firstName, s.email, s.industry, s.source, fmtDateTime(s.subscribedAt), s.status ?? "active"]),
+      ["First Name", "Email", "Industry", "Source", "Country", "City", "IP", "Subscribed At", "Status"],
+      ...filtered.map(s => [s.firstName, s.email, s.industry, s.source, s.country ?? "", s.city ?? "", s.ip ?? "", fmtDateTime(s.subscribedAt), s.status ?? "active"]),
     ];
     const csv = rows.map(r => r.map(v => `"${(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -348,8 +353,8 @@ export default function SubscriberDashboard() {
           </div>
 
           {/* Column headers */}
-          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 220px 160px 160px 110px", padding: "10px 24px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
-            {["", "Subscriber", "Email", "Industry", "Joined", "Status"].map(h => (
+          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 200px 130px 160px 160px 100px", padding: "10px 24px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+            {["", "Subscriber", "Email", "Industry", "Location", "Joined", "Status"].map(h => (
               <p key={h} style={{ margin: 0, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</p>
             ))}
           </div>
@@ -369,12 +374,17 @@ export default function SubscriberDashboard() {
             const initials = (s.firstName?.[0] ?? "?").toUpperCase();
             const colours = ["#6366f1", "#00bfa5", "#f59e0b", "#10b981", "#e11d48", "#8b5cf6"];
             const avatarBg = colours[s.email.charCodeAt(0) % colours.length];
+            const locationParts = [s.city, s.country].filter(Boolean);
+            const locationStr = locationParts.length ? locationParts.join(", ") : null;
+            const flagEmoji = s.countryCode
+              ? String.fromCodePoint(...[...s.countryCode.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65))
+              : null;
 
             return (
               <div
                 key={s.email}
                 style={{
-                  display: "grid", gridTemplateColumns: "40px 1fr 220px 160px 160px 110px",
+                  display: "grid", gridTemplateColumns: "40px 1fr 200px 130px 160px 160px 100px",
                   padding: "13px 24px", alignItems: "center",
                   borderBottom: i < filtered.length - 1 ? "1px solid #f9fafb" : "none",
                   background: i % 2 === 0 ? "#fff" : "#fafafa",
@@ -399,6 +409,23 @@ export default function SubscriberDashboard() {
                   <span style={{ width: 5, height: 5, borderRadius: "50%", background: ic.dot }} />
                   {s.industry || "Other"}
                 </span>
+
+                {/* Location */}
+                <div>
+                  {locationStr ? (
+                    <p style={{ margin: 0, fontSize: 12, color: "#374151", fontWeight: 500 }}>
+                      {flagEmoji && <span style={{ marginRight: 4 }}>{flagEmoji}</span>}
+                      {locationStr}
+                    </p>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 12, color: "#d1d5db" }}>—</p>
+                  )}
+                  {s.ip && (
+                    <p style={{ margin: "2px 0 0", fontSize: 10, color: "#9ca3af", fontFamily: "monospace" }} title={`IP: ${s.ip}`}>
+                      {s.ip}
+                    </p>
+                  )}
+                </div>
 
                 {/* Date */}
                 <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>{fmtDate(s.subscribedAt)}</p>
