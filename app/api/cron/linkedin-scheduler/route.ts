@@ -7,8 +7,9 @@ export const maxDuration = 30;
 // Fires any LinkedIn posts scheduled for today or earlier
 
 export async function GET(req: Request) {
+  const secret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (secret && authHeader !== `Bearer ${secret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
