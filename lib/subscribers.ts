@@ -62,6 +62,22 @@ export async function getSubscribers(limit = 200): Promise<Subscriber[]> {
   return records.filter((r): r is Subscriber => r !== null);
 }
 
+export async function deleteSubscribers(emails: string[]): Promise<number> {
+  const redis = getRedis();
+  if (!redis || !emails.length) return 0;
+
+  let deleted = 0;
+  for (const email of emails) {
+    const existed = await redis.hexists(`subscriber:${email}`, "email");
+    if (!existed) continue;
+    await redis.del(`subscriber:${email}`);
+    await redis.lrem("subscribers:list", 0, email);
+    await redis.decr("subscribers:count");
+    deleted++;
+  }
+  return deleted;
+}
+
 export async function getSubscriberCount(): Promise<number> {
   const redis = getRedis();
   if (!redis) return 0;

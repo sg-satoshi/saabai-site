@@ -430,6 +430,7 @@ export default function SubscriberDashboard() {
   const [chartDays, setChartDays] = useState(30);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch("/api/subscribers")
@@ -510,6 +511,29 @@ export default function SubscriberDashboard() {
     setTimeout(() => setExportMsg(""), 3000);
   }
 
+  async function deleteSelected() {
+    const emails = Array.from(selected);
+    if (!emails.length) return;
+    const confirmed = confirm(`Permanently delete ${emails.length} subscriber${emails.length !== 1 ? "s" : ""}? This cannot be undone.`);
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/subscribers", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSubs(prev => prev.filter(s => !selected.has(s.email)));
+        setCount(prev => prev - (data.deleted ?? 0));
+        setSelected(new Set());
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const inputStyle: React.CSSProperties = {
     padding: "9px 13px", fontSize: 13, border: "1px solid #e5e7eb",
     borderRadius: 8, outline: "none", background: "#fff", color: "#111827",
@@ -561,6 +585,20 @@ export default function SubscriberDashboard() {
                 }}
               >
                 Send Email →
+              </button>
+            )}
+            {someSelected && (
+              <button
+                onClick={deleteSelected}
+                disabled={deleting}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                  color: "#ef4444", cursor: deleting ? "not-allowed" : "pointer", letterSpacing: 0.2,
+                  opacity: deleting ? 0.6 : 1,
+                }}
+              >
+                {deleting ? "Deleting…" : `Delete ${selected.size}`}
               </button>
             )}
             <button
