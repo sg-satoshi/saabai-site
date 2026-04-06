@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { saveNurtureRecord } from "../../../lib/redis";
 
 export const runtime = "edge";
 
@@ -248,6 +249,92 @@ function buildVisitorFollowUpEmail(lead: {
             <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
           </div>
 
+        </div>
+      </div>
+    `,
+  };
+}
+
+// ── Mia lead nurture — Day 2 ─────────────────────────────────────────────────
+
+function buildMiaNurtureDay2Email(lead: {
+  name?: string;
+  email: string;
+  business?: string;
+  industry?: string;
+}) {
+  const { name, business, industry } = lead;
+  const firstName = name?.split(" ")[0] || null;
+  const greeting = firstName ? `Hey ${firstName},` : "Hey,";
+  const businessLine = business
+    ? `I had another look at what you described — ${business.toLowerCase().replace(/\.$/, "")}.`
+    : "I had another look at our chat from yesterday.";
+  const industryNote = industry
+    ? `Most ${industry.toLowerCase()} businesses we work with see the biggest gains in the first 60 days — the automatable work is usually hiding in plain sight.`
+    : "Most businesses we work with see the biggest gains in the first 60 days — the automatable work is usually hiding in plain sight.";
+
+  return {
+    subject: firstName ? `${firstName}, quick one from Saabai` : "Quick one from Saabai",
+    html: `
+      <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+        <div style="background: #0b092e; padding: 36px 40px 32px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #62c5d1, transparent);"></div>
+          <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 10px; font-weight: 600;">Saabai · From Shane</p>
+          <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3;">${greeting}</h1>
+        </div>
+        <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">${businessLine} ${industryNote}</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">The strategy call is 30 minutes and free. I come in prepared — I've already read your chat with Mia, so you don't start from scratch. You leave with a clear picture of what's automatable and what it costs. No pitch deck, no junior sales process.</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 28px;">If the timing's off, no worries. But if the problem's still there — which it usually is — this is the fastest way to understand what fixing it actually looks like.</p>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 15px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book Your Free Strategy Call →</a>
+          </div>
+          <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 32px;">Free · 30 minutes · No obligation</p>
+          <div style="border-top: 1px solid #e8e8ec; padding-top: 20px;">
+            <p style="font-size: 14px; color: #555; margin: 0 0 4px;">Shane Goldberg</p>
+            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+}
+
+// ── Mia lead nurture — Day 5 ─────────────────────────────────────────────────
+
+function buildMiaNurtureDay5Email(lead: {
+  name?: string;
+  email: string;
+  business?: string;
+}) {
+  const { name, business } = lead;
+  const firstName = name?.split(" ")[0] || null;
+  const greeting = firstName ? `${firstName},` : "One last one —";
+  const context = business
+    ? `From what you shared with Mia, there's a real automation opportunity in ${business.toLowerCase().replace(/\.$/, "")}.`
+    : "From your chat with Mia, there are clear opportunities worth a proper look.";
+
+  return {
+    subject: firstName ? `Last one, ${firstName}` : "Last one from Saabai",
+    html: `
+      <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+        <div style="background: #0b092e; padding: 36px 40px 32px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #62c5d1, transparent);"></div>
+          <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 10px; font-weight: 600;">Saabai · From Shane</p>
+          <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3;">${greeting}</h1>
+        </div>
+        <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">${context}</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">I won't keep following up after this — that's not how we operate. But if the problems you described are still there next week or next quarter — the call is free and the offer doesn't expire.</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 28px;">When the time's right, just book a time. I'll know who you are.</p>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 15px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book a Free Strategy Call →</a>
+          </div>
+          <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 32px;">Free · 30 minutes · Pick your time</p>
+          <div style="border-top: 1px solid #e8e8ec; padding-top: 20px;">
+            <p style="font-size: 14px; color: #555; margin: 0 0 4px;">Shane Goldberg</p>
+            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
+          </div>
         </div>
       </div>
     `,
@@ -703,6 +790,164 @@ function buildPeteCustomerTranscriptEmail(lead: {
   };
 }
 
+// ── Operator notification: Mia hot lead (show_booking_cta fired) ─────────────
+
+function buildHotLeadEmail(lead: {
+  name?: string;
+  business?: string;
+  industry?: string;
+  team_size?: string;
+  pain_points?: string[];
+  qualification_summary: string;
+  qualification_score?: number;
+  business_fit?: boolean;
+  pain_point_named?: boolean;
+  automation_potential?: boolean;
+  roiData?: {
+    team_members: number;
+    hours_per_person_per_week: number;
+    hourly_rate: number;
+    weeklyHours: number;
+    annualHours: number;
+    annualCost: number;
+    monthlyCost: number;
+    process_name?: string;
+  };
+  page: string;
+  timestamp: string;
+  conversation?: { role: string; content: string }[];
+  analysis?: ConversationAnalysis | null;
+}) {
+  const {
+    name,
+    business,
+    industry,
+    team_size,
+    pain_points = [],
+    qualification_summary,
+    qualification_score,
+    business_fit,
+    pain_point_named,
+    automation_potential,
+    roiData,
+    page,
+    timestamp,
+    conversation = [],
+    analysis,
+  } = lead;
+
+  const displayName = name || business || "a visitor";
+
+  const signal = (flag: boolean | undefined, label: string) => {
+    const tick = flag
+      ? `<span style="color: #22c55e; font-weight: 700;">✓</span>`
+      : `<span style="color: #6b7280;">–</span>`;
+    return `
+      <tr>
+        <td style="padding: 6px 0; font-size: 13px; color: rgba(255,255,255,0.7); width: 20px; vertical-align: middle;">${tick}</td>
+        <td style="padding: 6px 0; font-size: 13px; color: rgba(255,255,255,0.8); vertical-align: middle;">${label}</td>
+      </tr>`;
+  };
+
+  const roiBlock = roiData
+    ? `
+      <div style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 10px; padding: 20px 24px; margin-bottom: 24px;">
+        <p style="font-size: 10px; color: #22c55e; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 10px;">Annual Cost of Their Manual Work</p>
+        <p style="font-size: 40px; font-weight: 800; color: #ffffff; margin: 0 0 4px; letter-spacing: -0.02em;">${formatCurrency(roiData.annualCost)}</p>
+        <p style="font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 ${roiData.process_name ? "10px" : "0"};">AUD per year in repetitive work</p>
+        ${roiData.process_name ? `<p style="font-size: 13px; color: rgba(255,255,255,0.6); margin: 0;">Process: <em>${roiData.process_name}</em></p>` : ""}
+      </div>`
+    : "";
+
+  const painHtml = pain_points.length
+    ? `
+      <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+        <p style="font-size: 10px; color: #62c5d1; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 8px;">Pain Points</p>
+        <ul style="margin: 0; padding-left: 18px; color: rgba(255,255,255,0.75);">
+          ${pain_points.map((p) => `<li style="margin-bottom: 4px; font-size: 13px; line-height: 1.5;">${p}</li>`).join("")}
+        </ul>
+      </div>`
+    : "";
+
+  const bubblesHtml = buildChatBubblesHtml(conversation, name);
+
+  const subject = `🔥 HOT LEAD — Mia qualified ${displayName} · Book now`;
+
+  const html = `
+    <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 640px; margin: 0 auto; background: #ffffff;">
+
+      <!-- Header -->
+      <div style="background: #0b092e; padding: 36px 40px 32px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #ef4444, transparent);"></div>
+        <div style="display: inline-block; background: #ef4444; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px;">🔥 HOT LEAD</div>
+        <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2;">Mia just qualified ${displayName}</h1>
+        <p style="color: #f97316; font-size: 13px; font-weight: 600; margin: 0; letter-spacing: 0.02em;">Act within the hour — this is the hottest possible signal.</p>
+      </div>
+
+      <!-- Body -->
+      <div style="background: #0b092e; padding: 32px 40px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+
+        <!-- Qualification summary -->
+        <p style="font-size: 20px; color: #62c5d1; font-weight: 600; line-height: 1.5; margin: 0 0 28px; letter-spacing: -0.01em;">"${qualification_summary}"</p>
+
+        ${roiBlock}
+
+        <!-- Qualification signals -->
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px 20px; margin-bottom: 24px;">
+          <p style="font-size: 10px; color: #62c5d1; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 10px;">Qualification Signals${qualification_score != null ? ` · Score ${qualification_score}/3` : ""}</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            ${signal(business_fit, "Business fit confirmed")}
+            ${signal(pain_point_named, "Pain point named")}
+            ${signal(automation_potential, "Automation potential identified")}
+          </table>
+          ${painHtml}
+        </div>
+
+        <!-- Contact details -->
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 18px 20px; margin-bottom: 24px;">
+          <p style="font-size: 10px; color: #62c5d1; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 10px;">Contact</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px; width: 120px;">Name</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${name || "—"}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Business</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${business || "—"}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Industry</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${industry || "—"}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Team size</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${team_size || "—"}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Page</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${page}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Time</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney" })}</td></tr>
+          </table>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <a href="${CALENDLY}" style="display: inline-block; background: #ef4444; color: #ffffff; padding: 16px 40px; border-radius: 10px; font-weight: 700; font-size: 16px; text-decoration: none; letter-spacing: -0.01em;">Reply or Book Call →</a>
+        </div>
+
+      </div>
+
+      <!-- Analysis + transcript on white background -->
+      <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
+
+        ${analysis ? buildAnalysisHtml(analysis) : ""}
+
+        ${conversation.length > 0 ? `
+        <p style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #999; margin: 0 0 14px;">Full Conversation</p>
+        <div style="background: #ffffff; border: 1px solid #e8e8ec; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            ${bubblesHtml}
+          </table>
+        </div>` : ""}
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e8e8ec;">
+          <p style="font-size: 13px; font-weight: 700; color: #1a1a1a; margin: 0 0 4px;">Saabai</p>
+          <p style="font-size: 12px; color: #bbb; margin: 0;">AI Automation for Professional Firms · Australia</p>
+          <p style="font-size: 12px; color: #ccc; margin: 10px 0 0;">Sent automatically when Mia's booking CTA fires · saabai.ai</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return { subject, html };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -711,6 +956,7 @@ export async function POST(req: Request) {
   console.log("[lead captured]", JSON.stringify(lead));
 
   const isCalculator = lead.source?.startsWith("calculator");
+  const isMiaQualified = lead.source === "mia_qualified";
   const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";
   const isPeteClosed = lead.source === "pete_ended";
 
@@ -744,6 +990,21 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error("[resend pete customer transcript error]", err);
         }
+      }
+
+    } else if (isMiaQualified) {
+      // Hottest possible signal — Mia's show_booking_cta tool fired
+      const analysis = await analyseConversation(lead.conversation ?? []);
+      const { subject, html } = buildHotLeadEmail({ ...lead, analysis });
+      try {
+        await resend.emails.send({
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
+        });
+      } catch (err) {
+        console.error("[resend hot lead error]", err);
       }
 
     } else if (isChatClosed) {
@@ -857,6 +1118,16 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error("[resend follow-up error]", err);
         }
+      }
+
+      // Enroll in nurture sequence — Day 2 and Day 5 emails via cron
+      if (!isCalculator && lead.email) {
+        saveNurtureRecord({
+          email: lead.email,
+          name: lead.name,
+          business: lead.business,
+          industry: lead.industry,
+        }).catch(() => {});
       }
     }
   }

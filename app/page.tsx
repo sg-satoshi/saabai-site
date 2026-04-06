@@ -488,6 +488,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Social Proof / Results ──────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          What Clients Say
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
+          The firms that move fast win the time back first.
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-6">
+
+          <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-10 relative overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.3), 0 0 24px rgba(98,197,209,0.15)" }}>
+            <div className="h-px absolute top-0 left-12 right-12 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+            <p className="text-lg text-saabai-text-muted leading-relaxed mb-8">
+              &ldquo;Rex handles the quotes we used to miss — the Saturday afternoon ones, the after-midnight ones. Those enquiries used to go straight to a competitor. Now they get an answer within two minutes. We went live in three weeks and haven&apos;t looked back.&rdquo;
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-saabai-teal/10 border border-saabai-teal/30 flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-saabai-teal">NPS</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-saabai-text tracking-tight">National Plastics Supplier</p>
+                <p className="text-xs text-saabai-text-dim mt-0.5">Trade &amp; E-commerce · AI Agent (Rex) · Live since 2025</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-10 relative overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.3), 0 0 24px rgba(98,197,209,0.15)" }}>
+            <div className="h-px absolute top-0 left-12 right-12 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+            <p className="text-lg text-saabai-text-muted leading-relaxed mb-8">
+              &ldquo;The after-hours intake was the problem we&apos;d been putting off for years. ATO dispute clients don&apos;t wait until Monday morning. Lex qualifies the matter, captures the urgency, and flags it so nothing slips. It was live within weeks of the first conversation.&rdquo;
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-saabai-teal/10 border border-saabai-teal/30 flex items-center justify-center shrink-0">
+                <span className="text-sm font-bold text-saabai-teal">TL</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-saabai-text tracking-tight">Tributum Law</p>
+                <p className="text-xs text-saabai-text-dim mt-0.5">Specialist Tax &amp; Trust Law · AI Agent (Lex) · Live since 2025</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       <CalculatorSection />
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}

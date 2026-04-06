@@ -129,6 +129,58 @@ export async function getGrowthStats(): Promise<{
   };
 }
 
+// ─── Mia Lead Nurture Queue ───────────────────────────────────────────────────
+
+export interface NurtureRecord {
+  id: string;
+  email: string;
+  name?: string;
+  business?: string;
+  industry?: string;
+  capturedAt: string;
+  day2Sent: boolean;
+  day5Sent: boolean;
+}
+
+export async function saveNurtureRecord(lead: Pick<NurtureRecord, "email" | "name" | "business" | "industry">): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  const id = `nurture_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const record: NurtureRecord = {
+    ...lead,
+    id,
+    capturedAt: new Date().toISOString(),
+    day2Sent: false,
+    day5Sent: false,
+  };
+  await redis.hset(`nurture:${id}`, record as unknown as Record<string, unknown>);
+  await redis.lpush("nurture:list", id);
+  await redis.ltrim("nurture:list", 0, 999);
+}
+
+export async function getPendingNurture(): Promise<NurtureRecord[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("nurture:list", 0, 499) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map((id) => redis.hgetall(`nurture:${id}`) as Promise<Record<string, unknown> | null>)
+  );
+  return records
+    .filter((r): r is Record<string, unknown> => r !== null && typeof r.email === "string")
+    .map((r) => ({
+      ...r,
+      day2Sent: r.day2Sent === true || r.day2Sent === "true",
+      day5Sent: r.day5Sent === true || r.day5Sent === "true",
+    })) as NurtureRecord[];
+}
+
+export async function markNurtureSent(id: string, day: "day2" | "day5"): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.hset(`nurture:${id}`, { [`${day}Sent`]: true });
+}
+
 // ─── Edge Profile (Performance Coach) ────────────────────────────────────────
 
 export interface EdgeProfile {
