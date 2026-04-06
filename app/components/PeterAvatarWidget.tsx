@@ -1013,8 +1013,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
           style={{
             background: "#0084FF",
             boxShadow: pulsing
-              ? "0 0 0 4px rgba(0,132,255,0.2), 0 8px 24px rgba(0,132,255,0.35)"
-              : "0 4px 20px rgba(0,132,255,0.4)",
+              ? "0 0 0 4px rgba(0,132,255,0.2)"
+              : "none",
             transform: pulsing ? "scale(1.025) translateY(-1px)" : undefined,
           }}
         >
