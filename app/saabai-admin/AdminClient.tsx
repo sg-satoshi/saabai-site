@@ -705,10 +705,40 @@ export default function AdminClient({
         </div>
       </div>
 
+      {/* Section jump nav */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #f3f4f6", padding: "0 32px", position: "sticky", top: 0, zIndex: 40, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", gap: 2, height: 44, overflowX: "auto" }}>
+          {[
+            { label: "Overview",        href: "#overview" },
+            { label: "Clients",         href: "#clients" },
+            { label: "LinkedIn Queue",  href: "#linkedin-queue" },
+            { label: "Post Composer",   href: "#post-composer" },
+            { label: "Subscribers",     href: "#subscribers" },
+            { label: "Actions",         href: "#actions" },
+          ].map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              style={{
+                fontSize: 12, fontWeight: 600, color: "#6b7280",
+                padding: "0 14px", height: "100%", display: "flex", alignItems: "center",
+                textDecoration: "none", whiteSpace: "nowrap" as const,
+                borderBottom: "2px solid transparent",
+                transition: "color 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.color = "#111827"; (e.target as HTMLElement).style.borderBottomColor = "#62c5d1"; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.color = "#6b7280"; (e.target as HTMLElement).style.borderBottomColor = "transparent"; }}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 32px 64px" }}>
 
         {/* Page header */}
-        <div style={{ marginBottom: 28 }}>
+        <div id="overview" style={{ marginBottom: 28, scrollMarginTop: 60 }}>
           <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 900, color: "#111827", letterSpacing: -0.5 }}>Client Overview</h1>
           <p style={{ ...T.muted, margin: 0 }}>{visibleClients.length} active client{visibleClients.length !== 1 ? "s" : ""} · {totalLeadsAcrossClients} total leads across platform</p>
         </div>
@@ -728,7 +758,7 @@ export default function AdminClient({
         </div>
 
         {/* Client cards */}
-        <p style={{ ...T.label, margin: "0 0 14px" }}>Clients</p>
+        <p id="clients" style={{ ...T.label, margin: "0 0 14px", scrollMarginTop: 60 }}>Clients</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {visibleClients.length === 0 && (
             <div style={{ ...T.card, padding: "32px", textAlign: "center" }}>
@@ -746,13 +776,19 @@ export default function AdminClient({
         </div>
 
         {/* LinkedIn queue */}
-        <LinkedInQueue />
+        <div id="linkedin-queue" style={{ scrollMarginTop: 60 }}>
+          <LinkedInQueue />
+        </div>
 
         {/* LinkedIn composer */}
-        <LinkedInPanel />
+        <div id="post-composer" style={{ scrollMarginTop: 60 }}>
+          <LinkedInPanel />
+        </div>
 
         {/* Email subscribers */}
-        <SubscriberPanel />
+        <div id="subscribers" style={{ scrollMarginTop: 60 }}>
+          <SubscriberPanel />
+        </div>
         <div style={{ marginTop: 12, textAlign: "right" }}>
           <a href="/saabai-admin/subscribers" style={{ fontSize: 12, fontWeight: 700, color: "#00bfa5", textDecoration: "none" }}>
             Open full subscriber dashboard →
@@ -760,7 +796,9 @@ export default function AdminClient({
         </div>
 
         {/* Actions */}
-        <DigestTrigger />
+        <div id="actions" style={{ scrollMarginTop: 60 }}>
+          <DigestTrigger />
+        </div>
 
         {/* Footer */}
         <p style={{ marginTop: 40, textAlign: "center", ...T.muted }}>
