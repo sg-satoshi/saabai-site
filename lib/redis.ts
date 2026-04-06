@@ -219,6 +219,20 @@ export async function getPendingLinkedInPosts(): Promise<LinkedInPost[]> {
     .map((r) => r as unknown as LinkedInPost);
 }
 
+export async function getSentLinkedInPosts(): Promise<LinkedInPost[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("lipost:queue", 0, 199) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map((id) => redis.hgetall(`lipost:${id}`) as Promise<Record<string, string> | null>)
+  );
+  return records
+    .filter((r): r is Record<string, string> => r !== null && !!r.sentAt && !!r.content)
+    .map((r) => r as unknown as LinkedInPost)
+    .sort((a, b) => (b.sentAt ?? "").localeCompare(a.sentAt ?? ""));
+}
+
 export async function markLinkedInPostSent(id: string): Promise<void> {
   const redis = getRedis();
   if (!redis) return;

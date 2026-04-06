@@ -1,11 +1,15 @@
-import { getPendingLinkedInPosts, getRedis, markLinkedInPostSent } from "../../../../lib/redis";
+import { getPendingLinkedInPosts, getSentLinkedInPosts, getRedis, markLinkedInPostSent } from "../../../../lib/redis";
 
 export const runtime = "nodejs";
 
-// GET — list all pending (unsent) posts
-export async function GET() {
+// GET — pending posts (?sent=true for history)
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  if (searchParams.get("sent") === "true") {
+    const posts = await getSentLinkedInPosts();
+    return Response.json({ posts });
+  }
   const posts = await getPendingLinkedInPosts();
-  // Sort by scheduledFor ascending
   posts.sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor));
   return Response.json({ posts });
 }

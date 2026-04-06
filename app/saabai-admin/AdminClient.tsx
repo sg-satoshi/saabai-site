@@ -209,6 +209,7 @@ interface QueuedPost {
   content: string;
   imageUrl?: string;
   scheduledFor: string;
+  sentAt?: string;
   createdAt: string;
 }
 
@@ -296,8 +297,10 @@ function SubscriberPanel() {
 
 function LinkedInQueue() {
   const [posts, setPosts] = useState<QueuedPost[]>([]);
+  const [history, setHistory] = useState<QueuedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [viewingPost, setViewingPost] = useState<QueuedPost | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
@@ -307,9 +310,13 @@ function LinkedInQueue() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/linkedin/queue");
-      const data = await res.json();
-      setPosts(data.posts ?? []);
+      const [pendingRes, sentRes] = await Promise.all([
+        fetch("/api/linkedin/queue"),
+        fetch("/api/linkedin/queue?sent=true"),
+      ]);
+      const [pendingData, sentData] = await Promise.all([pendingRes.json(), sentRes.json()]);
+      setPosts(pendingData.posts ?? []);
+      setHistory(sentData.posts ?? []);
     } finally {
       setLoading(false);
     }
@@ -486,6 +493,57 @@ function LinkedInQueue() {
             );
           })}
         </div>}
+      </div>
+
+      {/* ── Post History ── */}
+      <div style={{ ...T.card, padding: "20px 24px", marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: historyCollapsed ? 0 : 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 900, color: "#6b7280" }}>✓</span>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Posted History</p>
+              <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{history.length} post{history.length !== 1 ? "s" : ""} published · most recent first</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setHistoryCollapsed(v => !v)}
+            style={{ fontSize: 11, color: "#6b7280", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: "2px 6px", borderRadius: 6 }}
+          >
+            <span style={{ display: "inline-block", transform: historyCollapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+            {historyCollapsed ? "Show" : "Hide"}
+          </button>
+        </div>
+
+        {!historyCollapsed && (
+          history.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "16px 0" }}>No posts published yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 1 }}>
+              {history.map((post, i) => {
+                const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+                const sentDate = post.sentAt
+                  ? new Date(post.sentAt).toLocaleString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                  : fmtDate(post.scheduledFor);
+                return (
+                  <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: i % 2 === 0 ? "#f9fafb" : "#fff" }}>
+                    {/* Sent badge */}
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: "#059669", background: "#f0fdf4", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                      ✓ {sentDate}
+                    </span>
+                    {/* Preview */}
+                    <span style={{ fontSize: 12, color: "#6b7280", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                      {preview}
+                    </span>
+                    {/* View */}
+                    <button onClick={() => setViewingPost(post)} style={{ ...btnBase, color: "#0077b5", borderColor: "#bfdbfe", background: "#f0f9ff", flexShrink: 0 }}>View</button>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
       </div>
     </>
   );
