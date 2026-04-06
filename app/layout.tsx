@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
+import EmailCapturePopup from "./components/EmailCapturePopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -106,6 +107,7 @@ export default function RootLayout({
       >
         {children}
         <ConditionalWidgets />
+        <EmailCapturePopup />
       </body>
     </html>
   );

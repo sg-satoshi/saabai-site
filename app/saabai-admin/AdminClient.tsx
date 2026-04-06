@@ -212,6 +212,88 @@ interface QueuedPost {
   createdAt: string;
 }
 
+// ── Subscriber Panel ─────────────────────────────────────────────────────────
+
+interface Subscriber {
+  email: string;
+  firstName: string;
+  industry: string;
+  source: string;
+  subscribedAt: string;
+}
+
+function SubscriberPanel() {
+  const [subs, setSubs] = useState<Subscriber[]>([]);
+  const [count, setCount] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/subscribers")
+      .then(r => r.json())
+      .then(d => { setSubs(d.subscribers ?? []); setCount(d.count ?? 0); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  const INDUSTRY_COLOURS: Record<string, string> = {
+    "Law / Legal": "#6366f1",
+    "Accounting / Finance": "#f59e0b",
+    "Real Estate": "#10b981",
+    "Other": "#6b7280",
+  };
+
+  return (
+    <div style={{ ...T.card, padding: "20px 24px", marginTop: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: collapsed ? 0 : 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: "#00bfa5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✉</div>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Email Subscribers</p>
+            <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{count !== null ? `${count} total` : "Loading…"} · AI Readiness Audit opt-ins</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setCollapsed(v => !v)}
+          style={{ fontSize: 11, color: "#6b7280", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: "2px 6px", borderRadius: 6 }}
+        >
+          <span style={{ display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+          {collapsed ? "Show" : "Hide"}
+        </button>
+      </div>
+
+      {!collapsed && (
+        loading ? null :
+        subs.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "20px 0" }}>No subscribers yet — the popup is live on the site.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {subs.map((s, i) => (
+              <div key={s.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: i % 2 === 0 ? "#f9fafb" : "#fff" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#374151", flexShrink: 0 }}>
+                  {s.firstName?.[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#111827" }}>{s.firstName} <span style={{ color: "#9ca3af", fontWeight: 400 }}>·</span> {s.email}</p>
+                </div>
+                {s.industry && (
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, color: INDUSTRY_COLOURS[s.industry] ?? "#6b7280", background: "rgba(0,0,0,0.04)", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                    {s.industry}
+                  </span>
+                )}
+                <span style={{ fontSize: 11, color: "#9ca3af", flexShrink: 0, whiteSpace: "nowrap" as const }}>{fmtDate(s.subscribedAt)}</span>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 function LinkedInQueue() {
   const [posts, setPosts] = useState<QueuedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -668,6 +750,9 @@ export default function AdminClient({
 
         {/* LinkedIn composer */}
         <LinkedInPanel />
+
+        {/* Email subscribers */}
+        <SubscriberPanel />
 
         {/* Actions */}
         <DigestTrigger />
