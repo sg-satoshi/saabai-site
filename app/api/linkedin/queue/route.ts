@@ -1,4 +1,4 @@
-import { getPendingLinkedInPosts, getSentLinkedInPosts, getRedis, markLinkedInPostSent } from "../../../../lib/redis";
+import { getPendingLinkedInPosts, getSentLinkedInPosts, queueLinkedInPost, getRedis, markLinkedInPostSent } from "../../../../lib/redis";
 
 export const runtime = "nodejs";
 
@@ -12,6 +12,15 @@ export async function GET(req: Request) {
   const posts = await getPendingLinkedInPosts();
   posts.sort((a, b) => a.scheduledFor.localeCompare(b.scheduledFor));
   return Response.json({ posts });
+}
+
+// POST — add a new post to the queue
+export async function POST(req: Request) {
+  let body: { content?: string; scheduledFor?: string };
+  try { body = await req.json(); } catch { return Response.json({ error: "Invalid JSON" }, { status: 400 }); }
+  if (!body.content || !body.scheduledFor) return Response.json({ error: "content and scheduledFor required" }, { status: 400 });
+  const id = await queueLinkedInPost({ content: body.content, scheduledFor: body.scheduledFor });
+  return Response.json({ ok: true, id });
 }
 
 // PATCH — edit content or scheduledFor of a queued post

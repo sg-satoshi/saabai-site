@@ -770,22 +770,24 @@ export default function AdminClient({
             { label: "Overview",        href: "#overview" },
             { label: "Clients",         href: "#clients" },
             { label: "LinkedIn Queue",  href: "#linkedin-queue" },
-            { label: "Post Composer",   href: "#post-composer" },
             { label: "Subscribers",     href: "#subscribers" },
             { label: "Actions",         href: "#actions" },
-          ].map(({ label, href }) => (
+            { label: "🎯 Social Media", href: "/saabai-admin/social/linkedin", external: true },
+            { label: "📊 Subscribers",  href: "/saabai-admin/subscribers", external: true },
+          ].map(({ label, href, external }) => (
             <a
               key={href}
               href={href}
               style={{
-                fontSize: 12, fontWeight: 600, color: "#6b7280",
+                fontSize: 12, fontWeight: 600,
+                color: external ? "#62c5d1" : "#6b7280",
                 padding: "0 14px", height: "100%", display: "flex", alignItems: "center",
                 textDecoration: "none", whiteSpace: "nowrap" as const,
-                borderBottom: "2px solid transparent",
+                borderBottom: external ? "2px solid rgba(98,197,209,0.3)" : "2px solid transparent",
                 transition: "color 0.15s, border-color 0.15s",
               }}
               onMouseEnter={e => { (e.target as HTMLElement).style.color = "#111827"; (e.target as HTMLElement).style.borderBottomColor = "#62c5d1"; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.color = "#6b7280"; (e.target as HTMLElement).style.borderBottomColor = "transparent"; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.color = external ? "#62c5d1" : "#6b7280"; (e.target as HTMLElement).style.borderBottomColor = external ? "rgba(98,197,209,0.3)" : "transparent"; }}
             >
               {label}
             </a>
