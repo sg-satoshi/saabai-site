@@ -281,7 +281,8 @@ function LinkedInQueue() {
   }
 
   function fmtDate(d: string) {
-    return new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+    const date = new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+    return `${date} · 9:00am`;
   }
 
   const today = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
