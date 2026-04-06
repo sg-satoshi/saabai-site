@@ -753,6 +753,11 @@ export default function AdminClient({
 
         {/* Email subscribers */}
         <SubscriberPanel />
+        <div style={{ marginTop: 12, textAlign: "right" }}>
+          <a href="/saabai-admin/subscribers" style={{ fontSize: 12, fontWeight: 700, color: "#00bfa5", textDecoration: "none" }}>
+            Open full subscriber dashboard →
+          </a>
+        </div>
 
         {/* Actions */}
         <DigestTrigger />

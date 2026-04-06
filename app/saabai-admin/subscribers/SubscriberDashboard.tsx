@@ -1,0 +1,422 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+interface Subscriber {
+  email: string;
+  firstName: string;
+  industry: string;
+  source: string;
+  subscribedAt: string;
+  status: string;
+}
+
+const INDUSTRY_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  "Law / Legal":          { color: "#6366f1", bg: "#eef2ff", dot: "#6366f1" },
+  "Accounting / Finance": { color: "#d97706", bg: "#fffbeb", dot: "#f59e0b" },
+  "Real Estate":          { color: "#059669", bg: "#ecfdf5", dot: "#10b981" },
+  "Other":                { color: "#6b7280", bg: "#f3f4f6", dot: "#9ca3af" },
+};
+
+function getIC(industry: string) {
+  return INDUSTRY_CONFIG[industry] ?? INDUSTRY_CONFIG["Other"];
+}
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtDateTime(iso: string) {
+  return new Date(iso).toLocaleString("en-AU", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+// Build daily growth data for the past N days
+function buildGrowthData(subs: Subscriber[], days = 30) {
+  const counts: Record<string, number> = {};
+  const now = Date.now();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now - i * 86400000).toISOString().slice(0, 10);
+    counts[d] = 0;
+  }
+  subs.forEach(s => {
+    const d = s.subscribedAt.slice(0, 10);
+    if (counts[d] !== undefined) counts[d]++;
+  });
+  return Object.entries(counts).map(([date, count]) => ({ date, count }));
+}
+
+function buildIndustryBreakdown(subs: Subscriber[]) {
+  const totals: Record<string, number> = {};
+  subs.forEach(s => {
+    const k = s.industry || "Other";
+    totals[k] = (totals[k] ?? 0) + 1;
+  });
+  return Object.entries(totals)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count, pct: Math.round((count / subs.length) * 100) }));
+}
+
+function buildSourceBreakdown(subs: Subscriber[]) {
+  const totals: Record<string, number> = {};
+  subs.forEach(s => {
+    const k = s.source || "/";
+    totals[k] = (totals[k] ?? 0) + 1;
+  });
+  return Object.entries(totals).sort((a, b) => b[1] - a[1]);
+}
+
+// Mini bar chart
+function BarChart({ data }: { data: { date: string; count: number }[] }) {
+  const max = Math.max(...data.map(d => d.count), 1);
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const showEvery = Math.ceil(data.length / 6);
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 80 }}>
+        {data.map((d, i) => (
+          <div key={d.date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, height: "100%" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+              <div
+                title={`${d.date}: ${d.count} subscriber${d.count !== 1 ? "s" : ""}`}
+                style={{
+                  width: "100%",
+                  height: d.count === 0 ? 2 : `${Math.max(4, Math.round((d.count / max) * 80))}px`,
+                  background: d.count > 0 ? "linear-gradient(180deg, #00e5cc 0%, #00bfa5 100%)" : "#e5e7eb",
+                  borderRadius: "3px 3px 0 0",
+                  transition: "height 0.3s ease",
+                  cursor: "default",
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* X-axis labels */}
+      <div style={{ display: "flex", gap: 3, marginTop: 6 }}>
+        {data.map((d, i) => (
+          <div key={d.date} style={{ flex: 1, textAlign: "center" }}>
+            {i % showEvery === 0 && (
+              <span style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>
+                {new Date(d.date + "T12:00:00Z").toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p style={{ margin: "8px 0 0", fontSize: 11, color: "#6b7280" }}>
+        {total} new subscriber{total !== 1 ? "s" : ""} in the last {data.length} days
+      </p>
+    </div>
+  );
+}
+
+export default function SubscriberDashboard() {
+  const [subs, setSubs] = useState<Subscriber[]>([]);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterIndustry, setFilterIndustry] = useState("All");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "industry">("date");
+  const [exportMsg, setExportMsg] = useState("");
+  const [chartDays, setChartDays] = useState(30);
+
+  useEffect(() => {
+    fetch("/api/subscribers")
+      .then(r => r.json())
+      .then(d => {
+        setSubs(d.subscribers ?? []);
+        setCount(d.count ?? 0);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Derived stats
+  const thisWeek = subs.filter(s => {
+    const d = new Date(s.subscribedAt);
+    return Date.now() - d.getTime() < 7 * 86400000;
+  }).length;
+
+  const thisMonth = subs.filter(s => {
+    const d = new Date(s.subscribedAt);
+    return Date.now() - d.getTime() < 30 * 86400000;
+  }).length;
+
+  const industryBreakdown = buildIndustryBreakdown(subs);
+  const sourceBreakdown = buildSourceBreakdown(subs);
+  const growthData = buildGrowthData(subs, chartDays);
+
+  // Filtered + sorted list
+  const filtered = subs
+    .filter(s => {
+      const q = search.toLowerCase();
+      const matchSearch = !q || s.email.toLowerCase().includes(q) || s.firstName.toLowerCase().includes(q);
+      const matchIndustry = filterIndustry === "All" || s.industry === filterIndustry;
+      return matchSearch && matchIndustry;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date") return b.subscribedAt.localeCompare(a.subscribedAt);
+      if (sortBy === "name") return a.firstName.localeCompare(b.firstName);
+      return (a.industry || "").localeCompare(b.industry || "");
+    });
+
+  function exportCSV() {
+    const rows = [
+      ["First Name", "Email", "Industry", "Source", "Subscribed At", "Status"],
+      ...filtered.map(s => [s.firstName, s.email, s.industry, s.source, fmtDateTime(s.subscribedAt), s.status ?? "active"]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `saabai-subscribers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportMsg(`${filtered.length} records exported`);
+    setTimeout(() => setExportMsg(""), 3000);
+  }
+
+  const inputStyle: React.CSSProperties = {
+    padding: "9px 13px", fontSize: 13, border: "1px solid #e5e7eb",
+    borderRadius: 8, outline: "none", background: "#fff", color: "#111827",
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: "#fff", border: "1px solid #e5e7eb",
+    borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+  };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontSize: 14, color: "#9ca3af" }}>Loading…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+
+      {/* Header */}
+      <div style={{ background: "#0e0c2e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 40px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <a href="/saabai-admin" style={{ fontSize: 13, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+              ← Admin
+            </a>
+            <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00bfa5" }} />
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Subscriber Intelligence</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {exportMsg && <span style={{ fontSize: 12, color: "#00bfa5" }}>{exportMsg}</span>}
+            <button
+              onClick={exportCSV}
+              style={{
+                padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                background: "rgba(0,191,165,0.15)", border: "1px solid rgba(0,191,165,0.3)",
+                color: "#00bfa5", cursor: "pointer", letterSpacing: 0.3,
+              }}
+            >
+              ↓ Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px" }}>
+
+        {/* KPI row */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "Total Subscribers", value: count, sub: "All time", accent: "#00bfa5" },
+            { label: "This Month", value: thisMonth, sub: "Last 30 days", accent: "#6366f1" },
+            { label: "This Week", value: thisWeek, sub: "Last 7 days", accent: "#f59e0b" },
+            { label: "Industries", value: industryBreakdown.length, sub: "Segments tracked", accent: "#10b981" },
+          ].map(({ label, value, sub, accent }) => (
+            <div key={label} style={{ ...cardStyle, padding: "20px 24px" }}>
+              <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#9ca3af", textTransform: "uppercase" }}>{label}</p>
+              <p style={{ margin: "0 0 4px", fontSize: 36, fontWeight: 900, color: "#111827", letterSpacing: -1.5, lineHeight: 1 }}>{value}</p>
+              <p style={{ margin: 0, fontSize: 12, color: accent, fontWeight: 600 }}>{sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts row */}
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 24 }}>
+
+          {/* Growth chart */}
+          <div style={{ ...cardStyle, padding: "24px 28px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+              <div>
+                <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: "#111827" }}>Subscriber Growth</p>
+                <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>New sign-ups per day</p>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[7, 14, 30].map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setChartDays(d)}
+                    style={{
+                      padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      background: chartDays === d ? "#0e0c2e" : "#f3f4f6",
+                      color: chartDays === d ? "#fff" : "#6b7280",
+                      border: "none", cursor: "pointer",
+                    }}
+                  >{d}d</button>
+                ))}
+              </div>
+            </div>
+            <BarChart data={buildGrowthData(subs, chartDays)} />
+          </div>
+
+          {/* Industry breakdown */}
+          <div style={{ ...cardStyle, padding: "24px 28px" }}>
+            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: "#111827" }}>Industry Mix</p>
+            <p style={{ margin: "0 0 20px", fontSize: 12, color: "#9ca3af" }}>Subscriber segments</p>
+            {industryBreakdown.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#9ca3af" }}>No data yet</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {industryBreakdown.map(({ name, count: c, pct }) => {
+                  const ic = getIC(name);
+                  return (
+                    <div key={name}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: ic.dot, display: "inline-block" }} />
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>{name}</span>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#111827" }}>{c} <span style={{ color: "#9ca3af", fontWeight: 400 }}>({pct}%)</span></span>
+                      </div>
+                      <div style={{ height: 6, borderRadius: 3, background: "#f3f4f6", overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, background: ic.dot, borderRadius: 3, transition: "width 0.4s ease" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Source breakdown */}
+            {sourceBreakdown.length > 0 && (
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #f3f4f6" }}>
+                <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8 }}>Top Sources</p>
+                {sourceBreakdown.slice(0, 5).map(([src, n]) => (
+                  <div key={src} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, color: "#6b7280", fontFamily: "monospace" }}>{src || "/"}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#111827" }}>{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Subscriber table */}
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+
+          {/* Table header */}
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const }}>
+            <div>
+              <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: "#111827" }}>All Subscribers</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{filtered.length} of {subs.length} shown</p>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+              <input
+                placeholder="Search name or email…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ ...inputStyle, width: 220 }}
+              />
+              <select value={filterIndustry} onChange={e => setFilterIndustry(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option value="All">All industries</option>
+                {Object.keys(INDUSTRY_CONFIG).map(k => <option key={k} value={k}>{k}</option>)}
+              </select>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as "date" | "name" | "industry")} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option value="date">Newest first</option>
+                <option value="name">Name A–Z</option>
+                <option value="industry">Industry</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 220px 160px 160px 110px", padding: "10px 24px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6" }}>
+            {["", "Subscriber", "Email", "Industry", "Joined", "Status"].map(h => (
+              <p key={h} style={{ margin: 0, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</p>
+            ))}
+          </div>
+
+          {/* Rows */}
+          {filtered.length === 0 ? (
+            <div style={{ padding: "40px 24px", textAlign: "center" }}>
+              <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 600, color: "#374151" }}>
+                {subs.length === 0 ? "No subscribers yet" : "No matches found"}
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>
+                {subs.length === 0 ? "The popup is live — subscribers will appear here as they sign up." : "Try adjusting your search or filters."}
+              </p>
+            </div>
+          ) : filtered.map((s, i) => {
+            const ic = getIC(s.industry);
+            const initials = (s.firstName?.[0] ?? "?").toUpperCase();
+            const colours = ["#6366f1", "#00bfa5", "#f59e0b", "#10b981", "#e11d48", "#8b5cf6"];
+            const avatarBg = colours[s.email.charCodeAt(0) % colours.length];
+
+            return (
+              <div
+                key={s.email}
+                style={{
+                  display: "grid", gridTemplateColumns: "40px 1fr 220px 160px 160px 110px",
+                  padding: "13px 24px", alignItems: "center",
+                  borderBottom: i < filtered.length - 1 ? "1px solid #f9fafb" : "none",
+                  background: i % 2 === 0 ? "#fff" : "#fafafa",
+                  transition: "background 0.1s",
+                }}
+              >
+                {/* Avatar */}
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: avatarBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>
+                  {initials}
+                </div>
+
+                {/* Name */}
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#111827" }}>{s.firstName || "—"}</p>
+
+                {/* Email */}
+                <a href={`mailto:${s.email}`} style={{ margin: 0, fontSize: 12, color: "#6366f1", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                  {s.email}
+                </a>
+
+                {/* Industry */}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 20, background: ic.bg, color: ic.color, fontSize: 11, fontWeight: 700, width: "fit-content" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: ic.dot }} />
+                  {s.industry || "Other"}
+                </span>
+
+                {/* Date */}
+                <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>{fmtDate(s.subscribedAt)}</p>
+
+                {/* Status */}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 20, background: "#f0fdf4", color: "#059669", fontSize: 11, fontWeight: 700, width: "fit-content" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e" }} />
+                  Active
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <p style={{ marginTop: 32, textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
+          Saabai Subscriber Intelligence · <a href="/saabai-admin" style={{ color: "#00bfa5", textDecoration: "none" }}>← Back to admin</a>
+        </p>
+      </div>
+    </div>
+  );
+}
