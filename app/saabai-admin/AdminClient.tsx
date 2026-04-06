@@ -204,27 +204,68 @@ function DigestTrigger() {
 
 // ── LinkedIn Post Panel ───────────────────────────────────────────────────────
 
+type ImageType = "none" | "stat" | "insight" | "quote" | "beforeafter";
+
+const IMAGE_TYPES: { value: ImageType; label: string; hint: string }[] = [
+  { value: "none",        label: "No image",     hint: "Text only" },
+  { value: "insight",     label: "Insight card",  hint: "Headline + subtext" },
+  { value: "stat",        label: "Stat card",     hint: "Big number + context" },
+  { value: "quote",       label: "Quote card",    hint: "Pull quote" },
+  { value: "beforeafter", label: "Before → After", hint: "Two-panel comparison" },
+];
+
 function LinkedInPanel() {
   const [content, setContent] = useState("");
+  const [imageType, setImageType] = useState<ImageType>("none");
+  const [imgHeadline, setImgHeadline] = useState("");
+  const [imgSub, setImgSub]     = useState("");
+  const [imgStat, setImgStat]   = useState("");
+  const [imgBefore, setImgBefore] = useState("");
+  const [imgAfter, setImgAfter]  = useState("");
+  const [imgLabel, setImgLabel]  = useState("Saabai.ai");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "posting" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const charCount = content.length;
   const over = charCount > 3000;
 
+  function buildImageUrl() {
+    if (imageType === "none") return null;
+    const base = "/api/og/linkedin-card";
+    const p = new URLSearchParams({ type: imageType });
+    if (imgHeadline) p.set("headline", imgHeadline);
+    if (imgSub)      p.set("sub", imgSub);
+    if (imgStat)     p.set("stat", imgStat);
+    if (imgBefore)   p.set("before", imgBefore);
+    if (imgAfter)    p.set("after", imgAfter);
+    if (imgLabel)    p.set("label", imgLabel);
+    return `${base}?${p.toString()}`;
+  }
+
+  function handlePreview() { setPreviewUrl(buildImageUrl()); }
+
   async function handlePost() {
     if (!content.trim() || over) return;
     setStatus("posting");
+    const imageParams: Record<string, string> = {};
+    if (imgHeadline) imageParams.headline = imgHeadline;
+    if (imgSub)      imageParams.sub      = imgSub;
+    if (imgStat)     imageParams.stat     = imgStat;
+    if (imgBefore)   imageParams.before   = imgBefore;
+    if (imgAfter)    imageParams.after    = imgAfter;
+    if (imgLabel)    imageParams.label    = imgLabel;
     try {
       const res = await fetch("/api/linkedin/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, imageType, imageParams }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Unknown error");
       setStatus("done");
       setMessage("Posted to LinkedIn ✓");
-      setContent("");
+      setContent(""); setImgHeadline(""); setImgSub(""); setImgStat("");
+      setImgBefore(""); setImgAfter(""); setImageType("none"); setPreviewUrl(null);
       setTimeout(() => { setStatus("idle"); setMessage(""); }, 4000);
     } catch (err) {
       setStatus("error");
@@ -233,30 +274,90 @@ function LinkedInPanel() {
     }
   }
 
+  const inp = (placeholder: string, value: string, onChange: (v: string) => void) => (
+    <input
+      placeholder={placeholder} value={value}
+      onChange={e => onChange(e.target.value)}
+      style={{ flex: 1, padding: "8px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 12, color: "#111827", background: "#f9fafb", outline: "none", fontFamily: "inherit" }}
+    />
+  );
+
   return (
     <div style={{ ...T.card, padding: "24px 28px", marginTop: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
         <div style={{ width: 32, height: 32, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>in</span>
         </div>
         <div>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Post to LinkedIn</p>
-          <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>Fires via Make → Shane Goldberg&apos;s profile</p>
+          <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>Research → Write → Image → Post · Full pipeline</p>
         </div>
       </div>
+
+      {/* Post content */}
       <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder="Write your LinkedIn post here..."
+        value={content} onChange={e => setContent(e.target.value)}
+        placeholder="Write your LinkedIn post here, or paste content drafted by the AI team..."
         rows={8}
-        style={{
-          width: "100%", boxSizing: "border-box", padding: "14px 16px",
-          border: `1px solid ${over ? "#ef4444" : "#e5e7eb"}`, borderRadius: 10,
-          fontSize: 13, lineHeight: 1.7, color: "#111827", background: "#f9fafb",
-          resize: "vertical", outline: "none", fontFamily: "inherit",
-        }}
+        style={{ width: "100%", boxSizing: "border-box", padding: "14px 16px", border: `1px solid ${over ? "#ef4444" : "#e5e7eb"}`, borderRadius: 10, fontSize: 13, lineHeight: 1.7, color: "#111827", background: "#f9fafb", resize: "vertical", outline: "none", fontFamily: "inherit", marginBottom: 16 }}
       />
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+
+      {/* Image card section */}
+      <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: "16px 18px", marginBottom: 14 }}>
+        <p style={{ ...T.label, margin: "0 0 12px" }}>Branded Image Card</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const, marginBottom: 14 }}>
+          {IMAGE_TYPES.map(({ value, label, hint }) => (
+            <button key={value} onClick={() => { setImageType(value); setPreviewUrl(null); }}
+              style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${imageType === value ? "#0077b5" : "#e5e7eb"}`, background: imageType === value ? "#eff8ff" : "#fff", color: imageType === value ? "#0077b5" : "#6b7280", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
+              {label}
+              {imageType === value && hint && <span style={{ color: "#9ca3af", fontWeight: 400, marginLeft: 4 }}>· {hint}</span>}
+            </button>
+          ))}
+        </div>
+
+        {imageType !== "none" && (
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+            {imageType === "stat" && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {inp("Big stat (e.g. 18 hrs/wk)", imgStat, setImgStat)}
+                {inp("Context (e.g. recovered per fee earner)", imgSub, setImgSub)}
+              </div>
+            )}
+            {imageType === "insight" && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {inp("Headline (e.g. Law firms lose 20% of fee earner time to admin)", imgHeadline, setImgHeadline)}
+                {inp("Subtext (optional)", imgSub, setImgSub)}
+              </div>
+            )}
+            {imageType === "quote" && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {inp("Quote text", imgHeadline, setImgHeadline)}
+                {inp("Attribution (e.g. Principal, Tributum Law)", imgSub, setImgSub)}
+              </div>
+            )}
+            {imageType === "beforeafter" && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {inp("Before (e.g. 4-hour response time, leads going cold)", imgBefore, setImgBefore)}
+                {inp("After (e.g. 90 seconds. Every enquiry. Any time.)", imgAfter, setImgAfter)}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {inp("Label (e.g. Law Firm Result)", imgLabel, setImgLabel)}
+              <button onClick={handlePreview}
+                style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #0077b5", background: "#fff", color: "#0077b5", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as const }}>
+                Preview Image
+              </button>
+            </div>
+            {previewUrl && (
+              <img src={previewUrl} alt="Card preview" style={{ width: "100%", borderRadius: 8, border: "1px solid #e5e7eb", marginTop: 4 }} />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 11, color: over ? "#ef4444" : "#9ca3af" }}>
           {charCount.toLocaleString()} / 3,000
         </span>
@@ -266,17 +367,8 @@ function LinkedInPanel() {
               {message}
             </span>
           )}
-          <button
-            onClick={handlePost}
-            disabled={!content.trim() || over || status === "posting"}
-            style={{
-              padding: "9px 20px", borderRadius: 8, border: "none", cursor: "pointer",
-              fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
-              background: status === "posting" ? "#9ca3af" : "#0077b5",
-              color: "#fff", opacity: (!content.trim() || over) ? 0.5 : 1,
-              transition: "opacity 0.15s",
-            }}
-          >
+          <button onClick={handlePost} disabled={!content.trim() || over || status === "posting"}
+            style={{ padding: "9px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, letterSpacing: 0.3, background: status === "posting" ? "#9ca3af" : "#0077b5", color: "#fff", opacity: (!content.trim() || over) ? 0.5 : 1, transition: "opacity 0.15s" }}>
             {status === "posting" ? "Posting…" : "Post Now →"}
           </button>
         </div>
