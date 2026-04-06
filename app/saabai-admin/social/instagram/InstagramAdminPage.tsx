@@ -800,15 +800,27 @@ export default function InstagramAdminPage() {
               <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
               <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Social Media</span>
             </div>
-            <a
-              href="https://www.instagram.com/saabai.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
-            >
-              <span style={{ fontSize: 10, fontWeight: 900, padding: "2px 6px", borderRadius: 4, background: igGradient, color: "#fff" }}>Ig</span>
-              @saabai.ai
-            </a>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <a
+                href="https://www.instagram.com/saabai.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <span style={{ fontSize: 10, fontWeight: 900, padding: "2px 6px", borderRadius: 4, background: igGradient, color: "#fff" }}>Ig</span>
+                @saabai.ai
+              </a>
+              <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+              <a
+                href="https://www.facebook.com/saabai.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 900, padding: "1px 6px", borderRadius: 3, background: "#1877f2", color: "#fff", fontFamily: "Georgia, serif" }}>f</span>
+                saabai.ai
+              </a>
+            </div>
           </div>
 
           {/* Platform tabs */}
