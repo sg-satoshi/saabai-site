@@ -202,6 +202,89 @@ function DigestTrigger() {
   );
 }
 
+// ── LinkedIn Post Panel ───────────────────────────────────────────────────────
+
+function LinkedInPanel() {
+  const [content, setContent] = useState("");
+  const [status, setStatus] = useState<"idle" | "posting" | "done" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const charCount = content.length;
+  const over = charCount > 3000;
+
+  async function handlePost() {
+    if (!content.trim() || over) return;
+    setStatus("posting");
+    try {
+      const res = await fetch("/api/linkedin/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Unknown error");
+      setStatus("done");
+      setMessage("Posted to LinkedIn ✓");
+      setContent("");
+      setTimeout(() => { setStatus("idle"); setMessage(""); }, 4000);
+    } catch (err) {
+      setStatus("error");
+      setMessage(String(err));
+      setTimeout(() => { setStatus("idle"); setMessage(""); }, 6000);
+    }
+  }
+
+  return (
+    <div style={{ ...T.card, padding: "24px 28px", marginTop: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>in</span>
+        </div>
+        <div>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Post to LinkedIn</p>
+          <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>Fires via Make → Shane Goldberg&apos;s profile</p>
+        </div>
+      </div>
+      <textarea
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        placeholder="Write your LinkedIn post here..."
+        rows={8}
+        style={{
+          width: "100%", boxSizing: "border-box", padding: "14px 16px",
+          border: `1px solid ${over ? "#ef4444" : "#e5e7eb"}`, borderRadius: 10,
+          fontSize: 13, lineHeight: 1.7, color: "#111827", background: "#f9fafb",
+          resize: "vertical", outline: "none", fontFamily: "inherit",
+        }}
+      />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+        <span style={{ fontSize: 11, color: over ? "#ef4444" : "#9ca3af" }}>
+          {charCount.toLocaleString()} / 3,000
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {message && (
+            <span style={{ fontSize: 12, color: status === "error" ? "#ef4444" : "#10b981", fontWeight: 600 }}>
+              {message}
+            </span>
+          )}
+          <button
+            onClick={handlePost}
+            disabled={!content.trim() || over || status === "posting"}
+            style={{
+              padding: "9px 20px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
+              background: status === "posting" ? "#9ca3af" : "#0077b5",
+              color: "#fff", opacity: (!content.trim() || over) ? 0.5 : 1,
+              transition: "opacity 0.15s",
+            }}
+          >
+            {status === "posting" ? "Posting…" : "Post Now →"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function AdminClient({
@@ -280,6 +363,9 @@ export default function AdminClient({
               : <GenericClientCard key={client.id} client={client} />;
           })}
         </div>
+
+        {/* LinkedIn */}
+        <LinkedInPanel />
 
         {/* Actions */}
         <DigestTrigger />

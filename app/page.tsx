@@ -534,7 +534,111 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Industries ──────────────────────────────────────────────────── */}
+      <section className="py-24 px-6 border-t border-saabai-border">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">Built for your industry</p>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-4 leading-snug">
+            Automation built around <span className="text-gradient">how you actually work</span>
+          </h2>
+          <p className="text-saabai-text-muted text-center max-w-2xl mx-auto mb-14 text-lg">
+            Every professional services firm has the same problem — skilled people doing work a system should handle. The difference is where it hides.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                label: "Law Firms",
+                href: "/for-law-firms",
+                icon: "⚖️",
+                headline: "Intake. Matter tracking. Document chasing.",
+                detail: "Fee earners spending 20% of their week on admin that has nothing to do with practising law.",
+                stat: "20+ hrs/week recovered",
+              },
+              {
+                label: "Accounting Firms",
+                href: "/for-accounting-firms",
+                icon: "📊",
+                headline: "Document collection. Deadline reminders. Reports.",
+                detail: "Tax season coordination runs on email threads and manual chasing — until it doesn't have to.",
+                stat: "12 hrs/week per staff",
+              },
+              {
+                label: "Real Estate",
+                href: "/for-real-estate",
+                icon: "🏠",
+                headline: "Enquiry response. Follow-up. Vendor reporting.",
+                detail: "Every hour of delay on a new enquiry is a lead your competitor got to first.",
+                stat: "90-second response time",
+              },
+            ].map(({ label, href, icon, headline, detail, stat }) => (
+              <a
+                key={href}
+                href={href}
+                className="group block bg-saabai-surface border border-saabai-border rounded-2xl p-8 hover:border-saabai-teal transition-colors"
+                style={{ boxShadow: "0 0 0 0 transparent" }}
+              >
+                <div className="text-3xl mb-5">{icon}</div>
+                <p className="text-xs font-semibold tracking-[0.18em] text-saabai-teal uppercase mb-3">{label}</p>
+                <h3 className="text-lg font-semibold text-saabai-text mb-3 leading-snug">{headline}</h3>
+                <p className="text-sm text-saabai-text-muted leading-relaxed mb-6">{detail}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-saabai-teal">{stat}</span>
+                  <span className="text-saabai-text-dim text-sm group-hover:text-saabai-teal transition-colors">Learn more →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <CalculatorSection />
+
+      {/* ── Case Studies teaser ─────────────────────────────────────────── */}
+      <section className="py-24 px-6 border-t border-saabai-border">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">Results</p>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-4 leading-snug">
+            Live systems. <span className="text-gradient">Real numbers.</span>
+          </h2>
+          <p className="text-saabai-text-muted text-center max-w-xl mx-auto mb-14 text-lg">
+            Every engagement is different. The results aren't.
+          </p>
+          <div className="grid md:grid-cols-2 gap-6 mb-10">
+            {[
+              {
+                industry: "Law Firm",
+                name: "Tributum Law",
+                result: "12 hrs/week recovered. 90-second enquiry response. Live in 3 weeks.",
+                quote: "The clients calling about ATO disputes are stressed. They want to know someone's there. Lex answers that in 90 seconds, any time of day.",
+                href: "/case-studies",
+              },
+              {
+                industry: "National Supplier",
+                name: "Plastics Distributor",
+                result: "40% of enquiries resolved without team involvement. After-hours revenue captured.",
+                quote: "Rex handles the quoting work our team was doing manually all day. They're actually selling now instead of answering the same questions.",
+                href: "/case-studies",
+              },
+            ].map(({ industry, name, result, quote, href }) => (
+              <a key={name} href={href} className="group block bg-saabai-surface border border-saabai-border rounded-2xl p-8 hover:border-saabai-teal transition-colors">
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="text-xs font-semibold tracking-[0.18em] text-saabai-teal uppercase">{industry}</span>
+                  <span className="text-saabai-border">·</span>
+                  <span className="text-sm text-saabai-text-muted">{name}</span>
+                </div>
+                <p className="text-base font-semibold text-saabai-text mb-4 leading-snug">{result}</p>
+                <p className="text-sm text-saabai-text-muted italic leading-relaxed border-l-2 border-saabai-teal pl-4 mb-5">&ldquo;{quote}&rdquo;</p>
+                <span className="text-sm text-saabai-text-dim group-hover:text-saabai-teal transition-colors">Read case study →</span>
+              </a>
+            ))}
+          </div>
+          <div className="text-center">
+            <a href="/case-studies" className="inline-block border border-saabai-border text-saabai-text-muted hover:text-saabai-teal hover:border-saabai-teal px-8 py-3 rounded-xl text-sm font-medium transition-colors">
+              View all case studies →
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-3xl mx-auto border-t border-saabai-border">

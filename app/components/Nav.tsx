@@ -7,9 +7,10 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
   { label: "Use Cases", href: "/use-cases" },
+  { label: "Case Studies", href: "/case-studies" },
+  { label: "Insights", href: "/insights" },
   { label: "Process", href: "/process" },
   { label: "Calculator", href: "/calculator" },
-  { label: "AI News", href: "/ai-news" },
   { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
 ];
