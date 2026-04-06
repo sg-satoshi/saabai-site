@@ -202,6 +202,163 @@ function DigestTrigger() {
   );
 }
 
+// ── LinkedIn Queue Manager ────────────────────────────────────────────────────
+
+interface QueuedPost {
+  id: string;
+  content: string;
+  imageUrl?: string;
+  scheduledFor: string;
+  createdAt: string;
+}
+
+function LinkedInQueue() {
+  const [posts, setPosts] = useState<QueuedPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/linkedin/queue");
+      const data = await res.json();
+      setPosts(data.posts ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useState(() => { load(); });
+
+  function startEdit(post: QueuedPost) {
+    setEditingId(post.id);
+    setEditContent(post.content);
+    setEditDate(post.scheduledFor);
+  }
+
+  async function saveEdit(id: string) {
+    setSaving(true);
+    await fetch("/api/linkedin/queue", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, content: editContent, scheduledFor: editDate }),
+    });
+    setSaving(false);
+    setEditingId(null);
+    load();
+  }
+
+  async function cancelPost(id: string) {
+    if (!confirm("Remove this post from the queue?")) return;
+    await fetch("/api/linkedin/queue", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    load();
+  }
+
+  async function postNow(post: QueuedPost) {
+    if (!confirm("Post this to LinkedIn right now?")) return;
+    await fetch("/api/linkedin/post", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: post.content }),
+    });
+    // Mark as sent
+    await fetch("/api/linkedin/queue", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: post.id }),
+    });
+    load();
+  }
+
+  function fmtDate(d: string) {
+    return new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+  }
+
+  const today = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
+
+  if (loading) return null;
+  if (posts.length === 0) return null;
+
+  return (
+    <div style={{ ...T.card, padding: "24px 28px", marginTop: 28 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>in</span>
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Scheduled Posts</p>
+            <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{posts.length} post{posts.length !== 1 ? "s" : ""} queued · fires at 9am Brisbane</p>
+          </div>
+        </div>
+        <button onClick={load} style={{ fontSize: 11, color: "#9ca3af", background: "none", border: "none", cursor: "pointer" }}>↻ Refresh</button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column" as const, gap: 12 }}>
+        {posts.map((post) => {
+          const isEditing = editingId === post.id;
+          const isDue = post.scheduledFor <= today;
+
+          return (
+            <div key={post.id} style={{ border: `1px solid ${isDue ? "#fbbf24" : "#e5e7eb"}`, borderRadius: 12, overflow: "hidden", background: isDue ? "#fffbeb" : "#f9fafb" }}>
+              {/* Header row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #e5e7eb" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {isDue
+                    ? <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: "#d97706", background: "#fef3c7", padding: "3px 8px", borderRadius: 20 }}>POSTING TODAY</span>
+                    : <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: "#0077b5", background: "#eff8ff", padding: "3px 8px", borderRadius: 20 }}>{fmtDate(post.scheduledFor)}</span>
+                  }
+                  {post.imageUrl && <span style={{ fontSize: 10, color: "#6b7280", background: "#f3f4f6", padding: "3px 8px", borderRadius: 20 }}>🖼 Image card</span>}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {!isEditing && <>
+                    <button onClick={() => startEdit(post)} style={{ fontSize: 11, fontWeight: 600, color: "#374151", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Edit</button>
+                    <button onClick={() => postNow(post)} style={{ fontSize: 11, fontWeight: 600, color: "#0077b5", background: "#eff8ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Post now</button>
+                    <button onClick={() => cancelPost(post.id)} style={{ fontSize: 11, fontWeight: 600, color: "#ef4444", background: "#fff", border: "1px solid #fecaca", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Remove</button>
+                  </>}
+                  {isEditing && <>
+                    <button onClick={() => saveEdit(post.id)} disabled={saving} style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#0077b5", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>{saving ? "Saving…" : "Save"}</button>
+                    <button onClick={() => setEditingId(null)} style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Cancel</button>
+                  </>}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{ padding: "14px 16px" }}>
+                {isEditing ? (
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                    <textarea
+                      value={editContent} onChange={e => setEditContent(e.target.value)} rows={10}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 12, lineHeight: 1.7, color: "#111827", background: "#fff", resize: "vertical", outline: "none", fontFamily: "inherit" }}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "#6b7280" }}>Reschedule:</span>
+                      <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+                        style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 12, color: "#111827", background: "#fff", outline: "none" }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 12, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 120, overflow: "hidden", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent)" }}>
+                    {post.content}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── LinkedIn Post Panel ───────────────────────────────────────────────────────
 
 type ImageType = "none" | "stat" | "insight" | "quote" | "beforeafter";
@@ -456,7 +613,10 @@ export default function AdminClient({
           })}
         </div>
 
-        {/* LinkedIn */}
+        {/* LinkedIn queue */}
+        <LinkedInQueue />
+
+        {/* LinkedIn composer */}
         <LinkedInPanel />
 
         {/* Actions */}
