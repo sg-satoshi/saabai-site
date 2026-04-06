@@ -255,7 +255,7 @@ function SubscriberPanel() {
     <div style={{ ...T.card, padding: "20px 24px", marginTop: 28 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: collapsed ? 0 : 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: "#00bfa5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✉</div>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg, #00bfa5, #009688)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#fff", letterSpacing: -0.3 }}>SI</div>
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Email Subscribers</p>
             <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{count !== null ? `${count} total` : "Loading…"} · AI Readiness Audit opt-ins</p>
@@ -768,35 +768,50 @@ export default function AdminClient({
               <span style={{ fontSize: 10, fontWeight: 700, color: "#8b8fa8", letterSpacing: 2.5, textTransform: "uppercase" as const }}>Admin</span>
             </div>
             <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
-              <button type="submit" style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", background: "none", border: "none", cursor: "pointer", letterSpacing: 0.2 }}>
+              <button
+                type="submit"
+                style={{ fontSize: 11, fontWeight: 600, color: "#8b8fa8", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, cursor: "pointer", letterSpacing: 0.3, padding: "5px 12px", transition: "color 0.15s, border-color 0.15s, background 0.15s" }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.color = "#fff"; el.style.borderColor = "rgba(255,255,255,0.25)"; el.style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.color = "#8b8fa8"; el.style.borderColor = "rgba(255,255,255,0.1)"; el.style.background = "none"; }}
+              >
                 Sign out
               </button>
             </form>
           </div>
 
           {/* Section jump nav — inline in header */}
-          <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 1 }}>
             {[
-              { label: "Overview",     href: "#overview",  external: false },
-              { label: "Clients",      href: "#clients",   external: false },
-              { label: "Social Media", href: "#social",    external: false },
-              { label: "Subscribers",  href: "#subs-hub",  external: false },
-              { label: "Actions",      href: "#actions",   external: false },
-            ].map(({ label, href, external }) => (
+              { label: "Overview",     href: "#overview" },
+              { label: "Clients",      href: "#clients"  },
+              { label: "Social Media", href: "#social"   },
+              { label: "Subscribers",  href: "#subs-hub" },
+              { label: "Actions",      href: "#actions"  },
+            ].map(({ label, href }) => (
               <a
                 key={href}
                 href={href}
                 style={{
                   fontSize: 12, fontWeight: 600,
-                  color: external ? "#00bfa5" : "#8b8fa8",
-                  padding: "10px 16px",
+                  color: "#8b8fa8",
+                  padding: "8px 14px",
+                  marginBottom: 8,
                   display: "flex", alignItems: "center",
                   textDecoration: "none", whiteSpace: "nowrap" as const,
-                  borderBottom: external ? "2px solid rgba(0,191,165,0.4)" : "2px solid transparent",
-                  transition: "color 0.15s, border-color 0.15s",
+                  borderRadius: 6,
+                  letterSpacing: 0.1,
+                  transition: "color 0.18s ease, background 0.18s ease",
                 }}
-                onMouseEnter={e => { const el = e.currentTarget; el.style.color = "#fff"; el.style.borderBottomColor = external ? "#00bfa5" : "rgba(255,255,255,0.3)"; }}
-                onMouseLeave={e => { const el = e.currentTarget; el.style.color = external ? "#00bfa5" : "#8b8fa8"; el.style.borderBottomColor = external ? "rgba(0,191,165,0.4)" : "transparent"; }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget;
+                  el.style.color = "#fff";
+                  el.style.background = "rgba(255,255,255,0.09)";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget;
+                  el.style.color = "#8b8fa8";
+                  el.style.background = "transparent";
+                }}
               >
                 {label}
               </a>
@@ -828,7 +843,10 @@ export default function AdminClient({
         </div>
 
         {/* Client cards */}
-        <p id="clients" style={{ ...T.label, margin: "0 0 14px", scrollMarginTop: 60 }}>Clients</p>
+        <p id="clients" style={{ ...T.label, margin: "0 0 16px", scrollMarginTop: 60, display: "flex", alignItems: "center", gap: 10 }}>
+          Clients
+          <span style={{ flex: 1, height: 1, background: "#e5e7eb", display: "inline-block" }} />
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 40 }}>
           {visibleClients.length === 0 && (
             <div style={{ ...T.card, padding: "32px", textAlign: "center" }}>
@@ -846,42 +864,47 @@ export default function AdminClient({
 
         {/* ── Social Media Hub ─────────────────────────────── */}
         <div id="social" style={{ scrollMarginTop: 60, marginBottom: 40 }}>
-          <p style={{ ...T.label, margin: "0 0 14px" }}>Social Media</p>
+          <p style={{ ...T.label, margin: "0 0 16px", display: "flex", alignItems: "center", gap: 10 }}>
+            Social Media
+            <span style={{ flex: 1, height: 1, background: "#e5e7eb", display: "inline-block" }} />
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
 
             {/* LinkedIn */}
-            <a href="/saabai-admin/social/linkedin" style={{ ...T.card, padding: "24px 26px", textDecoration: "none", display: "block", transition: "box-shadow 0.15s, transform 0.15s" }}
-              onMouseEnter={e => { const el = e.currentTarget; el.style.boxShadow = "0 4px 16px rgba(0,119,181,0.15)"; el.style.transform = "translateY(-1px)"; }}
-              onMouseLeave={e => { const el = e.currentTarget; el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; el.style.transform = "translateY(0)"; }}
+            <a
+              href="/saabai-admin/social/linkedin"
+              style={{ ...T.card, padding: "22px 24px", textDecoration: "none", display: "block", transition: "box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease", borderLeft: "3px solid transparent" }}
+              onMouseEnter={e => { const el = e.currentTarget; el.style.boxShadow = "0 8px 24px rgba(0,119,181,0.13)"; el.style.transform = "translateY(-2px)"; el.style.borderLeftColor = "#0077b5"; }}
+              onMouseLeave={e => { const el = e.currentTarget; el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; el.style.transform = "translateY(0)"; el.style.borderLeftColor = "transparent"; }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 9, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: "#fff" }}>in</div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#059669", background: "#f0fdf4", padding: "3px 9px", borderRadius: 20, letterSpacing: 0.5 }}>LIVE</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: -0.3 }}>in</div>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#059669", background: "#ecfdf5", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LIVE</span>
               </div>
-              <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: "#111827" }}>LinkedIn</p>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#6b7280" }}>Post generator · Queue · Published history</p>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#0077b5" }}>Open LinkedIn Hub →</p>
+              <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: "#111827", letterSpacing: -0.2 }}>LinkedIn</p>
+              <p style={{ margin: "0 0 18px", fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Post generator · Scheduled queue · Published history</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#0077b5", letterSpacing: 0.1 }}>Open Hub →</p>
             </a>
 
             {/* Instagram */}
-            <div style={{ ...T.card, padding: "24px 26px", opacity: 0.55 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 9, background: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#fff" }}>📷</div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", background: "#f3f4f6", padding: "3px 9px", borderRadius: 20, letterSpacing: 0.5 }}>SOON</span>
+            <div style={{ ...T.card, padding: "22px 24px", opacity: 0.5, borderLeft: "3px solid transparent" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#fff", letterSpacing: -0.3 }}>Ig</div>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", background: "#f3f4f6", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>SOON</span>
               </div>
-              <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: "#111827" }}>Instagram</p>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#6b7280" }}>Reels · Feed · Story scheduler</p>
+              <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: "#111827", letterSpacing: -0.2 }}>Instagram</p>
+              <p style={{ margin: "0 0 18px", fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Reels · Feed posts · Story scheduler</p>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>Coming soon</p>
             </div>
 
             {/* Facebook */}
-            <div style={{ ...T.card, padding: "24px 26px", opacity: 0.55 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 9, background: "#1877f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 900, color: "#fff" }}>f</div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", background: "#f3f4f6", padding: "3px 9px", borderRadius: 20, letterSpacing: 0.5 }}>SOON</span>
+            <div style={{ ...T.card, padding: "22px 24px", opacity: 0.5, borderLeft: "3px solid transparent" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "#1877f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#fff", fontFamily: "Georgia, serif" }}>f</div>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", background: "#f3f4f6", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>SOON</span>
               </div>
-              <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: "#111827" }}>Facebook</p>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#6b7280" }}>Page posts · Ad copy · Schedule</p>
+              <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: "#111827", letterSpacing: -0.2 }}>Facebook</p>
+              <p style={{ margin: "0 0 18px", fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Page posts · Ad creative · Schedule</p>
               <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>Coming soon</p>
             </div>
 
@@ -890,27 +913,35 @@ export default function AdminClient({
 
         {/* ── Subscribers Hub ───────────────────────────────── */}
         <div id="subs-hub" style={{ scrollMarginTop: 60, marginBottom: 40 }}>
-          <p style={{ ...T.label, margin: "0 0 14px" }}>Email & Subscribers</p>
-          <a href="/saabai-admin/subscribers" style={{ ...T.card, padding: "24px 28px", textDecoration: "none", display: "block", transition: "box-shadow 0.15s, transform 0.15s" }}
-            onMouseEnter={e => { const el = e.currentTarget; el.style.boxShadow = "0 4px 16px rgba(0,191,165,0.15)"; el.style.transform = "translateY(-1px)"; }}
-            onMouseLeave={e => { const el = e.currentTarget; el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; el.style.transform = "translateY(0)"; }}
+          <p style={{ ...T.label, margin: "0 0 16px", display: "flex", alignItems: "center", gap: 10 }}>
+            Email &amp; Subscribers
+            <span style={{ flex: 1, height: 1, background: "#e5e7eb", display: "inline-block" }} />
+          </p>
+          <a
+            href="/saabai-admin/subscribers"
+            style={{ ...T.card, padding: "22px 28px", textDecoration: "none", display: "block", transition: "box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease", borderLeft: "3px solid transparent" }}
+            onMouseEnter={e => { const el = e.currentTarget; el.style.boxShadow = "0 8px 24px rgba(0,191,165,0.13)"; el.style.transform = "translateY(-2px)"; el.style.borderLeftColor = "#00bfa5"; }}
+            onMouseLeave={e => { const el = e.currentTarget; el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; el.style.transform = "translateY(0)"; el.style.borderLeftColor = "transparent"; }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 11, background: "#00bfa5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>✉</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: "linear-gradient(135deg, #00bfa5 0%, #009688 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: -0.3 }}>SI</div>
                 <div>
-                  <p style={{ margin: "0 0 3px", fontSize: 15, fontWeight: 800, color: "#111827" }}>Subscriber Intelligence</p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>Growth charts · Industry breakdown · IP &amp; geolocation · Full subscriber table · CSV export</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 800, color: "#111827", letterSpacing: -0.3 }}>Subscriber Intelligence</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Growth charts · Industry breakdown · IP &amp; geolocation · Full table · CSV export</p>
                 </div>
               </div>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#00bfa5", whiteSpace: "nowrap" as const }}>Open Dashboard →</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#00bfa5", whiteSpace: "nowrap" as const, letterSpacing: 0.1 }}>Open Dashboard →</p>
             </div>
           </a>
         </div>
 
         {/* ── Actions ───────────────────────────────────────── */}
         <div id="actions" style={{ scrollMarginTop: 60 }}>
-          <p style={{ ...T.label, margin: "0 0 14px" }}>Actions</p>
+          <p style={{ ...T.label, margin: "0 0 16px", display: "flex", alignItems: "center", gap: 10 }}>
+            Actions
+            <span style={{ flex: 1, height: 1, background: "#e5e7eb", display: "inline-block" }} />
+          </p>
           <DigestTrigger />
         </div>
 
