@@ -119,6 +119,306 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
   );
 }
 
+// ── Segment definitions ───────────────────────────────────────────────────────
+
+const SEGMENTS = [
+  { label: "All Active",         filter: (s: Subscriber) => s.status !== "unsubscribed" },
+  { label: "Law / Legal",        filter: (s: Subscriber) => s.industry === "Law / Legal" },
+  { label: "Accounting",         filter: (s: Subscriber) => s.industry === "Accounting / Finance" },
+  { label: "Real Estate",        filter: (s: Subscriber) => s.industry === "Real Estate" },
+  { label: "This Month",         filter: (s: Subscriber) => Date.now() - new Date(s.subscribedAt).getTime() < 30 * 86400000 },
+  { label: "This Week",          filter: (s: Subscriber) => Date.now() - new Date(s.subscribedAt).getTime() < 7 * 86400000 },
+  { label: "Australia",          filter: (s: Subscriber) => s.country === "Australia" },
+  { label: "Outside Australia",  filter: (s: Subscriber) => !!s.country && s.country !== "Australia" },
+];
+
+// ── Broadcast Panel ───────────────────────────────────────────────────────────
+
+function BroadcastPanel({
+  recipients,
+  allSubs,
+  onClose,
+  onSelectSegment,
+}: {
+  recipients: Subscriber[];
+  allSubs: Subscriber[];
+  onClose: () => void;
+  onSelectSegment: (emails: Set<string>) => void;
+}) {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [preview, setPreview] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 13px", fontSize: 13,
+    border: "1px solid #e5e7eb", borderRadius: 8, outline: "none",
+    background: "#fff", color: "#111827", fontFamily: "inherit",
+    boxSizing: "border-box" as const,
+  };
+
+  // Personalise preview with first recipient
+  const previewSub = recipients[0];
+  const previewHtml = body
+    .replace(/\{\{firstName\}\}/g, previewSub?.firstName || "there")
+    .split("\n").map(l => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${l || "&nbsp;"}</p>`).join("");
+
+  async function send() {
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/subscribers/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emails: recipients.map(s => s.email),
+          subject: subject.trim(),
+          html: buildHtml(body),
+        }),
+      });
+      const data = await res.json();
+      setResult({ sent: data.sent ?? 0, failed: data.failed ?? 0 });
+      setConfirmOpen(false);
+    } catch {
+      setResult({ sent: 0, failed: recipients.length });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function buildHtml(rawBody: string) {
+    const paragraphs = rawBody
+      .split("\n")
+      .map(l => `<p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.75;">${l || "&nbsp;"}</p>`)
+      .join("");
+    return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <tr><td style="background:#0e0c2e;padding:28px 40px;">
+    <p style="margin:0;font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.3px;">Saabai<span style="color:#00bfa5;">.</span>ai</p>
+  </td></tr>
+  <tr><td style="padding:36px 40px 28px;">${paragraphs}</td></tr>
+  <tr><td style="padding:20px 40px;border-top:1px solid #f3f4f6;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this as a Saabai subscriber · <a href="https://saabai.ai" style="color:#00bfa5;text-decoration:none;">saabai.ai</a></p>
+  </td></tr>
+</table></td></tr></table></body></html>`;
+  }
+
+  const ready = subject.trim().length > 0 && body.trim().length > 0 && recipients.length > 0;
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", overflow: "hidden" }}>
+
+      {/* Panel header */}
+      <div style={{ background: "#0e0c2e", padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,191,165,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: "#00bfa5" }}>BC</div>
+          <div>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#fff" }}>Broadcast Email</p>
+            <p style={{ margin: 0, fontSize: 11, color: "#8b8fa8" }}>
+              {recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected
+            </p>
+          </div>
+        </div>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#8b8fa8", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "4px 6px" }}>×</button>
+      </div>
+
+      <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column" as const, gap: 20 }}>
+
+        {/* Smart segment quick-selectors */}
+        <div>
+          <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: "#9ca3af", textTransform: "uppercase" as const }}>
+            Smart Segments — quick select
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 7 }}>
+            {SEGMENTS.map(seg => {
+              const matches = allSubs.filter(seg.filter);
+              return (
+                <button
+                  key={seg.label}
+                  onClick={() => onSelectSegment(new Set(matches.map(s => s.email)))}
+                  style={{
+                    padding: "5px 13px", borderRadius: 20,
+                    border: "1px solid #e5e7eb", background: "#f9fafb",
+                    fontSize: 12, fontWeight: 600, color: "#374151",
+                    cursor: matches.length === 0 ? "default" : "pointer",
+                    opacity: matches.length === 0 ? 0.4 : 1,
+                    transition: "all 0.12s",
+                  }}
+                  onMouseEnter={e => { if (matches.length) { e.currentTarget.style.background = "#ecfdf5"; e.currentTarget.style.borderColor = "#6ee7b7"; e.currentTarget.style.color = "#059669"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}
+                >
+                  {seg.label} <span style={{ color: "#9ca3af", fontWeight: 400 }}>({matches.length})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Recipient pills preview */}
+        <div>
+          <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: "#9ca3af", textTransform: "uppercase" as const }}>
+            Recipients ({recipients.length})
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 5, maxHeight: 72, overflowY: "auto" as const }}>
+            {recipients.map(s => (
+              <span key={s.email} style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: "#f0fdf4", color: "#059669", border: "1px solid #bbf7d0", fontWeight: 500 }}>
+                {s.firstName || s.email}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Subject */}
+        <div>
+          <p style={{ margin: "0 0 7px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: "#9ca3af", textTransform: "uppercase" as const }}>Subject Line</p>
+          <input
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            placeholder="e.g. The AI audit results are in — here's what we found"
+            style={inputStyle}
+          />
+        </div>
+
+        {/* Body */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
+            <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: "#9ca3af", textTransform: "uppercase" as const }}>
+              Message Body
+            </p>
+            <div style={{ display: "flex", gap: 2 }}>
+              {["Write", "Preview"].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setPreview(tab === "Preview")}
+                  style={{
+                    padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    border: "1px solid",
+                    borderColor: (tab === "Preview") === preview ? "#0e0c2e" : "#e5e7eb",
+                    background: (tab === "Preview") === preview ? "#0e0c2e" : "#fff",
+                    color: (tab === "Preview") === preview ? "#fff" : "#6b7280",
+                    cursor: "pointer",
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {!preview ? (
+            <>
+              <textarea
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                placeholder={`Hi {{firstName}},\n\nWrite your message here. Each new line becomes a paragraph.\n\nUse {{firstName}} to personalise — it's replaced with each subscriber's first name.\n\nTalk soon,\nShane`}
+                rows={10}
+                style={{ ...inputStyle, resize: "vertical" as const, lineHeight: 1.7 }}
+              />
+              <p style={{ margin: "5px 0 0", fontSize: 10, color: "#d1d5db" }}>
+                Use {"{{firstName}}"} for personalisation · Each line becomes a paragraph
+              </p>
+            </>
+          ) : (
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, overflow: "hidden", minHeight: 200 }}>
+              <div style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb", padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
+                <span style={{ marginLeft: 8, fontSize: 11, color: "#9ca3af" }}>Email preview · To: {previewSub?.email ?? "subscriber@example.com"}</span>
+              </div>
+              <div style={{ padding: "20px 24px", background: "#fff" }}>
+                <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 700, color: "#111827" }}>{subject || <em style={{ color: "#9ca3af" }}>No subject yet</em>}</p>
+                {body ? (
+                  <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                ) : (
+                  <p style={{ color: "#9ca3af", fontSize: 13 }}>Start typing your message to see a preview.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Result banner */}
+        {result && (
+          <div style={{ padding: "12px 16px", borderRadius: 10, background: result.failed === 0 ? "#f0fdf4" : "#fef2f2", border: `1px solid ${result.failed === 0 ? "#bbf7d0" : "#fecaca"}` }}>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: result.failed === 0 ? "#059669" : "#dc2626" }}>
+              {result.failed === 0
+                ? `Sent successfully to ${result.sent} subscriber${result.sent !== 1 ? "s" : ""}`
+                : `${result.sent} sent · ${result.failed} failed — check Resend dashboard`}
+            </p>
+          </div>
+        )}
+
+        {/* Footer actions */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+          <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+            Sent from <strong style={{ color: "#374151" }}>hello@saabai.ai</strong>
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={onClose}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              disabled={!ready || sending}
+              style={{
+                padding: "9px 22px", borderRadius: 8, border: "none",
+                background: ready && !sending ? "#0e0c2e" : "#e5e7eb",
+                color: ready && !sending ? "#fff" : "#9ca3af",
+                fontSize: 12, fontWeight: 700, cursor: ready && !sending ? "pointer" : "not-allowed",
+                letterSpacing: 0.2,
+              }}
+            >
+              {sending ? "Sending…" : `Send to ${recipients.length}`}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Confirm modal */}
+      {confirmOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 440, padding: "28px 32px", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <p style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 800, color: "#111827" }}>Confirm broadcast</p>
+            <p style={{ margin: "0 0 20px", fontSize: 13, color: "#6b7280", lineHeight: 1.6 }}>
+              You're about to send <strong style={{ color: "#111827" }}>"{subject}"</strong> to{" "}
+              <strong style={{ color: "#111827" }}>{recipients.length} subscriber{recipients.length !== 1 ? "s" : ""}</strong>.
+              This cannot be undone.
+            </p>
+            <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", marginBottom: 20 }}>
+              {SEGMENTS.filter(seg => recipients.every(seg.filter) || recipients.some(seg.filter)).slice(0, 3).map(seg => {
+                const n = recipients.filter(seg.filter).length;
+                if (!n || n === recipients.length) return null;
+                return <p key={seg.label} style={{ margin: "0 0 4px", fontSize: 12, color: "#374151" }}>{n} × {seg.label}</p>;
+              })}
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#111827" }}>{recipients.length} total recipients</p>
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setConfirmOpen(false)} style={{ padding: "9px 18px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                Go back
+              </button>
+              <button
+                onClick={send}
+                disabled={sending}
+                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: sending ? "#e5e7eb" : "#059669", color: sending ? "#9ca3af" : "#fff", fontSize: 12, fontWeight: 700, cursor: sending ? "not-allowed" : "pointer" }}
+              >
+                {sending ? "Sending…" : "Confirm send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SubscriberDashboard() {
   const [subs, setSubs] = useState<Subscriber[]>([]);
   const [count, setCount] = useState(0);
@@ -129,6 +429,7 @@ export default function SubscriberDashboard() {
   const [exportMsg, setExportMsg] = useState("");
   const [chartDays, setChartDays] = useState(30);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/subscribers")
@@ -243,13 +544,25 @@ export default function SubscriberDashboard() {
               <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Subscriber Intelligence</span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {someSelected && (
               <span style={{ fontSize: 12, color: "#00bfa5", fontWeight: 600 }}>
                 {selected.size} selected
               </span>
             )}
             {exportMsg && <span style={{ fontSize: 12, color: "#00bfa5" }}>{exportMsg}</span>}
+            {someSelected && (
+              <button
+                onClick={() => setBroadcastOpen(true)}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  background: "#00bfa5", border: "none",
+                  color: "#0e0c2e", cursor: "pointer", letterSpacing: 0.2,
+                }}
+              >
+                Send Email →
+              </button>
+            )}
             <button
               onClick={exportCSV}
               style={{
@@ -258,7 +571,7 @@ export default function SubscriberDashboard() {
                 color: "#00bfa5", cursor: "pointer", letterSpacing: 0.3,
               }}
             >
-              ↓ {someSelected ? `Export ${selected.size} Selected` : "Export CSV"}
+              ↓ {someSelected ? `Export ${selected.size}` : "Export CSV"}
             </button>
           </div>
         </div>
@@ -493,6 +806,18 @@ export default function SubscriberDashboard() {
             );
           })}
         </div>
+
+        {/* Broadcast Panel */}
+        {broadcastOpen && (
+          <div style={{ marginTop: 24 }}>
+            <BroadcastPanel
+              recipients={subs.filter(s => selected.has(s.email))}
+              allSubs={subs}
+              onClose={() => setBroadcastOpen(false)}
+              onSelectSegment={(emails) => { setSelected(emails); }}
+            />
+          </div>
+        )}
 
         <p style={{ marginTop: 32, textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
           Saabai Subscriber Intelligence · <a href="/saabai-admin" style={{ color: "#00bfa5", textDecoration: "none" }}>← Back to admin</a>
