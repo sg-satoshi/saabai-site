@@ -74,6 +74,7 @@ export interface FeedbackItem {
   leadRef?: string;
   status: FeedbackStatus;
   atlasReview?: AtlasReview;
+  screenshotBase64?: string; // compressed JPEG, base64 encoded
   // Audit trail
   approvedAt?: string;
   implementedAt?: string;

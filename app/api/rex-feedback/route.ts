@@ -96,6 +96,10 @@ async function sendFeedbackNotification(item: FeedbackItem): Promise<void> {
     ? `<p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Lead ref: <strong style="color:#374151;">${item.leadRef}</strong></p>`
     : "";
 
+  const screenshotBlock = item.screenshotBase64
+    ? `<div style="margin-top:16px;"><p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7280;">Screenshot</p><img src="data:image/jpeg;base64,${item.screenshotBase64}" style="max-width:100%;border-radius:8px;border:1px solid #e5e7eb;" /></div>`
+    : "";
+
   await resend.emails.send({
     from: FROM_EMAIL,
     to:   NOTIFY_EMAIL,
@@ -111,6 +115,7 @@ async function sendFeedbackNotification(item: FeedbackItem): Promise<void> {
       </div>
       ${leadLine}
       <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;">${new Date(item.submittedAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} AEST</p>
+      ${screenshotBlock}
       ${atlasBlock}
       <div style="margin-top:28px;">
         <a href="https://saabai.ai/rex-dashboard" style="display:inline-block;padding:10px 20px;background:#e13f00;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">Review in Dashboard →</a>
@@ -128,10 +133,11 @@ export async function GET() {
 // POST — submit new feedback + run Atlas review synchronously
 export async function POST(req: Request) {
   try {
-    const { category, message, leadRef } = await req.json() as {
+    const { category, message, leadRef, screenshotBase64 } = await req.json() as {
       category: FeedbackCategory;
       message: string;
       leadRef?: string;
+      screenshotBase64?: string;
     };
 
     if (!category || !message?.trim()) {
@@ -148,6 +154,7 @@ export async function POST(req: Request) {
       message: message.trim(),
       leadRef,
       status: "submitted",
+      ...(screenshotBase64 ? { screenshotBase64 } : {}),
     };
 
     // Store immediately

@@ -513,6 +513,8 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
   const [submitting, setSubmitting] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [screenshot, setScreenshot] = useState<string | null>(null); // base64 JPEG
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     fetch("/api/rex-feedback")
@@ -521,6 +523,31 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
       .catch(() => setLoading(false));
   }, []);
 
+  function compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const MAX = 900;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+        resolve(dataUrl.split(",")[1]); // strip "data:image/jpeg;base64,"
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function handleImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    compressImage(file).then(b64 => setScreenshot(b64)).catch(() => {});
+  }
+
   async function handleSubmit() {
     if (!category || !message.trim()) return;
     setSubmitting(true);
@@ -528,13 +555,14 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
       const res = await fetch("/api/rex-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, message, leadRef: leadRef || undefined }),
+        body: JSON.stringify({ category, message, leadRef: leadRef || undefined, screenshotBase64: screenshot ?? undefined }),
       });
       const newItem = await res.json() as FeedbackItem;
       setItems(prev => [newItem, ...prev]);
       setCategory(null);
       setMessage("");
       setLeadRef("");
+      setScreenshot(null);
       setJustSubmitted(true);
       setExpandedId(newItem.id);
       setTimeout(() => setJustSubmitted(false), 3000);
@@ -607,6 +635,53 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
             resize: "vertical", outline: "none",
             fontFamily: "inherit",
           }}
+        />
+
+        {/* Screenshot upload */}
+        <p style={{ ...T.label, margin: "16px 0 8px" }}>Screenshot (optional)</p>
+        {screenshot ? (
+          <div style={{ position: "relative", display: "inline-block", marginBottom: 4 }}>
+            <img
+              src={`data:image/jpeg;base64,${screenshot}`}
+              alt="screenshot preview"
+              style={{ maxWidth: "100%", maxHeight: 220, borderRadius: 8, border: "1px solid #e5e7eb", display: "block" }}
+            />
+            <button
+              onClick={() => setScreenshot(null)}
+              style={{
+                position: "absolute", top: 6, right: 6,
+                background: "rgba(0,0,0,0.55)", border: "none", borderRadius: 6,
+                color: "#fff", fontSize: 13, fontWeight: 700, width: 26, height: 26,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >×</button>
+          </div>
+        ) : (
+          <div
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleImageFile(f); }}
+            onClick={() => document.getElementById("fb-screenshot-input")?.click()}
+            style={{
+              border: `2px dashed ${dragOver ? "#e13f00" : "#d1d5db"}`,
+              borderRadius: 10, padding: "20px 16px",
+              textAlign: "center", cursor: "pointer",
+              background: dragOver ? "#fff7f5" : "#f9fafb",
+              transition: "all 0.15s", marginBottom: 4,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+              Drag & drop a screenshot here, or <span style={{ color: "#e13f00", fontWeight: 600 }}>click to browse</span>
+            </p>
+            <p style={{ margin: "4px 0 0", fontSize: 11, color: "#9ca3af" }}>PNG, JPG, WebP — auto-compressed</p>
+          </div>
+        )}
+        <input
+          id="fb-screenshot-input"
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value = ""; }}
         />
 
         {/* Optional lead reference */}
@@ -729,14 +804,33 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
                   </div>
                   <p style={{ ...T.body, margin: 0, fontWeight: 500, lineHeight: 1.5 }}>{item.message}</p>
                 </div>
-                <span style={{ color: "#9ca3af", fontSize: 14, marginTop: 2, flexShrink: 0 }}>
-                  {isExpanded ? "▲" : "▼"}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  {item.screenshotBase64 && (
+                    <img
+                      src={`data:image/jpeg;base64,${item.screenshotBase64}`}
+                      alt="screenshot"
+                      style={{ width: 48, height: 36, objectFit: "cover", borderRadius: 4, border: "1px solid #e5e7eb" }}
+                    />
+                  )}
+                  <span style={{ color: "#9ca3af", fontSize: 14, marginTop: 2 }}>
+                    {isExpanded ? "▲" : "▼"}
+                  </span>
+                </div>
               </div>
 
               {/* Expanded: Atlas review + actions */}
               {isExpanded && (
                 <div style={{ borderTop: "1px solid #f3f4f6" }}>
+                  {item.screenshotBase64 && (
+                    <div style={{ padding: "16px 20px 0" }}>
+                      <p style={{ ...T.label, margin: "0 0 8px" }}>Screenshot</p>
+                      <img
+                        src={`data:image/jpeg;base64,${item.screenshotBase64}`}
+                        alt="screenshot"
+                        style={{ maxWidth: "100%", maxHeight: 320, borderRadius: 8, border: "1px solid #e5e7eb" }}
+                      />
+                    </div>
+                  )}
                   {ar ? (
                     <div style={{ padding: "16px 20px", background: "#f8faff", borderLeft: "3px solid #2563eb" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
