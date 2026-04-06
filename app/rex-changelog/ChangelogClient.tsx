@@ -29,8 +29,20 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "4 Apr 2026",
+    date: "5 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "10:30", tag: "NEW", title: "Mia quick reply chips — four suggested openers appear below greeting before user types ('What can you automate?', 'How does it work?', 'What does it cost?', 'Show me examples'); chips disappear once user sends first message; reduces cold-start friction" },
+      { time: "10:30", tag: "UI", title: "Mia widget opens directly to text chat — mode picker removed from initial open flow; voice still available via mic button inside the chat panel; saves one click on every session" },
+      { time: "10:30", tag: "IMPROVEMENT", title: "Mia split bubble reveal speed 2-3× faster — inter-bubble delay reduced from 650-1100ms to 280-400ms per segment; three-part Mia response now reveals in ~600-800ms instead of 1.3-2.2s" },
+      { time: "10:30", tag: "IMPROVEMENT", title: "Mia thinking delay reduced from 150-300ms to 80ms fixed — removes artificial hesitation after response arrives; chat feels nearly instant" },
+      { time: "10:30", tag: "IMPROVEMENT", title: "Mia prompt caching enabled — system prompt (~750 lines) now sent with Anthropic ephemeral cache control; reduces token processing on every turn after first; same pattern as Rex; stepCountIs reduced 5→3 for faster tool resolution" },
+      { time: "10:30", tag: "UI", title: "Mia chat bubble and input font bumped to 15px (text-[15px]) — matches Rex sizing and Facebook Messenger standard" },
+      { time: "10:30", tag: "UI", title: "Mia proactive bubble copy updated to Mia's voice — 'Hey — what does your team spend the most time on that isn't really your core work?' replaces generic AI chatbot opener" },
+    ],
+  },
+  {
+    date: "4 Apr 2026",
     entries: [
       { time: "19:30", tag: "UI", title: "Rex chat bubble font bumped from 12px (text-xs) to 15px (text-[15px]) to match Facebook Messenger sizing — improves readability and matches world-class chat UX research" },
       { time: "19:00", tag: "NEW", title: "Saabai.ai site updated with live deployment proof points — homepage: Live in Production section (National Plastics Supplier / Rex, Tributum Law / Lex), industry bar adds Trade & E-commerce, AI Agents renamed to AI Chat Agents; services page: AI Chat Agents card added; use-cases page: Trade & E-commerce section added; about page: live deployments paragraph added; FAQ: e-commerce question added" },

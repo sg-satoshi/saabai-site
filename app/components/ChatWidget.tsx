@@ -246,7 +246,7 @@ export default function ChatWidget() {
         }
       }
       // Short fixed delay for text bubble reveal — natural but not slow
-      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 150 + Math.random() * 150);
+      thinkingTimer.current = setTimeout(() => setThinkingDelay(false), 80);
     }
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -316,7 +316,7 @@ export default function ChatWidget() {
           segments.slice(1).forEach((_, i) => {
             const t = setTimeout(() => {
               setSplitProgress((p) => p ? { ...p, count: Math.min(p.count + 1, p.total) } : null);
-            }, (i + 1) * (650 + Math.random() * 450));
+            }, (i + 1) * (280 + Math.random() * 120));
             splitTimers.current.push(t);
           });
         }
@@ -437,7 +437,7 @@ export default function ChatWidget() {
 
   function openWidget() {
     setIsOpen(true);
-    setChatMode(null); // show mode picker first
+    setChatMode("text");
     setShowBubble(false);
     localStorage.setItem("saabai-chat-seen", "1");
     track("widget_opened");
@@ -505,7 +505,7 @@ export default function ChatWidget() {
     stopAudio();
     recognitionRef.current?.stop();
     setIsListening(false);
-    setChatMode(null);
+    setChatMode("text");
     voiceModeRef.current = false;
     setVoiceEnabled(false);
     voiceEnabledRef.current = false;
@@ -690,8 +690,8 @@ export default function ChatWidget() {
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
           </div>
           <div className="p-4">
-            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">Quick question — are you exploring how automation could save your team time?</p>
-            <button onClick={openWidget} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Yes, tell me more →</button>
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">Hey — what does your team spend the most time on that isn&apos;t really your core work?</p>
+            <button onClick={openWidget} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Tell me about it →</button>
           </div>
         </div>
       )}
@@ -884,7 +884,7 @@ export default function ChatWidget() {
             {displayItems.map((item) => (
               <div key={item.key} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[82%] px-4 py-3 rounded-xl text-sm leading-relaxed ${
+                  className={`max-w-[82%] px-4 py-3 rounded-xl text-[15px] leading-relaxed ${
                     item.role === "user" ? "bg-saabai-teal text-saabai-bg font-medium" : "text-saabai-text-muted"
                   }`}
                   style={item.role !== "user" ? { background: "#272466" } : {}}
@@ -893,6 +893,28 @@ export default function ChatWidget() {
                 </div>
               </div>
             ))}
+
+            {/* Quick reply chips — shown before first user message */}
+            {userMessages.length === 0 && !isLoading && !thinkingDelay && (
+              <div className="flex flex-wrap gap-2 mt-1">
+                {["What can you automate?", "How does it work?", "What does it cost?", "Show me examples"].map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => {
+                      if (!hasTrackedFirstMessage.current) {
+                        hasTrackedFirstMessage.current = true;
+                        track("first_message_sent");
+                      }
+                      sendMessage({ text: chip });
+                    }}
+                    className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"
+                    style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.25)", color: "rgba(255,255,255,0.65)" }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Typing indicator */}
             {showTypingIndicator && (
@@ -1167,7 +1189,7 @@ export default function ChatWidget() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={isListening ? "Listening…" : "Type a message…"}
-                className="flex-1 rounded-xl px-4 py-2.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none transition-colors"
+                className="flex-1 rounded-xl px-4 py-2.5 text-[15px] text-saabai-text placeholder:text-saabai-text-dim focus:outline-none transition-colors"
                 style={{
                   background: "#2a2870",
                   border: isListening ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(98,197,209,0.2)",

@@ -1,4 +1,4 @@
-import { streamText, tool, stepCountIs, convertToModelMessages } from "ai";
+import { streamText, tool, stepCountIs, convertToModelMessages, type SystemModelMessage } from "ai";
 import { z } from "zod";
 import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
@@ -37,11 +37,19 @@ export async function POST(req: Request) {
     captureReason?: string;
   } = { visitorFacts: {} };
 
+  const cachedSystem: SystemModelMessage = {
+    role: "system",
+    content: buildSystemPrompt(pageContext, returningVisitor, visitorProfile),
+    providerOptions: {
+      anthropic: { cacheControl: { type: "ephemeral" } },
+    },
+  };
+
   const result = streamText({
     model,
-    system: buildSystemPrompt(pageContext, returningVisitor, visitorProfile),
+    system: cachedSystem,
     messages: await convertToModelMessages(messages),
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(3),
     onFinish: async () => {
       // Save conversation + lead after stream completes
       const msgCount = messages.length + 1;
