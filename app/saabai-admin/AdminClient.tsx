@@ -887,15 +887,18 @@ export default function AdminClient({
             </a>
 
             {/* Instagram */}
-            <div style={{ ...T.card, padding: "22px 24px", opacity: 0.5, borderLeft: "3px solid transparent" }}>
+            <a href="/saabai-admin/social/instagram" style={{ ...T.card, padding: "22px 24px", textDecoration: "none", borderLeft: "3px solid transparent", transition: "border-left-color 0.2s, box-shadow 0.2s" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#dc2743"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 4px 24px rgba(220,39,67,0.10)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "transparent"; (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none"; }}
+            >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#fff", letterSpacing: -0.3 }}>Ig</div>
-                <span style={{ fontSize: 9, fontWeight: 800, color: "#9ca3af", background: "#f3f4f6", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>SOON</span>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "#00bfa5", background: "rgba(0,191,165,0.1)", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LIVE</span>
               </div>
               <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: "#111827", letterSpacing: -0.2 }}>Instagram</p>
-              <p style={{ margin: "0 0 18px", fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Reels · Feed posts · Story scheduler</p>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>Coming soon</p>
-            </div>
+              <p style={{ margin: "0 0 18px", fontSize: 12, color: "#9ca3af", lineHeight: 1.5 }}>Caption AI · Queue · Scheduled posts</p>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: "#dc2743", letterSpacing: 0.1 }}>Open Hub →</p>
+            </a>
 
             {/* Facebook */}
             <div style={{ ...T.card, padding: "22px 24px", opacity: 0.5, borderLeft: "3px solid transparent" }}>

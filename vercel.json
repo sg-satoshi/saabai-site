@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/linkedin-scheduler",
       "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/instagram/cron",
+      "schedule": "0 23 * * *"
     }
   ]
 }

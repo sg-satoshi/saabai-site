@@ -239,6 +239,76 @@ export async function markLinkedInPostSent(id: string): Promise<void> {
   await redis.hset(`lipost:${id}`, { sentAt: new Date().toISOString() });
 }
 
+// ─── Instagram Post Queue ─────────────────────────────────────────────────────
+
+export interface InstagramPost {
+  id: string;
+  caption: string;
+  imageUrl: string;       // publicly accessible URL — required by IG Graph API
+  imageType?: string;     // "branded" | "custom" | "url"
+  scheduledFor: string;   // YYYY-MM-DD
+  scheduledTime?: string; // HH:MM AEST
+  sentAt?: string;
+  postId?: string;        // IG media ID after publish
+  createdAt: string;
+}
+
+export async function queueInstagramPost(
+  post: Pick<InstagramPost, "caption" | "imageUrl" | "imageType" | "scheduledFor" | "scheduledTime">
+): Promise<string | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const id = `igpost_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const record: InstagramPost = { ...post, id, createdAt: new Date().toISOString() };
+  const flat: Record<string, string> = {
+    id,
+    caption: record.caption,
+    imageUrl: record.imageUrl,
+    scheduledFor: record.scheduledFor,
+    createdAt: record.createdAt,
+  };
+  if (record.imageType)    flat.imageType    = record.imageType;
+  if (record.scheduledTime) flat.scheduledTime = record.scheduledTime;
+  await redis.hset(`igpost:${id}`, flat);
+  await redis.lpush("igpost:queue", id);
+  return id;
+}
+
+export async function getPendingInstagramPosts(): Promise<InstagramPost[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("igpost:queue", 0, 99) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map((id) => redis.hgetall(`igpost:${id}`) as Promise<Record<string, string> | null>)
+  );
+  return records
+    .filter((r): r is Record<string, string> => r !== null && !r.sentAt && !!r.caption)
+    .map((r) => r as unknown as InstagramPost);
+}
+
+export async function getSentInstagramPosts(): Promise<InstagramPost[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("igpost:queue", 0, 199) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map((id) => redis.hgetall(`igpost:${id}`) as Promise<Record<string, string> | null>)
+  );
+  return records
+    .filter((r): r is Record<string, string> => r !== null && !!r.sentAt && !!r.caption)
+    .map((r) => r as unknown as InstagramPost)
+    .sort((a, b) => (b.sentAt ?? "").localeCompare(a.sentAt ?? ""));
+}
+
+export async function markInstagramPostSent(id: string, postId?: string): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  const update: Record<string, string> = { sentAt: new Date().toISOString() };
+  if (postId) update.postId = postId;
+  await redis.hset(`igpost:${id}`, update);
+}
+
 // ─── Edge Profile (Performance Coach) ────────────────────────────────────────
 
 export interface EdgeProfile {
