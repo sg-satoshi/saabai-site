@@ -181,6 +181,50 @@ export async function markNurtureSent(id: string, day: "day2" | "day5"): Promise
   await redis.hset(`nurture:${id}`, { [`${day}Sent`]: true });
 }
 
+// ─── LinkedIn Post Queue ──────────────────────────────────────────────────────
+
+export interface LinkedInPost {
+  id: string;
+  content: string;
+  imageUrl?: string;
+  scheduledFor: string; // ISO date string — fires on or after this date (AEST 9am)
+  sentAt?: string;
+  createdAt: string;
+}
+
+export async function queueLinkedInPost(post: Pick<LinkedInPost, "content" | "imageUrl" | "scheduledFor">): Promise<string | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  const id = `lipost_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const record: LinkedInPost = { ...post, id, createdAt: new Date().toISOString() };
+  const flat: Record<string, string> = {
+    id, content: record.content, scheduledFor: record.scheduledFor, createdAt: record.createdAt,
+  };
+  if (record.imageUrl) flat.imageUrl = record.imageUrl;
+  await redis.hset(`lipost:${id}`, flat);
+  await redis.lpush("lipost:queue", id);
+  return id;
+}
+
+export async function getPendingLinkedInPosts(): Promise<LinkedInPost[]> {
+  const redis = getRedis();
+  if (!redis) return [];
+  const ids = await redis.lrange("lipost:queue", 0, 99) as string[];
+  if (!ids.length) return [];
+  const records = await Promise.all(
+    ids.map((id) => redis.hgetall(`lipost:${id}`) as Promise<Record<string, string> | null>)
+  );
+  return records
+    .filter((r): r is Record<string, string> => r !== null && !r.sentAt && !!r.content)
+    .map((r) => r as unknown as LinkedInPost);
+}
+
+export async function markLinkedInPostSent(id: string): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  await redis.hset(`lipost:${id}`, { sentAt: new Date().toISOString() });
+}
+
 // ─── Edge Profile (Performance Coach) ────────────────────────────────────────
 
 export interface EdgeProfile {
