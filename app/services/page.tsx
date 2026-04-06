@@ -171,8 +171,48 @@ export default function Services() {
         }} />
       </section>
 
+      {/* ── Advisory & Board Roles ───────────────────────────────────────── */}
+      <section className="py-20 px-6 max-w-5xl mx-auto">
+        <div
+          className="relative rounded-xl overflow-hidden border border-saabai-border-accent bg-saabai-surface p-10 md:p-14 flex flex-col md:flex-row md:items-center gap-8"
+          style={{ boxShadow: "0 0 80px rgba(98,197,209,0.35), 0 0 32px rgba(98,197,209,0.15)" }}
+        >
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
+          <div className="flex-1">
+            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-4">
+              New Offering
+            </p>
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-4 leading-snug">
+              Advisory &amp; Board Roles
+            </h2>
+            <p className="text-base text-saabai-text-muted leading-relaxed max-w-xl">
+              Beyond implementation — Shane Goldberg is now available for advisory retainers,
+              board of director positions, advisory board roles, and implementation oversight
+              engagements. For leadership teams and boards that need AI expertise at the
+              decision-making level, not just the operational level.
+            </p>
+            <ul className="flex flex-col gap-2.5 mt-6">
+              {["AI Advisory Retainer (2–4 days/month)", "Board of Directors", "Advisory Board Member", "Implementation Oversight"].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm text-saabai-text-muted">
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="shrink-0">
+            <a
+              href="/advisory"
+              className="inline-block bg-saabai-teal text-saabai-bg px-8 py-3.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)] whitespace-nowrap"
+            >
+              Learn More
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── What We Help Automate ────────────────────────────────────────── */}
-      <section className="py-32 px-6 max-w-5xl mx-auto">
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
           What We Help Professional Firms Automate
         </p>
