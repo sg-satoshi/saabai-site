@@ -215,6 +215,8 @@ interface QueuedPost {
 function LinkedInQueue() {
   const [posts, setPosts] = useState<QueuedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
+  const [viewingPost, setViewingPost] = useState<QueuedPost | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editDate, setEditDate] = useState("");
@@ -234,6 +236,7 @@ function LinkedInQueue() {
   useEffect(() => { load(); }, []);
 
   function startEdit(post: QueuedPost) {
+    setViewingPost(null);
     setEditingId(post.id);
     setEditContent(post.content);
     setEditDate(post.scheduledFor);
@@ -268,12 +271,12 @@ function LinkedInQueue() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: post.content }),
     });
-    // Mark as sent
     await fetch("/api/linkedin/queue", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: post.id }),
     });
+    setViewingPost(null);
     load();
   }
 
@@ -286,76 +289,122 @@ function LinkedInQueue() {
   if (loading) return null;
   if (posts.length === 0) return null;
 
+  const btnBase: React.CSSProperties = { fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "3px 9px", cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" };
+
   return (
-    <div style={{ ...T.card, padding: "24px 28px", marginTop: 28 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>in</span>
-          </div>
-          <div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Scheduled Posts</p>
-            <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{posts.length} post{posts.length !== 1 ? "s" : ""} queued · fires at 9am Brisbane</p>
-          </div>
-        </div>
-        <button onClick={load} style={{ fontSize: 11, color: "#9ca3af", background: "none", border: "none", cursor: "pointer" }}>↻ Refresh</button>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column" as const, gap: 12 }}>
-        {posts.map((post) => {
-          const isEditing = editingId === post.id;
-          const isDue = post.scheduledFor <= today;
-
-          return (
-            <div key={post.id} style={{ border: `1px solid ${isDue ? "#fbbf24" : "#e5e7eb"}`, borderRadius: 12, overflow: "hidden", background: isDue ? "#fffbeb" : "#f9fafb" }}>
-              {/* Header row */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #e5e7eb" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {isDue
-                    ? <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: "#d97706", background: "#fef3c7", padding: "3px 8px", borderRadius: 20 }}>POSTING TODAY</span>
-                    : <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: "#0077b5", background: "#eff8ff", padding: "3px 8px", borderRadius: 20 }}>{fmtDate(post.scheduledFor)}</span>
-                  }
-                  {post.imageUrl && <span style={{ fontSize: 10, color: "#6b7280", background: "#f3f4f6", padding: "3px 8px", borderRadius: 20 }}>🖼 Image card</span>}
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {!isEditing && <>
-                    <button onClick={() => startEdit(post)} style={{ fontSize: 11, fontWeight: 600, color: "#374151", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Edit</button>
-                    <button onClick={() => postNow(post)} style={{ fontSize: 11, fontWeight: 600, color: "#0077b5", background: "#eff8ff", border: "1px solid #bfdbfe", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Post now</button>
-                    <button onClick={() => cancelPost(post.id)} style={{ fontSize: 11, fontWeight: 600, color: "#ef4444", background: "#fff", border: "1px solid #fecaca", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Remove</button>
-                  </>}
-                  {isEditing && <>
-                    <button onClick={() => saveEdit(post.id)} disabled={saving} style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#0077b5", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }}>{saving ? "Saving…" : "Save"}</button>
-                    <button onClick={() => setEditingId(null)} style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Cancel</button>
-                  </>}
-                </div>
+    <>
+      {/* ── View modal ── */}
+      {viewingPost && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={() => setViewingPost(null)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={e => e.stopPropagation()}>
+            {/* Modal header */}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.8, color: viewingPost.scheduledFor <= today ? "#d97706" : "#0077b5", background: viewingPost.scheduledFor <= today ? "#fef3c7" : "#eff8ff", padding: "3px 8px", borderRadius: 20 }}>
+                  {viewingPost.scheduledFor <= today ? "POSTING TODAY" : fmtDate(viewingPost.scheduledFor)}
+                </span>
+                <span style={{ fontSize: 11, color: "#9ca3af" }}>{viewingPost.content.length} chars</span>
               </div>
-
-              {/* Content */}
-              <div style={{ padding: "14px 16px" }}>
-                {isEditing ? (
-                  <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                    <textarea
-                      value={editContent} onChange={e => setEditContent(e.target.value)} rows={10}
-                      style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 12, lineHeight: 1.7, color: "#111827", background: "#fff", resize: "vertical", outline: "none", fontFamily: "inherit" }}
-                    />
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 11, color: "#6b7280" }}>Reschedule:</span>
-                      <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
-                        style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 12, color: "#111827", background: "#fff", outline: "none" }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <p style={{ margin: 0, fontSize: 12, color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 120, overflow: "hidden", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent)" }}>
-                    {post.content}
-                  </p>
-                )}
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => startEdit(viewingPost)} style={{ ...btnBase }}>Edit</button>
+                <button onClick={() => postNow(viewingPost)} style={{ ...btnBase, color: "#0077b5", background: "#eff8ff", borderColor: "#bfdbfe" }}>Post now</button>
+                <button onClick={() => { cancelPost(viewingPost.id); setViewingPost(null); }} style={{ ...btnBase, color: "#ef4444", borderColor: "#fecaca" }}>Remove</button>
+                <button onClick={() => setViewingPost(null)} style={{ ...btnBase, color: "#9ca3af" }}>✕</button>
               </div>
             </div>
-          );
-        })}
+            {/* Modal body */}
+            <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
+              <p style={{ margin: 0, fontSize: 13, color: "#111827", lineHeight: 1.75, whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+                {viewingPost.content}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit modal ── */}
+      {editingId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={() => setEditingId(null)}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 560, display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Edit Post</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, color: "#6b7280" }}>Reschedule:</span>
+                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)}
+                  style={{ padding: "5px 8px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 12, color: "#111827", background: "#fff", outline: "none" }} />
+              </div>
+            </div>
+            <div style={{ padding: "16px 20px" }}>
+              <textarea value={editContent} onChange={e => setEditContent(e.target.value)} rows={12}
+                style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: "#111827", background: "#f9fafb", resize: "vertical", outline: "none", fontFamily: "inherit" }} />
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #e5e7eb", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setEditingId(null)} style={{ ...btnBase }}>Cancel</button>
+              <button onClick={() => saveEdit(editingId)} disabled={saving}
+                style={{ ...btnBase, background: "#0077b5", color: "#fff", border: "none", fontWeight: 700 }}>
+                {saving ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Queue list ── */}
+      <div style={{ ...T.card, padding: "20px 24px", marginTop: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: collapsed ? 0 : 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 900, color: "#fff" }}>in</span>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#111827" }}>Scheduled Posts</p>
+              <p style={{ margin: 0, fontSize: 11, color: "#6b7280" }}>{posts.length} queued · 9am Brisbane · Mon / Wed / Fri</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={load} style={{ fontSize: 11, color: "#9ca3af", background: "none", border: "none", cursor: "pointer" }}>↻</button>
+            <button
+              onClick={() => setCollapsed(v => !v)}
+              style={{ fontSize: 11, color: "#6b7280", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: "2px 6px", borderRadius: 6 }}
+            >
+              <span style={{ display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+              {collapsed ? "Show" : "Hide"}
+            </button>
+          </div>
+        </div>
+
+        {/* Compact table */}
+        {!collapsed && <div style={{ display: "flex", flexDirection: "column" as const, gap: 1 }}>
+          {posts.map((post, i) => {
+            const isDue = post.scheduledFor <= today;
+            const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+            return (
+              <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: i % 2 === 0 ? "#f9fafb" : "#fff", border: isDue ? "1px solid #fbbf24" : "1px solid transparent" }}>
+                {/* Date badge */}
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: isDue ? "#d97706" : "#0077b5", background: isDue ? "#fef3c7" : "#eff8ff", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                  {isDue ? "TODAY" : fmtDate(post.scheduledFor)}
+                </span>
+                {/* Preview */}
+                <span style={{ fontSize: 12, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                  {preview}
+                </span>
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <button onClick={() => setViewingPost(post)} style={{ ...btnBase, color: "#0077b5", borderColor: "#bfdbfe", background: "#f0f9ff" }}>View</button>
+                  <button onClick={() => startEdit(post)} style={{ ...btnBase }}>Edit</button>
+                  <button onClick={() => postNow(post)} style={{ ...btnBase, color: "#059669", borderColor: "#a7f3d0", background: "#f0fdf4" }}>Post now</button>
+                  <button onClick={() => cancelPost(post.id)} style={{ ...btnBase, color: "#ef4444", borderColor: "#fecaca" }}>✕</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>}
       </div>
-    </div>
+    </>
   );
 }
 
