@@ -29,8 +29,14 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "5 Apr 2026",
+    date: "7 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "09:00", tag: "IMPROVEMENT", title: "Email gate removed from pricing — Rex now gives quotes immediately without asking for email first; after delivering a quote Rex offers a soft 'want me to send this through?' prompt; if no email given Rex moves on without asking again; fixes internal/staff use where multiple quotes were blocked by the email wall" },
+    ],
+  },
+  {
+    date: "5 Apr 2026",
     entries: [
       { time: "10:30", tag: "NEW", title: "Mia quick reply chips — four suggested openers appear below greeting before user types ('What can you automate?', 'How does it work?', 'What does it cost?', 'Show me examples'); chips disappear once user sends first message; reduces cold-start friction" },
       { time: "10:30", tag: "UI", title: "Mia widget opens directly to text chat — mode picker removed from initial open flow; voice still available via mic button inside the chat panel; saves one click on every session" },
