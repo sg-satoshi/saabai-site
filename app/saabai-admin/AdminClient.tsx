@@ -286,7 +286,7 @@ function SubscriberPanel() {
                   {(s.city || s.country) && (
                     <p style={{ margin: "1px 0 0", fontSize: 10, color: "#9ca3af" }}>
                       {[s.city, s.country].filter(Boolean).join(", ")}
-                      {s.ip && <span style={{ marginLeft: 6, fontFamily: "monospace" }}>{s.ip}</span>}
+                      {s.ip && <span style={{ marginLeft: 6, fontFamily: "monospace", fontSize: 9 }}>{s.ip}</span>}
                     </p>
                   )}
                 </div>

@@ -165,7 +165,8 @@ async function getGeo(ip: string): Promise<{ country?: string; countryCode?: str
       city:        d.city ?? undefined,
       region:      d.region ?? undefined,
     };
-  } catch {
+  } catch (err) {
+    console.warn("[subscribe] geo lookup failed for", ip, err);
     return {};
   }
 }
