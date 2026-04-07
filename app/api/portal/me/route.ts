@@ -1,54 +1,48 @@
 /**
  * GET /api/portal/me
- * Returns the authenticated firm's details from the session cookie.
- * Used by the client portal to check auth state on mount.
+ * Returns the authenticated firm's details by verifying the signed session cookie.
+ * No Redis lookup — the HMAC signature IS the proof of authenticity.
+ *
+ * DELETE /api/portal/me
+ * Signs out by clearing the session cookie.
  */
 
-import { getRedis } from "../../../../lib/redis";
-import { cookies } from "next/headers";
 import { getLexClients } from "../../../../lib/lex-config";
+import { verifySession } from "../../../../lib/portal-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+
 function parseCookie(header: string | null, name: string): string | undefined {
   if (!header) return undefined;
   for (const part of header.split(";")) {
-    const [k, v] = part.trim().split("=");
-    if (k === name) return v;
+    const trimmed = part.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    if (trimmed.slice(0, eq) === name) return trimmed.slice(eq + 1);
   }
   return undefined;
 }
 
 export async function GET(req: Request) {
   try {
-    // Read cookie directly from request headers — more reliable than next/headers
-    // cookies() in Route Handlers has known issues in some Next.js 15 deployments.
-    const sessionId =
-      parseCookie(req.headers.get("cookie"), "portal_session") ||
-      (await cookies()).get("portal_session")?.value;
+    const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
 
-    if (!sessionId) {
+    if (!sessionToken) {
       return Response.json({ authenticated: false }, { status: 401 });
     }
 
-    const redis = getRedis();
-    if (!redis) {
-      return Response.json({ authenticated: false }, { status: 503 });
-    }
-
-    const raw = await redis.get(`portal:session:${sessionId}`) as string | null;
-    if (!raw) {
+    const session = verifySession(sessionToken);
+    if (!session) {
       return Response.json({ authenticated: false }, { status: 401 });
     }
 
-    const session = JSON.parse(raw) as { email: string; createdAt: string };
-
-    // Look up firm config by matching notification email
-    // Falls back to default external config if no match
+    // Look up firm config by matching team email
     const clients = getLexClients();
     const firmConfig = clients.find(
-      c => c.email.teamEmail.toLowerCase() === session.email.toLowerCase()
+      (c) => c.email.teamEmail.toLowerCase() === session.email.toLowerCase()
     );
 
     return Response.json({
@@ -65,21 +59,22 @@ export async function GET(req: Request) {
   }
 }
 
-export async function DELETE() {
-  // Sign out — clear session cookie
-  try {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get("portal_session")?.value;
+export async function DELETE(req: Request) {
+  const isProd = process.env.NODE_ENV === "production";
+  const clearCookie = [
+    "portal_session=",
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0",
+    ...(isProd ? ["Secure"] : []),
+  ].join("; ");
 
-    if (sessionId) {
-      const redis = getRedis();
-      if (redis) await redis.del(`portal:session:${sessionId}`);
-    }
-
-    cookieStore.set("portal_session", "", { maxAge: 0, path: "/" });
-    return Response.json({ ok: true });
-  } catch (err) {
-    console.error("[portal/signout]", err);
-    return Response.json({ error: "Sign out failed" }, { status: 500 });
-  }
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": clearCookie,
+    },
+  });
 }
