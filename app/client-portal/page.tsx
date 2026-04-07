@@ -44,18 +44,20 @@ const MOCK = {
   ],
 };
 
-type Tab = "overview" | "leads" | "customize" | "embed" | "settings";
+type Tab = "overview" | "leads" | "customize" | "test" | "embed" | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "overview",  label: "Overview"  },
-  { id: "leads",     label: "Leads"     },
-  { id: "customize", label: "Customise" },
-  { id: "embed",     label: "Embed Code"},
-  { id: "settings",  label: "Settings"  },
+  { id: "overview",  label: "Overview"   },
+  { id: "leads",     label: "Leads"      },
+  { id: "customize", label: "Customise"  },
+  { id: "test",      label: "Test Agent" },
+  { id: "embed",     label: "Embed Code" },
+  { id: "settings",  label: "Settings"   },
 ];
 
 type AuthView = "checking" | "login" | "sent" | "dashboard";
 type FirmSession = { email: string; firmName: string; clientId: string; agentName: string; plan: string };
+type TestMsg = { role: "user" | "assistant"; content: string };
 
 function ClientPortalInner() {
   const searchParams = useSearchParams();
@@ -96,6 +98,11 @@ function ClientPortalInner() {
   const [neverSayDraft,     setNeverSayDraft]      = useState("");
   const [instructionDraft,  setInstructionDraft]   = useState("");
   const [outcomeDraft,      setOutcomeDraft]        = useState("");
+  // Test Agent tab state
+  const [testMessages, setTestMessages] = useState<TestMsg[]>([]);
+  const [testInput,    setTestInput]    = useState("");
+  const [testLoading,  setTestLoading]  = useState(false);
+  const [testError,    setTestError]    = useState<string | null>(null);
 
   // Sync tab from URL param
   useEffect(() => {
@@ -290,6 +297,72 @@ function ClientPortalInner() {
       setSaveError("Failed to save. Please try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendTestMessage() {
+    const text = testInput.trim();
+    if (!text || testLoading) return;
+
+    const newMessages: TestMsg[] = [...testMessages, { role: "user", content: text }];
+    setTestMessages(newMessages);
+    setTestInput("");
+    setTestLoading(true);
+    setTestError(null);
+
+    try {
+      const res = await fetch("/api/lex-chat", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          clientId,
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error("No response");
+
+      // Stream SSE response
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantText = "";
+      let started = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === "text-delta" && parsed.delta) {
+              assistantText += parsed.delta;
+              if (!started) {
+                started = true;
+                setTestMessages(prev => [...prev, { role: "assistant", content: assistantText }]);
+              } else {
+                setTestMessages(prev => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { role: "assistant", content: assistantText };
+                  return copy;
+                });
+              }
+            }
+          } catch { /* skip malformed lines */ }
+        }
+      }
+
+      if (!started) throw new Error("Empty response");
+    } catch {
+      setTestError("Something went wrong. Please try again.");
+      setTestMessages(prev => prev.filter(m => !(m.role === "assistant" && m.content === "")));
+    } finally {
+      setTestLoading(false);
     }
   }
 
@@ -959,6 +1032,137 @@ function ClientPortalInner() {
             </div>
           );
         })()}
+
+        {/* Test Agent */}
+        {tab === "test" && (
+          <div style={{ maxWidth: 720 }}>
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Test Your Agent</h2>
+              <p style={{ color: C.muted, margin: 0, fontSize: 14, lineHeight: 1.6 }}>
+                Have a live conversation with <strong style={{ color: C.goldB }}>{agentName}</strong> using your current saved configuration.
+                This is exactly how clients on your website will experience it.
+              </p>
+            </div>
+
+            {/* Info banner */}
+            <div style={{ background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
+              <div>
+                <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: C.goldB }}>Using your saved configuration</p>
+                <p style={{ margin: 0, fontSize: 12, color: C.muted }}>
+                  Changes made in the Customise tab only apply here after you hit Save Configuration.
+                  Reset the conversation any time to start fresh.
+                </p>
+              </div>
+            </div>
+
+            {/* Chat window */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden" }}>
+              {/* Chat header */}
+              <div style={{ background: C.raised, borderBottom: `1px solid ${C.border}`, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif" }}>
+                    {agentName[0]}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{agentName}</div>
+                    <div style={{ fontSize: 11, color: C.green, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, display: "inline-block" }} />
+                      Live preview
+                    </div>
+                  </div>
+                </div>
+                {testMessages.length > 0 && (
+                  <button
+                    onClick={() => { setTestMessages([]); setTestError(null); }}
+                    style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.muted, fontSize: 12, cursor: "pointer", padding: "5px 12px" }}>
+                    Reset conversation
+                  </button>
+                )}
+              </div>
+
+              {/* Messages */}
+              <div style={{ padding: 20, minHeight: 320, maxHeight: 480, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+                {testMessages.length === 0 && (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", textAlign: "center" }}>
+                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: C.goldBg, border: `1px solid ${C.goldBdr}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 16 }}>💬</div>
+                    <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.text }}>Start a test conversation</p>
+                    <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted }}>Type anything a client might ask and see exactly how {agentName} responds.</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                      {[
+                        "What areas of law do you handle?",
+                        "I think I need a lawyer — where do I start?",
+                        "How much does it cost?",
+                        "I need help urgently",
+                      ].map(q => (
+                        <button key={q} onClick={() => { setTestInput(q); }}
+                          style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, fontSize: 12, cursor: "pointer" }}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {testMessages.map((msg, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                    <div style={{
+                      maxWidth: "75%", padding: "10px 14px", borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                      background: msg.role === "user" ? C.gold : C.raised,
+                      color: msg.role === "user" ? "#0a1628" : C.text,
+                      fontSize: 14, lineHeight: 1.6,
+                    }}>
+                      {msg.content || <span style={{ opacity: 0.5 }}>●●●</span>}
+                    </div>
+                  </div>
+                ))}
+                {testLoading && testMessages[testMessages.length - 1]?.role === "user" && (
+                  <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                    <div style={{ padding: "10px 16px", borderRadius: "16px 16px 16px 4px", background: C.raised, color: C.muted, fontSize: 20, letterSpacing: 3 }}>
+                      ···
+                    </div>
+                  </div>
+                )}
+                {testError && (
+                  <div style={{ fontSize: 13, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, padding: "10px 14px", textAlign: "center" }}>
+                    {testError}
+                  </div>
+                )}
+              </div>
+
+              {/* Input */}
+              <div style={{ borderTop: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", gap: 10 }}>
+                <input
+                  value={testInput}
+                  onChange={e => setTestInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendTestMessage(); }}}
+                  placeholder={`Message ${agentName}…`}
+                  disabled={testLoading}
+                  style={{
+                    flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10,
+                    padding: "10px 14px", color: C.text, fontSize: 14, outline: "none",
+                    opacity: testLoading ? 0.6 : 1,
+                  }}
+                />
+                <button
+                  onClick={sendTestMessage}
+                  disabled={!testInput.trim() || testLoading}
+                  style={{
+                    padding: "10px 20px", borderRadius: 10, border: "none",
+                    background: testInput.trim() && !testLoading ? C.gold : C.goldBg,
+                    color: testInput.trim() && !testLoading ? "#0a1628" : C.gold,
+                    fontWeight: 700, fontSize: 14, cursor: testInput.trim() && !testLoading ? "pointer" : "not-allowed",
+                    transition: "all 0.15s",
+                  }}>
+                  Send
+                </button>
+              </div>
+            </div>
+
+            <p style={{ marginTop: 12, fontSize: 12, color: C.dim }}>
+              Test conversations are not saved or counted in your analytics.
+            </p>
+          </div>
+        )}
 
         {/* Embed */}
         {tab === "embed" && (
