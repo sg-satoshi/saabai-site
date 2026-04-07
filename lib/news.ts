@@ -135,6 +135,13 @@ const AI_X_ACCOUNTS: { handle: string; name: string }[] = [
   { handle: "GaryMarcus", name: "Gary Marcus" },
   { handle: "mistralai", name: "Mistral AI" },
   { handle: "perplexity_ai", name: "Perplexity AI" },
+  { handle: "openclaw", name: "OpenClaw" },
+  { handle: "juliangoldieseo", name: "Julian Goldie" },
+  { handle: "milesdeutscher", name: "Miles Deutscher" },
+  { handle: "aiedge_", name: "AI Edge" },
+  { handle: "gregisenberg", name: "Greg Isenberg" },
+  { handle: "startupideaspod", name: "Startup Ideas Pod" },
+  { handle: "alexfinn", name: "Alex Finn" },
 ];
 
 function parseXRss(xml: string, handle: string, authorName: string, limit = 3): NewsItem[] {

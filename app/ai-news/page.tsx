@@ -176,7 +176,7 @@ export default async function AINewsPage() {
               <span key={s} className="text-[10px] font-semibold px-2 py-1 rounded tracking-wide"
                 style={{ background: "rgba(98,197,209,0.08)", color: "#62c5d1" }}>{s}</span>
             ))}
-            {["@sama", "@karpathy", "@ylecun", "@OpenAI", "@AnthropicAI", "@GoogleDeepMind", "@huggingface", "@mistralai"].map((s) => (
+            {["@sama", "@karpathy", "@ylecun", "@OpenAI", "@AnthropicAI", "@GoogleDeepMind", "@huggingface", "@mistralai", "@openclaw", "@juliangoldieseo", "@milesdeutscher", "@aiedge_", "@gregisenberg", "@startupideaspod", "@alexfinn"].map((s) => (
               <span key={s} className="text-[10px] font-semibold px-2 py-1 rounded tracking-wide"
                 style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)" }}>{s}</span>
             ))}
