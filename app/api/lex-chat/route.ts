@@ -2,9 +2,13 @@ import { streamText, tool, stepCountIs } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { LEX_KNOWLEDGE } from "../../../lib/lex-knowledge";
+import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// Tributum Law team email — used to look up portal configuration in Redis
+const TRIBUTUM_TEAM_EMAIL = "hello@tributumlaw.com";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://www.tributumlaw.com";
 
@@ -66,9 +70,20 @@ ${LEX_KNOWLEDGE}`;
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
+  // Fetch portal settings for Tributum Law and build an enhanced system prompt
+  let systemPrompt = SYSTEM_PROMPT;
+  try {
+    const portalSettings = await getPortalSettings(TRIBUTUM_TEAM_EMAIL);
+    if (portalSettings) {
+      systemPrompt = SYSTEM_PROMPT + buildSystemPromptAddition(portalSettings);
+    }
+  } catch {
+    // Non-fatal — fall back to base system prompt if Redis is unavailable
+  }
+
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages,
     temperature: 0.3,
     stopWhen: stepCountIs(5),

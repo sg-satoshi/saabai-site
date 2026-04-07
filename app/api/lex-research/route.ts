@@ -1,6 +1,7 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getPremiumModel } from "../../../lib/chat-config";
 import { getLexConfig } from "../../../lib/lex-config";
+import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import {
   searchAustLII,
   searchATO,
@@ -12,6 +13,7 @@ import {
 // Lex Research always uses the premium model — legal accuracy is non-negotiable.
 // Never route legal research to a cheaper model.
 
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 type AustLIIInput  = { query: string; jurisdiction?: string };
@@ -26,13 +28,24 @@ export async function POST(req: Request) {
 
     const config = getLexConfig(clientId);
 
+    // Fetch portal settings for this firm and build an enhanced system prompt
+    let systemPromptContent = config.systemPrompt;
+    try {
+      const portalSettings = await getPortalSettings(config.email.teamEmail);
+      if (portalSettings) {
+        systemPromptContent = config.systemPrompt + buildSystemPromptAddition(portalSettings);
+      }
+    } catch {
+      // Non-fatal — fall back to base system prompt if Redis is unavailable
+    }
+
     const coreMessages = (messages as Array<{ role: string; content: string }>)
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
     const cachedSystem: SystemModelMessage = {
       role: "system",
-      content: config.systemPrompt,
+      content: systemPromptContent,
       providerOptions: {
         anthropic: { cacheControl: { type: "ephemeral" } },
       },
