@@ -71,12 +71,20 @@ function ClientPortalInner() {
   const [copied,   setCopied]   = useState<string | null>(null);
   const [savedOk,  setSavedOk]  = useState(false);
   const [settings, setSettings] = useState({
-    agentName:       MOCK.agentName,
-    welcomeMessage:  "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
-    formalityLevel:  75,
-    warmthLevel:     60,
+    agentName:          MOCK.agentName,
+    welcomeMessage:     "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
+    formalityLevel:     75,
+    warmthLevel:        60,
+    humorLevel:         20,
+    responseLength:     "balanced" as "concise" | "balanced" | "detailed",
+    personalityTraits:  [] as string[],
+    alwaysSay:          [] as string[],
+    neverSay:           [] as string[],
+    customInstructions: "",
     leadCaptureEnabled: true,
   });
+  const [alwaysSayDraft, setAlwaysSayDraft] = useState("");
+  const [neverSayDraft,  setNeverSayDraft]  = useState("");
 
   // Sync tab from URL param
   useEffect(() => {
@@ -391,51 +399,206 @@ function ClientPortalInner() {
         )}
 
         {/* Customise */}
-        {tab === "customize" && (
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>Customise Lex</h2>
-            <p style={{ color: C.muted, margin: "0 0 32px" }}>Adjust the voice, personality, and behaviour of your agent.</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 600 }}>
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8 }}>Agent Name</label>
-                <input
-                  value={settings.agentName}
-                  onChange={e => setSettings(p => ({ ...p, agentName: e.target.value }))}
-                  style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 14, outline: "none" }}
-                />
-              </div>
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8 }}>Welcome Message</label>
-                <input
-                  value={settings.welcomeMessage}
-                  onChange={e => setSettings(p => ({ ...p, welcomeMessage: e.target.value }))}
-                  style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 14, outline: "none" }}
-                />
-              </div>
-              {[
-                { label: "Formality", key: "formalityLevel" as const, value: settings.formalityLevel },
-                { label: "Warmth",    key: "warmthLevel"    as const, value: settings.warmthLevel    },
-              ].map(dial => (
-                <div key={dial.key} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 20 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: C.muted, display: "block", marginBottom: 12 }}>
-                    {dial.label}: {dial.value}%
-                  </label>
-                  <input
-                    type="range" min={0} max={100} value={dial.value}
-                    onChange={e => setSettings(p => ({ ...p, [dial.key]: Number(e.target.value) }))}
-                    style={{ width: "100%", accentColor: C.gold }}
+        {tab === "customize" && (() => {
+          const TRAITS = [
+            "Professional", "Empathetic", "Direct", "Concise", "Thorough",
+            "Approachable", "Reassuring", "Formal", "Plain English", "Proactive",
+            "Cautious", "Confident", "Conversational", "Detail-oriented", "Warm", "Authoritative",
+          ];
+          const inputStyle: React.CSSProperties = {
+            width: "100%", background: C.raised, border: `1px solid ${C.border}`,
+            borderRadius: 8, padding: "10px 12px", color: C.text, fontSize: 14,
+            outline: "none", boxSizing: "border-box",
+          };
+          const sectionStyle: React.CSSProperties = {
+            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24,
+          };
+          const labelStyle: React.CSSProperties = {
+            fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: "0.8px",
+            textTransform: "uppercase", display: "block", marginBottom: 8,
+          };
+
+          function addTag(field: "alwaysSay" | "neverSay", draft: string, setDraft: (v: string) => void) {
+            const val = draft.trim().replace(/,+$/, "");
+            if (!val) return;
+            setSettings(p => ({ ...p, [field]: [...p[field], val] }));
+            setDraft("");
+          }
+          function removeTag(field: "alwaysSay" | "neverSay", idx: number) {
+            setSettings(p => ({ ...p, [field]: p[field].filter((_, i) => i !== idx) }));
+          }
+
+          return (
+            <div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Customise Lex</h2>
+              <p style={{ color: C.muted, margin: "0 0 32px", fontSize: 14 }}>
+                Everything below shapes how Lex speaks, thinks, and represents your firm.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
+
+                {/* ── Identity ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Identity</h3>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={labelStyle}>Agent Name</label>
+                    <input value={settings.agentName}
+                      onChange={e => setSettings(p => ({ ...p, agentName: e.target.value }))}
+                      style={inputStyle} placeholder="e.g. Lex" />
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>The name your agent uses when greeting clients.</p>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Welcome Message</label>
+                    <input value={settings.welcomeMessage}
+                      onChange={e => setSettings(p => ({ ...p, welcomeMessage: e.target.value }))}
+                      style={inputStyle} placeholder="Hi there! How can I help you today?" />
+                    <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>The first message clients see when they open the widget.</p>
+                  </div>
+                </div>
+
+                {/* ── Voice & Tone ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Voice & Tone</h3>
+
+                  {([
+                    { key: "formalityLevel" as const, label: "Formality", lo: "Casual", hi: "Formal",   val: settings.formalityLevel },
+                    { key: "warmthLevel"    as const, label: "Warmth",    lo: "Cool",   hi: "Warm",     val: settings.warmthLevel    },
+                    { key: "humorLevel"     as const, label: "Humour",    lo: "None",   hi: "Playful",  val: settings.humorLevel     },
+                  ] as { key: "formalityLevel"|"warmthLevel"|"humorLevel"; label: string; lo: string; hi: string; val: number }[]).map(dial => (
+                    <div key={dial.key} style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <label style={{ ...labelStyle, marginBottom: 0 }}>{dial.label}</label>
+                        <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>{dial.val}%</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 11, color: C.dim, width: 44, textAlign: "right" }}>{dial.lo}</span>
+                        <input type="range" min={0} max={100} value={dial.val}
+                          onChange={e => setSettings(p => ({ ...p, [dial.key]: Number(e.target.value) }))}
+                          style={{ flex: 1, accentColor: C.gold }} />
+                        <span style={{ fontSize: 11, color: C.dim, width: 44 }}>{dial.hi}</span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div style={{ marginTop: 4 }}>
+                    <label style={labelStyle}>Response Length</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {(["concise", "balanced", "detailed"] as const).map(opt => (
+                        <button key={opt} onClick={() => setSettings(p => ({ ...p, responseLength: opt }))}
+                          style={{
+                            flex: 1, padding: "9px 0", borderRadius: 8, fontSize: 13, fontWeight: 700,
+                            cursor: "pointer", border: `1px solid ${settings.responseLength === opt ? C.gold : C.border}`,
+                            background: settings.responseLength === opt ? C.goldBg : "transparent",
+                            color: settings.responseLength === opt ? C.goldB : C.muted,
+                            textTransform: "capitalize",
+                          }}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                    <p style={{ margin: "8px 0 0", fontSize: 12, color: C.dim }}>Concise = short answers. Balanced = standard. Detailed = thorough explanations.</p>
+                  </div>
+                </div>
+
+                {/* ── Personality Traits ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Personality Traits</h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted }}>Select the traits that best describe how your agent should come across.</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {TRAITS.map(trait => {
+                      const active = settings.personalityTraits.includes(trait);
+                      return (
+                        <button key={trait} onClick={() => setSettings(p => ({
+                          ...p,
+                          personalityTraits: active
+                            ? p.personalityTraits.filter(t => t !== trait)
+                            : [...p.personalityTraits, trait],
+                        }))}
+                          style={{
+                            padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                            border: `1px solid ${active ? C.gold : C.border}`,
+                            background: active ? C.goldBg : "transparent",
+                            color: active ? C.goldB : C.muted,
+                            transition: "all 0.12s",
+                          }}>
+                          {trait}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ── Language Rules ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Language Rules</h3>
+                  <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted }}>Control the specific words and phrases your agent uses or avoids.</p>
+
+                  {([
+                    { field: "alwaysSay" as const, label: "Always Say", hint: "Phrases Lex should regularly use", draft: alwaysSayDraft, setDraft: setAlwaysSayDraft, color: C.green, colorBg: C.greenBg, colorBdr: C.greenBdr },
+                    { field: "neverSay"  as const, label: "Never Say",  hint: "Words or phrases Lex must avoid", draft: neverSayDraft,  setDraft: setNeverSayDraft,  color: "#f87171", colorBg: "rgba(248,113,113,0.08)", colorBdr: "rgba(248,113,113,0.25)" },
+                  ]).map(row => (
+                    <div key={row.field} style={{ marginBottom: 20 }}>
+                      <label style={labelStyle}>{row.label}</label>
+                      <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim }}>{row.hint}</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                        {settings[row.field].map((tag, i) => (
+                          <span key={i} style={{
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                            background: row.colorBg, border: `1px solid ${row.colorBdr}`, color: row.color,
+                          }}>
+                            {tag}
+                            <button onClick={() => removeTag(row.field, i)} style={{ background: "none", border: "none", color: row.color, cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1 }}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          value={row.draft}
+                          onChange={e => row.setDraft(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(row.field, row.draft, row.setDraft); }}}
+                          placeholder="Type a phrase and press Enter"
+                          style={{ ...inputStyle, flex: 1 }}
+                        />
+                        <button onClick={() => addTag(row.field, row.draft, row.setDraft)}
+                          style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Custom Instructions ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Custom Instructions</h3>
+                  <p style={{ margin: "0 0 12px", fontSize: 13, color: C.muted }}>
+                    Anything else Lex should know — your firm&apos;s values, specific workflows, things to always or never do, jurisdiction focus, or unique client base.
+                  </p>
+                  <textarea
+                    value={settings.customInstructions}
+                    onChange={e => setSettings(p => ({ ...p, customInstructions: e.target.value }))}
+                    rows={6}
+                    placeholder={"e.g. We specialise in family law for high-net-worth clients. Always emphasise confidentiality. Never discuss fees — direct clients to book a consultation. Our tone should reflect 30 years of trusted expertise."}
+                    style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
                   />
                 </div>
-              ))}
-              <button
-                onClick={saveSettings}
-                style={{ padding: "12px 28px", background: savedOk ? C.green : C.gold, color: "#0a1628", fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: "pointer", transition: "background 0.2s" }}
-              >
-                {savedOk ? "Saved!" : "Save Settings"}
-              </button>
+
+                {/* ── Save ── */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <button onClick={saveSettings}
+                    style={{ padding: "13px 36px", background: savedOk ? C.green : C.gold, color: "#0a1628", fontWeight: 800, fontSize: 15, borderRadius: 10, border: "none", cursor: "pointer", transition: "background 0.2s" }}>
+                    {savedOk ? "Saved!" : "Save Settings"}
+                  </button>
+                  {savedOk && (
+                    <span style={{ fontSize: 13, color: C.green }}>Your changes have been saved.</span>
+                  )}
+                </div>
+
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Embed */}
         {tab === "embed" && (
