@@ -125,16 +125,41 @@ const NITTER_INSTANCES = [
 ];
 
 const AI_X_ACCOUNTS: { handle: string; name: string }[] = [
-  { handle: "sama", name: "Sam Altman" },
-  { handle: "karpathy", name: "Andrej Karpathy" },
-  { handle: "ylecun", name: "Yann LeCun" },
+  // ── Major LLM Labs ──────────────────────────────────────────────────────────
   { handle: "OpenAI", name: "OpenAI" },
   { handle: "AnthropicAI", name: "Anthropic" },
   { handle: "GoogleDeepMind", name: "Google DeepMind" },
-  { handle: "huggingface", name: "Hugging Face" },
-  { handle: "GaryMarcus", name: "Gary Marcus" },
+  { handle: "Google", name: "Google" },
+  { handle: "Meta", name: "Meta AI" },
+  { handle: "xai", name: "xAI (Grok)" },
   { handle: "mistralai", name: "Mistral AI" },
+  { handle: "CohereAI", name: "Cohere" },
+  { handle: "AI21Labs", name: "AI21 Labs" },
   { handle: "perplexity_ai", name: "Perplexity AI" },
+  { handle: "ClaudeAI", name: "Claude" },
+
+  // ── Open Source & OSS Models ────────────────────────────────────────────────
+  { handle: "huggingface", name: "Hugging Face" },
+  { handle: "MetaAI", name: "Meta AI (Llama)" },
+  { handle: "ollama", name: "Ollama" },
+  { handle: "lmsysorg", name: "lmsys (Vicuna/Chatbot Arena)" },
+  { handle: "tiiuae", name: "TII (Falcon)" },
+  { handle: "MosaicML", name: "MosaicML / Databricks" },
+  { handle: "EleutherAI", name: "EleutherAI (GPT-NeoX)" },
+  { handle: "stability_ai", name: "Stability AI" },
+  { handle: "togethercompute", name: "Together AI" },
+  { handle: "groq", name: "Groq" },
+  { handle: "CerebriumAI", name: "Cerebrium" },
+
+  // ── Key Researchers & Voices ────────────────────────────────────────────────
+  { handle: "sama", name: "Sam Altman" },
+  { handle: "karpathy", name: "Andrej Karpathy" },
+  { handle: "ylecun", name: "Yann LeCun" },
+  { handle: "GaryMarcus", name: "Gary Marcus" },
+  { handle: "demishassabis", name: "Demis Hassabis" },
+  { handle: "ilyasut", name: "Ilya Sutskever" },
+
+  // ── Your Custom Accounts ────────────────────────────────────────────────────
   { handle: "openclaw", name: "OpenClaw" },
   { handle: "juliangoldieseo", name: "Julian Goldie" },
   { handle: "milesdeutscher", name: "Miles Deutscher" },
