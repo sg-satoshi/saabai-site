@@ -201,6 +201,16 @@ export default function LexPage() {
     inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + "px";
   }, [input]);
 
+  // Fire pre-filled query from ?q= URL param (e.g. from client portal top questions)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) {
+      window.history.replaceState({}, "", "/lex");
+      sendMessage(q);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function newThread() {
     const id = `t_${Date.now()}`;
     const thread: Thread = { id, title: "New research", messages: [], createdAt: Date.now() };
