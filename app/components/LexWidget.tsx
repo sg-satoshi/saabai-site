@@ -191,28 +191,44 @@ export default function LexWidget() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let assistantText = "";
-      const assistantMsg: ChatMessage = { role: "assistant", content: "" };
-      setMessages(prev => [...prev, assistantMsg]);
+      let buffer = "";
+      let streamingStarted = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
         for (const line of lines) {
-          if (line.startsWith("0:")) {
-            try {
-              const raw = line.slice(2);
-              const parsed = JSON.parse(raw);
-              assistantText += parsed;
-              setMessages(prev => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { role: "assistant", content: assistantText };
-                return copy;
-              });
-            } catch { /* ignore */ }
-          }
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === "text-delta" && parsed.delta) {
+              assistantText += parsed.delta;
+              if (!streamingStarted) {
+                streamingStarted = true;
+                setMessages(prev => [...prev, { role: "assistant", content: assistantText }]);
+              } else {
+                setMessages(prev => {
+                  const copy = [...prev];
+                  copy[copy.length - 1] = { role: "assistant", content: assistantText };
+                  return copy;
+                });
+              }
+            }
+          } catch { /* ignore */ }
         }
+      }
+      // flush remaining buffer
+      if (buffer.startsWith("data: ")) {
+        try {
+          const parsed = JSON.parse(buffer.slice(6));
+          if (parsed.type === "text-delta" && parsed.delta) assistantText += parsed.delta;
+        } catch { /* ignore */ }
+      }
+      if (!streamingStarted && assistantText) {
+        setMessages(prev => [...prev, { role: "assistant", content: assistantText }]);
       }
 
       setChips(getFollowUpChips(assistantText));
