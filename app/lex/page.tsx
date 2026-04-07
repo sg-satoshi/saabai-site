@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
 const C = {
@@ -26,6 +27,10 @@ const C = {
 
 type ChatMessage  = { role: "user" | "assistant"; content: string };
 type Thread       = { id: string; title: string; messages: ChatMessage[]; createdAt: number };
+type Mode         = "research" | "draft";
+
+type QASection  = { id: string; clause: string; status: "verified" | "flagged" | "unverified"; note: string };
+type QAReport   = { overallConfidence: number; sections: QASection[]; criticalIssues: string[]; recommendedChecks: string[] };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function threadTitle(msgs: ChatMessage[]): string {
@@ -157,6 +162,21 @@ export default function LexPage() {
   const [chips, setChips] = useState<string[]>(() => pickReplies());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  // ── Draft mode state ───────────────────────────────────────────────────────
+  const [mode, setMode] = useState<Mode>("research");
+  const [draftTypeId, setDraftTypeId] = useState<string>(DOCUMENT_TYPES[0].id);
+  const [draftParties, setDraftParties] = useState("");
+  const [draftJurisdiction, setDraftJurisdiction] = useState("All Australian jurisdictions");
+  const [draftInstructions, setDraftInstructions] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [draftQA, setDraftQA] = useState<QAReport | null>(null);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftQALoading, setDraftQALoading] = useState(false);
+  const [draftThinkLabel, setDraftThinkLabel] = useState("Searching legislation…");
+  const [draftCopied, setDraftCopied] = useState(false);
+  const draftBottomRef = useRef<HTMLDivElement>(null);
+  const draftAbortRef  = useRef<AbortController | null>(null);
 
   const bottomRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLTextAreaElement>(null);
@@ -299,6 +319,95 @@ export default function LexPage() {
     });
   }
 
+  const sendDraft = useCallback(async () => {
+    if (draftLoading) return;
+    setDraftText("");
+    setDraftQA(null);
+    setDraftLoading(true);
+    setDraftQALoading(false);
+
+    const labels = ["Searching legislation…", "Verifying sections…", "Searching AustLII…", "Drafting document…", "Compiling clauses…"];
+    let labelIdx = 0;
+    setDraftThinkLabel(labels[0]);
+    const labelTimer = setInterval(() => {
+      labelIdx = (labelIdx + 1) % labels.length;
+      setDraftThinkLabel(labels[labelIdx]);
+    }, 3500);
+
+    draftAbortRef.current?.abort();
+    draftAbortRef.current = new AbortController();
+
+    try {
+      const res = await fetch("/api/lex-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType: draftTypeId,
+          parties: draftParties,
+          jurisdiction: draftJurisdiction,
+          specialInstructions: draftInstructions,
+          messages: [],
+        }),
+        signal: draftAbortRef.current.signal,
+      });
+
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.type === "text-delta" && parsed.delta) {
+              fullText += parsed.delta;
+              setDraftText(fullText);
+            }
+          } catch {}
+        }
+      }
+
+      clearInterval(labelTimer);
+      setDraftLoading(false);
+
+      // ── QA pass ─────────────────────────────────────────────────────────────
+      if (fullText.trim()) {
+        setDraftQALoading(true);
+        try {
+          const qaRes = await fetch("/api/lex-draft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestQA: true, completedDraft: fullText, documentType: draftTypeId }),
+          });
+          if (qaRes.ok) {
+            const qa = await qaRes.json() as QAReport;
+            setDraftQA(qa);
+          }
+        } catch {}
+        setDraftQALoading(false);
+      }
+    } catch (e: unknown) {
+      clearInterval(labelTimer);
+      if ((e as Error)?.name !== "AbortError") {
+        setDraftText("There was a problem reaching the drafting API. Please try again.");
+      }
+      setDraftLoading(false);
+    }
+  }, [draftLoading, draftTypeId, draftParties, draftJurisdiction, draftInstructions]);
+
+  useEffect(() => {
+    if (draftText) draftBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [draftText]);
+
   const showWelcome = messages.length === 0;
 
   return (
@@ -412,12 +521,22 @@ export default function LexPage() {
               </svg>
             </button>
             {!sidebarOpen && <LexMark size={26} />}
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.textMuted }}>
-              {activeThread ? activeThread.title : "Lex — Australian Legal Research"}
-            </p>
+            {/* Mode tabs */}
+            <div style={{ display: "flex", background: C.bg, borderRadius: 8, padding: 3, border: `1px solid ${C.border}` }}>
+              {([["research", "Research"], ["draft", "Draft Document"]] as [Mode, string][]).map(([m, label]) => (
+                <button key={m} onClick={() => setMode(m)} style={{
+                  padding: "4px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", border: "none", transition: "all 0.15s",
+                  background: mode === m ? C.gold : "transparent",
+                  color: mode === m ? C.bg : C.textMuted,
+                }}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {messages.some(m => m.role === "assistant") && (
+            {mode === "research" && messages.some(m => m.role === "assistant") && (
               <button onClick={copyLast} style={{
                 background: "none", border: `1px solid ${C.border}`, borderRadius: 6,
                 color: C.textMuted, fontSize: 11, cursor: "pointer", padding: "4px 10px",
@@ -425,15 +544,324 @@ export default function LexPage() {
                 {copyFeedback ?? "Copy last response"}
               </button>
             )}
-            <button onClick={newThread} style={{
-              background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-              borderRadius: 6, color: C.gold, fontSize: 11, fontWeight: 700,
-              cursor: "pointer", padding: "4px 12px",
-            }}>+ New Thread</button>
+            {mode === "research" && (
+              <button onClick={newThread} style={{
+                background: C.goldBg, border: `1px solid ${C.goldBorder}`,
+                borderRadius: 6, color: C.gold, fontSize: 11, fontWeight: 700,
+                cursor: "pointer", padding: "4px 12px",
+              }}>+ New Thread</button>
+            )}
+            {mode === "draft" && draftText && (
+              <button onClick={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }} style={{
+                background: "none", border: `1px solid ${C.border}`, borderRadius: 6,
+                color: C.textMuted, fontSize: 11, cursor: "pointer", padding: "4px 10px",
+              }}>
+                {draftCopied ? "Copied!" : "Copy draft"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Messages area */}
+        {/* ── Draft mode ─────────────────────────────────────────────────────── */}
+        {mode === "draft" && (
+          <div style={{ flex: 1, overflowY: "auto", display: "flex", minHeight: 0 }}>
+
+            {/* Form panel */}
+            <div style={{
+              width: 340, flexShrink: 0, borderRight: `1px solid ${C.border}`,
+              background: C.surface, overflowY: "auto", padding: "24px 20px",
+            }}>
+              <p style={{ margin: "0 0 18px", fontSize: 13, fontWeight: 700, color: C.gold, letterSpacing: 0.3 }}>
+                Document Configuration
+              </p>
+
+              {/* Document type */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Document Type
+                </label>
+                <select value={draftTypeId} onChange={e => setDraftTypeId(e.target.value)}
+                  style={{
+                    width: "100%", padding: "9px 12px", borderRadius: 8,
+                    background: C.bg, border: `1px solid ${C.border}`,
+                    color: C.text, fontSize: 13, cursor: "pointer", outline: "none",
+                  }}>
+                  {(["trust", "family-law", "commercial", "employment", "property"] as const).map(cat => {
+                    const docs = DOCUMENT_TYPES.filter(d => d.category === cat);
+                    if (!docs.length) return null;
+                    const labels: Record<string, string> = { trust: "Trusts", "family-law": "Family Law", commercial: "Commercial", employment: "Employment", property: "Property" };
+                    return (
+                      <optgroup key={cat} label={labels[cat]}>
+                        {docs.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      </optgroup>
+                    );
+                  })}
+                </select>
+                {/* Document description */}
+                {(() => {
+                  const doc = DOCUMENT_TYPES.find(d => d.id === draftTypeId);
+                  return doc ? (
+                    <p style={{ margin: "8px 0 0", fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>{doc.description}</p>
+                  ) : null;
+                })()}
+              </div>
+
+              {/* Jurisdiction */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Jurisdiction
+                </label>
+                <select value={draftJurisdiction} onChange={e => setDraftJurisdiction(e.target.value)}
+                  style={{
+                    width: "100%", padding: "9px 12px", borderRadius: 8,
+                    background: C.bg, border: `1px solid ${C.border}`,
+                    color: C.text, fontSize: 13, cursor: "pointer", outline: "none",
+                  }}>
+                  <option>All Australian jurisdictions</option>
+                  <option>New South Wales (NSW)</option>
+                  <option>Victoria (VIC)</option>
+                  <option>Queensland (QLD)</option>
+                  <option>Western Australia (WA)</option>
+                  <option>South Australia (SA)</option>
+                  <option>Tasmania (TAS)</option>
+                  <option>Australian Capital Territory (ACT)</option>
+                  <option>Northern Territory (NT)</option>
+                  <option>Cross-border / International</option>
+                </select>
+              </div>
+
+              {/* Parties */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Parties
+                </label>
+                <textarea value={draftParties} onChange={e => setDraftParties(e.target.value)}
+                  placeholder={"e.g.\nTrustee: Smith Holdings Pty Ltd (ACN 123 456 789)\nSettlor: Jane Smith\nBeneficiaries: Smith Family"}
+                  rows={5}
+                  style={{
+                    width: "100%", padding: "9px 12px", borderRadius: 8, resize: "vertical",
+                    background: C.bg, border: `1px solid ${C.border}`,
+                    color: C.text, fontSize: 13, lineHeight: 1.6, outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+
+              {/* Special instructions */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Special Instructions
+                  <span style={{ fontWeight: 400, textTransform: "none", marginLeft: 4, color: C.textDim }}>(optional)</span>
+                </label>
+                <textarea value={draftInstructions} onChange={e => setDraftInstructions(e.target.value)}
+                  placeholder="e.g. Include a corporate trustee clause. Vesting date 80 years from establishment."
+                  rows={3}
+                  style={{
+                    width: "100%", padding: "9px 12px", borderRadius: 8, resize: "vertical",
+                    background: C.bg, border: `1px solid ${C.border}`,
+                    color: C.text, fontSize: 13, lineHeight: 1.6, outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+
+              {/* Warnings for selected doc type */}
+              {(() => {
+                const doc = DOCUMENT_TYPES.find(d => d.id === draftTypeId);
+                return doc && doc.draftingWarnings.length > 0 ? (
+                  <div style={{ marginBottom: 20, padding: "12px 14px", borderRadius: 8, background: "rgba(201,168,76,0.06)", border: `1px solid ${C.goldBorder}` }}>
+                    <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>Key Drafting Risks</p>
+                    {doc.draftingWarnings.slice(0, 3).map((w, i) => (
+                      <p key={i} style={{ margin: i > 0 ? "6px 0 0" : 0, fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>
+                        <span style={{ color: C.gold }}>!</span> {w}
+                      </p>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+
+              <button
+                onClick={sendDraft}
+                disabled={draftLoading}
+                style={{
+                  width: "100%", padding: "12px 0", borderRadius: 10, border: "none",
+                  background: draftLoading ? C.goldDim : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
+                  color: C.bg, fontSize: 13, fontWeight: 800, cursor: draftLoading ? "not-allowed" : "pointer",
+                  letterSpacing: 0.3, transition: "opacity 0.15s",
+                  boxShadow: draftLoading ? "none" : `0 0 20px rgba(201,168,76,0.3)`,
+                }}>
+                {draftLoading ? draftThinkLabel : "Draft Document"}
+              </button>
+
+              {draftLoading && (
+                <p style={{ margin: "10px 0 0", fontSize: 10, color: C.textDim, textAlign: "center" }}>
+                  Searching legislation and verifying citations before drafting...
+                </p>
+              )}
+            </div>
+
+            {/* Output panel */}
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", minWidth: 0 }}>
+
+              {/* Empty state */}
+              {!draftText && !draftLoading && (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, textAlign: "center" }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 16, background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/>
+                    </svg>
+                  </div>
+                  <p style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: C.text }}>Ready to Draft</p>
+                  <p style={{ margin: 0, fontSize: 13, color: C.textMuted, maxWidth: 360, lineHeight: 1.6 }}>
+                    Configure the document on the left. Lex will search the governing legislation, verify section numbers, and draft a fully cited document.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", justifyContent: "center" }}>
+                    {["Search-first mandate", "Verified citations", "QA verification", "Jurisdiction-aware"].map(t => (
+                      <span key={t} style={{ fontSize: 10, padding: "4px 10px", borderRadius: 20, background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Thinking state */}
+              {draftLoading && !draftText && (
+                <div style={{ padding: "32px 32px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                    <ThinkingDots label={draftThinkLabel} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11, color: C.textDim }}>Lex is searching legislation before drafting. This ensures every section number is verified.</p>
+                </div>
+              )}
+
+              {/* Draft output */}
+              {draftText && (
+                <div style={{ padding: "28px 32px" }}>
+                  <div style={{
+                    background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12,
+                    padding: "28px 32px", fontFamily: "'Georgia', 'Times New Roman', serif",
+                    fontSize: 13.5, lineHeight: 1.9, color: C.text, whiteSpace: "pre-wrap",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+                  }}>
+                    {draftText}
+                    {draftLoading && <span style={{ display: "inline-block", width: 8, height: 16, background: C.gold, animation: "lexDot 0.8s ease-in-out infinite", verticalAlign: "middle", marginLeft: 4, borderRadius: 2 }} />}
+                  </div>
+
+                  {/* QA Loading */}
+                  {draftQALoading && (
+                    <div style={{ marginTop: 16, padding: "14px 18px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {[0,1,2].map(i => <span key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: C.gold, display: "block", animation: `lexDot 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
+                      </div>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>Running QA verification — checking every citation and clause...</span>
+                    </div>
+                  )}
+
+                  {/* QA Panel */}
+                  {draftQA && (
+                    <div style={{ marginTop: 20, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                      {/* QA header */}
+                      <div style={{
+                        padding: "20px 24px", background: C.surface,
+                        borderBottom: `1px solid ${C.border}`,
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                      }}>
+                        <div>
+                          <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 800, color: C.text }}>QA Verification Report</p>
+                          <p style={{ margin: 0, fontSize: 11, color: C.textMuted }}>Independent review of citations, clauses, and legal accuracy</p>
+                        </div>
+                        {/* Confidence score */}
+                        <div style={{ textAlign: "center", flexShrink: 0 }}>
+                          <div style={{
+                            width: 72, height: 72, borderRadius: "50%", position: "relative",
+                            background: `conic-gradient(${
+                              draftQA.overallConfidence >= 85 ? "#22c55e" :
+                              draftQA.overallConfidence >= 65 ? "#f59e0b" : "#ef4444"
+                            } ${draftQA.overallConfidence * 3.6}deg, ${C.bg} 0deg)`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            boxShadow: `0 0 16px ${draftQA.overallConfidence >= 85 ? "rgba(34,197,94,0.25)" : draftQA.overallConfidence >= 65 ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}`,
+                          }}>
+                            <div style={{ width: 54, height: 54, borderRadius: "50%", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                              <span style={{ fontSize: 16, fontWeight: 900, color: draftQA.overallConfidence >= 85 ? "#22c55e" : draftQA.overallConfidence >= 65 ? "#f59e0b" : "#ef4444", lineHeight: 1 }}>{draftQA.overallConfidence}</span>
+                              <span style={{ fontSize: 8, color: C.textDim, lineHeight: 1, marginTop: 1 }}>/ 100</span>
+                            </div>
+                          </div>
+                          <p style={{ margin: "6px 0 0", fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: draftQA.overallConfidence >= 85 ? "#22c55e" : draftQA.overallConfidence >= 65 ? "#f59e0b" : "#ef4444" }}>
+                            {draftQA.overallConfidence >= 85 ? "High Confidence" : draftQA.overallConfidence >= 65 ? "Review Advised" : "Significant Concerns"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Critical issues */}
+                      {draftQA.criticalIssues.length > 0 && (
+                        <div style={{ padding: "16px 24px", background: "rgba(239,68,68,0.06)", borderBottom: `1px solid rgba(239,68,68,0.15)` }}>
+                          <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: "#ef4444", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                            Critical Issues — Must Review Before Use
+                          </p>
+                          {draftQA.criticalIssues.map((issue, i) => (
+                            <div key={i} style={{ display: "flex", gap: 8, marginTop: i > 0 ? 8 : 0 }}>
+                              <span style={{ color: "#ef4444", fontSize: 14, lineHeight: 1.4, flexShrink: 0 }}>✕</span>
+                              <p style={{ margin: 0, fontSize: 12, color: "#fca5a5", lineHeight: 1.5 }}>{issue}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Clause sections */}
+                      {draftQA.sections.length > 0 && (
+                        <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.border}` }}>
+                          <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>Clause-by-Clause Review</p>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {draftQA.sections.map((s, i) => {
+                              const statusColor = s.status === "verified" ? "#22c55e" : s.status === "flagged" ? "#f59e0b" : C.textDim;
+                              const statusIcon = s.status === "verified" ? "✓" : s.status === "flagged" ? "⚠" : "?";
+                              const statusBg = s.status === "verified" ? "rgba(34,197,94,0.06)" : s.status === "flagged" ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)";
+                              return (
+                                <div key={i} style={{ padding: "10px 14px", borderRadius: 8, background: statusBg, border: `1px solid ${s.status === "verified" ? "rgba(34,197,94,0.12)" : s.status === "flagged" ? "rgba(245,158,11,0.15)" : C.border}` }}>
+                                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                                    <span style={{ fontSize: 13, color: statusColor, flexShrink: 0, fontWeight: 700, marginTop: 1 }}>{statusIcon}</span>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3, flexWrap: "wrap" }}>
+                                        <span style={{ fontSize: 11, fontWeight: 700, color: C.text }}>{s.id}</span>
+                                        <span style={{ fontSize: 10, color: C.textDim }}>{s.clause}</span>
+                                        <span style={{ fontSize: 9, padding: "1px 7px", borderRadius: 20, background: statusBg, color: statusColor, fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase", border: `1px solid ${s.status === "verified" ? "rgba(34,197,94,0.2)" : s.status === "flagged" ? "rgba(245,158,11,0.2)" : C.border}` }}>
+                                          {s.status}
+                                        </span>
+                                      </div>
+                                      <p style={{ margin: 0, fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>{s.note}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommended checks */}
+                      {draftQA.recommendedChecks.length > 0 && (
+                        <div style={{ padding: "16px 24px" }}>
+                          <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>Recommended Checks Before Use</p>
+                          {draftQA.recommendedChecks.map((check, i) => (
+                            <div key={i} style={{ display: "flex", gap: 8, marginTop: i > 0 ? 8 : 0 }}>
+                              <span style={{ color: C.gold, fontSize: 12, lineHeight: 1.6, flexShrink: 0 }}>→</span>
+                              <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>{check}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div ref={draftBottomRef} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Research mode ───────────────────────────────────────────────────── */}
+        {mode === "research" && (
         <div style={{ flex: 1, overflowY: "auto", padding: "24px 0" }}>
           <div style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px" }}>
 
@@ -517,9 +945,10 @@ export default function LexPage() {
             <div ref={bottomRef} />
           </div>
         </div>
+        )}
 
-        {/* Input area */}
-        <div style={{
+        {/* Input area — research mode only */}
+        {mode === "research" && <div style={{
           borderTop: `1px solid ${C.border}`, background: C.surface,
           padding: "14px 24px 18px", flexShrink: 0,
         }}>
@@ -567,7 +996,7 @@ export default function LexPage() {
               <a href="https://legislation.gov.au" target="_blank" rel="noopener noreferrer" style={{ color: C.textDim }}>legislation.gov.au</a>
             </p>
           </div>
-        </div>
+        </div>}
       </main>
     </div>
   );
