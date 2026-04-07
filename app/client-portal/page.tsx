@@ -80,11 +80,12 @@ function ClientPortalInner() {
     personalityTraits:  [] as string[],
     alwaysSay:          [] as string[],
     neverSay:           [] as string[],
-    customInstructions: "",
+    instructionLog:     [] as { text: string; ts: string }[],
     leadCaptureEnabled: true,
   });
-  const [alwaysSayDraft, setAlwaysSayDraft] = useState("");
-  const [neverSayDraft,  setNeverSayDraft]  = useState("");
+  const [alwaysSayDraft,   setAlwaysSayDraft]   = useState("");
+  const [neverSayDraft,    setNeverSayDraft]     = useState("");
+  const [instructionDraft, setInstructionDraft]  = useState("");
 
   // Sync tab from URL param
   useEffect(() => {
@@ -572,16 +573,50 @@ function ClientPortalInner() {
                 {/* ── Custom Instructions ── */}
                 <div style={sectionStyle}>
                   <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Custom Instructions</h3>
-                  <p style={{ margin: "0 0 12px", fontSize: 13, color: C.muted }}>
-                    Anything else Lex should know — your firm&apos;s values, specific workflows, things to always or never do, jurisdiction focus, or unique client base.
+                  <p style={{ margin: "0 0 4px", fontSize: 13, color: C.muted }}>
+                    Anything else Lex should know — your firm&apos;s values, workflows, jurisdiction focus, or unique client base.
                   </p>
+                  <p style={{ margin: "0 0 16px", fontSize: 12, color: C.dim }}>
+                    Each entry is added to the existing instructions — not replaced. Use amendments to fine-tune over time (e.g. &quot;be slightly less formal&quot; or &quot;add more empathy when discussing family matters&quot;).
+                  </p>
+
+                  {/* Log of past instructions */}
+                  {settings.instructionLog.length > 0 && (
+                    <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {settings.instructionLog.map((entry, i) => (
+                        <div key={i} style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", position: "relative" }}>
+                          <div style={{ fontSize: 11, color: C.dim, marginBottom: 4 }}>
+                            {i === 0 ? "Initial instructions" : `Amendment ${i}`} · {entry.ts}
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: C.muted, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{entry.text}</p>
+                          <button onClick={() => setSettings(p => ({ ...p, instructionLog: p.instructionLog.filter((_, j) => j !== i) }))}
+                            style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new instruction / amendment */}
                   <textarea
-                    value={settings.customInstructions}
-                    onChange={e => setSettings(p => ({ ...p, customInstructions: e.target.value }))}
-                    rows={6}
-                    placeholder={"e.g. We specialise in family law for high-net-worth clients. Always emphasise confidentiality. Never discuss fees — direct clients to book a consultation. Our tone should reflect 30 years of trusted expertise."}
-                    style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                    value={instructionDraft}
+                    onChange={e => setInstructionDraft(e.target.value)}
+                    rows={4}
+                    placeholder={settings.instructionLog.length === 0
+                      ? "e.g. We specialise in family law for high-net-worth clients. Always emphasise confidentiality. Never discuss fees — direct clients to book a consultation."
+                      : "e.g. Be slightly less formal in tone. Show more empathy when the client mentions stress or urgency."}
+                    style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6, marginBottom: 8 }}
                   />
+                  <button
+                    onClick={() => {
+                      const text = instructionDraft.trim();
+                      if (!text) return;
+                      const ts = new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+                      setSettings(p => ({ ...p, instructionLog: [...p.instructionLog, { text, ts }] }));
+                      setInstructionDraft("");
+                    }}
+                    style={{ padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+                    {settings.instructionLog.length === 0 ? "+ Add Instructions" : "+ Add Amendment"}
+                  </button>
                 </div>
 
                 {/* ── Save ── */}
