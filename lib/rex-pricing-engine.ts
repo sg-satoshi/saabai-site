@@ -831,11 +831,7 @@ function priceAcrylicSheet(col: string, thickness: number, width: number, height
   const url = getProductUrl("acrylic");
   const row = ACRYLIC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
-  // WooCommerce does not rotate pieces — if any dimension exceeds the standard sheet's short side,
-  // the calculator routes to the oversized variation (which carries a higher CTS rate)
-  if (Math.max(width, height) > row.sheetH) {
-    return priceWithOversized(row, ACRYLIC_OVERSIZED, col, width, height, qty, url);
-  }
+  // Use fits() to check both orientations — piece fits standard sheet if either rotation works
   const std = calcStandardSheet(row, width, height);
   if (std) return buildResult(std.unitPrice, qty, std.note, url);
   return priceWithOversized(row, ACRYLIC_OVERSIZED, col, width, height, qty, url);
@@ -845,7 +841,7 @@ function pricePCSheet(col: string, thickness: number, width: number, height: num
   const url = getProductUrl("polycarbonate");
   const row = PC.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
-  if (Math.max(width, height) > row.sheetH) {
+  if (!calcStandardSheet(row, width, height)) {
     return priceWithOversized(row, PC_OVERSIZED, col, width, height, qty, url);
   }
   const std = calcStandardSheet(row, width, height);
