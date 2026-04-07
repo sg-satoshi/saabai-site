@@ -65,12 +65,29 @@ export async function GET(req: Request) {
     { ex: SESSION_TTL_SECONDS }
   );
 
-  // Return redirect WITH Set-Cookie in the same response
-  return new Response(null, {
-    status: 302,
+  // Return an HTML page (200 OK) that sets the cookie and redirects via JS.
+  // This is more reliable than Set-Cookie on a 302 — browsers always honour
+  // cookies on 200 responses before running any scripts.
+  const dest = `${BASE_URL}/client-portal`;
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Signing in…</title>
+  <meta http-equiv="refresh" content="0;url=${dest}">
+</head>
+<body style="margin:0;background:#0d1b2a;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;">
+  <p style="color:#8fa3c0;font-size:14px;">Signing you in…</p>
+  <script>window.location.replace(${JSON.stringify(dest)});</script>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status: 200,
     headers: {
-      Location: `${BASE_URL}/client-portal`,
+      "Content-Type": "text/html; charset=utf-8",
       "Set-Cookie": buildCookie(sessionId),
+      "Cache-Control": "no-store, no-cache",
     },
   });
 }
