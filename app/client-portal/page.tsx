@@ -60,12 +60,29 @@ type FirmSession = { email: string; firmName: string; clientId: string; agentNam
 function ClientPortalInner() {
   const searchParams = useSearchParams();
 
-  // ── Auth state ──────────────────────────────────────────────────────────────
+  // ── All hooks must be declared before any early returns (Rules of Hooks) ──────
   const [authView,  setAuthView]  = useState<AuthView>("checking");
   const [loginEmail, setLoginEmail] = useState("");
   const [sending,    setSending]    = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [firm,       setFirm]       = useState<FirmSession | null>(null);
+  // Dashboard state (declared here even when not yet on dashboard)
+  const [tab,      setTab]      = useState<Tab>("overview");
+  const [copied,   setCopied]   = useState<string | null>(null);
+  const [savedOk,  setSavedOk]  = useState(false);
+  const [settings, setSettings] = useState({
+    agentName:       MOCK.agentName,
+    welcomeMessage:  "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
+    formalityLevel:  75,
+    warmthLevel:     60,
+    leadCaptureEnabled: true,
+  });
+
+  // Sync tab from URL param
+  useEffect(() => {
+    const t = searchParams.get("tab") as Tab | null;
+    if (t && TABS.some(x => x.id === t)) setTab(t);
+  }, [searchParams]);
 
   // Check for existing session on mount + handle ?error= from magic link
   useEffect(() => {
@@ -78,6 +95,7 @@ function ClientPortalInner() {
       .then(data => {
         if (data?.authenticated) {
           setFirm({ email: data.email, firmName: data.firmName, clientId: data.clientId, agentName: data.agentName, plan: data.plan });
+          setSettings(prev => ({ ...prev, agentName: data.agentName }));
           setAuthView("dashboard");
         } else {
           setAuthView("login");
@@ -217,22 +235,6 @@ function ClientPortalInner() {
   const clientId  = firm?.clientId  ?? MOCK.clientId;
   const agentName = firm?.agentName ?? MOCK.agentName;
   const plan      = firm?.plan      ?? MOCK.plan;
-
-  const [tab, setTab] = useState<Tab>("overview");
-  const [copied, setCopied]   = useState<string | null>(null);
-  const [savedOk, setSavedOk] = useState(false);
-  const [settings, setSettings] = useState({
-    agentName,
-    welcomeMessage: "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
-    formalityLevel: 75,
-    warmthLevel:    60,
-    leadCaptureEnabled: true,
-  });
-
-  useEffect(() => {
-    const t = searchParams.get("tab") as Tab | null;
-    if (t && TABS.some(x => x.id === t)) setTab(t);
-  }, [searchParams]);
 
   function copy(text: string, key: string) {
     navigator.clipboard.writeText(text).catch(() => {});
