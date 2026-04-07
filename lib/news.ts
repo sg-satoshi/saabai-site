@@ -2,10 +2,12 @@ export interface NewsItem {
   title: string;
   url: string;
   source: string;
-  type: "reddit" | "news";
+  type: "reddit" | "news" | "x";
   score?: number;
   comments?: number;
   permalink?: string;
+  handle?: string;
+  authorName?: string;
 }
 
 function decodeHtml(str: string): string {
@@ -109,9 +111,99 @@ function shuffleNoConsecutive(items: NewsItem[]): NewsItem[] {
   return result;
 }
 
+// ── X / Twitter via Nitter RSS ────────────────────────────────────────────────
+// Nitter is an open-source Twitter front-end that exposes RSS feeds.
+// We rotate through public instances — if one is down the next is tried.
+// All X post links are rewritten to x.com so users land on the real tweet.
+
+const NITTER_INSTANCES = [
+  "nitter.privacydev.net",
+  "nitter.poast.org",
+  "nitter.1d4.us",
+  "nitter.lucabased.com",
+  "nitter.nicfab.eu",
+];
+
+const AI_X_ACCOUNTS: { handle: string; name: string }[] = [
+  { handle: "sama", name: "Sam Altman" },
+  { handle: "karpathy", name: "Andrej Karpathy" },
+  { handle: "ylecun", name: "Yann LeCun" },
+  { handle: "OpenAI", name: "OpenAI" },
+  { handle: "AnthropicAI", name: "Anthropic" },
+  { handle: "GoogleDeepMind", name: "Google DeepMind" },
+  { handle: "huggingface", name: "Hugging Face" },
+  { handle: "GaryMarcus", name: "Gary Marcus" },
+  { handle: "mistralai", name: "Mistral AI" },
+  { handle: "perplexity_ai", name: "Perplexity AI" },
+];
+
+function parseXRss(xml: string, handle: string, authorName: string, limit = 3): NewsItem[] {
+  const items: NewsItem[] = [];
+  const pattern = /<(?:item|entry)[\s>]([\s\S]*?)<\/(?:item|entry)>/g;
+  let m: RegExpExecArray | null;
+
+  while ((m = pattern.exec(xml)) !== null && items.length < limit) {
+    const block = m[1];
+
+    const titleMatch = block.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+    let title = titleMatch ? decodeHtml(titleMatch[1]) : "";
+
+    // Skip retweets and bare @-replies — they lack context without the parent
+    if (title.startsWith("RT @") || title.startsWith("R to @")) continue;
+    if (title.startsWith("@")) continue;
+
+    const linkRss = block.match(/<link[^>]*>\s*(https?[^\s<]+)\s*<\/link>/);
+    const linkAtom = block.match(/<link[^>]*href="(https?[^"]+)"/);
+    let url = linkRss ? linkRss[1].trim() : linkAtom ? linkAtom[1].trim() : "";
+
+    // Rewrite Nitter instance URL to x.com
+    if (url) url = url.replace(/^https:\/\/[^/]+\//, "https://x.com/");
+
+    if (title.length > 10 && url) {
+      items.push({ title, url, source: `@${handle}`, type: "x", handle, authorName });
+    }
+  }
+
+  return items;
+}
+
+async function fetchXAccount(handle: string, authorName: string, limit = 3): Promise<NewsItem[]> {
+  for (const instance of NITTER_INSTANCES) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`https://${instance}/${handle}/rss`, {
+        next: { revalidate: 1800 },
+        headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const items = parseXRss(xml, handle, authorName, limit);
+      if (items.length > 0) return items;
+    } catch {
+      // Try next instance
+    }
+  }
+  return [];
+}
+
+export async function fetchXFeeds(limitPerAccount = 2): Promise<NewsItem[]> {
+  const results = await Promise.allSettled(
+    AI_X_ACCOUNTS.map(({ handle, name }) => fetchXAccount(handle, name, limitPerAccount))
+  );
+  return results
+    .filter((r): r is PromiseFulfilledResult<NewsItem[]> => r.status === "fulfilled")
+    .flatMap((r) => r.value);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface NewsData {
   reddit: NewsItem[];
   news: NewsItem[];
+  x: NewsItem[];
   all: NewsItem[];
   updatedAt: string;
 }
@@ -138,6 +230,7 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     rssRegister,
     rssAINews,
     rssMarkTechPost,
+    xPosts,
   ] = await Promise.all([
     fetchReddit("AINews", 50, rl),
     fetchReddit("artificial", 100, rl),
@@ -156,6 +249,7 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     fetchRss("https://www.theregister.com/software/ai_ml/headlines.atom", "The Register", nl),
     fetchRss("https://artificialintelligence-news.com/feed/", "AI News", nl),
     fetchRss("https://www.marktechpost.com/feed/", "MarkTechPost", nl),
+    fetchXFeeds(2),
   ]);
 
   const reddit = [
@@ -181,11 +275,12 @@ export async function getNewsData(opts?: { redditLimit?: number; newsLimit?: num
     ...rssMarkTechPost,
   ];
 
-  const allRaw = [...reddit, ...news];
+  const allRaw = [...reddit, ...news, ...xPosts];
 
   return {
     reddit: shuffleNoConsecutive(reddit),
     news: shuffleNoConsecutive(news),
+    x: shuffleNoConsecutive(xPosts),
     all: shuffleNoConsecutive(allRaw),
     updatedAt: new Date().toISOString(),
   };
