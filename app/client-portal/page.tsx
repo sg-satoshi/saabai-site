@@ -80,12 +80,18 @@ function ClientPortalInner() {
     personalityTraits:  [] as string[],
     alwaysSay:          [] as string[],
     neverSay:           [] as string[],
-    instructionLog:     [] as { text: string; ts: string }[],
-    leadCaptureEnabled: true,
+    instructionLog:      [] as { text: string; ts: string }[],
+    leadCaptureEnabled:  true,
+    // Goals & Strategy
+    primaryGoal:         "",
+    successDefinition:   "",
+    targetClient:        "",
+    desiredOutcomes:     [] as string[],
   });
-  const [alwaysSayDraft,   setAlwaysSayDraft]   = useState("");
-  const [neverSayDraft,    setNeverSayDraft]     = useState("");
-  const [instructionDraft, setInstructionDraft]  = useState("");
+  const [alwaysSayDraft,    setAlwaysSayDraft]    = useState("");
+  const [neverSayDraft,     setNeverSayDraft]      = useState("");
+  const [instructionDraft,  setInstructionDraft]   = useState("");
+  const [outcomeDraft,      setOutcomeDraft]        = useState("");
 
   // Sync tab from URL param
   useEffect(() => {
@@ -431,12 +437,118 @@ function ClientPortalInner() {
 
           return (
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Customise Lex</h2>
-              <p style={{ color: C.muted, margin: "0 0 32px", fontSize: 14 }}>
-                Everything below shapes how Lex speaks, thinks, and represents your firm.
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Agent Configuration</h2>
+              <p style={{ color: C.muted, margin: "0 0 32px", fontSize: 14, lineHeight: 1.6 }}>
+                Every setting here becomes a guiding principle for {agentName} — shaping how it thinks, speaks, and drives your firm&apos;s goals across every conversation.
+                All configuration is saved to your firm&apos;s profile and applied automatically.
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
+
+                {/* ── Goals & Strategy ── */}
+                <div style={{ ...sectionStyle, borderColor: C.goldBdr, background: `linear-gradient(135deg, ${C.surface} 0%, rgba(201,168,76,0.04) 100%)` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                    <span style={{ fontSize: 18 }}>🎯</span>
+                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.goldB }}>Goals & Strategy</h3>
+                  </div>
+                  <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                    Define what success looks like for your firm. {agentName} will use these goals to actively steer every conversation toward your desired outcomes — not just answer questions, but drive results.
+                  </p>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={labelStyle}>Primary Business Goal</label>
+                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>What is the single most important thing you want Lex to achieve for your business?</p>
+                    <textarea
+                      value={settings.primaryGoal}
+                      onChange={e => setSettings(p => ({ ...p, primaryGoal: e.target.value }))}
+                      rows={3}
+                      placeholder="e.g. Convert every website enquiry into a booked consultation. Our goal is to turn 40% of widget conversations into qualified leads who book a free 15-minute call."
+                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={labelStyle}>What does a successful conversation look like?</label>
+                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>Describe the ideal outcome — how should the client feel, and what action should they take?</p>
+                    <textarea
+                      value={settings.successDefinition}
+                      onChange={e => setSettings(p => ({ ...p, successDefinition: e.target.value }))}
+                      rows={3}
+                      placeholder="e.g. The client feels genuinely heard and reassured. They understand their options and are confident in taking the next step. They have either booked a consultation or left their contact details."
+                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={labelStyle}>Your Ideal Client</label>
+                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>Who are you trying to attract and serve? The more specific, the better {agentName} can qualify and connect with the right people.</p>
+                    <textarea
+                      value={settings.targetClient}
+                      onChange={e => setSettings(p => ({ ...p, targetClient: e.target.value }))}
+                      rows={3}
+                      placeholder="e.g. Small business owners (10–50 staff) facing employment disputes or contract issues. They are time-poor, cost-conscious, and need fast, clear guidance without legal jargon."
+                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Desired Outcomes (in priority order)</label>
+                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>What actions should {agentName} guide every conversation toward? Add them in order of priority — {agentName} will aim for #1 first, then #2, and so on.</p>
+                    {settings.desiredOutcomes.length > 0 && (
+                      <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                        {settings.desiredOutcomes.map((outcome, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px" }}>
+                            <span style={{ fontSize: 12, fontWeight: 800, color: C.gold, minWidth: 20 }}>#{i + 1}</span>
+                            <span style={{ flex: 1, fontSize: 13, color: C.text }}>{outcome}</span>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              {i > 0 && (
+                                <button onClick={() => setSettings(p => {
+                                  const arr = [...p.desiredOutcomes];
+                                  [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+                                  return { ...p, desiredOutcomes: arr };
+                                })} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 14, padding: "0 4px" }} title="Move up">↑</button>
+                              )}
+                              {i < settings.desiredOutcomes.length - 1 && (
+                                <button onClick={() => setSettings(p => {
+                                  const arr = [...p.desiredOutcomes];
+                                  [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+                                  return { ...p, desiredOutcomes: arr };
+                                })} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 14, padding: "0 4px" }} title="Move down">↓</button>
+                              )}
+                              <button onClick={() => setSettings(p => ({ ...p, desiredOutcomes: p.desiredOutcomes.filter((_, j) => j !== i) }))}
+                                style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, padding: "0 4px", lineHeight: 1 }}>×</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        value={outcomeDraft}
+                        onChange={e => setOutcomeDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = outcomeDraft.trim();
+                            if (!val) return;
+                            setSettings(p => ({ ...p, desiredOutcomes: [...p.desiredOutcomes, val] }));
+                            setOutcomeDraft("");
+                          }
+                        }}
+                        placeholder="e.g. Book a free consultation · Capture contact details · Qualify the matter type"
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                      <button onClick={() => {
+                        const val = outcomeDraft.trim();
+                        if (!val) return;
+                        setSettings(p => ({ ...p, desiredOutcomes: [...p.desiredOutcomes, val] }));
+                        setOutcomeDraft("");
+                      }} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 {/* ── Identity ── */}
                 <div style={sectionStyle}>
