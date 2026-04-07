@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
     date: "7 Apr 2026",
     label: "Today",
     entries: [
+      { time: "09:30", tag: "FIX", title: "Rex pricing format restored — explicit instruction added for Rex to always wrap price in markdown link using productUrl from getPrice result; fixes regression where price showed as plain text without yellow colour or clickable link after email gate removal" },
       { time: "09:00", tag: "IMPROVEMENT", title: "Email gate removed from pricing — Rex now gives quotes immediately without asking for email first; after delivering a quote Rex offers a soft 'want me to send this through?' prompt; if no email given Rex moves on without asking again; fixes internal/staff use where multiple quotes were blocked by the email wall" },
     ],
   },
