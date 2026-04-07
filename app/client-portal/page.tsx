@@ -93,11 +93,23 @@ function ClientPortalInner() {
     targetClient:        "",
     desiredOutcomes:     [] as string[],
     skillPacks:          [] as string[],
+    // Style Coach
+    writingPersona:    "",
+    clientAddress:     "first-name" as "first-name" | "mr-ms" | "formal",
+    contractions:      "sometimes" as "always" | "sometimes" | "never",
+    sentenceLength:    "medium" as "short" | "medium" | "long",
+    legalLatin:        "sometimes" as "never" | "sometimes" | "often",
+    openingStyle:      "",
+    badNewsStyle:      "",
+    signOff:           "",
+    writingSamples:    [] as { label: string; text: string }[],
   });
   const [alwaysSayDraft,    setAlwaysSayDraft]    = useState("");
   const [neverSayDraft,     setNeverSayDraft]      = useState("");
   const [instructionDraft,  setInstructionDraft]   = useState("");
   const [outcomeDraft,      setOutcomeDraft]        = useState("");
+  const [sampleLabelDraft,  setSampleLabelDraft]    = useState("");
+  const [sampleTextDraft,   setSampleTextDraft]     = useState("");
   // Test Agent tab state
   const [testMessages, setTestMessages] = useState<TestMsg[]>([]);
   const [testInput,    setTestInput]    = useState("");
@@ -891,6 +903,199 @@ function ClientPortalInner() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* ── Style Coach ── */}
+                <div style={sectionStyle}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                    <span style={{ fontSize: 20, marginTop: 1 }}>✍️</span>
+                    <div>
+                      <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Style Coach</h3>
+                      <p style={{ margin: 0, fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                        Teach {agentName} to write exactly like you do. Senior lawyers have spent decades developing their voice — this is where you transfer that to your agent. The more precise you are, the more precisely {agentName} will replicate it.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ height: 1, background: C.border, margin: "16px 0" }} />
+
+                  {/* Writing persona */}
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={labelStyle}>Your Writing Persona</label>
+                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
+                      In your own words — what makes your writing style distinctive? What do you always do? What do you never do? How do you want clients to feel when they read your words?
+                    </p>
+                    <textarea
+                      value={settings.writingPersona}
+                      onChange={e => setSettings(p => ({ ...p, writingPersona: e.target.value }))}
+                      rows={5}
+                      placeholder={"e.g. I'm a senior tax partner with 28 years of practice. I lead with the answer — never bury the conclusion. I write in plain English unless a term of art is genuinely necessary. I never begin with 'I hope this finds you well.' I use short sentences. I don't hedge unless I need to. When delivering bad news, I'm direct but I always include a path forward. My sign-off is always 'Kind regards' — never 'Best wishes'."}
+                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  {/* Style attributes */}
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ ...labelStyle, marginBottom: 16 }}>Style Attributes</label>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+
+                      {/* Client address */}
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>How do you address clients?</div>
+                        {([
+                          { val: "first-name", label: "First name", eg: "\"Hi James\"" },
+                          { val: "mr-ms",      label: "Mr / Ms Surname", eg: "\"Dear Mr Thompson\"" },
+                          { val: "formal",     label: "Full formal", eg: "\"Dear Mr James Thompson\"" },
+                        ] as { val: "first-name"|"mr-ms"|"formal"; label: string; eg: string }[]).map(opt => (
+                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
+                            <input type="radio" name="clientAddress" checked={settings.clientAddress === opt.val}
+                              onChange={() => setSettings(p => ({ ...p, clientAddress: opt.val }))}
+                              style={{ accentColor: C.gold }} />
+                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
+                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Contractions */}
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Contractions (don't, can't, it's)</div>
+                        {([
+                          { val: "never",     label: "Never", eg: "always \"do not\", \"cannot\"" },
+                          { val: "sometimes", label: "Sometimes", eg: "depends on context" },
+                          { val: "always",    label: "Always", eg: "conversational tone" },
+                        ] as { val: "always"|"sometimes"|"never"; label: string; eg: string }[]).map(opt => (
+                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
+                            <input type="radio" name="contractions" checked={settings.contractions === opt.val}
+                              onChange={() => setSettings(p => ({ ...p, contractions: opt.val }))}
+                              style={{ accentColor: C.gold }} />
+                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
+                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Sentence length */}
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Sentence length preference</div>
+                        {([
+                          { val: "short",  label: "Short & punchy", eg: "clear, direct, minimal" },
+                          { val: "medium", label: "Balanced", eg: "standard professional length" },
+                          { val: "long",   label: "Long & detailed", eg: "thorough, layered reasoning" },
+                        ] as { val: "short"|"medium"|"long"; label: string; eg: string }[]).map(opt => (
+                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
+                            <input type="radio" name="sentenceLength" checked={settings.sentenceLength === opt.val}
+                              onChange={() => setSettings(p => ({ ...p, sentenceLength: opt.val }))}
+                              style={{ accentColor: C.gold }} />
+                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
+                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Legal Latin */}
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Legal Latin (inter alia, prima facie, etc.)</div>
+                        {([
+                          { val: "never",     label: "Never", eg: "plain English always" },
+                          { val: "sometimes", label: "When precise", eg: "only when genuinely necessary" },
+                          { val: "often",     label: "Freely", eg: "part of professional register" },
+                        ] as { val: "never"|"sometimes"|"often"; label: string; eg: string }[]).map(opt => (
+                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
+                            <input type="radio" name="legalLatin" checked={settings.legalLatin === opt.val}
+                              onChange={() => setSettings(p => ({ ...p, legalLatin: opt.val }))}
+                              style={{ accentColor: C.gold }} />
+                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
+                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Freetext style questions */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 20 }}>
+                      {([
+                        { key: "openingStyle" as const, label: "How do you open a letter or email of advice?", placeholder: "e.g. \"Thank you for your instructions. The question is whether...\" or \"I refer to our meeting of [date]. My advice is as follows.\"" },
+                        { key: "badNewsStyle" as const, label: "How do you deliver bad news or an unfavourable opinion?", placeholder: "e.g. \"I need to be direct with you — the position is not as strong as you had hoped. That said, there are steps we can take to...\"" },
+                        { key: "signOff" as const, label: "Your standard sign-off / closing phrase", placeholder: "e.g. \"Please do not hesitate to contact me should you have any questions.\" then \"Kind regards\"" },
+                      ]).map(field => (
+                        <div key={field.key}>
+                          <label style={labelStyle}>{field.label}</label>
+                          <textarea
+                            value={settings[field.key]}
+                            onChange={e => setSettings(p => ({ ...p, [field.key]: e.target.value }))}
+                            rows={2}
+                            placeholder={field.placeholder}
+                            style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Writing samples */}
+                  <div>
+                    <label style={labelStyle}>Writing Samples</label>
+                    <p style={{ margin: "0 0 12px", fontSize: 12, color: C.dim, lineHeight: 1.6 }}>
+                      Paste 1–3 real excerpts from your own writing — emails, letters of advice, or client communications. {agentName} will study these closely and mirror your exact phrasing, rhythm, and structure.
+                    </p>
+
+                    {settings.writingSamples.length > 0 && (
+                      <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                        {settings.writingSamples.map((sample, i) => (
+                          <div key={i} style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+                            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: C.goldB }}>
+                                Sample {i + 1}{sample.label ? ` — ${sample.label}` : ""}
+                              </span>
+                              <button onClick={() => setSettings(p => ({ ...p, writingSamples: p.writingSamples.filter((_, j) => j !== i) }))}
+                                style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>×</button>
+                            </div>
+                            <p style={{ margin: 0, padding: "12px 14px", fontSize: 12, color: C.muted, lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 120, overflowY: "auto" }}>{sample.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {settings.writingSamples.length < 3 && (
+                      <div style={{ background: C.raised, border: `1px dashed ${C.border}`, borderRadius: 10, padding: 16 }}>
+                        <div style={{ marginBottom: 10 }}>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>Sample label (optional)</label>
+                          <input
+                            value={sampleLabelDraft}
+                            onChange={e => setSampleLabelDraft(e.target.value)}
+                            placeholder="e.g. Letter of advice — CGT on property sale"
+                            style={{ ...inputStyle }}
+                          />
+                        </div>
+                        <div style={{ marginBottom: 10 }}>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>Paste your writing here</label>
+                          <textarea
+                            value={sampleTextDraft}
+                            onChange={e => setSampleTextDraft(e.target.value)}
+                            rows={6}
+                            placeholder="Paste an excerpt from one of your actual letters, emails, or advice documents..."
+                            style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            const text = sampleTextDraft.trim();
+                            if (!text) return;
+                            setSettings(p => ({ ...p, writingSamples: [...p.writingSamples, { label: sampleLabelDraft.trim(), text }] }));
+                            setSampleLabelDraft("");
+                            setSampleTextDraft("");
+                          }}
+                          style={{ padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.goldBdr}`, background: C.goldBg, color: C.goldB, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+                          + Add Writing Sample {settings.writingSamples.length > 0 ? `(${settings.writingSamples.length}/3)` : ""}
+                        </button>
+                      </div>
+                    )}
+                    {settings.writingSamples.length >= 3 && (
+                      <p style={{ margin: 0, fontSize: 12, color: C.dim }}>Maximum 3 samples added. Remove one to add another.</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* ── Custom Instructions ── */}

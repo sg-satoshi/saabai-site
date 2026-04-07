@@ -15,6 +15,16 @@ export interface PortalSettings {
   alwaysSay?: string[];
   neverSay?: string[];
   instructionLog?: { text: string; ts: string }[];
+  // Style Coach
+  writingPersona?: string;
+  clientAddress?: "first-name" | "mr-ms" | "formal";
+  contractions?: "always" | "sometimes" | "never";
+  sentenceLength?: "short" | "medium" | "long";
+  legalLatin?: "never" | "sometimes" | "often";
+  openingStyle?: string;
+  badNewsStyle?: string;
+  signOff?: string;
+  writingSamples?: { label: string; text: string }[];
 }
 
 const SKILL_PACK_INSTRUCTIONS: Record<string, string> = {
@@ -124,6 +134,56 @@ export function buildSystemPromptAddition(s: PortalSettings): string {
     lines.push("[LANGUAGE RULES]");
     if (s.alwaysSay?.length) lines.push(`Always say: ${s.alwaysSay.join(", ")}`);
     if (s.neverSay?.length) lines.push(`Never say / avoid: ${s.neverSay.join(", ")}`);
+  }
+
+  // Writing Style — compiled from Style Coach
+  const hasWritingStyle =
+    s.writingPersona || s.clientAddress || s.contractions || s.sentenceLength ||
+    s.legalLatin || s.openingStyle || s.badNewsStyle || s.signOff ||
+    (s.writingSamples?.length ?? 0) > 0;
+
+  if (hasWritingStyle) {
+    lines.push("");
+    lines.push("[WRITING STYLE — FOLLOW PRECISELY]");
+    lines.push("This section defines how the senior lawyer writes. Mirror this style exactly in every response.");
+
+    if (s.writingPersona) {
+      lines.push("");
+      lines.push(`Writing Persona: ${s.writingPersona}`);
+    }
+
+    const styleAttrs: string[] = [];
+    if (s.clientAddress) {
+      const addressMap = { "first-name": "first name only (e.g. 'Hi James')", "mr-ms": "Mr/Ms Surname (e.g. 'Dear Mr Thompson')", "formal": "full formal name" };
+      styleAttrs.push(`Address clients by: ${addressMap[s.clientAddress]}`);
+    }
+    if (s.contractions) {
+      const contractMap = { never: "never use contractions — always write 'do not', 'cannot', 'it is'", sometimes: "use contractions only in informal contexts", always: "use contractions freely for a conversational register" };
+      styleAttrs.push(`Contractions: ${contractMap[s.contractions]}`);
+    }
+    if (s.sentenceLength) {
+      const lengthMap = { short: "short, punchy sentences — direct and minimal", medium: "balanced sentence length — professional standard", long: "longer, detailed sentences — thorough reasoning" };
+      styleAttrs.push(`Sentence length: ${lengthMap[s.sentenceLength]}`);
+    }
+    if (s.legalLatin) {
+      const latinMap = { never: "never use legal Latin — plain English always", sometimes: "use legal Latin only when it is the most precise term", often: "use legal Latin freely as part of professional register" };
+      styleAttrs.push(`Legal Latin: ${latinMap[s.legalLatin]}`);
+    }
+    if (styleAttrs.length) lines.push(...styleAttrs);
+
+    if (s.openingStyle) lines.push(`Opening style: ${s.openingStyle}`);
+    if (s.badNewsStyle) lines.push(`Delivering bad news: ${s.badNewsStyle}`);
+    if (s.signOff) lines.push(`Sign-off / closing: ${s.signOff}`);
+
+    if (s.writingSamples?.length) {
+      lines.push("");
+      lines.push("Writing Samples — study these and replicate this exact style, tone, phrasing, and rhythm:");
+      s.writingSamples.forEach((sample, i) => {
+        lines.push("");
+        lines.push(`Sample ${i + 1}${sample.label ? ` (${sample.label})` : ""}:`);
+        lines.push(`"${sample.text}"`);
+      });
+    }
   }
 
   // Custom instructions — newest-first
