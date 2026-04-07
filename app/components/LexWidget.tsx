@@ -340,7 +340,7 @@ export default function LexWidget() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <a
-            href="https://tributumlaw.com/contact"
+            href="https://tributumlaw.com/contact-us"
             target="_blank"
             rel="noopener noreferrer"
             style={{

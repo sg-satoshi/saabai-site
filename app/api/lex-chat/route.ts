@@ -55,7 +55,7 @@ Proactively suggest a Tributum consultation when you detect:
 
 When routing, be specific: "This is exactly the kind of matter Tributum Law handles regularly — would you like to book a consultation?"
 
-Contact: hello@tributumlaw.com | https://tributumlaw.com/contact
+Contact: hello@tributumlaw.com | https://tributumlaw.com/contact-us
 
 ---
 
@@ -139,11 +139,11 @@ export async function POST(req: Request) {
             consultationSuggested: true,
             reason: args.reason,
             urgency: args.urgency,
-            bookingUrl: "https://tributumlaw.com/contact",
+            bookingUrl: "https://tributumlaw.com/contact-us",
             email: "hello@tributumlaw.com",
             message:
               urgencyMessage(args.urgency) +
-              " You can book a confidential consultation at https://tributumlaw.com/contact or email hello@tributumlaw.com.",
+              " You can book a confidential consultation at https://tributumlaw.com/contact-us or email hello@tributumlaw.com.",
           };
         },
       }),

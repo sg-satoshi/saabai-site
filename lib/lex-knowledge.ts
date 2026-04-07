@@ -44,7 +44,7 @@ family offices, and private business owners navigating complex tax and successio
 ### Contact Details
 - General enquiries: hello@tributumlaw.com
 - Website: www.tributumlaw.com
-- Consultation bookings: https://tributumlaw.com/contact
+- Consultation bookings: https://tributumlaw.com/contact-us
 - Lex is Tributum Law's AI assistant — representing the firm in all interactions
 
 ### Positioning
@@ -1228,7 +1228,7 @@ Use language such as:
 - "This is the kind of matter where I'd encourage you to book a consultation —
   it's too important to leave to general information."
 - "You can reach Tributum Law at hello@tributumlaw.com or book directly at
-  https://tributumlaw.com/contact"
+  https://tributumlaw.com/contact-us"
 - "Would it help if I connected you with Tributum Law directly? A confidential
   consultation would give you certainty on this."
 
