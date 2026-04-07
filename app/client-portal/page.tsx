@@ -73,7 +73,7 @@ function ClientPortalInner() {
     if (err === "invalid_token") setLoginError("That sign-in link has expired or already been used. Request a new one.");
     if (err === "missing_token")  setLoginError("Invalid sign-in link. Please request a new one.");
 
-    fetch("/api/portal/me")
+    fetch("/api/portal/me", { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.authenticated) {

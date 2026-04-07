@@ -11,10 +11,22 @@ import { getLexClients } from "../../../../lib/lex-config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+function parseCookie(header: string | null, name: string): string | undefined {
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const [k, v] = part.trim().split("=");
+    if (k === name) return v;
+  }
+  return undefined;
+}
+
+export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get("portal_session")?.value;
+    // Read cookie directly from request headers — more reliable than next/headers
+    // cookies() in Route Handlers has known issues in some Next.js 15 deployments.
+    const sessionId =
+      parseCookie(req.headers.get("cookie"), "portal_session") ||
+      (await cookies()).get("portal_session")?.value;
 
     if (!sessionId) {
       return Response.json({ authenticated: false }, { status: 401 });
