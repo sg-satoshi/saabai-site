@@ -7,6 +7,13 @@ import {
   searchATO,
   searchLegislation,
   searchInternational,
+  verifySection,
+  searchStateLegislation,
+  searchASIC,
+  searchAAT,
+  searchFairWork,
+  searchCorporationsLaw,
+  searchFamilyLaw,
   type LegalSearchResponse,
 } from "../../../lib/lex-tools";
 
@@ -16,11 +23,14 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-type AustLIIInput  = { query: string; jurisdiction?: string };
-type ATOInput      = { query: string };
-type LegisInput    = { query: string };
-type IntlInput     = { query: string; source?: "bailii" | "nzlii" | "worldlii" };
-type MatterInput   = { name: string; email: string; phone?: string; practiceArea: string; matterBrief: string };
+type AustLIIInput        = { query: string; jurisdiction?: string };
+type ATOInput            = { query: string };
+type LegisInput          = { query: string };
+type IntlInput           = { query: string; source?: "bailii" | "nzlii" | "worldlii" };
+type VerifySectionInput  = { act: string; section: string };
+type StateLegisInput     = { query: string; state: "NSW" | "VIC" | "QLD" | "WA" | "SA" | "TAS" | "ACT" | "NT" };
+type SimpleQueryInput    = { query: string };
+type MatterInput         = { name: string; email: string; phone?: string; practiceArea: string; matterBrief: string };
 
 export async function POST(req: Request) {
   try {
@@ -144,6 +154,124 @@ export async function POST(req: Request) {
               required: ["query"],
             }),
             execute: async ({ query, source }) => searchInternational(query, source),
+          }),
+        }),
+
+        ...(enabledTools.has("verifySection") && {
+          verifySection: tool<VerifySectionInput, LegalSearchResponse>({
+            description:
+              "Verify the exact text of a specific section from legislation.gov.au BEFORE citing it in any document or advice. " +
+              "Always call this before including a specific section number in a draft — prevents citation hallucinations.",
+            inputSchema: jsonSchema<VerifySectionInput>({
+              type: "object",
+              properties: {
+                act:     { type: "string", description: "Full Act name — e.g. 'Corporations Act 2001' or 'Income Tax Assessment Act 1997'" },
+                section: { type: "string", description: "Section reference — e.g. '181' or '9' or '102AG'" },
+              },
+              required: ["act", "section"],
+            }),
+            execute: async ({ act, section }) => verifySection(act, section),
+          }),
+        }),
+
+        ...(enabledTools.has("searchStateLegislation") && {
+          searchStateLegislation: tool<StateLegisInput, LegalSearchResponse>({
+            description:
+              "Search state and territory legislation on AustLII. Use for state-specific Acts: Property Law Act, " +
+              "Conveyancing Act, Duties Act, Succession Act, Retail Leases Act, Workers Compensation, etc.",
+            inputSchema: jsonSchema<StateLegisInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Legislation query — e.g. 'Succession Act spouse entitlement'" },
+                state: {
+                  type: "string",
+                  enum: ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"],
+                  description: "The Australian state or territory",
+                },
+              },
+              required: ["query", "state"],
+            }),
+            execute: async ({ query, state }) => searchStateLegislation(query, state),
+          }),
+        }),
+
+        ...(enabledTools.has("searchASIC") && {
+          searchASIC: tool<SimpleQueryInput, LegalSearchResponse>({
+            description:
+              "Search ASIC for regulatory guides, information sheets, legislative instruments, and compliance guidance. " +
+              "Use for corporate governance, financial services licensing, managed investments, market conduct.",
+            inputSchema: jsonSchema<SimpleQueryInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "ASIC regulatory query — e.g. 'RG 65 section 912A financial services licensee obligations'" },
+              },
+              required: ["query"],
+            }),
+            execute: async ({ query }) => searchASIC(query),
+          }),
+        }),
+
+        ...(enabledTools.has("searchAAT") && {
+          searchAAT: tool<SimpleQueryInput, LegalSearchResponse>({
+            description:
+              "Search Administrative Appeals Tribunal decisions. Covers tax objections, migration review, NDIS, " +
+              "social security appeals, ATO private ruling reviews, and general administrative decisions.",
+            inputSchema: jsonSchema<SimpleQueryInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "AAT query — e.g. 'income tax objection deductions work-related expenses'" },
+              },
+              required: ["query"],
+            }),
+            execute: async ({ query }) => searchAAT(query),
+          }),
+        }),
+
+        ...(enabledTools.has("searchFairWork") && {
+          searchFairWork: tool<SimpleQueryInput, LegalSearchResponse>({
+            description:
+              "Search Fair Work Commission decisions, awards, and determinations. Use for unfair dismissal, " +
+              "enterprise agreements, general protections, modern award rates, anti-bullying, and right of entry.",
+            inputSchema: jsonSchema<SimpleQueryInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Employment law query — e.g. 'unfair dismissal valid reason procedural fairness' or 'Legal Services Award 2020 rates'" },
+              },
+              required: ["query"],
+            }),
+            execute: async ({ query }) => searchFairWork(query),
+          }),
+        }),
+
+        ...(enabledTools.has("searchCorporationsLaw") && {
+          searchCorporationsLaw: tool<SimpleQueryInput, LegalSearchResponse>({
+            description:
+              "Search Corporations Act case law and ASIC decisions on AustLII. Use for directors' duties, " +
+              "corporate governance, insolvency, managed investment schemes, takeovers, and market misconduct.",
+            inputSchema: jsonSchema<SimpleQueryInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Corporations law query — e.g. 'director duty of care section 180 business judgment rule'" },
+              },
+              required: ["query"],
+            }),
+            execute: async ({ query }) => searchCorporationsLaw(query),
+          }),
+        }),
+
+        ...(enabledTools.has("searchFamilyLaw") && {
+          searchFamilyLaw: tool<SimpleQueryInput, LegalSearchResponse>({
+            description:
+              "Search Family Court and Federal Circuit Court decisions. Use for property settlement, " +
+              "parenting orders, spousal maintenance, binding financial agreements, divorce, and de facto matters.",
+            inputSchema: jsonSchema<SimpleQueryInput>({
+              type: "object",
+              properties: {
+                query: { type: "string", description: "Family law query — e.g. 'property settlement contributions assessment Stanford v Stanford'" },
+              },
+              required: ["query"],
+            }),
+            execute: async ({ query }) => searchFamilyLaw(query),
           }),
         }),
 

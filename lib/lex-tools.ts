@@ -145,3 +145,99 @@ export async function searchInternational(
   const { site, label } = sites[source];
   return siteSearch(query, site, label);
 }
+
+/**
+ * Verify the exact text of a section from legislation.gov.au.
+ * Use this BEFORE citing any specific statutory provision in a document.
+ * Anti-hallucination: always verify section numbers and text before including in a draft.
+ *
+ * @param act       Full Act name, e.g. "Corporations Act 2001"
+ * @param section   Section reference, e.g. "181" or "9(1)(b)"
+ */
+export async function verifySection(
+  act: string,
+  section: string
+): Promise<LegalSearchResponse> {
+  const q = `"${act}" "section ${section}"`;
+  return siteSearch(q, "legislation.gov.au", "Federal Register of Legislation");
+}
+
+/**
+ * Search state and territory legislation on AustLII.
+ * Use for state-specific Acts: Property Law Act, Conveyancing Act, Duties Act,
+ * Succession Act, Workers Compensation, Retail Leases Act, etc.
+ *
+ * @param query  Legal query
+ * @param state  "NSW" | "VIC" | "QLD" | "WA" | "SA" | "TAS" | "ACT" | "NT"
+ */
+export async function searchStateLegislation(
+  query: string,
+  state: "NSW" | "VIC" | "QLD" | "WA" | "SA" | "TAS" | "ACT" | "NT"
+): Promise<LegalSearchResponse> {
+  const statePathMap: Record<string, string> = {
+    NSW: "nsw/legis",
+    VIC: "vic/legis",
+    QLD: "qld/legis",
+    WA: "wa/legis",
+    SA: "sa/legis",
+    TAS: "tas/legis",
+    ACT: "act/legis",
+    NT: "nt/legis",
+  };
+  const path = statePathMap[state];
+  return siteSearch(`${query} ${state}`, `austlii.edu.au/au/${path}`, `AustLII (${state} Legislation)`);
+}
+
+/**
+ * Search ASIC (Australian Securities and Investments Commission).
+ * Covers: regulatory guides, information sheets, legislative instruments,
+ * media releases, ASIC decisions, and company search guidance.
+ *
+ * @param query  Legal or regulatory query
+ */
+export async function searchASIC(query: string): Promise<LegalSearchResponse> {
+  return siteSearch(query, "asic.gov.au", "ASIC");
+}
+
+/**
+ * Search Administrative Appeals Tribunal (AAT) decisions on AustLII.
+ * Covers: tax objections, migration review, NDIS, social security, ATO appeals.
+ *
+ * @param query  Legal query
+ */
+export async function searchAAT(query: string): Promise<LegalSearchResponse> {
+  return siteSearch(query, "austlii.edu.au/au/cases/cth/aat", "Administrative Appeals Tribunal");
+}
+
+/**
+ * Search Fair Work Commission decisions, awards, and determinations.
+ * Covers: unfair dismissal, enterprise agreements, modern awards,
+ * general protections, minimum wage decisions, and anti-bullying.
+ *
+ * @param query  Employment law query
+ */
+export async function searchFairWork(query: string): Promise<LegalSearchResponse> {
+  return siteSearch(query, "fwc.gov.au", "Fair Work Commission");
+}
+
+/**
+ * Search ASIC Connect and Corporations Act case law on AustLII.
+ * Covers: directors' duties, corporate governance, insolvency,
+ * managed investment schemes, market misconduct, takeovers.
+ *
+ * @param query  Corporations law query
+ */
+export async function searchCorporationsLaw(query: string): Promise<LegalSearchResponse> {
+  return siteSearch(`${query} corporations act`, "austlii.edu.au", "AustLII (Corporations Law)");
+}
+
+/**
+ * Search Family Court and Federal Circuit Court decisions.
+ * Covers: property settlement, parenting orders, spousal maintenance,
+ * BFAs, financial agreements, divorce, and de facto relationships.
+ *
+ * @param query  Family law query
+ */
+export async function searchFamilyLaw(query: string): Promise<LegalSearchResponse> {
+  return siteSearch(query, "austlii.edu.au/au/cases/cth/famca", "Family Court of Australia");
+}
