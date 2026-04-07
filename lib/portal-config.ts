@@ -56,7 +56,15 @@ export async function getPortalSettings(email: string): Promise<PortalSettings |
 }
 
 export function buildSystemPromptAddition(s: PortalSettings): string {
-  const lines: string[] = ["", "--- FIRM CONFIGURATION ---"];
+  const lines: string[] = [
+    "",
+    "--- FIRM CONFIGURATION ---",
+    "",
+    "[FORMATTING — NON-NEGOTIABLE]",
+    "Never use asterisks, bold (**text**), headers (##), or any markdown symbols. They render as raw characters.",
+    "Write in plain prose only. Break after every 1–2 sentences with a blank line. Short paragraphs. No walls of text.",
+    "For numbered lists, give each item its own paragraph — a blank line before each number. Never run numbered points together in one block.",
+  ];
 
   // Goals
   const hasGoals =
