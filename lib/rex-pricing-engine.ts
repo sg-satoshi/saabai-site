@@ -785,6 +785,9 @@ function buildResult(unitPrice: number, qty: number, note: string, url: string):
 function calcStandardSheet(row: SheetRow, width: number, height: number): { unitPrice: number; note: string } | null {
   if (!fits(width, height, row.sheetW, row.sheetH)) return null; // doesn't fit
   if (!row.ctsRate) return { unitPrice: row.fullSheetPrice, note: "full sheet only" };
+  // If dimensions exactly match the full sheet (either orientation) — no cutting, no fee
+  const isFullSheet = (width === row.sheetW && height === row.sheetH) || (width === row.sheetH && height === row.sheetW);
+  if (isFullSheet) return { unitPrice: row.fullSheetPrice, note: "full sheet" };
   const area = (width / 1000) * (height / 1000);
   const ctsPrice = r2(row.ctsRate * area);
   if (ctsPrice >= row.fullSheetPrice) {
@@ -806,6 +809,9 @@ function priceWithOversized(
     if (!fits(width, height, os.sheetW, os.sheetH)) continue;
     const osPrice = oversizedColourPrice(os, col);
     if (osPrice === null) continue;
+    // If dimensions exactly match the oversized sheet — no cutting, no fee
+    const isFullSheet = (width === os.sheetW && height === os.sheetH) || (width === os.sheetH && height === os.sheetW);
+    if (isFullSheet) return buildResult(osPrice, qty, "oversized full sheet", url);
     // Oversized variations carry a 20% CTS rate premium (matches WooCommerce oversized variation pricing)
     const area = (width / 1000) * (height / 1000);
     const ctsPrice = r2((stdRow.ctsRate ?? 0) * 1.2 * area);
