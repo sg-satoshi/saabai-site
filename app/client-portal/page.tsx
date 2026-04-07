@@ -1314,9 +1314,13 @@ function ClientPortalInner() {
                       maxWidth: "75%", padding: "10px 14px", borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                       background: msg.role === "user" ? C.gold : C.raised,
                       color: msg.role === "user" ? "#0a1628" : C.text,
-                      fontSize: 14, lineHeight: 1.6,
+                      fontSize: 14, lineHeight: 1.7,
                     }}>
-                      {msg.content || <span style={{ opacity: 0.5 }}>●●●</span>}
+                      {msg.content
+                        ? msg.content.split(/\n\n+/).map((para: string, pi: number) => (
+                            <p key={pi} style={{ margin: pi === 0 ? 0 : "10px 0 0", whiteSpace: "pre-wrap" }}>{para}</p>
+                          ))
+                        : <span style={{ opacity: 0.5 }}>●●●</span>}
                     </div>
                   </div>
                 ))}
