@@ -525,7 +525,7 @@ export default function LexPage() {
         }}>
           <div style={{ maxWidth: 780, margin: "0 auto" }}>
             <div style={{
-              display: "flex", gap: 10, alignItems: "flex-end",
+              display: "flex", gap: 10, alignItems: "center",
               background: C.bg, border: `1.5px solid ${C.borderAccent}`,
               borderRadius: 14, padding: "10px 12px",
             }}>
