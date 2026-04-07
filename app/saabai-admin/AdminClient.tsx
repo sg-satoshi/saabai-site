@@ -761,10 +761,9 @@ export default function AdminClient({
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 32px" }}>
           {/* Brand + logout row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span style={{ fontSize: 17, fontWeight: 900, color: "#fff", letterSpacing: -0.5 }}>
-                Saabai<span style={{ color: "#00bfa5" }}>.</span>
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/saabai-logo-white-v2.png" alt="Saabai" style={{ height: 26, width: "auto" }} />
               <span style={{ fontSize: 10, fontWeight: 700, color: "#8b8fa8", letterSpacing: 2.5, textTransform: "uppercase" as const }}>Admin</span>
             </div>
             <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
