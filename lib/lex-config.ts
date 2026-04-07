@@ -201,3 +201,7 @@ export function getLexConfig(clientId?: string): LexClientConfig {
   const config = LEX_CLIENT_REGISTRY.find((c) => c.id === clientId);
   return config ?? LEX_INTERNAL;
 }
+
+export function getLexClients(): LexClientConfig[] {
+  return LEX_CLIENT_REGISTRY;
+}
