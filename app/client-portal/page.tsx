@@ -70,6 +70,9 @@ function ClientPortalInner() {
   const [tab,      setTab]      = useState<Tab>("overview");
   const [copied,   setCopied]   = useState<string | null>(null);
   const [savedOk,  setSavedOk]  = useState(false);
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedAt,   setSavedAt]   = useState<string | null>(null);
   const [settings, setSettings] = useState({
     agentName:          MOCK.agentName,
     welcomeMessage:     "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
@@ -113,6 +116,15 @@ function ClientPortalInner() {
           setFirm({ email: data.email, firmName: data.firmName, clientId: data.clientId, agentName: data.agentName, plan: data.plan });
           setSettings(prev => ({ ...prev, agentName: data.agentName }));
           setAuthView("dashboard");
+          // Load saved settings from server
+          fetch("/api/portal/settings", { credentials: "include" })
+            .then(r => r.ok ? r.json() : null)
+            .then(saved => {
+              if (saved?.settings) {
+                setSettings(prev => ({ ...prev, ...saved.settings }));
+              }
+            })
+            .catch(() => {});
         } else {
           setAuthView("login");
         }
@@ -258,9 +270,27 @@ function ClientPortalInner() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  function saveSettings() {
-    setSavedOk(true);
-    setTimeout(() => setSavedOk(false), 2500);
+  async function saveSettings() {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/portal/settings", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...settings, firmName }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      const data = await res.json();
+      setSavedOk(true);
+      setSavedAt(data.savedAt);
+      setTimeout(() => setSavedOk(false), 4000);
+    } catch {
+      setSaveError("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const embedCode = [
@@ -888,14 +918,41 @@ function ClientPortalInner() {
                 })()}
 
                 {/* ── Save ── */}
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <button onClick={saveSettings}
-                    style={{ padding: "13px 36px", background: savedOk ? C.green : C.gold, color: "#0a1628", fontWeight: 800, fontSize: 15, borderRadius: 10, border: "none", cursor: "pointer", transition: "background 0.2s" }}>
-                    {savedOk ? "Saved!" : "Save Settings"}
-                  </button>
-                  {savedOk && (
-                    <span style={{ fontSize: 13, color: C.green }}>Your changes have been saved.</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <button
+                      onClick={saveSettings}
+                      disabled={saving}
+                      style={{
+                        padding: "13px 36px",
+                        background: savedOk ? C.green : saving ? C.goldBg : C.gold,
+                        color: saving ? C.gold : "#0a1628",
+                        fontWeight: 800, fontSize: 15, borderRadius: 10, border: saving ? `1px solid ${C.goldBdr}` : "none",
+                        cursor: saving ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                        display: "flex", alignItems: "center", gap: 10,
+                        minWidth: 180,
+                      }}>
+                      {saving && (
+                        <span style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
+                      )}
+                      {saving ? "Saving…" : savedOk ? "✓ Saved" : "Save Configuration"}
+                    </button>
+                    {savedOk && savedAt && (
+                      <span style={{ fontSize: 13, color: C.green }}>
+                        Saved · {new Date(savedAt).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  {saveError && (
+                    <div style={{ fontSize: 13, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span>{saveError}</span>
+                      <button onClick={saveSettings} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 13, fontWeight: 700, textDecoration: "underline", padding: 0 }}>Retry</button>
+                    </div>
                   )}
+                  <p style={{ margin: 0, fontSize: 12, color: C.dim }}>
+                    Configuration is saved to your firm&apos;s profile and applied to {agentName} automatically.
+                  </p>
                 </div>
 
               </div>
