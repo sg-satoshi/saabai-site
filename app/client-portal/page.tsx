@@ -87,6 +87,7 @@ function ClientPortalInner() {
     successDefinition:   "",
     targetClient:        "",
     desiredOutcomes:     [] as string[],
+    skillPacks:          [] as string[],
   });
   const [alwaysSayDraft,    setAlwaysSayDraft]    = useState("");
   const [neverSayDraft,     setNeverSayDraft]      = useState("");
@@ -438,10 +439,50 @@ function ClientPortalInner() {
           return (
             <div>
               <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Agent Configuration</h2>
-              <p style={{ color: C.muted, margin: "0 0 32px", fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ color: C.muted, margin: "0 0 24px", fontSize: 14, lineHeight: 1.6 }}>
                 Every setting here becomes a guiding principle for {agentName} — shaping how it thinks, speaks, and drives your firm&apos;s goals across every conversation.
-                All configuration is saved to your firm&apos;s profile and applied automatically.
               </p>
+
+              {/* ── Configuration Health Score ── */}
+              {(() => {
+                const checks = [
+                  { label: "Goals & Strategy", done: !!(settings.primaryGoal.trim() && settings.desiredOutcomes.length > 0), pts: 25 },
+                  { label: "Identity",          done: settings.agentName !== MOCK.agentName || settings.welcomeMessage !== "Hi there! I'm Lex, an AI legal assistant. How can I help you today?", pts: 10 },
+                  { label: "Voice & Tone",      done: settings.personalityTraits.length > 0 || settings.responseLength !== "balanced", pts: 15 },
+                  { label: "Personality",       done: settings.personalityTraits.length >= 3, pts: 15 },
+                  { label: "Language Rules",    done: settings.alwaysSay.length > 0 || settings.neverSay.length > 0, pts: 15 },
+                  { label: "Skill Packs",       done: settings.skillPacks.length > 0, pts: 10 },
+                  { label: "Instructions",      done: settings.instructionLog.length > 0, pts: 10 },
+                ];
+                const score = checks.reduce((acc, c) => acc + (c.done ? c.pts : 0), 0);
+                const complete = checks.filter(c => c.done).length;
+                const scoreColor = score >= 80 ? C.green : score >= 50 ? C.gold : "#f87171";
+                return (
+                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 24px", marginBottom: 28 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 2 }}>Agent Readiness</div>
+                        <div style={{ fontSize: 28, fontWeight: 900, color: scoreColor }}>{score}<span style={{ fontSize: 16, fontWeight: 600 }}>%</span></div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 12, color: C.dim }}>{complete} of {checks.length} sections complete</div>
+                        {score < 80 && <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Fully configured agents get 3× more qualified leads</div>}
+                        {score >= 80 && <div style={{ fontSize: 11, color: C.green, marginTop: 2 }}>Your agent is well-configured — great work</div>}
+                      </div>
+                    </div>
+                    <div style={{ background: C.raised, borderRadius: 99, height: 6, marginBottom: 14, overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}cc)`, width: `${score}%`, transition: "width 0.4s ease" }} />
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
+                      {checks.map(c => (
+                        <span key={c.label} style={{ fontSize: 12, color: c.done ? C.green : C.dim, display: "flex", alignItems: "center", gap: 5 }}>
+                          <span style={{ fontSize: 10 }}>{c.done ? "●" : "○"}</span>{c.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
 
@@ -454,6 +495,34 @@ function ClientPortalInner() {
                   <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
                     Define what success looks like for your firm. {agentName} will use these goals to actively steer every conversation toward your desired outcomes — not just answer questions, but drive results.
                   </p>
+
+                  {/* Goal templates */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.dim, letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 10 }}>Quick Start Templates</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      {([
+                        { icon: "🎯", label: "Lead Conversion", goal: "Convert every website enquiry into a booked consultation. Target 40% of widget conversations becoming qualified leads who book a free 15-minute call.", success: "The client feels heard, understands their legal position, and books a consultation. They leave the conversation with clear next steps and confidence in the firm.", client: "People actively searching for legal help — typically stressed, time-poor, and uncertain about their situation. They need clarity and a trusted professional to guide them.", outcomes: ["Book a free consultation", "Capture contact details (name, email, phone)", "Qualify the matter type and urgency"] },
+                        { icon: "🤝", label: "Trust & Education", goal: "Position the firm as the most trusted and knowledgeable legal resource in our practice areas. Build long-term relationships by genuinely helping people understand their options before asking for anything.", success: "The client feels genuinely informed and grateful. They see the firm as the expert they want to work with. They either book a consultation or come back when they're ready.", client: "People in the research phase — they have a legal concern but aren't sure if they need a lawyer yet. They need clear, jargon-free information before they'll trust anyone enough to engage.", outcomes: ["Educate the client clearly on their options", "Build trust and demonstrate expertise", "Capture details when the client is ready"] },
+                        { icon: "👑", label: "Premium Acquisition", goal: "Attract and convert high-value clients who have complex, multi-faceted matters. Every interaction should communicate exceptional expertise and justify a premium fee structure.", success: "The prospect feels they've already received more value in this conversation than from other firms. They're eager to engage and have no hesitation about fees because the quality is self-evident.", client: "High-net-worth individuals and business owners with significant legal matters. They've likely worked with lawyers before and know the difference between average and exceptional. They value results over cost.", outcomes: ["Book a senior partner consultation", "Qualify the matter complexity and budget", "Convey firm expertise and track record"] },
+                        { icon: "⏰", label: "After-Hours Intake", goal: "Capture every after-hours enquiry so no lead goes cold overnight. Ensure prospective clients feel supported 24/7 and are automatically queued for follow-up the next business day.", success: "The client feels they've been heard even outside business hours. Their details are captured, their matter is understood, and they receive a response first thing the next morning.", client: "People who need legal help urgently but contact the firm outside office hours. They're often stressed or facing a deadline and need immediate reassurance that someone will help them.", outcomes: ["Capture full contact details and matter description", "Set clear expectations on response time", "Triage urgency level for next-day follow-up"] },
+                      ] as { icon: string; label: string; goal: string; success: string; client: string; outcomes: string[] }[]).map(tpl => (
+                        <button key={tpl.label} onClick={() => setSettings(p => ({
+                          ...p,
+                          primaryGoal: tpl.goal,
+                          successDefinition: tpl.success,
+                          targetClient: tpl.client,
+                          desiredOutcomes: tpl.outcomes,
+                        }))}
+                          style={{ textAlign: "left", padding: "12px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.raised, cursor: "pointer", transition: "border-color 0.15s" }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = C.gold)}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
+                          <div style={{ fontSize: 18, marginBottom: 4 }}>{tpl.icon}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{tpl.label}</div>
+                          <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Click to pre-fill</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div style={{ marginBottom: 20 }}>
                     <label style={labelStyle}>Primary Business Goal</label>
@@ -613,6 +682,45 @@ function ClientPortalInner() {
                   </div>
                 </div>
 
+                {/* ── Skill Packs ── */}
+                <div style={sectionStyle}>
+                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Skill Packs</h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                    Give {agentName} specialised capabilities beyond standard legal assistance. Each pack adds a set of proven behavioural frameworks — select what fits your goals.
+                  </p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                    {([
+                      { id: "sales-conversion",   icon: "💼", name: "Sales Conversion",     desc: "Guides conversations toward bookings using proven conversion psychology" },
+                      { id: "objection-handling",  icon: "🛡️", name: "Objection Handling",   desc: "Expertly addresses hesitations: cost, urgency, trust, and \"I'll think about it\"" },
+                      { id: "rapport-building",    icon: "🤝", name: "Rapport Building",      desc: "Builds genuine connection fast — clients feel understood before they feel sold to" },
+                      { id: "appointment-setting", icon: "📅", name: "Appointment Setting",   desc: "Optimised scripts and framing to maximise consultation bookings" },
+                      { id: "lead-qualification",  icon: "🎯", name: "Lead Qualification",    desc: "Expertly qualifies matter type, urgency, and client fit before handing off" },
+                      { id: "active-listening",    icon: "👂", name: "Active Listening",      desc: "Demonstrates genuine understanding before offering solutions — builds deep trust" },
+                      { id: "urgency-framing",     icon: "⚡", name: "Urgency Framing",       desc: "Ethically communicates the value and importance of acting sooner rather than later" },
+                      { id: "premium-positioning", icon: "👑", name: "Premium Positioning",   desc: "Confidently communicates the firm's expertise, value, and premium positioning" },
+                    ] as { id: string; icon: string; name: string; desc: string }[]).map(pack => {
+                      const active = settings.skillPacks.includes(pack.id);
+                      return (
+                        <button key={pack.id} onClick={() => setSettings(p => ({
+                          ...p,
+                          skillPacks: active ? p.skillPacks.filter(s => s !== pack.id) : [...p.skillPacks, pack.id],
+                        }))}
+                          style={{
+                            textAlign: "left", padding: "14px 14px", borderRadius: 10, cursor: "pointer",
+                            border: `1px solid ${active ? C.gold : C.border}`,
+                            background: active ? C.goldBg : "transparent",
+                            transition: "all 0.12s",
+                          }}>
+                          <div style={{ fontSize: 20, marginBottom: 6 }}>{pack.icon}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.goldB : C.text, marginBottom: 4 }}>{pack.name}</div>
+                          <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.5 }}>{pack.desc}</div>
+                          {active && <div style={{ marginTop: 8, fontSize: 11, fontWeight: 700, color: C.gold }}>✓ Active</div>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* ── Personality Traits ── */}
                 <div style={sectionStyle}>
                   <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Personality Traits</h3>
@@ -730,6 +838,54 @@ function ClientPortalInner() {
                     {settings.instructionLog.length === 0 ? "+ Add Instructions" : "+ Add Amendment"}
                   </button>
                 </div>
+
+                {/* ── Dynamic Agent Brief ── */}
+                {(settings.primaryGoal.trim() || settings.personalityTraits.length >= 2 || settings.skillPacks.length > 0) && (() => {
+                  const formalityDesc = settings.formalityLevel >= 70 ? "formal and authoritative" : settings.formalityLevel >= 45 ? "professionally balanced" : "casual and conversational";
+                  const warmthDesc    = settings.warmthLevel >= 70 ? "deeply empathetic and warm" : settings.warmthLevel >= 45 ? "friendly and approachable" : "matter-of-fact";
+                  const humourDesc    = settings.humorLevel >= 50 ? ", with a natural sense of humour" : settings.humorLevel >= 25 ? ", with occasional light humour" : "";
+                  const lengthDesc    = settings.responseLength === "concise" ? "Keep responses short and direct." : settings.responseLength === "detailed" ? "Provide thorough, detailed explanations." : "Balance depth with brevity.";
+                  const traits        = settings.personalityTraits.slice(0, 4).join(", ").toLowerCase();
+                  const packs         = settings.skillPacks.map(id => ({ "sales-conversion": "sales conversion", "objection-handling": "objection handling", "rapport-building": "rapport building", "appointment-setting": "appointment setting", "lead-qualification": "lead qualification", "active-listening": "active listening", "urgency-framing": "urgency framing", "premium-positioning": "premium positioning" }[id] ?? id)).join(", ");
+                  const outcomes      = settings.desiredOutcomes.slice(0, 2);
+
+                  return (
+                    <div style={{ background: `linear-gradient(135deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.02) 100%)`, border: `1px solid ${C.goldBdr}`, borderRadius: 12, padding: 24 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                        <span style={{ fontSize: 16 }}>📋</span>
+                        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.goldB }}>Agent Brief — Preview</h3>
+                        <span style={{ fontSize: 11, color: C.dim, marginLeft: "auto" }}>Updates live as you configure</span>
+                      </div>
+                      <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
+                        <strong style={{ color: C.goldB }}>{settings.agentName}</strong> will operate as a <strong>{formalityDesc}</strong>, <strong>{warmthDesc}</strong> professional{humourDesc}.
+                        {traits ? ` In every interaction, ${settings.agentName} will be ${traits}.` : ""}
+                        {` ${lengthDesc}`}
+                      </p>
+                      {settings.primaryGoal.trim() && (
+                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
+                          <strong style={{ color: C.goldB }}>Primary mission:</strong> {settings.primaryGoal.slice(0, 160)}{settings.primaryGoal.length > 160 ? "…" : ""}
+                        </p>
+                      )}
+                      {outcomes.length > 0 && (
+                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
+                          <strong style={{ color: C.goldB }}>Every conversation will actively steer toward:</strong>{" "}
+                          {outcomes.map((o, i) => <span key={i}>#{i + 1} {o}{i < outcomes.length - 1 ? ", then " : ""}</span>)}
+                          {settings.desiredOutcomes.length > 2 ? ` (+${settings.desiredOutcomes.length - 2} more)` : "."}
+                        </p>
+                      )}
+                      {settings.targetClient.trim() && (
+                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
+                          <strong style={{ color: C.goldB }}>Ideal client:</strong> {settings.targetClient.slice(0, 120)}{settings.targetClient.length > 120 ? "…" : ""}
+                        </p>
+                      )}
+                      {packs && (
+                        <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.8 }}>
+                          <strong style={{ color: C.goldB }}>Active skill packs:</strong> {packs}.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* ── Save ── */}
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
