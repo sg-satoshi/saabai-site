@@ -181,6 +181,7 @@ function ContextMenuItem({ icon, label, onClick, danger = false }: { icon: strin
 // ── Thread row (sidebar) ──────────────────────────────────────────────────────
 function ThreadRow({
   thread, activeId, onSelect, onMenu, renameState, setRenameState, renameThread,
+  onDragStart, onDragEnd, isDragging,
 }: {
   thread: Thread; activeId: string | null;
   onSelect: () => void;
@@ -188,16 +189,24 @@ function ThreadRow({
   renameState: { type: "thread" | "project"; id: string; value: string } | null;
   setRenameState: React.Dispatch<React.SetStateAction<typeof renameState>>;
   renameThread: (id: string, title: string) => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
 }) {
   const isActive = activeId === thread.id;
   const isRenaming = renameState?.type === "thread" && renameState.id === thread.id;
   return (
-    <div onClick={onSelect} style={{
-      padding: "7px 8px 7px 10px", borderRadius: 7, cursor: "pointer", marginBottom: 1,
-      background: isActive ? C.surfaceRaised : "transparent",
-      border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
-      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4,
-    }}>
+    <div onClick={onSelect}
+      draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      style={{
+        padding: "7px 8px 7px 10px", borderRadius: 7, cursor: isDragging ? "grabbing" : "grab", marginBottom: 1,
+        background: isActive ? C.surfaceRaised : "transparent",
+        border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4,
+        opacity: isDragging ? 0.4 : 1, transition: "opacity 0.15s",
+      }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         {isRenaming ? (
           <input
@@ -248,6 +257,8 @@ export default function LexPage() {
   const [projectMenu, setProjectMenu] = useState<{ projectId: string; x: number; y: number } | null>(null);
   const [renameState, setRenameState] = useState<{ type: "thread" | "project"; id: string; value: string } | null>(null);
   const [moveDialog, setMoveDialog] = useState<string | null>(null); // threadId being moved
+  const [dragThreadId, setDragThreadId] = useState<string | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null); // projectId or "unorganised"
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -733,16 +744,29 @@ export default function LexPage() {
               const isExpanded = expandedProjects.has(project.id);
               return (
                 <div key={project.id} style={{ marginBottom: 4 }}>
-                  {/* Project header */}
+                  {/* Project header — also a drop target */}
                   <div style={{
                     display: "flex", alignItems: "center", gap: 5, padding: "5px 6px",
                     borderRadius: 7, cursor: "pointer",
+                    background: dragOverTarget === project.id ? `${project.colour}18` : "transparent",
+                    border: dragOverTarget === project.id ? `1px dashed ${project.colour}` : "1px solid transparent",
+                    transition: "background 0.1s, border 0.1s",
                   }}
                     onClick={() => setExpandedProjects(prev => {
                       const next = new Set(prev);
                       isExpanded ? next.delete(project.id) : next.add(project.id);
                       return next;
                     })}
+                    onDragOver={e => { if (dragThreadId) { e.preventDefault(); setDragOverTarget(project.id); } }}
+                    onDragLeave={() => setDragOverTarget(null)}
+                    onDrop={e => {
+                      e.preventDefault();
+                      if (dragThreadId) {
+                        moveThreadToProject(dragThreadId, project.id);
+                        setExpandedProjects(prev => new Set([...prev, project.id]));
+                        setDragThreadId(null); setDragOverTarget(null);
+                      }
+                    }}
                   >
                     {/* Chevron */}
                     <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ flexShrink: 0, transition: "transform 0.15s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>
@@ -791,10 +815,15 @@ export default function LexPage() {
                       onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
                       onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
                       renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
+                      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
+                      onDragEnd={() => { setDragThreadId(null); setDragOverTarget(null); }}
+                      isDragging={dragThreadId === thread.id}
                     />
                   ))}
                   {isExpanded && projectThreads.length === 0 && (
-                    <p style={{ margin: "2px 0 4px 28px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>Empty project</p>
+                    <p style={{ margin: "2px 0 4px 28px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>
+                      {dragOverTarget === project.id ? "Drop here" : "Empty project"}
+                    </p>
                   )}
                 </div>
               );
@@ -804,18 +833,39 @@ export default function LexPage() {
             {(() => {
               const unorganised = threads.filter(t => !t.projectId);
               if (unorganised.length === 0 && projects.length === 0) return null;
+              const isDropTarget = dragOverTarget === "unorganised";
               return (
-                <div style={{ marginTop: projects.length > 0 ? 6 : 0 }}>
+                <div style={{ marginTop: projects.length > 0 ? 6 : 0 }}
+                  onDragOver={e => { if (dragThreadId) { e.preventDefault(); setDragOverTarget("unorganised"); } }}
+                  onDragLeave={() => setDragOverTarget(null)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    if (dragThreadId) { moveThreadToProject(dragThreadId, null); setDragThreadId(null); setDragOverTarget(null); }
+                  }}
+                >
                   {projects.length > 0 && (
-                    <p style={{ margin: "2px 6px 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Unorganised</p>
+                    <p style={{
+                      margin: "2px 6px 4px", fontSize: 10, fontWeight: 600, letterSpacing: 0.5,
+                      textTransform: "uppercase", padding: "3px 6px", borderRadius: 5,
+                      color: isDropTarget ? C.textMuted : C.textDim,
+                      background: isDropTarget ? C.surfaceRaised : "transparent",
+                      border: isDropTarget ? `1px dashed ${C.border}` : "1px solid transparent",
+                      transition: "all 0.1s",
+                    }}>Unorganised</p>
                   )}
                   {unorganised.map(thread => (
                     <ThreadRow key={thread.id} thread={thread} activeId={activeId}
                       onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
                       onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
                       renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
+                      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
+                      onDragEnd={() => { setDragThreadId(null); setDragOverTarget(null); }}
+                      isDragging={dragThreadId === thread.id}
                     />
                   ))}
+                  {unorganised.length === 0 && isDropTarget && (
+                    <p style={{ margin: "2px 0 4px 6px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>Drop here to unorganise</p>
+                  )}
                 </div>
               );
             })()}
