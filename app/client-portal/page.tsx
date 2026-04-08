@@ -44,15 +44,16 @@ const MOCK = {
   ],
 };
 
-type Tab = "overview" | "leads" | "customize" | "test" | "embed" | "settings";
+type Tab = "overview" | "leads" | "review-queue" | "customize" | "test" | "embed" | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "overview",  label: "Overview"   },
-  { id: "leads",     label: "Leads"      },
-  { id: "customize", label: "Customise"  },
-  { id: "test",      label: "Test Agent" },
-  { id: "embed",     label: "Embed Code" },
-  { id: "settings",  label: "Settings"   },
+  { id: "overview",     label: "Overview"      },
+  { id: "leads",        label: "Leads"         },
+  { id: "review-queue", label: "Review Queue"  },
+  { id: "customize",    label: "Customise"     },
+  { id: "test",         label: "Test Agent"    },
+  { id: "embed",        label: "Embed Code"    },
+  { id: "settings",     label: "Settings"      },
 ];
 
 type AuthView = "checking" | "login" | "sent" | "dashboard";
@@ -115,12 +116,40 @@ function ClientPortalInner() {
   const [testInput,    setTestInput]    = useState("");
   const [testLoading,  setTestLoading]  = useState(false);
   const [testError,    setTestError]    = useState<string | null>(null);
+  // Review Queue tab state
+  type StoredReview = {
+    id: string; firmId: string; submittedBy: string; matterNo: string; clientName: string;
+    documentName: string; submittedAt: number; reviewedAt?: number; reportJson: string;
+    riskLevel: string; overallScore: number; documentType: string; direction: string;
+    jurisdiction: string; status: "pending" | "approved" | "needs_changes";
+    supervisorNotes: string; reviewedBy: string;
+  };
+  const [queue,        setQueue]        = useState<StoredReview[]>([]);
+  const [queueLoading, setQueueLoading] = useState(false);
+  const [queueError,   setQueueError]   = useState<string | null>(null);
+  const [expandedId,   setExpandedId]   = useState<string | null>(null);
+  const [signOffId,    setSignOffId]    = useState<string | null>(null);
+  const [signOffNotes, setSignOffNotes] = useState("");
+  const [signOffBy,    setSignOffBy]    = useState("");
+  const [signOffLoading, setSignOffLoading] = useState(false);
 
   // Sync tab from URL param
   useEffect(() => {
     const t = searchParams.get("tab") as Tab | null;
     if (t && TABS.some(x => x.id === t)) setTab(t);
   }, [searchParams]);
+
+  // Load review queue when that tab is active
+  useEffect(() => {
+    if (tab !== "review-queue") return;
+    setQueueLoading(true);
+    setQueueError(null);
+    fetch("/api/lex-review-queue?firmId=lex-internal&limit=50")
+      .then(r => r.json())
+      .then(data => { setQueue(data.reviews ?? []); })
+      .catch(() => setQueueError("Failed to load review queue."))
+      .finally(() => setQueueLoading(false));
+  }, [tab]);
 
   // Check for existing session on mount + handle ?error= from magic link
   useEffect(() => {
@@ -534,6 +563,158 @@ function ClientPortalInner() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ── Review Queue ─────────────────────────────────────────────────── */}
+        {tab === "review-queue" && (
+          <div style={{ padding: "28px 32px", maxWidth: 900 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Doc Review Queue</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: C.muted }}>Reviews submitted by lawyers for supervisor sign-off.</p>
+              </div>
+              <button onClick={() => {
+                setQueueLoading(true);
+                fetch("/api/lex-review-queue?firmId=lex-internal&limit=50")
+                  .then(r => r.json()).then(d => setQueue(d.reviews ?? []))
+                  .finally(() => setQueueLoading(false));
+              }} style={{ padding: "8px 14px", borderRadius: 8, background: C.raised, border: `1px solid ${C.border}`, color: C.muted, fontSize: 12, cursor: "pointer" }}>
+                ↻ Refresh
+              </button>
+            </div>
+
+            {queueLoading && <p style={{ color: C.muted, fontSize: 13 }}>Loading…</p>}
+            {queueError  && <p style={{ color: "#f87171", fontSize: 13 }}>{queueError}</p>}
+            {!queueLoading && queue.length === 0 && (
+              <div style={{ padding: "48px 0", textAlign: "center" }}>
+                <p style={{ fontSize: 28, marginBottom: 12 }}>📋</p>
+                <p style={{ color: C.muted, fontSize: 14 }}>No reviews submitted yet.</p>
+                <p style={{ color: C.dim, fontSize: 12, marginTop: 4 }}>When a lawyer submits a Doc Review for sign-off, it will appear here.</p>
+              </div>
+            )}
+
+            {queue.map(review => {
+              const isExpanded = expandedId === review.id;
+              const isSignOff  = signOffId === review.id;
+              const statusColour = review.status === "approved" ? C.green : review.status === "needs_changes" ? "#f97316" : C.gold;
+              const statusLabel  = review.status === "approved" ? "Approved" : review.status === "needs_changes" ? "Needs Changes" : "Pending";
+              const riskColour   = review.riskLevel === "critical" ? "#ef4444" : review.riskLevel === "high" ? "#f97316" : review.riskLevel === "medium" ? "#eab308" : C.green;
+              let report: Record<string, unknown> | null = null;
+              try { report = JSON.parse(review.reportJson); } catch {}
+
+              return (
+                <div key={review.id} style={{ marginBottom: 12, borderRadius: 12, background: C.surface, border: `1px solid ${isExpanded ? C.border : C.border}`, overflow: "hidden" }}>
+                  {/* Row header */}
+                  <div onClick={() => setExpandedId(isExpanded ? null : review.id)}
+                    style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", flexWrap: "wrap" }}>
+                    {/* Risk badge */}
+                    <div style={{ padding: "3px 10px", borderRadius: 20, background: `${riskColour}18`, border: `1px solid ${riskColour}40`, fontSize: 10, fontWeight: 700, color: riskColour, textTransform: "uppercase", letterSpacing: 0.5, flexShrink: 0 }}>
+                      {review.riskLevel}
+                    </div>
+                    {/* Doc info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {review.documentName || review.documentType || "Document"}
+                      </p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>
+                        {review.submittedBy && <span>{review.submittedBy}</span>}
+                        {review.matterNo    && <span style={{ marginLeft: 8 }}>· Matter {review.matterNo}</span>}
+                        {review.clientName  && <span style={{ marginLeft: 4 }}>· {review.clientName}</span>}
+                        <span style={{ marginLeft: 8, color: C.dim }}>
+                          {new Date(review.submittedAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </p>
+                    </div>
+                    {/* Score */}
+                    <div style={{ textAlign: "center", flexShrink: 0 }}>
+                      <p style={{ margin: 0, fontSize: 16, fontWeight: 900, color: riskColour }}>{review.overallScore}</p>
+                      <p style={{ margin: 0, fontSize: 9, color: C.dim, textTransform: "uppercase" }}>Score</p>
+                    </div>
+                    {/* Status badge */}
+                    <div style={{ padding: "4px 10px", borderRadius: 20, background: `${statusColour}18`, border: `1px solid ${statusColour}40`, fontSize: 11, fontWeight: 700, color: statusColour, flexShrink: 0 }}>
+                      {statusLabel}
+                    </div>
+                    <span style={{ color: C.dim, fontSize: 14 }}>{isExpanded ? "▲" : "▼"}</span>
+                  </div>
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div style={{ borderTop: `1px solid ${C.border}`, padding: "20px 18px" }}>
+                      {/* Summary */}
+                      {report && (report.summary as string) && (
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Lex Summary</p>
+                          <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{report.summary as string}</p>
+                        </div>
+                      )}
+                      {/* Key findings */}
+                      {report && Array.isArray(report.findings) && (report.findings as unknown[]).length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Key Findings</p>
+                          {(report.findings as {severity:string;title:string;issue:string}[]).slice(0, 4).map((f, i) => (
+                            <div key={i} style={{ padding: "10px 12px", borderRadius: 8, marginBottom: 6, background: C.raised, border: `1px solid ${C.border}`, display: "flex", gap: 10 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: f.severity === "critical" ? "#ef4444" : f.severity === "moderate" ? "#f97316" : C.muted, textTransform: "uppercase", letterSpacing: 0.4, flexShrink: 0, paddingTop: 1 }}>{f.severity}</span>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text }}>{f.title}</p>
+                                <p style={{ margin: "3px 0 0", fontSize: 11, color: C.muted }}>{f.issue}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Existing supervisor notes */}
+                      {review.supervisorNotes && (
+                        <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 8, background: C.raised, border: `1px solid ${C.border}` }}>
+                          <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Supervisor Notes</p>
+                          <p style={{ margin: 0, fontSize: 13, color: C.text }}>{review.supervisorNotes}</p>
+                          {review.reviewedBy && <p style={{ margin: "6px 0 0", fontSize: 11, color: C.dim }}>— {review.reviewedBy}</p>}
+                        </div>
+                      )}
+
+                      {/* Sign-off form */}
+                      {review.status === "pending" && (
+                        isSignOff ? (
+                          <div style={{ padding: "16px", borderRadius: 10, background: C.raised, border: `1px solid ${C.border}` }}>
+                            <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: C.text }}>Sign Off</p>
+                            <input value={signOffBy} onChange={e => setSignOffBy(e.target.value)}
+                              placeholder="Your name" style={{ width: "100%", marginBottom: 8, padding: "8px 12px", borderRadius: 7, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+                            <textarea value={signOffNotes} onChange={e => setSignOffNotes(e.target.value)}
+                              placeholder="Add notes for the lawyer (optional)" rows={3}
+                              style={{ width: "100%", marginBottom: 12, padding: "8px 12px", borderRadius: 7, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }} />
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button disabled={signOffLoading} onClick={async () => {
+                                setSignOffLoading(true);
+                                await fetch("/api/lex-review-queue", { method: "PATCH", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ id: review.id, status: "approved", supervisorNotes: signOffNotes, reviewedBy: signOffBy }) });
+                                setQueue(q => q.map(r => r.id === review.id ? { ...r, status: "approved", supervisorNotes: signOffNotes, reviewedBy: signOffBy } : r));
+                                setSignOffId(null); setSignOffNotes(""); setSignOffBy(""); setSignOffLoading(false);
+                              }} style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", background: "rgba(34,197,94,0.15)", color: C.green, fontWeight: 700, fontSize: 12, cursor: signOffLoading ? "wait" : "pointer" }}>
+                                {signOffLoading ? "Saving…" : "✓ Approve"}
+                              </button>
+                              <button disabled={signOffLoading} onClick={async () => {
+                                setSignOffLoading(true);
+                                await fetch("/api/lex-review-queue", { method: "PATCH", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ id: review.id, status: "needs_changes", supervisorNotes: signOffNotes, reviewedBy: signOffBy }) });
+                                setQueue(q => q.map(r => r.id === review.id ? { ...r, status: "needs_changes", supervisorNotes: signOffNotes, reviewedBy: signOffBy } : r));
+                                setSignOffId(null); setSignOffNotes(""); setSignOffBy(""); setSignOffLoading(false);
+                              }} style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", background: "rgba(249,115,22,0.12)", color: "#f97316", fontWeight: 700, fontSize: 12, cursor: signOffLoading ? "wait" : "pointer" }}>
+                                ↩ Request Changes
+                              </button>
+                              <button onClick={() => { setSignOffId(null); setSignOffNotes(""); }} style={{ padding: "9px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => { setSignOffId(review.id); setSignOffNotes(review.supervisorNotes || ""); }} style={{
+                            padding: "9px 18px", borderRadius: 8, background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold, fontWeight: 700, fontSize: 12, cursor: "pointer",
+                          }}>Sign Off →</button>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

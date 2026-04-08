@@ -296,6 +296,14 @@ export default function LexPage() {
   const [reviewError, setReviewError]             = useState<string | null>(null);
   const reviewFileRef = useRef<HTMLInputElement>(null);
   const [reviewDragOver, setReviewDragOver]       = useState(false);
+  // Matter context fields
+  const [reviewSubmittedBy, setReviewSubmittedBy] = useState("");
+  const [reviewMatterNo, setReviewMatterNo]       = useState("");
+  const [reviewClientName, setReviewClientName]   = useState("");
+  // Supervision submit state
+  const [submitLoading, setSubmitLoading]         = useState(false);
+  const [submitDone, setSubmitDone]               = useState(false);
+  const [submitError, setSubmitError]             = useState<string | null>(null);
 
   const bottomRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLTextAreaElement>(null);
@@ -599,6 +607,32 @@ export default function LexPage() {
     }
   }, [draftLoading, draftTypeId, draftParties, draftJurisdiction, draftInstructions]);
 
+  const submitForSupervision = useCallback(async () => {
+    if (!reviewReport || submitLoading) return;
+    setSubmitLoading(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/lex-review-submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firmId: "lex-internal",
+          submittedBy: reviewSubmittedBy,
+          matterNo: reviewMatterNo,
+          clientName: reviewClientName,
+          documentName: reviewFile?.name ?? "",
+          report: reviewReport,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Submit failed");
+      setSubmitDone(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Submit failed");
+    } finally {
+      setSubmitLoading(false);
+    }
+  }, [reviewReport, submitLoading, reviewSubmittedBy, reviewMatterNo, reviewClientName, reviewFile]);
+
   const sendReview = useCallback(async () => {
     if (reviewLoading) return;
     const hasContent = reviewInputMode === "paste" ? reviewPasteText.trim() : !!reviewFile;
@@ -607,6 +641,8 @@ export default function LexPage() {
     setReviewLoading(true);
     setReviewReport(null);
     setReviewError(null);
+    setSubmitDone(false);
+    setSubmitError(null);
 
     const stages = [
       "Extracting document...",
@@ -1460,6 +1496,28 @@ export default function LexPage() {
 
               <p style={{ margin: "0 0 18px", fontSize: 13, fontWeight: 700, color: C.gold, letterSpacing: 0.3 }}>Document Review</p>
 
+              {/* Matter context */}
+              <div style={{ marginBottom: 18, padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
+                <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Matter Details</p>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Submitted By</label>
+                  <input value={reviewSubmittedBy} onChange={e => setReviewSubmittedBy(e.target.value)}
+                    placeholder="Your name" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Matter No.</label>
+                    <input value={reviewMatterNo} onChange={e => setReviewMatterNo(e.target.value)}
+                      placeholder="e.g. 2024-0142" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Client Name</label>
+                    <input value={reviewClientName} onChange={e => setReviewClientName(e.target.value)}
+                      placeholder="e.g. Smith Holdings" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                </div>
+              </div>
+
               {/* Direction toggle */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>Review Type</label>
@@ -1741,6 +1799,31 @@ export default function LexPage() {
 
                 return (
                   <div style={{ padding: "28px 32px" }}>
+
+                    {/* Submit for Supervision */}
+                    <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 12, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>Submit for Supervisor Review</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textMuted }}>
+                          {submitDone ? "Submitted — supervisor has been notified." : "Send this review to a supervising partner for sign-off."}
+                        </p>
+                        {submitError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>{submitError}</p>}
+                      </div>
+                      {submitDone ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                          <span style={{ fontSize: 13 }}>✓</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Submitted</span>
+                        </div>
+                      ) : (
+                        <button onClick={submitForSupervision} disabled={submitLoading} style={{
+                          padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: submitLoading ? "wait" : "pointer",
+                          background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, flexShrink: 0, whiteSpace: "nowrap",
+                          opacity: submitLoading ? 0.6 : 1,
+                        }}>
+                          {submitLoading ? "Submitting…" : "Submit for Review"}
+                        </button>
+                      )}
+                    </div>
 
                     {/* Risk dashboard */}
                     <div style={{ marginBottom: 24, padding: "20px 24px", borderRadius: 14, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
