@@ -576,6 +576,67 @@ const PP_RODS: RodRow[] = [
   { diameterMm: 200, colour: "beige", standardLengthM: 1, fullLengthPrice: 1052.87, ctsRatePerM: 1052.87 },
 ];
 
+// ── Rigid PVC Sheets ─────────────────────────────────────────────────────────
+// Pricing: March 2026. ctsRate = <cutoff rate (smaller pieces).
+// Nanya = standard grade (Plastral). Simona = premium grade (Plastral).
+// Dotmar Trovidur = premium German grade.
+// Simona Dark Grey 30/40/50mm: full sheet only (ctsRate: null).
+const RIGID_PVC: SheetRow[] = [
+  // Nanya — Clear (2440×1220)
+  { colour: "clear",      thicknessMm: 1,    sheetW: 2440, sheetH: 1220, ctsRate: 53.61,  fullSheetPrice: 81.90 },
+  { colour: "clear",      thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 126.38, fullSheetPrice: 193.05 },
+  { colour: "clear",      thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 190.20, fullSheetPrice: 290.55 },
+  { colour: "clear",      thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 252.75, fullSheetPrice: 386.10 },
+  // Nanya — Light Grey (2440×1220)
+  { colour: "light grey", thicknessMm: 1.5,  sheetW: 2440, sheetH: 1220, ctsRate: 53.61,  fullSheetPrice: 81.90 },
+  { colour: "light grey", thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 102.12, fullSheetPrice: 156.00 },
+  { colour: "light grey", thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 153.18, fullSheetPrice: 234.00 },
+  { colour: "light grey", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 204.25, fullSheetPrice: 312.00 },
+  { colour: "light grey", thicknessMm: 8,    sheetW: 2440, sheetH: 1220, ctsRate: 237.23, fullSheetPrice: 374.50 },
+  { colour: "light grey", thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 295.99, fullSheetPrice: 467.25 },
+  { colour: "light grey", thicknessMm: 12,   sheetW: 2440, sheetH: 1220, ctsRate: 354.74, fullSheetPrice: 560.00 },
+  { colour: "light grey", thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 443.43, fullSheetPrice: 700.00 },
+  { colour: "light grey", thicknessMm: 20,   sheetW: 2440, sheetH: 1220, ctsRate: 537.15, fullSheetPrice: 906.10 },
+  // grey = alias for light grey (Nanya)
+  { colour: "grey",       thicknessMm: 1.5,  sheetW: 2440, sheetH: 1220, ctsRate: 53.61,  fullSheetPrice: 81.90 },
+  { colour: "grey",       thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 102.12, fullSheetPrice: 156.00 },
+  { colour: "grey",       thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 153.18, fullSheetPrice: 234.00 },
+  { colour: "grey",       thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 204.25, fullSheetPrice: 312.00 },
+  { colour: "grey",       thicknessMm: 8,    sheetW: 2440, sheetH: 1220, ctsRate: 237.23, fullSheetPrice: 374.50 },
+  { colour: "grey",       thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 295.99, fullSheetPrice: 467.25 },
+  { colour: "grey",       thicknessMm: 12,   sheetW: 2440, sheetH: 1220, ctsRate: 354.74, fullSheetPrice: 560.00 },
+  { colour: "grey",       thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 443.43, fullSheetPrice: 700.00 },
+  { colour: "grey",       thicknessMm: 20,   sheetW: 2440, sheetH: 1220, ctsRate: 537.15, fullSheetPrice: 906.10 },
+  // Nanya — White (2440×1220)
+  { colour: "white",      thicknessMm: 1.5,  sheetW: 2440, sheetH: 1220, ctsRate: 76.59,  fullSheetPrice: 117.00 },
+  { colour: "white",      thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 114.89, fullSheetPrice: 175.50 },
+  { colour: "white",      thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 172.33, fullSheetPrice: 263.25 },
+  { colour: "white",      thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 229.78, fullSheetPrice: 351.00 },
+  { colour: "white",      thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 332.57, fullSheetPrice: 525.00 },
+  // Simona — Swiss Grey (2440×1220 and 3000×1500)
+  { colour: "swiss grey", thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 95.74,  fullSheetPrice: 146.25 },
+  { colour: "swiss grey", thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 144.25, fullSheetPrice: 220.35 },
+  { colour: "swiss grey", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 191.48, fullSheetPrice: 292.50 },
+  { colour: "swiss grey", thicknessMm: 6,    sheetW: 3000, sheetH: 1500, ctsRate: 190.84, fullSheetPrice: 440.70 },
+  { colour: "swiss grey", thicknessMm: 8,    sheetW: 2440, sheetH: 1220, ctsRate: 221.71, fullSheetPrice: 350.00 },
+  { colour: "swiss grey", thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 277.14, fullSheetPrice: 437.50 },
+  { colour: "swiss grey", thicknessMm: 12,   sheetW: 2440, sheetH: 1220, ctsRate: 332.57, fullSheetPrice: 525.00 },
+  { colour: "swiss grey", thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 415.71, fullSheetPrice: 656.25 },
+  { colour: "swiss grey", thicknessMm: 20,   sheetW: 2440, sheetH: 1220, ctsRate: 503.90, fullSheetPrice: 850.00 },
+  { colour: "swiss grey", thicknessMm: 25,   sheetW: 2440, sheetH: 1220, ctsRate: 629.87, fullSheetPrice: 1062.50 },
+  // Simona — Dark Grey thick slabs (2000×1000 — full sheet only)
+  { colour: "dark grey",  thicknessMm: 30,   sheetW: 2000, sheetH: 1000, ctsRate: null,   fullSheetPrice: 1104.00 },
+  { colour: "dark grey",  thicknessMm: 40,   sheetW: 2000, sheetH: 1000, ctsRate: null,   fullSheetPrice: 1572.80 },
+  { colour: "dark grey",  thicknessMm: 50,   sheetW: 2000, sheetH: 1000, ctsRate: null,   fullSheetPrice: 2177.60 },
+  // Simona — White (2440×1220)
+  { colour: "white",      thicknessMm: 3,    sheetW: 2440, sheetH: 1220, ctsRate: 114.89, fullSheetPrice: 175.50 },
+  { colour: "white",      thicknessMm: 4.5,  sheetW: 2440, sheetH: 1220, ctsRate: 172.33, fullSheetPrice: 263.25 },
+  { colour: "white",      thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 229.78, fullSheetPrice: 351.00 },
+  { colour: "white",      thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 280.47, fullSheetPrice: 442.75 },
+  // Simona — Clear (2440×1220)
+  { colour: "clear",      thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 299.99, fullSheetPrice: 458.25 },
+];
+
 const PVC_RODS: RodRow[] = [
   // Sold in 2m lengths; < 25mm: full length only
   { diameterMm: 10, colour: "grey", standardLengthM: 2, fullLengthPrice: 11.10,  ctsRatePerM: null },
@@ -1011,6 +1072,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "acp":             return priceGenericSheet(ACP, col, thick, w, h, qty, getProductUrl("acp"));
       case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, getProductUrl("acrylic"));
       case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, getProductUrl("peek"));
+      case "pvc":             return priceGenericSheet(RIGID_PVC, col, thick, w, h, qty, getProductUrl("rigid pvc"));
       default:                return notFound();
     }
   }
