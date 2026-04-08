@@ -328,6 +328,102 @@ const MATERIALS_SIGNAGE = `
 
 ---
 
+### RIGID PVC (Polyvinyl Chloride — Solid Sheet)
+
+**Properties:** Dense, rigid, chemically resistant. Easy to machine (saw, route, drill, tap). Excellent corrosion/chemical resistance. Food-grade grades available. NOT UV-stable long-term outdoors — use UV-stabilised PC or acrylic for exterior.
+
+**Brands stocked:** Nanya (standard grade, Plastral), Simona Swiss Grey (premium grade, Plastral), Simona Dark Grey (thick slabs), Simona White/Clear, Dotmar Trovidur (premium German grade)
+
+**Applications:** Chemical plant components, tanks, fume hoods, ducts, food processing equipment, lab bench surfaces, marine fittings, pump housings, guards.
+
+**PRICING — All prices ex GST, March 2026**
+
+CTS (cut-to-size) pricing uses two rates:
+- **Below cutoff:** higher $/m² rate (small pieces)
+- **Above cutoff:** lower $/m² rate (larger pieces)
+- Cutoff areas: 1–6mm = 2 m², 8–15mm = 1.75 m², 20mm+ = 1.5 m²
+- Rule: if CTS price exceeds full sheet price, charge full sheet price + cutting fee
+
+**NANYA — CLEAR (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 1mm       | $53.61             | $42.33             | $81.90     |
+| 3mm       | $126.38            | $99.77             | $193.05    |
+| 4.5mm     | $190.20            | $150.16            | $290.55    |
+| 6mm       | $252.75            | $199.54            | $386.10    |
+
+**NANYA — LIGHT GREY (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 1.5mm     | $53.61             | $42.33             | $81.90     |
+| 3mm       | $102.12            | $80.62             | $156.00    |
+| 4.5mm     | $153.18            | $120.94            | $234.00    |
+| 6mm       | $204.25            | $161.25            | $312.00    |
+| 8mm       | $237.23            | $194.10            | $374.50    |
+| 10mm      | $295.99            | $242.17            | $467.25    |
+| 12mm      | $354.74            | $290.24            | $560.00    |
+| 15mm      | $443.43            | $362.81            | $700.00    |
+| 20mm      | $537.15            | $447.63            | $906.10    |
+
+**NANYA — WHITE (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 1.5mm     | $76.59             | $60.47             | $117.00    |
+| 3mm       | $114.89            | $90.70             | $175.50    |
+| 4.5mm     | $172.33            | $136.05            | $263.25    |
+| 6mm       | $229.78            | $181.40            | $351.00    |
+| 10mm      | $332.57            | $272.10            | $525.00    |
+
+**SIMONA — SWISS GREY (2440 × 1220mm unless noted)**
+| Thickness | Sheet Size    | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|---------------|--------------------|--------------------|------------|
+| 3mm       | 2440 × 1220   | $95.74             | $75.58             | $146.25    |
+| 4.5mm     | 2440 × 1220   | $144.25            | $113.88            | $220.35    |
+| 6mm       | 2440 × 1220   | $191.48            | $151.17            | $292.50    |
+| 6mm       | 3000 × 1500   | $190.84            | $150.67            | $440.70    |
+| 8mm       | 2440 × 1220   | $221.71            | $181.40            | $350.00    |
+| 10mm      | 2440 × 1220   | $277.14            | $226.75            | $437.50    |
+| 12mm      | 2440 × 1220   | $332.57            | $272.10            | $525.00    |
+| 15mm      | 2440 × 1220   | $415.71            | $340.13            | $656.25    |
+| 20mm      | 2440 × 1220   | $503.90            | $419.91            | $850.00    |
+| 25mm      | 2440 × 1220   | $629.87            | $524.89            | $1,062.50  |
+
+**SIMONA — DARK GREY — THICK SLABS (2000 × 1000mm, full sheet only — no CTS)**
+| Thickness | Full Sheet  |
+|-----------|-------------|
+| 30mm      | $1,104.00   |
+| 40mm      | $1,572.80   |
+| 50mm      | $2,177.60   |
+
+**SIMONA — WHITE (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 3mm       | $114.89            | $90.70             | $175.50    |
+| 4.5mm     | $172.33            | $136.05            | $263.25    |
+| 6mm       | $229.78            | $181.40            | $351.00    |
+| 10mm      | $280.47            | $229.47            | $442.75    |
+
+**SIMONA — CLEAR (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 6mm       | $299.99            | $236.83            | $458.25    |
+
+**DOTMAR TROVIDUR — LIGHT GREY PREMIUM (2440 × 1220mm)**
+| Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
+|-----------|--------------------|--------------------|------------|
+| 1.5mm     | $63.48             | $50.12             | $96.97     |
+| 3mm       | $126.96            | $100.24            | $193.95    |
+| 4.5mm     | $190.43            | $150.34            | $290.90    |
+| 6mm       | $253.93            | $200.47            | $387.89    |
+| 8mm       | $293.98            | $240.53            | $464.08    |
+| 10mm      | $367.55            | $300.72            | $580.21    |
+| 12mm      | $441.03            | $360.85            | $696.22    |
+| 15mm      | $551.29            | $451.06            | $870.28    |
+| 20mm      | $668.20            | $556.83            | $1,127.15  |
+| 25mm      | $835.23            | $696.02            | $1,408.91  |
+
+---
+
 ### ACM (Aluminium Composite Material / Panel)
 
 **Properties:** Sandwich panel — two thin aluminium skins + PE or mineral core. Lightweight (3.4× lighter than steel). Won't warp, swell, or corrode. Weather-resistant. Excellent print surface. V-routed and folded for 3D box forms.

@@ -33,6 +33,7 @@ const CHANGELOG: Day[] = [
     label: "Today",
     entries: [
       { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
+      { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
     ],
   },
   {
