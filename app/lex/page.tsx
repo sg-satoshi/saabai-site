@@ -162,21 +162,13 @@ function pickReplies() {
 export default function LexPage() {
   const clientId = "lex-internal";
 
-  const [threads, setThreads] = useState<Thread[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
-    } catch { return []; }
-  });
-
-  const [activeId, setActiveId] = useState<string | null>(() =>
-    threads.length > 0 ? threads[0].id : null
-  );
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkLabel, setThinkLabel] = useState("Researching…");
-  const [chips, setChips] = useState<string[]>(() => pickReplies());
+  const [chips, setChips] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
@@ -216,6 +208,18 @@ export default function LexPage() {
 
   const activeThread = threads.find(t => t.id === activeId) ?? null;
   const messages = activeThread?.messages ?? [];
+
+  // Hydrate threads + chips from client state after mount (avoids server/client mismatch)
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
+      if (saved.length > 0) {
+        setThreads(saved);
+        setActiveId(saved[0].id);
+      }
+    } catch {}
+    setChips(pickReplies());
+  }, []);
 
   // Persist threads
   useEffect(() => {
