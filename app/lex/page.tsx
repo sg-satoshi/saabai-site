@@ -26,8 +26,11 @@ const C = {
 };
 
 type ChatMessage  = { role: "user" | "assistant"; content: string };
-type Thread       = { id: string; title: string; messages: ChatMessage[]; createdAt: number };
+type Thread       = { id: string; title: string; messages: ChatMessage[]; createdAt: number; projectId?: string };
+type Project      = { id: string; name: string; createdAt: number; colour: string };
 type Mode         = "research" | "draft" | "review";
+
+const PROJECT_COLOURS = ["#C9A84C","#5b8dee","#25c986","#f97316","#a78bfa","#f472b6"];
 
 type QASection  = { id: string; clause: string; status: "verified" | "flagged" | "unverified"; note: string };
 type QAReport   = { overallConfidence: number; sections: QASection[]; criticalIssues: string[]; recommendedChecks: string[] };
@@ -158,12 +161,93 @@ function pickReplies() {
   return [...QUICK_REPLIES].sort(() => Math.random() - 0.5).slice(0, 4);
 }
 
+// ── Context menu item ─────────────────────────────────────────────────────────
+function ContextMenuItem({ icon, label, onClick, danger = false }: { icon: string; label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button onClick={onClick} style={{
+      width: "100%", padding: "8px 14px", background: "none", border: "none",
+      color: danger ? "#f87171" : C.text, fontSize: 12, textAlign: "left", cursor: "pointer",
+      display: "flex", alignItems: "center", gap: 8,
+    }}
+      onMouseEnter={e => (e.currentTarget.style.background = danger ? "rgba(248,113,113,0.08)" : C.bg)}
+      onMouseLeave={e => (e.currentTarget.style.background = "none")}
+    >
+      <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+// ── Thread row (sidebar) ──────────────────────────────────────────────────────
+function ThreadRow({
+  thread, activeId, onSelect, onMenu, renameState, setRenameState, renameThread,
+}: {
+  thread: Thread; activeId: string | null;
+  onSelect: () => void;
+  onMenu: (e: React.MouseEvent) => void;
+  renameState: { type: "thread" | "project"; id: string; value: string } | null;
+  setRenameState: React.Dispatch<React.SetStateAction<typeof renameState>>;
+  renameThread: (id: string, title: string) => void;
+}) {
+  const isActive = activeId === thread.id;
+  const isRenaming = renameState?.type === "thread" && renameState.id === thread.id;
+  return (
+    <div onClick={onSelect} style={{
+      padding: "7px 8px 7px 10px", borderRadius: 7, cursor: "pointer", marginBottom: 1,
+      background: isActive ? C.surfaceRaised : "transparent",
+      border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
+      display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {isRenaming ? (
+          <input
+            data-menu="rename"
+            autoFocus
+            value={renameState!.value}
+            onChange={e => setRenameState(s => s ? { ...s, value: e.target.value } : null)}
+            onBlur={() => { renameThread(thread.id, renameState!.value || thread.title); setRenameState(null); }}
+            onKeyDown={e => {
+              if (e.key === "Enter") { renameThread(thread.id, renameState!.value || thread.title); setRenameState(null); }
+              if (e.key === "Escape") setRenameState(null);
+              e.stopPropagation();
+            }}
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%", fontSize: 12, fontWeight: 500, color: C.text, background: C.bg,
+              border: `1px solid ${C.borderAccent}`, borderRadius: 4, padding: "1px 5px", outline: "none",
+            }}
+          />
+        ) : (
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: isActive ? C.text : C.textMuted,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {thread.title}
+          </p>
+        )}
+        <p style={{ margin: "2px 0 0", fontSize: 10, color: C.textDim }}>{fmtDate(thread.createdAt)}</p>
+      </div>
+      <button
+        data-menu="trigger"
+        onClick={onMenu}
+        style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer",
+          padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1, opacity: 0.7 }}
+        title="Thread options"
+      >⋯</button>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function LexPage() {
   const clientId = "lex-internal";
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [threadMenu, setThreadMenu] = useState<{ threadId: string; x: number; y: number } | null>(null);
+  const [projectMenu, setProjectMenu] = useState<{ projectId: string; x: number; y: number } | null>(null);
+  const [renameState, setRenameState] = useState<{ type: "thread" | "project"; id: string; value: string } | null>(null);
+  const [moveDialog, setMoveDialog] = useState<string | null>(null); // threadId being moved
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -209,13 +293,17 @@ export default function LexPage() {
   const activeThread = threads.find(t => t.id === activeId) ?? null;
   const messages = activeThread?.messages ?? [];
 
-  // Hydrate threads + chips from client state after mount (avoids server/client mismatch)
+  // Hydrate threads + projects + chips from client state after mount (avoids server/client mismatch)
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
-      if (saved.length > 0) {
-        setThreads(saved);
-        setActiveId(saved[0].id);
+      if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
+    } catch {}
+    try {
+      const savedProjects = JSON.parse(localStorage.getItem("lex_projects") ?? "[]") as Project[];
+      if (savedProjects.length > 0) {
+        setProjects(savedProjects);
+        setExpandedProjects(new Set(savedProjects.map(p => p.id)));
       }
     } catch {}
     setChips(pickReplies());
@@ -225,6 +313,26 @@ export default function LexPage() {
   useEffect(() => {
     try { localStorage.setItem("lex_threads", JSON.stringify(threads)); } catch {}
   }, [threads]);
+
+  // Persist projects
+  useEffect(() => {
+    try { localStorage.setItem("lex_projects", JSON.stringify(projects)); } catch {}
+  }, [projects]);
+
+  // Close menus on outside click
+  useEffect(() => {
+    if (!threadMenu && !projectMenu && !moveDialog) return;
+    const handler = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-menu]")) {
+        setThreadMenu(null);
+        setProjectMenu(null);
+        setMoveDialog(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [threadMenu, projectMenu, moveDialog]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -262,6 +370,36 @@ export default function LexPage() {
       const remaining = threads.filter(t => t.id !== id);
       setActiveId(remaining[0]?.id ?? null);
     }
+  }
+
+  function renameThread(id: string, title: string) {
+    setThreads(prev => prev.map(t => t.id === id ? { ...t, title } : t));
+  }
+
+  function moveThreadToProject(threadId: string, projectId: string | null) {
+    setThreads(prev => prev.map(t => t.id === threadId ? { ...t, projectId: projectId ?? undefined } : t));
+    // Auto-expand destination project
+    if (projectId) setExpandedProjects(prev => new Set([...prev, projectId]));
+  }
+
+  function newProject() {
+    const id = `p_${Date.now()}`;
+    const colour = PROJECT_COLOURS[projects.length % PROJECT_COLOURS.length];
+    const project: Project = { id, name: "New Project", createdAt: Date.now(), colour };
+    setProjects(prev => [...prev, project]);
+    setExpandedProjects(prev => new Set([...prev, id]));
+    // Open rename immediately
+    setRenameState({ type: "project", id, value: "New Project" });
+  }
+
+  function renameProject(id: string, name: string) {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, name } : p));
+  }
+
+  function deleteProject(id: string) {
+    setProjects(prev => prev.filter(p => p.id !== id));
+    // Orphan threads back to Unorganised
+    setThreads(prev => prev.map(t => t.projectId === id ? { ...t, projectId: undefined } : t));
   }
 
   function updateThreadMessages(id: string, msgs: ChatMessage[]) {
@@ -540,8 +678,8 @@ export default function LexPage() {
       {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
       {sidebarOpen && (
         <aside style={{
-          width: 260, flexShrink: 0, display: "flex", flexDirection: "column",
-          background: C.surface, borderRight: `1px solid ${C.border}`,
+          width: 264, flexShrink: 0, display: "flex", flexDirection: "column",
+          background: C.surface, borderRight: `1px solid ${C.border}`, position: "relative",
         }}>
           {/* Brand */}
           <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
@@ -554,60 +692,138 @@ export default function LexPage() {
             </div>
           </div>
 
-          {/* New thread button */}
-          <div style={{ padding: "10px 12px" }}>
+          {/* Action buttons row */}
+          <div style={{ padding: "10px 10px 6px", display: "flex", gap: 6 }}>
             <button onClick={newThread} style={{
-              width: "100%", padding: "9px 12px", borderRadius: 10,
+              flex: 1, padding: "8px 10px", borderRadius: 8,
               background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-              color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 6,
+              color: C.gold, fontSize: 11, fontWeight: 700, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
             }}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              New Research Thread
+              New Thread
+            </button>
+            <button onClick={newProject} style={{
+              flex: 1, padding: "8px 10px", borderRadius: 8,
+              background: "rgba(91,141,238,0.08)", border: "1px solid rgba(91,141,238,0.2)",
+              color: "#5b8dee", fontSize: 11, fontWeight: 700, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+            }}>
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M1 2.5C1 1.95 1.45 1.5 2 1.5h2.5l1 1H9c.55 0 1 .45 1 1v5c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1v-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
+                <path d="M5.5 4.5v3M4 6h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              New Project
             </button>
           </div>
 
-          {/* Thread list */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "4px 8px" }}>
-            {threads.length === 0 && (
+          {/* Thread + Project list */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "2px 8px 8px" }}>
+            {threads.length === 0 && projects.length === 0 && (
               <p style={{ textAlign: "center", color: C.textDim, fontSize: 11, marginTop: 24, padding: "0 12px" }}>
                 No threads yet. Start a new research session above.
               </p>
             )}
-            {threads.map(thread => (
-              <div
-                key={thread.id}
-                onClick={() => { setActiveId(thread.id); setChips(pickReplies()); }}
-                style={{
-                  padding: "9px 10px", borderRadius: 8, cursor: "pointer", marginBottom: 2,
-                  background: activeId === thread.id ? C.surfaceRaised : "transparent",
-                  border: activeId === thread.id ? `1px solid ${C.borderAccent}` : "1px solid transparent",
-                  display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6,
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: activeId === thread.id ? C.text : C.textMuted,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {thread.title}
-                  </p>
-                  <p style={{ margin: "2px 0 0", fontSize: 10, color: C.textDim }}>{fmtDate(thread.createdAt)}</p>
+
+            {/* Projects (each as a collapsible folder) */}
+            {projects.map(project => {
+              const projectThreads = threads.filter(t => t.projectId === project.id);
+              const isExpanded = expandedProjects.has(project.id);
+              return (
+                <div key={project.id} style={{ marginBottom: 4 }}>
+                  {/* Project header */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 5, padding: "5px 6px",
+                    borderRadius: 7, cursor: "pointer",
+                  }}
+                    onClick={() => setExpandedProjects(prev => {
+                      const next = new Set(prev);
+                      isExpanded ? next.delete(project.id) : next.add(project.id);
+                      return next;
+                    })}
+                  >
+                    {/* Chevron */}
+                    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ flexShrink: 0, transition: "transform 0.15s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>
+                      <path d="M3 2l3 2.5L3 7" stroke={C.textDim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {/* Folder icon */}
+                    <svg width="13" height="12" viewBox="0 0 13 12" fill="none" style={{ flexShrink: 0 }}>
+                      <path d="M1 3C1 2.45 1.45 2 2 2h3l1 1.5H11c.55 0 1 .45 1 1V10c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1V3z" fill={project.colour} opacity="0.25"/>
+                      <path d="M1 3C1 2.45 1.45 2 2 2h3l1 1.5H11c.55 0 1 .45 1 1V10c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1V3z" stroke={project.colour} strokeWidth="1.2" strokeLinejoin="round" fill="none"/>
+                    </svg>
+                    {/* Name (inline rename) */}
+                    {renameState?.type === "project" && renameState.id === project.id ? (
+                      <input
+                        data-menu="rename"
+                        autoFocus
+                        value={renameState.value}
+                        onChange={e => setRenameState(s => s ? { ...s, value: e.target.value } : null)}
+                        onBlur={() => { renameProject(project.id, renameState.value || project.name); setRenameState(null); }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") { renameProject(project.id, renameState.value || project.name); setRenameState(null); }
+                          if (e.key === "Escape") setRenameState(null);
+                          e.stopPropagation();
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          flex: 1, fontSize: 12, fontWeight: 600, color: C.text, background: C.bg,
+                          border: `1px solid ${C.borderAccent}`, borderRadius: 4, padding: "1px 5px", outline: "none",
+                        }}
+                      />
+                    ) : (
+                      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {project.name}
+                      </span>
+                    )}
+                    <span style={{ fontSize: 10, color: C.textDim, flexShrink: 0 }}>{projectThreads.length}</span>
+                    {/* 3-dot menu button */}
+                    <button
+                      data-menu="trigger"
+                      onClick={e => { e.stopPropagation(); setProjectMenu(m => m?.projectId === project.id ? null : { projectId: project.id, x: e.clientX, y: e.clientY }); setThreadMenu(null); }}
+                      style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1 }}
+                    >⋯</button>
+                  </div>
+                  {/* Threads inside project */}
+                  {isExpanded && projectThreads.map(thread => (
+                    <ThreadRow key={thread.id} thread={thread} activeId={activeId}
+                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
+                      onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
+                      renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
+                    />
+                  ))}
+                  {isExpanded && projectThreads.length === 0 && (
+                    <p style={{ margin: "2px 0 4px 28px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>Empty project</p>
+                  )}
                 </div>
-                <button
-                  onClick={e => { e.stopPropagation(); deleteThread(thread.id); }}
-                  style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer",
-                    padding: 2, borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 14 }}
-                  title="Delete thread"
-                >×</button>
-              </div>
-            ))}
+              );
+            })}
+
+            {/* Unorganised threads */}
+            {(() => {
+              const unorganised = threads.filter(t => !t.projectId);
+              if (unorganised.length === 0 && projects.length === 0) return null;
+              return (
+                <div style={{ marginTop: projects.length > 0 ? 6 : 0 }}>
+                  {projects.length > 0 && (
+                    <p style={{ margin: "2px 6px 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: 0.5 }}>Unorganised</p>
+                  )}
+                  {unorganised.map(thread => (
+                    <ThreadRow key={thread.id} thread={thread} activeId={activeId}
+                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
+                      onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
+                      renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Footer */}
           <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}` }}>
-            <a href="/client-portal" style={{ display: "block", fontSize: 11, color: C.textMuted,
-              textDecoration: "none", padding: "6px 0" }}>
+            <a href="/client-portal" style={{ display: "block", fontSize: 11, color: C.textMuted, textDecoration: "none", padding: "6px 0" }}>
               ⚙ Firm Dashboard
             </a>
             <a href="https://saabai.ai" target="_blank" rel="noopener noreferrer"
@@ -615,6 +831,79 @@ export default function LexPage() {
               Powered by Saabai.ai
             </a>
           </div>
+
+          {/* ── Thread context menu ─────────────────────────────────────── */}
+          {threadMenu && (() => {
+            const thread = threads.find(t => t.id === threadMenu.threadId);
+            if (!thread) return null;
+            return (
+              <div data-menu="context" style={{
+                position: "fixed", top: Math.min(threadMenu.y, window.innerHeight - 180), left: Math.min(threadMenu.x + 4, window.innerWidth - 180),
+                background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 10,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 9999, minWidth: 168, overflow: "hidden",
+              }}>
+                <ContextMenuItem icon="✎" label="Rename" onClick={() => { setRenameState({ type: "thread", id: thread.id, value: thread.title }); setThreadMenu(null); }} />
+                <ContextMenuItem icon="⇢" label="Move to Project" onClick={() => { setMoveDialog(thread.id); setThreadMenu(null); }} />
+                {thread.projectId && (
+                  <ContextMenuItem icon="⊘" label="Remove from Project" onClick={() => { moveThreadToProject(thread.id, null); setThreadMenu(null); }} />
+                )}
+                <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
+                <ContextMenuItem icon="×" label="Delete Thread" danger onClick={() => { deleteThread(thread.id); setThreadMenu(null); }} />
+              </div>
+            );
+          })()}
+
+          {/* ── Project context menu ────────────────────────────────────── */}
+          {projectMenu && (() => {
+            const project = projects.find(p => p.id === projectMenu.projectId);
+            if (!project) return null;
+            return (
+              <div data-menu="context" style={{
+                position: "fixed", top: Math.min(projectMenu.y, window.innerHeight - 160), left: Math.min(projectMenu.x + 4, window.innerWidth - 180),
+                background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 10,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 9999, minWidth: 168, overflow: "hidden",
+              }}>
+                <ContextMenuItem icon="✎" label="Rename Project" onClick={() => { setRenameState({ type: "project", id: project.id, value: project.name }); setProjectMenu(null); }} />
+                <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
+                <ContextMenuItem icon="×" label="Delete Project" danger onClick={() => { deleteProject(project.id); setProjectMenu(null); }} />
+              </div>
+            );
+          })()}
+
+          {/* ── Move to Project dialog ──────────────────────────────────── */}
+          {moveDialog && (
+            <div data-menu="context" style={{
+              position: "fixed",
+              top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+              background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 12,
+              boxShadow: "0 16px 48px rgba(0,0,0,0.5)", zIndex: 9999, minWidth: 220, padding: "14px 0 10px",
+            }}>
+              <p style={{ margin: "0 0 8px", padding: "0 16px", fontSize: 12, fontWeight: 700, color: C.text }}>Move to Project</p>
+              {projects.length === 0 ? (
+                <p style={{ padding: "0 16px", fontSize: 11, color: C.textDim }}>No projects yet. Create one first.</p>
+              ) : projects.map(p => (
+                <button key={p.id} onClick={() => { moveThreadToProject(moveDialog, p.id); setMoveDialog(null); }}
+                  style={{
+                    width: "100%", padding: "8px 16px", background: "none", border: "none",
+                    color: C.text, fontSize: 12, textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                >
+                  <span style={{ width: 10, height: 10, borderRadius: 3, background: p.colour, flexShrink: 0 }} />
+                  {p.name}
+                </button>
+              ))}
+              <div style={{ height: 1, background: C.border, margin: "8px 0 4px" }} />
+              <button onClick={() => { moveThreadToProject(moveDialog, null); setMoveDialog(null); }}
+                style={{ width: "100%", padding: "8px 16px", background: "none", border: "none", color: C.textMuted, fontSize: 12, textAlign: "left", cursor: "pointer" }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+                onMouseLeave={e => (e.currentTarget.style.background = "none")}
+              >
+                ⊘ Remove from project
+              </button>
+            </div>
+          )}
         </aside>
       )}
 
