@@ -236,6 +236,51 @@ Also known as: Polyethylene HD. Seaboard = marine UV-stabilised brand.
 **BONDING:** Requires specialised adhesives or welding.
 
 **Applications:** Chemical storage tanks, lab equipment, food processing, living hinge applications, automotive parts.
+
+**PP SHEET PRICING — March 2026 (all prices ex GST)**
+
+Pricing rules:
+- Orders under $50 are charged a $35 cutting fee
+- CTS = cut-to-size. Pieces ≤1.25m² use the higher rate; pieces >1.25m² use the lower rate
+- Where the CTS total exceeds the full sheet price, charge full sheet price + cutting fee
+
+**PP GREY — 3000×1500mm sheet (4.5m²):**
+
+| Thickness | Full Sheet | CTS ≤1.25m² | CTS >1.25m² |
+|-----------|-----------|-------------|-------------|
+| 2mm | $112 | $43.56/m² | $31.11/m² |
+| 3mm | $164 | $63.78/m² | $45.56/m² |
+| 4.5mm | $246 | $95.67/m² | $68.33/m² |
+| 6mm | $336 | $130.67/m² | $93.33/m² |
+| 10mm | $509 | $208.44/m² | $148.89/m² |
+| 12mm | $623 | $255.11/m² | $182.22/m² |
+| 15mm | $798 | $326.67/m² | $233.33/m² |
+| 20mm | $985 | $425.44/m² | $243.11/m² |
+| 25mm | $1,231 | $532.00/m² | $304.00/m² |
+
+**PP GREY — 30mm and above (multiple sheet sizes available):**
+
+| Thickness | Sheet Size | Full Sheet | CTS >1.25m² |
+|-----------|-----------|------------|-------------|
+| 30mm | 995×495mm | $177 | $760.37/m² (small only) |
+| 30mm | 2000×1000mm | $607 | $368.00/m² |
+| 30mm | 3000×1500mm | $1,480 | $398.67/m² |
+| 35mm | 995×495mm | $221 | $952.24/m² (small only) |
+| 35mm | 3000×1500mm | $2,541 | $684.44/m² |
+| 40mm | 995×495mm | $243 | $1,044.62/m² (small only) |
+| 40mm | 3000×1500mm | $1,937 | $521.78/m² |
+| 40mm Beige (Polystone) | 2000×1000mm | $1,552 | $940.56/m² |
+| 50mm Beige (Polystone) | 2000×1000mm | $2,158 | $1,308.06/m² |
+
+**PP NATURAL — 2000×1000mm sheet (2.0m²):**
+
+| Thickness | Full Sheet | CTS ≤1.25m² | CTS >1.25m² |
+|-----------|-----------|-------------|-------------|
+| 2mm | $66 | $57.75/m² | $41.25/m² |
+| 3mm | $100 | $87.50/m² | $62.50/m² |
+| 4mm | $132 | $115.50/m² | $82.50/m² |
+| 5mm | $166 | $145.25/m² | $103.75/m² |
+| 6mm | $230 | $201.25/m² | $143.75/m² |
 `;
 
 const MATERIALS_SIGNAGE = `

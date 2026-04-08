@@ -29,8 +29,14 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "7 Apr 2026",
+    date: "8 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
+    ],
+  },
+  {
+    date: "7 Apr 2026",
     entries: [
       { time: "10:15", tag: "IMPROVEMENT", title: "Rex now treats 'full sheet' requests as 2440×1220mm — if customer says 'full sheet of 6mm clear acrylic' Rex calls getPrice with 2440×1220 without asking for dimensions; oversized sheets (2490×1880, 3050×2030) only quoted when customer explicitly requests a size larger than standard" },
       { time: "10:00", tag: "PRICING", title: "Full sheet orders no longer charged $30 cutting fee — if customer orders exact standard sheet dimensions (e.g. 2440×1220mm) no cutting is performed so no cutting fee applies; same fix applied to oversized sheet sizes; e.g. 3mm opal 2440×1220mm now correctly $136 not $166" },
