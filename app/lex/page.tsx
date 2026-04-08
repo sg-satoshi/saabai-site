@@ -197,7 +197,7 @@ export default function LexPage() {
 
   // ── Review mode state ──────────────────────────────────────────────────────
   const [reviewDirection, setReviewDirection]     = useState<"incoming" | "outgoing">("incoming");
-  const [reviewDocType, setReviewDocType]         = useState("service-agreement");
+  const [reviewDocType, setReviewDocType]         = useState("auto-detect");
   const [reviewActingFor, setReviewActingFor]     = useState("vendor");
   const [reviewJurisdiction, setReviewJurisdiction] = useState("All Australian jurisdictions");
   const [reviewInputMode, setReviewInputMode]     = useState<"upload" | "paste">("upload");
@@ -1144,6 +1144,7 @@ export default function LexPage() {
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>Document Type</label>
                 <select value={reviewDocType} onChange={e => setReviewDocType(e.target.value)}
                   style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
+                  <option value="auto-detect">⚡ Auto-detect (Lex identifies the document)</option>
                   <optgroup label="Commercial">
                     <option value="service-agreement">Service Agreement</option>
                     <option value="nda">Non-Disclosure Agreement (NDA)</option>
@@ -1181,7 +1182,15 @@ export default function LexPage() {
                     <option value="lease-residential">Residential Lease</option>
                     <option value="easement">Easement / Covenant</option>
                   </optgroup>
+                  <optgroup label="Other">
+                    <option value="other">Other / Custom document</option>
+                  </optgroup>
                 </select>
+                {reviewDocType === "auto-detect" && (
+                  <p style={{ margin: "6px 0 0", fontSize: 10, color: C.textDim, lineHeight: 1.5 }}>
+                    Lex will identify the document type from the content and apply the appropriate review criteria automatically.
+                  </p>
+                )}
               </div>
 
               {/* Acting for (incoming only) */}

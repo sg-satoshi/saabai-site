@@ -66,25 +66,34 @@ function buildUserPrompt(body: ReviewRequest): string {
   const { documentText, documentType, direction, actingFor, jurisdiction } = body;
   const truncated = documentText.slice(0, 12000);
 
+  const isAutoDetect = documentType === "auto-detect" || documentType === "other";
+  const docTypeInstruction = isAutoDetect
+    ? `First, identify the document type from the content (e.g. "Service Agreement", "Employment Contract", "NDA", "Commercial Lease", "Letter of Advice" etc.) and use that as the documentType field in your response. Apply review criteria appropriate for that document type.`
+    : `Document type: ${documentType}.`;
+
   let analysisInstructions: string;
 
   if (direction === "incoming") {
-    analysisInstructions = `Review this ${documentType} as ${actingFor ?? "your client"}'s solicitor in ${jurisdiction}.
+    analysisInstructions = `${docTypeInstruction}
+
+Review this document as ${actingFor ?? "your client"}'s solicitor in ${jurisdiction}.
 
 Analyse across these axes:
 1. RISK FLAGS — clauses that create unfavorable exposure for your client (unlimited liability, one-sided indemnities, unilateral variation rights, unusual termination triggers, IP assignment, auto-renewal traps)
-2. MISSING CLAUSES — clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.)
-3. LEGISLATION CONFLICTS — clauses that may conflict with Australian legislation (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, etc.)
+2. MISSING CLAUSES — clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.) — tailor this to the identified document type
+3. LEGISLATION CONFLICTS — clauses that may conflict with Australian legislation relevant to this document type (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, Family Law Act, etc.)
 4. MARKET POSITION — terms that are unusually aggressive or non-standard for this document type
 5. NEGOTIATION — for each critical/moderate finding, suggest a redline (replacement clause language)
 
 Return a JSON ReviewReport object.`;
   } else {
-    analysisInstructions = `Review this ${documentType} prepared for a client in ${jurisdiction} as outgoing work product from a law firm.
+    analysisInstructions = `${docTypeInstruction}
+
+Review this document prepared for a client in ${jurisdiction} as outgoing work product from a law firm.
 
 Analyse across these axes:
-1. ACCURACY — are legal citations correct? Are case references valid? Are legislation section numbers accurate?
-2. COMPLETENESS — has the lawyer addressed all material issues? What has been missed?
+1. ACCURACY — are legal citations correct? Are case references valid? Are legislation section numbers accurate for the identified document type?
+2. COMPLETENESS — has the lawyer addressed all material issues relevant to this document type? What has been missed?
 3. COMPLIANCE — does this comply with Legal Profession Uniform Law obligations (costs disclosure, conflict disclosure)?
 4. TONE — is the language professionally appropriate? Too aggressive? Too tentative?
 5. RISK TO FIRM — anything that could expose the firm to professional indemnity liability?
