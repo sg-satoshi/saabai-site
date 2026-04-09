@@ -363,12 +363,13 @@ const HDPE: SheetRow[] = [
 ];
 
 const SEABOARD: SheetRow[] = [
-  { colour: "white", thicknessMm: 6.35,  sheetW: 2440, sheetH: 1370, ctsRate: 205.76, fullSheetPrice: 334.85 },
-  { colour: "white", thicknessMm: 9.5,   sheetW: 2440, sheetH: 1370, ctsRate: 313.75, fullSheetPrice: 510.60 },
-  { colour: "white", thicknessMm: 12.7,  sheetW: 2440, sheetH: 1370, ctsRate: 414.92, fullSheetPrice: 675.25 },
-  { colour: "white", thicknessMm: 15.8,  sheetW: 2440, sheetH: 1370, ctsRate: 529.74, fullSheetPrice: 862.10 },
-  { colour: "white", thicknessMm: 19,    sheetW: 2440, sheetH: 1370, ctsRate: 620.68, fullSheetPrice: 928.20 },
-  { colour: "white", thicknessMm: 25.4,  sheetW: 2440, sheetH: 1370, ctsRate: 834.39, fullSheetPrice: 1247.80 },
+  // Thicknesses are PLON's metric labels (physical imperial stock: 6.35mm=6mm, 9.5mm=10mm, 12.7mm=12mm, etc.)
+  { colour: "white", thicknessMm: 6,   sheetW: 2440, sheetH: 1370, ctsRate: 205.76, fullSheetPrice: 334.85 },
+  { colour: "white", thicknessMm: 10,  sheetW: 2440, sheetH: 1370, ctsRate: 284.21, fullSheetPrice: 510.60 },
+  { colour: "white", thicknessMm: 12,  sheetW: 2440, sheetH: 1370, ctsRate: 414.92, fullSheetPrice: 675.25 },
+  { colour: "white", thicknessMm: 16,  sheetW: 2440, sheetH: 1370, ctsRate: 529.74, fullSheetPrice: 862.10 },
+  { colour: "white", thicknessMm: 19,  sheetW: 2440, sheetH: 1370, ctsRate: 620.68, fullSheetPrice: 928.20 },
+  { colour: "white", thicknessMm: 25,  sheetW: 2440, sheetH: 1370, ctsRate: 834.39, fullSheetPrice: 1247.80 },
 ];
 
 const PETG: SheetRow[] = [
@@ -832,10 +833,11 @@ function buildResult(unitPrice: number, qty: number, note: string, url: string):
     note += ", 5% bulk discount applied";
   }
   let minFee = false;
-  if (total < MIN_ORDER) {
-    total += CUTTING_FEE;
+  if (total < CUTTING_FEE) {
+    // Minimum cutting fee: you pay at least $30 (not CTS + $30)
+    total = CUTTING_FEE;
     minFee = true;
-    note += ", $30 minimum order fee";
+    note += ", $30 minimum cutting fee";
   }
   total = r2(total);
   return { found: true, price: total, priceFormatted: fmt(total), note, productUrl: url, bulkDiscountApplied: bulkDiscount, minimumFeeApplied: minFee };

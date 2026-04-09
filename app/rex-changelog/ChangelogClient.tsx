@@ -30,7 +30,6 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 const CHANGELOG: Day[] = [
   {
     date: "8 Apr 2026",
-    label: "Today",
     entries: [
       { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
       { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
@@ -39,7 +38,10 @@ const CHANGELOG: Day[] = [
   },
   {
     date: "10 Apr 2026",
+    label: "Today",
     entries: [
+      { time: "14:00", tag: "PRICING", title: "Fixed Seaboard 10mm pricing — SEABOARD data was using imperial thickness labels (9.5mm, 12.7mm etc.) but PLON's site uses metric (10mm, 12mm, 16mm); Rex was returning 'not found' for 10mm and hallucinating a price; corrected thickness labels and updated 10mm CTS rate to $284.21/m² (verified against site: 420×300mm = $35.81)" },
+      { time: "14:00", tag: "FIX", title: "Fixed minimum cutting fee logic — engine was adding $30 on top of CTS price for any order under $50 (e.g. $35.81 + $30 = $65.81), but PLON's WooCommerce calculator charges the CTS price as-is; $30 is now a minimum floor (if piece costs < $30, charge $30) not a surcharge" },
       { time: "10:30", tag: "IMPROVEMENT", title: "Lock it in → link now carries all quote dimensions as URL params (colour, thickness, width, height, qty) — takes customer to the exact product page with their specs in the URL so PLON's cut-to-size form can auto-fill; pricing flow via getPrice unchanged, no WooCommerce API lookup needed" },
       { time: "09:00", tag: "FIX", title: "Lead notification email destination changed from enquiries@plasticonline.com.au to sales@hollandplastics.com.au — all Rex lead alerts and weekly digests now route to the new address" },
     ],
