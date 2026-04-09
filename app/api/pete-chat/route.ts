@@ -164,6 +164,8 @@ export async function POST(req: Request) {
                 p.set("material",  input.material ?? "");
                 if (input.colour)      p.set("colour",    input.colour);
                 if (input.thicknessMm) p.set("thickness", String(input.thicknessMm));
+                if (input.widthMm)     p.set("width",     String(input.widthMm));
+                if (input.heightMm)    p.set("height",    String(input.heightMm));
                 p.set("qty", String(input.quantity ?? 1));
                 return { ...result, cartUrl: `${base}/api/rex-cart?${p.toString()}` };
               }
