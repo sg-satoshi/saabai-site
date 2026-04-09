@@ -40,6 +40,7 @@ const CHANGELOG: Day[] = [
     date: "10 Apr 2026",
     label: "Today",
     entries: [
+      { time: "17:00", tag: "FIX", title: "Fixed Seaboard returning blank response — when Rex called getPrice without passing a colour, normColour returned 'natural' which matched no Seaboard rows; engine now defaults to 'white' for Seaboard when colour is empty or unspecified, matching the primary product; White and Black still work when explicitly requested" },
       { time: "16:30", tag: "IMPROVEMENT", title: "Lock it in → now uses a server-side redirect (/api/rex-cart) to resolve the real WooCommerce variation_id — Rex looks up material+colour+thickness via searchProducts, finds the matching in-stock variation, and redirects to /?add-to-cart=PRODUCT_ID&variation_id=VARIATION_ID; correct product and thickness/colour are pre-selected in the cart" },
       { time: "15:30", tag: "PRICING", title: "Full Seaboard HDPE pricelist updated from March 2026 supplier data — White 2440×1220 (6/10/12/12.7/15/19/25mm) and 2440×1370 (6.35/9.5/14.28/15.8/19/25.4mm); Black 2440×1220 (6/9.5/12.7/15/19mm); all CTS rates and full sheet prices corrected; Rex can now quote both White and Black Seaboard at correct rates" },
       { time: "15:30", tag: "FIX", title: "Fixed Seaboard colour bug — switch case was hardcoding 'white' regardless of what customer requested; Black Seaboard quotes now work correctly" },

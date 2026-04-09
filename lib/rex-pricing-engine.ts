@@ -1079,7 +1079,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"));
       case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, getProductUrl("polypropylene"));
       case "hdpe":            return priceGenericSheet(HDPE, hdpeCol, thick, w, h, qty, getProductUrl("hdpe"));
-      case "seaboard":        return priceGenericSheet(SEABOARD, col, thick, w, h, qty, getProductUrl("seaboard"));
+      case "seaboard":        return priceGenericSheet(SEABOARD, (col === "natural" || col === "") ? "white" : col, thick, w, h, qty, getProductUrl("seaboard"));
       case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, getProductUrl("petg"));
       case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, getProductUrl("hips"));
       case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, getProductUrl("acrylic mirror"));
