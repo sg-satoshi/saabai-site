@@ -155,20 +155,17 @@ export async function POST(req: Request) {
             }),
             execute: async (input) => {
               const result = getPricing(input);
-              // Enrich with cartUrl containing all quote dimensions as query params
-              // These params allow PLON's WooCommerce plugin to pre-fill the cut-to-size form
-              if (result.found && result.productUrl) {
+              // Build cartUrl pointing to /api/rex-cart — a server-side redirect that
+              // resolves the WooCommerce variation_id via searchProducts and redirects
+              // to the real /?add-to-cart=PRODUCT_ID&variation_id=VARIATION_ID URL
+              if (result.found && input.type === "sheet") {
+                const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
                 const p = new URLSearchParams();
-                if (input.colour)       p.set("colour",    input.colour);
-                if (input.thicknessMm)  p.set("thickness", String(input.thicknessMm));
-                if (input.widthMm)      p.set("width",     String(input.widthMm));
-                if (input.heightMm)     p.set("height",    String(input.heightMm));
-                if (input.diameterMm)   p.set("diameter",  String(input.diameterMm));
-                if (input.lengthMm)     p.set("length",    String(input.lengthMm));
+                p.set("material",  input.material ?? "");
+                if (input.colour)      p.set("colour",    input.colour);
+                if (input.thicknessMm) p.set("thickness", String(input.thicknessMm));
                 p.set("qty", String(input.quantity ?? 1));
-                // Use base product URL without UTM params for the cart link
-                const baseUrl = result.productUrl.split("?")[0];
-                return { ...result, cartUrl: `${baseUrl}?${p.toString()}` };
+                return { ...result, cartUrl: `${base}/api/rex-cart?${p.toString()}` };
               }
               return result;
             },
