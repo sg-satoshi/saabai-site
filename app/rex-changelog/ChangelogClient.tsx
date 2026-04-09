@@ -40,7 +40,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Apr 2026",
     entries: [
-      { time: "10:30", tag: "IMPROVEMENT", title: "Lock it in → now links directly to WooCommerce cart with variation, quantity, and cut dimensions pre-filled — customer skips product page and goes straight to cart ready to checkout" },
+      { time: "10:30", tag: "IMPROVEMENT", title: "Lock it in → link now carries all quote dimensions as URL params (colour, thickness, width, height, qty) — takes customer to the exact product page with their specs in the URL so PLON's cut-to-size form can auto-fill; pricing flow via getPrice unchanged, no WooCommerce API lookup needed" },
       { time: "09:00", tag: "FIX", title: "Lead notification email destination changed from enquiries@plasticonline.com.au to sales@hollandplastics.com.au — all Rex lead alerts and weekly digests now route to the new address" },
     ],
   },

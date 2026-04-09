@@ -136,7 +136,7 @@ export async function POST(req: Request) {
         }),
 
         ...(enabledTools.has("getPrice") && {
-          getPrice: tool<GetPriceInput, PriceResult>({
+          getPrice: tool<GetPriceInput, PriceResult & { cartUrl?: string }>({
             description: "Get the exact price for any plastic product — sheets, rods, or tubes. Handles cut-to-size logic, oversized sheets, bulk discounts, and minimum order fees automatically. Call this for ALL price requests.",
             inputSchema: jsonSchema<GetPriceInput>({
               type: "object",
@@ -153,7 +153,25 @@ export async function POST(req: Request) {
               },
               required: ["type", "material"],
             }),
-            execute: async (input) => getPricing(input),
+            execute: async (input) => {
+              const result = getPricing(input);
+              // Enrich with cartUrl containing all quote dimensions as query params
+              // These params allow PLON's WooCommerce plugin to pre-fill the cut-to-size form
+              if (result.found && result.productUrl) {
+                const p = new URLSearchParams();
+                if (input.colour)       p.set("colour",    input.colour);
+                if (input.thicknessMm)  p.set("thickness", String(input.thicknessMm));
+                if (input.widthMm)      p.set("width",     String(input.widthMm));
+                if (input.heightMm)     p.set("height",    String(input.heightMm));
+                if (input.diameterMm)   p.set("diameter",  String(input.diameterMm));
+                if (input.lengthMm)     p.set("length",    String(input.lengthMm));
+                p.set("qty", String(input.quantity ?? 1));
+                // Use base product URL without UTM params for the cart link
+                const baseUrl = result.productUrl.split("?")[0];
+                return { ...result, cartUrl: `${baseUrl}?${p.toString()}` };
+              }
+              return result;
+            },
           }),
         }),
 
