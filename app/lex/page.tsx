@@ -1027,8 +1027,8 @@ export default function LexPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {mode === "research" && messages.some(m => m.role === "assistant") && (
               <button onClick={copyLast} style={{
-                background: "none", border: `1px solid ${C.border}`, borderRadius: 6,
-                color: C.textMuted, fontSize: 11, cursor: "pointer", padding: "4px 10px",
+                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
+                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
               }}>
                 {copyFeedback ?? "Copy last response"}
               </button>
@@ -1042,10 +1042,10 @@ export default function LexPage() {
             )}
             {mode === "draft" && draftText && (
               <button onClick={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }} style={{
-                background: "none", border: `1px solid ${C.border}`, borderRadius: 6,
-                color: C.textMuted, fontSize: 11, cursor: "pointer", padding: "4px 10px",
+                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
+                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
               }}>
-                {draftCopied ? "Copied!" : "Copy draft"}
+                {draftCopied ? "✓ Copied!" : "Copy draft"}
               </button>
             )}
           </div>
