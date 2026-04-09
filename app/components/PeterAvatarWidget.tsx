@@ -113,7 +113,6 @@ function renderContent(text: string) {
   // e.g. "hi there!How" → "hi there! How"
   // e.g. "that?Why" → "that? Why"
   // (avoids touching decimals like $88.89)
-  text = text.replace(/([a-z\)])[\.!?] ?([A-Z])/g, "$1$2 ").replace(/([a-z\)]\.\D) ?([A-Z])/g, "$1 $2");
   text = text.replace(/([a-z\)])([.!?]) ?([A-Z])/g, "$1$2 $3");
   const paragraphs = text.split(/\n{2,}/);
   const result: React.ReactNode[] = [];
