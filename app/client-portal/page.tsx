@@ -78,6 +78,7 @@ function ClientPortalInner() {
   const [savedAt,   setSavedAt]   = useState<string | null>(null);
   const [settings, setSettings] = useState({
     agentName:          MOCK.agentName,
+    agentIconUrl:       "",
     welcomeMessage:     "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
     formalityLevel:     75,
     warmthLevel:        60,
@@ -934,6 +935,83 @@ function ClientPortalInner() {
                 {/* ── Identity ── */}
                 <div style={sectionStyle}>
                   <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Identity</h3>
+
+                  {/* Widget Icon */}
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={labelStyle}>Widget Icon</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                      {/* Preview */}
+                      <div style={{
+                        width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
+                        background: settings.agentIconUrl ? "transparent" : `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`,
+                        border: `2px solid ${C.goldBdr}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        overflow: "hidden", position: "relative",
+                      }}>
+                        {settings.agentIconUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={settings.agentIconUrl} alt="Agent icon"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 26, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif" }}>
+                            {settings.agentName?.[0] ?? "L"}
+                          </span>
+                        )}
+                      </div>
+                      {/* Upload controls */}
+                      <div style={{ flex: 1 }}>
+                        <label htmlFor="agent-icon-upload" style={{
+                          display: "inline-block", padding: "8px 16px",
+                          background: C.raised, border: `1px solid ${C.border}`,
+                          borderRadius: 8, fontSize: 13, fontWeight: 600,
+                          color: C.muted, cursor: "pointer",
+                          transition: "border-color 0.15s",
+                        }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = C.gold)}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}
+                        >
+                          {settings.agentIconUrl ? "Change image" : "Upload image"}
+                        </label>
+                        <input
+                          id="agent-icon-upload"
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          style={{ display: "none" }}
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = ev => {
+                              const result = ev.target?.result;
+                              if (typeof result === "string") {
+                                setSettings(p => ({ ...p, agentIconUrl: result }));
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                            // Reset input so same file can be re-selected
+                            e.target.value = "";
+                          }}
+                        />
+                        {settings.agentIconUrl && (
+                          <button onClick={() => setSettings(p => ({ ...p, agentIconUrl: "" }))} style={{
+                            marginLeft: 8, padding: "8px 14px", background: "none",
+                            border: `1px solid ${C.border}`, borderRadius: 8,
+                            fontSize: 13, color: C.dim, cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#f87171"; e.currentTarget.style.color = "#f87171"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.dim; }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <p style={{ margin: "8px 0 0", fontSize: 12, color: C.dim }}>
+                          PNG, JPG, WebP or SVG · Recommended 128×128px or larger
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div style={{ marginBottom: 16 }}>
                     <label style={labelStyle}>Agent Name</label>
                     <input value={settings.agentName}
@@ -1463,8 +1541,11 @@ function ClientPortalInner() {
               {/* Chat header */}
               <div style={{ background: C.raised, borderBottom: `1px solid ${C.border}`, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif" }}>
-                    {agentName[0]}
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: settings.agentIconUrl ? "transparent" : `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif", overflow: "hidden", flexShrink: 0 }}>
+                    {settings.agentIconUrl
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={settings.agentIconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : agentName[0]}
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{agentName}</div>
