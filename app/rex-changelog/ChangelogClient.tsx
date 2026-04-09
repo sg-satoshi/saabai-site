@@ -38,6 +38,12 @@ const CHANGELOG: Day[] = [
     ],
   },
   {
+    date: "10 Apr 2026",
+    entries: [
+      { time: "09:00", tag: "FIX", title: "Lead notification email destination changed from enquiries@plasticonline.com.au to sales@hollandplastics.com.au — all Rex lead alerts and weekly digests now route to the new address" },
+    ],
+  },
+  {
     date: "7 Apr 2026",
     entries: [
       { time: "10:15", tag: "IMPROVEMENT", title: "Rex now treats 'full sheet' requests as 2440×1220mm — if customer says 'full sheet of 6mm clear acrylic' Rex calls getPrice with 2440×1220 without asking for dimensions; oversized sheets (2490×1880, 3050×2030) only quoted when customer explicitly requests a size larger than standard" },

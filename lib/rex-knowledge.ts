@@ -31,7 +31,7 @@ const COMPANY = `
 **Burleigh Heads**
 9 Leda Drive, Burleigh Heads QLD 4220 · (07) 5535 7544 · Mon–Fri 7:30am–4:00pm
 
-**Online:** enquiries@plasticonline.com.au · plasticonline.com.au
+**Online:** sales@hollandplastics.com.au · plasticonline.com.au
 
 ### Ordering & Service
 

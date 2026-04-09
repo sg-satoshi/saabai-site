@@ -91,7 +91,7 @@ const PLON: RexClientConfig = {
   email: {
     resendKeyEnvVar: "PLON_RESEND_API_KEY",
     from: process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>",
-    teamEmail: process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.au",
+    teamEmail: process.env.PLON_TEAM_EMAIL ?? "sales@hollandplastics.com.au",
   },
   shopUrl: "https://www.plasticonline.com.au/shop/",
   contactUrl: "https://www.plasticonline.com.au/contact/",
