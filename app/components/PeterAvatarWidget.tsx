@@ -330,6 +330,22 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayMessages]);
 
+  // Strip formatting when copying from the chat — pastes as plain text into emails
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const handleCopy = (e: ClipboardEvent) => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const plainText = selection.toString();
+      if (!plainText) return;
+      e.preventDefault();
+      e.clipboardData?.setData("text/plain", plainText);
+    };
+    el.addEventListener("copy", handleCopy);
+    return () => el.removeEventListener("copy", handleCopy);
+  }, []);
+
   // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
     try {
