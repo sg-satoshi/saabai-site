@@ -133,11 +133,15 @@ function getFollowUpScheduleTime(captureTime: string | undefined): string {
 
 function formatTranscript(messages: Array<{ role: string; content: string }>): string {
   return messages
-    .filter(m => m.role === "user" || m.role === "assistant")
+    .filter(m => {
+      const role = String(m.role).toLowerCase().trim();
+      return role === "user" || role === "assistant";
+    })
     .map(m => {
-      const label = m.role === "user" ? "Customer" : "Rex";
+      const role = String(m.role).toLowerCase().trim();
+      const label = role === "user" ? "CUSTOMER" : "REX";
       const content = m.content.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
-      return `${label}: ${content}`;
+      return `${label}\n\n${content}`;
     })
     .join("\n\n");
 }
