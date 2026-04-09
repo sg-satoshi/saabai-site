@@ -40,6 +40,8 @@ const CHANGELOG: Day[] = [
     date: "10 Apr 2026",
     label: "Today",
     entries: [
+      { time: "15:30", tag: "PRICING", title: "Full Seaboard HDPE pricelist updated from March 2026 supplier data — White 2440×1220 (6/10/12/12.7/15/19/25mm) and 2440×1370 (6.35/9.5/14.28/15.8/19/25.4mm); Black 2440×1220 (6/9.5/12.7/15/19mm); all CTS rates and full sheet prices corrected; Rex can now quote both White and Black Seaboard at correct rates" },
+      { time: "15:30", tag: "FIX", title: "Fixed Seaboard colour bug — switch case was hardcoding 'white' regardless of what customer requested; Black Seaboard quotes now work correctly" },
       { time: "14:00", tag: "PRICING", title: "Fixed Seaboard 10mm pricing — SEABOARD data was using imperial thickness labels (9.5mm, 12.7mm etc.) but PLON's site uses metric (10mm, 12mm, 16mm); Rex was returning 'not found' for 10mm and hallucinating a price; corrected thickness labels and updated 10mm CTS rate to $284.21/m² (verified against site: 420×300mm = $35.81)" },
       { time: "14:00", tag: "FIX", title: "Fixed minimum cutting fee logic — engine was adding $30 on top of CTS price for any order under $50 (e.g. $35.81 + $30 = $65.81), but PLON's WooCommerce calculator charges the CTS price as-is; $30 is now a minimum floor (if piece costs < $30, charge $30) not a surcharge" },
       { time: "10:30", tag: "IMPROVEMENT", title: "Lock it in → link now carries all quote dimensions as URL params (colour, thickness, width, height, qty) — takes customer to the exact product page with their specs in the URL so PLON's cut-to-size form can auto-fill; pricing flow via getPrice unchanged, no WooCommerce API lookup needed" },

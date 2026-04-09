@@ -221,9 +221,17 @@ Also known as: Polyethylene HD. Seaboard = marine UV-stabilised brand.
 
 **BONDING:** Does NOT paint or glue easily — use mechanical fastening or welding.
 
-**Seaboard:** UV-stabilised, sun/saltwater/marine resistant.
+**Seaboard HDPE (UV-stabilised marine grade):** Resistant to sun, saltwater, and outdoor degradation. Suppliers: AST, Plastral, Dotmar.
 
-**Applications:** Food cutting boards, marine, conveyor wear strips, truck liners, playground equipment, dock fenders.
+**White Seaboard — stocked thicknesses:**
+- 2440×1220: 6mm, 10mm, 12mm, 12.7mm, 15mm, 19mm, 25mm
+- 2440×1370: 6.35mm, 9.5mm, 14.28mm, 15.8mm, 19mm, 25.4mm
+
+**Black Seaboard — stocked thicknesses:** 6mm, 9.5mm, 12.7mm, 15mm, 19mm (2440×1220)
+
+**Playground HDPE** (Plastral, 19mm only): Single colours — Blue, Forest Green, Grasshopper Green, Light Grey, Orange, Red, Woodland Grey, Yellow. Tricolour sandwich panels also available. Sheet sizes 2440×1220 or 3050×1220 depending on colour. For playground colour pricing, call the team or ask Rex to get you in touch.
+
+**Applications:** Marine, boat decking, dock fenders, playground equipment, truck liners, conveyor wear strips, outdoor furniture frames.
 
 ---
 

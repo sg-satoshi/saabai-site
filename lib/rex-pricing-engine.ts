@@ -363,13 +363,26 @@ const HDPE: SheetRow[] = [
 ];
 
 const SEABOARD: SheetRow[] = [
-  // Thicknesses are PLON's metric labels (physical imperial stock: 6.35mm=6mm, 9.5mm=10mm, 12.7mm=12mm, etc.)
-  { colour: "white", thicknessMm: 6,   sheetW: 2440, sheetH: 1370, ctsRate: 205.76, fullSheetPrice: 334.85 },
-  { colour: "white", thicknessMm: 10,  sheetW: 2440, sheetH: 1370, ctsRate: 284.21, fullSheetPrice: 510.60 },
-  { colour: "white", thicknessMm: 12,  sheetW: 2440, sheetH: 1370, ctsRate: 414.92, fullSheetPrice: 675.25 },
-  { colour: "white", thicknessMm: 16,  sheetW: 2440, sheetH: 1370, ctsRate: 529.74, fullSheetPrice: 862.10 },
-  { colour: "white", thicknessMm: 19,  sheetW: 2440, sheetH: 1370, ctsRate: 620.68, fullSheetPrice: 928.20 },
-  { colour: "white", thicknessMm: 25,  sheetW: 2440, sheetH: 1370, ctsRate: 834.39, fullSheetPrice: 1247.80 },
+  // WHITE — 2440×1220 (AST) — March 2026
+  { colour: "white", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 170.63, fullSheetPrice: 290 },
+  { colour: "white", thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 270.66, fullSheetPrice: 437 },
+  { colour: "white", thicknessMm: 12,   sheetW: 2440, sheetH: 1220, ctsRate: 341.26, fullSheetPrice: 551 },
+  { colour: "white", thicknessMm: 12.7, sheetW: 2440, sheetH: 1220, ctsRate: 368.01, fullSheetPrice: 595 },
+  { colour: "white", thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 426.58, fullSheetPrice: 689 },
+  { colour: "white", thicknessMm: 19,   sheetW: 2440, sheetH: 1220, ctsRate: 540.32, fullSheetPrice: 827 },
+  { colour: "white", thicknessMm: 25,   sheetW: 2440, sheetH: 1220, ctsRate: 710.95, fullSheetPrice: 1088 },
+  // WHITE — 2440×1370 (Plastral) — imperial thicknesses / larger format
+  { colour: "white", thicknessMm: 6.35, sheetW: 2440, sheetH: 1370, ctsRate: 189.51, fullSheetPrice: 344 },
+  { colour: "white", thicknessMm: 9.5,  sheetW: 2440, sheetH: 1370, ctsRate: 288.98, fullSheetPrice: 524 },
+  { colour: "white", thicknessMm: 14.28,sheetW: 2440, sheetH: 1380, ctsRate: 464.55, fullSheetPrice: 849 },
+  { colour: "white", thicknessMm: 15.8, sheetW: 2440, sheetH: 1370, ctsRate: 487.91, fullSheetPrice: 839 },
+  { colour: "white", thicknessMm: 25.4, sheetW: 2440, sheetH: 1370, ctsRate: 768.52, fullSheetPrice: 1211 },
+  // BLACK — 2440×1220
+  { colour: "black", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 141.09, fullSheetPrice: 240 },
+  { colour: "black", thicknessMm: 9.5,  sheetW: 2440, sheetH: 1220, ctsRate: 319.09, fullSheetPrice: 516 },
+  { colour: "black", thicknessMm: 12.7, sheetW: 2440, sheetH: 1220, ctsRate: 349.98, fullSheetPrice: 566 },
+  { colour: "black", thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 420.92, fullSheetPrice: 680 },
+  { colour: "black", thicknessMm: 19,   sheetW: 2440, sheetH: 1220, ctsRate: 525.56, fullSheetPrice: 805 },
 ];
 
 const PETG: SheetRow[] = [
@@ -1066,7 +1079,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"));
       case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, getProductUrl("polypropylene"));
       case "hdpe":            return priceGenericSheet(HDPE, hdpeCol, thick, w, h, qty, getProductUrl("hdpe"));
-      case "seaboard":        return priceGenericSheet(SEABOARD, "white", thick, w, h, qty, getProductUrl("seaboard"));
+      case "seaboard":        return priceGenericSheet(SEABOARD, col, thick, w, h, qty, getProductUrl("seaboard"));
       case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, getProductUrl("petg"));
       case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, getProductUrl("hips"));
       case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, getProductUrl("acrylic mirror"));
