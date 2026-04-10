@@ -295,8 +295,13 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       if (Date.now() - saved.savedAt > TTL_MS) { localStorage.removeItem(STORAGE_KEY); return; }
       const awayMs = Date.now() - saved.savedAt;
       if (saved.messages?.length > 0) {
-        const restored = saved.messages;
-        const showWelcome = awayMs > 5 * 60 * 1000; // only after 5 min away
+        const restored = saved.messages as ChatMessage[];
+        const wbSet = new Set(WELCOME_BACK);
+        const wbCount = restored.filter(m => wbSet.has(m.content)).length;
+        const lastMsg = restored[restored.length - 1];
+        const lastWasWelcome = lastMsg?.role === "assistant" && wbSet.has(lastMsg.content);
+        // Show welcome back only if: away >5min, shown <2x total, user has replied since last one
+        const showWelcome = awayMs > 5 * 60 * 1000 && wbCount < 2 && !lastWasWelcome;
         const restoredWithWelcome = showWelcome
           ? [...restored, { role: "assistant", content: WELCOME_BACK[Math.floor(Math.random() * WELCOME_BACK.length)] } as ChatMessage]
           : restored;
