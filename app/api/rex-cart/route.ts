@@ -47,7 +47,8 @@ export async function GET(req: Request) {
   if (!material) return Response.redirect(SHOP_FALLBACK, 302);
 
   try {
-    const result = await searchProducts(material);
+    // Always search for sheets — rex-cart is only used for cut-to-size sheet products
+    const result = await searchProducts(`${material} sheet`);
     if ("error" in result || !result.results?.length) {
       return Response.redirect(SHOP_FALLBACK, 302);
     }
