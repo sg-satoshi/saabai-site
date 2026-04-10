@@ -716,28 +716,37 @@ function teamNotificationHtml(
   const despatchLabel = despatch === "pickup" ? "Pick up" : despatch === "delivery" ? "Delivery" : "Not specified";
   const timeStr = new Date().toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
 
-  // Each message is a full-width block — no two-column layout
+  // formatTranscript produces "LABEL\n\ncontent" pairs joined by "\n\n".
+  // Process in pairs so labels (CUSTOMER/REX) are read as the header, not as message content.
   const transcriptHtml = transcript
-    ? transcript.split("\n\n").map(block => {
-        const isRex = block.startsWith("Rex:");
-        const label = isRex ? "Rex" : "Customer";
-        const labelColour = isRex ? "#e13f00" : "#1a1a1a";
-        const bg = isRex ? "#fff8f6" : "#f8f8f8";
-        const border = isRex ? "#e13f00" : "#cccccc";
-        const content = block.replace(/^(Rex|Customer):\s*/, "").replace(/\n/g, "<br>");
-        return `
+    ? (() => {
+        const blocks = transcript.split("\n\n");
+        const rows: string[] = [];
+        for (let i = 0; i + 1 < blocks.length; i += 2) {
+          const rawLabel = blocks[i].trim();
+          const content = blocks[i + 1].trim();
+          if (!content) continue;
+          const isRex = rawLabel === "REX";
+          const label = isRex ? "Rex" : "Customer";
+          const labelColour = isRex ? "#e13f00" : "#1a1a1a";
+          const bg = isRex ? "#fff8f6" : "#f8f8f8";
+          const border = isRex ? "#e13f00" : "#cccccc";
+          const contentHtml = content.replace(/\n/g, "<br>");
+          rows.push(`
           <tr><td style="padding:4px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr><td style="padding:0 0 5px;">
                 <span style="font-size:11px;font-weight:800;color:${labelColour};text-transform:uppercase;letter-spacing:1px;">${label}</span>
               </td></tr>
               <tr><td style="background:${bg};border:1px solid ${border}20;border-left:3px solid ${border};border-radius:0 8px 8px 0;padding:12px 16px;">
-                <p style="margin:0;font-size:14px;color:#2a2a2a;line-height:1.8;">${content}</p>
+                <p style="margin:0;font-size:14px;color:#2a2a2a;line-height:1.8;">${contentHtml}</p>
               </td></tr>
             </table>
           </td></tr>
-          <tr><td style="height:10px;font-size:0;"></td></tr>`;
-      }).join("")
+          <tr><td style="height:10px;font-size:0;"></td></tr>`);
+        }
+        return rows.join("");
+      })()
     : `<tr><td style="padding:16px;color:#999;font-size:13px;font-style:italic;">No transcript available</td></tr>`;
 
   return `<!DOCTYPE html>
