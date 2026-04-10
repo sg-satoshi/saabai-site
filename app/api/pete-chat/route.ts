@@ -146,7 +146,9 @@ export async function POST(req: Request) {
               required: ["type", "material"],
             }),
             execute: async (input) => {
+              console.log("[getPrice input]", JSON.stringify(input));
               const result = getPricing(input);
+              console.log("[getPrice result]", JSON.stringify({ found: result.found, price: result.price, note: result.note }));
               // Build cartUrl pointing to /api/rex-cart — a server-side redirect that
               // resolves the WooCommerce variation_id via searchProducts and redirects
               // to the real /?add-to-cart=PRODUCT_ID&variation_id=VARIATION_ID URL
