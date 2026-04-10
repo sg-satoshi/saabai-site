@@ -268,10 +268,15 @@ export async function POST(req: Request) {
 
     const order = await res.json();
 
+    // WC doesn't always return checkout_payment_url in the creation response.
+    // Build it from order_key (always present) as a reliable fallback.
+    const checkoutUrl = order.checkout_payment_url
+      || (order.order_key ? `${WC_URL}/checkout/order-pay/${order.id}/?pay_for_order=true&key=${order.order_key}` : undefined);
+
     return Response.json({
       orderId:        order.id,
       orderNumber:    order.number,
-      checkoutUrl:    order.checkout_payment_url,
+      checkoutUrl,
       totalIncGst,
       totalFormatted: `$${totalIncGst.toFixed(2)}`,
       lineExGst,
