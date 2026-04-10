@@ -36,8 +36,11 @@ function thicknessMatches(option: string, target: string): boolean {
 
 function colourMatches(option: string, target: string): boolean {
   if (!target) return true;
-  return option.toLowerCase().includes(target.toLowerCase()) ||
-         target.toLowerCase().includes(option.toLowerCase());
+  const opt = option.toLowerCase();
+  const tgt = target.toLowerCase();
+  // "clear" must not match "clear satin" — exclude satin variants unless explicitly requested
+  if (!tgt.includes("satin") && opt.includes("satin")) return false;
+  return opt.includes(tgt) || tgt.includes(opt);
 }
 
 export async function POST(req: Request) {
