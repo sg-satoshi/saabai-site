@@ -84,12 +84,12 @@ After createCheckout returns successfully, respond ONLY with this exact format:
 **Your Order — {orderNumber}**
 
 {colour} {material} {thickness}mm — {width}×{height}mm × {qty} pc
-**\${lineExGst} ex GST**
+\${lineExGst} ex GST
 
 (repeat above two lines for each additional item)
 
-GST (10%): **\${gst}**
-Total: **\${totalIncGst} inc GST**
+GST (10%): \${gst}
+Total: \${totalIncGst} inc GST
 
 [Pay Now to Complete Order →]({checkoutUrl})
 
