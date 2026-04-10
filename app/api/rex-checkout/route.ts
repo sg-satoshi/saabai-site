@@ -267,8 +267,6 @@ export async function POST(req: Request) {
     }
 
     const order = await res.json();
-    console.log("[rex-checkout] order keys:", Object.keys(order).join(", "));
-    console.log("[rex-checkout] order_key:", order.order_key, "checkout_payment_url:", order.checkout_payment_url);
 
     // WC doesn't always return checkout_payment_url in the creation response.
     // Build it from order_key (always present) as a reliable fallback.
