@@ -139,6 +139,7 @@ export async function calculateCutToSizePrice(params: {
   widthMm: number;
   heightMm: number;
   quantity?: number;
+  applyMultiplier?: boolean; // true for acrylic/polycarbonate; other materials have it baked into unit_price
 }) {
   const result = await callPriceApi(params);
   if ("error" in result) return result;
@@ -156,8 +157,10 @@ export async function calculateCutToSizePrice(params: {
   }
 
   const areaSqm = (params.widthMm / 1000) * (params.heightMm / 1000);
-  // custom_multiplier is the CTS markup factor applied by PLON's calculator (e.g. 1.2 for acrylic)
-  const unitTotal = unit_price * (custom_multiplier ?? 1) * areaSqm;
+  // PLON's price API returns custom_multiplier for all products, but only acrylic/polycarbonate
+  // actually apply it in their CTS calculator — other materials have the CTS rate baked into unit_price.
+  const multiplier = (params.applyMultiplier ?? false) ? (custom_multiplier ?? 1) : 1;
+  const unitTotal = unit_price * multiplier * areaSqm;
   const total = Math.round(unitTotal * qty * 100) / 100;
 
   return {

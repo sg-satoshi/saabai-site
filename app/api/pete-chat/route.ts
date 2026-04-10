@@ -209,6 +209,10 @@ export async function POST(req: Request) {
                       const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
                       const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
 
+                      // PLON's calculator applies custom_multiplier only for acrylic/polycarbonate.
+                      // All other materials have the CTS rate baked into unit_price already.
+                      const applyMultiplier = /acrylic|polycarbonate/i.test(input.material ?? "");
+
                       const woo = await calculateCutToSizePrice({
                         productId:   product.product_id,
                         variationId: chosen.variation_id,
@@ -217,6 +221,7 @@ export async function POST(req: Request) {
                         widthMm:     input.widthMm ?? 0,
                         heightMm:    input.heightMm ?? 0,
                         quantity:    input.quantity ?? 1,
+                        applyMultiplier,
                       });
 
                       if ("error" in woo) break outer; // dimensions out of range — fall through
