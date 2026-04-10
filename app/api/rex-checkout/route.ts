@@ -17,8 +17,8 @@ export const runtime = "nodejs";
 const WC_URL = "https://www.plasticonline.com.au";
 
 function getAuth() {
-  const key    = process.env.WC_CONSUMER_KEY    ?? "";
-  const secret = process.env.WC_CONSUMER_SECRET ?? "";
+  const key    = process.env.WOOCOMMERCE_CONSUMER_KEY    ?? "";
+  const secret = process.env.WOOCOMMERCE_CONSUMER_SECRET ?? "";
   return "Basic " + Buffer.from(`${key}:${secret}`).toString("base64");
 }
 
