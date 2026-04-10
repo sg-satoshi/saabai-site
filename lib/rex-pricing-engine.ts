@@ -845,13 +845,7 @@ function buildResult(unitPrice: number, qty: number, note: string, url: string):
     bulkDiscount = true;
     note += ", 5% bulk discount applied";
   }
-  let minFee = false;
-  if (total < CUTTING_FEE) {
-    // Minimum cutting fee: you pay at least $30 (not CTS + $30)
-    total = CUTTING_FEE;
-    minFee = true;
-    note += ", $30 minimum cutting fee";
-  }
+  const minFee = false;
   total = r2(total);
   return { found: true, price: total, priceFormatted: fmt(total), note, productUrl: url, bulkDiscountApplied: bulkDiscount, minimumFeeApplied: minFee };
 }
