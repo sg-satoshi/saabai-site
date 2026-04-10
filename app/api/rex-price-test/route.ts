@@ -20,7 +20,7 @@ export async function GET() {
     }
 
     const product = search.results[0];
-    log.push(`First product: id=${product.product_id}, name="${product.name}", variations=${product.variations?.length ?? 0}`);
+    log.push(`First product: id=${product.product_id}, name="${product.name}", variations fetched=${product.variations?.length ?? 0}`);
 
     const normNum = (s: string) => s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
     const thickStr = "10"; // 10mm

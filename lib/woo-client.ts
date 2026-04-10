@@ -33,11 +33,23 @@ async function callPriceApi(params: {
 
 async function fetchVariations(productId: number) {
   try {
-    const url = `${WOO_URL}/wp-json/wc/v3/products/${productId}/variations?per_page=50`;
-    const res = await fetch(url, { headers: { Authorization: auth() } });
-    if (!res.ok) return [];
-    const vars = await res.json() as any[];
-    return vars.map((v) => {
+    const allVars: any[] = [];
+    const pageSize = 100;
+    let page = 1;
+
+    // Paginate until all variations are fetched (products like acrylic have 100+)
+    while (true) {
+      const url = `${WOO_URL}/wp-json/wc/v3/products/${productId}/variations?per_page=${pageSize}&page=${page}`;
+      const res = await fetch(url, { headers: { Authorization: auth() } });
+      if (!res.ok) break;
+      const vars = await res.json() as any[];
+      if (!vars.length) break;
+      allVars.push(...vars);
+      if (vars.length < pageSize) break; // last page
+      page++;
+    }
+
+    return allVars.map((v) => {
       // Extract CPC unit price from meta_data if present
       const meta: Record<string, any> = {};
       if (Array.isArray(v.meta_data)) {
@@ -109,7 +121,7 @@ export async function searchProducts(query: string) {
         in_stock: p.stock_status === "instock",
         url: p.permalink,
         categories: (p.categories as any[])?.map((c) => c.name).join(", ") ?? "",
-        variations: variations.slice(0, 20),
+        variations,
       };
     }));
 
