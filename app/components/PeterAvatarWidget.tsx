@@ -252,6 +252,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   const lastActivityRef = useRef<number>(Date.now());
   const reEngagementFiredRef = useRef(false);
   const quoteEmailOpenRef = useRef(false);
+  const wbCountRef = useRef(0);           // how many welcome backs shown this chat
+  const pendingWelcomeRef = useRef(false); // true if last msg was welcome back with no user reply yet
 
   useEffect(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -296,12 +298,15 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       const awayMs = Date.now() - saved.savedAt;
       if (saved.messages?.length > 0) {
         const restored = saved.messages as ChatMessage[];
-        const wbSet = new Set(WELCOME_BACK);
-        const wbCount = restored.filter(m => wbSet.has(m.content)).length;
-        const lastMsg = restored[restored.length - 1];
-        const lastWasWelcome = lastMsg?.role === "assistant" && wbSet.has(lastMsg.content);
-        // Show welcome back only if: away >5min, shown <2x total, user has replied since last one
-        const showWelcome = awayMs > 5 * 60 * 1000 && wbCount < 2 && !lastWasWelcome;
+        // Use explicitly saved counters — more reliable than deriving from message content
+        // (race condition: rapid refresh before save effect commits means content-based check misses it)
+        wbCountRef.current = saved.wbCount ?? 0;
+        pendingWelcomeRef.current = saved.pendingWelcome ?? false;
+        const showWelcome = awayMs > 5 * 60 * 1000 && wbCountRef.current < 2 && !pendingWelcomeRef.current;
+        if (showWelcome) {
+          wbCountRef.current += 1;
+          pendingWelcomeRef.current = true;
+        }
         const restoredWithWelcome = showWelcome
           ? [...restored, { role: "assistant", content: WELCOME_BACK[Math.floor(Math.random() * WELCOME_BACK.length)] } as ChatMessage]
           : restored;
@@ -328,6 +333,8 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
         messages: messagesToSave,
         isOpen,
         savedAt: Date.now(),
+        wbCount: wbCountRef.current,
+        pendingWelcome: pendingWelcomeRef.current,
       }));
     } catch {}
   }, [displayMessages, isOpen]);
@@ -557,6 +564,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     setFollowUpChips([]);
     setQuoteEmailOpen(false);
     lastActivityRef.current = Date.now();
+    pendingWelcomeRef.current = false; // user replied — welcome back gate can fire again if eligible
 
     // Set flag on first user message — chips stay hidden for entire conversation
     if (messagesRef.current.length === 0) {
