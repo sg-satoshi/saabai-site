@@ -35,6 +35,15 @@ type CreateCheckoutInput = {
   items: CheckoutLineItem[];
   customerName?: string;
   customerEmail?: string;
+  customerPhone?: string;
+  customerCompany?: string;
+  shippingAddress?: {
+    address1: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country?: string;
+  };
 };
 type CheckoutResult = {
   orderId?: number;
@@ -283,7 +292,7 @@ export async function POST(req: Request) {
 
         ...(enabledTools.has("createCheckout") && {
           createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
-            description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Call this when the customer explicitly says yes to purchasing ('yes', 'lock it in', 'let's do it', 'add to cart', 'order it'). Pass ALL items the customer wants in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item. Pass customerEmail and customerName if already captured.",
+            description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Only call this AFTER collecting the customer's name, email, phone, and delivery address. Pass ALL items in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item.",
             inputSchema: jsonSchema<CreateCheckoutInput>({
               type: "object",
               properties: {
@@ -305,10 +314,24 @@ export async function POST(req: Request) {
                     required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
                   },
                 },
-                customerName:  { type: "string", description: "Customer's name if captured" },
-                customerEmail: { type: "string", description: "Customer's email if captured" },
+                customerName:    { type: "string", description: "Customer's full name" },
+                customerEmail:   { type: "string", description: "Customer's email address — required, must be real" },
+                customerPhone:   { type: "string", description: "Customer's phone number" },
+                customerCompany: { type: "string", description: "Company name if provided" },
+                shippingAddress: {
+                  type: "object",
+                  description: "Delivery address",
+                  properties: {
+                    address1: { type: "string", description: "Street address" },
+                    city:     { type: "string", description: "Suburb" },
+                    state:    { type: "string", description: "State abbreviation e.g. QLD, NSW, VIC" },
+                    postcode: { type: "string", description: "Postcode" },
+                    country:  { type: "string", description: "Country code, default AU" },
+                  },
+                  required: ["address1", "city", "state", "postcode"],
+                },
               },
-              required: ["items"],
+              required: ["items", "customerName", "customerEmail"],
             }),
             execute: async (params) => {
               try {

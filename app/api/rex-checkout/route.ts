@@ -189,8 +189,15 @@ export async function POST(req: Request) {
       productName: body.productName ?? "",
     }];
 
-    const customerName  = (body.customerName  ?? "").trim();
-    const customerEmail =  body.customerEmail ?? "";
+    const customerName    = (body.customerName    ?? "").trim();
+    const customerEmail   =  body.customerEmail   ?? "";
+    const customerPhone   =  body.customerPhone   ?? "";
+    const customerCompany =  body.customerCompany ?? "";
+    const shipping        =  body.shippingAddress ?? {};
+
+    if (!customerEmail) {
+      return Response.json({ error: "Customer email is required to create an order" }, { status: 400 });
+    }
 
     // Validate all items up front
     for (const item of rawItems) {
@@ -218,13 +225,31 @@ export async function POST(req: Request) {
     const [firstName, ...rest] = customerName.split(" ");
     const lastName = rest.join(" ");
 
+    const billingBase = {
+      first_name: firstName ?? "",
+      last_name:  lastName  ?? "",
+      company:    customerCompany,
+      email:      customerEmail,
+      phone:      customerPhone,
+      address_1:  shipping.address1 ?? "",
+      city:       shipping.city     ?? "",
+      state:      shipping.state    ?? "",
+      postcode:   shipping.postcode ?? "",
+      country:    shipping.country  ?? "AU",
+    };
+
     const orderBody = {
-      status: "pending",
-      billing: {
+      status:   "pending",
+      billing:  billingBase,
+      shipping: {
         first_name: firstName ?? "",
         last_name:  lastName  ?? "",
-        email:      customerEmail || "orders@plasticonline.com.au",
-        country:    "AU",
+        company:    customerCompany,
+        address_1:  shipping.address1 ?? "",
+        city:       shipping.city     ?? "",
+        state:      shipping.state    ?? "",
+        postcode:   shipping.postcode ?? "",
+        country:    shipping.country  ?? "AU",
       },
       line_items: resolved.map(r => r.wcLineItem),
     };
