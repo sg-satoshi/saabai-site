@@ -237,8 +237,8 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("[rex-checkout] WC order creation failed:", err);
-      return Response.json({ error: "Order creation failed", detail: err }, { status: 502 });
+      console.error("[rex-checkout] WC order creation failed — status:", res.status, "body:", err.slice(0, 500));
+      return Response.json({ error: "Order creation failed", wc_status: res.status, detail: err }, { status: 502 });
     }
 
     const order = await res.json();
