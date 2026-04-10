@@ -240,6 +240,11 @@ export async function POST(req: Request) {
 
     const orderBody = {
       status:   "pending",
+      meta_data: [
+        { key: "_wc_order_attribution_source_type", value: "referral" },
+        { key: "_wc_order_attribution_utm_source",  value: "Rex Chat" },
+        { key: "_wc_order_attribution_origin",      value: "Rex Chat" },
+      ],
       billing:  billingBase,
       shipping: {
         first_name: firstName ?? "",
