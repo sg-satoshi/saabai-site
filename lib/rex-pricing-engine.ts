@@ -365,7 +365,7 @@ const HDPE: SheetRow[] = [
 const SEABOARD: SheetRow[] = [
   // WHITE — 2440×1220 (AST) — March 2026
   { colour: "white", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 170.63, fullSheetPrice: 290 },
-  { colour: "white", thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 270.66, fullSheetPrice: 437 },
+  { colour: "white", thicknessMm: 10,   sheetW: 2440, sheetH: 1220, ctsRate: 284.21, fullSheetPrice: 437 },
   { colour: "white", thicknessMm: 12,   sheetW: 2440, sheetH: 1220, ctsRate: 341.26, fullSheetPrice: 551 },
   { colour: "white", thicknessMm: 12.7, sheetW: 2440, sheetH: 1220, ctsRate: 368.01, fullSheetPrice: 595 },
   { colour: "white", thicknessMm: 15,   sheetW: 2440, sheetH: 1220, ctsRate: 426.58, fullSheetPrice: 689 },
