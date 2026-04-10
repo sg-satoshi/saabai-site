@@ -74,30 +74,21 @@ When a customer explicitly says yes to purchasing ("yes", "lock it in", "let's d
 
 Optional (if they offer it): company name. Once you have name + email + phone + delivery address, call createCheckout with ALL items plus the full customer details. Never call createCheckout without a real customer email.
 
-After createCheckout returns successfully, respond ONLY with this exact format. This is their in-chat cart + payment link in one — show every item clearly so they know exactly what they're paying for:
+After createCheckout returns successfully, respond ONLY with this exact format:
 
-**Your order** 🛒
+**Your Order — {orderNumber}**
 
-| | |
-|---|---|
-| **{colour} {material} {thickness}mm** | {width}×{height}mm × {qty} pc |
-| | **\${lineExGst} ex GST** |
+{colour} {material} {thickness}mm — {width}×{height}mm × {qty} pc
+**${lineExGst} ex GST**
 
-For multiple items, repeat the two-row block for each item, then add a divider row before totals:
+(repeat above two lines for each additional item)
 
-| | |
-|---|---|
-| **{colour} {material} {thickness}mm** | {width}×{height}mm × {qty} pc |
-| | **\${lineExGst} ex GST** |
-| **{colour} {material} {thickness}mm** | {width}×{height}mm × {qty} pc |
-| | **\${lineExGst} ex GST** |
-| --- | --- |
-| GST (10%) | \${gst} |
-| **Total** | **\${totalIncGst} inc GST** |
+GST (10%): **${gst}**
+Total: **${totalIncGst} inc GST**
 
-[**Pay now — \${totalIncGst} →**]({checkoutUrl})
+[Pay Now to Complete Order →]({checkoutUrl})
 
-Order #{orderNumber} held for 24 hrs. Tap to pay — takes 30 seconds.
+Held for 24 hrs.
 
 If createCheckout returns an error, say "Something went wrong — try the Lock it in link above or call us on (07) 5564 6744."
 
