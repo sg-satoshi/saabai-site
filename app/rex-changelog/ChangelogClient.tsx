@@ -39,14 +39,6 @@ const CHANGELOG: Day[] = [
     ],
   },
   {
-    date: "8 Apr 2026",
-    entries: [
-      { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
-      { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
-      { time: "12:00", tag: "FIX", title: "Fixed Rigid PVC sheet pricing engine — PVC sheets were missing from the pricing engine switch entirely (only PVC rods were wired); added RIGID_PVC data array and wired case 'pvc' for sheet type; Rex can now quote Nanya Clear/Light Grey/White, Simona Swiss Grey/Dark Grey/White/Clear across all stocked thicknesses" },
-    ],
-  },
-  {
     date: "10 Apr 2026",
     entries: [
       { time: "21:00", tag: "NEW", title: "In-chat checkout — createCheckout tool creates a live WooCommerce pending order with full CTS meta (_calculator_raw_data) and returns a direct payment URL; Rex presents an order summary card with Pay Now button; customer lands on WC order-pay page and pays with Stripe without leaving the conversation" },
@@ -69,6 +61,14 @@ const CHANGELOG: Day[] = [
       { time: "14:00", tag: "FIX", title: "Fixed minimum cutting fee logic — engine was adding $30 on top of CTS price for any order under $50 (e.g. $35.81 + $30 = $65.81), but PLON's WooCommerce calculator charges the CTS price as-is; $30 is now a minimum floor (if piece costs < $30, charge $30) not a surcharge" },
       { time: "10:30", tag: "IMPROVEMENT", title: "Lock it in → link now carries all quote dimensions as URL params (colour, thickness, width, height, qty) — takes customer to the exact product page with their specs in the URL so PLON's cut-to-size form can auto-fill; pricing flow via getPrice unchanged, no WooCommerce API lookup needed" },
       { time: "09:00", tag: "FIX", title: "Lead notification email destination changed from enquiries@plasticonline.com.au to sales@hollandplastics.com.au — all Rex lead alerts and weekly digests now route to the new address" },
+    ],
+  },
+  {
+    date: "8 Apr 2026",
+    entries: [
+      { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
+      { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
+      { time: "12:00", tag: "FIX", title: "Fixed Rigid PVC sheet pricing engine — PVC sheets were missing from the pricing engine switch entirely (only PVC rods were wired); added RIGID_PVC data array and wired case 'pvc' for sheet type; Rex can now quote Nanya Clear/Light Grey/White, Simona Swiss Grey/Dark Grey/White/Clear across all stocked thicknesses" },
     ],
   },
   {
