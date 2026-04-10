@@ -40,6 +40,7 @@ const CHANGELOG: Day[] = [
     date: "10 Apr 2026",
     label: "Today",
     entries: [
+      { time: "20:30", tag: "FIX", title: "Fixed wrong variation selected for cut-to-size pricing — variation matching loop now collects all in-stock matches for colour+thickness and prefers the standard 2440×1220 sheet (e.g. variation 946 at $246.91/m²) over oversized variants (e.g. variation 953 at $296.29/m²); also tightened thickness attribute regex from /thickness|size|gauge/i to /thickness|gauge/i to prevent the Size attribute (values like '2440 X 1220') from being misidentified as a thickness" },
       { time: "19:30", tag: "FIX", title: "Fixed Rex completely non-responsive — Gemini Flash Lite (DEFAULT_CHAT_MODEL) silently stalls when any tools are present in the request; captureLead is always wired in so every query was affected; all requests now route to Claude Sonnet (PREMIUM_CHAT_MODEL) until a reliable default model is confirmed" },
       { time: "18:30", tag: "FIX", title: "Fixed price running on to same line as acknowledgment text (e.g. 'On it!$35.55') — added explicit instruction to always put a blank line before the price link" },
       { time: "18:00", tag: "FIX", title: "Fixed pricing queries hitting slow premium model (Claude Sonnet) — dimension patterns like '400x500mm' were triggering 'pricing' intent which escalated to premium tier; pricing queries now stay on the fast model (Gemini Flash Lite) since getPrice is offline/synchronous; only technical material questions and long conversations escalate to Sonnet" },

@@ -169,15 +169,28 @@ export async function POST(req: Request) {
                     const colStr = (input.colour ?? "").toLowerCase();
                     const thickStr = normNum(String(input.thicknessMm ?? ""));
 
+                    // isStandardSheet: variation's "Size" attribute contains 2440 and 1220
+                    const isStandardSheet = (attrs: Array<{ name: string; option: string }>) => {
+                      const sizeAttr = attrs.find(a => a.name === "Size");
+                      if (!sizeAttr) return false;
+                      const v = sizeAttr.option;
+                      return v.includes("2440") && v.includes("1220");
+                    };
+
                     outer: for (const product of search.results) {
-                      for (const variation of (product.variations as Array<{
+                      type VariationRaw = {
                         variation_id: number;
                         attributes: Array<{ name: string; option: string }>;
                         in_stock: boolean;
-                      }>)) {
+                      };
+
+                      const matches: VariationRaw[] = [];
+
+                      for (const variation of (product.variations as VariationRaw[])) {
                         if (!variation.in_stock) continue;
                         const attrs = variation.attributes;
-                        const thicknessAttr = attrs.find(a => /thickness|size|gauge/i.test(a.name));
+                        // Use /thickness|gauge/i — deliberately excludes "Size" (which holds sheet dimensions like "2440 X 1220")
+                        const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
                         const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
                         const tMatch = !thickStr || (thicknessAttr && normNum(thicknessAttr.option) === thickStr);
                         const cMatch = !colStr   || (colourAttr && (
@@ -185,31 +198,40 @@ export async function POST(req: Request) {
                           colStr.includes(colourAttr.option.toLowerCase())
                         ));
                         if (!tMatch || !cMatch) continue;
-
-                        const woo = await calculateCutToSizePrice({
-                          productId:   product.product_id,
-                          variationId: variation.variation_id,
-                          color:       colourAttr?.option ?? "",
-                          thickness:   thicknessAttr?.option ?? "",
-                          widthMm:     input.widthMm ?? 0,
-                          heightMm:    input.heightMm ?? 0,
-                          quantity:    input.quantity ?? 1,
-                        });
-
-                        if ("error" in woo) break outer; // dimensions out of range — fall through
-
-                        const price = Math.round(parseFloat(woo.total.replace(/[^0-9.]/g, "")) * 100) / 100;
-                        return {
-                          found: true,
-                          price,
-                          priceFormatted: `$${price.toFixed(2)}`,
-                          note: "cut to size",
-                          productUrl: product.url,
-                          cartUrl: buildCartUrl(),
-                          bulkDiscountApplied: false,
-                          minimumFeeApplied: false,
-                        };
+                        matches.push(variation);
                       }
+
+                      if (!matches.length) continue;
+
+                      // Prefer the standard 2440×1220 sheet; fall back to first match
+                      const chosen = matches.find(v => isStandardSheet(v.attributes)) ?? matches[0];
+                      const attrs = chosen.attributes;
+                      const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
+                      const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
+
+                      const woo = await calculateCutToSizePrice({
+                        productId:   product.product_id,
+                        variationId: chosen.variation_id,
+                        color:       colourAttr?.option ?? "",
+                        thickness:   thicknessAttr?.option ?? "",
+                        widthMm:     input.widthMm ?? 0,
+                        heightMm:    input.heightMm ?? 0,
+                        quantity:    input.quantity ?? 1,
+                      });
+
+                      if ("error" in woo) break outer; // dimensions out of range — fall through
+
+                      const price = Math.round(parseFloat(woo.total.replace(/[^0-9.]/g, "")) * 100) / 100;
+                      return {
+                        found: true,
+                        price,
+                        priceFormatted: `$${price.toFixed(2)}`,
+                        note: "cut to size",
+                        productUrl: product.url,
+                        cartUrl: buildCartUrl(),
+                        bulkDiscountApplied: false,
+                        minimumFeeApplied: false,
+                      };
                     }
                   }
                 } catch { /* fall through to offline engine */ }
