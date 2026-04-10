@@ -1070,7 +1070,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       {/* Improvement #5: slide-up entrance animation */}
       {isOpen && (
         <div
-          className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col"
+          className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col rounded-2xl"
           style={{
             ...(isMobile ? {
               // Full-screen on mobile — covers entire viewport including notch/status bar
