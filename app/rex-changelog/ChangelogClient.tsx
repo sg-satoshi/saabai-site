@@ -18,24 +18,16 @@ interface Day {
 }
 
 const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
-  NEW:         { bg: "rgba(37,211,102,0.10)",  text: "#25D366", border: "rgba(37,211,102,0.25)" },
-  FIX:         { bg: "rgba(96,165,250,0.10)",  text: "#60a5fa", border: "rgba(96,165,250,0.25)" },
-  IMPROVEMENT: { bg: "rgba(251,191,36,0.10)",  text: "#fbbf24", border: "rgba(251,191,36,0.25)" },
-  PRICING:     { bg: "rgba(167,139,250,0.10)", text: "#a78bfa", border: "rgba(167,139,250,0.25)" },
-  UI:          { bg: "rgba(244,114,182,0.10)", text: "#f472b6", border: "rgba(244,114,182,0.25)" },
-  DEPLOYMENT:  { bg: "rgba(251,146,60,0.10)",  text: "#fb923c", border: "rgba(251,146,60,0.25)" },
-  DEBUG:       { bg: "rgba(156,163,175,0.08)", text: "#9ca3af", border: "rgba(156,163,175,0.20)" },
+  NEW:         { bg: "rgba(37,211,102,0.18)",  text: "#ffffff", border: "rgba(37,211,102,0.35)" },
+  FIX:         { bg: "rgba(96,165,250,0.18)",  text: "#ffffff", border: "rgba(96,165,250,0.35)" },
+  IMPROVEMENT: { bg: "rgba(251,191,36,0.18)",  text: "#ffffff", border: "rgba(251,191,36,0.35)" },
+  PRICING:     { bg: "rgba(167,139,250,0.18)", text: "#ffffff", border: "rgba(167,139,250,0.35)" },
+  UI:          { bg: "rgba(244,114,182,0.18)", text: "#ffffff", border: "rgba(244,114,182,0.35)" },
+  DEPLOYMENT:  { bg: "rgba(251,146,60,0.18)",  text: "#ffffff", border: "rgba(251,146,60,0.35)" },
+  DEBUG:       { bg: "rgba(156,163,175,0.15)", text: "#ffffff", border: "rgba(156,163,175,0.30)" },
 };
 
 const CHANGELOG: Day[] = [
-  {
-    date: "8 Apr 2026",
-    entries: [
-      { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
-      { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
-      { time: "12:00", tag: "FIX", title: "Fixed Rigid PVC sheet pricing engine — PVC sheets were missing from the pricing engine switch entirely (only PVC rods were wired); added RIGID_PVC data array and wired case 'pvc' for sheet type; Rex can now quote Nanya Clear/Light Grey/White, Simona Swiss Grey/Dark Grey/White/Clear across all stocked thicknesses" },
-    ],
-  },
   {
     date: "11 Apr 2026",
     label: "Today",
@@ -44,6 +36,14 @@ const CHANGELOG: Day[] = [
       { time: "11:00", tag: "NEW", title: "Direct-to-payment on Lock it in → — clicking the price link now creates a WooCommerce order server-side via /api/rex-pay and redirects straight to the order payment page; no product page visit required" },
       { time: "11:00", tag: "UI", title: "In-chat cart summary — Rex now shows a full order review table (item, dimensions, per-line price, GST, total) before the Pay Now link so customers can verify everything before paying" },
       { time: "01:40", tag: "IMPROVEMENT", title: "Rex now collects customer details before creating an order — asks for name, email, phone, and delivery address in one message when customer says yes; createCheckout passes full billing/shipping to WooCommerce so the order is complete from the start; real customer email required (no fallback)" },
+    ],
+  },
+  {
+    date: "8 Apr 2026",
+    entries: [
+      { time: "10:00", tag: "PRICING", title: "Added full PP sheet pricing table to knowledge base — PP Grey (2mm–40mm, 3000×1500mm) and PP Natural (2mm–6mm, 2000×1000mm); includes 20mm and 40mm which were previously missing; also covers 30mm, 35mm, 50mm Beige Polystone; CTS rates and full sheet prices from March 2026 supplier analysis" },
+      { time: "11:30", tag: "PRICING", title: "Added full Rigid PVC sheet pricing to knowledge base — Nanya (Clear, Light Grey, White), Simona Swiss Grey, Simona Dark Grey thick slabs (30/40/50mm), Simona White, Simona Clear, and Dotmar Trovidur premium; two-tier CTS rates (below/above cutoff) across all thicknesses 1mm–50mm; March 2026 pricing" },
+      { time: "12:00", tag: "FIX", title: "Fixed Rigid PVC sheet pricing engine — PVC sheets were missing from the pricing engine switch entirely (only PVC rods were wired); added RIGID_PVC data array and wired case 'pvc' for sheet type; Rex can now quote Nanya Clear/Light Grey/White, Simona Swiss Grey/Dark Grey/White/Clear across all stocked thicknesses" },
     ],
   },
   {
@@ -578,7 +578,7 @@ export default function ChangelogClient() {
                 <div style={{ display: "flex", alignItems: "baseline", gap: "10px", flexWrap: "wrap", flex: 1 }}>
                   {day.label && <span style={{ fontSize: "17px", fontWeight: 700, color: "#e8e8f0" }}>{day.label}</span>}
                   <span style={{ fontSize: "13px", color: "#333", letterSpacing: "0.04em" }}>{day.date}</span>
-                  <span style={{ marginLeft: "auto", fontSize: "10px", color: "#2a2a2a", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "5px", padding: "2px 8px", letterSpacing: "0.04em", flexShrink: 0 }}>
+                  <span style={{ marginLeft: "auto", fontSize: "10px", color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "5px", padding: "2px 8px", letterSpacing: "0.04em", flexShrink: 0 }}>
                     {day.entries.length} update{day.entries.length !== 1 ? "s" : ""}
                   </span>
                 </div>
