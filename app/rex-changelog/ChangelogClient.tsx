@@ -40,6 +40,7 @@ const CHANGELOG: Day[] = [
     date: "10 Apr 2026",
     label: "Today",
     entries: [
+      { time: "19:30", tag: "FIX", title: "Fixed Rex completely non-responsive — Gemini Flash Lite (DEFAULT_CHAT_MODEL) silently stalls when any tools are present in the request; captureLead is always wired in so every query was affected; all requests now route to Claude Sonnet (PREMIUM_CHAT_MODEL) until a reliable default model is confirmed" },
       { time: "18:30", tag: "FIX", title: "Fixed price running on to same line as acknowledgment text (e.g. 'On it!$35.55') — added explicit instruction to always put a blank line before the price link" },
       { time: "18:00", tag: "FIX", title: "Fixed pricing queries hitting slow premium model (Claude Sonnet) — dimension patterns like '400x500mm' were triggering 'pricing' intent which escalated to premium tier; pricing queries now stay on the fast model (Gemini Flash Lite) since getPrice is offline/synchronous; only technical material questions and long conversations escalate to Sonnet" },
       { time: "17:00", tag: "FIX", title: "Fixed Seaboard returning blank response — when Rex called getPrice without passing a colour, normColour returned 'natural' which matched no Seaboard rows; engine now defaults to 'white' for Seaboard when colour is empty or unspecified, matching the primary product; White and Black still work when explicitly requested" },
