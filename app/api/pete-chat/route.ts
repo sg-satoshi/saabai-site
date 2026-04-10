@@ -146,20 +146,79 @@ export async function POST(req: Request) {
               required: ["type", "material"],
             }),
             execute: async (input) => {
-              const result = getPricing(input);
-              // Build cartUrl pointing to /api/rex-cart — a server-side redirect that
-              // resolves the WooCommerce variation_id via searchProducts and redirects
-              // to the real /?add-to-cart=PRODUCT_ID&variation_id=VARIATION_ID URL
-              if (result.found && input.type === "sheet") {
-                const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
+              const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
+
+              const buildCartUrl = () => {
                 const p = new URLSearchParams();
-                p.set("material",  input.material ?? "");
+                p.set("material", input.material ?? "");
                 if (input.colour)      p.set("colour",    input.colour);
                 if (input.thicknessMm) p.set("thickness", String(input.thicknessMm));
                 if (input.widthMm)     p.set("width",     String(input.widthMm));
                 if (input.heightMm)    p.set("height",    String(input.heightMm));
                 p.set("qty", String(input.quantity ?? 1));
-                return { ...result, cartUrl: `${base}/api/rex-cart?${p.toString()}` };
+                return `${base}/api/rex-cart?${p.toString()}`;
+              };
+
+              // For sheets with dimensions: hit PLON's live price API so the price always
+              // matches their CTS calculator exactly. Falls back to offline engine if API fails.
+              if (input.type === "sheet" && input.widthMm && input.heightMm) {
+                try {
+                  const search = await searchProducts(`${input.material ?? ""} sheet`);
+                  if (!("error" in search) && search.results?.length) {
+                    const normNum = (s: string) => s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
+                    const colStr = (input.colour ?? "").toLowerCase();
+                    const thickStr = normNum(String(input.thicknessMm ?? ""));
+
+                    outer: for (const product of search.results) {
+                      for (const variation of (product.variations as Array<{
+                        variation_id: number;
+                        attributes: Array<{ name: string; option: string }>;
+                        in_stock: boolean;
+                      }>)) {
+                        if (!variation.in_stock) continue;
+                        const attrs = variation.attributes;
+                        const thicknessAttr = attrs.find(a => /thickness|size|gauge/i.test(a.name));
+                        const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
+                        const tMatch = !thickStr || (thicknessAttr && normNum(thicknessAttr.option) === thickStr);
+                        const cMatch = !colStr   || (colourAttr && (
+                          colourAttr.option.toLowerCase().includes(colStr) ||
+                          colStr.includes(colourAttr.option.toLowerCase())
+                        ));
+                        if (!tMatch || !cMatch) continue;
+
+                        const woo = await calculateCutToSizePrice({
+                          productId:   product.product_id,
+                          variationId: variation.variation_id,
+                          color:       colourAttr?.option ?? "",
+                          thickness:   thicknessAttr?.option ?? "",
+                          widthMm:     input.widthMm ?? 0,
+                          heightMm:    input.heightMm ?? 0,
+                          quantity:    input.quantity ?? 1,
+                        });
+
+                        if ("error" in woo) break outer; // dimensions out of range — fall through
+
+                        const price = Math.round(parseFloat(woo.total.replace(/[^0-9.]/g, "")) * 100) / 100;
+                        return {
+                          found: true,
+                          price,
+                          priceFormatted: `$${price.toFixed(2)}`,
+                          note: "cut to size",
+                          productUrl: product.url,
+                          cartUrl: buildCartUrl(),
+                          bulkDiscountApplied: false,
+                          minimumFeeApplied: false,
+                        };
+                      }
+                    }
+                  }
+                } catch { /* fall through to offline engine */ }
+              }
+
+              // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
+              const result = getPricing(input);
+              if (result.found && input.type === "sheet") {
+                return { ...result, cartUrl: buildCartUrl() };
               }
               return result;
             },
