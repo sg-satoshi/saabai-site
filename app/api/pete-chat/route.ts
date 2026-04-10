@@ -52,7 +52,9 @@ export async function POST(req: Request) {
     // Dynamic model selection: start with intent, then analyze full conversation depth
     const firstMsg = coreMessages[0]?.content || "";
     const intent = detectIntent(firstMsg);
-    let tier: "default" | "premium" = (intent !== "general" || coreMessages.length > 6) ? "premium" : "default";
+    // Pricing queries stay on the fast model — getPrice is offline/synchronous so no AI heavy-lifting needed.
+    // Only technical questions and long conversations escalate to premium.
+    let tier: "default" | "premium" = (intent === "technical" || coreMessages.length > 6) ? "premium" : "default";
 
     // Mid-conversation escalation: if conversation shows technical depth, switch to premium model
     // This allows Gemini (default/cheap) for simple quotes, Claude (premium) for complex material questions
