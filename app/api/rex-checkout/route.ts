@@ -54,6 +54,7 @@ interface ResolvedLineItem {
   lineExGst:    number;
   description:  string;
   qty:          number;
+  imageUrl:     string;
 }
 
 async function resolveLineItem(item: CheckoutItem): Promise<ResolvedLineItem | { error: string }> {
@@ -78,6 +79,7 @@ async function resolveLineItem(item: CheckoutItem): Promise<ResolvedLineItem | {
   let variationId: number | undefined;
   let resolvedProductName = productName;
   let sheetSize = "2440 X 1220";
+  let imageUrl = "";
 
   const isStandardSheet = (attrs: Array<{ name: string; option: string }>) => {
     const sizeAttr = attrs.find(a => a.name === "Size");
@@ -91,6 +93,7 @@ async function resolveLineItem(item: CheckoutItem): Promise<ResolvedLineItem | {
   for (const product of search.results) {
     productId = product.product_id as number;
     resolvedProductName = resolvedProductName || product.name;
+    imageUrl = imageUrl || (product as any).imageUrl || "";
     const candidates: Variation[] = [];
     for (const variation of (product.variations as Variation[])) {
       if (!variation.in_stock) continue;
@@ -169,6 +172,7 @@ async function resolveLineItem(item: CheckoutItem): Promise<ResolvedLineItem | {
     wcLineItem,
     lineExGst,
     qty,
+    imageUrl,
     description: `${colour} ${resolvedProductName || material} ${thicknessMm}mm — ${widthMm}×${heightMm}mm`,
   };
 }
@@ -193,6 +197,7 @@ export async function POST(req: Request) {
     const customerEmail   =  body.customerEmail   ?? "";
     const customerPhone   =  body.customerPhone   ?? "";
     const customerCompany =  body.customerCompany ?? "";
+    const customerNote    =  body.customerNote    ?? "";
     const shipping        =  body.shippingAddress ?? {};
 
     if (!customerEmail) {
@@ -239,7 +244,8 @@ export async function POST(req: Request) {
     };
 
     const orderBody = {
-      status:   "pending",
+      status:            "pending",
+      customer_note:     customerNote,
       meta_data: [
         { key: "_wc_order_attribution_source_type", value: "referral" },
         { key: "_wc_order_attribution_utm_source",  value: "Rex Chat" },
@@ -290,6 +296,7 @@ export async function POST(req: Request) {
         description: r.description,
         qty:         r.qty,
         lineExGst:   r.lineExGst,
+        imageUrl:    r.imageUrl,
       })),
     });
 

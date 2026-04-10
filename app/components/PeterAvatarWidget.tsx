@@ -118,18 +118,25 @@ function renderContent(text: string, onLockIn?: (msg: string) => void) {
   const result: React.ReactNode[] = [];
 
   function processLine(line: string, lineKey: string) {
-    const linkRegex = /(\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\))/g;
+    const linkRegex = /(!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)|\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\))/g;
     const nodes: React.ReactNode[] = [];
     let last = 0;
     let match: RegExpExecArray | null;
     let key = 0;
     while ((match = linkRegex.exec(line)) !== null) {
       if (match.index > last) nodes.push(line.slice(last, match.index));
-      if (match[0].startsWith("**")) {
-        nodes.push(<strong key={`b-${lineKey}-${key++}`} style={{ color: "#FFD700" }}>{match[2]}</strong>);
+      if (match[0].startsWith("![")) {
+        // Product thumbnail image
+        nodes.push(
+          <img key={`img-${lineKey}-${key++}`} src={match[3]} alt={match[2]}
+            style={{ width: "72px", height: "72px", objectFit: "cover", borderRadius: "8px", display: "block", margin: "4px 0 2px" }}
+          />
+        );
+      } else if (match[0].startsWith("**")) {
+        nodes.push(<strong key={`b-${lineKey}-${key++}`} style={{ color: "#FFD700" }}>{match[4]}</strong>);
       } else {
-        const href = match[4];
-        const label = match[3];
+        const href = match[6];
+        const label = match[5];
         // "Lock it in →" links — intercept and stay in chat to collect customer details
         if (onLockIn && href.includes("rex-pay")) {
           nodes.push(

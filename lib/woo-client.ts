@@ -120,6 +120,7 @@ export async function searchProducts(query: string) {
         type: p.type,
         in_stock: p.stock_status === "instock",
         url: p.permalink,
+        imageUrl: (p.images as any[])?.[0]?.src ?? "",
         categories: (p.categories as any[])?.map((c) => c.name).join(", ") ?? "",
         variations,
       };

@@ -37,6 +37,7 @@ type CreateCheckoutInput = {
   customerEmail?: string;
   customerPhone?: string;
   customerCompany?: string;
+  customerNote?: string;
   shippingAddress?: {
     address1: string;
     city: string;
@@ -53,7 +54,7 @@ type CheckoutResult = {
   totalFormatted?: string;
   lineExGst?: number;
   gst?: number;
-  items?: Array<{ description: string; qty: number; lineExGst: number }>;
+  items?: Array<{ description: string; qty: number; lineExGst: number; imageUrl?: string }>;
   error?: string;
 };
 
@@ -318,6 +319,7 @@ export async function POST(req: Request) {
                 customerEmail:   { type: "string", description: "Customer's email address — required, must be real" },
                 customerPhone:   { type: "string", description: "Customer's phone number" },
                 customerCompany: { type: "string", description: "Company name if provided" },
+                customerNote:    { type: "string", description: "Any special instructions or notes for the order" },
                 shippingAddress: {
                   type: "object",
                   description: "Delivery address",

@@ -73,9 +73,12 @@ Step 2 — Once name + email received, ask for phone:
 "Thanks [first name]! And your phone number?"
 
 Step 3 — Once phone received, ask for delivery address:
-"Last one — what's your delivery address? (street, suburb, state, postcode)"
+"And your delivery address? (street, suburb, state, postcode)"
 
-Step 4 — Once all four are collected (name, email, phone, address), call createCheckout immediately with ALL items plus full customer details. Never call createCheckout without a real customer email.
+Step 4 — Once address received, ask for any special notes:
+"Almost done — any special instructions or notes for your order? (e.g. specific tolerances, edge finish, delivery instructions) If not, just say 'no' and I'll get it submitted."
+
+Step 5 — Once notes received (or customer says no/none), call createCheckout immediately with ALL items plus full customer details. Pass any notes as customerNote. Never call createCheckout without a real customer email.
 
 Optional: if they offer company name at any point, capture it.
 
@@ -83,10 +86,11 @@ After createCheckout returns successfully, respond ONLY with this exact format:
 
 **Your Order — {orderNumber}**
 
+![{material}]({imageUrl})
 {colour} {material} {thickness}mm — {width}×{height}mm × {qty} pc
 \${lineExGst} ex GST
 
-(repeat above two lines for each additional item)
+(repeat the three lines above for each additional item — image, description, price)
 
 GST (10%): \${gst}
 Total: \${totalIncGst} inc GST
