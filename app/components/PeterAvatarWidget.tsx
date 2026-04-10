@@ -107,7 +107,7 @@ function playMessageSound() {
   } catch {}
 }
 
-function renderContent(text: string) {
+function renderContent(text: string, onLockIn?: (msg: string) => void) {
   // Fix missing space after sentence-ending punctuation before a capital letter
   // e.g. "right now.Our" → "right now. Our"
   // e.g. "hi there!How" → "hi there! How"
@@ -128,12 +128,28 @@ function renderContent(text: string) {
       if (match[0].startsWith("**")) {
         nodes.push(<strong key={`b-${lineKey}-${key++}`} style={{ color: "#FFD700" }}>{match[2]}</strong>);
       } else {
-        nodes.push(
-          <a key={`a-${lineKey}-${key++}`} href={match[4]} target="_blank" rel="noopener noreferrer"
-            className="underline font-bold hover:opacity-80" style={{ color: "#FFD700" }}>
-            {match[3]}
-          </a>
-        );
+        const href = match[4];
+        const label = match[3];
+        // "Lock it in →" links — intercept and stay in chat to collect customer details
+        if (onLockIn && href.includes("rex-pay")) {
+          nodes.push(
+            <button
+              key={`a-${lineKey}-${key++}`}
+              onClick={() => onLockIn("Yes, lock that in")}
+              className="underline font-bold hover:opacity-80"
+              style={{ color: "#FFD700", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}
+            >
+              {label}
+            </button>
+          );
+        } else {
+          nodes.push(
+            <a key={`a-${lineKey}-${key++}`} href={href} target="_blank" rel="noopener noreferrer"
+              className="underline font-bold hover:opacity-80" style={{ color: "#FFD700" }}>
+              {label}
+            </a>
+          );
+        }
       }
       last = match.index + match[0].length;
     }
@@ -1255,7 +1271,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                 return (
                   <div className="w-full px-1">
                     <div className="bg-saabai-surface-raised border border-saabai-teal/30 rounded-xl px-3 py-2.5 text-xs leading-relaxed break-words text-saabai-text">
-                      {renderContent(lastAssistant.content)}
+                      {renderContent(lastAssistant.content, handleUserMessage)}
                     </div>
                   </div>
                 );
@@ -1301,7 +1317,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                         }`}
                         style={msg.role === "user" ? { background: "#e9e9eb", color: "#000" } : { background: "#0084FF" }}
                       >
-                        {renderContent(msg.content)}
+                        {renderContent(msg.content, handleUserMessage)}
                       </div>
                     </div>
                   );
