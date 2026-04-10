@@ -37,8 +37,14 @@ const CHANGELOG: Day[] = [
     ],
   },
   {
-    date: "10 Apr 2026",
+    date: "11 Apr 2026",
     label: "Today",
+    entries: [
+      { time: "10:30", tag: "NEW", title: "Multi-item checkout — createCheckout now accepts an items array; Rex bundles all quoted items into a single WooCommerce order in one call and returns one Pay Now link; system prompt updated to instruct Rex to pass all items together" },
+    ],
+  },
+  {
+    date: "10 Apr 2026",
     entries: [
       { time: "21:00", tag: "NEW", title: "In-chat checkout — createCheckout tool creates a live WooCommerce pending order with full CTS meta (_calculator_raw_data) and returns a direct payment URL; Rex presents an order summary card with Pay Now button; customer lands on WC order-pay page and pays with Stripe without leaving the conversation" },
       { time: "18:30", tag: "UI", title: "Added rounded corners to Rex chat panel (rounded-2xl)" },

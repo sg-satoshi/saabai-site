@@ -21,15 +21,18 @@ type CalcInput = {
 
 type OrderInput = { orderNumber: string };
 type GetPriceInput = PricingInput;
-type CreateCheckoutInput = {
+type CheckoutLineItem = {
   material: string;
   colour: string;
   thicknessMm: number;
   widthMm: number;
   heightMm: number;
   qty: number;
-  priceExGst: number;
+  priceExGst: number;   // per piece, ex GST — from the most recent getPrice result for this item
   productName?: string;
+};
+type CreateCheckoutInput = {
+  items: CheckoutLineItem[];
   customerName?: string;
   customerEmail?: string;
 };
@@ -41,6 +44,7 @@ type CheckoutResult = {
   totalFormatted?: string;
   lineExGst?: number;
   gst?: number;
+  items?: Array<{ description: string; qty: number; lineExGst: number }>;
   error?: string;
 };
 
@@ -276,22 +280,32 @@ export async function POST(req: Request) {
 
         ...(enabledTools.has("createCheckout") && {
           createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
-            description: "Create a WooCommerce order for the quoted cut-to-size item and return a direct payment link. Only call this when the customer explicitly says yes to purchasing (e.g. 'yes', 'lock it in', 'let's do it', 'add to cart'). Use the price from the most recent getPrice result. Pass customerEmail and customerName if already captured.",
+            description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Call this when the customer explicitly says yes to purchasing ('yes', 'lock it in', 'let's do it', 'add to cart', 'order it'). Pass ALL items the customer wants in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item. Pass customerEmail and customerName if already captured.",
             inputSchema: jsonSchema<CreateCheckoutInput>({
               type: "object",
               properties: {
-                material:      { type: "string", description: "Material slug e.g. 'acrylic', 'seaboard', 'hdpe'" },
-                colour:        { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
-                thicknessMm:   { type: "number", description: "Thickness in mm e.g. 10" },
-                widthMm:       { type: "number", description: "Cut width in mm" },
-                heightMm:      { type: "number", description: "Cut height in mm" },
-                qty:           { type: "number", description: "Number of pieces, default 1" },
-                priceExGst:    { type: "number", description: "Rex's calculated price ex GST for ONE piece" },
-                productName:   { type: "string", description: "Full product name e.g. 'Acrylic Sheet (Perspex)'" },
+                items: {
+                  type: "array",
+                  description: "All items to include in the order",
+                  items: {
+                    type: "object",
+                    properties: {
+                      material:    { type: "string", description: "Material e.g. 'acrylic', 'seaboard', 'hdpe'" },
+                      colour:      { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
+                      thicknessMm: { type: "number", description: "Thickness in mm" },
+                      widthMm:     { type: "number", description: "Cut width in mm" },
+                      heightMm:    { type: "number", description: "Cut height in mm" },
+                      qty:         { type: "number", description: "Number of pieces" },
+                      priceExGst:  { type: "number", description: "Price ex GST for ONE piece from getPrice" },
+                      productName: { type: "string", description: "Full product name if known" },
+                    },
+                    required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
+                  },
+                },
                 customerName:  { type: "string", description: "Customer's name if captured" },
                 customerEmail: { type: "string", description: "Customer's email if captured" },
               },
-              required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
+              required: ["items"],
             }),
             execute: async (params) => {
               try {
