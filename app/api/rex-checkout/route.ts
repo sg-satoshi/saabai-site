@@ -223,7 +223,7 @@ export async function POST(req: Request) {
       billing: {
         first_name: firstName ?? "",
         last_name:  lastName  ?? "",
-        email:      customerEmail,
+        email:      customerEmail || "orders@plasticonline.com.au",
         country:    "AU",
       },
       line_items: resolved.map(r => r.wcLineItem),
