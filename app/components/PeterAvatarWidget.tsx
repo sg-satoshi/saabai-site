@@ -135,7 +135,7 @@ function renderContent(text: string, onLockIn?: (msg: string) => void) {
           nodes.push(
             <button
               key={`a-${lineKey}-${key++}`}
-              onClick={() => onLockIn("Yes, lock that in")}
+              onClick={() => onLockIn("Lock it in!")}
               className="underline font-bold hover:opacity-80"
               style={{ color: "#FFD700", background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}
             >
