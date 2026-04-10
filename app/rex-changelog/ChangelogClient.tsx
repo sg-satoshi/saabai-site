@@ -41,6 +41,8 @@ const CHANGELOG: Day[] = [
     label: "Today",
     entries: [
       { time: "10:30", tag: "NEW", title: "Multi-item checkout — createCheckout now accepts an items array; Rex bundles all quoted items into a single WooCommerce order in one call and returns one Pay Now link; system prompt updated to instruct Rex to pass all items together" },
+      { time: "11:00", tag: "NEW", title: "Direct-to-payment on Lock it in → — clicking the price link now creates a WooCommerce order server-side via /api/rex-pay and redirects straight to the order payment page; no product page visit required" },
+      { time: "11:00", tag: "UI", title: "In-chat cart summary — Rex now shows a full order review table (item, dimensions, per-line price, GST, total) before the Pay Now link so customers can verify everything before paying" },
     ],
   },
   {

@@ -174,15 +174,18 @@ export async function POST(req: Request) {
             execute: async (input) => {
               const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
 
-              const buildCartUrl = () => {
-                const p = new URLSearchParams();
-                p.set("material", input.material ?? "");
-                if (input.colour)      p.set("colour",    input.colour);
-                if (input.thicknessMm) p.set("thickness", String(input.thicknessMm));
-                if (input.widthMm)     p.set("width",     String(input.widthMm));
-                if (input.heightMm)    p.set("height",    String(input.heightMm));
-                p.set("qty", String(input.quantity ?? 1));
-                return `${base}/api/rex-cart?${p.toString()}`;
+              // Builds a direct payment URL — clicking "Lock it in →" creates a WC order
+              // server-side and redirects straight to the order-pay page (no product page)
+              const buildPayUrl = (priceExGst: number) => {
+                const params = new URLSearchParams();
+                params.set("material",    input.material    ?? "");
+                params.set("colour",      input.colour      ?? "");
+                params.set("thicknessMm", String(input.thicknessMm ?? ""));
+                params.set("widthMm",     String(input.widthMm     ?? ""));
+                params.set("heightMm",    String(input.heightMm    ?? ""));
+                params.set("qty",         String(input.quantity    ?? 1));
+                params.set("priceExGst",  String(priceExGst));
+                return `${base}/api/rex-pay?${params.toString()}`;
               };
 
               // For sheets with dimensions: hit PLON's live price API so the price always
@@ -259,7 +262,7 @@ export async function POST(req: Request) {
                         priceFormatted: `$${price.toFixed(2)}`,
                         note: "cut to size",
                         productUrl: product.url,
-                        cartUrl: buildCartUrl(),
+                        cartUrl: buildPayUrl(price),
                         bulkDiscountApplied: false,
                         minimumFeeApplied: false,
                       };
@@ -270,8 +273,8 @@ export async function POST(req: Request) {
 
               // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
               const result = getPricing(input);
-              if (result.found && input.type === "sheet") {
-                return { ...result, cartUrl: buildCartUrl() };
+              if (result.found && result.price && input.type === "sheet") {
+                return { ...result, cartUrl: buildPayUrl(result.price) };
               }
               return result;
             },
