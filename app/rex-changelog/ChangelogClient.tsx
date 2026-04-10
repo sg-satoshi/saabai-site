@@ -40,6 +40,7 @@ const CHANGELOG: Day[] = [
     date: "10 Apr 2026",
     label: "Today",
     entries: [
+      { time: "21:00", tag: "NEW", title: "In-chat checkout — createCheckout tool creates a live WooCommerce pending order with full CTS meta (_calculator_raw_data) and returns a direct payment URL; Rex presents an order summary card with Pay Now button; customer lands on WC order-pay page and pays with Stripe without leaving the conversation" },
       { time: "18:30", tag: "UI", title: "Added rounded corners to Rex chat panel (rounded-2xl)" },
       { time: "15:45", tag: "FIX", title: "Fixed CUSTOMER/REX labels in lead notification emails — transcript was split by \\n\\n treating label lines as message content; now processes label+content as pairs so Rex messages correctly show REX label and customer messages show CUSTOMER label" },
       { time: "15:30", tag: "FIX", title: "Fixed Rex widget disappearing from PLON site — root cause was a literal newline inside the JS cssText string in the WordPress embed script, causing a SyntaxError that silently killed the iframe creation; fixed by splitting the cssText across two strings joined with + so line wrapping in editors can never break it again" },

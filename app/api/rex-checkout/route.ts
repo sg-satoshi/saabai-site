@@ -1,0 +1,202 @@
+/**
+ * Rex Checkout
+ *
+ * Creates a pending WooCommerce order with full cut-to-size meta data
+ * (matching the _calculator_raw_data format used by PLON's CTS plugin)
+ * and returns the order's checkout_payment_url so Rex can send it as a
+ * Pay button in chat. Customer lands on the WooCommerce order-pay page,
+ * fills in billing/shipping details, and pays with Stripe.
+ *
+ * Flow:
+ *   Rex has price + specs → POST /api/rex-checkout
+ *   → look up product_id + variation_id via WooCommerce REST API
+ *   → create pending order with CTS meta_data + price override
+ *   → return { checkoutUrl, orderId, totalIncGst }
+ */
+
+import { searchProducts } from "../../../lib/woo-client";
+
+export const runtime = "nodejs";
+
+const WC_URL = "https://www.plasticonline.com.au";
+
+function getAuth() {
+  const key    = process.env.WC_CONSUMER_KEY    ?? "";
+  const secret = process.env.WC_CONSUMER_SECRET ?? "";
+  return "Basic " + Buffer.from(`${key}:${secret}`).toString("base64");
+}
+
+function normNum(s: string): string {
+  return s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
+}
+
+function thicknessMatches(option: string, target: string): boolean {
+  return normNum(option) === normNum(target);
+}
+
+function colourMatches(option: string, target: string): boolean {
+  if (!target) return true;
+  return option.toLowerCase().includes(target.toLowerCase()) ||
+         target.toLowerCase().includes(option.toLowerCase());
+}
+
+export async function POST(req: Request) {
+  try {
+    const {
+      material,
+      colour       = "",
+      thicknessMm,
+      widthMm,
+      heightMm,
+      qty          = 1,
+      priceExGst,          // Rex's calculated price (ex GST) for ONE piece
+      productName  = "",
+      customerName = "",
+      customerEmail = "",
+    } = await req.json();
+
+    if (!material || !thicknessMm || !widthMm || !heightMm || !priceExGst) {
+      return Response.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // ── 1. Find product + variation ────────────────────────────────────────────
+    const search = await searchProducts(`${material} sheet`);
+    if ("error" in search || !search.results?.length) {
+      return Response.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    let productId: number | undefined;
+    let variationId: number | undefined;
+    let resolvedProductName = productName;
+    let sheetSize = "2440 X 1220"; // default
+
+    const isStandardSheet = (attrs: Array<{ name: string; option: string }>) => {
+      const sizeAttr = attrs.find(a => a.name === "Size");
+      if (!sizeAttr) return true;
+      return sizeAttr.option.includes("2440") && sizeAttr.option.includes("1220");
+    };
+
+    type Variation = { variation_id: number; attributes: Array<{ name: string; option: string }>; in_stock: boolean };
+
+    outer:
+    for (const product of search.results) {
+      productId = product.product_id as number;
+      resolvedProductName = resolvedProductName || product.name;
+      const candidates: Variation[] = [];
+      for (const variation of (product.variations as Variation[])) {
+        if (!variation.in_stock) continue;
+        const attrs = variation.attributes;
+        const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
+        const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
+        const tMatch = !thicknessMm || (thicknessAttr && thicknessMatches(thicknessAttr.option, String(thicknessMm)));
+        const cMatch = !colour      || (colourAttr    && colourMatches(colourAttr.option, colour));
+        if (tMatch && cMatch) candidates.push(variation);
+      }
+      if (candidates.length) {
+        const match = candidates.find(v => isStandardSheet(v.attributes)) ?? candidates[0];
+        variationId = match.variation_id;
+        const sizeAttr = match.attributes.find(a => a.name === "Size");
+        if (sizeAttr) sheetSize = sizeAttr.option;
+        break outer;
+      }
+    }
+
+    if (!productId) {
+      return Response.json({ error: "No matching variation found" }, { status: 404 });
+    }
+
+    // ── 2. Build pricing ───────────────────────────────────────────────────────
+    const area           = (widthMm * heightMm) / 1_000_000;
+    const unitPrice      = area > 0 ? priceExGst / area : 0;
+    const lineExGst      = Math.round(priceExGst * qty * 100) / 100;
+    const gst            = Math.round(lineExGst * 0.1 * 100) / 100;
+    const totalIncGst    = Math.round((lineExGst + gst) * 100) / 100;
+
+    // ── 3. Build _calculator_raw_data (matches PLON's CTS plugin format) ───────
+    const calculatorRawData = {
+      shape:                "rectangle",
+      product_name:         resolvedProductName,
+      color:                colour,
+      thickness:            `${thicknessMm}mm`,
+      height:               heightMm,
+      width:                widthMm,
+      diameter:             0,
+      area:                 Math.round(area * 10000) / 10000,
+      unit_price:           Math.round(unitPrice * 100) / 100,
+      addons_data:          [],
+      addon_price:          0,
+      addon_details:        "",
+      additional_info:      "",
+      base_price:           priceExGst,
+      subtotal:             priceExGst,
+      total_price:          lineExGst,
+      one_time_base_price:  0,
+      per_item_cost:        priceExGst,
+      has_one_time_base_price: 0,
+      original_quantity:    qty,
+      uploaded_file:        "",
+      preview_image:        "",
+    };
+
+    // ── 4. Create WooCommerce order ────────────────────────────────────────────
+    const [firstName, ...rest] = customerName.trim().split(" ");
+    const lastName = rest.join(" ");
+
+    const orderBody = {
+      status: "pending",
+      billing: {
+        first_name: firstName ?? "",
+        last_name:  lastName  ?? "",
+        email:      customerEmail,
+        country:    "AU",
+      },
+      line_items: [{
+        product_id:   productId,
+        ...(variationId ? { variation_id: variationId } : {}),
+        quantity:     qty,
+        subtotal:     lineExGst.toFixed(2),
+        total:        lineExGst.toFixed(2),
+        meta_data: [
+          { key: "colour-and-features", value: colour },
+          { key: "thickness",           value: `${thicknessMm}mm` },
+          { key: "size",                value: sheetSize },
+          { key: "Product Type",        value: resolvedProductName },
+          { key: "Shape",               value: "Rectangle" },
+          { key: "Color",               value: colour },
+          { key: "Thickness",           value: `${thicknessMm}mm` },
+          { key: "Dimensions",          value: `${widthMm}mm x ${heightMm}mm` },
+          { key: "Area",                value: `${(Math.round(area * 10000) / 10000).toFixed(4)} m\u00b2` },
+          { key: "_calculator_raw_data", value: JSON.stringify(calculatorRawData) },
+        ],
+      }],
+    };
+
+    const res = await fetch(`${WC_URL}/wp-json/wc/v3/orders`, {
+      method:  "POST",
+      headers: { Authorization: getAuth(), "Content-Type": "application/json" },
+      body:    JSON.stringify(orderBody),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[rex-checkout] WC order creation failed:", err);
+      return Response.json({ error: "Order creation failed", detail: err }, { status: 502 });
+    }
+
+    const order = await res.json();
+
+    return Response.json({
+      orderId:         order.id,
+      orderNumber:     order.number,
+      checkoutUrl:     order.checkout_payment_url,
+      totalIncGst,
+      totalFormatted:  `$${totalIncGst.toFixed(2)}`,
+      lineExGst,
+      gst,
+    });
+
+  } catch (err) {
+    console.error("[rex-checkout]", err);
+    return Response.json({ error: String(err) }, { status: 500 });
+  }
+}

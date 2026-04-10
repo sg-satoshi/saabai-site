@@ -21,6 +21,28 @@ type CalcInput = {
 
 type OrderInput = { orderNumber: string };
 type GetPriceInput = PricingInput;
+type CreateCheckoutInput = {
+  material: string;
+  colour: string;
+  thicknessMm: number;
+  widthMm: number;
+  heightMm: number;
+  qty: number;
+  priceExGst: number;
+  productName?: string;
+  customerName?: string;
+  customerEmail?: string;
+};
+type CheckoutResult = {
+  orderId?: number;
+  orderNumber?: string;
+  checkoutUrl?: string;
+  totalIncGst?: number;
+  totalFormatted?: string;
+  lineExGst?: number;
+  gst?: number;
+  error?: string;
+};
 
 // Proactive intent detection from first message
 function detectIntent(firstMessage: string): "pricing" | "technical" | "general" {
@@ -248,6 +270,39 @@ export async function POST(req: Request) {
                 return { ...result, cartUrl: buildCartUrl() };
               }
               return result;
+            },
+          }),
+        }),
+
+        ...(enabledTools.has("createCheckout") && {
+          createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
+            description: "Create a WooCommerce order for the quoted cut-to-size item and return a direct payment link. Only call this when the customer explicitly says yes to purchasing (e.g. 'yes', 'lock it in', 'let's do it', 'add to cart'). Use the price from the most recent getPrice result. Pass customerEmail and customerName if already captured.",
+            inputSchema: jsonSchema<CreateCheckoutInput>({
+              type: "object",
+              properties: {
+                material:      { type: "string", description: "Material slug e.g. 'acrylic', 'seaboard', 'hdpe'" },
+                colour:        { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
+                thicknessMm:   { type: "number", description: "Thickness in mm e.g. 10" },
+                widthMm:       { type: "number", description: "Cut width in mm" },
+                heightMm:      { type: "number", description: "Cut height in mm" },
+                qty:           { type: "number", description: "Number of pieces, default 1" },
+                priceExGst:    { type: "number", description: "Rex's calculated price ex GST for ONE piece" },
+                productName:   { type: "string", description: "Full product name e.g. 'Acrylic Sheet (Perspex)'" },
+                customerName:  { type: "string", description: "Customer's name if captured" },
+                customerEmail: { type: "string", description: "Customer's email if captured" },
+              },
+              required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
+            }),
+            execute: async (params) => {
+              try {
+                const res = await fetch(
+                  `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-checkout`,
+                  { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
+                );
+                return await res.json();
+              } catch (e) {
+                return { error: String(e) };
+              }
             },
           }),
         }),

@@ -11,7 +11,7 @@ import { REX_KNOWLEDGE } from "./rex-knowledge";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type RexTool = "searchProducts" | "lookupOrder" | "getPrice" | "calculatePrice";
+export type RexTool = "searchProducts" | "lookupOrder" | "getPrice" | "calculatePrice" | "createCheckout";
 
 export interface RexClientConfig {
   id: string;
@@ -60,6 +60,25 @@ If asked or ready to order: most orders ship within a few business days from Gol
 ORDER STATUS:
 Order number given (PLON-XXXXX, HP-XXXXX, EXP-XXXXX, or just number)? Call lookupOrder immediately. Read back in plain English (no raw stage names). Close with "What else can I sort out for you?" Not found? Apologise, ask to double-check, give phone/email. Never mention order formats.
 
+CHECKOUT:
+When a customer explicitly says yes to purchasing ("yes", "lock it in", "let's do it", "add to cart", "order it", "I'll take it"), call createCheckout with the specs and price from the most recent getPrice result. Pass customerEmail and customerName if already captured. After createCheckout returns successfully, respond ONLY with this exact format (replace values):
+
+**Order ready — just pay to confirm**
+
+| | |
+|---|---|
+| **Item** | {colour} {material} {thickness}mm — {width}×{height}mm |
+| **Qty** | {qty} |
+| **Subtotal** | \${lineExGst} ex GST |
+| **GST (10%)** | \${gst} |
+| **Total** | **\${totalIncGst} inc GST** |
+
+[**Pay now — \${totalIncGst} →**]({checkoutUrl})
+
+Order #{orderNumber} is held for you. Tap to pay — takes about 30 seconds.
+
+If createCheckout returns an error, say "Something went wrong creating the order — try the [Lock it in →] link above or call us on (07) 5564 6744."
+
 LINKS:
 Text: markdown [Lock it in →](url). Speaking: "tap the button below". Never read URLs.
 
@@ -74,7 +93,7 @@ const PLON: RexClientConfig = {
   id: "plon",
   agentName: "Rex",
   systemPrompt: PLON_SYSTEM,
-  tools: ["searchProducts", "lookupOrder", "getPrice"],
+  tools: ["searchProducts", "lookupOrder", "getPrice", "createCheckout"],
   quickReplies: [
     "How much for acrylic cut to size?",
     "What would 6mm clear acrylic cost me?",
