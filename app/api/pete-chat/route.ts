@@ -164,12 +164,10 @@ export async function POST(req: Request) {
               if (input.type === "sheet" && input.widthMm && input.heightMm) {
                 try {
                   const search = await searchProducts(`${input.material ?? ""} sheet`);
-                  console.log("[getPrice] search:", "error" in search ? search.error : `${search.results?.length} products`);
                   if (!("error" in search) && search.results?.length) {
                     const normNum = (s: string) => s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
                     const colStr = (input.colour ?? "").toLowerCase();
                     const thickStr = normNum(String(input.thicknessMm ?? ""));
-                    console.log("[getPrice] matching col:", colStr, "thick:", thickStr);
 
                     outer: for (const product of search.results) {
                       for (const variation of (product.variations as Array<{
@@ -186,7 +184,6 @@ export async function POST(req: Request) {
                           colourAttr.option.toLowerCase().includes(colStr) ||
                           colStr.includes(colourAttr.option.toLowerCase())
                         ));
-                        console.log("[getPrice] var:", variation.variation_id, "thick:", thicknessAttr?.option, "col:", colourAttr?.option, "tMatch:", tMatch, "cMatch:", cMatch);
                         if (!tMatch || !cMatch) continue;
 
                         const woo = await calculateCutToSizePrice({
@@ -198,7 +195,6 @@ export async function POST(req: Request) {
                           heightMm:    input.heightMm ?? 0,
                           quantity:    input.quantity ?? 1,
                         });
-                        console.log("[getPrice] woo result:", JSON.stringify(woo));
 
                         if ("error" in woo) break outer; // dimensions out of range — fall through
 

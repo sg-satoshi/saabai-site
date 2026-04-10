@@ -13,7 +13,7 @@ async function callPriceApi(params: {
   variationId: number;
   color: string;
   thickness: string;
-}): Promise<{ unit_price: number; constraints: any } | { error: string }> {
+}): Promise<{ unit_price: number; custom_multiplier: number; constraints: any } | { error: string }> {
   try {
     const qs = new URLSearchParams({
       product_id: String(params.productId),
@@ -24,7 +24,7 @@ async function callPriceApi(params: {
     const res = await fetch(`${PLON_PRICE_API}?${qs}`);
     if (!res.ok) return { error: `Price API returned ${res.status}` };
     const json = await res.json() as any;
-    if (json.unit_price) return { unit_price: json.unit_price, constraints: json.constraints };
+    if (json.unit_price) return { unit_price: json.unit_price, custom_multiplier: json.custom_multiplier ?? 1, constraints: json.constraints };
     return { error: `Unexpected response: ${JSON.stringify(json)}` };
   } catch (err) {
     return { error: `Price API call failed: ${String(err)}` };
@@ -131,7 +131,7 @@ export async function calculateCutToSizePrice(params: {
   const result = await callPriceApi(params);
   if ("error" in result) return result;
 
-  const { unit_price, constraints } = result;
+  const { unit_price, custom_multiplier, constraints } = result;
   const qty = params.quantity ?? 1;
 
   // Validate dimensions
@@ -144,7 +144,8 @@ export async function calculateCutToSizePrice(params: {
   }
 
   const areaSqm = (params.widthMm / 1000) * (params.heightMm / 1000);
-  const unitTotal = unit_price * areaSqm;
+  // custom_multiplier is the CTS markup factor applied by PLON's calculator (e.g. 1.2 for acrylic)
+  const unitTotal = unit_price * (custom_multiplier ?? 1) * areaSqm;
   const total = Math.round(unitTotal * qty * 100) / 100;
 
   return {
