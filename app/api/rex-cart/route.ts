@@ -57,26 +57,30 @@ export async function GET(req: Request) {
     let productUrl: string | undefined;
     let matchedVariation: { variation_id: number; attributes: Array<{ name: string; option: string }> } | undefined;
 
-    outer:
+    const isStandardSheet = (attrs: Array<{ name: string; option: string }>) => {
+      const sizeAttr = attrs.find(a => a.name === "Size");
+      if (!sizeAttr) return true; // no Size attr → not oversized
+      return sizeAttr.option.includes("2440") && sizeAttr.option.includes("1220");
+    };
+
     for (const product of result.results) {
       productUrl = product.url;
-      for (const variation of (product.variations as Array<{
-        variation_id: number;
-        attributes: Array<{ name: string; option: string }>;
-        in_stock: boolean;
-      }>)) {
+      type V = { variation_id: number; attributes: Array<{ name: string; option: string }>; in_stock: boolean };
+      const candidates: V[] = [];
+      for (const variation of (product.variations as V[])) {
         if (!variation.in_stock) continue;
         const attrs = variation.attributes;
-        const thicknessAttr = attrs.find(a => /thickness|size|gauge/i.test(a.name));
+        // Deliberately excludes "Size" attribute (sheet dimensions like "2440 X 1220")
+        const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
         const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
-
         const tMatch = !thickness || (thicknessAttr && thicknessMatches(thicknessAttr.option, thickness));
         const cMatch = !colour    || (colourAttr    && colourMatches(colourAttr.option, colour));
-
-        if (tMatch && cMatch) {
-          matchedVariation = variation;
-          break outer;
-        }
+        if (tMatch && cMatch) candidates.push(variation);
+      }
+      if (candidates.length) {
+        // Prefer standard 2440×1220 sheet — avoids oversize pricing
+        matchedVariation = candidates.find(v => isStandardSheet(v.attributes)) ?? candidates[0];
+        break;
       }
     }
 
