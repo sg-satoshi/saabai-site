@@ -330,6 +330,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
   }, [displayMessages]);
 
   // Strip formatting when copying from the chat — pastes as plain text into emails
+  // Depends on isOpen so the listener attaches after the chat window renders
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
@@ -340,10 +341,11 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       if (!plainText) return;
       e.preventDefault();
       e.clipboardData?.setData("text/plain", plainText);
+      e.clipboardData?.setData("text/html", plainText); // force HTML-aware apps to receive plain text too
     };
     el.addEventListener("copy", handleCopy);
     return () => el.removeEventListener("copy", handleCopy);
-  }, []);
+  }, [isOpen]);
 
   // Notify parent page to resize iframe — send exact dimensions needed
   useEffect(() => {
