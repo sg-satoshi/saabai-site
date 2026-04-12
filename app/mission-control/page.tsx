@@ -550,7 +550,7 @@ const VENTURES = [
     value: "Ongoing",
     nextAction: "Scale inbound — increase Mia conversations",
     url: "https://www.saabai.ai",
-    color: "from-cyan-500/20 to-cyan-700/30",
+    color: "bg-cyan-500",
     initials: "SA",
   },
   {
@@ -562,7 +562,7 @@ const VENTURES = [
     value: "AUD $30–55k+",
     nextAction: "Complete scoping form — build AI agent proposal",
     url: "https://www.saabai.ai/onboarding/plon",
-    color: "from-cyan-500/20 to-cyan-700/30",
+    color: "bg-cyan-500",
     initials: "PL",
   },
   {
@@ -574,7 +574,7 @@ const VENTURES = [
     value: "TBD",
     nextAction: "Awaiting fact find return before scoping",
     url: null,
-    color: "from-cyan-500/20 to-cyan-700/30",
+    color: "bg-cyan-500",
     initials: "BC",
   },
 ];
@@ -994,7 +994,7 @@ const AGENTS: Agent[] = [
     role: "Orchestration Intelligence",
     cluster: "orchestrator",
     status: "active",
-    color: "from-cyan-500/30 to-cyan-700/40",
+    color: "bg-cyan-500",
     initials: "AT",
     mission: "Build profitable automated ventures while minimising operator workload. Ask: what is the highest ROI action across all ventures right now?",
     skills: ["Venture strategy", "Capital allocation", "Agent coordination", "Task routing", "Build execution", "Decision-making"],
@@ -1007,7 +1007,7 @@ const AGENTS: Agent[] = [
     role: "Build & Infrastructure Agent",
     cluster: "build",
     status: "active",
-    color: "from-cyan-500/30 to-cyan-700/40",
+    color: "bg-cyan-500",
     initials: "DEV",
     mission: "Execute validated opportunities into scalable, self-running systems. Configure before building. No-code before code.",
     skills: ["Landing pages", "Cold email systems", "Zapier / Make workflows", "AI chatbots", "API integrations", "Scraping & data pipelines", "CRM setup", "Checkout flows"],
@@ -1020,7 +1020,7 @@ const AGENTS: Agent[] = [
     role: "Workflow Reliability Agent",
     cluster: "build",
     status: "active",
-    color: "from-cyan-400/20 to-cyan-800/40",
+    color: "bg-cyan-500",
     initials: "AE",
     mission: "Eliminate manual operator work by building reliable, self-running workflows. Not product builders — reliability engineers.",
     skills: ["Process auditing", "Make / Zapier / n8n", "CRM automation", "Payment triggers", "Lead routing", "Error monitoring", "SOP documentation"],
@@ -1033,7 +1033,7 @@ const AGENTS: Agent[] = [
     role: "Demand Generation Agent",
     cluster: "growth",
     status: "active",
-    color: "from-cyan-500/20 to-cyan-900/40",
+    color: "bg-cyan-500",
     initials: "MKT",
     mission: "Design how ventures attract attention, generate leads, and convert customers. Channel strategy, offer design, funnel design.",
     skills: ["Cold email", "LinkedIn outreach", "Reddit / forums", "Positioning & messaging", "Funnel design", "Offer structuring", "Conversion optimisation", "Acquisition systems"],
@@ -1046,7 +1046,7 @@ const AGENTS: Agent[] = [
     role: "Paid Traffic & CAC Agent",
     cluster: "growth",
     status: "active",
-    color: "from-cyan-400/20 to-cyan-900/40",
+    color: "bg-cyan-500",
     initials: "PAS",
     mission: "Design, test, and optimise paid traffic systems. Goal: profitable customer acquisition. No scaling before signal.",
     skills: ["Meta Ads", "Google Search", "LinkedIn Ads", "TikTok Ads", "YouTube Ads", "Creative testing", "CAC modelling", "Audience strategy", "Landing page briefs"],
@@ -1059,7 +1059,7 @@ const AGENTS: Agent[] = [
     role: "Brand & Messaging Agent",
     cluster: "growth",
     status: "active",
-    color: "from-cyan-500/20 to-slate-900/40",
+    color: "bg-slate-400",
     initials: "CD",
     mission: "Ensure all external output is clear, persuasive, visually coherent, and aligned with Saabai's premium positioning.",
     skills: ["Brand consistency", "Copywriting", "Website UX", "Ad creative", "Content creation", "Design direction", "Messaging strategy", "Competitive intelligence"],
@@ -1072,7 +1072,7 @@ const AGENTS: Agent[] = [
     role: "Systems & SOP Agent",
     cluster: "ops",
     status: "active",
-    color: "from-slate-500/20 to-slate-900/40",
+    color: "bg-slate-400",
     initials: "OA",
     mission: "Design systems, SOPs, and operating frameworks that make ventures run without constant operator involvement.",
     skills: ["SOP development", "Process mapping", "Operating rhythm design", "Delivery frameworks", "Tool stack design", "Role definition", "Reporting systems", "Onboarding design"],
@@ -1085,7 +1085,7 @@ const AGENTS: Agent[] = [
     role: "Opportunity Intelligence Agent",
     cluster: "archived",
     status: "archived",
-    color: "from-gray-500/20 to-gray-800/40",
+    color: "bg-slate-400",
     initials: "RES",
     mission: "Intelligence arm identifying, surfacing, and validating profitable opportunities. Kills bad ideas fast.",
     skills: ["Market research", "Demand validation", "Competitor analysis", "Market sizing", "Opportunity scoring", "ICP definition"],
@@ -1097,7 +1097,7 @@ const AGENTS: Agent[] = [
     role: "Capital Allocation Agent",
     cluster: "archived",
     status: "archived",
-    color: "from-gray-500/20 to-gray-800/40",
+    color: "bg-slate-400",
     initials: "FIN",
     mission: "Financial gatekeeper protecting resources. Evaluates opportunities and decides: INVEST / TEST SMALL / KILL.",
     skills: ["Unit economics", "CAC modelling", "LTV analysis", "Break-even modelling", "Risk assessment", "Financial scoring", "Capital efficiency"],
@@ -1110,7 +1110,7 @@ const AGENTS: Agent[] = [
     role: "Revenue Generation Agent",
     cluster: "archived",
     status: "archived",
-    color: "from-gray-500/20 to-gray-800/40",
+    color: "bg-slate-400",
     initials: "SAL",
     mission: "Generate revenue fast. Builds systematised sales assets, not one-off pitches.",
     skills: ["Offer structuring", "Cold outreach", "LinkedIn DMs", "Funnel design", "Conversion optimisation", "Objection handling", "CRM pipeline", "Closing frameworks"],
@@ -1196,7 +1196,7 @@ function AgentsView() {
           onClick={onToggle}
           className="w-full flex items-center gap-3 p-4 text-left"
         >
-          <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${agent.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+          <div className={`w-9 h-9 rounded-lg ${agent.color} border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-slate-900 shrink-0`}>
             {agent.initials}
           </div>
           <div className="flex-1 min-w-0">
