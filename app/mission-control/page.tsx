@@ -37,7 +37,7 @@ const DEFAULT_TOOLS: Tool[] = [
     triggerText: "Ask Mia about automation",
     triggerSubtext: "AI-powered · Replies instantly",
     avatarInitials: "M",
-    avatarColor: "from-cyan-500/30 to-indigo-700/40",
+    avatarColor: "from-cyan-600 to-blue-700",
     pages: "*",
     status: "active",
     createdAt: "2025-01-01",
@@ -76,7 +76,7 @@ const BLANK_TOOL: Omit<Tool, "id" | "createdAt" | "updatedAt"> = {
   triggerText: "Chat with us",
   triggerSubtext: "AI-powered · Replies instantly",
   avatarInitials: "",
-  avatarColor: "from-cyan-500/30 to-indigo-700/40",
+  avatarColor: "from-cyan-600 to-blue-700",
   pages: "*",
   status: "draft",
 };
@@ -104,7 +104,7 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
     <div className="min-h-screen bg-white flex items-center justify-center font-[family-name:var(--font-geist-sans)]">
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white border border-slate-300 mb-6">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <rect x="3" y="11" width="18" height="11" rx="2" stroke="#06B6D4" strokeWidth="1.5" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#06B6D4" strokeWidth="1.5" strokeLinecap="round" />
@@ -122,12 +122,12 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
             onKeyDown={(e) => e.key === "Enter" && attempt()}
             placeholder="Access code"
             autoFocus
-            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-red-300" : "border-slate-200 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
+            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-red-300" : "border-slate-300 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
           />
           {error && <p className="text-red-600 text-xs text-center">Incorrect — try again</p>}
           <button
             onClick={attempt}
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
+            className="w-full bg-cyan-600 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
             style={{ boxShadow: "0 1px 3px rgba(6, 182, 212, 0.12)" }}
           >
             Unlock
@@ -142,9 +142,9 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
 
 function StatusBadge({ status }: { status: Tool["status"] }) {
   const styles = {
-    active: "bg-green-50 text-green-700 border-green-200",
-    draft: "bg-amber-50 text-amber-700 border-amber-200",
-    paused: "bg-slate-100 text-slate-600 border-slate-200",
+    active: "bg-green-600 text-white border-green-600",
+    draft: "bg-amber-600 text-white border-amber-600",
+    paused: "bg-slate-600 text-white border-slate-600",
   };
   return (
     <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 ${styles[status]}`}>
@@ -160,7 +160,7 @@ function WidgetPreview({ tool }: { tool: Partial<Tool> }) {
       {/* Launcher */}
       <div className="inline-flex items-center gap-3 bg-white border border-cyan-100 rounded-full pl-3 pr-5 py-2.5 shadow-sm"
         style={{ boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)" }}>
-        <div className={`w-9 h-9 rounded-full bg-cyan-50 border border-cyan-200 flex items-center justify-center text-xs font-bold text-cyan-600 shrink-0`}>
+        <div className={`w-9 h-9 rounded-full bg-cyan-50 border border-cyan-200 flex items-center justify-center text-xs font-bold text-white shrink-0`}>
           {tool.avatarInitials || "?"}
         </div>
         <div>
@@ -185,7 +185,7 @@ function Input({ label, value, onChange, placeholder, hint, type = "text" }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors"
+        className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors"
       />
     </div>
   );
@@ -204,7 +204,7 @@ function Textarea({ label, value, onChange, placeholder, hint, rows = 6 }: {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors resize-none font-mono text-xs leading-relaxed"
+        className="bg-white border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors resize-none font-mono text-xs leading-relaxed"
       />
     </div>
   );
@@ -276,10 +276,10 @@ function GrowthView() {
   }, []);
 
   function outcomeStyle(outcome: string) {
-    if (outcome === "booked") return "bg-green-500/10 text-green-400 border-green-500/20";
-    if (outcome === "lead_captured") return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    if (outcome === "qualified") return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-    return "bg-white/5 text-slate-600 border-white/10";
+    if (outcome === "booked") return "bg-green-600 text-white border-green-600";
+    if (outcome === "lead_captured") return "bg-blue-700 text-white border-blue-700";
+    if (outcome === "qualified") return "bg-amber-600 text-white border-amber-600";
+    return "bg-slate-300 text-slate-900 border-slate-300";
   }
 
   function outcomeLabel(outcome: string) {
@@ -316,13 +316,13 @@ function GrowthView() {
               a.href=url; a.download=`leads-${new Date().toISOString().split("T")[0]}.csv`; a.click();
               URL.revokeObjectURL(url);
             }}
-            className="text-xs text-slate-600 hover:text-cyan-600 transition-colors px-3 py-2 border border-slate-200 rounded-lg"
+            className="text-xs text-slate-700 hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-300 rounded-lg"
           >
             ↓ Export CSV
           </button>
           <button
             onClick={() => { setLoading(true); fetch("/api/growth").then(r => r.json()).then(d => { setStats(d); setLoading(false); }); }}
-            className="text-xs text-slate-600 hover:text-cyan-600 transition-colors px-3 py-2 border border-slate-200 rounded-lg"
+            className="text-xs text-slate-700 hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-300 rounded-lg"
           >
             ↺ Refresh
           </button>
@@ -330,10 +330,10 @@ function GrowthView() {
       </div>
 
       {noRedis && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-6">
-          <p className="text-sm font-medium text-amber-400 mb-1">Redis not connected</p>
-          <p className="text-xs text-amber-400/70">Add <code className="bg-black/20 px-1 rounded">UPSTASH_REDIS_REST_URL</code> and <code className="bg-black/20 px-1 rounded">UPSTASH_REDIS_REST_TOKEN</code> to Vercel env vars to start capturing leads and conversations.</p>
-          <a href="https://upstash.com" target="_blank" rel="noopener noreferrer" className="text-xs text-amber-400 hover:text-amber-300 mt-2 inline-block">Set up Upstash Redis free →</a>
+        <div className="bg-amber-600 border border-amber-600 rounded-2xl p-6 mb-6">
+          <p className="text-sm font-medium text-white mb-1">Redis not connected</p>
+          <p className="text-xs text-white/90">Add <code className="bg-black/30 px-1 rounded">UPSTASH_REDIS_REST_URL</code> and <code className="bg-black/30 px-1 rounded">UPSTASH_REDIS_REST_TOKEN</code> to Vercel env vars to start capturing leads and conversations.</p>
+          <a href="https://upstash.com" target="_blank" rel="noopener noreferrer" className="text-xs text-white hover:text-gray-200 mt-2 inline-block">Set up Upstash Redis free →</a>
         </div>
       )}
 
@@ -343,17 +343,17 @@ function GrowthView() {
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total Leads", value: stats?.totalLeads ?? 0, color: "text-cyan-600", dot: "bg-cyan-500", bar: "bg-cyan-500" },
-            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "text-indigo-400", dot: "bg-indigo-400", bar: "bg-indigo-400" },
-            { label: "Qualified", value: stats?.qualified ?? 0, color: "text-amber-400", dot: "bg-amber-400", bar: "bg-amber-400" },
-            { label: "Booking Shown", value: stats?.booked ?? 0, color: "text-green-400", dot: "bg-green-400", bar: "bg-green-400" },
-            { label: "Lead Captured", value: stats?.captured ?? 0, color: "text-blue-400", dot: "bg-blue-400", bar: "bg-blue-400" },
-            { label: "Conv. Rate", value: stats?.totalConvs ? `${Math.round(((stats.booked + stats.captured) / stats.totalConvs) * 100)}%` : "—", color: "text-pink-400", dot: "bg-pink-400", bar: null },
+            { label: "Total Leads", value: stats?.totalLeads ?? 0, color: "text-white", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "text-blue-700", dot: "bg-blue-700", bar: "bg-blue-700" },
+            { label: "Qualified", value: stats?.qualified ?? 0, color: "text-amber-600", dot: "bg-amber-600", bar: "bg-amber-600" },
+            { label: "Booking Shown", value: stats?.booked ?? 0, color: "text-green-600", dot: "bg-green-600", bar: "bg-green-600" },
+            { label: "Lead Captured", value: stats?.captured ?? 0, color: "text-blue-700", dot: "bg-blue-700", bar: "bg-blue-700" },
+            { label: "Conv. Rate", value: stats?.totalConvs ? `${Math.round(((stats.booked + stats.captured) / stats.totalConvs) * 100)}%` : "—", color: "text-red-700", dot: "bg-red-600", bar: null },
           ].map((s) => {
             const max = stats?.totalConvs || 1;
             const pct = typeof s.value === "number" ? Math.min((s.value / max) * 100, 100) : null;
             return (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
+              <div key={s.label} className="bg-white border border-slate-300 rounded-xl p-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                   <span className={`text-[10px] font-medium ${s.color}`}>{s.label}</span>
@@ -370,10 +370,10 @@ function GrowthView() {
         </div>
 
         {/* Funnel diagram */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col">
+        <div className="bg-white border border-slate-300 rounded-2xl p-4 flex flex-col">
           <p className="text-base font-semibold text-slate-900 mb-4">Mia Funnel</p>
           {[
-            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-indigo-400/60", w: "100%" },
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-blue-700/60", w: "100%" },
             { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-amber-400/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
             { label: "Captured", value: stats?.captured ?? 0, color: "bg-blue-400/60", w: stats?.totalConvs ? `${Math.max(15, Math.round((stats.captured / stats.totalConvs) * 100))}%` : "45%" },
             { label: "Booked", value: stats?.booked ?? 0, color: "bg-green-400/70", w: stats?.totalConvs ? `${Math.max(10, Math.round((stats.booked / stats.totalConvs) * 100))}%` : "30%" },
@@ -391,19 +391,19 @@ function GrowthView() {
       </div>
 
       {avgScore && (
-        <div className="mt-3 bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shrink-0" />
-          <span className="text-[10px] font-medium text-pink-400">Avg Qualification Score</span>
+        <div className="mt-3 bg-white border border-slate-300 rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+          <span className="text-[10px] font-medium text-red-700">Avg Qualification Score</span>
           <span className="text-lg font-semibold text-slate-900 ml-auto">{avgScore}<span className="text-[11px] text-slate-600">/3</span></span>
         </div>
       )}
 
       {/* Section tabs + filters */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2 mt-6">
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-white border border-slate-300 rounded-xl p-1">
           {(["leads", "conversations"] as const).map((s) => (
             <button key={s} onClick={() => setActiveSection(s)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s ? "bg-cyan-500 text-white" : "text-slate-600 hover:text-slate-900"}`}>
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${activeSection === s ? "bg-cyan-600 text-white" : "text-slate-700 hover:text-slate-900"}`}>
               {s === "leads" ? `Leads (${leads.length})` : `Conversations (${convs.length})`}
             </button>
           ))}
@@ -415,7 +415,7 @@ function GrowthView() {
               const labels: Record<string, string> = { all: "All", booked: "Booking", qualified: "Qualified", lead_captured: "Captured", browsing: "Browsing" };
               return (
                 <button key={f} onClick={() => setOutcomeFilter(f)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${outcomeFilter === f ? "bg-cyan-500 text-white" : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900"}`}>
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${outcomeFilter === f ? "bg-cyan-600 text-white" : "bg-white border border-slate-300 text-slate-700 hover:text-slate-900"}`}>
                   {labels[f]} {count > 0 ? `(${count})` : ""}
                 </button>
               );
@@ -429,11 +429,11 @@ function GrowthView() {
         <div>
           {loading ? (
             <div className="flex flex-col gap-2">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-white border border-slate-200 rounded-xl animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-white border border-slate-300 rounded-xl animate-pulse" />)}
             </div>
           ) : filteredLeads.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#06b6d4" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No leads yet</p>
@@ -442,10 +442,10 @@ function GrowthView() {
           ) : (
             <div className="flex flex-col gap-2">
               {filteredLeads.map((lead) => (
-                <div key={lead.id} className={`rounded-xl p-4 hover:border-slate-200-accent transition-colors border ${(lead.qualification_score ?? 0) >= 2 ? "bg-amber-500/5 border-amber-500/25" : "bg-white border-slate-200"}`}>
+                <div key={lead.id} className={`rounded-xl p-4 hover:border-slate-300-accent transition-colors border ${(lead.qualification_score ?? 0) >= 2 ? "bg-amber-600/5 border-amber-500/25" : "bg-white border-slate-300"}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-indigo-400/30 border border-cyan-500/20 flex items-center justify-center text-[10px] font-bold text-cyan-600 shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-indigo-400/30 border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
                         {(lead.name ?? "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -457,13 +457,13 @@ function GrowthView() {
                         <div className="flex flex-wrap gap-1.5">
                           {lead.industry && <span className="text-[10px] bg-white/5 text-slate-600 rounded px-1.5 py-0.5">{lead.industry}</span>}
                           {lead.team_size && <span className="text-[10px] bg-white/5 text-slate-600 rounded px-1.5 py-0.5">{lead.team_size}</span>}
-                          {lead.qualification_score !== undefined && <span className="text-[10px] bg-cyan-500/10 text-cyan-600 rounded px-1.5 py-0.5">Score {lead.qualification_score}/3</span>}
+                          {lead.qualification_score !== undefined && <span className="text-[10px] bg-cyan-600/10 text-white rounded px-1.5 py-0.5">Score {lead.qualification_score}/3</span>}
                           {lead.page && lead.page !== "/" && <span className="text-[10px] bg-white/5 text-slate-600 rounded px-1.5 py-0.5 font-mono">{lead.page}</span>}
                         </div>
                         {lead.pain_points && lead.pain_points.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {lead.pain_points.slice(0, 3).map((p, i) => (
-                              <span key={i} className="text-[10px] bg-amber-500/10 text-amber-400/80 border border-amber-500/15 rounded px-1.5 py-0.5">{p}</span>
+                              <span key={i} className="text-[10px] bg-amber-600/10 text-amber-600/80 border border-amber-500/15 rounded px-1.5 py-0.5">{p}</span>
                             ))}
                           </div>
                         )}
@@ -486,11 +486,11 @@ function GrowthView() {
         <div>
           {loading ? (
             <div className="flex flex-col gap-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-white border border-slate-200 rounded-xl animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-white border border-slate-300 rounded-xl animate-pulse" />)}
             </div>
           ) : convs.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="#06b6d4" strokeWidth="1.5" strokeLinejoin="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No conversations yet</p>
@@ -499,10 +499,10 @@ function GrowthView() {
           ) : (
             <div className="flex flex-col gap-2">
               {convs.map((conv) => (
-                <div key={conv.id} className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 hover:border-slate-200-accent transition-colors">
+                <div key={conv.id} className="bg-white border border-slate-300 rounded-xl px-4 py-3.5 hover:border-slate-300-accent transition-colors">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/15 to-indigo-400/20 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/15 to-indigo-400/20 border border-cyan-600 flex items-center justify-center shrink-0">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="#06b6d4" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" /></svg>
                       </div>
                       <div className="min-w-0">
@@ -545,7 +545,7 @@ const VENTURES = [
     name: "Saabai.ai",
     type: "Core Venture",
     stage: "In Market",
-    stageColor: "text-green-400 bg-green-500/10 border-green-500/20",
+    stageColor: "text-green-600 bg-green-600/10 border-green-600",
     value: "Ongoing",
     nextAction: "Scale inbound — increase Mia conversations",
     url: "https://www.saabai.ai",
@@ -557,7 +557,7 @@ const VENTURES = [
     name: "PlasticOnline (PLON)",
     type: "Client Engagement",
     stage: "Scoping",
-    stageColor: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    stageColor: "text-amber-600 bg-amber-600/10 border-amber-600",
     value: "AUD $30–55k+",
     nextAction: "Complete scoping form — build AI agent proposal",
     url: "https://www.saabai.ai/onboarding/plon",
@@ -569,7 +569,7 @@ const VENTURES = [
     name: "Builder Client",
     type: "Client Engagement",
     stage: "Qualifying",
-    stageColor: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+    stageColor: "text-blue-700 bg-blue-700/10 border-blue-700",
     value: "TBD",
     nextAction: "Awaiting fact find return before scoping",
     url: null,
@@ -620,12 +620,12 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
   const dateStr = now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long" });
 
   const QUICK_ACTIONS = [
-    { label: "Saabai.ai", sub: "Main site", href: "https://www.saabai.ai", icon: "↗", color: "text-cyan-600" },
-    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-amber-400" },
-    { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-indigo-400" },
+    { label: "Saabai.ai", sub: "Main site", href: "https://www.saabai.ai", icon: "↗", color: "text-white" },
+    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-amber-600" },
+    { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-blue-700" },
     { label: "Vercel", sub: "Deployments", href: "https://vercel.com/dashboard", icon: "↗", color: "text-white/70" },
-    { label: "Atlas Memory", sub: "Control Panel", href: "/atlas-memory-control", icon: "⚙", color: "text-cyan-400" },
-    { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-green-400", onClick: onNewTool },
+    { label: "Atlas Memory", sub: "Control Panel", href: "/atlas-memory-control", icon: "⚙", color: "text-cyan-600" },
+    { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-green-600", onClick: onNewTool },
   ];
 
   const HEALTH_ITEMS = [
@@ -646,37 +646,37 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
             <p className="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">{dateStr}</p>
             <h1 className="text-5xl font-bold text-slate-900 mb-3">{greeting}, Shane.</h1>
             <div className="flex items-center gap-2 mt-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
               <p className="text-sm text-slate-600 italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
             </div>
           </div>
           <button
             onClick={onNewTool}
-            className="flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-bold transition-all shrink-0 shadow-sm hover:shadow-md"
+            className="flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-600 text-white rounded-xl text-sm font-bold transition-all shrink-0 shadow-sm hover:shadow-md"
           >
             <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             New Tool
           </button>
         </div>
-        <div className="h-0.5 w-32 bg-cyan-500" />
+        <div className="h-0.5 w-32 bg-cyan-600" />
       </div>
 
       {/* Top KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-emerald-600", borderColor: "border-l-4 border-l-emerald-500", dot: "bg-emerald-500", tab: "tools" as Tab },
-          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-cyan-600", borderColor: "border-l-4 border-l-cyan-500", dot: "bg-cyan-500", tab: "agents" as Tab },
-          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-blue-600", borderColor: "border-l-4 border-l-blue-500", dot: "bg-blue-500", tab: "tools" as Tab },
-          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-600", borderColor: "border-l-4 border-l-amber-500", dot: "bg-amber-500", tab: "growth" as Tab },
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-600", borderColor: "border-l-4 border-l-green-600", dot: "bg-green-600", tab: "tools" as Tab },
+          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-white", borderColor: "border-l-4 border-l-cyan-600", dot: "bg-cyan-600", tab: "agents" as Tab },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-blue-700", borderColor: "border-l-4 border-l-blue-700", dot: "bg-blue-700", tab: "tools" as Tab },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-600", borderColor: "border-l-4 border-l-amber-600", dot: "bg-amber-600", tab: "growth" as Tab },
         ].map((s) => (
           <button key={s.label} onClick={() => onTabChange(s.tab)}
-            className={`bg-white border border-slate-200 ${s.borderColor} rounded-lg p-5 hover:shadow-md transition-all cursor-pointer text-left group`}>
+            className={`bg-white border border-slate-300 ${s.borderColor} rounded-lg p-5 hover:shadow-md transition-all cursor-pointer text-left group`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${s.dot}`} />
                 <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{s.label}</span>
               </div>
-              <span className="text-[10px] text-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
+              <span className="text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
             </div>
             <div className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</div>
             <div className="text-[11px] text-slate-500">{s.sub}</div>
@@ -685,9 +685,9 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       </div>
 
       {/* Mia Performance Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg px-6 py-5 mb-8 flex items-center gap-6 flex-wrap shadow-sm">
+      <div className="bg-white border border-slate-300 rounded-lg px-6 py-5 mb-8 flex items-center gap-6 flex-wrap shadow-sm">
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-cyan-100 border border-cyan-300 flex items-center justify-center text-xs font-bold text-cyan-700">M</div>
+          <div className="w-8 h-8 rounded-lg bg-cyan-100 border border-cyan-300 flex items-center justify-center text-xs font-bold text-white">M</div>
           <div>
             <p className="text-sm font-semibold text-slate-900 leading-none">Mia</p>
             <p className="text-[10px] text-slate-600 mt-0.5">Live performance</p>
@@ -695,10 +695,10 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         </div>
         <div className="w-px h-10 bg-slate-200 shrink-0" />
         {[
-          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-blue-600" },
+          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-blue-700" },
           { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-amber-600" },
-          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-emerald-600" },
-          { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-cyan-600" },
+          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-green-600" },
+          { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-white" },
           { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-pink-600" },
           { label: "Last Active", value: activityLeads[0] ? timeAgo(activityLeads[0].createdAt) : "—", color: "text-slate-600" },
         ].map((m) => (
@@ -715,29 +715,29 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {QUICK_ACTIONS.map((a) => {
             const getBgHover = () => {
-              if (a.color === "text-cyan-600" || a.color === "text-cyan-400") return "hover:bg-cyan-50";
-              if (a.color === "text-amber-400") return "hover:bg-amber-50";
-              if (a.color === "text-indigo-400") return "hover:bg-indigo-50";
-              if (a.color === "text-green-400") return "hover:bg-green-50";
-              return "hover:bg-slate-50";
+              if (a.color === "text-white" || a.color === "text-cyan-600") return "hover:bg-cyan-50";
+              if (a.color === "text-amber-600") return "hover:bg-amber-600";
+              if (a.color === "text-blue-700") return "hover:bg-blue-700";
+              if (a.color === "text-green-600") return "hover:bg-green-600";
+              return "hover:bg-white";
             };
             const getTextColor = () => {
-              if (a.color === "text-cyan-600" || a.color === "text-cyan-400") return "text-cyan-600";
-              if (a.color === "text-amber-400") return "text-amber-600";
-              if (a.color === "text-indigo-400") return "text-indigo-600";
-              if (a.color === "text-green-400") return "text-emerald-600";
+              if (a.color === "text-white" || a.color === "text-cyan-600") return "text-white";
+              if (a.color === "text-amber-600") return "text-amber-600";
+              if (a.color === "text-blue-700") return "text-indigo-600";
+              if (a.color === "text-green-600") return "text-emerald-600";
               return "text-slate-700";
             };
             return a.href ? (
               <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer"
-                className={`bg-white border border-slate-200 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 shadow-sm hover:shadow-md`}>
+                className={`bg-white border border-slate-300 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 shadow-sm hover:shadow-md`}>
                 <span className={`text-lg font-bold ${getTextColor()} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
                 <span className="text-sm font-semibold text-slate-900 leading-tight">{a.label}</span>
                 <span className="text-xs text-slate-600">{a.sub}</span>
               </a>
             ) : (
               <button key={a.label} onClick={a.onClick}
-                className={`bg-white border border-slate-200 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 text-left shadow-sm hover:shadow-md`}>
+                className={`bg-white border border-slate-300 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 text-left shadow-sm hover:shadow-md`}>
                 <span className={`text-lg font-bold ${getTextColor()} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
                 <span className="text-sm font-semibold text-slate-900 leading-tight">{a.label}</span>
                 <span className="text-xs text-slate-600">{a.sub}</span>
@@ -761,13 +761,13 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
               const CardWrapper = v.url
                 ? ({ children }: { children: React.ReactNode }) => (
                     <a href={v.url} target="_blank" rel="noopener noreferrer"
-                      className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer block group">
+                      className="bg-white border border-slate-300 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer block group">
                       {children}
                     </a>
                   )
                 : ({ children }: { children: React.ReactNode }) => (
                     <button onClick={() => onTabChange("growth")}
-                      className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer w-full text-left block group">
+                      className="bg-white border border-slate-300 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer w-full text-left block group">
                       {children}
                     </button>
                   );
@@ -789,12 +789,12 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                     <div className="text-right shrink-0">
                       <p className="text-xs font-semibold text-slate-900">{v.value}</p>
                       {v.url && (
-                        <span className="text-[10px] text-cyan-600 group-hover:text-cyan-700 transition-colors">Open ↗</span>
+                        <span className="text-[10px] text-white group-hover:text-white transition-colors">Open ↗</span>
                       )}
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-start gap-1.5">
-                    <span className="text-[9px] text-cyan-600 uppercase font-semibold mt-0.5 shrink-0">Next</span>
+                  <div className="mt-3 pt-3 border-t border-slate-300 flex items-start gap-1.5">
+                    <span className="text-[9px] text-white uppercase font-semibold mt-0.5 shrink-0">Next</span>
                     <p className="text-[11px] text-slate-700">{v.nextAction}</p>
                   </div>
                 </CardWrapper>
@@ -806,12 +806,12 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         {/* System Health */}
         <div>
           <h2 className="text-xl font-bold text-slate-900 mb-4">System Health</h2>
-          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-white border border-slate-300 rounded-lg overflow-hidden shadow-sm">
             {HEALTH_ITEMS.map((item, i) => {
               const ok = health?.[item.key];
               const loading = health === null;
               return (
-                <div key={item.key} className={`flex items-center justify-between px-4 py-3 ${i < HEALTH_ITEMS.length - 1 ? "border-b border-slate-200" : ""}`}>
+                <div key={item.key} className={`flex items-center justify-between px-4 py-3 ${i < HEALTH_ITEMS.length - 1 ? "border-b border-slate-300" : ""}`}>
                   <div>
                     <p className="text-xs font-medium text-slate-900">{item.label}</p>
                     <p className="text-[10px] text-slate-600">{item.desc}</p>
@@ -820,22 +820,22 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                     <div className="w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
                   ) : ok ? (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <div className="w-2 h-2 rounded-full bg-green-600" />
                       <span className="text-[10px] text-emerald-600 font-medium">OK</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <div className="w-2 h-2 rounded-full bg-red-600" />
                       <span className="text-[10px] text-red-600 font-medium">Missing</span>
                     </div>
                   )}
                 </div>
               );
             })}
-            <div className="px-4 py-2 border-t border-slate-200 bg-slate-50">
+            <div className="px-4 py-2 border-t border-slate-300 bg-white">
               <button
                 onClick={() => fetch("/api/mission-control/health").then(r => r.json()).then(setHealth)}
-                className="text-[10px] text-slate-600 hover:text-cyan-600 transition-colors"
+                className="text-[10px] text-slate-700 hover:text-white hover:bg-cyan-600 transition-colors"
               >
                 ↺ Refresh
               </button>
@@ -850,28 +850,28 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-white">Active Tools</h2>
-            <button onClick={() => onTabChange("tools")} className="text-[11px] text-cyan-600 hover:text-cyan-600-bright transition-colors">View all →</button>
+            <button onClick={() => onTabChange("tools")} className="text-[11px] text-white hover:text-white-bright transition-colors">View all →</button>
           </div>
           <div className="flex flex-col gap-2">
             {tools.filter(t => t.status === "active").map((tool) => (
-              <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-slate-200-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
+              <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-white border border-slate-300 rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-slate-300-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-cyan-500/30 flex items-center justify-center text-[10px] font-bold text-cyan-600 shrink-0`}>
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
                     {tool.avatarInitials}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-slate-900">{tool.name}</p>
-                      <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Live</span>
+                      <span className="text-[9px] bg-green-600/10 text-green-600 border border-green-600 rounded-full px-1.5 py-0.5">Live</span>
                     </div>
                     <p className="text-[11px] text-slate-600 mt-0.5">{tool.role}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.model.split("-")[1]}</span>
-                  {tool.voiceId && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 rounded-lg px-2 py-1">Voice</span>}
+                  {tool.voiceId && <span className="text-[10px] bg-blue-700 text-blue-700 rounded-lg px-2 py-1">Voice</span>}
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.pages === "*" ? "All pages" : tool.pages}</span>
-                  <span className="text-[11px] text-cyan-600 group-hover:text-cyan-600-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
+                  <span className="text-[11px] text-white group-hover:text-white-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
                 </div>
               </button>
             ))}
@@ -882,11 +882,11 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-white">Recent Activity</h2>
-            <button onClick={() => onTabChange("growth")} className="text-[11px] text-cyan-600 hover:text-cyan-600-bright transition-colors">View all →</button>
+            <button onClick={() => onTabChange("growth")} className="text-[11px] text-white hover:text-white-bright transition-colors">View all →</button>
           </div>
           {activityLeads.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center">
-              <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-white border border-slate-300 rounded-xl p-6 text-center">
+              <div className="w-8 h-8 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-3">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 8l3-3.5 2.5 2L9 3l4 5" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
               <p className="text-xs text-slate-600">No activity yet — Mia conversations will appear here</p>
@@ -894,14 +894,14 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
           ) : (
             <div className="flex flex-col gap-2">
               {activityLeads.slice(0, 5).map((lead) => {
-                const outcomeColor = lead.outcome === "booked" ? "text-green-400 bg-green-500/10 border-green-500/20"
-                  : lead.outcome === "lead_captured" ? "text-blue-400 bg-blue-500/10 border-blue-500/20"
-                  : lead.outcome === "qualified" ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
+                const outcomeColor = lead.outcome === "booked" ? "text-green-600 bg-green-600/10 border-green-600"
+                  : lead.outcome === "lead_captured" ? "text-blue-700 bg-blue-700/10 border-blue-700"
+                  : lead.outcome === "qualified" ? "text-amber-600 bg-amber-600/10 border-amber-600"
                   : "text-slate-600 bg-white/5 border-white/10";
                 const outcomeLabel = lead.outcome === "booked" ? "Booking" : lead.outcome === "lead_captured" ? "Captured" : lead.outcome === "qualified" ? "Qualified" : "Browsing";
                 const dotColor = lead.outcome === "booked" ? "bg-green-400" : lead.outcome === "lead_captured" ? "bg-blue-400" : lead.outcome === "qualified" ? "bg-amber-400" : "bg-white/20";
                 return (
-                  <div key={lead.id} className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex items-center gap-3 hover:border-slate-200-accent transition-colors">
+                  <div key={lead.id} className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 flex items-center gap-3 hover:border-slate-300-accent transition-colors">
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-slate-900 truncate">
@@ -948,23 +948,23 @@ const AGENT_CLUSTERS = [
     id: "orchestrator",
     label: "Orchestrator",
     description: "Strategic oversight, capital allocation, operating rules",
-    color: "text-cyan-600",
+    color: "text-white",
     borderColor: "border-cyan-500/40",
-    bgColor: "bg-cyan-500/5",
+    bgColor: "bg-cyan-600",
   },
   {
     id: "build",
     label: "Build & Automation",
     description: "Systems, infrastructure, workflows",
-    color: "text-indigo-400",
+    color: "text-blue-700",
     borderColor: "border-indigo-400/30",
-    bgColor: "bg-indigo-400/5",
+    bgColor: "bg-blue-700/5",
   },
   {
     id: "growth",
     label: "Growth & Revenue",
     description: "Demand generation, paid traffic, creative",
-    color: "text-emerald-400",
+    color: "text-green-600",
     borderColor: "border-emerald-400/30",
     bgColor: "bg-emerald-400/5",
   },
@@ -972,7 +972,7 @@ const AGENT_CLUSTERS = [
     id: "ops",
     label: "Operations",
     description: "Systems design, SOPs, delivery frameworks",
-    color: "text-amber-400",
+    color: "text-amber-600",
     borderColor: "border-amber-400/30",
     bgColor: "bg-amber-400/5",
   },
@@ -1189,7 +1189,7 @@ function AgentsView() {
     agent: Agent; cluster: typeof AGENT_CLUSTERS[0]; isExpanded: boolean; onToggle: () => void;
   }) {
     return (
-      <div className={`mb-2 rounded-xl border transition-colors ${agent.status === "archived" ? "border-white/8 opacity-60" : isExpanded ? cluster.borderColor : "border-slate-200 hover:border-slate-200-accent"}`}>
+      <div className={`mb-2 rounded-xl border transition-colors ${agent.status === "archived" ? "border-white/8 opacity-60" : isExpanded ? cluster.borderColor : "border-slate-300 hover:border-slate-300-accent"}`}>
         {/* Header row */}
         <button
           onClick={onToggle}
@@ -1202,7 +1202,7 @@ function AgentsView() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-base font-semibold text-slate-900">{agent.name}</span>
               {agent.status === "active" ? (
-                <span className="text-[9px] font-medium bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-1.5 py-0.5">Active</span>
+                <span className="text-[9px] font-medium bg-green-600/10 text-green-600 border border-green-600 rounded-full px-1.5 py-0.5">Active</span>
               ) : (
                 <span className="text-[9px] font-medium bg-white/5 text-slate-600 border border-white/10 rounded-full px-1.5 py-0.5">Archived</span>
               )}
@@ -1219,7 +1219,7 @@ function AgentsView() {
 
         {/* Expanded detail */}
         {isExpanded && (
-          <div className="px-4 pb-4 border-t border-slate-200/50 pt-4">
+          <div className="px-4 pb-4 border-t border-slate-300/50 pt-4">
             <p className="text-xs text-slate-600 leading-relaxed mb-4">{agent.mission}</p>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1245,25 +1245,25 @@ function AgentsView() {
             </div>
 
             {agent.hardRule && (
-              <div className="mt-4 pt-3 border-t border-slate-200/50 flex items-start gap-2">
-                <span className="text-[10px] text-cyan-600 shrink-0 mt-0.5">RULE</span>
+              <div className="mt-4 pt-3 border-t border-slate-300/50 flex items-start gap-2">
+                <span className="text-[10px] text-white shrink-0 mt-0.5">RULE</span>
                 <p className="text-[11px] text-slate-600 italic">&ldquo;{agent.hardRule}&rdquo;</p>
               </div>
             )}
 
             {/* Improvement Notes */}
-            <div className="mt-4 pt-3 border-t border-slate-200/50">
+            <div className="mt-4 pt-3 border-t border-slate-300/50">
               <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-2">Improvement Notes</p>
               <textarea
                 value={agentNotes[agent.id] ?? ""}
                 onChange={(e) => saveNote(agent.id, e.target.value)}
                 placeholder={`What should ${agent.name} learn or do better? Notes persist across sessions.`}
                 rows={2}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-600/40 focus:outline-none focus:border-cyan-500/40 transition-colors resize-none leading-relaxed"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder:text-slate-600/40 focus:outline-none focus:border-cyan-500/40 transition-colors resize-none leading-relaxed"
                 onClick={(e) => e.stopPropagation()}
               />
               {agentNotes[agent.id] && (
-                <p className="text-[9px] text-green-400/70 mt-1">✓ Notes saved</p>
+                <p className="text-[9px] text-green-600/70 mt-1">✓ Notes saved</p>
               )}
             </div>
           </div>
@@ -1281,16 +1281,16 @@ function AgentsView() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
-          <div className="text-xs font-medium text-green-400 mb-2">● Active Agents</div>
+        <div className="bg-white border border-slate-300 rounded-2xl p-5">
+          <div className="text-xs font-medium text-green-600 mb-2">● Active Agents</div>
           <div className="text-3xl font-semibold text-slate-900 stat-glow">{activeAgents.length}</div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
+        <div className="bg-white border border-slate-300 rounded-2xl p-5">
           <div className="text-xs font-medium text-slate-600 mb-2">◌ Archived</div>
           <div className="text-3xl font-semibold text-slate-900">{archivedAgents.length}</div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
-          <div className="text-xs font-medium text-cyan-600 mb-2">◆ Clusters</div>
+        <div className="bg-white border border-slate-300 rounded-2xl p-5">
+          <div className="text-xs font-medium text-white mb-2">◆ Clusters</div>
           <div className="text-3xl font-semibold text-slate-900 stat-glow">{clusterGroups.length}</div>
         </div>
       </div>
@@ -1343,7 +1343,7 @@ function AgentsView() {
         </div>
 
         {/* Archived */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
+        <div className="mt-6 pt-6 border-t border-slate-300">
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/8 bg-white/3 mb-3">
             <span className="text-xs font-semibold text-slate-600">Archived</span>
             <span className="text-slate-600 text-xs">—</span>
@@ -1778,16 +1778,16 @@ function EdgeView() {
 
       {/* Left Panel */}
       {leftPanelOpen
-        ? <div className="w-[260px] shrink-0 border-r border-slate-200 hidden md:flex flex-col overflow-y-auto">
+        ? <div className="w-[260px] shrink-0 border-r border-slate-300 hidden md:flex flex-col overflow-y-auto">
 
           {/* Today's Truth */}
-          <div className="p-4 border-b border-slate-200">
+          <div className="p-4 border-b border-slate-300">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[9px] font-semibold text-cyan-600 uppercase tracking-widest">Truth of the Day</p>
+              <p className="text-[9px] font-semibold text-white uppercase tracking-widest">Truth of the Day</p>
               <button
                 onClick={() => setLeftPanelOpen(false)}
                 title="Collapse panel"
-                className="w-5 h-5 flex items-center justify-center rounded text-slate-600 hover:text-slate-900 hover:bg-white/5 transition-colors"
+                className="w-5 h-5 flex items-center justify-center rounded text-white hover:text-white hover:bg-slate-700 transition-colors"
               >
                 <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1799,21 +1799,21 @@ function EdgeView() {
 
         {/* Edge's Current Read */}
         {profile?.rawNotes && (
-          <div className="p-4 border-b border-slate-200">
-            <p className="text-[9px] font-semibold text-amber-400 uppercase tracking-widest mb-2">Edge&apos;s Read on You</p>
+          <div className="p-4 border-b border-slate-300">
+            <p className="text-[9px] font-semibold text-amber-600 uppercase tracking-widest mb-2">Edge&apos;s Read on You</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{profile.rawNotes}</p>
           </div>
         )}
 
         {/* Active Commitments */}
         {commitments.length > 0 && (
-          <div className="p-4 border-b border-slate-200">
+          <div className="p-4 border-b border-slate-300">
             <p className="text-[9px] font-semibold text-slate-600 uppercase tracking-widest mb-2">Your Commitments</p>
             <div className="flex flex-col gap-1.5">
               {commitments.map((c, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <div className="w-3 h-3 rounded border border-cyan-500/40 shrink-0 mt-0.5 flex items-center justify-center">
-                    <div className="w-1 h-1 rounded-full bg-cyan-500/40" />
+                    <div className="w-1 h-1 rounded-full bg-cyan-600/40" />
                   </div>
                   <p className="text-[11px] text-slate-600 leading-tight">{c}</p>
                 </div>
@@ -1824,15 +1824,15 @@ function EdgeView() {
 
         {/* Patterns */}
         {profile?.patterns && (
-          <div className="p-4 border-b border-slate-200">
-            <p className="text-[9px] font-semibold text-pink-400 uppercase tracking-widest mb-2">Patterns Noticed</p>
+          <div className="p-4 border-b border-slate-300">
+            <p className="text-[9px] font-semibold text-red-700 uppercase tracking-widest mb-2">Patterns Noticed</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{profile.patterns}</p>
           </div>
         )}
 
         {/* Mood Trend */}
         {sessions.filter(s => s.mood).length > 0 && (
-          <div className="p-4 border-b border-slate-200">
+          <div className="p-4 border-b border-slate-300">
             <p className="text-[9px] font-semibold text-slate-600 uppercase tracking-widest mb-3">Mood Trend</p>
             <div className="flex items-end gap-1.5 h-8">
               {sessions.filter(s => s.mood).slice(0, 10).reverse().map((s, i) => {
@@ -1853,7 +1853,7 @@ function EdgeView() {
         )}
 
         {/* Session History */}
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-slate-300">
           <button
             onClick={() => setHistoryExpanded(p => !p)}
             className="flex items-center justify-between w-full mb-2"
@@ -1867,7 +1867,7 @@ function EdgeView() {
                 <button
                   key={s.id}
                   onClick={() => loadSessionTranscript(s)}
-                  className={`w-full text-left rounded-lg p-2.5 border transition-all hover:border-cyan-500/40 ${viewingSessionId === s.id ? "bg-cyan-500/5 border-cyan-500/40" : "bg-white border-slate-200"}`}
+                  className={`w-full text-left rounded-lg p-2.5 border transition-all hover:border-cyan-500/40 ${viewingSessionId === s.id ? "bg-cyan-600 border-cyan-500/40" : "bg-white border-slate-300"}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-slate-600">{s.createdAt.split("T")[0]}</span>
@@ -1878,12 +1878,12 @@ function EdgeView() {
                           <span className="text-[9px] text-slate-600">{s.mood}/10</span>
                         </>
                       )}
-                      <span className="text-[9px] text-cyan-600/60">{viewingSessionId === s.id ? "▸" : "↗"}</span>
+                      <span className="text-[9px] text-white/60">{viewingSessionId === s.id ? "▸" : "↗"}</span>
                     </div>
                   </div>
                   {s.summary && <p className="text-[10px] text-slate-600 leading-relaxed">{s.summary}</p>}
                   {s.newCommitments && (
-                    <p className="text-[9px] text-cyan-600 mt-1">↳ {s.newCommitments}</p>
+                    <p className="text-[9px] text-white mt-1">↳ {s.newCommitments}</p>
                   )}
                 </button>
               ))}
@@ -1907,13 +1907,13 @@ function EdgeView() {
             <div className="flex flex-col gap-2">
               {hasProfile ? (
                 [
-                  { key: "coreGoals", label: "Goals", color: "text-cyan-600" },
-                  { key: "currentFocus", label: "Focus", color: "text-indigo-400" },
-                  { key: "strengths", label: "Strengths", color: "text-green-400" },
-                  { key: "challenges", label: "Challenges", color: "text-amber-400" },
-                  { key: "breakthroughs", label: "Breakthroughs", color: "text-pink-400" },
-                  { key: "watchFor", label: "Watch For", color: "text-red-400" },
-                  { key: "worksWith", label: "Works With", color: "text-blue-400" },
+                  { key: "coreGoals", label: "Goals", color: "text-white" },
+                  { key: "currentFocus", label: "Focus", color: "text-blue-700" },
+                  { key: "strengths", label: "Strengths", color: "text-green-600" },
+                  { key: "challenges", label: "Challenges", color: "text-amber-600" },
+                  { key: "breakthroughs", label: "Breakthroughs", color: "text-red-700" },
+                  { key: "watchFor", label: "Watch For", color: "text-red-600" },
+                  { key: "worksWith", label: "Works With", color: "text-blue-700" },
                 ].filter(f => profile?.[f.key as keyof EdgeProfileData]).map(f => (
                   <div key={f.key}>
                     <p className={`text-[9px] font-semibold ${f.color} uppercase tracking-wider mb-0.5`}>{f.label}</p>
@@ -1930,11 +1930,11 @@ function EdgeView() {
           )}
         </div>
         </div>
-        : <div className="hidden md:flex w-8 shrink-0 border-r border-slate-200 flex-col items-center pt-4">
+        : <div className="hidden md:flex w-8 shrink-0 border-r border-slate-300 flex-col items-center pt-4">
             <button
               onClick={() => setLeftPanelOpen(true)}
               title="Expand panel"
-              className="w-5 h-5 flex items-center justify-center rounded text-slate-600 hover:text-slate-900 hover:bg-white/5 transition-colors"
+              className="w-5 h-5 flex items-center justify-center rounded text-white hover:text-white hover:bg-slate-700 transition-colors"
             >
               <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                 <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1947,7 +1947,7 @@ function EdgeView() {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-200 shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-slate-300 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-700/60 to-slate-900/80 border border-white/10 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -1967,33 +1967,33 @@ function EdgeView() {
               </div>
             )}
             {mood !== null && (
-              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-500/30 text-green-400 bg-green-500/5" : mood >= 5 ? "border-amber-500/30 text-amber-400 bg-amber-500/5" : "border-red-500/30 text-red-400 bg-red-500/5"}`}>
+              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-600 text-green-600 bg-green-600/5" : mood >= 5 ? "border-amber-600 text-amber-600 bg-amber-600/5" : "border-red-600 text-red-600 bg-red-600/5"}`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${moodColor(mood)}`} />
                 {mood}/10 · {moodLabel(mood)}
               </div>
             )}
             <button
               onClick={() => setVoiceEnabled(v => !v)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors ${voiceEnabled ? "border-indigo-500/40 text-indigo-400 bg-indigo-500/10" : "border-slate-200 text-slate-600 hover:text-slate-900"}`}
+              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors ${voiceEnabled ? "border-blue-700 text-blue-700 bg-blue-700" : "border-slate-300 text-slate-700 hover:text-slate-900"}`}
             >
               {voiceEnabled ? "Voice On" : "Voice Off"}
             </button>
             {sessionStarted && !sessionEnded && messages.length > 2 && (
               <div className="flex items-center gap-2">
                 {endError && (
-                  <span className="text-[10px] text-red-400 max-w-[140px] truncate" title={endError}>{endError}</span>
+                  <span className="text-[10px] text-red-600 max-w-[140px] truncate" title={endError}>{endError}</span>
                 )}
                 <button
                   onClick={exitWithoutSaving}
                   disabled={sessionEnding}
-                  className="px-3 py-1.5 rounded-lg text-[11px] border border-slate-200 text-slate-600 hover:border-slate-200 hover:text-slate-900 transition-colors disabled:opacity-40"
+                  className="px-3 py-1.5 rounded-lg text-[11px] border border-slate-300 text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors disabled:opacity-40"
                 >
                   Exit
                 </button>
                 <button
                   onClick={endSession}
                   disabled={sessionEnding}
-                  className="px-3 py-1.5 rounded-lg text-[11px] border border-cyan-500/30 text-cyan-600 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors disabled:opacity-40"
+                  className="px-3 py-1.5 rounded-lg text-[11px] border border-cyan-600 text-white bg-cyan-600 hover:bg-cyan-700 transition-colors disabled:opacity-40"
                 >
                   {sessionEnding ? "Saving…" : "Save & Exit"}
                 </button>
@@ -2011,7 +2011,7 @@ function EdgeView() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => { setViewingSessionId(null); setViewingSession(null); setViewingTranscript(null); }}
-                    className="flex items-center gap-1.5 text-[11px] text-slate-600 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-1.5 text-[11px] text-slate-700 hover:text-slate-900 transition-colors"
                   >
                     ← Back
                   </button>
@@ -2025,7 +2025,7 @@ function EdgeView() {
                 {!sessionStarted && viewingTranscript && viewingTranscript.length > 0 && (
                   <button
                     onClick={continueFromSession}
-                    className="px-3 py-1.5 rounded-lg text-[11px] border border-cyan-500/30 text-cyan-600 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
+                    className="px-3 py-1.5 rounded-lg text-[11px] border border-cyan-600 text-white bg-cyan-600 hover:bg-cyan-700 transition-colors"
                   >
                     Continue this thread →
                   </button>
@@ -2036,7 +2036,7 @@ function EdgeView() {
                 {transcriptLoading ? (
                   <div className="flex items-center justify-center h-40">
                     <div className="flex gap-1">
-                      {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-500/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />)}
+                      {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-600/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />)}
                     </div>
                   </div>
                 ) : viewingTranscript && viewingTranscript.length > 0 ? (
@@ -2052,7 +2052,7 @@ function EdgeView() {
                               </svg>
                             </div>
                           )}
-                          <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${isEdge ? "bg-white border border-slate-200 text-slate-900" : "bg-cyan-500/10 border border-cyan-500/20 text-slate-900 ml-auto"}`}>
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${isEdge ? "bg-white border border-slate-300 text-slate-900" : "bg-cyan-600/10 border border-cyan-600 text-slate-900 ml-auto"}`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
                           </div>
                         </div>
@@ -2062,7 +2062,7 @@ function EdgeView() {
                       <div className="flex justify-center pt-4">
                         <button
                           onClick={continueFromSession}
-                          className="px-5 py-2.5 rounded-xl text-[11px] border border-cyan-500/30 text-cyan-600 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors font-medium"
+                          className="px-5 py-2.5 rounded-xl text-[11px] border border-cyan-600 text-white bg-cyan-600 hover:bg-cyan-700 transition-colors font-medium"
                         >
                           Continue this thread →
                         </button>
@@ -2079,7 +2079,7 @@ function EdgeView() {
           ) : sessionEnded ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-sm">
-                <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-green-600/10 border border-green-600 flex items-center justify-center mx-auto mb-4">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </div>
                 <p className="text-sm font-semibold text-slate-900 mb-2">Session saved.</p>
@@ -2091,7 +2091,7 @@ function EdgeView() {
                     setMood(null);
                     setMessages([]);
                   }}
-                  className="px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 text-xs hover:bg-cyan-500/20 transition-colors"
+                  className="px-4 py-2 rounded-lg bg-cyan-600/10 border border-cyan-600 text-white text-xs hover:bg-cyan-600/20 transition-colors"
                 >
                   Start New Session
                 </button>
@@ -2123,7 +2123,7 @@ function EdgeView() {
                   <div className="flex flex-col items-center gap-3">
                     <button
                       onClick={() => startSession(null)}
-                      className="w-full py-3.5 rounded-xl text-sm font-semibold border border-cyan-500/30 text-cyan-600 bg-cyan-500/5 hover:bg-cyan-500/10 transition-all"
+                      className="w-full py-3.5 rounded-xl text-sm font-semibold border border-cyan-600 text-white bg-cyan-600 hover:bg-cyan-700 transition-all"
                     >
                       Jump back in →
                     </button>
@@ -2133,12 +2133,12 @@ function EdgeView() {
                         const el = document.getElementById("edge-mood-grid");
                         if (el) el.style.display = "block";
                       }}
-                      className="text-[11px] text-slate-600 hover:text-slate-900 transition-colors"
+                      className="text-[11px] text-slate-700 hover:text-slate-900 transition-colors"
                     >
                       Rate your mood anyway
                     </button>
                     <div id="edge-mood-grid" style={{ display: "none" }} className="w-full">
-                      <div className="bg-white border border-slate-200 rounded-2xl p-6 mt-2">
+                      <div className="bg-white border border-slate-300 rounded-2xl p-6 mt-2">
                         <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
                         <div className="grid grid-cols-5 gap-2 mb-4">
                           {[1,2,3,4,5,6,7,8,9,10].map(n => (
@@ -2146,9 +2146,9 @@ function EdgeView() {
                               key={n}
                               onClick={() => startSession(n)}
                               className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
-                                n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
-                                : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
-                                : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
+                                n <= 3 ? "border-red-600 text-red-600 bg-red-600/5 hover:bg-red-600/10 hover:border-red-600"
+                                : n <= 6 ? "border-amber-600 text-amber-600 bg-amber-600/5 hover:bg-amber-600/10 hover:border-amber-500/50"
+                                : "border-green-600 text-green-600 bg-green-600/5 hover:bg-green-600/10 hover:border-green-500/50"
                               }`}
                             >
                               {n}
@@ -2164,7 +2164,7 @@ function EdgeView() {
                   </div>
                 ) : (
                   <>
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                    <div className="bg-white border border-slate-300 rounded-2xl p-6">
                       <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-4 text-center">Energy &amp; Mindset — Rate 1 to 10</p>
                       <div className="grid grid-cols-5 gap-2 mb-4">
                         {[1,2,3,4,5,6,7,8,9,10].map(n => (
@@ -2172,9 +2172,9 @@ function EdgeView() {
                             key={n}
                             onClick={() => startSession(n)}
                             className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
-                              n <= 3 ? "border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/50"
-                              : n <= 6 ? "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/50"
-                              : "border-green-500/30 text-green-400 bg-green-500/5 hover:bg-green-500/10 hover:border-green-500/50"
+                              n <= 3 ? "border-red-600 text-red-600 bg-red-600/5 hover:bg-red-600/10 hover:border-red-600"
+                              : n <= 6 ? "border-amber-600 text-amber-600 bg-amber-600/5 hover:bg-amber-600/10 hover:border-amber-500/50"
+                              : "border-green-600 text-green-600 bg-green-600/5 hover:bg-green-600/10 hover:border-green-500/50"
                             }`}
                           >
                             {n}
@@ -2189,7 +2189,7 @@ function EdgeView() {
                     <div className="mt-3 text-center">
                       <button
                         onClick={() => startSession(null)}
-                        className="text-[11px] text-slate-600 hover:text-slate-900 transition-colors"
+                        className="text-[11px] text-slate-700 hover:text-slate-900 transition-colors"
                       >
                         Skip, just chat →
                       </button>
@@ -2230,23 +2230,23 @@ function EdgeView() {
                     <div className={`max-w-[80%] flex flex-col gap-1.5 ${isEdge ? "" : "items-end ml-auto"}`}>
                       {fileParts.map((p: {type:string; url?: string; mediaType?: string; fileName?: string}, i: number) => (
                         p.mediaType === "application/pdf" ? (
-                          <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+                          <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-cyan-600 bg-cyan-600">
                             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                               <rect x="2" y="1" width="10" height="13" rx="1.5" stroke="#06b6d4" strokeWidth="1.2"/>
                               <path d="M9 1v4h4" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round"/>
                               <path d="M4.5 8h5M4.5 10.5h3" stroke="#06b6d4" strokeWidth="1.1" strokeLinecap="round"/>
                             </svg>
-                            <span className="text-[11px] text-cyan-600">{p.fileName ?? "document.pdf"}</span>
+                            <span className="text-[11px] text-white">{p.fileName ?? "document.pdf"}</span>
                           </div>
                         ) : (
-                          <div key={i} className="rounded-xl overflow-hidden border border-cyan-500/20 max-w-[220px]">
+                          <div key={i} className="rounded-xl overflow-hidden border border-cyan-600 max-w-[220px]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={p.url} alt="Attached image" className="w-full block" />
                           </div>
                         )
                       ))}
                       {content && (
-                        <div className={`rounded-2xl px-4 py-3 ${isEdge ? "bg-white border border-slate-200 text-slate-900" : "bg-cyan-500/10 border border-cyan-500/20 text-slate-900"}`}>
+                        <div className={`rounded-2xl px-4 py-3 ${isEdge ? "bg-white border border-slate-300 text-slate-900" : "bg-cyan-600/10 border border-cyan-600 text-slate-900"}`}>
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
                         </div>
                       )}
@@ -2261,10 +2261,10 @@ function EdgeView() {
                       <path d="M6 1L7.5 4H11L8.5 5.8L9.5 9L6 7L2.5 9L3.5 5.8L1 4H4.5L6 1Z" stroke="#06b6d4" strokeWidth="1" strokeLinejoin="round" fill="none" />
                     </svg>
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+                  <div className="bg-white border border-slate-300 rounded-2xl px-4 py-3">
                     <div className="flex gap-1">
                       {[0,1,2].map(i => (
-                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-500/50 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-6000 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
                       ))}
                     </div>
                   </div>
@@ -2277,7 +2277,7 @@ function EdgeView() {
 
         {/* Input */}
         {sessionStarted && !sessionEnded && !viewingSessionId && (
-          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-200 shrink-0">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-slate-300 shrink-0">
             {/* Hidden file input */}
             <input
               ref={fileInputRef}
@@ -2290,20 +2290,20 @@ function EdgeView() {
             {pendingImage && (
               <div className="mb-2 flex items-center gap-2">
                 {pendingImage.preview ? (
-                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-cyan-500/30 shrink-0">
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-cyan-600 shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={pendingImage.preview} alt="Attached" className="w-full h-full object-cover" />
                     <button type="button" onClick={() => setPendingImage(null)}
                       className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px] leading-none">×</button>
                   </div>
                 ) : (
-                  <div className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/5 shrink-0">
+                  <div className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-600 bg-cyan-600 shrink-0">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <rect x="2" y="1" width="10" height="13" rx="1.5" stroke="#06b6d4" strokeWidth="1.2"/>
                       <path d="M9 1v4h4" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round"/>
                       <path d="M4.5 8h5M4.5 10.5h3" stroke="#06b6d4" strokeWidth="1.1" strokeLinecap="round"/>
                     </svg>
-                    <span className="text-[11px] text-cyan-600 max-w-[140px] truncate">{pendingImage.fileName}</span>
+                    <span className="text-[11px] text-white max-w-[140px] truncate">{pendingImage.fileName}</span>
                     <button type="button" onClick={() => setPendingImage(null)}
                       className="w-4 h-4 rounded-full bg-black/40 flex items-center justify-center text-white text-[10px] leading-none ml-1">×</button>
                   </div>
@@ -2372,13 +2372,13 @@ function EdgeView() {
                 placeholder="Say what's on your mind… (paste a screenshot anytime)"
                 rows={2}
                 disabled={isLoading}
-                className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2.5 md:px-4 md:py-3 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
+                className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2.5 md:px-4 md:py-3 text-sm text-slate-900 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none leading-relaxed disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => { if (!isLoading) handleEdgeSend(); }}
                 disabled={isLoading || (!input.trim() && !pendingImage)}
-                className="px-3 md:px-4 py-3 bg-cyan-500 text-white rounded-xl text-sm font-semibold hover:bg-cyan-500-bright disabled:opacity-40 transition-colors shrink-0"
+                className="px-3 md:px-4 py-3 bg-cyan-600 text-white rounded-xl text-sm font-semibold hover:bg-cyan-700 disabled:opacity-40 transition-colors shrink-0"
                 style={{ boxShadow: "0 0 16px rgba(98,197,209,0.15)" }}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8L2 2l5 6-5 6 12-6z" fill="currentColor" /></svg>
@@ -2508,19 +2508,19 @@ export default function MissionControl() {
     <div className="min-h-screen bg-white text-slate-900 font-[family-name:var(--font-geist-sans)] flex">
 
       {/* Sidebar — hidden on mobile, collapsible on desktop */}
-      <aside className={`shrink-0 border-r border-slate-200 hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 bg-slate-900 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
+      <aside className={`shrink-0 border-r border-slate-800 hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 bg-slate-900 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
 
         {/* Logo / header */}
         <div className={`mb-5 ${navCollapsed ? "flex flex-col items-center gap-3" : "px-2"}`}>
           {navCollapsed ? (
             <>
-              <div className="w-6 h-6 rounded-md bg-cyan-500/20 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+              <div className="w-6 h-6 rounded-md bg-cyan-600 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
               </div>
               <button
                 onClick={toggleNav}
                 title="Expand sidebar"
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-600 hover:text-slate-900 hover:bg-white/5 transition-colors"
+                className="flex items-center justify-center w-5 h-5 rounded text-white hover:text-cyan-600 hover:bg-slate-700 transition-colors"
               >
                 <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M5 2l4 5-4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2531,17 +2531,17 @@ export default function MissionControl() {
             <div className="flex items-start justify-between">
               <div>
                 <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
-                  <Image src="/brand/saabai-logo.png" alt="Saabai.ai" width={110} height={30} className="opacity-90 hover:opacity-100 transition-opacity" />
+                  <Image src="/brand/saabai-logo-white-v2.png" alt="Saabai.ai" width={110} height={30} className="opacity-95 hover:opacity-100 transition-opacity" />
                 </a>
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                  <p className="text-[10px] text-slate-600 font-medium">Mission Control</p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
+                  <p className="text-[10px] text-white font-medium">Mission Control</p>
                 </div>
               </div>
               <button
                 onClick={toggleNav}
                 title="Collapse sidebar"
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-600 hover:text-slate-900 hover:bg-white/5 transition-colors mt-0.5"
+                className="flex items-center justify-center w-5 h-5 rounded text-white hover:text-cyan-600 hover:bg-slate-700 transition-colors mt-0.5"
               >
                 <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
                   <path d="M9 2L5 7l4 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2552,7 +2552,7 @@ export default function MissionControl() {
         </div>
 
         <nav className="flex flex-col gap-0.5 flex-1">
-          {!navCollapsed && <p className="text-[9px] font-semibold text-slate-600 uppercase tracking-widest px-3 mb-1">Workspace</p>}
+          {!navCollapsed && <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest px-3 mb-1">Workspace</p>}
           {(["dashboard", "agents", "growth", "coach"] as const).map((tab) => {
             const icons: Record<string, React.ReactElement> = {
               dashboard: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" /></svg>,
@@ -2567,11 +2567,11 @@ export default function MissionControl() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 title={navCollapsed ? labels[tab] : undefined}
-                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-cyan-500/10 text-cyan-600 border border-cyan-500/20" : "text-slate-600 hover:text-slate-900 hover:bg-white/5"}`}
+                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-cyan-600 text-white border border-cyan-600" : "text-white hover:text-white hover:bg-slate-700"}`}
               >
                 {icons[tab]}
                 {!navCollapsed && <span>{labels[tab]}</span>}
-                {!navCollapsed && tab === "agents" && <span className="ml-auto text-[10px] bg-cyan-500/10 text-cyan-600 rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
+                {!navCollapsed && tab === "agents" && <span className="ml-auto text-[10px] bg-cyan-600 text-white rounded-full px-1.5 py-0.5">{AGENTS.filter(a => a.status === "active").length}</span>}
               </button>
             );
           })}
@@ -2591,19 +2591,19 @@ export default function MissionControl() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 title={navCollapsed ? labels[tab] : undefined}
-                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-cyan-500/10 text-cyan-600 border border-cyan-500/20" : "text-slate-600 hover:text-slate-900 hover:bg-white/5"}`}
+                className={`flex items-center rounded-lg transition-colors text-left ${navCollapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2.5 text-sm"} ${active ? "bg-cyan-600 text-white border border-cyan-600" : "text-white hover:text-white hover:bg-slate-700"}`}
               >
                 {icons[tab]}
                 {!navCollapsed && <span>{labels[tab]}</span>}
-                {!navCollapsed && tab === "tools" && <span className="ml-auto text-[10px] bg-cyan-500/10 text-cyan-600 rounded-full px-1.5 py-0.5">{tools.length}</span>}
+                {!navCollapsed && tab === "tools" && <span className="ml-auto text-[10px] bg-cyan-600 text-white rounded-full px-1.5 py-0.5">{tools.length}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div className={`pt-3 border-t border-slate-200 flex flex-col gap-2 ${navCollapsed ? "items-center" : ""}`}>
+        <div className={`pt-3 border-t border-slate-300 flex flex-col gap-2 ${navCollapsed ? "items-center" : ""}`}>
           {!navCollapsed && (
-            <button onClick={startNewTool} className="w-full flex items-center justify-center gap-2 py-2 bg-cyan-500 text-white rounded-lg text-xs font-semibold hover:bg-cyan-500-bright transition-colors">
+            <button onClick={startNewTool} className="w-full flex items-center justify-center gap-2 py-2 bg-cyan-600 text-white rounded-lg text-xs font-semibold hover:bg-cyan-700 transition-colors">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
               New Tool
             </button>
@@ -2633,7 +2633,7 @@ export default function MissionControl() {
               </div>
               <button
                 onClick={startNewTool}
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-semibold hover:bg-cyan-500-bright transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-semibold hover:bg-cyan-700 transition-colors"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
                 New Tool
@@ -2642,10 +2642,10 @@ export default function MissionControl() {
 
             <div className="flex flex-col gap-3">
               {tools.map((tool) => (
-                <div key={tool.id} className="bg-white border border-slate-200 rounded-2xl p-5">
+                <div key={tool.id} className="bg-white border border-slate-300 rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.avatarColor} border border-cyan-500/30 flex items-center justify-center text-sm font-bold text-cyan-600 shrink-0`}>
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-sm font-bold text-white shrink-0`}>
                         {tool.avatarInitials}
                       </div>
                       <div>
@@ -2664,20 +2664,20 @@ export default function MissionControl() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => toggleStatus(tool.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-200-accent text-slate-600 hover:text-slate-900 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-lg border border-slate-300 hover:border-slate-300-accent text-slate-700 hover:text-slate-900 transition-colors"
                       >
                         {tool.status === "active" ? "Pause" : "Activate"}
                       </button>
                       <button
                         onClick={() => editTool(tool)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 hover:bg-cyan-500/20 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-lg bg-cyan-600/10 border border-cyan-600 text-white hover:bg-cyan-600/20 transition-colors"
                       >
                         Edit
                       </button>
                       {!["mia", "peter"].includes(tool.id) && (
                         <button
                           onClick={() => deleteTool(tool.id)}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-red-600 text-red-600/60 hover:text-red-600 hover:border-red-600 transition-colors"
                         >
                           Delete
                         </button>
@@ -2702,7 +2702,7 @@ export default function MissionControl() {
               </div>
               <div className="flex items-center gap-3">
                 {saved && (
-                  <span className="text-xs text-green-400 flex items-center gap-1.5">
+                  <span className="text-xs text-green-600 flex items-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Saved
                   </span>
@@ -2710,7 +2710,7 @@ export default function MissionControl() {
                 <button
                   onClick={saveTool}
                   disabled={!draftTool.name}
-                  className="px-5 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-semibold hover:bg-cyan-500-bright disabled:opacity-40 transition-colors"
+                  className="px-5 py-2.5 bg-cyan-600 text-white rounded-lg text-sm font-semibold hover:bg-cyan-700 disabled:opacity-40 transition-colors"
                   style={{ boxShadow: "0 0 16px rgba(98,197,209,0.2)" }}
                 >
                   {editingTool ? "Save Changes" : "Create Tool"}
@@ -2723,7 +2723,7 @@ export default function MissionControl() {
               <div className="flex flex-col gap-6">
 
                 {/* Identity */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-6">
                   <h2 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-5">Identity</h2>
                   <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -2735,7 +2735,7 @@ export default function MissionControl() {
                 </div>
 
                 {/* System Prompt */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-6">
                   <h2 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-5">System Prompt</h2>
                   <Textarea
                     label="Persona & Instructions"
@@ -2748,7 +2748,7 @@ export default function MissionControl() {
                 </div>
 
                 {/* Voice */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-6">
                   <h2 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-5">Voice</h2>
                   <div className="flex flex-col gap-4">
                     <Input
@@ -2762,13 +2762,13 @@ export default function MissionControl() {
                 </div>
 
                 {/* Model */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-6">
                   <h2 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-5">AI Model</h2>
                   <div className="flex flex-col gap-2">
                     {MODELS.map((m) => (
-                      <label key={m.id} className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:border-slate-200-accent group" style={{ borderColor: draftTool.model === m.id ? "rgba(98,197,209,0.4)" : undefined, background: draftTool.model === m.id ? "rgba(98,197,209,0.05)" : undefined }}>
+                      <label key={m.id} className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:border-slate-300-accent group" style={{ borderColor: draftTool.model === m.id ? "rgba(98,197,209,0.4)" : undefined, background: draftTool.model === m.id ? "rgba(98,197,209,0.05)" : undefined }}>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${draftTool.model === m.id ? "border-cyan-500" : "border-white/20"}`}>
-                          {draftTool.model === m.id && <div className="w-2 h-2 rounded-full bg-cyan-500" />}
+                          {draftTool.model === m.id && <div className="w-2 h-2 rounded-full bg-cyan-600" />}
                         </div>
                         <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">{m.label}</span>
                         <input type="radio" className="sr-only" checked={draftTool.model === m.id} onChange={() => setDraftTool(d => ({ ...d, model: m.id }))} />
@@ -2778,7 +2778,7 @@ export default function MissionControl() {
                 </div>
 
                 {/* Deployment */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-6">
                   <h2 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-5">Deployment</h2>
                   <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -2799,7 +2799,7 @@ export default function MissionControl() {
                           <button
                             key={s}
                             onClick={() => setDraftTool(d => ({ ...d, status: s }))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${draftTool.status === s ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-600" : "border-slate-200 text-slate-600 hover:text-slate-900"}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${draftTool.status === s ? "bg-cyan-600/10 border-cyan-600 text-white" : "border-slate-300 text-slate-700 hover:text-slate-900"}`}
                           >
                             {s.charAt(0).toUpperCase() + s.slice(1)}
                           </button>
@@ -2813,19 +2813,19 @@ export default function MissionControl() {
 
               {/* Preview sidebar */}
               <div className="flex flex-col gap-6">
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 sticky top-6">
+                <div className="bg-white border border-slate-300 rounded-2xl p-5 sticky top-6">
                   <WidgetPreview tool={draftTool} />
 
-                  <div className="mt-6 pt-5 border-t border-slate-200">
+                  <div className="mt-6 pt-5 border-t border-slate-300">
                     <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-3 font-medium">Embed Code</p>
-                    <div className="bg-white rounded-xl p-3 font-mono text-[10px] text-slate-600 leading-relaxed border border-slate-200">
+                    <div className="bg-white rounded-xl p-3 font-mono text-[10px] text-slate-600 leading-relaxed border border-slate-300">
                       {`<PeterAvatarWidget\n  name="${draftTool.name || "Agent"}"\n  voiceId="${draftTool.voiceId || ""}"\n  pages="${draftTool.pages || "*"}"\n/>`}
                     </div>
                     <p className="text-[10px] text-slate-600 mt-2">Drop this into any page component.</p>
                   </div>
 
                   {draftTool.systemPrompt && (
-                    <div className="mt-4 pt-4 border-t border-slate-200">
+                    <div className="mt-4 pt-4 border-t border-slate-300">
                       <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2 font-medium">Prompt Preview</p>
                       <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-4">{draftTool.systemPrompt}</p>
                     </div>
@@ -2852,17 +2852,17 @@ export default function MissionControl() {
                 { label: "Mission Control Password", key: "NEXT_PUBLIC_MC_PASSWORD", desc: "Change in Vercel env vars and redeploy" },
                 { label: "Chat Model (Default)", key: "CHAT_MODEL", desc: "Defaults to claude-sonnet-4-6" },
               ].map((item) => (
-                <div key={item.key} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+                <div key={item.key} className="bg-white border border-slate-300 rounded-2xl p-5 flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-slate-900">{item.label}</p>
                     <p className="text-xs text-slate-600 mt-0.5">{item.desc}</p>
                   </div>
-                  <span className="text-[10px] font-mono bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-600 shrink-0">{item.key}</span>
+                  <span className="text-[10px] font-mono bg-white border border-slate-300 px-2.5 py-1.5 rounded-lg text-slate-600 shrink-0">{item.key}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-200">
+            <div className="mt-8 pt-6 border-t border-slate-300">
               <h2 className="text-sm font-medium text-slate-600 uppercase tracking-wider mb-4">Danger Zone</h2>
               <button
                 onClick={() => {
@@ -2870,7 +2870,7 @@ export default function MissionControl() {
                   localStorage.removeItem("mc_tools_v1");
                   setTools(DEFAULT_TOOLS);
                 }}
-                className="px-4 py-2.5 border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 rounded-lg text-sm transition-colors"
+                className="px-4 py-2.5 border border-red-600 text-red-600/60 hover:text-red-600 hover:border-red-600 rounded-lg text-sm transition-colors"
               >
                 Reset all tools to defaults
               </button>
