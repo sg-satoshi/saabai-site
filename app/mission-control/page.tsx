@@ -160,7 +160,7 @@ function WidgetPreview({ tool }: { tool: Partial<Tool> }) {
       {/* Launcher */}
       <div className="inline-flex items-center gap-3 bg-white border border-cyan-100 rounded-full pl-3 pr-5 py-2.5 shadow-sm"
         style={{ boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)" }}>
-        <div className={`w-9 h-9 rounded-full bg-cyan-50 border border-cyan-200 flex items-center justify-center text-xs font-bold text-white shrink-0`}>
+        <div className={`w-9 h-9 rounded-full bg-cyan-500 border border-cyan-600 flex items-center justify-center text-xs font-bold text-slate-900 shrink-0`}>
           {tool.avatarInitials || "?"}
         </div>
         <div>
@@ -433,8 +433,8 @@ function GrowthView() {
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center mx-auto mb-4">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#0891B2" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#0891B2" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <div className="w-12 h-12 rounded-full bg-cyan-500 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#0F172A" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#0F172A" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No leads yet</p>
               <p className="text-xs text-slate-600">Leads appear here when Mia learns about a visitor — name, business, industry, or pain points.</p>
@@ -490,8 +490,8 @@ function GrowthView() {
             </div>
           ) : convs.length === 0 ? (
             <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center mx-auto mb-4">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="#0891B2" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+              <div className="w-12 h-12 rounded-full bg-cyan-500 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="#0F172A" strokeWidth="1.5" strokeLinejoin="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No conversations yet</p>
               <p className="text-xs text-slate-600">Conversations appear here after Mia qualifies or captures a lead.</p>
@@ -502,8 +502,8 @@ function GrowthView() {
                 <div key={conv.id} className="bg-white border border-slate-300 rounded-xl px-4 py-3.5 hover:border-slate-300-accent transition-colors">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-cyan-100 border border-cyan-200 flex items-center justify-center shrink-0">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="#0891B2" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#0891B2" strokeWidth="1.2" strokeLinecap="round" /></svg>
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500 border border-cyan-600 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="#0F172A" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#0F172A" strokeWidth="1.2" strokeLinecap="round" /></svg>
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -871,7 +871,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.model.split("-")[1]}</span>
                   {tool.voiceId && <span className="text-[10px] bg-slate-700 text-slate-700 rounded-lg px-2 py-1">Voice</span>}
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.pages === "*" ? "All pages" : tool.pages}</span>
-                  <span className="text-[11px] text-white group-hover:text-white-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
+                  <span className="text-[11px] text-slate-900 group-hover:text-cyan-600 transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
                 </div>
               </button>
             ))}
