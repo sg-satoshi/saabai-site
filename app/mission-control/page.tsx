@@ -641,108 +641,106 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
       {/* Hero Header */}
       <div className="mb-12">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs text-saabai-text-dim uppercase tracking-widest mb-2">{dateStr}</p>
-            <h1 className="text-6xl font-black bg-gradient-to-r from-cyan-400 via-saabai-teal to-blue-500 bg-clip-text text-transparent mb-3">{greeting}, Shane.</h1>
+            <p className="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">{dateStr}</p>
+            <h1 className="text-5xl font-bold text-slate-900 mb-3">{greeting}, Shane.</h1>
             <div className="flex items-center gap-2 mt-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
-              <p className="text-sm text-saabai-text-dim italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+              <p className="text-sm text-slate-600 italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
             </div>
           </div>
           <button
             onClick={onNewTool}
-            className="flex items-center gap-2 px-6 py-3 bg-saabai-teal/20 border border-saabai-teal/50 rounded-xl text-sm font-bold hover:bg-saabai-teal/30 transition-all shrink-0 text-saabai-teal hover:shadow-lg hover:shadow-saabai-teal/20"
+            className="flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-bold transition-all shrink-0 shadow-sm hover:shadow-md"
           >
             <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
             New Tool
           </button>
         </div>
-        <div className="h-1 w-40 bg-gradient-to-r from-cyan-500 to-saabai-teal rounded-full" />
+        <div className="h-0.5 w-32 bg-cyan-500" />
       </div>
 
       {/* Top KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", bgGradient: "from-green-900/40 to-green-800/20", borderColor: "border-green-500/30", dot: "bg-green-400", tab: "tools" as Tab },
-          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", bgGradient: "from-cyan-900/40 to-cyan-800/20", borderColor: "border-cyan-500/30", dot: "bg-saabai-teal", tab: "agents" as Tab },
-          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", bgGradient: "from-indigo-900/40 to-indigo-800/20", borderColor: "border-indigo-500/30", dot: "bg-indigo-400", tab: "tools" as Tab },
-          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", bgGradient: "from-amber-900/40 to-amber-800/20", borderColor: "border-amber-500/30", dot: "bg-amber-400", tab: "growth" as Tab },
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-emerald-600", borderColor: "border-l-4 border-l-emerald-500", dot: "bg-emerald-500", tab: "tools" as Tab },
+          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-cyan-600", borderColor: "border-l-4 border-l-cyan-500", dot: "bg-cyan-500", tab: "agents" as Tab },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-blue-600", borderColor: "border-l-4 border-l-blue-500", dot: "bg-blue-500", tab: "tools" as Tab },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-600", borderColor: "border-l-4 border-l-amber-500", dot: "bg-amber-500", tab: "growth" as Tab },
         ].map((s) => (
           <button key={s.label} onClick={() => onTabChange(s.tab)}
-            className={`bg-gradient-to-br ${s.bgGradient} border ${s.borderColor} rounded-xl p-6 backdrop-blur-sm hover:${s.borderColor.replace('border-', 'border-')} hover:shadow-lg transition-all cursor-pointer text-left group`}>
-            <div className="flex items-center justify-between mb-3">
+            className={`bg-white border border-slate-200 ${s.borderColor} rounded-lg p-5 hover:shadow-md transition-all cursor-pointer text-left group`}>
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                <span className={`text-xs font-bold ${s.color}`}>{s.label}</span>
+                <span className={`w-2 h-2 rounded-full ${s.dot}`} />
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{s.label}</span>
               </div>
-              <span className={`text-[10px] ${s.color} opacity-0 group-hover:opacity-100 transition-opacity`}>View →</span>
+              <span className="text-[10px] text-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity">View →</span>
             </div>
-            <div className={`text-4xl font-black ${s.color} mb-1`}>{s.value}</div>
-            <div className="text-[11px] text-slate-400">{s.sub}</div>
+            <div className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</div>
+            <div className="text-[11px] text-slate-500">{s.sub}</div>
           </button>
         ))}
       </div>
 
       {/* Mia Performance Bar */}
-      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-indigo-500/20 rounded-xl px-6 py-5 mb-8 flex items-center gap-5 flex-wrap backdrop-blur-sm">
+      <div className="bg-white border border-slate-200 rounded-lg px-6 py-5 mb-8 flex items-center gap-6 flex-wrap shadow-sm">
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-saabai-teal/30 to-indigo-700/40 border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal">M</div>
+          <div className="w-8 h-8 rounded-lg bg-cyan-100 border border-cyan-300 flex items-center justify-center text-xs font-bold text-cyan-700">M</div>
           <div>
-            <p className="text-xs font-semibold text-saabai-text leading-none">Mia</p>
-            <p className="text-[10px] text-saabai-text-dim mt-0.5">Live performance</p>
+            <p className="text-sm font-semibold text-slate-900 leading-none">Mia</p>
+            <p className="text-[10px] text-slate-600 mt-0.5">Live performance</p>
           </div>
         </div>
-        <div className="w-px h-8 bg-saabai-border shrink-0" />
+        <div className="w-px h-10 bg-slate-200 shrink-0" />
         {[
-          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-indigo-400" },
-          { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-amber-400" },
-          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-green-400" },
-          { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-saabai-teal" },
-          { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-pink-400" },
-          { label: "Last Active", value: activityLeads[0] ? timeAgo(activityLeads[0].createdAt) : "—", color: "text-saabai-text-dim" },
+          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-blue-600" },
+          { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-amber-600" },
+          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-emerald-600" },
+          { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-cyan-600" },
+          { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-pink-600" },
+          { label: "Last Active", value: activityLeads[0] ? timeAgo(activityLeads[0].createdAt) : "—", color: "text-slate-600" },
         ].map((m) => (
-          <div key={m.label} className="flex flex-col items-center min-w-[56px]">
-            <span className={`text-lg font-semibold ${m.color}`}>{m.value}</span>
-            <span className="text-[9px] text-saabai-text-dim mt-0.5 text-center">{m.label}</span>
+          <div key={m.label} className="flex flex-col items-center min-w-[70px]">
+            <span className={`text-lg font-bold ${m.color}`}>{m.value}</span>
+            <span className="text-[10px] text-slate-600 mt-0.5 text-center font-medium">{m.label}</span>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-4">Quick Actions</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {QUICK_ACTIONS.map((a) => {
-            const getBgColor = () => {
-              if (a.color === "text-saabai-teal") return "from-cyan-900/30 to-cyan-800/10";
-              if (a.color === "text-amber-400") return "from-amber-900/30 to-amber-800/10";
-              if (a.color === "text-indigo-400") return "from-indigo-900/30 to-indigo-800/10";
-              if (a.color === "text-green-400") return "from-green-900/30 to-green-800/10";
-              if (a.color === "text-cyan-400") return "from-cyan-900/30 to-cyan-800/10";
-              return "from-slate-800/30 to-slate-700/10";
+            const getBgHover = () => {
+              if (a.color === "text-saabai-teal" || a.color === "text-cyan-400") return "hover:bg-cyan-50";
+              if (a.color === "text-amber-400") return "hover:bg-amber-50";
+              if (a.color === "text-indigo-400") return "hover:bg-indigo-50";
+              if (a.color === "text-green-400") return "hover:bg-green-50";
+              return "hover:bg-slate-50";
             };
-            const getBorderColor = () => {
-              if (a.color === "text-saabai-teal") return "border-cyan-500/30";
-              if (a.color === "text-amber-400") return "border-amber-500/30";
-              if (a.color === "text-indigo-400") return "border-indigo-500/30";
-              if (a.color === "text-green-400") return "border-green-500/30";
-              if (a.color === "text-cyan-400") return "border-cyan-500/30";
-              return "border-slate-600/30";
+            const getTextColor = () => {
+              if (a.color === "text-saabai-teal" || a.color === "text-cyan-400") return "text-cyan-600";
+              if (a.color === "text-amber-400") return "text-amber-600";
+              if (a.color === "text-indigo-400") return "text-indigo-600";
+              if (a.color === "text-green-400") return "text-emerald-600";
+              return "text-slate-700";
             };
             return a.href ? (
               <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer"
-                className={`bg-gradient-to-br ${getBgColor()} border ${getBorderColor()} rounded-lg p-4 hover:shadow-lg transition-all group flex flex-col gap-2 backdrop-blur-sm`}>
-                <span className={`text-xl font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
-                <span className="text-sm font-semibold text-white leading-tight">{a.label}</span>
-                <span className="text-xs text-slate-400">{a.sub}</span>
+                className={`bg-white border border-slate-200 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 shadow-sm hover:shadow-md`}>
+                <span className={`text-lg font-bold ${getTextColor()} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-sm font-semibold text-slate-900 leading-tight">{a.label}</span>
+                <span className="text-xs text-slate-600">{a.sub}</span>
               </a>
             ) : (
               <button key={a.label} onClick={a.onClick}
-                className={`bg-gradient-to-br ${getBgColor()} border ${getBorderColor()} rounded-lg p-4 hover:shadow-lg transition-all group flex flex-col gap-2 text-left backdrop-blur-sm`}>
-                <span className={`text-xl font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
-                <span className="text-sm font-semibold text-white leading-tight">{a.label}</span>
-                <span className="text-xs text-slate-400">{a.sub}</span>
+                className={`bg-white border border-slate-200 rounded-lg p-4 ${getBgHover()} transition-all group flex flex-col gap-2 text-left shadow-sm hover:shadow-md`}>
+                <span className={`text-lg font-bold ${getTextColor()} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-sm font-semibold text-slate-900 leading-tight">{a.label}</span>
+                <span className="text-xs text-slate-600">{a.sub}</span>
               </button>
             )
           })}
@@ -757,19 +755,19 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* Venture Tracker */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">Venture Tracker</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-4">Venture Tracker</h2>
           <div className="flex flex-col gap-2">
             {VENTURES.map((v) => {
               const CardWrapper = v.url
                 ? ({ children }: { children: React.ReactNode }) => (
                     <a href={v.url} target="_blank" rel="noopener noreferrer"
-                      className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer block group">
+                      className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer block group">
                       {children}
                     </a>
                   )
                 : ({ children }: { children: React.ReactNode }) => (
                     <button onClick={() => onTabChange("growth")}
-                      className="bg-saabai-surface border border-saabai-border rounded-xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer w-full text-left block group">
+                      className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md hover:border-slate-300 transition-all cursor-pointer w-full text-left block group">
                       {children}
                     </button>
                   );
@@ -777,27 +775,27 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                 <CardWrapper key={v.id}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${v.color} border border-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-700 shrink-0">
                         {v.initials}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-medium text-saabai-text">{v.name}</p>
+                          <p className="text-sm font-medium text-slate-900">{v.name}</p>
                           <span className={`text-[9px] font-medium border rounded-full px-1.5 py-0.5 ${v.stageColor}`}>{v.stage}</span>
                         </div>
-                        <p className="text-[11px] text-saabai-text-dim mt-0.5">{v.type}</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5">{v.type}</p>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-semibold text-saabai-text">{v.value}</p>
+                      <p className="text-xs font-semibold text-slate-900">{v.value}</p>
                       {v.url && (
-                        <span className="text-[10px] text-saabai-teal group-hover:text-saabai-teal-bright transition-colors">Open ↗</span>
+                        <span className="text-[10px] text-cyan-600 group-hover:text-cyan-700 transition-colors">Open ↗</span>
                       )}
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-saabai-border/50 flex items-start gap-1.5">
-                    <span className="text-[9px] text-saabai-teal uppercase font-semibold mt-0.5 shrink-0">Next</span>
-                    <p className="text-[11px] text-saabai-text-muted">{v.nextAction}</p>
+                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-start gap-1.5">
+                    <span className="text-[9px] text-cyan-600 uppercase font-semibold mt-0.5 shrink-0">Next</span>
+                    <p className="text-[11px] text-slate-700">{v.nextAction}</p>
                   </div>
                 </CardWrapper>
               );
@@ -807,37 +805,37 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* System Health */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">System Health</h2>
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-purple-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">System Health</h2>
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
             {HEALTH_ITEMS.map((item, i) => {
               const ok = health?.[item.key];
               const loading = health === null;
               return (
-                <div key={item.key} className={`flex items-center justify-between px-4 py-3 ${i < HEALTH_ITEMS.length - 1 ? "border-b border-saabai-border/50" : ""}`}>
+                <div key={item.key} className={`flex items-center justify-between px-4 py-3 ${i < HEALTH_ITEMS.length - 1 ? "border-b border-slate-200" : ""}`}>
                   <div>
-                    <p className="text-xs font-medium text-saabai-text">{item.label}</p>
-                    <p className="text-[10px] text-saabai-text-dim">{item.desc}</p>
+                    <p className="text-xs font-medium text-slate-900">{item.label}</p>
+                    <p className="text-[10px] text-slate-600">{item.desc}</p>
                   </div>
                   {loading ? (
-                    <div className="w-2 h-2 rounded-full bg-white/20 animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
                   ) : ok ? (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="text-[10px] text-green-400">OK</span>
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-[10px] text-emerald-600 font-medium">OK</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-400/60" />
-                      <span className="text-[10px] text-red-400/70">Missing</span>
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="text-[10px] text-red-600 font-medium">Missing</span>
                     </div>
                   )}
                 </div>
               );
             })}
-            <div className="px-4 py-2 border-t border-saabai-border/50 bg-saabai-bg/40">
+            <div className="px-4 py-2 border-t border-slate-200 bg-slate-50">
               <button
                 onClick={() => fetch("/api/mission-control/health").then(r => r.json()).then(setHealth)}
-                className="text-[10px] text-saabai-text-dim hover:text-saabai-teal transition-colors"
+                className="text-[10px] text-slate-600 hover:text-cyan-600 transition-colors"
               >
                 ↺ Refresh
               </button>
