@@ -53,7 +53,7 @@ const DEFAULT_TOOLS: Tool[] = [
     triggerText: "Talk to Peter",
     triggerSubtext: "Got questions? I'm here.",
     avatarInitials: "PS",
-    avatarColor: "from-cyan-500/20 to-indigo-700/30",
+    avatarColor: "from-cyan-500/20 to-cyan-700/30",
     pages: "/onboarding/plon",
     status: "active",
     createdAt: "2026-03-21",
@@ -122,9 +122,9 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
             onKeyDown={(e) => e.key === "Enter" && attempt()}
             placeholder="Access code"
             autoFocus
-            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-red-300" : "border-slate-300 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
+            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-slate-300" : "border-slate-300 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
           />
-          {error && <p className="text-red-600 text-xs text-center">Incorrect — try again</p>}
+          {error && <p className="text-slate-600 text-xs text-center">Incorrect — try again</p>}
           <button
             onClick={attempt}
             className="w-full bg-cyan-600 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
@@ -142,9 +142,9 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
 
 function StatusBadge({ status }: { status: Tool["status"] }) {
   const styles = {
-    active: "bg-green-600 text-white border-green-600",
-    draft: "bg-amber-600 text-white border-amber-600",
-    paused: "bg-slate-600 text-white border-slate-600",
+    active: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    draft: "bg-slate-100 text-slate-700 border-slate-200",
+    paused: "bg-slate-100 text-slate-700 border-slate-200",
   };
   return (
     <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 ${styles[status]}`}>
@@ -276,10 +276,10 @@ function GrowthView() {
   }, []);
 
   function outcomeStyle(outcome: string) {
-    if (outcome === "booked") return "bg-green-600 text-white border-green-600";
-    if (outcome === "lead_captured") return "bg-blue-700 text-white border-blue-700";
-    if (outcome === "qualified") return "bg-amber-600 text-white border-amber-600";
-    return "bg-slate-300 text-slate-900 border-slate-300";
+    if (outcome === "booked") return "bg-cyan-100 text-cyan-700 border-cyan-200";
+    if (outcome === "lead_captured") return "bg-cyan-100 text-cyan-700 border-cyan-200";
+    if (outcome === "qualified") return "bg-slate-100 text-slate-700 border-slate-200";
+    return "bg-slate-100 text-slate-700 border-slate-200";
   }
 
   function outcomeLabel(outcome: string) {
@@ -330,10 +330,10 @@ function GrowthView() {
       </div>
 
       {noRedis && (
-        <div className="bg-amber-600 border border-amber-600 rounded-2xl p-6 mb-6">
-          <p className="text-sm font-medium text-white mb-1">Redis not connected</p>
-          <p className="text-xs text-white/90">Add <code className="bg-black/30 px-1 rounded">UPSTASH_REDIS_REST_URL</code> and <code className="bg-black/30 px-1 rounded">UPSTASH_REDIS_REST_TOKEN</code> to Vercel env vars to start capturing leads and conversations.</p>
-          <a href="https://upstash.com" target="_blank" rel="noopener noreferrer" className="text-xs text-white hover:text-gray-200 mt-2 inline-block">Set up Upstash Redis free →</a>
+        <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-6 mb-6">
+          <p className="text-sm font-medium text-slate-900 mb-1">Redis not connected</p>
+          <p className="text-xs text-slate-600">Add <code className="bg-slate-200 px-1 rounded">UPSTASH_REDIS_REST_URL</code> and <code className="bg-slate-200 px-1 rounded">UPSTASH_REDIS_REST_TOKEN</code> to Vercel env vars to start capturing leads and conversations.</p>
+          <a href="https://upstash.com" target="_blank" rel="noopener noreferrer" className="text-xs text-cyan-600 hover:text-cyan-700 mt-2 inline-block">Set up Upstash Redis free →</a>
         </div>
       )}
 
@@ -343,12 +343,12 @@ function GrowthView() {
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total Leads", value: stats?.totalLeads ?? 0, color: "text-white", dot: "bg-cyan-600", bar: "bg-cyan-600" },
-            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "text-blue-700", dot: "bg-blue-700", bar: "bg-blue-700" },
-            { label: "Qualified", value: stats?.qualified ?? 0, color: "text-amber-600", dot: "bg-amber-600", bar: "bg-amber-600" },
-            { label: "Booking Shown", value: stats?.booked ?? 0, color: "text-green-600", dot: "bg-green-600", bar: "bg-green-600" },
-            { label: "Lead Captured", value: stats?.captured ?? 0, color: "text-blue-700", dot: "bg-blue-700", bar: "bg-blue-700" },
-            { label: "Conv. Rate", value: stats?.totalConvs ? `${Math.round(((stats.booked + stats.captured) / stats.totalConvs) * 100)}%` : "—", color: "text-red-700", dot: "bg-red-600", bar: null },
+            { label: "Total Leads", value: stats?.totalLeads ?? 0, color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Qualified", value: stats?.qualified ?? 0, color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Booking Shown", value: stats?.booked ?? 0, color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Lead Captured", value: stats?.captured ?? 0, color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
+            { label: "Conv. Rate", value: stats?.totalConvs ? `${Math.round(((stats.booked + stats.captured) / stats.totalConvs) * 100)}%` : "—", color: "text-slate-900", dot: "bg-cyan-600", bar: "bg-cyan-600" },
           ].map((s) => {
             const max = stats?.totalConvs || 1;
             const pct = typeof s.value === "number" ? Math.min((s.value / max) * 100, 100) : null;
@@ -373,10 +373,10 @@ function GrowthView() {
         <div className="bg-white border border-slate-300 rounded-2xl p-4 flex flex-col">
           <p className="text-base font-semibold text-slate-900 mb-4">Mia Funnel</p>
           {[
-            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-blue-700/60", w: "100%" },
-            { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-amber-400/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
-            { label: "Captured", value: stats?.captured ?? 0, color: "bg-blue-400/60", w: stats?.totalConvs ? `${Math.max(15, Math.round((stats.captured / stats.totalConvs) * 100))}%` : "45%" },
-            { label: "Booked", value: stats?.booked ?? 0, color: "bg-green-400/70", w: stats?.totalConvs ? `${Math.max(10, Math.round((stats.booked / stats.totalConvs) * 100))}%` : "30%" },
+            { label: "Conversations", value: stats?.totalConvs ?? 0, color: "bg-cyan-600/60", w: "100%" },
+            { label: "Qualified", value: stats?.qualified ?? 0, color: "bg-cyan-500/60", w: stats?.totalConvs ? `${Math.max(20, Math.round(((stats.qualified) / stats.totalConvs) * 100))}%` : "60%" },
+            { label: "Captured", value: stats?.captured ?? 0, color: "bg-cyan-400/60", w: stats?.totalConvs ? `${Math.max(15, Math.round((stats.captured / stats.totalConvs) * 100))}%` : "45%" },
+            { label: "Booked", value: stats?.booked ?? 0, color: "bg-cyan-500/70", w: stats?.totalConvs ? `${Math.max(10, Math.round((stats.booked / stats.totalConvs) * 100))}%` : "30%" },
           ].map((stage) => (
             <div key={stage.label} className="mb-2 flex flex-col items-center">
               <div className="w-full flex justify-center mb-0.5">
@@ -392,8 +392,8 @@ function GrowthView() {
 
       {avgScore && (
         <div className="mt-3 bg-white border border-slate-300 rounded-xl px-4 py-3 flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
-          <span className="text-[10px] font-medium text-red-700">Avg Qualification Score</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
+          <span className="text-[10px] font-medium text-slate-700">Avg Qualification Score</span>
           <span className="text-lg font-semibold text-slate-900 ml-auto">{avgScore}<span className="text-[11px] text-slate-600">/3</span></span>
         </div>
       )}
@@ -429,12 +429,12 @@ function GrowthView() {
         <div>
           {loading ? (
             <div className="flex flex-col gap-2">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-white border border-slate-300 rounded-xl animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="h-20 bg-slate-100 border border-slate-200 rounded-xl animate-pulse" />)}
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#06b6d4" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round" /></svg>
+              <div className="w-12 h-12 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#0891B2" strokeWidth="1.5" /><path d="M3 17c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="#0891B2" strokeWidth="1.5" strokeLinecap="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No leads yet</p>
               <p className="text-xs text-slate-600">Leads appear here when Mia learns about a visitor — name, business, industry, or pain points.</p>
@@ -442,10 +442,10 @@ function GrowthView() {
           ) : (
             <div className="flex flex-col gap-2">
               {filteredLeads.map((lead) => (
-                <div key={lead.id} className={`rounded-xl p-4 hover:border-slate-300-accent transition-colors border ${(lead.qualification_score ?? 0) >= 2 ? "bg-amber-600/5 border-amber-500/25" : "bg-white border-slate-300"}`}>
+                <div key={lead.id} className={`rounded-xl p-4 hover:border-slate-300-accent transition-colors border ${(lead.qualification_score ?? 0) >= 2 ? "bg-cyan-50 border-cyan-200" : "bg-white border-slate-300"}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-indigo-400/30 border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-500/30 border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
                         {(lead.name ?? "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -463,7 +463,7 @@ function GrowthView() {
                         {lead.pain_points && lead.pain_points.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {lead.pain_points.slice(0, 3).map((p, i) => (
-                              <span key={i} className="text-[10px] bg-amber-600/10 text-amber-600/80 border border-amber-500/15 rounded px-1.5 py-0.5">{p}</span>
+                              <span key={i} className="text-[10px] bg-cyan-100 text-cyan-700 border border-cyan-200 rounded px-1.5 py-0.5">{p}</span>
                             ))}
                           </div>
                         )}
@@ -486,12 +486,12 @@ function GrowthView() {
         <div>
           {loading ? (
             <div className="flex flex-col gap-2">
-              {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-white border border-slate-300 rounded-xl animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-slate-100 border border-slate-200 rounded-xl animate-pulse" />)}
             </div>
           ) : convs.length === 0 ? (
             <div className="bg-white border border-slate-300 rounded-2xl p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="#06b6d4" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+              <div className="w-12 h-12 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7l-4 3V5a1 1 0 0 1 1-1z" stroke="#0891B2" strokeWidth="1.5" strokeLinejoin="round" /></svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">No conversations yet</p>
               <p className="text-xs text-slate-600">Conversations appear here after Mia qualifies or captures a lead.</p>
@@ -502,8 +502,8 @@ function GrowthView() {
                 <div key={conv.id} className="bg-white border border-slate-300 rounded-xl px-4 py-3.5 hover:border-slate-300-accent transition-colors">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/15 to-indigo-400/20 border border-cyan-600 flex items-center justify-center shrink-0">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="#06b6d4" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" /></svg>
+                      <div className="w-7 h-7 rounded-lg bg-cyan-100 border border-cyan-200 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="2" stroke="#0891B2" strokeWidth="1.2" /><path d="M2 10c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#0891B2" strokeWidth="1.2" strokeLinecap="round" /></svg>
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -545,11 +545,11 @@ const VENTURES = [
     name: "Saabai.ai",
     type: "Core Venture",
     stage: "In Market",
-    stageColor: "text-green-600 bg-green-600/10 border-green-600",
+    stageColor: "text-cyan-700 bg-cyan-100 border-cyan-200",
     value: "Ongoing",
     nextAction: "Scale inbound — increase Mia conversations",
     url: "https://www.saabai.ai",
-    color: "from-cyan-500/20 to-blue-800/30",
+    color: "from-cyan-500/20 to-cyan-700/30",
     initials: "SA",
   },
   {
@@ -557,11 +557,11 @@ const VENTURES = [
     name: "PlasticOnline (PLON)",
     type: "Client Engagement",
     stage: "Scoping",
-    stageColor: "text-amber-600 bg-amber-600/10 border-amber-600",
+    stageColor: "text-slate-700 bg-slate-100 border-slate-200",
     value: "AUD $30–55k+",
     nextAction: "Complete scoping form — build AI agent proposal",
     url: "https://www.saabai.ai/onboarding/plon",
-    color: "from-amber-500/20 to-orange-900/30",
+    color: "from-cyan-500/20 to-cyan-700/30",
     initials: "PL",
   },
   {
@@ -569,11 +569,11 @@ const VENTURES = [
     name: "Builder Client",
     type: "Client Engagement",
     stage: "Qualifying",
-    stageColor: "text-blue-700 bg-blue-700/10 border-blue-700",
+    stageColor: "text-slate-700 bg-slate-100 border-slate-200",
     value: "TBD",
     nextAction: "Awaiting fact find return before scoping",
     url: null,
-    color: "from-blue-500/20 to-indigo-900/30",
+    color: "from-cyan-500/20 to-cyan-700/30",
     initials: "BC",
   },
 ];
@@ -621,11 +621,11 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
   const QUICK_ACTIONS = [
     { label: "Saabai.ai", sub: "Main site", href: "https://www.saabai.ai", icon: "↗", color: "text-white" },
-    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-amber-600" },
-    { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-blue-700" },
+    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-slate-700" },
+    { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-slate-700" },
     { label: "Vercel", sub: "Deployments", href: "https://vercel.com/dashboard", icon: "↗", color: "text-white/70" },
     { label: "Atlas Memory", sub: "Control Panel", href: "/atlas-memory-control", icon: "⚙", color: "text-cyan-600" },
-    { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-green-600", onClick: onNewTool },
+    { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-cyan-700", onClick: onNewTool },
   ];
 
   const HEALTH_ITEMS = [
@@ -664,10 +664,10 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       {/* Top KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-600", borderColor: "border-l-4 border-l-green-600", dot: "bg-green-600", tab: "tools" as Tab },
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-cyan-700", borderColor: "border-l-4 border-l-green-600", dot: "bg-cyan-600", tab: "tools" as Tab },
           { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-white", borderColor: "border-l-4 border-l-cyan-600", dot: "bg-cyan-600", tab: "agents" as Tab },
-          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-blue-700", borderColor: "border-l-4 border-l-blue-700", dot: "bg-blue-700", tab: "tools" as Tab },
-          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-600", borderColor: "border-l-4 border-l-amber-600", dot: "bg-amber-600", tab: "growth" as Tab },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-slate-700", borderColor: "border-l-4 border-l-blue-700", dot: "bg-slate-700", tab: "tools" as Tab },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-slate-700", borderColor: "border-l-4 border-l-amber-600", dot: "bg-slate-700", tab: "growth" as Tab },
         ].map((s) => (
           <button key={s.label} onClick={() => onTabChange(s.tab)}
             className={`bg-white border border-slate-300 ${s.borderColor} rounded-lg p-5 hover:shadow-md transition-all cursor-pointer text-left group`}>
@@ -695,11 +695,11 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
         </div>
         <div className="w-px h-10 bg-slate-200 shrink-0" />
         {[
-          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-blue-700" },
-          { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-amber-600" },
-          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-green-600" },
+          { label: "Conversations", value: perfStats?.totalConvs ?? "—", color: "text-slate-700" },
+          { label: "Qualified", value: perfStats?.qualified ?? "—", color: "text-slate-700" },
+          { label: "Bookings", value: perfStats?.booked ?? "—", color: "text-cyan-700" },
           { label: "Conv Rate", value: perfStats && perfStats.totalConvs > 0 ? `${Math.round(((perfStats.booked + perfStats.captured) / perfStats.totalConvs) * 100)}%` : "—", color: "text-white" },
-          { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-pink-600" },
+          { label: "Avg Score", value: activityLeads.length > 0 ? `${(activityLeads.reduce((s, l) => s + (l.qualification_score ?? 0), 0) / activityLeads.length).toFixed(1)}/3` : "—", color: "text-slate-700" },
           { label: "Last Active", value: activityLeads[0] ? timeAgo(activityLeads[0].createdAt) : "—", color: "text-slate-600" },
         ].map((m) => (
           <div key={m.label} className="flex flex-col items-center min-w-[70px]">
@@ -716,16 +716,16 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
           {QUICK_ACTIONS.map((a) => {
             const getBgHover = () => {
               if (a.color === "text-white" || a.color === "text-cyan-600") return "hover:bg-cyan-50";
-              if (a.color === "text-amber-600") return "hover:bg-amber-600";
-              if (a.color === "text-blue-700") return "hover:bg-blue-700";
-              if (a.color === "text-green-600") return "hover:bg-green-600";
+              if (a.color === "text-slate-700") return "hover:bg-slate-700";
+              if (a.color === "text-slate-700") return "hover:bg-slate-700";
+              if (a.color === "text-cyan-700") return "hover:bg-cyan-600";
               return "hover:bg-white";
             };
             const getTextColor = () => {
               if (a.color === "text-white" || a.color === "text-cyan-600") return "text-white";
-              if (a.color === "text-amber-600") return "text-amber-600";
-              if (a.color === "text-blue-700") return "text-indigo-600";
-              if (a.color === "text-green-600") return "text-emerald-600";
+              if (a.color === "text-slate-700") return "text-slate-700";
+              if (a.color === "text-slate-700") return "text-slate-700";
+              if (a.color === "text-cyan-700") return "text-cyan-700";
               return "text-slate-700";
             };
             return a.href ? (
@@ -820,13 +820,13 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                     <div className="w-2 h-2 rounded-full bg-slate-300 animate-pulse" />
                   ) : ok ? (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-600" />
-                      <span className="text-[10px] text-emerald-600 font-medium">OK</span>
+                      <div className="w-2 h-2 rounded-full bg-cyan-600" />
+                      <span className="text-[10px] text-cyan-700 font-medium">OK</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-600" />
-                      <span className="text-[10px] text-red-600 font-medium">Missing</span>
+                      <div className="w-2 h-2 rounded-full bg-slate-700" />
+                      <span className="text-[10px] text-slate-700 font-medium">Missing</span>
                     </div>
                   )}
                 </div>
@@ -862,14 +862,14 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-slate-900">{tool.name}</p>
-                      <span className="text-[9px] bg-green-600/10 text-green-600 border border-green-600 rounded-full px-1.5 py-0.5">Live</span>
+                      <span className="text-[9px] bg-cyan-600/10 text-cyan-700 border border-cyan-600 rounded-full px-1.5 py-0.5">Live</span>
                     </div>
                     <p className="text-[11px] text-slate-600 mt-0.5">{tool.role}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.model.split("-")[1]}</span>
-                  {tool.voiceId && <span className="text-[10px] bg-blue-700 text-blue-700 rounded-lg px-2 py-1">Voice</span>}
+                  {tool.voiceId && <span className="text-[10px] bg-slate-700 text-slate-700 rounded-lg px-2 py-1">Voice</span>}
                   <span className="text-[10px] bg-white/5 rounded-lg px-2 py-1 font-mono text-slate-600">{tool.pages === "*" ? "All pages" : tool.pages}</span>
                   <span className="text-[11px] text-white group-hover:text-white-bright transition-colors ml-1 opacity-0 group-hover:opacity-100">Edit →</span>
                 </div>
@@ -886,20 +886,20 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
           </div>
           {activityLeads.length === 0 ? (
             <div className="bg-white border border-slate-300 rounded-xl p-6 text-center">
-              <div className="w-8 h-8 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-3">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 8l3-3.5 2.5 2L9 3l4 5" stroke="#06b6d4" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <div className="w-8 h-8 rounded-full bg-cyan-100 border border-cyan-200 flex items-center justify-center mx-auto mb-3">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 8l3-3.5 2.5 2L9 3l4 5" stroke="#0891B2" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
               <p className="text-xs text-slate-600">No activity yet — Mia conversations will appear here</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {activityLeads.slice(0, 5).map((lead) => {
-                const outcomeColor = lead.outcome === "booked" ? "text-green-600 bg-green-600/10 border-green-600"
-                  : lead.outcome === "lead_captured" ? "text-blue-700 bg-blue-700/10 border-blue-700"
-                  : lead.outcome === "qualified" ? "text-amber-600 bg-amber-600/10 border-amber-600"
-                  : "text-slate-600 bg-white/5 border-white/10";
+                const outcomeColor = lead.outcome === "booked" ? "text-cyan-700 bg-cyan-100 border-cyan-200"
+                  : lead.outcome === "lead_captured" ? "text-slate-700 bg-slate-100 border-slate-200"
+                  : lead.outcome === "qualified" ? "text-slate-700 bg-slate-100 border-slate-200"
+                  : "text-slate-600 bg-slate-100 border-slate-200";
                 const outcomeLabel = lead.outcome === "booked" ? "Booking" : lead.outcome === "lead_captured" ? "Captured" : lead.outcome === "qualified" ? "Qualified" : "Browsing";
-                const dotColor = lead.outcome === "booked" ? "bg-green-400" : lead.outcome === "lead_captured" ? "bg-blue-400" : lead.outcome === "qualified" ? "bg-amber-400" : "bg-white/20";
+                const dotColor = lead.outcome === "booked" ? "bg-cyan-600" : lead.outcome === "lead_captured" ? "bg-cyan-600" : lead.outcome === "qualified" ? "bg-cyan-600" : "bg-slate-400";
                 return (
                   <div key={lead.id} className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 flex items-center gap-3 hover:border-slate-300-accent transition-colors">
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
@@ -956,25 +956,25 @@ const AGENT_CLUSTERS = [
     id: "build",
     label: "Build & Automation",
     description: "Systems, infrastructure, workflows",
-    color: "text-blue-700",
-    borderColor: "border-indigo-400/30",
-    bgColor: "bg-blue-700/5",
+    color: "text-cyan-700",
+    borderColor: "border-cyan-500/40",
+    bgColor: "bg-cyan-50",
   },
   {
     id: "growth",
     label: "Growth & Revenue",
     description: "Demand generation, paid traffic, creative",
-    color: "text-green-600",
-    borderColor: "border-emerald-400/30",
-    bgColor: "bg-emerald-400/5",
+    color: "text-cyan-700",
+    borderColor: "border-cyan-500/30",
+    bgColor: "bg-cyan-500/5",
   },
   {
     id: "ops",
     label: "Operations",
     description: "Systems design, SOPs, delivery frameworks",
-    color: "text-amber-600",
-    borderColor: "border-amber-400/30",
-    bgColor: "bg-amber-400/5",
+    color: "text-cyan-700",
+    borderColor: "border-cyan-400/30",
+    bgColor: "bg-cyan-50",
   },
   {
     id: "archived",
@@ -993,7 +993,7 @@ const AGENTS: Agent[] = [
     role: "Orchestration Intelligence",
     cluster: "orchestrator",
     status: "active",
-    color: "from-cyan-500/30 to-blue-700/40",
+    color: "from-cyan-500/30 to-cyan-700/40",
     initials: "AT",
     mission: "Build profitable automated ventures while minimising operator workload. Ask: what is the highest ROI action across all ventures right now?",
     skills: ["Venture strategy", "Capital allocation", "Agent coordination", "Task routing", "Build execution", "Decision-making"],
@@ -1006,7 +1006,7 @@ const AGENTS: Agent[] = [
     role: "Build & Infrastructure Agent",
     cluster: "build",
     status: "active",
-    color: "from-indigo-500/30 to-indigo-900/40",
+    color: "from-cyan-500/30 to-cyan-700/40",
     initials: "DEV",
     mission: "Execute validated opportunities into scalable, self-running systems. Configure before building. No-code before code.",
     skills: ["Landing pages", "Cold email systems", "Zapier / Make workflows", "AI chatbots", "API integrations", "Scraping & data pipelines", "CRM setup", "Checkout flows"],
@@ -1019,7 +1019,7 @@ const AGENTS: Agent[] = [
     role: "Workflow Reliability Agent",
     cluster: "build",
     status: "active",
-    color: "from-indigo-400/20 to-purple-800/40",
+    color: "from-cyan-400/20 to-cyan-800/40",
     initials: "AE",
     mission: "Eliminate manual operator work by building reliable, self-running workflows. Not product builders — reliability engineers.",
     skills: ["Process auditing", "Make / Zapier / n8n", "CRM automation", "Payment triggers", "Lead routing", "Error monitoring", "SOP documentation"],
@@ -1032,7 +1032,7 @@ const AGENTS: Agent[] = [
     role: "Demand Generation Agent",
     cluster: "growth",
     status: "active",
-    color: "from-emerald-500/20 to-teal-900/40",
+    color: "from-cyan-500/20 to-cyan-900/40",
     initials: "MKT",
     mission: "Design how ventures attract attention, generate leads, and convert customers. Channel strategy, offer design, funnel design.",
     skills: ["Cold email", "LinkedIn outreach", "Reddit / forums", "Positioning & messaging", "Funnel design", "Offer structuring", "Conversion optimisation", "Acquisition systems"],
@@ -1045,7 +1045,7 @@ const AGENTS: Agent[] = [
     role: "Paid Traffic & CAC Agent",
     cluster: "growth",
     status: "active",
-    color: "from-emerald-400/20 to-green-900/40",
+    color: "from-cyan-400/20 to-cyan-900/40",
     initials: "PAS",
     mission: "Design, test, and optimise paid traffic systems. Goal: profitable customer acquisition. No scaling before signal.",
     skills: ["Meta Ads", "Google Search", "LinkedIn Ads", "TikTok Ads", "YouTube Ads", "Creative testing", "CAC modelling", "Audience strategy", "Landing page briefs"],
@@ -1058,7 +1058,7 @@ const AGENTS: Agent[] = [
     role: "Brand & Messaging Agent",
     cluster: "growth",
     status: "active",
-    color: "from-pink-500/20 to-rose-900/40",
+    color: "from-cyan-500/20 to-slate-900/40",
     initials: "CD",
     mission: "Ensure all external output is clear, persuasive, visually coherent, and aligned with Saabai's premium positioning.",
     skills: ["Brand consistency", "Copywriting", "Website UX", "Ad creative", "Content creation", "Design direction", "Messaging strategy", "Competitive intelligence"],
@@ -1071,7 +1071,7 @@ const AGENTS: Agent[] = [
     role: "Systems & SOP Agent",
     cluster: "ops",
     status: "active",
-    color: "from-amber-500/20 to-orange-900/40",
+    color: "from-slate-500/20 to-slate-900/40",
     initials: "OA",
     mission: "Design systems, SOPs, and operating frameworks that make ventures run without constant operator involvement.",
     skills: ["SOP development", "Process mapping", "Operating rhythm design", "Delivery frameworks", "Tool stack design", "Role definition", "Reporting systems", "Onboarding design"],
@@ -1202,7 +1202,7 @@ function AgentsView() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-base font-semibold text-slate-900">{agent.name}</span>
               {agent.status === "active" ? (
-                <span className="text-[9px] font-medium bg-green-600/10 text-green-600 border border-green-600 rounded-full px-1.5 py-0.5">Active</span>
+                <span className="text-[9px] font-medium bg-cyan-600/10 text-cyan-700 border border-cyan-600 rounded-full px-1.5 py-0.5">Active</span>
               ) : (
                 <span className="text-[9px] font-medium bg-white/5 text-slate-600 border border-white/10 rounded-full px-1.5 py-0.5">Archived</span>
               )}
@@ -1263,7 +1263,7 @@ function AgentsView() {
                 onClick={(e) => e.stopPropagation()}
               />
               {agentNotes[agent.id] && (
-                <p className="text-[9px] text-green-600/70 mt-1">✓ Notes saved</p>
+                <p className="text-[9px] text-cyan-700/70 mt-1">✓ Notes saved</p>
               )}
             </div>
           </div>
@@ -1282,7 +1282,7 @@ function AgentsView() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white border border-slate-300 rounded-2xl p-5">
-          <div className="text-xs font-medium text-green-600 mb-2">● Active Agents</div>
+          <div className="text-xs font-medium text-cyan-700 mb-2">● Active Agents</div>
           <div className="text-3xl font-semibold text-slate-900 stat-glow">{activeAgents.length}</div>
         </div>
         <div className="bg-white border border-slate-300 rounded-2xl p-5">
@@ -1410,9 +1410,9 @@ interface EdgeSessionData {
 }
 
 function moodColor(mood: number) {
-  if (mood >= 8) return "bg-green-400";
-  if (mood >= 5) return "bg-amber-400";
-  return "bg-red-400";
+  if (mood >= 8) return "bg-cyan-600";
+  if (mood >= 5) return "bg-cyan-500";
+  return "bg-cyan-400";
 }
 
 function moodLabel(mood: number) {
@@ -1800,7 +1800,7 @@ function EdgeView() {
         {/* Edge's Current Read */}
         {profile?.rawNotes && (
           <div className="p-4 border-b border-slate-300">
-            <p className="text-[9px] font-semibold text-amber-600 uppercase tracking-widest mb-2">Edge&apos;s Read on You</p>
+            <p className="text-[9px] font-semibold text-slate-700 uppercase tracking-widest mb-2">Edge&apos;s Read on You</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{profile.rawNotes}</p>
           </div>
         )}
@@ -1825,7 +1825,7 @@ function EdgeView() {
         {/* Patterns */}
         {profile?.patterns && (
           <div className="p-4 border-b border-slate-300">
-            <p className="text-[9px] font-semibold text-red-700 uppercase tracking-widest mb-2">Patterns Noticed</p>
+            <p className="text-[9px] font-semibold text-slate-700 uppercase tracking-widest mb-2">Patterns Noticed</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{profile.patterns}</p>
           </div>
         )}
@@ -1837,7 +1837,7 @@ function EdgeView() {
             <div className="flex items-end gap-1.5 h-8">
               {sessions.filter(s => s.mood).slice(0, 10).reverse().map((s, i) => {
                 const h = Math.round(((s.mood ?? 5) / 10) * 100);
-                const col = (s.mood ?? 5) >= 8 ? "bg-green-400" : (s.mood ?? 5) >= 5 ? "bg-amber-400" : "bg-red-400";
+                const col = (s.mood ?? 5) >= 8 ? "bg-cyan-600" : (s.mood ?? 5) >= 5 ? "bg-cyan-500" : "bg-cyan-400";
                 return (
                   <div key={i} title={`${s.mood}/10 — ${s.createdAt.split("T")[0]}`}
                     className={`flex-1 rounded-sm ${col} opacity-80 min-h-[4px]`}
@@ -1908,12 +1908,12 @@ function EdgeView() {
               {hasProfile ? (
                 [
                   { key: "coreGoals", label: "Goals", color: "text-white" },
-                  { key: "currentFocus", label: "Focus", color: "text-blue-700" },
-                  { key: "strengths", label: "Strengths", color: "text-green-600" },
-                  { key: "challenges", label: "Challenges", color: "text-amber-600" },
-                  { key: "breakthroughs", label: "Breakthroughs", color: "text-red-700" },
-                  { key: "watchFor", label: "Watch For", color: "text-red-600" },
-                  { key: "worksWith", label: "Works With", color: "text-blue-700" },
+                  { key: "currentFocus", label: "Focus", color: "text-slate-700" },
+                  { key: "strengths", label: "Strengths", color: "text-cyan-700" },
+                  { key: "challenges", label: "Challenges", color: "text-slate-700" },
+                  { key: "breakthroughs", label: "Breakthroughs", color: "text-slate-700" },
+                  { key: "watchFor", label: "Watch For", color: "text-slate-700" },
+                  { key: "worksWith", label: "Works With", color: "text-slate-700" },
                 ].filter(f => profile?.[f.key as keyof EdgeProfileData]).map(f => (
                   <div key={f.key}>
                     <p className={`text-[9px] font-semibold ${f.color} uppercase tracking-wider mb-0.5`}>{f.label}</p>
@@ -1962,26 +1962,26 @@ function EdgeView() {
           <div className="flex items-center gap-2">
             {sessionStarted && !sessionEnded && (
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
                 <span className="text-[10px] text-slate-600">{elapsed > 0 ? `${elapsed}m` : "Live"}</span>
               </div>
             )}
             {mood !== null && (
-              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-green-600 text-green-600 bg-green-600/5" : mood >= 5 ? "border-amber-600 text-amber-600 bg-amber-600/5" : "border-red-600 text-red-600 bg-red-600/5"}`}>
+              <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-medium ${mood >= 8 ? "border-cyan-600 text-cyan-700 bg-cyan-600/5" : mood >= 5 ? "border-slate-700 text-slate-700 bg-slate-700/5" : "border-slate-700 text-slate-700 bg-slate-700/5"}`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${moodColor(mood)}`} />
                 {mood}/10 · {moodLabel(mood)}
               </div>
             )}
             <button
               onClick={() => setVoiceEnabled(v => !v)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors ${voiceEnabled ? "border-blue-700 text-blue-700 bg-blue-700" : "border-slate-300 text-slate-700 hover:text-slate-900"}`}
+              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors ${voiceEnabled ? "border-cyan-600 text-white bg-cyan-600" : "border-slate-300 text-slate-700 hover:text-slate-900"}`}
             >
               {voiceEnabled ? "Voice On" : "Voice Off"}
             </button>
             {sessionStarted && !sessionEnded && messages.length > 2 && (
               <div className="flex items-center gap-2">
                 {endError && (
-                  <span className="text-[10px] text-red-600 max-w-[140px] truncate" title={endError}>{endError}</span>
+                  <span className="text-[10px] text-slate-700 max-w-[140px] truncate" title={endError}>{endError}</span>
                 )}
                 <button
                   onClick={exitWithoutSaving}
@@ -2079,7 +2079,7 @@ function EdgeView() {
           ) : sessionEnded ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center max-w-sm">
-                <div className="w-12 h-12 rounded-full bg-green-600/10 border border-green-600 flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 rounded-full bg-cyan-600/10 border border-cyan-600 flex items-center justify-center mx-auto mb-4">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </div>
                 <p className="text-sm font-semibold text-slate-900 mb-2">Session saved.</p>
@@ -2146,9 +2146,9 @@ function EdgeView() {
                               key={n}
                               onClick={() => startSession(n)}
                               className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
-                                n <= 3 ? "border-red-600 text-red-600 bg-red-600/5 hover:bg-red-600/10 hover:border-red-600"
-                                : n <= 6 ? "border-amber-600 text-amber-600 bg-amber-600/5 hover:bg-amber-600/10 hover:border-amber-500/50"
-                                : "border-green-600 text-green-600 bg-green-600/5 hover:bg-green-600/10 hover:border-green-500/50"
+                                n <= 3 ? "border-slate-700 text-slate-700 bg-slate-700/5 hover:bg-slate-700/10 hover:border-slate-700"
+                                : n <= 6 ? "border-slate-700 text-slate-700 bg-slate-700/5 hover:bg-slate-700/10 hover:border-slate-400/50"
+                                : "border-cyan-600 text-cyan-700 bg-cyan-600/5 hover:bg-cyan-600/10 hover:border-cyan-500/50"
                               }`}
                             >
                               {n}
@@ -2172,9 +2172,9 @@ function EdgeView() {
                             key={n}
                             onClick={() => startSession(n)}
                             className={`py-3 rounded-xl text-sm font-semibold transition-all border hover:scale-105 ${
-                              n <= 3 ? "border-red-600 text-red-600 bg-red-600/5 hover:bg-red-600/10 hover:border-red-600"
-                              : n <= 6 ? "border-amber-600 text-amber-600 bg-amber-600/5 hover:bg-amber-600/10 hover:border-amber-500/50"
-                              : "border-green-600 text-green-600 bg-green-600/5 hover:bg-green-600/10 hover:border-green-500/50"
+                              n <= 3 ? "border-slate-700 text-slate-700 bg-slate-700/5 hover:bg-slate-700/10 hover:border-slate-700"
+                              : n <= 6 ? "border-slate-700 text-slate-700 bg-slate-700/5 hover:bg-slate-700/10 hover:border-slate-400/50"
+                              : "border-cyan-600 text-cyan-700 bg-cyan-600/5 hover:bg-cyan-600/10 hover:border-cyan-500/50"
                             }`}
                           >
                             {n}
@@ -2466,7 +2466,7 @@ export default function MissionControl() {
       triggerText: draftTool.triggerText ?? "Chat with us",
       triggerSubtext: draftTool.triggerSubtext ?? "AI-powered · Replies instantly",
       avatarInitials: draftTool.avatarInitials ?? draftTool.name?.slice(0, 2).toUpperCase() ?? "AI",
-      avatarColor: draftTool.avatarColor ?? "from-cyan-500/30 to-indigo-700/40",
+      avatarColor: draftTool.avatarColor ?? "from-cyan-500/30 to-cyan-700/40",
       pages: draftTool.pages ?? "*",
       status: draftTool.status ?? "draft",
       createdAt: editingTool?.createdAt ?? now,
@@ -2677,7 +2677,7 @@ export default function MissionControl() {
                       {!["mia", "peter"].includes(tool.id) && (
                         <button
                           onClick={() => deleteTool(tool.id)}
-                          className="text-xs px-3 py-1.5 rounded-lg border border-red-600 text-red-600/60 hover:text-red-600 hover:border-red-600 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-700/60 hover:text-slate-700 hover:border-slate-700 transition-colors"
                         >
                           Delete
                         </button>
@@ -2702,7 +2702,7 @@ export default function MissionControl() {
               </div>
               <div className="flex items-center gap-3">
                 {saved && (
-                  <span className="text-xs text-green-600 flex items-center gap-1.5">
+                  <span className="text-xs text-cyan-700 flex items-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Saved
                   </span>
@@ -2870,7 +2870,7 @@ export default function MissionControl() {
                   localStorage.removeItem("mc_tools_v1");
                   setTools(DEFAULT_TOOLS);
                 }}
-                className="px-4 py-2.5 border border-red-600 text-red-600/60 hover:text-red-600 hover:border-red-600 rounded-lg text-sm transition-colors"
+                className="px-4 py-2.5 border border-slate-700 text-slate-700/60 hover:text-slate-700 hover:border-slate-700 rounded-lg text-sm transition-colors"
               >
                 Reset all tools to defaults
               </button>
