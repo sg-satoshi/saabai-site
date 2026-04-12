@@ -188,6 +188,7 @@ export async function POST(req: Request) {
               // matches their CTS calculator exactly. Falls back to offline engine if API fails.
               if (input.type === "sheet" && input.widthMm && input.heightMm) {
                 try {
+                  console.log(`[rex-getPrice-live] Attempting live API for: ${input.material} ${input.colour} ${input.thicknessMm}mm ${input.widthMm}x${input.heightMm}mm`);
                   const search = await searchProducts(`${input.material ?? ""} sheet`);
                   if (!("error" in search) && search.results?.length) {
                     const normNum = (s: string) => s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
@@ -263,7 +264,10 @@ export async function POST(req: Request) {
                       };
                     }
                   }
-                } catch { /* fall through to offline engine */ }
+                } catch (err) {
+                  console.error(`[rex-getPrice-live] API failed, falling back to offline engine:`, String(err));
+                  /* fall through to offline engine */
+                }
               }
 
               // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
