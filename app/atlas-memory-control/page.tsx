@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { RefreshCw, Archive, Zap, Clock, AlertCircle, CheckCircle2, FileText } from "lucide-react";
+import TokenAnalytics from "./TokenAnalytics";
 
 interface MemoryTier {
   name: string;
@@ -93,7 +94,7 @@ const CRON_JOBS: CronJob[] = [
 ];
 
 export default function AtlasMemoryControl() {
-  const [activeTab, setActiveTab] = useState<"overview" | "tiers" | "cron" | "metrics">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "tiers" | "cron" | "metrics" | "tokens">("overview");
   const [refreshing, setRefreshing] = useState(false);
 
   const totalSize = "252KB";
@@ -154,8 +155,8 @@ export default function AtlasMemoryControl() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-slate-700">
-          {(["overview", "tiers", "cron", "metrics"] as const).map((tab) => (
+        <div className="flex gap-4 mb-8 border-b border-slate-700 overflow-x-auto">
+          {(["overview", "tiers", "cron", "metrics", "tokens"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -171,6 +172,9 @@ export default function AtlasMemoryControl() {
         </div>
 
         {/* Overview Tab */}
+        {/* Tokens Tab */}
+        {activeTab === "tokens" && <TokenAnalytics />}
+
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {/* Key Metrics Cards */}
@@ -428,7 +432,8 @@ export default function AtlasMemoryControl() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-slate-700 text-center text-slate-400 text-sm">
-          <p>Atlas Memory Control v1.0 • Last updated: 2026-04-12 • Status: Production Ready ✨</p>
+          <p>Atlas Memory Control v1.1 • Last updated: 2026-04-12 • Status: Production Ready ✨</p>
+          <p className="text-xs mt-2">Token tracking & real-time analytics enabled</p>
         </div>
       </div>
     </div>
