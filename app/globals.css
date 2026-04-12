@@ -77,8 +77,8 @@
 /* ─── Base ───────────────────────────────────────────────────────────────── */
 
 body {
-  background: var(--saabai-bg);
-  color: var(--saabai-text);
+  background: #ffffff;
+  color: #1f2937;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
