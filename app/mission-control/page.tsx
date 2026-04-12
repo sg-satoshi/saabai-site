@@ -101,18 +101,18 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-saabai-bg flex items-center justify-center font-[family-name:var(--font-geist-sans)]">
+    <div className="min-h-screen bg-white flex items-center justify-center font-[family-name:var(--font-geist-sans)]">
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-saabai-surface border border-saabai-border mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 mb-6">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--saabai-teal)" strokeWidth="1.5" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="12" cy="16" r="1.5" fill="var(--saabai-teal)" />
+              <rect x="3" y="11" width="18" height="11" rx="2" stroke="#06B6D4" strokeWidth="1.5" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#06B6D4" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="12" cy="16" r="1.5" fill="#06B6D4" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-saabai-text tracking-tight">Mission Control</h1>
-          <p className="text-saabai-text-dim text-sm mt-2">Enter your access code</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Mission Control</h1>
+          <p className="text-slate-500 text-sm mt-2">Enter your access code</p>
         </div>
         <div className="flex flex-col gap-3">
           <input
@@ -122,13 +122,13 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
             onKeyDown={(e) => e.key === "Enter" && attempt()}
             placeholder="Access code"
             autoFocus
-            className={`w-full bg-saabai-surface border rounded-xl px-4 py-3.5 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none transition-colors text-center tracking-widest ${error ? "border-red-500/60" : "border-saabai-border focus:border-saabai-teal/60"}`}
+            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-red-300" : "border-slate-200 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
           />
-          {error && <p className="text-red-400 text-xs text-center">Incorrect — try again</p>}
+          {error && <p className="text-red-600 text-xs text-center">Incorrect — try again</p>}
           <button
             onClick={attempt}
-            className="w-full bg-saabai-teal text-saabai-bg py-3.5 rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright transition-colors"
-            style={{ boxShadow: "0 0 24px rgba(98,197,209,0.25)" }}
+            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
+            style={{ boxShadow: "0 1px 3px rgba(6, 182, 212, 0.12)" }}
           >
             Unlock
           </button>
@@ -142,9 +142,9 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
 
 function StatusBadge({ status }: { status: Tool["status"] }) {
   const styles = {
-    active: "bg-green-500/10 text-green-400 border-green-500/20",
-    draft: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-    paused: "bg-white/5 text-saabai-text-dim border-white/10",
+    active: "bg-green-50 text-green-700 border-green-200",
+    draft: "bg-amber-50 text-amber-700 border-amber-200",
+    paused: "bg-slate-100 text-slate-600 border-slate-200",
   };
   return (
     <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 ${styles[status]}`}>
@@ -156,16 +156,16 @@ function StatusBadge({ status }: { status: Tool["status"] }) {
 function WidgetPreview({ tool }: { tool: Partial<Tool> }) {
   return (
     <div className="relative">
-      <p className="text-[10px] text-saabai-text-dim uppercase tracking-widest mb-3 font-medium">Live Preview</p>
+      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-3 font-medium">Live Preview</p>
       {/* Launcher */}
-      <div className="inline-flex items-center gap-3 bg-saabai-surface border border-saabai-teal/30 rounded-full pl-3 pr-5 py-2.5 shadow-lg"
-        style={{ boxShadow: "0 0 24px rgba(98,197,209,0.15)" }}>
-        <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${tool.avatarColor || "from-saabai-teal/30 to-indigo-700/40"} border border-saabai-teal/40 flex items-center justify-center text-xs font-bold text-saabai-teal shrink-0`}>
+      <div className="inline-flex items-center gap-3 bg-white border border-cyan-100 rounded-full pl-3 pr-5 py-2.5 shadow-sm"
+        style={{ boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)" }}>
+        <div className={`w-9 h-9 rounded-full bg-cyan-50 border border-cyan-200 flex items-center justify-center text-xs font-bold text-cyan-600 shrink-0`}>
           {tool.avatarInitials || "?"}
         </div>
         <div>
-          <p className="text-xs font-semibold text-saabai-text leading-none">{tool.triggerText || "Chat with us"}</p>
-          <p className="text-[10px] text-saabai-text-dim mt-0.5">{tool.triggerSubtext || "AI-powered"}</p>
+          <p className="text-xs font-semibold text-slate-900 leading-none">{tool.triggerText || "Chat with us"}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{tool.triggerSubtext || "AI-powered"}</p>
         </div>
       </div>
     </div>
@@ -178,14 +178,14 @@ function Input({ label, value, onChange, placeholder, hint, type = "text" }: {
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-saabai-text-dim uppercase tracking-wider">{label}</label>
-      {hint && <p className="text-[11px] text-saabai-text-dim -mt-0.5">{hint}</p>}
+      <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">{label}</label>
+      {hint && <p className="text-[11px] text-slate-500 -mt-0.5">{hint}</p>}
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="bg-saabai-bg border border-saabai-border rounded-xl px-4 py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
+        className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors"
       />
     </div>
   );
@@ -197,14 +197,14 @@ function Textarea({ label, value, onChange, placeholder, hint, rows = 6 }: {
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-saabai-text-dim uppercase tracking-wider">{label}</label>
-      {hint && <p className="text-[11px] text-saabai-text-dim -mt-0.5">{hint}</p>}
+      <label className="text-xs font-medium text-slate-600 uppercase tracking-wider">{label}</label>
+      {hint && <p className="text-[11px] text-slate-500 -mt-0.5">{hint}</p>}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="bg-saabai-bg border border-saabai-border rounded-xl px-4 py-3 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors resize-none font-mono text-xs leading-relaxed"
+        className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100 transition-colors resize-none font-mono text-xs leading-relaxed"
       />
     </div>
   );
