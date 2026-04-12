@@ -2646,7 +2646,7 @@ export default function MissionControl() {
                 <div key={tool.id} className="bg-white border border-slate-300 rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-sm font-bold text-white shrink-0`}>
+                      <div className={`w-12 h-12 rounded-xl ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-sm font-bold text-slate-900 shrink-0`}>
                         {tool.avatarInitials}
                       </div>
                       <div>
@@ -2671,7 +2671,7 @@ export default function MissionControl() {
                       </button>
                       <button
                         onClick={() => editTool(tool)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-cyan-600/10 border border-cyan-600 text-white hover:bg-cyan-600/20 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-lg bg-cyan-600 border border-cyan-700 text-white hover:bg-cyan-700 transition-colors"
                       >
                         Edit
                       </button>
