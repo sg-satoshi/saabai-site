@@ -28,7 +28,7 @@ type CheckoutLineItem = {
   widthMm: number;
   heightMm: number;
   qty: number;
-  priceExGst: number;   // per piece, ex GST — from the most recent getPrice result for this item
+  priceExGst: number;
   productName?: string;
 };
 type CreateCheckoutInput = {
@@ -58,16 +58,13 @@ type CheckoutResult = {
   error?: string;
 };
 
-// Proactive intent detection from first message
 function detectIntent(firstMessage: string): "pricing" | "technical" | "general" {
   const msg = firstMessage.toLowerCase();
   
-  // Pricing intent signals
   if (/price|quote|cost|how much|\$/.test(msg)) return "pricing";
-  if (/\d+mm|\d+\s*x\s*\d+/.test(msg)) return "pricing"; // dimensions = likely pricing
+  if (/\d+mm|\d+\s*x\s*\d+/.test(msg)) return "pricing";
   if (/buy|order|purchase|cart/.test(msg)) return "pricing";
   
-  // Technical intent signals
   if (/peek|ptfe|nylon|acetal|uhmwpe|properties|spec/i.test(msg)) return "technical";
   if (/(best|suitable|recommend|right).*for/i.test(msg)) return "technical";
   if (/bond|glue|cut|drill|form|machine/.test(msg)) return "technical";
@@ -85,13 +82,8 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-    // Always use premium model — Gemini Flash Lite (DEFAULT_CHAT_MODEL) stalls when tools are
-    // present in the request, causing silent empty responses for all queries including general chat.
-    // captureLead is always wired into tools, so every request triggers the stall.
-    // All queries route to Claude Sonnet (PREMIUM_CHAT_MODEL) until a reliable default is found.
     const tier: "default" | "premium" = "premium";
 
-    // Cache the static system prompt (~7k tokens) — full-context injection is faster than tool retrieval at this KB size
     const cachedSystem: SystemModelMessage = {
       role: "system",
       content: config.systemPrompt,
@@ -100,7 +92,6 @@ export async function POST(req: Request) {
       },
     };
 
-    // captureLead is always available — it passes clientId through to rex-leads
     const captureLeadTool = tool<LeadInput, { ok: boolean }>({
       description: "Save the customer's name and email when they share them during the conversation. Call this silently as soon as an email is given.",
       inputSchema: jsonSchema<LeadInput>({
@@ -114,7 +105,6 @@ export async function POST(req: Request) {
         required: ["email"],
       }),
       execute: async ({ email, name, company, note }) => {
-        // Fire and forget — pass full conversation so AI can generate structured quote for emails
         fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,7 +114,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // Build tool set — PLON-specific tools are opt-in per client config
     const enabledTools = new Set(config.tools);
 
     const result = streamText({
@@ -164,7 +153,7 @@ export async function POST(req: Request) {
         }),
 
         ...(enabledTools.has("getPrice") && {
-          getPrice: tool<GetPriceInput, PriceResult & { cartUrl?: string }>({
+          getPrice: tool<GetPriceInput, PriceResult>({
             description: "Get the exact price for any plastic product — sheets, rods, or tubes. Handles cut-to-size logic, oversized sheets, bulk discounts, and minimum order fees automatically. Call this for ALL price requests.",
             inputSchema: jsonSchema<GetPriceInput>({
               type: "object",
@@ -182,171 +171,13 @@ export async function POST(req: Request) {
               required: ["type", "material"],
             }),
             execute: async (input) => {
-              // CHECKOUT DISABLED — buildPayUrl removed. Using productUrl for "Order on the website now" link instead.
-
-              // For sheets with dimensions: hit PLON's live price API so the price always
-              // matches their CTS calculator exactly. Falls back to offline engine if API fails.
-              if (input.type === "sheet" && input.widthMm && input.heightMm) {
-                try {
-                  console.log(`[rex-getPrice-live] Attempting live API for: ${input.material} ${input.colour} ${input.thicknessMm}mm ${input.widthMm}x${input.heightMm}mm`);
-                  const search = await searchProducts(`${input.material ?? ""} sheet`);
-                  if (!("error" in search) && search.results?.length) {
-                    const normNum = (s: string) => s.replace(/[^0-9.]/g, "").replace(/\.0+$/, "");
-                    const colStr = (input.colour ?? "").toLowerCase();
-                    const thickStr = normNum(String(input.thicknessMm ?? ""));
-
-                    // isStandardSheet: variation's "Size" attribute contains 2440 and 1220
-                    const isStandardSheet = (attrs: Array<{ name: string; option: string }>) => {
-                      const sizeAttr = attrs.find(a => a.name === "Size");
-                      if (!sizeAttr) return false;
-                      const v = sizeAttr.option;
-                      return v.includes("2440") && v.includes("1220");
-                    };
-
-                    outer: for (const product of search.results) {
-                      type VariationRaw = {
-                        variation_id: number;
-                        attributes: Array<{ name: string; option: string }>;
-                        in_stock: boolean;
-                      };
-
-                      const matches: VariationRaw[] = [];
-
-                      for (const variation of (product.variations as VariationRaw[])) {
-                        if (!variation.in_stock) continue;
-                        const attrs = variation.attributes;
-                        // Use /thickness|gauge/i — deliberately excludes "Size" (which holds sheet dimensions like "2440 X 1220")
-                        const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
-                        const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
-                        const tMatch = !thickStr || (thicknessAttr && normNum(thicknessAttr.option) === thickStr);
-                        const cMatch = !colStr   || (colourAttr && (
-                          colourAttr.option.toLowerCase().includes(colStr) ||
-                          colStr.includes(colourAttr.option.toLowerCase())
-                        ));
-                        if (!tMatch || !cMatch) continue;
-                        matches.push(variation);
-                      }
-
-                      if (!matches.length) continue;
-
-                      // Prefer the standard 2440×1220 sheet; fall back to first match
-                      const chosen = matches.find(v => isStandardSheet(v.attributes)) ?? matches[0];
-                      const attrs = chosen.attributes;
-                      const thicknessAttr = attrs.find(a => /thickness|gauge/i.test(a.name));
-                      const colourAttr    = attrs.find(a => /colou?r/i.test(a.name));
-
-                      // PLON's calculator applies custom_multiplier only for acrylic/polycarbonate.
-                      // All other materials have the CTS rate baked into unit_price already.
-                      const applyMultiplier = /acrylic|polycarbonate/i.test(input.material ?? "");
-
-                      const woo = await calculateCutToSizePrice({
-                        productId:   product.product_id,
-                        variationId: chosen.variation_id,
-                        color:       colourAttr?.option ?? "",
-                        thickness:   thicknessAttr?.option ?? "",
-                        widthMm:     input.widthMm ?? 0,
-                        heightMm:    input.heightMm ?? 0,
-                        quantity:    input.quantity ?? 1,
-                        applyMultiplier,
-                      });
-
-                      if ("error" in woo) {
-                        console.log(`[rex-getPrice] WooCommerce API error for product ${product.product_id}: ${woo.error}`);
-                        break outer; // dimensions out of range — fall through
-                      }
-
-                      const price = Math.round(parseFloat(woo.total.replace(/[^0-9.]/g, "")) * 100) / 100;
-                      console.log(`[rex-getPrice] ✓ Live API success: ${input.material} ${input.colour} ${input.thicknessMm}mm = $${price}`);
-                      return {
-                        found: true,
-                        price,
-                        priceFormatted: `$${price.toFixed(2)}`,
-                        note: "cut to size",
-                        productUrl: product.url,
-                        bulkDiscountApplied: false,
-                        minimumFeeApplied: false,
-                      };
-                    }
-                  }
-                } catch (err) {
-                  console.error(`[rex-getPrice-live] API failed, falling back to offline engine:`, String(err));
-                  /* fall through to offline engine */
-                }
-              }
-
-              // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
-              console.log(`[rex-getPrice] Falling back to offline engine for: ${input.material} ${input.colour} ${input.thicknessMm}mm ${input.widthMm}x${input.heightMm}mm`);
+              // PLON WooCommerce live API disabled — custom_multiplier bug causes 3.5x pricing (e.g. $48 → $168)
+              // Using offline pricing engine as single source of truth
               const result = getPricing(input);
-              console.log(`[rex-getPrice] Offline result: found=${result.found}, price=$${result.price}`);
               return result;
             },
           }),
         }),
-
-        /* CHECKOUT DISABLED — 2026-04-13
-        * All code preserved below for re-enablement in a few weeks once accounting integration is tested.
-        * Currently: checkout creates orders marked as "approved" before payment, breaking accounting workflow.
-        * Solution: comment out checkout flow, revert to email-pricing model.
-        * To re-enable: uncomment this entire block, update rex-config.ts tools array to include "createCheckout".
-        * 
-        * ...(enabledTools.has("createCheckout") && {
-        *   createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
-        *     description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Only call this AFTER collecting the customer's name, email, phone, and delivery address. Pass ALL items in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item.",
-        *     inputSchema: jsonSchema<CreateCheckoutInput>({
-        *       type: "object",
-        *       properties: {
-        *         items: {
-        *           type: "array",
-        *           description: "All items to include in the order",
-        *           items: {
-        *             type: "object",
-        *             properties: {
-        *               material:    { type: "string", description: "Material e.g. 'acrylic', 'seaboard', 'hdpe'" },
-        *               colour:      { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
-        *               thicknessMm: { type: "number", description: "Thickness in mm" },
-        *               widthMm:     { type: "number", description: "Cut width in mm" },
-        *               heightMm:    { type: "number", description: "Cut height in mm" },
-        *               qty:         { type: "number", description: "Number of pieces" },
-        *               priceExGst:  { type: "number", description: "Price ex GST for ONE piece from getPrice" },
-        *               productName: { type: "string", description: "Full product name if known" },
-        *             },
-        *             required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
-        *           },
-        *         },
-        *         customerName:    { type: "string", description: "Customer's full name" },
-        *         customerEmail:   { type: "string", description: "Customer's email address — required, must be real" },
-        *         customerPhone:   { type: "string", description: "Customer's phone number" },
-        *         customerCompany: { type: "string", description: "Company name if provided" },
-        *         customerNote:    { type: "string", description: "Any special instructions or notes for the order" },
-        *         shippingAddress: {
-        *           type: "object",
-        *           description: "Delivery address",
-        *           properties: {
-        *             address1: { type: "string", description: "Street address" },
-        *             city:     { type: "string", description: "Suburb" },
-        *             state:    { type: "string", description: "State abbreviation e.g. QLD, NSW, VIC" },
-        *             postcode: { type: "string", description: "Postcode" },
-        *             country:  { type: "string", description: "Country code, default AU" },
-        *           },
-        *           required: ["address1", "city", "state", "postcode"],
-        *         },
-        *       },
-        *       required: ["items", "customerName", "customerEmail"],
-        *     }),
-        *     execute: async (params) => {
-        *       try {
-        *         const res = await fetch(
-        *           `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-checkout`,
-        *           { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
-        *         );
-        *         return await res.json();
-        *       } catch (e) {
-        *         return { error: String(e) };
-        *       }
-        *     },
-        *   }),
-        * }),
-        */
 
         ...(enabledTools.has("calculatePrice") && {
           calculatePrice: tool<CalcInput, Awaited<ReturnType<typeof calculateCutToSizePrice>>>({
