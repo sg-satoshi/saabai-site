@@ -328,7 +328,7 @@ function LeadsTable({ leads, onSelect }: { leads: LeadEvent[]; onSelect: (lead: 
               <td style={{ padding: "11px 12px 11px 0", color: "#111827", fontWeight: 600 }}>
                 {lead.name ?? <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
-              <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>
+              <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontFamily: "monospace", fontSize: 12, whiteSpace: "nowrap" }} title={lead.email ?? ""}>
                 {lead.email ?? <span style={{ color: "#d1d5db" }}>—</span>}
               </td>
               <td style={{ padding: "11px 12px 11px 0" }}>

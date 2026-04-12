@@ -168,12 +168,12 @@ export async function trackLead(event: LeadEvent): Promise<void> {
     if (event.despatch) pipeline.hincrby(K.despatch, event.despatch, 1);
     if (event.source)   pipeline.hincrby(K.sources, event.source, 1);
 
-    // Recent leads list — store minimal info (no full email for privacy)
+    // Recent leads list — store full email for dashboard display
     const record: LeadEvent = {
       timestamp:  event.timestamp,
       source:     event.source,
       name:       event.name,
-      email:      event.email ? event.email.replace(/(?<=.{2}).(?=.*@)/g, "*") : undefined,
+      email:      event.email,
       emailHash:  event.emailHash, // privacy-safe matching key
       price:      event.price,
       priceValue: priceVal > 0 ? priceVal : undefined,

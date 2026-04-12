@@ -614,16 +614,52 @@ function QueuePanel({ refresh }: { refresh: number }) {
 
   async function postNow(post: Post) {
     if (!confirm("Post to LinkedIn right now?")) return;
-    await fetch("/api/linkedin/post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: post.content }) });
-    await fetch("/api/linkedin/queue", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: post.id }) });
-    setViewingPost(null);
-    load();
+    try {
+      const postRes = await fetch("/api/linkedin/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: post.content }),
+      });
+      if (!postRes.ok) {
+        const error = await postRes.json().catch(() => ({ error: postRes.statusText }));
+        throw new Error(error.error || postRes.statusText);
+      }
+
+      const queueRes = await fetch("/api/linkedin/queue", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: post.id }),
+      });
+      if (!queueRes.ok) {
+        throw new Error("Failed to remove from queue");
+      }
+
+      setViewingPost(null);
+      load();
+      alert("✓ Posted to LinkedIn successfully!");
+    } catch (err) {
+      alert(`✗ Error posting to LinkedIn: ${String(err)}`);
+      console.error("postNow error:", err);
+    }
   }
 
   async function cancelPost(id: string) {
     if (!confirm("Remove this post from the queue?")) return;
-    await fetch("/api/linkedin/queue", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
-    load();
+    try {
+      const res = await fetch("/api/linkedin/queue", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to remove post");
+      }
+      load();
+      alert("✓ Post removed from queue");
+    } catch (err) {
+      alert(`✗ Error: ${String(err)}`);
+      console.error("cancelPost error:", err);
+    }
   }
 
   const btnBase: React.CSSProperties = { fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "3px 9px", cursor: "pointer", border: "1px solid #e5e7eb", background: "#fff", color: "#374151" };
