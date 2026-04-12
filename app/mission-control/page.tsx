@@ -2531,7 +2531,7 @@ export default function MissionControl() {
             <div className="flex items-start justify-between">
               <div>
                 <a href="https://www.saabai.ai" target="_blank" rel="noopener noreferrer">
-                  <Image src="/brand/saabai-logo-white-v2.png" alt="Saabai.ai" width={110} height={30} className="opacity-95 hover:opacity-100 transition-opacity" />
+                  <Image src="/brand/saabai-logo.png" alt="Saabai.ai" width={110} height={30} className="opacity-90 hover:opacity-100 transition-opacity" />
                 </a>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
