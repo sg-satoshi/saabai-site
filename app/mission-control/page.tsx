@@ -687,7 +687,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       {/* Mia Performance Bar */}
       <div className="bg-white border border-slate-300 rounded-lg px-6 py-5 mb-8 flex items-center gap-6 flex-wrap shadow-sm">
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-cyan-100 border border-cyan-300 flex items-center justify-center text-xs font-bold text-white">M</div>
+          <div className="w-8 h-8 rounded-lg bg-cyan-500 border border-cyan-600 flex items-center justify-center text-xs font-bold text-slate-900">M</div>
           <div>
             <p className="text-sm font-semibold text-slate-900 leading-none">Mia</p>
             <p className="text-[10px] text-slate-600 mt-0.5">Live performance</p>
