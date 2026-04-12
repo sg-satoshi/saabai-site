@@ -182,21 +182,7 @@ export async function POST(req: Request) {
               required: ["type", "material"],
             }),
             execute: async (input) => {
-              const base = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
-
-              // Builds a direct payment URL — clicking "Lock it in →" creates a WC order
-              // server-side and redirects straight to the order-pay page (no product page)
-              const buildPayUrl = (priceExGst: number) => {
-                const params = new URLSearchParams();
-                params.set("material",    input.material    ?? "");
-                params.set("colour",      input.colour      ?? "");
-                params.set("thicknessMm", String(input.thicknessMm ?? ""));
-                params.set("widthMm",     String(input.widthMm     ?? ""));
-                params.set("heightMm",    String(input.heightMm    ?? ""));
-                params.set("qty",         String(input.quantity    ?? 1));
-                params.set("priceExGst",  String(priceExGst));
-                return `${base}/api/rex-pay?${params.toString()}`;
-              };
+              // CHECKOUT DISABLED — buildPayUrl removed. Using productUrl for "Order on the website now" link instead.
 
               // For sheets with dimensions: hit PLON's live price API so the price always
               // matches their CTS calculator exactly. Falls back to offline engine if API fails.
@@ -272,7 +258,6 @@ export async function POST(req: Request) {
                         priceFormatted: `$${price.toFixed(2)}`,
                         note: "cut to size",
                         productUrl: product.url,
-                        cartUrl: buildPayUrl(price),
                         bulkDiscountApplied: false,
                         minimumFeeApplied: false,
                       };
@@ -283,9 +268,6 @@ export async function POST(req: Request) {
 
               // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
               const result = getPricing(input);
-              if (result.found && result.price && input.type === "sheet") {
-                return { ...result, cartUrl: buildPayUrl(result.price) };
-              }
               return result;
             },
           }),
