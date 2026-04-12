@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
+import { useRouter, useSearchParams } from "next/navigation";
 import AtlasStats from "./AtlasStats";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ const DEFAULT_TOOLS: Tool[] = [
     triggerText: "Talk to Peter",
     triggerSubtext: "Got questions? I'm here.",
     avatarInitials: "PS",
-    avatarColor: "from-cyan-500/20 to-cyan-700/30",
+    avatarColor: "bg-cyan-500",
     pages: "/onboarding/plon",
     status: "active",
     createdAt: "2026-03-21",
@@ -76,7 +77,7 @@ const BLANK_TOOL: Omit<Tool, "id" | "createdAt" | "updatedAt"> = {
   triggerText: "Chat with us",
   triggerSubtext: "AI-powered · Replies instantly",
   avatarInitials: "",
-  avatarColor: "from-cyan-600 to-blue-700",
+  avatarColor: "bg-cyan-500",
   pages: "*",
   status: "draft",
 };
@@ -856,7 +857,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
             {tools.filter(t => t.status === "active").map((tool) => (
               <button key={tool.id} onClick={() => onEditTool(tool)} className="bg-white border border-slate-300 rounded-xl px-4 py-3.5 flex items-center justify-between hover:border-slate-300-accent hover:bg-white/[0.02] transition-colors group w-full text-left cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                  <div className={`w-8 h-8 rounded-lg ${tool.avatarColor} border border-cyan-600 flex items-center justify-center text-[10px] font-bold text-slate-900 shrink-0`}>
                     {tool.avatarInitials}
                   </div>
                   <div>
@@ -2466,7 +2467,7 @@ export default function MissionControl() {
       triggerText: draftTool.triggerText ?? "Chat with us",
       triggerSubtext: draftTool.triggerSubtext ?? "AI-powered · Replies instantly",
       avatarInitials: draftTool.avatarInitials ?? draftTool.name?.slice(0, 2).toUpperCase() ?? "AI",
-      avatarColor: draftTool.avatarColor ?? "from-cyan-500/30 to-cyan-700/40",
+      avatarColor: draftTool.avatarColor ?? "bg-cyan-500",
       pages: draftTool.pages ?? "*",
       status: draftTool.status ?? "draft",
       createdAt: editingTool?.createdAt ?? now,
