@@ -2508,7 +2508,7 @@ export default function MissionControl() {
     <div className="min-h-screen bg-saabai-bg text-saabai-text font-[family-name:var(--font-geist-sans)] flex">
 
       {/* Sidebar — hidden on mobile, collapsible on desktop */}
-      <aside className={`shrink-0 border-r border-saabai-border hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
+      <aside className={`shrink-0 border-r border-saabai-border hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 bg-slate-900 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
 
         {/* Logo / header */}
         <div className={`mb-5 ${navCollapsed ? "flex flex-col items-center gap-3" : "px-2"}`}>
