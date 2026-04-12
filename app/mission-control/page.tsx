@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
+import AtlasStats from "./AtlasStats";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -729,6 +730,9 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
           ))}
         </div>
       </div>
+
+      {/* Atlas Stats & Projects */}
+      <AtlasStats />
 
       {/* Ventures + Health side by side */}
       <div className="grid grid-cols-[1fr_220px] gap-4 mb-6">
