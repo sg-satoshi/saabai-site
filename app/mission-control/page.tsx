@@ -317,13 +317,13 @@ function GrowthView() {
               a.href=url; a.download=`leads-${new Date().toISOString().split("T")[0]}.csv`; a.click();
               URL.revokeObjectURL(url);
             }}
-            className="text-xs text-slate-700 hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-300 rounded-lg"
+            className="text-xs text-slate-900 font-semibold hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-400 rounded-lg"
           >
             ↓ Export CSV
           </button>
           <button
             onClick={() => { setLoading(true); fetch("/api/growth").then(r => r.json()).then(d => { setStats(d); setLoading(false); }); }}
-            className="text-xs text-slate-700 hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-300 rounded-lg"
+            className="text-xs text-slate-900 font-semibold hover:text-white hover:bg-cyan-600 transition-colors px-3 py-2 border border-slate-400 rounded-lg"
           >
             ↺ Refresh
           </button>
