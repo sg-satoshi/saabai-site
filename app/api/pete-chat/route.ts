@@ -291,63 +291,70 @@ export async function POST(req: Request) {
           }),
         }),
 
-        ...(enabledTools.has("createCheckout") && {
-          createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
-            description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Only call this AFTER collecting the customer's name, email, phone, and delivery address. Pass ALL items in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item.",
-            inputSchema: jsonSchema<CreateCheckoutInput>({
-              type: "object",
-              properties: {
-                items: {
-                  type: "array",
-                  description: "All items to include in the order",
-                  items: {
-                    type: "object",
-                    properties: {
-                      material:    { type: "string", description: "Material e.g. 'acrylic', 'seaboard', 'hdpe'" },
-                      colour:      { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
-                      thicknessMm: { type: "number", description: "Thickness in mm" },
-                      widthMm:     { type: "number", description: "Cut width in mm" },
-                      heightMm:    { type: "number", description: "Cut height in mm" },
-                      qty:         { type: "number", description: "Number of pieces" },
-                      priceExGst:  { type: "number", description: "Price ex GST for ONE piece from getPrice" },
-                      productName: { type: "string", description: "Full product name if known" },
-                    },
-                    required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
-                  },
-                },
-                customerName:    { type: "string", description: "Customer's full name" },
-                customerEmail:   { type: "string", description: "Customer's email address — required, must be real" },
-                customerPhone:   { type: "string", description: "Customer's phone number" },
-                customerCompany: { type: "string", description: "Company name if provided" },
-                customerNote:    { type: "string", description: "Any special instructions or notes for the order" },
-                shippingAddress: {
-                  type: "object",
-                  description: "Delivery address",
-                  properties: {
-                    address1: { type: "string", description: "Street address" },
-                    city:     { type: "string", description: "Suburb" },
-                    state:    { type: "string", description: "State abbreviation e.g. QLD, NSW, VIC" },
-                    postcode: { type: "string", description: "Postcode" },
-                    country:  { type: "string", description: "Country code, default AU" },
-                  },
-                  required: ["address1", "city", "state", "postcode"],
-                },
-              },
-              required: ["items", "customerName", "customerEmail"],
-            }),
-            execute: async (params) => {
-              try {
-                const res = await fetch(
-                  `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-checkout`,
-                  { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
-                );
-                return await res.json();
-              } catch (e) {
-                return { error: String(e) };
-              }
-            },
-          }),
-        }),
+        /* CHECKOUT DISABLED — 2026-04-13
+        * All code preserved below for re-enablement in a few weeks once accounting integration is tested.
+        * Currently: checkout creates orders marked as "approved" before payment, breaking accounting workflow.
+        * Solution: comment out checkout flow, revert to email-pricing model.
+        * To re-enable: uncomment this entire block, update rex-config.ts tools array to include "createCheckout".
+        * 
+        * ...(enabledTools.has("createCheckout") && {
+        *   createCheckout: tool<CreateCheckoutInput, CheckoutResult>({
+        *     description: "Create a WooCommerce order for one or more quoted cut-to-size items and return a single direct payment link. Only call this AFTER collecting the customer's name, email, phone, and delivery address. Pass ALL items in one call — one order, one payment link. Use the priceExGst from the most recent getPrice result for each item.",
+        *     inputSchema: jsonSchema<CreateCheckoutInput>({
+        *       type: "object",
+        *       properties: {
+        *         items: {
+        *           type: "array",
+        *           description: "All items to include in the order",
+        *           items: {
+        *             type: "object",
+        *             properties: {
+        *               material:    { type: "string", description: "Material e.g. 'acrylic', 'seaboard', 'hdpe'" },
+        *               colour:      { type: "string", description: "Colour exactly as quoted, e.g. 'Clear 000', 'White'" },
+        *               thicknessMm: { type: "number", description: "Thickness in mm" },
+        *               widthMm:     { type: "number", description: "Cut width in mm" },
+        *               heightMm:    { type: "number", description: "Cut height in mm" },
+        *               qty:         { type: "number", description: "Number of pieces" },
+        *               priceExGst:  { type: "number", description: "Price ex GST for ONE piece from getPrice" },
+        *               productName: { type: "string", description: "Full product name if known" },
+        *             },
+        *             required: ["material", "colour", "thicknessMm", "widthMm", "heightMm", "qty", "priceExGst"],
+        *           },
+        *         },
+        *         customerName:    { type: "string", description: "Customer's full name" },
+        *         customerEmail:   { type: "string", description: "Customer's email address — required, must be real" },
+        *         customerPhone:   { type: "string", description: "Customer's phone number" },
+        *         customerCompany: { type: "string", description: "Company name if provided" },
+        *         customerNote:    { type: "string", description: "Any special instructions or notes for the order" },
+        *         shippingAddress: {
+        *           type: "object",
+        *           description: "Delivery address",
+        *           properties: {
+        *             address1: { type: "string", description: "Street address" },
+        *             city:     { type: "string", description: "Suburb" },
+        *             state:    { type: "string", description: "State abbreviation e.g. QLD, NSW, VIC" },
+        *             postcode: { type: "string", description: "Postcode" },
+        *             country:  { type: "string", description: "Country code, default AU" },
+        *           },
+        *           required: ["address1", "city", "state", "postcode"],
+        *         },
+        *       },
+        *       required: ["items", "customerName", "customerEmail"],
+        *     }),
+        *     execute: async (params) => {
+        *       try {
+        *         const res = await fetch(
+        *           `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-checkout`,
+        *           { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(params) }
+        *         );
+        *         return await res.json();
+        *       } catch (e) {
+        *         return { error: String(e) };
+        *       }
+        *     },
+        *   }),
+        * }),
+        */
 
         ...(enabledTools.has("calculatePrice") && {
           calculatePrice: tool<CalcInput, Awaited<ReturnType<typeof calculateCutToSizePrice>>>({

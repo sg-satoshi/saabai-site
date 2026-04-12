@@ -11,7 +11,7 @@ import { REX_KNOWLEDGE } from "./rex-knowledge";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type RexTool = "searchProducts" | "lookupOrder" | "getPrice" | "calculatePrice" | "createCheckout";
+export type RexTool = "searchProducts" | "lookupOrder" | "getPrice" | "calculatePrice"; // "createCheckout" disabled
 
 export interface RexClientConfig {
   id: string;
@@ -64,7 +64,11 @@ ORDER STATUS:
 Order number given (PLON-XXXXX, HP-XXXXX, EXP-XXXXX, or just number)? Call lookupOrder immediately. Read back in plain English (no raw stage names). Close with "What else can I sort out for you?" Not found? Apologise, ask to double-check, give phone/email. Never mention order formats.
 
 CHECKOUT:
-When a customer says "Lock it in!" or any purchase intent ("yes", "let's do it", "order it", "I'll take it"), collect their details conversationally in this exact sequence — one ask at a time:
+/* TEMPORARILY DISABLED — checkout flow commented out. All checkout code preserved in api/rex-checkout and api/rex-pay.
+When customer shows purchase intent, ask if they want the quote emailed instead of processing the order.
+Say: "I can send you that quote and pricing link via email — just grab your email and I'll fire it across."
+Collect email and call captureLead. Do NOT collect phone, address, or initiate any order creation.
+Revert this comment section and uncomment the steps below once accounting integration is tested in a few weeks.
 
 Step 1 — Respond warmly, then ask for name and email:
 "Awesome, happy to lock that in for you! To get your order sorted, can I grab your full name and email address?"
@@ -100,6 +104,7 @@ Total: \${totalIncGst} inc GST
 Held for 24 hrs.
 
 If createCheckout returns an error, say "Something went wrong — try the Lock it in link above or call us on (07) 5564 6744."
+*/
 
 LINKS:
 Text: markdown [Lock it in →](url). Speaking: "tap the button below". Never read URLs.
@@ -115,7 +120,7 @@ const PLON: RexClientConfig = {
   id: "plon",
   agentName: "Rex",
   systemPrompt: PLON_SYSTEM,
-  tools: ["searchProducts", "lookupOrder", "getPrice", "createCheckout"],
+  tools: ["searchProducts", "lookupOrder", "getPrice"], // createCheckout disabled — see CHECKOUT comment above
   quickReplies: [
     "How much for acrylic cut to size?",
     "What would 6mm clear acrylic cost me?",
