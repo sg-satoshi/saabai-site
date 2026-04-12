@@ -2248,7 +2248,7 @@ function EdgeView() {
                       ))}
                       {content && (
                         <div className={`rounded-2xl px-4 py-3 ${isEdge ? "bg-white border border-slate-300 text-slate-900" : "bg-cyan-600/10 border border-cyan-600 text-slate-900"}`}>
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap">{content.trim()}</p>
                         </div>
                       )}
                     </div>
