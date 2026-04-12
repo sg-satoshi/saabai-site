@@ -250,9 +250,13 @@ export async function POST(req: Request) {
                         applyMultiplier,
                       });
 
-                      if ("error" in woo) break outer; // dimensions out of range — fall through
+                      if ("error" in woo) {
+                        console.log(`[rex-getPrice] WooCommerce API error for product ${product.product_id}: ${woo.error}`);
+                        break outer; // dimensions out of range — fall through
+                      }
 
                       const price = Math.round(parseFloat(woo.total.replace(/[^0-9.]/g, "")) * 100) / 100;
+                      console.log(`[rex-getPrice] ✓ Live API success: ${input.material} ${input.colour} ${input.thicknessMm}mm = $${price}`);
                       return {
                         found: true,
                         price,
@@ -271,7 +275,9 @@ export async function POST(req: Request) {
               }
 
               // Fallback: offline engine (rods, tubes, full sheets, or if live API unavailable)
+              console.log(`[rex-getPrice] Falling back to offline engine for: ${input.material} ${input.colour} ${input.thicknessMm}mm ${input.widthMm}x${input.heightMm}mm`);
               const result = getPricing(input);
+              console.log(`[rex-getPrice] Offline result: found=${result.found}, price=$${result.price}`);
               return result;
             },
           }),
