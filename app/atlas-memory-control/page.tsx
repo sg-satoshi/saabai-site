@@ -84,6 +84,17 @@ export default function AtlasMemoryControlDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-6 md:p-8">
+      {/* Back to Mission Control */}
+      <div className="mb-6 flex items-center">
+        <a
+          href="/mission-control"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-700/50 transition font-medium text-sm text-slate-300 hover:text-white group"
+        >
+          <span className="group-hover:-translate-x-1 transition">←</span>
+          Back to Mission Control
+        </a>
+      </div>
+
       {/* Header */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-2">
@@ -397,6 +408,7 @@ export default function AtlasMemoryControlDashboard() {
       <div className="mt-12 pt-8 border-t border-slate-700 text-center text-slate-500 text-sm">
         <p>Atlas Memory Control — Real-time Intelligence Dashboard</p>
         <p className="text-xs mt-2">Last sync: {new Date().toLocaleTimeString()} • Status: Online 🟢</p>
+        <p className="text-xs mt-3"><a href="/mission-control" className="text-cyan-400 hover:text-cyan-300 transition">← Return to Mission Control</a></p>
       </div>
     </div>
   );
