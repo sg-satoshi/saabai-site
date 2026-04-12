@@ -639,51 +639,53 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
   return (
     <div className="p-8 max-w-5xl">
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <p className="text-xs text-saabai-text-dim uppercase tracking-wider mb-1">{dateStr}</p>
-          <h1 className="text-2xl font-semibold tracking-tight mb-1">{greeting}, Shane.</h1>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
-            <p className="text-sm text-saabai-text-dim italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
+      {/* Hero Header */}
+      <div className="mb-12">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <p className="text-xs text-saabai-text-dim uppercase tracking-widest mb-2">{dateStr}</p>
+            <h1 className="text-6xl font-black bg-gradient-to-r from-cyan-400 via-saabai-teal to-blue-500 bg-clip-text text-transparent mb-3">{greeting}, Shane.</h1>
+            <div className="flex items-center gap-2 mt-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal animate-pulse" />
+              <p className="text-sm text-saabai-text-dim italic">Atlas: &ldquo;What is the highest ROI action across all ventures right now?&rdquo;</p>
+            </div>
           </div>
+          <button
+            onClick={onNewTool}
+            className="flex items-center gap-2 px-6 py-3 bg-saabai-teal/20 border border-saabai-teal/50 rounded-xl text-sm font-bold hover:bg-saabai-teal/30 transition-all shrink-0 text-saabai-teal hover:shadow-lg hover:shadow-saabai-teal/20"
+          >
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            New Tool
+          </button>
         </div>
-        <button
-          onClick={onNewTool}
-          className="flex items-center gap-2 px-4 py-2.5 bg-saabai-teal text-saabai-bg rounded-xl text-sm font-semibold hover:bg-saabai-teal-bright transition-colors shrink-0"
-          style={{ boxShadow: "0 0 20px rgba(98,197,209,0.2)" }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-          New Tool
-        </button>
+        <div className="h-1 w-40 bg-gradient-to-r from-cyan-500 to-saabai-teal rounded-full" />
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      {/* Top KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", dot: "bg-green-400", tab: "tools" as Tab },
-          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", dot: "bg-saabai-teal", tab: "agents" as Tab },
-          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", dot: "bg-indigo-400", tab: "tools" as Tab },
-          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", dot: "bg-amber-400", tab: "growth" as Tab },
+          { label: "Active Tools", value: activeCount, sub: `${tools.length} total`, color: "text-green-400", bgGradient: "from-green-900/40 to-green-800/20", borderColor: "border-green-500/30", dot: "bg-green-400", tab: "tools" as Tab },
+          { label: "Active Agents", value: AGENTS.filter(a => a.status === "active").length, sub: `${AGENTS.length} total`, color: "text-saabai-teal", bgGradient: "from-cyan-900/40 to-cyan-800/20", borderColor: "border-cyan-500/30", dot: "bg-saabai-teal", tab: "agents" as Tab },
+          { label: "Voices Live", value: tools.filter(t => t.voiceId && t.status === "active").length, sub: "ElevenLabs", color: "text-indigo-400", bgGradient: "from-indigo-900/40 to-indigo-800/20", borderColor: "border-indigo-500/30", dot: "bg-indigo-400", tab: "tools" as Tab },
+          { label: "Client Engagements", value: VENTURES.filter(v => v.type === "Client Engagement").length, sub: "Active", color: "text-amber-400", bgGradient: "from-amber-900/40 to-amber-800/20", borderColor: "border-amber-500/30", dot: "bg-amber-400", tab: "growth" as Tab },
         ].map((s) => (
           <button key={s.label} onClick={() => onTabChange(s.tab)}
-            className="bg-saabai-surface border border-saabai-border rounded-2xl p-4 hover:border-saabai-border-accent hover:bg-white/[0.02] transition-colors cursor-pointer text-left group">
+            className={`bg-gradient-to-br ${s.bgGradient} border ${s.borderColor} rounded-xl p-6 backdrop-blur-sm hover:${s.borderColor.replace('border-', 'border-')} hover:shadow-lg transition-all cursor-pointer text-left group`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                <span className={`text-[11px] font-medium ${s.color}`}>{s.label}</span>
+                <span className={`text-xs font-bold ${s.color}`}>{s.label}</span>
               </div>
               <span className={`text-[10px] ${s.color} opacity-0 group-hover:opacity-100 transition-opacity`}>View →</span>
             </div>
-            <div className="text-3xl font-semibold text-saabai-text stat-glow mb-0.5">{s.value}</div>
-            <div className="text-[11px] text-saabai-text-dim">{s.sub}</div>
+            <div className={`text-4xl font-black ${s.color} mb-1`}>{s.value}</div>
+            <div className="text-[11px] text-slate-400">{s.sub}</div>
           </button>
         ))}
       </div>
 
       {/* Mia Performance Bar */}
-      <div className="bg-saabai-surface border border-saabai-border rounded-2xl px-5 py-4 mb-6 flex items-center gap-5 flex-wrap">
+      <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-indigo-500/20 rounded-xl px-6 py-5 mb-8 flex items-center gap-5 flex-wrap backdrop-blur-sm">
         <div className="flex items-center gap-2.5 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-saabai-teal/30 to-indigo-700/40 border border-saabai-teal/30 flex items-center justify-center text-[10px] font-bold text-saabai-teal">M</div>
           <div>
@@ -708,26 +710,42 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-saabai-text mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-6 gap-2">
-          {QUICK_ACTIONS.map((a) => (
-            a.href ? (
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-white mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {QUICK_ACTIONS.map((a) => {
+            const getBgColor = () => {
+              if (a.color === "text-saabai-teal") return "from-cyan-900/30 to-cyan-800/10";
+              if (a.color === "text-amber-400") return "from-amber-900/30 to-amber-800/10";
+              if (a.color === "text-indigo-400") return "from-indigo-900/30 to-indigo-800/10";
+              if (a.color === "text-green-400") return "from-green-900/30 to-green-800/10";
+              if (a.color === "text-cyan-400") return "from-cyan-900/30 to-cyan-800/10";
+              return "from-slate-800/30 to-slate-700/10";
+            };
+            const getBorderColor = () => {
+              if (a.color === "text-saabai-teal") return "border-cyan-500/30";
+              if (a.color === "text-amber-400") return "border-amber-500/30";
+              if (a.color === "text-indigo-400") return "border-indigo-500/30";
+              if (a.color === "text-green-400") return "border-green-500/30";
+              if (a.color === "text-cyan-400") return "border-cyan-500/30";
+              return "border-slate-600/30";
+            };
+            return a.href ? (
               <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer"
-                className="bg-saabai-surface border border-saabai-border rounded-xl p-3 hover:border-saabai-border-accent transition-colors group flex flex-col gap-1.5">
-                <span className={`text-base font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
-                <span className="text-xs font-medium text-saabai-text leading-tight">{a.label}</span>
-                <span className="text-[10px] text-saabai-text-dim">{a.sub}</span>
+                className={`bg-gradient-to-br ${getBgColor()} border ${getBorderColor()} rounded-lg p-4 hover:shadow-lg transition-all group flex flex-col gap-2 backdrop-blur-sm`}>
+                <span className={`text-xl font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-sm font-semibold text-white leading-tight">{a.label}</span>
+                <span className="text-xs text-slate-400">{a.sub}</span>
               </a>
             ) : (
               <button key={a.label} onClick={a.onClick}
-                className="bg-saabai-surface border border-saabai-border rounded-xl p-3 hover:border-saabai-border-accent transition-colors group flex flex-col gap-1.5 text-left">
-                <span className={`text-base font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
-                <span className="text-xs font-medium text-saabai-text leading-tight">{a.label}</span>
-                <span className="text-[10px] text-saabai-text-dim">{a.sub}</span>
+                className={`bg-gradient-to-br ${getBgColor()} border ${getBorderColor()} rounded-lg p-4 hover:shadow-lg transition-all group flex flex-col gap-2 text-left backdrop-blur-sm`}>
+                <span className={`text-xl font-bold ${a.color} group-hover:scale-110 transition-transform inline-block`}>{a.icon}</span>
+                <span className="text-sm font-semibold text-white leading-tight">{a.label}</span>
+                <span className="text-xs text-slate-400">{a.sub}</span>
               </button>
             )
-          ))}
+          })}
         </div>
       </div>
 
@@ -735,11 +753,11 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       <AtlasStats />
 
       {/* Ventures + Health side by side */}
-      <div className="grid grid-cols-[1fr_220px] gap-4 mb-6">
+      <div className="grid grid-cols-[1fr_280px] gap-6 mb-8">
 
         {/* Venture Tracker */}
         <div>
-          <h2 className="text-base font-semibold text-saabai-text mb-3">Venture Tracker</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Venture Tracker</h2>
           <div className="flex flex-col gap-2">
             {VENTURES.map((v) => {
               const CardWrapper = v.url
@@ -789,8 +807,8 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* System Health */}
         <div>
-          <h2 className="text-base font-semibold text-saabai-text mb-3">System Health</h2>
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden">
+          <h2 className="text-2xl font-bold text-white mb-4">System Health</h2>
+          <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-purple-500/20 rounded-xl overflow-hidden backdrop-blur-sm">
             {HEALTH_ITEMS.map((item, i) => {
               const ok = health?.[item.key];
               const loading = health === null;
@@ -829,11 +847,11 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
       </div>
 
       {/* Active Tools + Activity Feed */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active Tools */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-saabai-text">Active Tools</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-white">Active Tools</h2>
             <button onClick={() => onTabChange("tools")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
           </div>
           <div className="flex flex-col gap-2">
@@ -864,8 +882,8 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
         {/* Activity Feed */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-saabai-text">Activity Feed</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-white">Recent Activity</h2>
             <button onClick={() => onTabChange("growth")} className="text-[11px] text-saabai-teal hover:text-saabai-teal-bright transition-colors">View all →</button>
           </div>
           {activityLeads.length === 0 ? (
