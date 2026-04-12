@@ -37,7 +37,7 @@ const DEFAULT_TOOLS: Tool[] = [
     triggerText: "Ask Mia about automation",
     triggerSubtext: "AI-powered · Replies instantly",
     avatarInitials: "M",
-    avatarColor: "from-cyan-600 to-blue-700",
+    avatarColor: "bg-cyan-500",
     pages: "*",
     status: "active",
     createdAt: "2025-01-01",
