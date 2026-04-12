@@ -623,8 +623,8 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
     { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-amber-400" },
     { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-indigo-400" },
     { label: "Vercel", sub: "Deployments", href: "https://vercel.com/dashboard", icon: "↗", color: "text-white/70" },
+    { label: "Atlas Memory", sub: "Control Panel", href: "/atlas-memory-control", icon: "⚙", color: "text-cyan-400" },
     { label: "New Tool", sub: "Builder", href: null, icon: "+", color: "text-green-400", onClick: onNewTool },
-    { label: "View Agents", sub: "Registry", href: null, icon: "◆", color: "text-saabai-teal", onClick: () => onTabChange("agents") },
   ];
 
   const HEALTH_ITEMS = [
