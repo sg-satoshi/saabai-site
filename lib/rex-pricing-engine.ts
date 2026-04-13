@@ -114,7 +114,7 @@ const ACRYLIC: SheetRow[] = [
   { colour: "white",       thicknessMm: 2, sheetW: 2440, sheetH: 1220, ctsRate: 73.37,  fullSheetPrice: 104 },
   { colour: "black",       thicknessMm: 2, sheetW: 2440, sheetH: 1220, ctsRate: 73.37,  fullSheetPrice: 104 },
   // 3mm
-  { colour: "clear",          thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 88.89,  fullSheetPrice: 126 },
+  { colour: "clear",          thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 88.89,  fullSheetPrice: 265 },
   { colour: "clear satin",    thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 126.98, fullSheetPrice: 168 },
   { colour: "opal",           thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 95.94,  fullSheetPrice: 136 },
   { colour: "opal satin",     thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 128.49, fullSheetPrice: 170 },
@@ -126,7 +126,7 @@ const ACRYLIC: SheetRow[] = [
   { colour: "white satin",    thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 128.49, fullSheetPrice: 170 },
   { colour: "colour",         thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 111.46, fullSheetPrice: 158 },
   // 4.5mm
-  { colour: "clear",            thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 134.04, fullSheetPrice: 190 },
+  { colour: "clear",            thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 134.04, fullSheetPrice: 399 },
   { colour: "clear satin",      thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 179.89, fullSheetPrice: 238 },
   { colour: "opal",             thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 143.91, fullSheetPrice: 204 },
   { colour: "opal satin",       thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 191.98, fullSheetPrice: 254 },
@@ -136,7 +136,7 @@ const ACRYLIC: SheetRow[] = [
   { colour: "tint",             thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 165.08, fullSheetPrice: 234 },
   { colour: "marine green tint",thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 162.25, fullSheetPrice: 230 },
   // 6mm
-  { colour: "clear",            thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 177.77, fullSheetPrice: 252 },
+  { colour: "clear",            thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 177.77, fullSheetPrice: 530 },
   { colour: "opal",             thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 191.88, fullSheetPrice: 272 },
   { colour: "opal satin",       thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 256.99, fullSheetPrice: 340 },
   { colour: "marine green tint",thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 227.16, fullSheetPrice: 322 },
@@ -185,6 +185,7 @@ const ACRYLIC: SheetRow[] = [
 // Acrylic oversized — piece doesn't fit standard 2440×1220 sheet
 // CTS rate is same as standard sheet; only the cap price changes
 // Sorted smallest sheet first — code picks the smallest that fits
+// March 2026 pricing
 const ACRYLIC_OVERSIZED: OversizedRow[] = [
   { thicknessMm: 3,  sheetW: 2490, sheetH: 1880, clear: 194,    opal: 222,    black_white: 254 },
   { thicknessMm: 3,  sheetW: 3050, sheetH: 2030, clear: 266,    opal: 294,    black_white: 306 },
