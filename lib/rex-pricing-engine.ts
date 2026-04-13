@@ -751,7 +751,12 @@ const TUBES: TubeRow[] = [
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fits(pw: number, ph: number, sw: number, sh: number): boolean {
-  return (pw <= sw && ph <= sh) || (ph <= sw && pw <= sh);
+  const result = (pw <= sw && ph <= sh) || (ph <= sw && pw <= sh);
+  // Debug logging
+  if (Math.round(pw) === 1020 && Math.round(ph) === 1530) {
+    console.log(`[fits-debug] ${pw}×${ph} on ${sw}×${sh} = ${result}`);
+  }
+  return result;
 }
 
 function r2(n: number): number {
