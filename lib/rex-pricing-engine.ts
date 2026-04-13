@@ -882,9 +882,9 @@ function priceWithOversized(
     // If dimensions exactly match the oversized sheet — no cutting, no fee
     const isFullSheet = (width === os.sheetW && height === os.sheetH) || (width === os.sheetH && height === os.sheetW);
     if (isFullSheet) return buildResult(osPrice, qty, "oversized full sheet", url);
-    // Oversized variations carry a 20% CTS rate premium (matches WooCommerce oversized variation pricing)
+    // Oversized sheets use same CTS rate as standard sheets (premium only applies if CTS price >= oversized full sheet price)
     const area = (width / 1000) * (height / 1000);
-    const ctsPrice = r2((stdRow.ctsRate ?? 0) * 1.2 * area);
+    const ctsPrice = r2((stdRow.ctsRate ?? 0) * area);
     if (ctsPrice >= osPrice) {
       return buildResult(r2(osPrice + CUTTING_FEE), qty, "oversized sheet + $30 cutting fee", url);
     }
