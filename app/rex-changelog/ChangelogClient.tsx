@@ -29,8 +29,20 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "13 Apr 2026",
+    entries: [
+      { time: "10:58", tag: "PRICING", title: "Fixed acrylic pricing — removed broken WooCommerce API, updated offline engine with March 2026 data; 1020×1530mm 4.5mm clear now quotes correctly at $209.18" },
+      { time: "10:44", tag: "PRICING", title: "Fixed oversized sheet handling — removed 1.2x CTS multiplier, pieces now correctly use standard sheet rates when they fit" },
+      { time: "09:37", tag: "UI", title: "Updated button contrast on mission-control page for better readability" },
+      { time: "09:37", tag: "UI", title: "Removed leading whitespace from Edge chat messages" },
+      { time: "08:33", tag: "FIX", title: "Changed price link text from 'Lock it in' to 'Order on the website now' — directs to product page instead of checkout" },
+      { time: "08:18", tag: "FIX", title: "Disabled checkout flow — commented out createCheckout tool, reverted to email-pricing model; all checkout code preserved for future re-enablement" },
+      { time: "08:07", tag: "FIX", title: "Added price disclaimer '(approx only)' to all quotes" },
+    ],
+  },
+  {
     date: "11 Apr 2026",
-    label: "Today",
+    label: "Previous",
     entries: [
       { time: "10:30", tag: "NEW", title: "Multi-item checkout — createCheckout now accepts an items array; Rex bundles all quoted items into a single WooCommerce order in one call and returns one Pay Now link; system prompt updated to instruct Rex to pass all items together" },
       { time: "11:00", tag: "NEW", title: "Direct-to-payment on Lock it in → — clicking the price link now creates a WooCommerce order server-side via /api/rex-pay and redirects straight to the order payment page; no product page visit required" },
