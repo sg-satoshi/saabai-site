@@ -13,31 +13,31 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Backgrounds — WHITE LIGHT THEME */
-  --saabai-bg:              #ffffff;
-  --saabai-surface:         #ffffff;
-  --saabai-surface-raised:  #ffffff;
-  --saabai-nav:             #ffffff;
+  /* Backgrounds — DARK THEME (original brand colours) */
+  --saabai-bg:              #0b092e;
+  --saabai-surface:         #0f0d35;
+  --saabai-surface-raised:  #13113d;
+  --saabai-nav:             #0b092e;
 
   /* Brand accents */
-  --saabai-teal:            #06b6d4;
-  --saabai-teal-bright:     #06b6d4;
-  --saabai-blue:            #0ea5e9;
-  --saabai-blue-deep:       #0284c7;
+  --saabai-teal:            #62c5d1;
+  --saabai-teal-bright:     #7dd9e3;
+  --saabai-blue:            #1f4dc5;
+  --saabai-blue-deep:       #0915a4;
 
   /* Glows */
-  --saabai-glow:            #06b6d408;   /* Very subtle cyan                 */
-  --saabai-glow-mid:        #06b6d411;   /* Light cyan tint                  */
-  --saabai-glow-strong:     #06b6d41a;   /* Slightly stronger cyan tint      */
+  --saabai-glow:            #62c5d108;   /* Very subtle teal                 */
+  --saabai-glow-mid:        #62c5d118;   /* Mid teal glow                    */
+  --saabai-glow-strong:     #62c5d130;   /* Stronger teal glow               */
 
   /* Borders */
-  --saabai-border:          #e5e7eb;     /* Light grey border                */
-  --saabai-border-accent:   #06b6d440;   /* Cyan accent border               */
+  --saabai-border:          #1e1b4b;     /* Deep indigo border               */
+  --saabai-border-accent:   #62c5d140;   /* Teal accent border               */
 
   /* Text */
-  --saabai-text:            #1f2937;     /* Dark grey/charcoal                */
-  --saabai-text-muted:      #4b5563;     /* Medium grey                      */
-  --saabai-text-dim:        #6b7280;     /* Slightly lighter grey            */
+  --saabai-text:            #ffffff;     /* White                            */
+  --saabai-text-muted:      #a5b4fc;     /* Soft indigo-white                */
+  --saabai-text-dim:        #7c8db5;     /* Dimmed blue-grey                 */
 
   /* Legacy */
   --background: var(--saabai-bg);
