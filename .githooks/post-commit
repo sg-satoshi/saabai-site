@@ -1,0 +1,12 @@
+#!/bin/bash
+# Auto-update changelog after every commit
+
+NODE_PATH=$(which node)
+if [ -z "$NODE_PATH" ]; then
+  exit 0
+fi
+
+# Run changelog update script
+$NODE_PATH "$(dirname "$0")/../scripts/update-changelog.js" 2>/dev/null
+
+exit 0

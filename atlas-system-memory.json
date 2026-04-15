@@ -1,0 +1,52 @@
+{
+  "domainIndex": {
+    "rex": [
+      "lib/rex-pricing-engine.ts",
+      "lib/rex-knowledge.ts",
+      "lib/rex-config.ts",
+      "app/api/pete-chat/route.ts",
+      "app/api/rex-leads/route.ts"
+    ],
+    "lex": [
+      "lib/lex-knowledge.ts",
+      "lib/lex-tools.ts",
+      "lib/lex-config.ts",
+      "app/api/lex-chat/route.ts"
+    ],
+    "analytics": [
+      "lib/rex-stats.ts",
+      "app/api/rex-analytics/realtime/route.ts"
+    ],
+    "portal": [
+      "lib/portal-config.ts",
+      "app/api/portal/auth/route.ts"
+    ],
+    "linkedin": [
+      "app/api/linkedin/generate/route.ts",
+      "app/api/linkedin/post/route.ts"
+    ],
+    "instagram": [
+      "app/api/instagram/generate/route.ts",
+      "app/api/instagram/post/route.ts"
+    ]
+  },
+  "fileSummaries": {
+    "lib/rex-pricing-engine.ts": "Core deterministic pricing engine for cut-to-size plastics. Calculates quotes without LLM arithmetic.",
+    "lib/rex-knowledge.ts": "Central Rex pricing and product knowledge base used for quoting and product/material logic.",
+    "lib/rex-config.ts": "Configuration layer for Rex behaviour and pricing rules.",
+    "lib/rex-stats.ts": "Rex analytics and performance tracking logic.",
+    "lib/lex-knowledge.ts": "Legal intake knowledge base for the Lex agent.",
+    "lib/lex-tools.ts": "Tools and helper functions for Lex workflows.",
+    "lib/lex-config.ts": "Configuration layer for Lex behaviour.",
+    "lib/chat-prompt.ts": "Core prompt structure used for chat agents.",
+    "lib/chat-config.ts": "Shared chat configuration.",
+    "lib/pipedrive-client.ts": "Handles CRM integration and lead capture.",
+    "lib/woo-client.ts": "WooCommerce integration for checkout and order creation.",
+    "lib/clients.ts": "Client-facing data and related logic.",
+    "lib/portal-config.ts": "Portal configuration and supporting behavior.",
+    "lib/api-response.ts": "Standardized API response helpers.",
+    "proxy.ts": "Routing and request handling middleware.",
+    "next.config.ts": "Next.js configuration for build and deployment.",
+    "vercel.json": "Deployment configuration for Vercel."
+  }
+}
