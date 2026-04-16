@@ -77,15 +77,10 @@
 /* ─── Base ───────────────────────────────────────────────────────────────── */
 
 body {
-  background: #ffffff;
-  color: #1f2937;
+  background: var(--saabai-bg);
+  color: var(--saabai-text);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Mission Control dashboard background — pure white */
-.min-h-screen { 
-  background-color: #ffffff !important;
 }
 
 /* ─── News ticker animation ─────────────────────────────────────────────── */
