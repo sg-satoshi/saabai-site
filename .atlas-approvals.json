@@ -1,9 +1,0 @@
-{
-  "autoApprove": {
-    "PATCH": true,
-    "WRITE": false,
-    "RUN_SAFE": true,
-    "GIT_PUSH": true,
-    "DEPLOY": true
-  }
-}
