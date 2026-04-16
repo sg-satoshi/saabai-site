@@ -44,4 +44,7 @@ next-env.d.ts
 .atlas-memory.json
 .atlas-cache.json
 .atlas-approvals.json
+.atlas-system-memory.json.atlas-memory.json
+.atlas-cache.json
+.atlas-approvals.json
 .atlas-system-memory.json
