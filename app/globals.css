@@ -15,7 +15,7 @@
 :root {
   /* Backgrounds — DARK THEME (original brand colours) */
   --saabai-bg:              #0b092e;
-  --saabai-surface:         #0f0d35;
+  --saabai-surface:         #14123a;
   --saabai-surface-raised:  #13113d;
   --saabai-nav:             #0b092e;
 
@@ -26,16 +26,16 @@
   --saabai-blue-deep:       #0915a4;
 
   /* Glows */
-  --saabai-glow:            #62c5d108;   /* Very subtle teal                 */
+  --saabai-glow:            rgba(98, 197, 209, 0.35);   /* Very subtle teal                 */
   --saabai-glow-mid:        #62c5d118;   /* Mid teal glow                    */
   --saabai-glow-strong:     #62c5d130;   /* Stronger teal glow               */
 
   /* Borders */
-  --saabai-border:          #1e1b4b;     /* Deep indigo border               */
+  --saabai-border:          rgba(98, 197, 209, 0.22);     /* Deep indigo border               */
   --saabai-border-accent:   #62c5d140;   /* Teal accent border               */
 
   /* Text */
-  --saabai-text:            var(--saabai-surface);     /* White                            */
+  --saabai-text:            #ffffff;     /* White                            */
   --saabai-text-muted:      #a5b4fc;     /* Soft indigo-var(--saabai-surface)                */
   --saabai-text-dim:        #7c8db5;     /* Dimmed blue-grey                 */
 

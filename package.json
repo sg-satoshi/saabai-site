@@ -2,32 +2,39 @@
   "name": "saabai-site",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+
+  "bin": {
+    "atlas": "./atlas/atlas.ts"
+  },
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+
+    "atlas": "tsx ./atlas/atlas.ts",
+    "atlas:dev": "tsx watch ./atlas/atlas.ts"
   },
+
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.58",
-    "@ai-sdk/google": "^3.0.58",
-    "@ai-sdk/openai": "^3.0.41",
-    "@ai-sdk/react": "^3.0.118",
+    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/google": "^3.0.64",
+    "@ai-sdk/openai": "^3.0.53",
+    "@ai-sdk/react": "^3.0.166",
     "@heygen/streaming-avatar": "^2.1.0",
     "@upstash/redis": "^1.37.0",
-    "ai": "^6.0.116",
+    "ai": "^6.0.164",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.8.0",
     "mammoth": "^1.12.0",
     "next": "16.1.6",
     "pdf-parse": "^2.4.5",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "resend": "^6.9.3",
-    "tsx": "^4.21.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^6.12.0",
     "zod": "^4.3.6"
   },
+
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -36,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4",
     "typescript": "^5"
   }
 }
