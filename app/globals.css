@@ -9,7 +9,7 @@
      Helix teal:       #62c5d1  (primary brand accent)
      Mid blue:         #1f4dc5  (secondary accent)
      Deep blue:        #0915a4  (gradient / glow anchor)
-     Text:             #ffffff  (wordmark)
+     Text:             var(--saabai-surface)  (wordmark)
    ────────────────────────────────────────────────────────────────────────── */
 
 :root {
@@ -35,8 +35,8 @@
   --saabai-border-accent:   #62c5d140;   /* Teal accent border               */
 
   /* Text */
-  --saabai-text:            #ffffff;     /* White                            */
-  --saabai-text-muted:      #a5b4fc;     /* Soft indigo-white                */
+  --saabai-text:            var(--saabai-surface);     /* White                            */
+  --saabai-text-muted:      #a5b4fc;     /* Soft indigo-var(--saabai-surface)                */
   --saabai-text-dim:        #7c8db5;     /* Dimmed blue-grey                 */
 
   /* Legacy */
