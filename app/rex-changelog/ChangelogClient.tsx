@@ -28,6 +28,13 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 };
 
 const CHANGELOG: Day[] = [
+
+  {
+    date: "17 Apr 2026",
+    entries: [
+      { time: "01:09", tag: "IMPROVEMENT", title: "atlas hardening, safe patch flow, theme token updates" }
+    ],
+  },
   {
     date: "13 Apr 2026",
     entries: [
