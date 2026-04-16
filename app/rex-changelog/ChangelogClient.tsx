@@ -29,12 +29,6 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "17 Apr 2026",
-    entries: [
-      { time: "01:09", tag: "UPDATE", title: "atlas hardening, safe patch flow, theme token updates" }
-    ],
-  },
-  {
     date: "13 Apr 2026",
     entries: [
       { time: "10:58", tag: "PRICING", title: "Fixed acrylic pricing — removed broken WooCommerce API, updated offline engine with March 2026 data; 1020×1530mm 4.5mm clear now quotes correctly at $209.18" },
