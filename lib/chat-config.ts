@@ -12,7 +12,7 @@
  *   DEFAULT_CHAT_MODEL=google:gemini-2-0-flash-001
  *   PREMIUM_CHAT_MODEL=google:gemini-2-0-pro-001
  *
- * Supported providers: "anthropic", "openai", "google"
+ * Supported providers: "anthropic", "openai", "google", "xai"
  * The API route selects tier based on the `tier` field in the request body.
  * Default tier is "default" (cost-efficient). Use "premium" for qualified leads.
  */
@@ -20,6 +20,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
+import { xai } from "@ai-sdk/xai";
 import type { LanguageModel } from "ai";
 
 function resolveModel(envKey: string, fallback: string): LanguageModel {
@@ -41,10 +42,12 @@ function resolveModel(envKey: string, fallback: string): LanguageModel {
       return openai(modelId);
     case "google":
       return google(modelId);
+    case "xai":
+      return xai(modelId);
     default:
       throw new Error(
         `[chat-config] Unknown provider "${provider}" in ${envKey}="${value}". ` +
-          `Supported: "anthropic", "openai", "google".`
+          `Supported: "anthropic", "openai", "google", "xai".`
       );
   }
 }
