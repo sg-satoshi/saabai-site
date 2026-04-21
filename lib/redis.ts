@@ -337,13 +337,15 @@ export async function getGrowthStats(): Promise<GrowthStats> {
 // EDGE MEMORY
 // =========================
 
+const EDGE_PROFILE_ID = "shane";
+
 export async function saveEdgeProfile(
   profile: Omit<EdgeProfile, "id" | "createdAt"> & { id?: string }
 ): Promise<string | null> {
   const client = getRedis();
   if (!client) return null;
 
-  const id = profile.id ?? makeId("edge_profile");
+  const id = profile.id ?? EDGE_PROFILE_ID;
 
   await client.hset(`edge:profile:${id}`, {
     id,
@@ -356,9 +358,11 @@ export async function saveEdgeProfile(
 
 export async function getEdgeProfile(id?: string): Promise<EdgeProfile | null> {
   const client = getRedis();
-  if (!client || !id) return null;
+  if (!client) return null;
 
-  const raw = await client.hgetall<Record<string, string>>(`edge:profile:${id}`);
+  const resolvedId = id ?? EDGE_PROFILE_ID;
+
+  const raw = await client.hgetall<Record<string, string>>(`edge:profile:${resolvedId}`);
   if (!raw || !raw.id) return null;
 
   return {
