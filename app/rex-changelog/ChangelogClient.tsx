@@ -30,17 +30,28 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "21 Apr 2026",
+    date: "22 Apr 2026",
     entries: [
-      { time: "19:15", tag: "UPDATE", title: "Memory system optimization, active-projects sync, and system stability updates (Apr 17-21)" },
-      { time: "20:34", tag: "UPDATE", title: "Force rebuild" }
+      { time: "09:00", tag: "DEPLOYMENT", title: "Unblocked Vercel deploys — swapped ioredis (missing dep) for @upstash/redis across redis.ts, subscribers.ts, and portal login; all 4 failing builds since Apr 21 now resolve" },
+      { time: "09:00", tag: "FIX", title: "Fixed redis.set() EX argument for @upstash/redis — portal magic-link tokens now expire correctly after 15 minutes" },
+      { time: "09:00", tag: "FIX", title: "Excluded atlas/ scripts from Next.js TypeScript compilation — prevents atlas tool conflicts from breaking production builds" },
     ],
   },
-
+  {
+    date: "21 Apr 2026",
+    entries: [
+      { time: "19:15", tag: "NEW", title: "Redis conversation persistence — Rex now saves every conversation (threadId, projectId, messages, qualification score, outcome, page context) to Upstash Redis; powers analytics, lead tracking, and future returning-visitor memory" },
+      { time: "19:15", tag: "NEW", title: "Edge memory system — Edge coach now persists profiles and session history in Redis; remembers Shane's commitments, mood, wins, and blockers across sessions; last 5 sessions injected into every Edge conversation" },
+      { time: "19:15", tag: "NEW", title: "Instagram & LinkedIn scheduling queue — posts queue to Redis pending list; cron jobs pick up and send at scheduled time; sent posts archived with timestamp" },
+      { time: "19:15", tag: "NEW", title: "Nurture email tracking — lead nurture records stored in Redis with day-2/5/10 send flags; cron prevents duplicate sends; full lead lifecycle traceable" },
+      { time: "19:15", tag: "IMPROVEMENT", title: "Rex chat route hardened — now passes threadId and projectId on every message; conversations linked to session for analytics and transcript retrieval" },
+      { time: "19:15", tag: "NEW", title: "Growth stats endpoint — /api/growth returns conversation count, lead count, and qualified lead count pulled live from Redis" },
+    ],
+  },
   {
     date: "17 Apr 2026",
     entries: [
-      { time: "01:09", tag: "IMPROVEMENT", title: "atlas hardening, safe patch flow, theme token updates" }
+      { time: "01:09", tag: "UI", title: "Updated CSS theme tokens — tightened brand colour variables in globals.css for consistent rendering across dark and light admin views" },
     ],
   },
   {
