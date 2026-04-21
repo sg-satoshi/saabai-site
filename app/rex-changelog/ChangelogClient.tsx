@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import RexNav from "../components/RexNav";
 
-type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT" | "DEBUG";
+type Tag = "NEW" | "FIX" | "IMPROVEMENT" | "PRICING" | "UI" | "DEPLOYMENT" | "DEBUG" | "UPDATE";
 
 interface Entry {
   time: string;
@@ -25,13 +25,15 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
   UI:          { bg: "rgba(244,114,182,0.18)", text: "#ffffff", border: "rgba(244,114,182,0.35)" },
   DEPLOYMENT:  { bg: "rgba(251,146,60,0.18)",  text: "#ffffff", border: "rgba(251,146,60,0.35)" },
   DEBUG:       { bg: "rgba(156,163,175,0.15)", text: "#ffffff", border: "rgba(156,163,175,0.30)" },
+  UPDATE:      { bg: "rgba(59,130,246,0.18)",  text: "#ffffff", border: "rgba(59,130,246,0.35)" },
 };
 
 const CHANGELOG: Day[] = [
   {
     date: "21 Apr 2026",
     entries: [
-      { time: "19:15", tag: "UPDATE", title: "Memory system optimization, active-projects sync, and system stability updates (Apr 17-21)" }
+      { time: "19:15", tag: "UPDATE", title: "Memory system optimization, active-projects sync, and system stability updates (Apr 17-21)" },
+      { time: "20:34", tag: "UPDATE", title: "Force rebuild" }
     ],
   },
 
