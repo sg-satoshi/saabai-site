@@ -32,9 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
-      { time: "05:34", tag: "FIX", title: "fix: rewrite changelog auto-update script — regex was broken, never inserted entries" },
-      { time: "05:34", tag: "FIX", title: "fix: rewrite changelog auto-update script — regex was broken, never inserted entries" },
-      { time: "05:33", tag: "DEBUG", title: "test: hook verification" },
+      { time: "05:34", tag: "FIX", title: "Rewrote changelog auto-update script — regex was broken, entries were never being inserted" },
       { time: "09:00", tag: "DEPLOYMENT", title: "Unblocked Vercel deploys — swapped ioredis (missing dep) for @upstash/redis across redis.ts, subscribers.ts, and portal login; all 4 failing builds since Apr 21 now resolve" },
       { time: "09:00", tag: "FIX", title: "Fixed redis.set() EX argument for @upstash/redis — portal magic-link tokens now expire correctly after 15 minutes" },
       { time: "09:00", tag: "FIX", title: "Excluded atlas/ scripts from Next.js TypeScript compilation — prevents atlas tool conflicts from breaking production builds" },
