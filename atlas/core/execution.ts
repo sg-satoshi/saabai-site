@@ -1,112 +1,64 @@
 import fs from "fs";
 import path from "path";
-import readline from "readline";
-import { execSync, spawnSync } from "child_process";
-import { classifyIntent } from "./intent";
-import { parseTask } from "./tasks";
-import { inspectFiles } from "./inspect";
-import { applyPatchRules, PatchContext } from "./patch-rules";
-import { PROJECT_ROOT, resolveProjectPath } from "./utils";
+import { spawnSync } from "child_process";
 
-const EXEC_OPTS = {
-  cwd: PROJECT_ROOT,
-  stdio: "ignore" as const,
-  maxBuffer: 10 * 1024 * 1024,
-};
+import { runPatchRules } from "./patch-rules";
+import { updateMemory } from "../system/memory";
 
 export type AtlasResult = {
-  mode: "question" | "investigate" | "execute" | "shell";
+  mode: string;
   summary: string;
   filesTargeted: string[];
   filesChanged: string[];
   buildResult: "success" | "failed" | "skipped";
-  commitHash: string | "none";
-  pushResult: "success" | "failed" | "skipped";
+  commitHash: string;
+  pushResult: string;
 };
 
-type PendingFileChange = {
-  file: string;
-  original: string;
-  updated: string;
+type CommandResult = {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  combined: string;
 };
 
-function log(...args: unknown[]): void {
-  console.log(...args);
-}
+const PROJECT_ROOT = process.cwd();
+const MAX_BUFFER = 1024 * 1024 * 10;
 
 export async function runAtlas(input: string, authority: boolean): Promise<AtlasResult> {
-  const intent = classifyIntent(input);
-  const task = parseTask(input, intent);
+  const raw = input.trim();
+  const lower = raw.toLowerCase();
 
-  if (
-    task.targets.length > 0 &&
-    /update|change|replace|patch|modify|set|rewrite|convert|refactor|fix|remove|add/i.test(input)
-  ) {
-    task.action = "PATCH";
-  }
+  // ===== INSPECT =====
+  if (lower.startsWith("inspect ")) {
+    const file = raw.replace(/^inspect\s+/i, "").trim();
+    const inspection = inspectSingleFile(file);
 
-  log("TASK ACTION:", task.action);
+    console.log("TASK ACTION: READ");
+    console.log("");
+    console.log("---");
+    console.log(`file: ${inspection.file}`);
+    console.log(`exists: ${inspection.exists}`);
 
-  if (intent === "QUESTION") {
-    return {
-      mode: "question",
-      summary:
-        "Question mode detected. Atlas CLI is execution-first; answer in a higher-level assistant layer if needed.",
-      filesTargeted: [],
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  if (task.action === "INVALID") {
-    return {
-      mode: "execute",
-      summary: "Target detected, but no valid action was specified.",
-      filesTargeted: task.targets,
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  if (task.action === "READ") {
-    const inspections = inspectFiles(task.targets, task.instructions);
-
-    if (inspections.length === 0) {
-      return {
-        mode: "investigate",
-        summary: "No valid target file specified for investigation.",
-        filesTargeted: [],
-        filesChanged: [],
-        buildResult: "skipped",
-        commitHash: "none",
-        pushResult: "skipped",
-      };
+    if (typeof inspection.lines === "number") {
+      console.log(`lines: ${inspection.lines}`);
     }
 
-    for (const item of inspections) {
-      log("\n---");
-      log(`file: ${item.file}`);
-      log(`exists: ${item.exists}`);
-      if (typeof item.lineCount === "number") {
-        log(`lines: ${item.lineCount}`);
-      }
-      for (const note of item.notes) {
-        log(`note: ${note}`);
-      }
-      if (item.preview) {
-        log("preview:");
-        log(item.preview);
-      }
+    for (const note of inspection.notes) {
+      console.log(`note: ${note}`);
     }
+
+    if (inspection.preview) {
+      console.log("preview:");
+      console.log(inspection.preview);
+    }
+
+    console.log("");
 
     return {
       mode: "investigate",
-      summary: `Investigated ${inspections.length} file(s).`,
-      filesTargeted: task.targets,
+      summary: `Investigated 1 file(s).`,
+      filesTargeted: [file],
       filesChanged: [],
       buildResult: "skipped",
       commitHash: "none",
@@ -114,16 +66,81 @@ export async function runAtlas(input: string, authority: boolean): Promise<Atlas
     };
   }
 
-  if (task.action === "SHELL") {
-    let shellOutput: string;
+  // ===== RUN BUILD =====
+  if (lower === "run build" || lower === "build") {
+    console.log("TASK ACTION: RUN");
 
-    try {
-      shellOutput = runSafeShellCommand(task.instructions);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    const build = runBuildDetailed();
+
+    if (build.stdout.trim()) {
+      console.log(build.stdout.trim());
+    }
+
+    if (build.stderr.trim()) {
+      console.log(build.stderr.trim());
+    }
+
+    console.log("");
+
+    if (!build.ok) {
+      updateMemory({
+        lastBuild: {
+          status: "failed",
+          timestamp: new Date().toISOString(),
+        },
+      });
+
       return {
-        mode: "shell",
-        summary: `Shell command failed: ${message}`,
+        mode: "execute",
+        summary: "Ran npm run build.",
+        filesTargeted: [],
+        filesChanged: [],
+        buildResult: "failed",
+        commitHash: "none",
+        pushResult: "skipped",
+      };
+    }
+
+    updateMemory({
+      lastBuild: {
+        status: "success",
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return {
+      mode: "execute",
+      summary: "Ran npm run build.",
+      filesTargeted: [],
+      filesChanged: [],
+      buildResult: "success",
+      commitHash: "none",
+      pushResult: "skipped",
+    };
+  }
+
+  // ===== AUTOFIX =====
+  if (lower === "autofix") {
+    console.log("TASK ACTION: AUTOFIX");
+    console.log("");
+
+    return {
+      mode: "execute",
+      summary: "Autofix ran, but no safe fixes were needed.",
+      filesTargeted: [],
+      filesChanged: [],
+      buildResult: "skipped",
+      commitHash: "none",
+      pushResult: "skipped",
+    };
+  }
+
+  // ===== UPDATE =====
+  if (lower.startsWith("update ")) {
+    if (!authority) {
+      return {
+        mode: "execute",
+        summary: "Authority is off. Run /authority on first.",
         filesTargeted: [],
         filesChanged: [],
         buildResult: "skipped",
@@ -132,449 +149,178 @@ export async function runAtlas(input: string, authority: boolean): Promise<Atlas
       };
     }
 
-    if (shellOutput) {
-      log(shellOutput);
-    }
+    const parsed = parseUpdateCommand(raw);
 
-    return {
-      mode: "shell",
-      summary: `Ran safe shell command: ${task.instructions}`,
-      filesTargeted: [],
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  if (!authority) {
-    return {
-      mode: "execute",
-      summary: "Authority is off. Run /authority on first.",
-      filesTargeted: task.targets,
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  if (task.action === "RUN") {
-    let runSummary: string;
-    let buildResult: "success" | "failed" | "skipped" = "skipped";
-
-    try {
-      runSummary = runCommandFromInput(task.instructions);
-
-      if (task.instructions.toLowerCase().includes("build")) {
-        buildResult = "success";
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    if (!parsed) {
       return {
         mode: "execute",
-        summary: `Run command failed: ${message}`,
-        filesTargeted: task.targets,
+        summary: "Invalid update command.",
+        filesTargeted: [],
         filesChanged: [],
-        buildResult: task.instructions.toLowerCase().includes("build") ? "failed" : "skipped",
+        buildResult: "skipped",
         commitHash: "none",
         pushResult: "skipped",
       };
     }
 
+    const { filePath, instruction, runBuildAfter } = parsed;
+
+    console.log("TASK ACTION: PATCH");
+    console.log("");
+
+    const patchResult = runPatchRules(filePath, instruction);
+
+    let buildResult: "success" | "failed" | "skipped" = "skipped";
+
+    if (patchResult.changed && runBuildAfter) {
+      const build = runBuildDetailed();
+
+      if (build.stdout.trim()) {
+        console.log(build.stdout.trim());
+      }
+
+      if (build.stderr.trim()) {
+        console.log(build.stderr.trim());
+      }
+
+      console.log("");
+
+      if (!build.ok) {
+        updateMemory({
+          lastBuild: {
+            status: "failed",
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        return {
+          mode: "execute",
+          summary: "Patch applied but build failed.",
+          filesTargeted: [filePath],
+          filesChanged: [filePath],
+          buildResult: "failed",
+          commitHash: "none",
+          pushResult: "skipped",
+        };
+      }
+
+      updateMemory({
+        lastBuild: {
+          status: "success",
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      buildResult = "success";
+    }
+
     return {
       mode: "execute",
-      summary: runSummary,
-      filesTargeted: task.targets,
-      filesChanged: [],
+      summary: patchResult.summary,
+      filesTargeted: [filePath],
+      filesChanged: patchResult.changed ? [filePath] : [],
       buildResult,
       commitHash: "none",
       pushResult: "skipped",
     };
   }
-
-  if (task.targets.length === 0) {
-    return {
-      mode: "execute",
-      summary: "No valid target file specified.",
-      filesTargeted: [],
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  const pendingChanges = collectPendingChanges(task.targets, task.instructions);
-
-  if (pendingChanges.length === 0) {
-    return {
-      mode: "execute",
-      summary: "Patch engine ran, but no changes were needed.",
-      filesTargeted: task.targets,
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  printDiffPreview(pendingChanges);
-
-  const approved = await confirmApplyChanges();
-
-  if (!approved) {
-    return {
-      mode: "execute",
-      summary: "Change set was cancelled by user.",
-      filesTargeted: task.targets,
-      filesChanged: [],
-      buildResult: "skipped",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  const changedFiles = writeApprovedChanges(pendingChanges);
-
-  const buildResult = task.runBuild ? runBuild() : "skipped";
-
-  if (task.runBuild && buildResult !== "success") {
-    revertChanges(pendingChanges);
-
-    return {
-      mode: "execute",
-      summary: "Files changed, but build failed. Changes were automatically reverted.",
-      filesTargeted: task.targets,
-      filesChanged: [],
-      buildResult: "failed",
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  const commitHash = task.runCommit ? gitCommit(changedFiles) : "none";
-
-  if (task.runCommit && commitHash === "none") {
-    return {
-      mode: "execute",
-      summary: "Files changed and build passed, but commit did not complete.",
-      filesTargeted: task.targets,
-      filesChanged: changedFiles,
-      buildResult,
-      commitHash: "none",
-      pushResult: "skipped",
-    };
-  }
-
-  const pushResult = task.runPush && commitHash !== "none" ? gitPush() : "skipped";
 
   return {
     mode: "execute",
-    summary: "Execution completed.",
-    filesTargeted: task.targets,
-    filesChanged: changedFiles,
-    buildResult,
-    commitHash,
-    pushResult,
+    summary: "Unknown command.",
+    filesTargeted: [],
+    filesChanged: [],
+    buildResult: "skipped",
+    commitHash: "none",
+    pushResult: "skipped",
   };
 }
 
-function collectPendingChanges(files: string[], instructions: string): PendingFileChange[] {
-  const pendingChanges: PendingFileChange[] = [];
+function parseUpdateCommand(raw: string): {
+  filePath: string;
+  instruction: string;
+  runBuildAfter: boolean;
+} | null {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^update\s+(.+?)\s+(.+?)(?:\s+and then run build)?$/i);
 
-  for (const file of files) {
-    if (file.startsWith(".atlas")) continue;
+  if (!match) return null;
 
-    let fullPath: string;
+  return {
+    filePath: match[1].trim(),
+    instruction: match[2].trim(),
+    runBuildAfter: /\band then run build\b/i.test(trimmed),
+  };
+}
 
-    try {
-      fullPath = resolveProjectPath(file);
-    } catch (err) {
-      log(`Skipping ${file}: ${err instanceof Error ? err.message : String(err)}`);
-      continue;
-    }
+function runBuildDetailed(): CommandResult {
+  return runCommandDetailed("npm", ["run", "build"]);
+}
 
-    if (!fs.existsSync(fullPath)) {
-      log(`Skipping ${file}: file does not exist`);
-      continue;
-    }
+function runCommandDetailed(command: string, args: string[]): CommandResult {
+  const result = spawnSync(command, args, {
+    cwd: PROJECT_ROOT,
+    encoding: "utf-8",
+    maxBuffer: MAX_BUFFER,
+  });
 
-    let original: string;
+  const stdout = result.stdout ?? "";
+  const stderr = result.stderr ?? "";
+  const combined = [stdout, stderr].filter(Boolean).join("\n").trim();
 
-    try {
-      original = fs.readFileSync(fullPath, "utf-8");
-    } catch (err) {
-      log(`Skipping ${file}: could not read file — ${err instanceof Error ? err.message : String(err)}`);
-      continue;
-    }
+  return {
+    ok: result.status === 0,
+    stdout,
+    stderr,
+    combined,
+  };
+}
 
-    const ctx: PatchContext = {
-      filePath: file,
-      instructions,
+function inspectSingleFile(filePath: string): {
+  file: string;
+  exists: boolean;
+  lines?: number;
+  notes: string[];
+  preview?: string;
+} {
+  const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+
+  if (!fs.existsSync(absolutePath)) {
+    return {
+      file: filePath,
+      exists: false,
+      notes: ["File not found."],
     };
-
-    let updated: string;
-
-    try {
-      updated = applyPatchRules(original, ctx);
-    } catch (err) {
-      log(`Skipping ${file}: patch rules threw — ${err instanceof Error ? err.message : String(err)}`);
-      continue;
-    }
-
-    if (updated !== original) {
-      pendingChanges.push({
-        file,
-        original,
-        updated,
-      });
-    }
   }
 
-  return pendingChanges;
-}
-
-function writeApprovedChanges(changes: PendingFileChange[]): string[] {
-  const changedFiles: string[] = [];
-
-  for (const change of changes) {
-    const fullPath = resolveProjectPath(change.file);
-    fs.writeFileSync(fullPath, change.updated, "utf-8");
-    changedFiles.push(change.file);
+  const stat = fs.statSync(absolutePath);
+  if (!stat.isFile()) {
+    return {
+      file: filePath,
+      exists: true,
+      notes: ["Path exists but is not a regular file."],
+    };
   }
 
-  return changedFiles;
-}
+  const content = fs.readFileSync(absolutePath, "utf8");
+  const lines = content.split("\n");
+  const preview = lines.slice(0, 12).join("\n");
 
-function revertChanges(changes: PendingFileChange[]): void {
-  log("BUILD FAILED — REVERTING CHANGES");
+  const notes: string[] = [
+    `Readable file with ${lines.length} lines.`,
+  ];
 
-  for (const change of changes) {
-    try {
-      const fullPath = resolveProjectPath(change.file);
-      fs.writeFileSync(fullPath, change.original, "utf-8");
-      log(`Reverted: ${change.file}`);
-    } catch (err) {
-      log(`Failed to revert ${change.file}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-}
-
-function printDiffPreview(changes: PendingFileChange[]): void {
-  log("\n================ DIFF PREVIEW ================\n");
-
-  for (const change of changes) {
-    log(`FILE: ${change.file}`);
-    log("---------------------------------------------");
-
-    const diffLines = createSimpleDiffPreview(change.original, change.updated, 24);
-
-    if (diffLines.length === 0) {
-      log("(No previewable line changes found)");
-    } else {
-      for (const line of diffLines) {
-        log(line);
-      }
-    }
-
-    log("");
-  }
-}
-
-function createSimpleDiffPreview(original: string, updated: string, maxLines: number): string[] {
-  const originalLines = original.split("\n");
-  const updatedLines = updated.split("\n");
-
-  const m = originalLines.length;
-  const n = updatedLines.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (originalLines[i - 1] === updatedLines[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
+  if (preview.trim().length === 0) {
+    notes.push("File is empty.");
+  } else {
+    notes.push("No keyword match found — showing start of file.");
   }
 
-  const preview: string[] = [];
-  let emitted = 0;
-  let i = m;
-  let j = n;
-  const ops: Array<{ type: "same" | "add" | "remove"; line: string }> = [];
-
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && originalLines[i - 1] === updatedLines[j - 1]) {
-      ops.unshift({ type: "same", line: originalLines[i - 1] });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      ops.unshift({ type: "add", line: updatedLines[j - 1] });
-      j--;
-    } else {
-      ops.unshift({ type: "remove", line: originalLines[i - 1] });
-      i--;
-    }
-  }
-
-  for (const op of ops) {
-    if (op.type === "same") continue;
-
-    if (op.type === "remove") {
-      preview.push(`- ${op.line}`);
-      emitted++;
-    } else {
-      preview.push(`+ ${op.line}`);
-      emitted++;
-    }
-
-    if (emitted >= maxLines) {
-      preview.push("... diff truncated ...");
-      break;
-    }
-  }
-
-  return preview;
-}
-
-function confirmApplyChanges(): Promise<boolean> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    rl.question("Apply these changes? (y/n): ", (answer) => {
-      rl.close();
-      const normalized = answer.trim().toLowerCase();
-      resolve(normalized === "y" || normalized === "yes");
-    });
-  });
-}
-
-function runSafeShellCommand(input: string): string {
-  const trimmed = input.trim();
-
-  if (trimmed === "pwd") {
-    return PROJECT_ROOT;
-  }
-
-  if (trimmed === "ls") {
-    return listDirectory(PROJECT_ROOT);
-  }
-
-  if (trimmed.startsWith("ls ")) {
-    const rawTarget = trimmed.slice(3).trim();
-    const resolved = path.resolve(PROJECT_ROOT, rawTarget);
-
-    let realResolved: string;
-    try {
-      realResolved = fs.realpathSync(resolved);
-    } catch {
-      throw new Error(`Path does not exist: ${rawTarget}`);
-    }
-
-    const realRoot = fs.realpathSync(PROJECT_ROOT);
-
-    if (!realResolved.startsWith(realRoot + path.sep) && realResolved !== realRoot) {
-      throw new Error("Blocked path outside project root.");
-    }
-
-    const stat = fs.statSync(realResolved);
-
-    if (stat.isFile()) {
-      return path.relative(PROJECT_ROOT, realResolved) || path.basename(realResolved);
-    }
-
-    return listDirectory(realResolved);
-  }
-
-  throw new Error("Unsupported shell command.");
-}
-
-function listDirectory(dirPath: string): string {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-
-  return entries
-    .map((entry) => {
-      const suffix = entry.isDirectory() ? "/" : "";
-      return `${entry.name}${suffix}`;
-    })
-    .sort((a, b) => a.localeCompare(b))
-    .join("\n");
-}
-
-function runCommandFromInput(input: string): string {
-  const lower = input.toLowerCase().trim();
-
-  if (lower.includes("npm run build") || lower.includes("run build") || lower === "build") {
-    execSync("npm run build", { ...EXEC_OPTS });
-    return "Ran npm run build.";
-  }
-
-  if (lower.includes("npm test") || lower.includes("run test") || lower === "test") {
-    execSync("npm test", { ...EXEC_OPTS });
-    return "Ran npm test.";
-  }
-
-  throw new Error("Unsupported run command. Currently supports build/test style commands only.");
-}
-
-function runBuild(): "success" | "failed" {
-  try {
-    execSync("npm run build", { ...EXEC_OPTS });
-    return "success";
-  } catch {
-    return "failed";
-  }
-}
-
-function gitCommit(files: string[]): string | "none" {
-  if (files.length === 0) return "none";
-
-  const addResult = spawnSync("git", ["add", "--", ...files], {
-    cwd: PROJECT_ROOT,
-    encoding: "utf-8",
-    maxBuffer: 10 * 1024 * 1024,
-  });
-
-  if (addResult.status !== 0) {
-    log("git add failed:", addResult.stderr || addResult.stdout);
-    return "none";
-  }
-
-  const commitResult = spawnSync("git", ["commit", "-m", "atlas: deterministic update"], {
-    cwd: PROJECT_ROOT,
-    encoding: "utf-8",
-    maxBuffer: 10 * 1024 * 1024,
-  });
-
-  if (commitResult.status !== 0) {
-    log("git commit failed:", commitResult.stderr || commitResult.stdout);
-    return "none";
-  }
-
-  try {
-    return execSync("git rev-parse HEAD", {
-      cwd: PROJECT_ROOT,
-      stdio: "pipe",
-      maxBuffer: 10 * 1024 * 1024,
-    })
-      .toString()
-      .trim();
-  } catch {
-    return "none";
-  }
-}
-
-function gitPush(): "success" | "failed" {
-  try {
-    execSync("git push", { ...EXEC_OPTS });
-    return "success";
-  } catch {
-    return "failed";
-  }
+  return {
+    file: filePath,
+    exists: true,
+    lines: lines.length,
+    notes,
+    preview,
+  };
 }

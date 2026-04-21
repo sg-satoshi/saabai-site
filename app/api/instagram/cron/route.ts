@@ -1,72 +1,96 @@
-import { getPendingInstagramPosts, markInstagramPostSent } from "../../../../lib/redis";
+import {
+  getPendingInstagramPosts,
+  markInstagramPostSent,
+} from "../../../../lib/redis";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
-const IG_API = "https://graph.facebook.com/v22.0";
+export async function GET() {
+  const webhookUrl = process.env.MAKE_INSTAGRAM_WEBHOOK_URL;
 
-// Called by Vercel Cron — see vercel.json
-export async function GET(req: Request) {
-  // Verify cron secret
-  const auth = req.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (secret && auth !== `Bearer ${secret}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!webhookUrl) {
+    return Response.json(
+      { ok: false, error: "MAKE_INSTAGRAM_WEBHOOK_URL is not set" },
+      { status: 500 }
+    );
   }
 
-  const igUserId    = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID;
-  const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+  // AEST-style date (rough but consistent)
+  const todayStr = new Date(Date.now() + 10 * 3600 * 1000)
+    .toISOString()
+    .slice(0, 10);
 
-  if (!igUserId || !accessToken) {
-    console.log("[ig-cron] Instagram env vars not set — skipping");
-    return Response.json({ ok: true, skipped: true, reason: "Instagram not configured" });
-  }
+  const pending = await getPendingInstagramPosts();
 
-  const todayStr = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10); // AEST
-  const pending  = await getPendingInstagramPosts();
-  const due      = pending.filter(p => p.scheduledFor <= todayStr);
+  // ✅ Safe guard for optional scheduledFor
+  const due = pending.filter(
+    (p) => typeof p.scheduledFor === "string" && p.scheduledFor <= todayStr
+  );
 
   if (!due.length) {
-    return Response.json({ ok: true, posted: 0, message: "Nothing due" });
+    return Response.json({
+      ok: true,
+      posted: 0,
+      message: "Nothing due",
+    });
   }
 
-  let posted = 0;
-  let failed = 0;
+  const results: Array<{
+    id: string;
+    ok: boolean;
+    status?: number;
+    error?: string;
+  }> = [];
 
   for (const post of due) {
     try {
-      // Create container
-      const containerRes = await fetch(`${IG_API}/${igUserId}/media`, {
+      const res = await fetch(webhookUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          image_url: post.imageUrl,
-          caption: post.caption,
-          access_token: accessToken,
+          id: post.id,
+          ...post.payload,
         }),
       });
-      const containerData = await containerRes.json();
-      if (!containerData.id) throw new Error(containerData.error?.message ?? "Container failed");
 
-      // Publish
-      const publishRes = await fetch(`${IG_API}/${igUserId}/media_publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creation_id: containerData.id,
-          access_token: accessToken,
-        }),
+      if (!res.ok) {
+        const text = await res.text();
+        results.push({
+          id: post.id,
+          ok: false,
+          status: res.status,
+          error: text || `Webhook failed (${res.status})`,
+        });
+        continue;
+      }
+
+      await markInstagramPostSent(post.id);
+
+      results.push({
+        id: post.id,
+        ok: true,
+        status: res.status,
       });
-      const publishData = await publishRes.json();
-      if (!publishData.id) throw new Error(publishData.error?.message ?? "Publish failed");
-
-      await markInstagramPostSent(post.id, publishData.id);
-      console.log(`[ig-cron] posted id=${post.id} igPostId=${publishData.id}`);
-      posted++;
     } catch (err) {
-      console.error(`[ig-cron] failed id=${post.id}:`, err);
-      failed++;
+      results.push({
+        id: post.id,
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
-  return Response.json({ ok: true, posted, failed, total: due.length });
+  const posted = results.filter((r) => r.ok).length;
+  const failed = results.filter((r) => !r.ok).length;
+
+  return Response.json({
+    ok: failed === 0,
+    posted,
+    failed,
+    totalDue: due.length,
+    results,
+  });
 }

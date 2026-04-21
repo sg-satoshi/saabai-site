@@ -3,7 +3,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { saveNurtureRecord } from "../../../lib/redis";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

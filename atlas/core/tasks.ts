@@ -1,7 +1,7 @@
 import { Intent } from "./intent";
 import { extractTargetFiles } from "./utils";
 
-export type TaskAction = "PATCH" | "READ" | "RUN" | "SHELL" | "INVALID";
+export type TaskAction = "PATCH" | "READ" | "RUN" | "SHELL" | "INVALID" | "AUTOFIX";
 
 export type Task = {
   action: TaskAction;
@@ -12,39 +12,7 @@ export type Task = {
   runPush: boolean;
 };
 
-// Verbs that signal a file mutation. Checked before RUN so patch instructions
-// like "fix the build script" don't fall through to the RUN branch.
-const PATCH_VERBS = [
-  "update",
-  "change",
-  "replace",
-  "patch",
-  "modify",
-  "set",
-  "rewrite",
-  "convert",
-  "refactor",
-  "fix",
-  "remove",
-  "add",
-] as const;
-
-// Verbs/keywords that signal running a command rather than editing a file.
-const RUN_KEYWORDS = [
-  "npm run",
-  "pnpm ",
-  "yarn ",
-  "bun ",
-  "run ",
-] as const;
-
-const RUN_EXACT = ["build", "test"] as const;
-
 export function parseTask(input: string, intent: Intent): Task {
-  if (!input || input.trim().length === 0) {
-    return makeTask("INVALID", [], input, false, false, false);
-  }
-
   const lower = input.toLowerCase().trim();
   const targets = extractTargetFiles(input);
 
@@ -63,37 +31,69 @@ export function parseTask(input: string, intent: Intent): Task {
     lower.includes("push") ||
     lower.includes("git push");
 
+  if (intent === "AUTOFIX") {
+    return {
+      action: "AUTOFIX",
+      targets,
+      instructions: input,
+      runBuild: true,
+      runCommit: false,
+      runPush: false,
+    };
+  }
+
   if (intent === "INVESTIGATE") {
-    return makeTask("READ", targets, input, false, false, false);
+    return {
+      action: "READ",
+      targets,
+      instructions: input,
+      runBuild: false,
+      runCommit: false,
+      runPush: false,
+    };
   }
 
   if (isSafeShellCommand(lower)) {
-    return makeTask("SHELL", [], input, false, false, false);
+    return {
+      action: "SHELL",
+      targets: [],
+      instructions: input,
+      runBuild: false,
+      runCommit: false,
+      runPush: false,
+    };
   }
 
-  // PATCH must be checked before RUN — a PATCH verb on a target file
-  // should never fall through to the RUN branch.
   if (isPatchInstruction(lower)) {
-    return makeTask("PATCH", targets, input, wantsBuild, wantsCommit, wantsPush);
+    return {
+      action: "PATCH",
+      targets,
+      instructions: input,
+      runBuild: wantsBuild,
+      runCommit: wantsCommit,
+      runPush: wantsPush,
+    };
   }
 
   if (isRunInstruction(lower)) {
-    return makeTask("RUN", targets, input, wantsBuild, wantsCommit, wantsPush);
+    return {
+      action: "RUN",
+      targets,
+      instructions: input,
+      runBuild: wantsBuild,
+      runCommit: wantsCommit,
+      runPush: wantsPush,
+    };
   }
 
-  return makeTask("INVALID", targets, input, false, false, false);
-}
-
-// Helper to keep return sites concise and consistent
-function makeTask(
-  action: TaskAction,
-  targets: string[],
-  instructions: string,
-  runBuild: boolean,
-  runCommit: boolean,
-  runPush: boolean
-): Task {
-  return { action, targets, instructions, runBuild, runCommit, runPush };
+  return {
+    action: "INVALID",
+    targets,
+    instructions: input,
+    runBuild: false,
+    runCommit: false,
+    runPush: false,
+  };
 }
 
 function isSafeShellCommand(input: string): boolean {
@@ -101,10 +101,30 @@ function isSafeShellCommand(input: string): boolean {
 }
 
 function isPatchInstruction(input: string): boolean {
-  return PATCH_VERBS.some((verb) => input.includes(verb));
+  return [
+    "update",
+    "change",
+    "replace",
+    "patch",
+    "modify",
+    "set",
+    "rewrite",
+    "convert",
+    "refactor",
+    "fix",
+    "remove",
+    "add",
+  ].some((verb) => input.includes(verb));
 }
 
 function isRunInstruction(input: string): boolean {
-  if ((RUN_EXACT as readonly string[]).includes(input)) return true;
-  return RUN_KEYWORDS.some((kw) => input.includes(kw));
+  return (
+    input === "build" ||
+    input === "test" ||
+    input.includes("npm run") ||
+    input.startsWith("run ") ||
+    input.includes("pnpm ") ||
+    input.includes("yarn ") ||
+    input.includes("bun ")
+  );
 }

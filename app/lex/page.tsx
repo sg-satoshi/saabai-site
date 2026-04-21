@@ -5,11 +5,11 @@ import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
 const C = {
-  bg:           "#0d1b2a",   // deep navy background
-  surface:      "#162236",   // card/panel surface
-  surfaceRaised:"#1e3050",   // elevated surfaces
-  border:       "#243550",   // subtle border
-  borderAccent: "#2d4870",   // stronger border on focus
+  bg:           "#08111f",   // deep navy background
+  surface:      "#101b2d",   // card/panel surface
+  surfaceRaised:"#16253d",   // elevated surfaces
+  border:       "#23344f",   // subtle border
+  borderAccent: "#32527f",   // stronger border on focus
   navy:         "#1B2B4B",
   gold:         "#C9A84C",   // primary gold accent
   goldBright:   "#E0BC6A",
@@ -165,7 +165,7 @@ function pickReplies() {
 function ContextMenuItem({ icon, label, onClick, danger = false }: { icon: string; label: string; onClick: () => void; danger?: boolean }) {
   return (
     <button onClick={onClick} style={{
-      width: "100%", padding: "8px 14px", background: "none", border: "none",
+      width: "100%", padding: "8px 14px", background: "none", border: "#23344f",
       color: danger ? "#f87171" : C.text, fontSize: 12, textAlign: "left", cursor: "pointer",
       display: "flex", alignItems: "center", gap: 8,
     }}
@@ -202,7 +202,7 @@ function ThreadRow({
       onDragEnd={onDragEnd}
       style={{
         padding: "7px 8px 7px 10px", borderRadius: 7, cursor: isDragging ? "grabbing" : "grab", marginBottom: 1,
-        background: isActive ? C.surfaceRaised : "transparent",
+        background: isActive ? C.surfaceRaised : "#16253d",
         border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
         display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4,
         opacity: isDragging ? 0.4 : 1, transition: "opacity 0.15s",
@@ -237,7 +237,7 @@ function ThreadRow({
       <button
         data-menu="trigger"
         onClick={onMenu}
-        style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer",
+        style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer",
           padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1, opacity: 0.7 }}
         title="Thread options"
       >⋯</button>
@@ -754,7 +754,7 @@ export default function LexPage() {
             </button>
             <button onClick={newProject} style={{
               flex: 1, padding: "8px 10px", borderRadius: 8,
-              background: "rgba(91,141,238,0.08)", border: "1px solid rgba(91,141,238,0.2)",
+              background: "rgba(91,141,238,0.08)", border: "#23344f",
               color: "#5b8dee", fontSize: 11, fontWeight: 700, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
             }}>
@@ -842,7 +842,7 @@ export default function LexPage() {
                     <button
                       data-menu="trigger"
                       onClick={e => { e.stopPropagation(); setProjectMenu(m => m?.projectId === project.id ? null : { projectId: project.id, x: e.clientX, y: e.clientY }); setThreadMenu(null); }}
-                      style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1 }}
+                      style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1 }}
                     >⋯</button>
                   </div>
                   {/* Threads inside project */}
@@ -884,7 +884,7 @@ export default function LexPage() {
                       margin: "2px 6px 4px", fontSize: 10, fontWeight: 600, letterSpacing: 0.5,
                       textTransform: "uppercase", padding: "3px 6px", borderRadius: 5,
                       color: isDropTarget ? C.textMuted : C.textDim,
-                      background: isDropTarget ? C.surfaceRaised : "transparent",
+                      background: isDropTarget ? C.surfaceRaised : "#16253d",
                       border: isDropTarget ? `1px dashed ${C.border}` : "1px solid transparent",
                       transition: "all 0.1s",
                     }}>Unorganised</p>
@@ -970,7 +970,7 @@ export default function LexPage() {
               ) : projects.map(p => (
                 <button key={p.id} onClick={() => { moveThreadToProject(moveDialog, p.id); setMoveDialog(null); }}
                   style={{
-                    width: "100%", padding: "8px 16px", background: "none", border: "none",
+                    width: "100%", padding: "8px 16px", background: "none", border: "#23344f",
                     color: C.text, fontSize: 12, textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
@@ -982,7 +982,7 @@ export default function LexPage() {
               ))}
               <div style={{ height: 1, background: C.border, margin: "8px 0 4px" }} />
               <button onClick={() => { moveThreadToProject(moveDialog, null); setMoveDialog(null); }}
-                style={{ width: "100%", padding: "8px 16px", background: "none", border: "none", color: C.textMuted, fontSize: 12, textAlign: "left", cursor: "pointer" }}
+                style={{ width: "100%", padding: "8px 16px", background: "none", border: "#23344f", color: C.textMuted, fontSize: 12, textAlign: "left", cursor: "pointer" }}
                 onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
                 onMouseLeave={e => (e.currentTarget.style.background = "none")}
               >
@@ -1004,7 +1004,7 @@ export default function LexPage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button onClick={() => setSidebarOpen(v => !v)}
-              style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", padding: 4 }}>
+              style={{ background: "none", border: "#23344f", color: C.textMuted, cursor: "pointer", padding: 4 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
@@ -1015,7 +1015,7 @@ export default function LexPage() {
               {([["research", "Research"], ["draft", "Draft Document"], ["review", "Doc Review"]] as [Mode, string][]).map(([m, label]) => (
                 <button key={m} onClick={() => setMode(m)} style={{
                   padding: "4px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                  cursor: "pointer", border: "none", transition: "all 0.15s",
+                  cursor: "pointer", border: "#23344f", transition: "all 0.15s",
                   background: mode === m ? C.gold : "transparent",
                   color: mode === m ? C.bg : C.textMuted,
                 }}>
@@ -1173,7 +1173,7 @@ export default function LexPage() {
                 onClick={sendDraft}
                 disabled={draftLoading}
                 style={{
-                  width: "100%", padding: "12px 0", borderRadius: 10, border: "none",
+                  width: "100%", padding: "12px 0", borderRadius: 10, border: "#23344f",
                   background: draftLoading ? C.goldDim : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
                   color: C.bg, fontSize: 13, fontWeight: 800, cursor: draftLoading ? "not-allowed" : "pointer",
                   letterSpacing: 0.3, transition: "opacity 0.15s",
@@ -1458,7 +1458,7 @@ export default function LexPage() {
                 disabled={loading}
                 rows={1}
                 style={{
-                  flex: 1, background: "none", border: "none", outline: "none",
+                  flex: 1, background: "none", border: "#23344f", outline: "none",
                   color: C.text, fontSize: 14, resize: "none", lineHeight: 1.6,
                 }}
               />
@@ -1466,7 +1466,7 @@ export default function LexPage() {
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || loading}
                 style={{
-                  width: 36, height: 36, borderRadius: 10, border: "none", flexShrink: 0,
+                  width: 36, height: 36, borderRadius: 10, border: "#23344f", flexShrink: 0,
                   background: input.trim() && !loading ? C.gold : C.goldBg,
                   cursor: input.trim() && !loading ? "pointer" : "not-allowed",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -1524,7 +1524,7 @@ export default function LexPage() {
                 <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}` }}>
                   {(["incoming", "outgoing"] as const).map(d => (
                     <button key={d} onClick={() => setReviewDirection(d)} style={{
-                      flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 600, cursor: "pointer", border: "none",
+                      flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 600, cursor: "pointer", border: "#23344f",
                       background: reviewDirection === d ? C.gold : "transparent",
                       color: reviewDirection === d ? C.bg : C.textMuted,
                       transition: "all 0.15s",
@@ -1720,7 +1720,7 @@ export default function LexPage() {
                 onClick={sendReview}
                 disabled={reviewLoading || (reviewInputMode === "upload" ? !reviewFile : !reviewPasteText.trim())}
                 style={{
-                  width: "100%", padding: "12px 0", borderRadius: 10, border: "none",
+                  width: "100%", padding: "12px 0", borderRadius: 10, border: "#23344f",
                   background: (reviewLoading || (reviewInputMode === "upload" ? !reviewFile : !reviewPasteText.trim()))
                     ? C.goldDim
                     : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
@@ -1779,7 +1779,7 @@ export default function LexPage() {
               {/* Error state */}
               {reviewError && !reviewLoading && (
                 <div style={{ padding: 32 }}>
-                  <div style={{ padding: "16px 20px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <div style={{ padding: "16px 20px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "#23344f" }}>
                     <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#ef4444" }}>Review failed</p>
                     <p style={{ margin: 0, fontSize: 12, color: "#fca5a5" }}>{reviewError}</p>
                   </div>
@@ -1810,7 +1810,7 @@ export default function LexPage() {
                         {submitError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>{submitError}</p>}
                       </div>
                       {submitDone ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "#23344f" }}>
                           <span style={{ fontSize: 13 }}>✓</span>
                           <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Submitted</span>
                         </div>
@@ -1883,7 +1883,7 @@ export default function LexPage() {
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {missingClauses.map((mc, i) => (
-                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.2)" }}>
+                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(201,168,76,0.06)", border: "#23344f" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                                 <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, background: "rgba(201,168,76,0.15)", color: C.gold, fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase" }}>{mc.severity}</span>
                                 <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>{mc.clause}</p>
@@ -1940,7 +1940,7 @@ export default function LexPage() {
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {legislationConflicts.map((lc, i) => (
-                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.2)" }}>
+                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(129,140,248,0.06)", border: "#23344f" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                                 <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, background: "rgba(129,140,248,0.15)", color: "#818cf8", fontWeight: 700 }}>{lc.ref}</span>
                                 <span style={{ fontSize: 10, color: C.textDim }}>{lc.clauseRef}</span>

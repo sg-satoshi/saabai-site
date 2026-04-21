@@ -3,7 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { getEdgeProfile, getEdgeSessions } from "../../../../lib/redis";
 import type { EdgeProfile, EdgeSession } from "../../../../lib/redis";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const EDGE_SYSTEM = `You are Edge — a private performance coach for one operator: Shane.

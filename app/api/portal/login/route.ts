@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     }
 
     const token = generateToken();
-    await redis.set(`portal:token:${token}`, normalised, { ex: 900 }); // 15 min
+    await redis.set(`portal:token:${token}`, normalised, "EX", 900);
 
     // Build magic link
     const link = `${BASE_URL}/api/portal/auth?token=${token}`;
