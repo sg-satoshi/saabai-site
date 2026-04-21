@@ -11,86 +11,68 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 try {
-  // Get the last commit message
   const message = execSync('git log -1 --pretty=%B', { encoding: 'utf-8' }).trim();
-  const hash = execSync('git log -1 --pretty=%h', { encoding: 'utf-8' }).trim();
   const date = execSync('git log -1 --pretty=%ad --date=short', { encoding: 'utf-8' }).trim();
-  
-  if (!message || message.includes('changelog')) {
-    process.exit(0); // Skip if no message or if it's a changelog update itself
+
+  if (!message || message.startsWith('changelog: auto-update')) {
+    process.exit(0);
   }
 
-  // Parse commit message for tag and title
+  // Parse tag and title from commit message
   let tag = 'UPDATE';
-  let title = message.split('\n')[0]; // First line only
-  
-  // Extract [TAG] if present
+  let title = message.split('\n')[0];
+
   const tagMatch = title.match(/^\[([A-Z]+)\]\s*(.+)/);
   if (tagMatch) {
     tag = tagMatch[1];
     title = tagMatch[2];
   } else {
-    // Auto-classify based on keywords
     const lower = title.toLowerCase();
-    if (lower.includes('fix')) tag = 'FIX';
-    else if (lower.includes('add') || lower.includes('new')) tag = 'NEW';
+    if (lower.startsWith('fix')) tag = 'FIX';
+    else if (lower.startsWith('feat') || lower.includes('add ') || lower.includes('new ')) tag = 'NEW';
     else if (lower.includes('ui') || lower.includes('style')) tag = 'UI';
-    else if (lower.includes('improve')) tag = 'IMPROVEMENT';
+    else if (lower.includes('improve') || lower.includes('refactor')) tag = 'IMPROVEMENT';
     else if (lower.includes('price') || lower.includes('pricing')) tag = 'PRICING';
+    else if (lower.startsWith('test')) tag = 'DEBUG';
   }
 
-  // Format date
+  // Format date: "2026-04-22" → "22 Apr 2026"
   const [year, month, day] = date.split('-');
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const formattedDate = `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
-  
-  // Get current time
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
-  // Read changelog file
+  // Get current AEST time
+  const now = new Date(Date.now() + 10 * 3600 * 1000);
+  const time = now.getUTCHours().toString().padStart(2, '0') + ':' + now.getUTCMinutes().toString().padStart(2, '0');
+
   const changelogPath = path.join(__dirname, '../app/rex-changelog/ChangelogClient.tsx');
   let content = fs.readFileSync(changelogPath, 'utf-8');
 
-  // Check if today's date already exists in changelog
-  const dateRegex = new RegExp(`date: "${formattedDate}"`);
-  const dateExists = dateRegex.test(content);
+  const newEntry = `      { time: "${time}", tag: "${tag}", title: "${title.replace(/"/g, '\\"').replace(/\n/g, ' ')}" }`;
+  const dateMarker = `date: "${formattedDate}"`;
 
-  let newEntry = `      { time: "${time}", tag: "${tag}", title: "${title.replace(/"/g, '\\"')}" }`;
+  if (content.includes(dateMarker)) {
+    // Insert as first entry in the existing day block
+    // Find "entries: [" after the date marker and insert right after the "["
+    const datePos = content.indexOf(dateMarker);
+    const entriesPos = content.indexOf('entries: [', datePos);
+    const bracketPos = content.indexOf('[', entriesPos) + 1;
 
-  if (dateExists) {
-    // Add to existing day
-    const insertRegex = new RegExp(
-      `(date: "${formattedDate}",\\s+entries: \\[)(\\n.*?)(\\n\\s+\\])`
-    );
-    content = content.replace(insertRegex, (match, before, entries, after) => {
-      return before + entries + ',\n' + newEntry + after;
-    });
+    content = content.slice(0, bracketPos) + '\n' + newEntry + ',' + content.slice(bracketPos);
   } else {
-    // Create new day entry
-    const newDay = `  {\n    date: "${formattedDate}",\n    entries: [\n${newEntry}\n    ],\n  },\n`;
-    
-    // Insert after "const CHANGELOG: Day[] = ["
+    // Create new day block at the top of CHANGELOG array
     const marker = 'const CHANGELOG: Day[] = [\n';
     const insertPos = content.indexOf(marker);
-    
-    if (insertPos !== -1) {
-      const before = content.substring(0, insertPos + marker.length);
-      const after = content.substring(insertPos + marker.length);
-      content = before + newDay + after;
-    } else {
-      process.exit(0); // Exit silently if can't find marker
-    }
+    if (insertPos === -1) process.exit(0);
+
+    const newDay = `  {\n    date: "${formattedDate}",\n    entries: [\n${newEntry}\n    ],\n  },\n`;
+    content = content.slice(0, insertPos + marker.length) + newDay + content.slice(insertPos + marker.length);
   }
 
-  // Write updated content
   fs.writeFileSync(changelogPath, content, 'utf-8');
-  
-  // Stage the changelog update
   execSync('git add app/rex-changelog/ChangelogClient.tsx', { encoding: 'utf-8' });
-  
+
   process.exit(0);
 } catch (err) {
-  // Fail silently on errors
   process.exit(0);
 }
