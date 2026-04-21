@@ -55,6 +55,13 @@ const CHANGELOG: Day[] = [
     ],
   },
   {
+    date: "16 Apr 2026",
+    entries: [
+      { time: "12:43", tag: "FIX", title: "Fixed public site background — switched body to CSS variable bg instead of hardcoded white; removed min-h-screen white override that was bleeding into dark-themed pages" },
+      { time: "01:35", tag: "UI", title: "Restored dark theme on public site — reverted accidental light-theme bleed; admin backend keeps light theme, public site back to dark" },
+    ],
+  },
+  {
     date: "13 Apr 2026",
     entries: [
       { time: "10:58", tag: "PRICING", title: "Fixed acrylic pricing — removed broken WooCommerce API, updated offline engine with March 2026 data; 1020×1530mm 4.5mm clear now quotes correctly at $209.18" },
