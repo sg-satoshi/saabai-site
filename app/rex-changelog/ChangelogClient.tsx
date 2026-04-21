@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "06:49", tag: "NEW", title: "Add test-goose2 page for deployment test" },
       { time: "06:08", tag: "NEW", title: "Add test-goose page for workflow testing" },
       { time: "05:35", tag: "UPDATE", title: "changelog: clean up duplicate test entries" },
       { time: "05:34", tag: "FIX", title: "Rewrote changelog auto-update script — regex was broken, entries were never being inserted" },
