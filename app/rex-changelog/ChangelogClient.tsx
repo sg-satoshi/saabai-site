@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "06:08", tag: "NEW", title: "Add test-goose page for workflow testing" },
       { time: "05:35", tag: "UPDATE", title: "changelog: clean up duplicate test entries" },
       { time: "05:34", tag: "FIX", title: "Rewrote changelog auto-update script — regex was broken, entries were never being inserted" },
       { time: "09:00", tag: "DEPLOYMENT", title: "Unblocked Vercel deploys — swapped ioredis (missing dep) for @upstash/redis across redis.ts, subscribers.ts, and portal login; all 4 failing builds since Apr 21 now resolve" },
