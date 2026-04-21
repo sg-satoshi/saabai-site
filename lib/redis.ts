@@ -1,11 +1,14 @@
-import Redis from "ioredis";
+import { Redis } from "@upstash/redis";
 
 let redis: Redis | null = null;
 
 export function getRedis(): Redis | null {
-  if (!process.env.REDIS_URL) return null;
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
   if (!redis) {
-    redis = new Redis(process.env.REDIS_URL);
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
   }
   return redis;
 }
@@ -208,7 +211,7 @@ export async function getConversations(limit = 50): Promise<ConversationRecord[]
   const results: ConversationRecord[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`conv:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`conv:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({
@@ -289,7 +292,7 @@ export async function getLeads(limit = 50): Promise<LeadRecord[]> {
   const results: LeadRecord[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`lead:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`lead:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({
@@ -355,7 +358,7 @@ export async function getEdgeProfile(id?: string): Promise<EdgeProfile | null> {
   const client = getRedis();
   if (!client || !id) return null;
 
-  const raw = await client.hgetall(`edge:profile:${id}`);
+  const raw = await client.hgetall<Record<string, string>>(`edge:profile:${id}`);
   if (!raw || !raw.id) return null;
 
   return {
@@ -401,7 +404,7 @@ export async function getEdgeSessions(limit = 50): Promise<EdgeSession[]> {
   const results: EdgeSession[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`edge:session:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`edge:session:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({
@@ -439,7 +442,7 @@ export async function getEdgeTranscript(
   const client = getRedis();
   if (!client || !sessionId) return [];
 
-  const raw = await client.get(`edge:transcript:${sessionId}`);
+  const raw = await client.get<string>(`edge:transcript:${sessionId}`);
   return raw ? decodeJson<ChatMessage[]>(raw) ?? [] : [];
 }
 
@@ -510,7 +513,7 @@ async function loadInstagramPosts(ids: string[]): Promise<InstagramPostRecord[]>
   const results: InstagramPostRecord[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`instagram:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`instagram:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({
@@ -593,7 +596,7 @@ async function loadLinkedInPosts(ids: string[]): Promise<LinkedInPostRecord[]> {
   const results: LinkedInPostRecord[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`linkedin:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`linkedin:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({
@@ -656,7 +659,7 @@ export async function getPendingNurture(
   const results: NurtureRecord[] = [];
 
   for (const id of ids) {
-    const raw = await client.hgetall(`nurture:${id}`);
+    const raw = await client.hgetall<Record<string, string>>(`nurture:${id}`);
     if (!raw || !raw.id) continue;
 
     results.push({

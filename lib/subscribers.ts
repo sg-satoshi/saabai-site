@@ -54,7 +54,7 @@ export async function getSubscribers(limit = 200): Promise<Subscriber[]> {
   if (!emails.length) return [];
 
   const rawRecords = await Promise.all(
-    emails.map((email) => redis.hgetall(`subscriber:${email}`))
+    emails.map((email) => redis.hgetall<Record<string, string>>(`subscriber:${email}`))
   );
 
   const subscribers: Subscriber[] = [];
