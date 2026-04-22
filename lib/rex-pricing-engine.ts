@@ -33,8 +33,10 @@ export interface PricingInput {
 
 export interface PriceResult {
   found: boolean;
-  price: number;
-  priceFormatted: string;
+  price: number;           // total for all qty (use this for the order total)
+  priceFormatted: string;  // formatted total
+  priceEach: number;       // price per single piece (before qty multiply)
+  priceEachFormatted: string; // formatted per-piece price
   note: string;
   productUrl: string;
   bulkDiscountApplied: boolean;
@@ -950,7 +952,7 @@ function oversizedColourPrice(row: OversizedRow, col: string): number | null {
 }
 
 function notFound(url = ""): PriceResult {
-  return { found: false, price: 0, priceFormatted: "", note: "not found", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
+  return { found: false, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "not found", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
 }
 
 function buildResult(unitPrice: number, qty: number, note: string, url: string): PriceResult {
@@ -963,7 +965,8 @@ function buildResult(unitPrice: number, qty: number, note: string, url: string):
   }
   const minFee = false;
   total = r2(total);
-  return { found: true, price: total, priceFormatted: fmt(total), note, productUrl: url, bulkDiscountApplied: bulkDiscount, minimumFeeApplied: minFee };
+  const each = r2(total / qty);
+  return { found: true, price: total, priceFormatted: fmt(total), priceEach: each, priceEachFormatted: fmt(each), note, productUrl: url, bulkDiscountApplied: bulkDiscount, minimumFeeApplied: minFee };
 }
 
 // ── Sheet Pricing ──────────────────────────────────────────────────────────────
@@ -1006,7 +1009,7 @@ function priceWithOversized(
     }
     return buildResult(ctsPrice, qty, "cut to size (oversized sheet)", url);
   }
-  return { found: true, price: 0, priceFormatted: "", note: "piece too large for all available sheets — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
+  return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece too large for all available sheets — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
 }
 
 function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, width: number, height: number, qty: number, url: string): PriceResult {
@@ -1015,7 +1018,7 @@ function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, w
            ?? sheets.find(r => r.thicknessMm === thickness && r.colour === "any");
   if (!row) return notFound(url);
   const result = calcStandardSheet(row, width, height);
-  if (!result) return { found: true, price: 0, priceFormatted: "", note: "piece too large for this sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
+  if (!result) return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece too large for this sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
   return buildResult(result.unitPrice, qty, result.note, url);
 }
 
@@ -1047,7 +1050,7 @@ function priceAcetalSheet(col: string, thickness: number, width: number, height:
   const row = ACETAL.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
   if (!fits(width, height, SHEET_W, SHEET_H)) {
-    return { found: true, price: 0, priceFormatted: "", note: "piece exceeds 2000×1000mm acetal sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
+    return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece exceeds 2000×1000mm acetal sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
   }
   const area = (width / 1000) * (height / 1000);
   let unitPrice: number;
@@ -1078,7 +1081,7 @@ function pricePTFESheet(thickness: number, width: number, height: number, qty: n
   const row = PTFE_SHEETS.find(r => r.thicknessMm === thickness);
   if (!row) return notFound(url);
   if (!fits(width, height, SHEET_W, SHEET_H)) {
-    return { found: true, price: 0, priceFormatted: "", note: "piece exceeds 1200×1200mm PTFE sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
+    return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece exceeds 1200×1200mm PTFE sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
   }
   const area = (width / 1000) * (height / 1000);
   let unitPrice: number;
@@ -1102,11 +1105,11 @@ function priceCorflute(col: string, thickness: number, qty: number): PriceResult
   const url = getProductUrl("corflute");
   const row = CORFLUTE.find(r => r.thicknessMm === thickness && r.colour === col);
   if (!row) return notFound(url);
-  const priceEach = qty >= 10 ? row.priceQty10 : row.priceEach;
-  const total = r2(priceEach * qty);
+  const unitPrice = qty >= 10 ? row.priceQty10 : row.priceEach;
+  const total = r2(unitPrice * qty);
   const note = qty >= 10 ? "10+ sheet price applied" : "per sheet price";
   // No min-order fee for corflute (full sheets, reasonable price)
-  return { found: true, price: total, priceFormatted: fmt(total), note, productUrl: url, bulkDiscountApplied: qty >= 10, minimumFeeApplied: false };
+  return { found: true, price: total, priceFormatted: fmt(total), priceEach: unitPrice, priceEachFormatted: fmt(unitPrice), note, productUrl: url, bulkDiscountApplied: qty >= 10, minimumFeeApplied: false };
 }
 
 // ── Rod Pricing ────────────────────────────────────────────────────────────────
