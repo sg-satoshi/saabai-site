@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "23 Apr 2026",
+    entries: [
+      { time: "00:00", tag: "NEW", title: "Per-job response length override in Lex draft" }
+    ],
+  },
+  {
     date: "22 Apr 2026",
     entries: [
       { time: "23:46", tag: "NEW", title: "Deep lawyer DNA section, PDF/URL ingestion, and portal redesign" },
