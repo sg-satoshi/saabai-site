@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "13:01", tag: "NEW", title: "feat: Lex conversation persistence scoped to logged-in user" },
       { time: "12:07", tag: "NEW", title: "feat: add PVC foam board pricing to Rex engine" },
       { time: "10:59", tag: "FIX", title: "fix: correct multi-piece price formatting — Rex was treating total as per-piece price" },
       { time: "10:48", tag: "NEW", title: "feat: add nylon sheet pricing to Rex engine — fixes order link on nylon sheet quotes" },
