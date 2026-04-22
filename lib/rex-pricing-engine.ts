@@ -474,6 +474,92 @@ const PEEK_SHEETS: SheetRow[] = [
   { colour: "natural", thicknessMm: 30, sheetW: 1000, sheetH: 610, ctsRate: null, fullSheetPrice: 11706.05 },
 ];
 
+// ── Nylon Sheets ───────────────────────────────────────────────────────────────
+// Pricing: March 2026 (ex GST). Standard sheet 2000×1000mm.
+// Natural 1–6mm: Ertalon 6SA (Dotmar). Natural 8–100mm: Cast Nylon 6SA (Epol).
+// Black 6–110mm: Cast Nylon 6SA. Specialty grades: full sheet only.
+const NYLON_SHEETS: SheetRow[] = [
+  // Natural (white)
+  { colour: "natural", thicknessMm: 1,   sheetW: 2000, sheetH: 1000, ctsRate: 210.00,  fullSheetPrice: 234 },
+  { colour: "natural", thicknessMm: 1.5, sheetW: 2000, sheetH: 1000, ctsRate: 315.91,  fullSheetPrice: 352 },
+  { colour: "natural", thicknessMm: 2,   sheetW: 2000, sheetH: 1000, ctsRate: 421.80,  fullSheetPrice: 470 },
+  { colour: "natural", thicknessMm: 3,   sheetW: 2000, sheetH: 1000, ctsRate: 631.81,  fullSheetPrice: 704 },
+  { colour: "natural", thicknessMm: 5,   sheetW: 2000, sheetH: 1000, ctsRate: 1054.52, fullSheetPrice: 1175 },
+  { colour: "natural", thicknessMm: 6,   sheetW: 2000, sheetH: 1000, ctsRate: 1265.41, fullSheetPrice: 1410 },
+  { colour: "natural", thicknessMm: 8,   sheetW: 2000, sheetH: 1000, ctsRate: 454.32,  fullSheetPrice: 493 },
+  { colour: "natural", thicknessMm: 10,  sheetW: 2000, sheetH: 1000, ctsRate: 567.89,  fullSheetPrice: 617 },
+  { colour: "natural", thicknessMm: 12,  sheetW: 2000, sheetH: 1000, ctsRate: 681.49,  fullSheetPrice: 740 },
+  { colour: "natural", thicknessMm: 15,  sheetW: 2000, sheetH: 1000, ctsRate: 851.85,  fullSheetPrice: 925 },
+  { colour: "natural", thicknessMm: 20,  sheetW: 2000, sheetH: 1000, ctsRate: 1135.80, fullSheetPrice: 1168 },
+  { colour: "natural", thicknessMm: 25,  sheetW: 2000, sheetH: 1000, ctsRate: 1419.74, fullSheetPrice: 1460 },
+  { colour: "natural", thicknessMm: 30,  sheetW: 2000, sheetH: 1000, ctsRate: 1703.70, fullSheetPrice: 1606 },
+  { colour: "natural", thicknessMm: 40,  sheetW: 2000, sheetH: 1000, ctsRate: 2271.59, fullSheetPrice: 2142 },
+  { colour: "natural", thicknessMm: 50,  sheetW: 2000, sheetH: 1000, ctsRate: 2839.50, fullSheetPrice: 2677 },
+  { colour: "natural", thicknessMm: 60,  sheetW: 2000, sheetH: 1000, ctsRate: 3407.39, fullSheetPrice: 3213 },
+  { colour: "natural", thicknessMm: 70,  sheetW: 2000, sheetH: 1000, ctsRate: 3975.30, fullSheetPrice: 3748 },
+  { colour: "natural", thicknessMm: 80,  sheetW: 2000, sheetH: 1000, ctsRate: 4543.19, fullSheetPrice: 4284 },
+  { colour: "natural", thicknessMm: 90,  sheetW: 2000, sheetH: 1000, ctsRate: 5111.09, fullSheetPrice: 4819 },
+  { colour: "natural", thicknessMm: 100, sheetW: 2000, sheetH: 1000, ctsRate: 5679.00, fullSheetPrice: 5354 },
+  // Black — Cast Nylon 6SA
+  { colour: "black", thicknessMm: 6,   sheetW: 2000, sheetH: 1000, ctsRate: 389.41,  fullSheetPrice: 434 },
+  { colour: "black", thicknessMm: 8,   sheetW: 2000, sheetH: 1000, ctsRate: 482.14,  fullSheetPrice: 523 },
+  { colour: "black", thicknessMm: 10,  sheetW: 2000, sheetH: 1000, ctsRate: 602.67,  fullSheetPrice: 654 },
+  { colour: "black", thicknessMm: 12,  sheetW: 2000, sheetH: 1000, ctsRate: 723.21,  fullSheetPrice: 785 },
+  { colour: "black", thicknessMm: 15,  sheetW: 2000, sheetH: 1000, ctsRate: 904.00,  fullSheetPrice: 981 },
+  { colour: "black", thicknessMm: 20,  sheetW: 2000, sheetH: 1000, ctsRate: 1205.33, fullSheetPrice: 1240 },
+  { colour: "black", thicknessMm: 25,  sheetW: 2000, sheetH: 1000, ctsRate: 1506.66, fullSheetPrice: 1550 },
+  { colour: "black", thicknessMm: 30,  sheetW: 2000, sheetH: 1000, ctsRate: 1808.01, fullSheetPrice: 1705 },
+  { colour: "black", thicknessMm: 40,  sheetW: 2000, sheetH: 1000, ctsRate: 2410.68, fullSheetPrice: 2273 },
+  { colour: "black", thicknessMm: 50,  sheetW: 2000, sheetH: 1000, ctsRate: 3013.34, fullSheetPrice: 2841 },
+  { colour: "black", thicknessMm: 60,  sheetW: 2000, sheetH: 1000, ctsRate: 3616.01, fullSheetPrice: 3409 },
+  { colour: "black", thicknessMm: 70,  sheetW: 2000, sheetH: 1000, ctsRate: 4218.67, fullSheetPrice: 3978 },
+  { colour: "black", thicknessMm: 80,  sheetW: 2000, sheetH: 1000, ctsRate: 4821.34, fullSheetPrice: 4546 },
+  { colour: "black", thicknessMm: 90,  sheetW: 2000, sheetH: 1000, ctsRate: 5424.02, fullSheetPrice: 5114 },
+  { colour: "black", thicknessMm: 100, sheetW: 2000, sheetH: 1000, ctsRate: 6026.69, fullSheetPrice: 5682 },
+  { colour: "black", thicknessMm: 110, sheetW: 2000, sheetH: 1000, ctsRate: 7292.29, fullSheetPrice: 6876 },
+  // Blue Heat Stabilised — full sheet only
+  { colour: "blue", thicknessMm: 8,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 493 },
+  { colour: "blue", thicknessMm: 10,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 617 },
+  { colour: "blue", thicknessMm: 12,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 740 },
+  { colour: "blue", thicknessMm: 15,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 925 },
+  { colour: "blue", thicknessMm: 20,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1168 },
+  { colour: "blue", thicknessMm: 25,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1460 },
+  { colour: "blue", thicknessMm: 30,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1606 },
+  { colour: "blue", thicknessMm: 40,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2142 },
+  { colour: "blue", thicknessMm: 50,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2677 },
+  { colour: "blue", thicknessMm: 60,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 3213 },
+  { colour: "blue", thicknessMm: 70,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 3748 },
+  { colour: "blue", thicknessMm: 80,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 4284 },
+  { colour: "blue", thicknessMm: 100, sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 5354 },
+  // Yellow Oil Filled — full sheet only
+  { colour: "yellow", thicknessMm: 8,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 523 },
+  { colour: "yellow", thicknessMm: 10,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 654 },
+  { colour: "yellow", thicknessMm: 12,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 785 },
+  { colour: "yellow", thicknessMm: 15,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 981 },
+  { colour: "yellow", thicknessMm: 20,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1240 },
+  { colour: "yellow", thicknessMm: 25,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1550 },
+  { colour: "yellow", thicknessMm: 30,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1705 },
+  { colour: "yellow", thicknessMm: 40,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2273 },
+  { colour: "yellow", thicknessMm: 50,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2841 },
+  { colour: "yellow", thicknessMm: 60,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 3409 },
+  { colour: "yellow", thicknessMm: 70,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 3978 },
+  { colour: "yellow", thicknessMm: 80,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 4546 },
+  { colour: "yellow", thicknessMm: 90,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 5114 },
+  { colour: "yellow", thicknessMm: 100, sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 5682 },
+  // Grey Wax Filled — full sheet only (selective sizes)
+  { colour: "grey", thicknessMm: 8,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 523 },
+  { colour: "grey", thicknessMm: 10,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 654 },
+  { colour: "grey", thicknessMm: 15,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 981 },
+  { colour: "grey", thicknessMm: 20,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1240 },
+  { colour: "grey", thicknessMm: 25,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1550 },
+  { colour: "grey", thicknessMm: 30,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 1705 },
+  { colour: "grey", thicknessMm: 40,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2273 },
+  { colour: "grey", thicknessMm: 50,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 2841 },
+  { colour: "grey", thicknessMm: 60,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 3409 },
+  { colour: "grey", thicknessMm: 80,  sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 4546 },
+  { colour: "grey", thicknessMm: 100, sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 5682 },
+];
+
 // ── Rod Data ───────────────────────────────────────────────────────────────────
 
 const ACETAL_RODS: RodRow[] = [
@@ -510,30 +596,54 @@ const UHMWPE_RODS: RodRow[] = [
   { diameterMm: 130, colour: "natural", standardLengthM: 1, fullLengthPrice: 414.59, ctsRatePerM: 575.83 },
 ];
 
+// Pricing: March 2026 (ex GST). Supplier: Epol (Cast grade). 1m standard length.
+// 230mm+: 0.6m standard length. CTS rates are ~134% of full-length rate.
 const NYLON_RODS: RodRow[] = [
-  { diameterMm: 30,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 27.40,   ctsRatePerM: 31.97 },
-  { diameterMm: 40,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 38.40,   ctsRatePerM: 51.53 },
-  { diameterMm: 50,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 60.02,   ctsRatePerM: 80.56 },
-  { diameterMm: 60,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 86.21,   ctsRatePerM: 115.71 },
-  { diameterMm: 70,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 117.51,  ctsRatePerM: 157.70 },
-  { diameterMm: 80,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 153.36,  ctsRatePerM: 205.82 },
-  { diameterMm: 90,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 194.05,  ctsRatePerM: 260.44 },
-  { diameterMm: 100, colour: "natural", standardLengthM: 1,   fullLengthPrice: 239.59,  ctsRatePerM: 321.55 },
-  { diameterMm: 110, colour: "natural", standardLengthM: 1,   fullLengthPrice: 259.43,  ctsRatePerM: 312.84 },
-  { diameterMm: 120, colour: "natural", standardLengthM: 1,   fullLengthPrice: 308.58,  ctsRatePerM: 372.11 },
-  { diameterMm: 125, colour: "natural", standardLengthM: 1,   fullLengthPrice: 334.98,  ctsRatePerM: 403.95 },
-  { diameterMm: 130, colour: "natural", standardLengthM: 1,   fullLengthPrice: 404.91,  ctsRatePerM: 543.43 },
-  { diameterMm: 140, colour: "natural", standardLengthM: 1,   fullLengthPrice: 469.51,  ctsRatePerM: 630.13 },
-  { diameterMm: 150, colour: "natural", standardLengthM: 1,   fullLengthPrice: 482.44,  ctsRatePerM: 581.77 },
-  { diameterMm: 160, colour: "natural", standardLengthM: 1,   fullLengthPrice: 548.89,  ctsRatePerM: 661.90 },
-  { diameterMm: 170, colour: "natural", standardLengthM: 1,   fullLengthPrice: 692.31,  ctsRatePerM: 929.15 },
-  { diameterMm: 180, colour: "natural", standardLengthM: 1,   fullLengthPrice: 694.53,  ctsRatePerM: 837.53 },
-  { diameterMm: 200, colour: "natural", standardLengthM: 1,   fullLengthPrice: 857.47,  ctsRatePerM: 1034.01 },
-  // 230-300mm: 0.6m standard length
-  { diameterMm: 230, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 759.43,  ctsRatePerM: 820.50 },
-  { diameterMm: 250, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 897.35,  ctsRatePerM: 969.51 },
-  { diameterMm: 280, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 1125.44, ctsRatePerM: 1215.95 },
-  { diameterMm: 300, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 1292.06, ctsRatePerM: 1395.96 },
+  // Natural (white) — Cast Nylon 6SA
+  { diameterMm: 30,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 31.68,   ctsRatePerM: 36.94 },
+  { diameterMm: 40,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 51.05,   ctsRatePerM: 68.53 },
+  { diameterMm: 50,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 79.78,   ctsRatePerM: 107.11 },
+  { diameterMm: 60,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 105.43,  ctsRatePerM: 141.49 },
+  { diameterMm: 70,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 143.68,  ctsRatePerM: 192.93 },
+  { diameterMm: 80,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 187.52,  ctsRatePerM: 251.68 },
+  { diameterMm: 90,  colour: "natural", standardLengthM: 1,   fullLengthPrice: 237.29,  ctsRatePerM: 318.57 },
+  { diameterMm: 100, colour: "natural", standardLengthM: 1,   fullLengthPrice: 292.95,  ctsRatePerM: 393.26 },
+  { diameterMm: 110, colour: "natural", standardLengthM: 1,   fullLengthPrice: 292.87,  ctsRatePerM: 393.15 },
+  { diameterMm: 120, colour: "natural", standardLengthM: 1,   fullLengthPrice: 348.36,  ctsRatePerM: 467.80 },
+  { diameterMm: 125, colour: "natural", standardLengthM: 1,   fullLengthPrice: 378.18,  ctsRatePerM: 507.77 },
+  { diameterMm: 130, colour: "natural", standardLengthM: 1,   fullLengthPrice: 408.99,  ctsRatePerM: 549.15 },
+  { diameterMm: 140, colour: "natural", standardLengthM: 1,   fullLengthPrice: 474.26,  ctsRatePerM: 636.71 },
+  { diameterMm: 150, colour: "natural", standardLengthM: 1,   fullLengthPrice: 544.63,  ctsRatePerM: 731.01 },
+  { diameterMm: 160, colour: "natural", standardLengthM: 1,   fullLengthPrice: 603.36,  ctsRatePerM: 809.90 },
+  { diameterMm: 170, colour: "natural", standardLengthM: 1,   fullLengthPrice: 680.89,  ctsRatePerM: 913.79 },
+  { diameterMm: 180, colour: "natural", standardLengthM: 1,   fullLengthPrice: 763.44,  ctsRatePerM: 1025.00 },
+  { diameterMm: 200, colour: "natural", standardLengthM: 1,   fullLengthPrice: 942.56,  ctsRatePerM: 1265.03 },
+  // 230mm+: 0.6m standard length
+  { diameterMm: 230, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 707.51,  ctsRatePerM: 1182.52 },
+  { diameterMm: 250, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 835.99,  ctsRatePerM: 1396.65 },
+  { diameterMm: 280, colour: "natural", standardLengthM: 0.6, fullLengthPrice: 1048.48, ctsRatePerM: 1747.47 },
+  // Black — Cast Nylon 6SA
+  { diameterMm: 30,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 33.42,   ctsRatePerM: 44.83 },
+  { diameterMm: 40,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 54.18,   ctsRatePerM: 72.72 },
+  { diameterMm: 50,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 84.65,   ctsRatePerM: 113.64 },
+  { diameterMm: 60,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 111.87,  ctsRatePerM: 150.15 },
+  { diameterMm: 65,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 123.69,  ctsRatePerM: null },
+  { diameterMm: 70,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 152.47,  ctsRatePerM: 204.71 },
+  { diameterMm: 80,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 199.02,  ctsRatePerM: 267.19 },
+  { diameterMm: 90,  colour: "black",   standardLengthM: 1,   fullLengthPrice: 251.80,  ctsRatePerM: 337.92 },
+  { diameterMm: 100, colour: "black",   standardLengthM: 1,   fullLengthPrice: 310.89,  ctsRatePerM: 417.39 },
+  { diameterMm: 110, colour: "black",   standardLengthM: 1,   fullLengthPrice: 310.80,  ctsRatePerM: null },
+  { diameterMm: 120, colour: "black",   standardLengthM: 1,   fullLengthPrice: 369.70,  ctsRatePerM: null },
+  { diameterMm: 125, colour: "black",   standardLengthM: 1,   fullLengthPrice: 401.32,  ctsRatePerM: null },
+  { diameterMm: 130, colour: "black",   standardLengthM: 1,   fullLengthPrice: 434.04,  ctsRatePerM: null },
+  { diameterMm: 140, colour: "black",   standardLengthM: 1,   fullLengthPrice: 503.29,  ctsRatePerM: null },
+  { diameterMm: 150, colour: "black",   standardLengthM: 1,   fullLengthPrice: 577.98,  ctsRatePerM: null },
+  { diameterMm: 160, colour: "black",   standardLengthM: 1,   fullLengthPrice: 640.29,  ctsRatePerM: null },
+  { diameterMm: 170, colour: "black",   standardLengthM: 1,   fullLengthPrice: 722.59,  ctsRatePerM: null },
+  { diameterMm: 180, colour: "black",   standardLengthM: 1,   fullLengthPrice: 810.19,  ctsRatePerM: null },
+  { diameterMm: 200, colour: "black",   standardLengthM: 1,   fullLengthPrice: 1000.26, ctsRatePerM: null },
+  { diameterMm: 230, colour: "black",   standardLengthM: 0.6, fullLengthPrice: 750.82,  ctsRatePerM: null },
+  { diameterMm: 250, colour: "black",   standardLengthM: 0.6, fullLengthPrice: 887.18,  ctsRatePerM: null },
 ];
 
 const HDPE_RODS: RodRow[] = [
@@ -1088,6 +1198,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, getProductUrl("acrylic"));
       case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, getProductUrl("peek"));
       case "pvc":             return priceGenericSheet(RIGID_PVC, col, thick, w, h, qty, getProductUrl("rigid pvc"));
+      case "nylon":           return priceGenericSheet(NYLON_SHEETS, col, thick, w, h, qty, getProductUrl("nylon sheet"));
       default:                return notFound();
     }
   }
@@ -1096,7 +1207,7 @@ export function getPricing(input: PricingInput): PriceResult {
     switch (mat) {
       case "acetal":        return priceRod(ACETAL_RODS, col, diam, len, qty, getProductUrl("acetal rod"));
       case "uhmwpe":        return priceRod(UHMWPE_RODS, "natural", diam, len, qty, getProductUrl("uhmwpe rod"));
-      case "nylon":         return priceRod(NYLON_RODS, "natural", diam, len, qty, getProductUrl("nylon rod"));
+      case "nylon":         return priceRod(NYLON_RODS, col, diam, len, qty, getProductUrl("nylon rod"));
       case "hdpe":          return priceRod(HDPE_RODS, hdpeCol, diam, len, qty, getProductUrl("hdpe rod"));
       case "polypropylene": return priceRod(PP_RODS, "beige", diam, len, qty, getProductUrl("pp rod"));
       case "pvc":           return priceRod(PVC_RODS, "grey", diam, len, qty, getProductUrl("pvc rod"));
