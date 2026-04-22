@@ -576,6 +576,79 @@ const MATERIALS_SIGNAGE = `
 
 **Applications:** Signage substrates, shop fitting panels, display boards, POS displays, trade show displays, architectural models, interior cladding.
 
+**Grades stocked:**
+- **Standard Foamed PVC** (AST Digifoam / Maxi-T) — most common, white and black, 1–30mm
+- **Simopor / Simopor Light** (Plastral) — premium density, white, 1–19mm; various oversized sheet options
+- **Celuka — Kicel** (Plastral) — closed-cell high-density, white, 10–30mm
+- **Celuka — Nycel** (Plastral) — premium high-density, white, 10–24mm
+
+**FOAM PVC PRICING — March 2026 (ex GST)**
+
+All sheets 2440×1220mm unless noted. CTS = cut-to-size $/m². Orders under $50 charged a $35 cutting fee.
+
+**STANDARD FOAMED PVC (AST Digifoam / Maxi-T) — White:**
+| Thickness | CTS ($/m²) | Full Sheet |
+|-----------|-----------|------------|
+| 1mm | $12.58 | $21 |
+| 2mm | $16.77 | $29 |
+| 3mm | $21.08 | $36 |
+| 4mm | $31.75 | $54 |
+| 5mm | $31.38 | $53 |
+| 6mm | $35.91 | $61 |
+| 10mm | $58.46 | $94 |
+| 16mm | $92.36 | $141 |
+| 20mm | $115.10 | $176 |
+| 25mm | $166.97 | $256 |
+| 30mm | $199.04 | $305 |
+
+Note: 3mm white also available oversized in 3050×1560mm ($57 full sheet, CTS $21.08/m²).
+
+**STANDARD FOAMED PVC — Black:**
+| Thickness | CTS ($/m²) | Full Sheet |
+|-----------|-----------|------------|
+| 3mm | $24.91 | $42 |
+| 6mm | $38.41 | $65 |
+| 10mm | $62.57 | $101 |
+| 12mm | $74.45 | $120 |
+| 16mm | $98.38 | $151 |
+
+**SIMOPOR / SIMOPOR LIGHT (Plastral) — White:**
+| Thickness | Sheet Size | CTS ($/m²) | Full Sheet |
+|-----------|-----------|-----------|------------|
+| 1mm | 2440×1220 | $19.99 | $34 |
+| 2mm | 2440×1220 | $34.10 | $58 |
+| 3mm | 2440×1220 | $51.73 | $88 |
+| 3mm | 3050×1220 | $38.56 | $82 |
+| 3mm | 3050×1530 | $40.50 | $108 |
+| 3mm | 3050×2030 | $38.44 | $136 |
+| 6mm | 2440×1220 | $71.72 | $122 |
+| 10mm | 2440×1220 | $156.38 | $253 |
+| 19mm | 2440×1220 | $241.03 | $369 |
+
+**CELUKA — KICEL (Plastral) — White, 2440×1220mm:**
+| Thickness | Grade | CTS ($/m²) | Full Sheet |
+|-----------|-------|-----------|------------|
+| 10mm | Kicel | $71.72 | $116 |
+| 12mm | Kicel | $87.01 | $141 |
+| 12mm | Kicel HD | $95.24 | $154 |
+| 15mm | Kicel | $105.82 | $171 |
+| 18mm | Kicel | $130.51 | $200 |
+| 20mm | Kicel | $143.44 | $220 |
+| 25mm | Kicel | $218.69 | $335 |
+| 30mm | Kicel | $283.36 | $434 |
+| 30mm | Kicel HD | $265.72 | $407 |
+
+**CELUKA — NYCEL (Plastral) — White, 2440×1220mm:**
+| Thickness | Sheet Size | CTS ($/m²) | Full Sheet |
+|-----------|-----------|-----------|------------|
+| 10mm | 2440×1220 | $123.45 | $200 |
+| 10mm | 3050×1220 | $121.34 | $245 |
+| 12mm | 2440×1220 | $150.50 | $243 |
+| 15mm | 2440×1220 | $177.54 | $287 |
+| 18mm | 2440×1220 | $197.53 | $302 |
+| 20mm | 2440×1220 | $223.39 | $342 |
+| 24mm | 2440×1220 | $276.30 | $423 |
+
 ---
 
 ### CORFLUTE (Corrugated Polypropylene / Coreflute)

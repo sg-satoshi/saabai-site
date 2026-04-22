@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "10:59", tag: "FIX", title: "fix: correct multi-piece price formatting — Rex was treating total as per-piece price" },
       { time: "10:48", tag: "NEW", title: "feat: add nylon sheet pricing to Rex engine — fixes order link on nylon sheet quotes" },
       { time: "10:37", tag: "NEW", title: "feat: add nylon sheet and rod pricing — March 2026 (all grades, full tables)" },
       { time: "10:18", tag: "UI", title: "ui: increase Rex chat border to 2px" },

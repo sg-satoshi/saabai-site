@@ -476,6 +476,60 @@ const PEEK_SHEETS: SheetRow[] = [
   { colour: "natural", thicknessMm: 30, sheetW: 1000, sheetH: 610, ctsRate: null, fullSheetPrice: 11706.05 },
 ];
 
+// ── PVC Foam Board ─────────────────────────────────────────────────────────────
+// Pricing: March 2026 (ex GST). Standard sheet 2440×1220mm.
+// Standard = AST Digifoam (white thin) / AST Maxi-T (thick + black).
+// Simopor = Plastral premium grade. Celuka = Plastral Kicel. Nycel = Plastral Nycel.
+const FOAM_PVC_STANDARD: SheetRow[] = [
+  // White
+  { colour: "white", thicknessMm: 1,  sheetW: 2440, sheetH: 1220, ctsRate: 12.58,  fullSheetPrice: 21 },
+  { colour: "white", thicknessMm: 2,  sheetW: 2440, sheetH: 1220, ctsRate: 16.77,  fullSheetPrice: 29 },
+  { colour: "white", thicknessMm: 3,  sheetW: 2440, sheetH: 1220, ctsRate: 21.08,  fullSheetPrice: 36 },
+  { colour: "white", thicknessMm: 4,  sheetW: 2440, sheetH: 1220, ctsRate: 31.75,  fullSheetPrice: 54 },
+  { colour: "white", thicknessMm: 5,  sheetW: 2440, sheetH: 1220, ctsRate: 31.38,  fullSheetPrice: 53 },
+  { colour: "white", thicknessMm: 6,  sheetW: 2440, sheetH: 1220, ctsRate: 35.91,  fullSheetPrice: 61 },
+  { colour: "white", thicknessMm: 10, sheetW: 2440, sheetH: 1220, ctsRate: 58.46,  fullSheetPrice: 94 },
+  { colour: "white", thicknessMm: 16, sheetW: 2440, sheetH: 1220, ctsRate: 92.36,  fullSheetPrice: 141 },
+  { colour: "white", thicknessMm: 20, sheetW: 2440, sheetH: 1220, ctsRate: 115.10, fullSheetPrice: 176 },
+  { colour: "white", thicknessMm: 25, sheetW: 2440, sheetH: 1220, ctsRate: 166.97, fullSheetPrice: 256 },
+  { colour: "white", thicknessMm: 30, sheetW: 2440, sheetH: 1220, ctsRate: 199.04, fullSheetPrice: 305 },
+  // Black
+  { colour: "black", thicknessMm: 3,  sheetW: 2440, sheetH: 1220, ctsRate: 24.91,  fullSheetPrice: 42 },
+  { colour: "black", thicknessMm: 6,  sheetW: 2440, sheetH: 1220, ctsRate: 38.41,  fullSheetPrice: 65 },
+  { colour: "black", thicknessMm: 10, sheetW: 2440, sheetH: 1220, ctsRate: 62.57,  fullSheetPrice: 101 },
+  { colour: "black", thicknessMm: 12, sheetW: 2440, sheetH: 1220, ctsRate: 74.45,  fullSheetPrice: 120 },
+  { colour: "black", thicknessMm: 16, sheetW: 2440, sheetH: 1220, ctsRate: 98.38,  fullSheetPrice: 151 },
+];
+
+const FOAM_PVC_SIMOPOR: SheetRow[] = [
+  { colour: "white", thicknessMm: 1,  sheetW: 2440, sheetH: 1220, ctsRate: 19.99,  fullSheetPrice: 34 },
+  { colour: "white", thicknessMm: 2,  sheetW: 2440, sheetH: 1220, ctsRate: 34.10,  fullSheetPrice: 58 },
+  { colour: "white", thicknessMm: 3,  sheetW: 2440, sheetH: 1220, ctsRate: 51.73,  fullSheetPrice: 88 },
+  { colour: "white", thicknessMm: 6,  sheetW: 2440, sheetH: 1220, ctsRate: 71.72,  fullSheetPrice: 122 },
+  { colour: "white", thicknessMm: 10, sheetW: 2440, sheetH: 1220, ctsRate: 156.38, fullSheetPrice: 253 },
+  { colour: "white", thicknessMm: 19, sheetW: 2440, sheetH: 1220, ctsRate: 241.03, fullSheetPrice: 369 },
+];
+
+const FOAM_PVC_CELUKA: SheetRow[] = [
+  // Kicel standard
+  { colour: "white", thicknessMm: 10, sheetW: 2440, sheetH: 1220, ctsRate: 71.72,  fullSheetPrice: 116 },
+  { colour: "white", thicknessMm: 12, sheetW: 2440, sheetH: 1220, ctsRate: 87.01,  fullSheetPrice: 141 },
+  { colour: "white", thicknessMm: 15, sheetW: 2440, sheetH: 1220, ctsRate: 105.82, fullSheetPrice: 171 },
+  { colour: "white", thicknessMm: 18, sheetW: 2440, sheetH: 1220, ctsRate: 130.51, fullSheetPrice: 200 },
+  { colour: "white", thicknessMm: 20, sheetW: 2440, sheetH: 1220, ctsRate: 143.44, fullSheetPrice: 220 },
+  { colour: "white", thicknessMm: 25, sheetW: 2440, sheetH: 1220, ctsRate: 218.69, fullSheetPrice: 335 },
+  { colour: "white", thicknessMm: 30, sheetW: 2440, sheetH: 1220, ctsRate: 283.36, fullSheetPrice: 434 },
+];
+
+const FOAM_PVC_NYCEL: SheetRow[] = [
+  { colour: "white", thicknessMm: 10, sheetW: 2440, sheetH: 1220, ctsRate: 123.45, fullSheetPrice: 200 },
+  { colour: "white", thicknessMm: 12, sheetW: 2440, sheetH: 1220, ctsRate: 150.50, fullSheetPrice: 243 },
+  { colour: "white", thicknessMm: 15, sheetW: 2440, sheetH: 1220, ctsRate: 177.54, fullSheetPrice: 287 },
+  { colour: "white", thicknessMm: 18, sheetW: 2440, sheetH: 1220, ctsRate: 197.53, fullSheetPrice: 302 },
+  { colour: "white", thicknessMm: 20, sheetW: 2440, sheetH: 1220, ctsRate: 223.39, fullSheetPrice: 342 },
+  { colour: "white", thicknessMm: 24, sheetW: 2440, sheetH: 1220, ctsRate: 276.30, fullSheetPrice: 423 },
+];
+
 // ── Nylon Sheets ───────────────────────────────────────────────────────────────
 // Pricing: March 2026 (ex GST). Standard sheet 2000×1000mm.
 // Natural 1–6mm: Ertalon 6SA (Dotmar). Natural 8–100mm: Cast Nylon 6SA (Epol).
@@ -897,6 +951,10 @@ function normMaterial(raw: string): string {
   if (s.includes("hips")) return "hips";
   if (s.includes("ptfe") || s.includes("teflon")) return "ptfe";
   if (s.includes("nylon") || s.includes("polyamide")) return "nylon";
+  if (s.includes("simopor")) return "simopor";
+  if (s.includes("celuka") || s.includes("kicel")) return "celuka";
+  if (s.includes("nycel")) return "nycel";
+  if ((s.includes("foam") && s.includes("pvc")) || s.includes("forex") || s.includes("foamex") || s.includes("digifoam") || s.includes("foam board")) return "foam_pvc";
   if (s.includes("pvc")) return "pvc";
   if (s.includes("acp") || s.includes("acm") || s.includes("aluminium composite")) return "acp";
   if (s.includes("corflute") || s.includes("coreflute")) return "corflute";
@@ -1202,6 +1260,10 @@ export function getPricing(input: PricingInput): PriceResult {
       case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, getProductUrl("peek"));
       case "pvc":             return priceGenericSheet(RIGID_PVC, col, thick, w, h, qty, getProductUrl("rigid pvc"));
       case "nylon":           return priceGenericSheet(NYLON_SHEETS, col, thick, w, h, qty, getProductUrl("nylon sheet"));
+      case "foam_pvc":        return priceGenericSheet(FOAM_PVC_STANDARD, col === "natural" ? "white" : col, thick, w, h, qty, getProductUrl("foam pvc"));
+      case "simopor":         return priceGenericSheet(FOAM_PVC_SIMOPOR, "white", thick, w, h, qty, getProductUrl("foam pvc"));
+      case "celuka":          return priceGenericSheet(FOAM_PVC_CELUKA, "white", thick, w, h, qty, getProductUrl("foam pvc"));
+      case "nycel":           return priceGenericSheet(FOAM_PVC_NYCEL, "white", thick, w, h, qty, getProductUrl("foam pvc"));
       default:                return notFound();
     }
   }
