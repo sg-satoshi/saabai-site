@@ -108,6 +108,21 @@ Also known as: Perspex, Plexiglass, Oroglas
 
 **Applications:** Signage, retail displays, glazing, aquariums, light fittings, sneeze guards, boat windscreens, machine covers.
 
+**ACRYLIC MIRROR PRICING — April 2026 (ex GST)**
+
+All 3mm, sheet size 2440×1220mm. CTS = cut-to-size ($/m²). Orders under $50 charged a $35 cutting fee. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee instead.
+
+| Colour | CTS ($/m²) | Full Sheet |
+|--------|-----------|------------|
+| Silver | $198.87 | $296 |
+| Gold | $237.84 | $354 |
+| Rose Gold | $237.84 | $354 |
+| Amber | $272.41 | $405 |
+| Grey | $272.41 | $405 |
+| Red | $272.41 | $405 |
+
+Note: Silver/Gold/Rose Gold supplied by Plastral (cheapest). Amber/Grey/Red supplied by Dotmar.
+
 ---
 
 ### POLYCARBONATE (PC)
@@ -126,6 +141,35 @@ Also known as: Lexan, Makrolon, Tuffak
 **Grades:** UV co-extruded (outdoor standard), Sign Grade (optimised for ink adhesion), Opal/tinted (skylights, glare control).
 
 **Applications:** Machine guards, safety barriers, skylights, greenhouse panels, boat windows, security glazing, roofing, industrial enclosures.
+
+**POLYCARBONATE LIGHT DIFFUSER PRICING — April 2026 (ex GST)**
+
+| Thickness | Type | Size | CTS ($/m²) | Full Sheet |
+|-----------|------|------|-----------|------------|
+| 3mm | Clear Seadrift Embossed | 2440×1250 | $136.18 | $208 |
+
+---
+
+### PRISMATIC ACRYLIC & EGGCRATE LOUVRE
+
+**PRISMATIC ACRYLIC PRICING — April 2026 (ex GST, supplier: AST)**
+
+Prismatic diffuser sheets for lighting applications. CTS = cut-to-size ($/m²). Orders under $50 charged a $35 cutting fee. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee.
+
+| Thickness | Type | Size | CTS ($/m²) | Full Sheet |
+|-----------|------|------|-----------|------------|
+| 3mm | Clear Y12 | 2440×1220 | $114.22 | $170 |
+| 4.5mm | Clear Y15 | 2440×1220 | $159.18 | $237 |
+| 4mm | Clear Y25 | 1600×620 | $253.83 | $126 |
+
+**EGG CRATE LOUVRE PRICING — April 2026 (ex GST, supplier: AST)**
+
+| Thickness | Colour | Cell Size | Sheet Size | CTS ($/m²) | Full Sheet |
+|-----------|--------|-----------|------------|-----------|------------|
+| 8mm | Opal | 16×16mm | 1210×600 | $66.00 | $69 |
+| 16mm | Silver | 16×16mm | 1213×603 | $143.55 | $54 |
+
+Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price — charge full sheet price ($54) + cutting fee instead.
 
 ---
 
