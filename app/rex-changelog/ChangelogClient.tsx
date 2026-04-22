@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "10:09", tag: "NEW", title: "ui: add subtle teal border and glow to Rex chat window" },
       { time: "10:05", tag: "NEW", title: "feat: add acrylic mirror, prismatic, PC diffuser and eggcrate pricing — April 2026" },
       { time: "07:57", tag: "UPDATE", title: "chore: remove test pages" },
       { time: "06:49", tag: "NEW", title: "Add test-goose2 page for deployment test" },

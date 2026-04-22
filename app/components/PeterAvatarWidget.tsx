@@ -1112,9 +1112,9 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
               right: 0,
               width: "100%",
               borderRadius: "1rem",
-              border: "1px solid rgba(98, 197, 209, 0.28)",
+              border: "1px solid rgba(98, 197, 209, 0.55)",
             }),
-            boxShadow: "0 0 0 1px rgba(98, 197, 209, 0.10), 0 8px 32px rgba(0,0,0,0.18), 0 0 48px rgba(98, 197, 209, 0.07)",
+            boxShadow: "inset 0 0 0 1px rgba(98, 197, 209, 0.18), 0 8px 32px rgba(0,0,0,0.18)",
             animation: isMobile ? "none" : "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
