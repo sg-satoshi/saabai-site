@@ -105,7 +105,17 @@ function ClientPortalInner() {
     badNewsStyle:      "",
     signOff:           "",
     writingSamples:    [] as { label: string; text: string }[],
+    // The Lawyer Behind the Agent
+    birthYear:            "",
+    practiceFocus:        "",
+    careerBackground:     "",
+    educationBackground:  "",
+    formativeInfluences:  "",
+    legalPhilosophy:      "",
   });
+  const [urlIngestDraft,   setUrlIngestDraft]   = useState("");
+  const [urlIngestLoading, setUrlIngestLoading] = useState(false);
+  const [pdfIngestLoading, setPdfIngestLoading] = useState(false);
   const [alwaysSayDraft,    setAlwaysSayDraft]    = useState("");
   const [neverSayDraft,     setNeverSayDraft]      = useState("");
   const [instructionDraft,  setInstructionDraft]   = useState("");
@@ -433,7 +443,7 @@ function ClientPortalInner() {
         <div style={{ maxWidth: 1100, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo-white-v2.png" alt="Saabai" style={{ height: 22 }} />
+            <img src="/brand/saabai-logo-transparent.png" alt="Saabai" style={{ height: 22 }} />
             <span style={{ color: C.gold, fontSize: 11, fontWeight: 700, background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 4, padding: "2px 8px" }}>
               Client Portal
             </span>
@@ -732,12 +742,22 @@ function ClientPortalInner() {
             outline: "none", boxSizing: "border-box",
           };
           const sectionStyle: React.CSSProperties = {
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24,
+            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 28,
           };
           const labelStyle: React.CSSProperties = {
-            fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: "0.8px",
+            fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: "0.8px",
             textTransform: "uppercase", display: "block", marginBottom: 8,
           };
+          let sectionCounter = 0;
+          function SectionNumber() {
+            sectionCounter += 1;
+            const n = String(sectionCounter).padStart(2, "0");
+            return (
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.gold, letterSpacing: "0.1em", marginBottom: 4 }}>
+                {n}
+              </div>
+            );
+          }
 
           function addTag(field: "alwaysSay" | "neverSay", draft: string, setDraft: (v: string) => void) {
             const val = draft.trim().replace(/,+$/, "");
@@ -797,15 +817,98 @@ function ClientPortalInner() {
                 );
               })()}
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 720 }}>
+
+                {/* ── The Lawyer Behind the Agent ── */}
+                <div style={{ ...sectionStyle, background: "#0a1628", borderColor: C.border, borderLeft: `4px solid ${C.gold}` }}>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.text, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>The Lawyer Behind the Agent</h3>
+                  <p style={{ margin: "0 0 24px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
+                    The more Lex understands who you are — not just how you write, but how you think — the more precisely it can represent you. This section is the deepest form of cloning available.
+                  </p>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+                    <div>
+                      <label style={labelStyle}>Birth Year</label>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>
+                        Used to understand your formative era — the ideas, events, and cultural context that shaped how you think about law and life.
+                      </p>
+                      <input
+                        value={settings.birthYear}
+                        onChange={e => setSettings(p => ({ ...p, birthYear: e.target.value }))}
+                        placeholder="e.g. 1968"
+                        style={{ ...inputStyle, maxWidth: 160 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Practice Focus & Specialties</label>
+                      <textarea
+                        value={settings.practiceFocus}
+                        onChange={e => setSettings(p => ({ ...p, practiceFocus: e.target.value }))}
+                        rows={3}
+                        placeholder="e.g. Tax and trust law, 28 years. Specialist in ATO disputes, family trust structuring, and business succession. Former ATO officer."
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Career Background</label>
+                      <textarea
+                        value={settings.careerBackground}
+                        onChange={e => setSettings(p => ({ ...p, careerBackground: e.target.value }))}
+                        rows={3}
+                        placeholder="e.g. Admitted 1994, NSW Bar 2001. 12 years at Clayton Utz, then founded own practice. Former ATO officer 1990-1994."
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Education</label>
+                      <textarea
+                        value={settings.educationBackground}
+                        onChange={e => setSettings(p => ({ ...p, educationBackground: e.target.value }))}
+                        rows={3}
+                        placeholder="e.g. LLB (Hons) UNSW 1993. Commerce degree UQ. Attended Sydney Grammar School. Also studied philosophy, which heavily influences my approach to legal reasoning."
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Formative Influences</label>
+                      <p style={{ margin: "0 0 8px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>Books, mentors, cases, and ideas that shaped how you think.</p>
+                      <textarea
+                        value={settings.formativeInfluences}
+                        onChange={e => setSettings(p => ({ ...p, formativeInfluences: e.target.value }))}
+                        rows={4}
+                        placeholder="e.g. Books: The Art of Advocacy (Morley Safer), Thinking Fast and Slow (Kahneman), Letters to a Young Lawyer (Dershowitz). Mentors: Sir Garfield Barwick's written judgments. Cases that shaped me: FCT v Spotless Services."
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Legal Philosophy & Worldview</label>
+                      <textarea
+                        value={settings.legalPhilosophy}
+                        onChange={e => setSettings(p => ({ ...p, legalPhilosophy: e.target.value }))}
+                        rows={4}
+                        placeholder="e.g. I believe the law is a tool for clarity, not a weapon. Plain English is more powerful than jargon. The best advice is the one the client can actually act on."
+                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
+                      />
+                    </div>
+
+                  </div>
+                </div>
 
                 {/* ── Goals & Strategy ── */}
                 <div style={{ ...sectionStyle, borderColor: C.goldBdr, background: `linear-gradient(135deg, ${C.surface} 0%, rgba(201,168,76,0.04) 100%)` }}>
+                  <SectionNumber />
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                     <span style={{ fontSize: 18 }}>🎯</span>
-                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.goldB }}>Goals & Strategy</h3>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Goals & Strategy</h3>
                   </div>
-                  <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                  <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
                     Define what success looks like for your firm. {agentName} will use these goals to actively steer every conversation toward your desired outcomes — not just answer questions, but drive results.
                   </p>
 
@@ -934,7 +1037,8 @@ function ClientPortalInner() {
 
                 {/* ── Identity ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Identity</h3>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Identity</h3>
 
                   {/* Widget Icon */}
                   <div style={{ marginBottom: 24 }}>
@@ -1030,7 +1134,8 @@ function ClientPortalInner() {
 
                 {/* ── Voice & Tone ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Voice & Tone</h3>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Voice & Tone</h3>
 
                   {([
                     { key: "formalityLevel" as const, label: "Formality", lo: "Casual", hi: "Formal",   val: settings.formalityLevel },
@@ -1074,8 +1179,9 @@ function ClientPortalInner() {
 
                 {/* ── Skill Packs ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Skill Packs</h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Skill Packs</h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
                     Give {agentName} specialised capabilities beyond standard legal assistance. Each pack adds a set of proven behavioural frameworks — select what fits your goals.
                   </p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
@@ -1113,8 +1219,9 @@ function ClientPortalInner() {
 
                 {/* ── Personality Traits ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Personality Traits</h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted }}>Select the traits that best describe how your agent should come across.</p>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Personality Traits</h3>
+                  <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>Select the traits that best describe how your agent should come across.</p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {TRAITS.map(trait => {
                       const active = settings.personalityTraits.includes(trait);
@@ -1141,8 +1248,9 @@ function ClientPortalInner() {
 
                 {/* ── Language Rules ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Language Rules</h3>
-                  <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted }}>Control the specific words and phrases your agent uses or avoids.</p>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Language Rules</h3>
+                  <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>Control the specific words and phrases your agent uses or avoids.</p>
 
                   {([
                     { field: "alwaysSay" as const, label: "Always Say", hint: "Phrases Lex should regularly use", draft: alwaysSayDraft, setDraft: setAlwaysSayDraft, color: C.green, colorBg: C.greenBg, colorBdr: C.greenBdr },
@@ -1182,11 +1290,12 @@ function ClientPortalInner() {
 
                 {/* ── Style Coach ── */}
                 <div style={sectionStyle}>
+                  <SectionNumber />
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
                     <span style={{ fontSize: 20, marginTop: 1 }}>✍️</span>
                     <div>
-                      <h3 style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Style Coach</h3>
-                      <p style={{ margin: 0, fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                      <h3 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Style Coach</h3>
+                      <p style={{ margin: 0, fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
                         Teach {agentName} to write exactly like you do. Senior lawyers have spent decades developing their voice — this is where you transfer that to your agent. The more precise you are, the more precisely {agentName} will replicate it.
                       </p>
                     </div>
@@ -1312,8 +1421,8 @@ function ClientPortalInner() {
                   {/* Writing samples */}
                   <div>
                     <label style={labelStyle}>Writing Samples</label>
-                    <p style={{ margin: "0 0 12px", fontSize: 12, color: C.dim, lineHeight: 1.6 }}>
-                      Paste 1–3 real excerpts from your own writing — emails, letters of advice, or client communications. {agentName} will study these closely and mirror your exact phrasing, rhythm, and structure.
+                    <p style={{ margin: "0 0 12px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>
+                      Paste up to 6 real excerpts from your own writing — emails, letters of advice, or client communications. {agentName} will study these closely and mirror your exact phrasing, rhythm, and structure.
                     </p>
 
                     {settings.writingSamples.length > 0 && (
@@ -1333,7 +1442,7 @@ function ClientPortalInner() {
                       </div>
                     )}
 
-                    {settings.writingSamples.length < 3 && (
+                    {settings.writingSamples.length < 6 && (
                       <div style={{ background: C.raised, border: `1px dashed ${C.border}`, borderRadius: 10, padding: 16 }}>
                         <div style={{ marginBottom: 10 }}>
                           <label style={{ ...labelStyle, marginBottom: 4 }}>Sample label (optional)</label>
@@ -1363,20 +1472,143 @@ function ClientPortalInner() {
                             setSampleTextDraft("");
                           }}
                           style={{ padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.goldBdr}`, background: C.goldBg, color: C.goldB, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-                          + Add Writing Sample {settings.writingSamples.length > 0 ? `(${settings.writingSamples.length}/3)` : ""}
+                          + Add Writing Sample {settings.writingSamples.length > 0 ? `(${settings.writingSamples.length}/6)` : ""}
                         </button>
                       </div>
                     )}
-                    {settings.writingSamples.length >= 3 && (
-                      <p style={{ margin: 0, fontSize: 12, color: C.dim }}>Maximum 3 samples added. Remove one to add another.</p>
+                    {settings.writingSamples.length >= 6 && (
+                      <p style={{ margin: 0, fontSize: 12, color: C.dim }}>Maximum 6 samples added. Remove one to add another.</p>
+                    )}
+
+                    {/* Import from Documents */}
+                    {settings.writingSamples.length < 6 && (
+                      <div style={{ marginTop: 20 }}>
+                        <div style={{ height: 1, background: C.border, marginBottom: 16 }} />
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>
+                          Import from Documents
+                        </div>
+
+                        {/* Import from URL */}
+                        <div style={{ marginBottom: 16 }}>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>Import from URL</label>
+                          <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
+                            Enter a URL to a web page containing your writing — an article, blog post, or published piece. We will extract the text and pre-fill a new sample.
+                          </p>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input
+                              value={urlIngestDraft}
+                              onChange={e => setUrlIngestDraft(e.target.value)}
+                              placeholder="https://..."
+                              style={{ ...inputStyle, flex: 1 }}
+                              disabled={urlIngestLoading}
+                            />
+                            <button
+                              disabled={urlIngestLoading || !urlIngestDraft.trim()}
+                              onClick={async () => {
+                                const url = urlIngestDraft.trim();
+                                if (!url) return;
+                                setUrlIngestLoading(true);
+                                try {
+                                  const res = await fetch("/api/portal/ingest-url", {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ url }),
+                                  });
+                                  const data = await res.json();
+                                  if (!res.ok) throw new Error(data.error ?? "Failed");
+                                  setSampleTextDraft(data.text ?? "");
+                                  setUrlIngestDraft("");
+                                } catch (err) {
+                                  alert(`Import failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+                                } finally {
+                                  setUrlIngestLoading(false);
+                                }
+                              }}
+                              style={{
+                                padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
+                                background: urlIngestLoading || !urlIngestDraft.trim() ? C.raised : C.goldBg,
+                                color: urlIngestLoading || !urlIngestDraft.trim() ? C.dim : C.goldB,
+                                cursor: urlIngestLoading || !urlIngestDraft.trim() ? "not-allowed" : "pointer",
+                                fontSize: 13, fontWeight: 700, whiteSpace: "nowrap",
+                                display: "flex", alignItems: "center", gap: 6,
+                              }}>
+                              {urlIngestLoading && (
+                                <span style={{ width: 12, height: 12, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
+                              )}
+                              {urlIngestLoading ? "Fetching…" : "Fetch & Import"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Import from PDF */}
+                        <div>
+                          <label style={{ ...labelStyle, marginBottom: 4 }}>Import from PDF</label>
+                          <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
+                            Upload a PDF document — a letter, opinion, or advice memo. Claude will extract the most style-revealing writing from it.
+                          </p>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <label style={{
+                              display: "inline-flex", alignItems: "center", gap: 8,
+                              padding: "10px 16px", borderRadius: 8,
+                              border: `1px solid ${pdfIngestLoading ? C.border : C.goldBdr}`,
+                              background: pdfIngestLoading ? C.raised : C.goldBg,
+                              color: pdfIngestLoading ? C.dim : C.goldB,
+                              cursor: pdfIngestLoading ? "not-allowed" : "pointer",
+                              fontSize: 13, fontWeight: 700,
+                            }}>
+                              {pdfIngestLoading && (
+                                <span style={{ width: 12, height: 12, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
+                              )}
+                              {pdfIngestLoading ? "Extracting…" : "Choose PDF"}
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                style={{ display: "none" }}
+                                disabled={pdfIngestLoading}
+                                onChange={async e => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  e.target.value = "";
+                                  setPdfIngestLoading(true);
+                                  try {
+                                    const arrayBuffer = await file.arrayBuffer();
+                                    const bytes = new Uint8Array(arrayBuffer);
+                                    let binary = "";
+                                    for (let i = 0; i < bytes.byteLength; i++) {
+                                      binary += String.fromCharCode(bytes[i]);
+                                    }
+                                    const base64 = btoa(binary);
+                                    const res = await fetch("/api/portal/ingest-pdf", {
+                                      method: "POST",
+                                      credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ base64, filename: file.name }),
+                                    });
+                                    const data = await res.json();
+                                    if (!res.ok) throw new Error(data.error ?? "Failed");
+                                    setSampleTextDraft(data.text ?? "");
+                                  } catch (err) {
+                                    alert(`PDF import failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+                                  } finally {
+                                    setPdfIngestLoading(false);
+                                  }
+                                }}
+                              />
+                            </label>
+                            <span style={{ fontSize: 12, color: C.dim }}>PDF · Max recommended 10MB</span>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* ── Custom Instructions ── */}
                 <div style={sectionStyle}>
-                  <h3 style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.goldB }}>Custom Instructions</h3>
-                  <p style={{ margin: "0 0 4px", fontSize: 13, color: C.muted }}>
+                  <SectionNumber />
+                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Custom Instructions</h3>
+                  <p style={{ margin: "0 0 4px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
                     Anything else Lex should know — your firm&apos;s values, workflows, jurisdiction focus, or unique client base.
                   </p>
                   <p style={{ margin: "0 0 16px", fontSize: 12, color: C.dim }}>

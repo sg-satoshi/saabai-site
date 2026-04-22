@@ -15,6 +15,13 @@ export interface PortalSettings {
   alwaysSay?: string[];
   neverSay?: string[];
   instructionLog?: { text: string; ts: string }[];
+  // The Lawyer Behind the Agent
+  birthYear?: string;
+  practiceFocus?: string;
+  careerBackground?: string;
+  educationBackground?: string;
+  formativeInfluences?: string;
+  legalPhilosophy?: string;
   // Style Coach
   writingPersona?: string;
   clientAddress?: "first-name" | "mr-ms" | "formal";
@@ -76,6 +83,21 @@ export function buildSystemPromptAddition(s: PortalSettings): string {
     "Write in plain prose only. Break after every 1 or 2 sentences with a blank line. Short paragraphs. No walls of text.",
     "For numbered lists, give each item its own paragraph with a blank line before each number. Never run numbered points together in one block.",
   ];
+
+  // Who This Lawyer Is
+  const hasLawyerProfile =
+    s.birthYear || s.practiceFocus || s.careerBackground ||
+    s.educationBackground || s.formativeInfluences || s.legalPhilosophy;
+  if (hasLawyerProfile) {
+    lines.push("");
+    lines.push("[WHO THIS LAWYER IS]");
+    if (s.birthYear) lines.push(`Birth Year / Generation: ${s.birthYear} — consider the formative era, ideas current at the time, education system and cultural context of that period`);
+    if (s.practiceFocus) lines.push(`Practice Focus: ${s.practiceFocus}`);
+    if (s.careerBackground) lines.push(`Career Background: ${s.careerBackground}`);
+    if (s.educationBackground) lines.push(`Education: ${s.educationBackground}`);
+    if (s.formativeInfluences) lines.push(`Formative Influences (books, mentors, cases): ${s.formativeInfluences}`);
+    if (s.legalPhilosophy) lines.push(`Legal Philosophy: ${s.legalPhilosophy}`);
+  }
 
   // Goals
   const hasGoals =

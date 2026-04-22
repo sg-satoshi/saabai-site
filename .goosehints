@@ -1,0 +1,26 @@
+# saabai-site — Goose Session Rules
+
+You are working on the saabai-site Next.js project.
+Project root: /Users/aiworkspace/Desktop/AI-Workspace/Projects/Saabai/saabai-site
+
+## Directory Rules
+- ALWAYS run shell commands from this project root
+- NEVER run npm, git, or vercel commands from any other directory
+- If you are unsure of your current directory, run `pwd` first
+- If pwd is not the project root, cd to it before doing anything else
+
+## Before Every Commit
+1. Run `npm run build` from the project root — confirm zero errors
+2. Only then commit and push
+3. After push, wait 60 seconds then run `vercel ls` — builds take ~1 minute
+4. Check once, maybe twice. Do not poll vercel ls in a tight loop
+5. Never say something is "live" until you see READY in vercel ls output
+
+## What NOT To Do
+- Do not create files outside this project directory
+- Do not run npm install unless a package is genuinely missing from package.json
+- Do not manually edit app/rex-changelog/ChangelogClient.tsx to add changelog entries — the post-commit git hook does this automatically
+- Do not hardcode model strings — use lib/chat-config.ts functions
+
+## Full rules
+Read CLAUDE.md in this directory before making any changes.

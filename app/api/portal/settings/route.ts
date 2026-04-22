@@ -35,6 +35,12 @@ function buildCompiledConfig(settings: Record<string, unknown>): string {
   const instructionLog  = Array.isArray(settings.instructionLog)
     ? (settings.instructionLog as Array<{ text: string; ts: string }>)
     : [];
+  const birthYear           = String(settings.birthYear           ?? "");
+  const practiceFocus       = String(settings.practiceFocus       ?? "");
+  const careerBackground    = String(settings.careerBackground    ?? "");
+  const educationBackground = String(settings.educationBackground ?? "");
+  const formativeInfluences = String(settings.formativeInfluences ?? "");
+  const legalPhilosophy     = String(settings.legalPhilosophy     ?? "");
 
   const outcomesSection = desiredOutcomes.length
     ? desiredOutcomes.map((o, i) => `${i + 1}. ${o}`).join("\n")
@@ -49,8 +55,20 @@ function buildCompiledConfig(settings: Record<string, unknown>): string {
         .join("\n")
     : "_(none)_";
 
+  const lawyerProfileSection = [
+    birthYear           ? `**Birth Year / Generation:** ${birthYear}` : "",
+    practiceFocus       ? `**Practice Focus:** ${practiceFocus}` : "",
+    careerBackground    ? `**Career Background:** ${careerBackground}` : "",
+    educationBackground ? `**Education:** ${educationBackground}` : "",
+    formativeInfluences ? `**Formative Influences:** ${formativeInfluences}` : "",
+    legalPhilosophy     ? `**Legal Philosophy:** ${legalPhilosophy}` : "",
+  ].filter(Boolean).join("\n") || "_(not configured)_";
+
   return [
     `# Lex Configuration — ${firmName}`,
+    "",
+    "## The Lawyer Behind the Agent",
+    lawyerProfileSection,
     "",
     "## Goals & Strategy",
     `**Primary Goal:** ${primaryGoal}`,
