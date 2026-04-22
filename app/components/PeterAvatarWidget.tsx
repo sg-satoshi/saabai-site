@@ -1093,7 +1093,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       {/* Improvement #5: slide-up entrance animation */}
       {isOpen && (
         <div
-          className="fixed z-50 overflow-hidden border border-saabai-border bg-saabai-surface flex flex-col rounded-2xl"
+          className="fixed z-50 overflow-hidden bg-saabai-surface flex flex-col rounded-2xl"
           style={{
             ...(isMobile ? {
               // Full-screen on mobile — covers entire viewport including notch/status bar
@@ -1112,8 +1112,9 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
               right: 0,
               width: "100%",
               borderRadius: "1rem",
+              border: "1px solid rgba(98, 197, 209, 0.28)",
             }),
-            boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+            boxShadow: "0 0 0 1px rgba(98, 197, 209, 0.10), 0 8px 32px rgba(0,0,0,0.18), 0 0 48px rgba(98, 197, 209, 0.07)",
             animation: isMobile ? "none" : "rexSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
