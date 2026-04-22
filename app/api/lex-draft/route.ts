@@ -174,6 +174,7 @@ export async function POST(req: Request) {
       parties,
       jurisdiction,
       specialInstructions,
+      responseLength,
       messages,
       requestQA,
       completedDraft,
@@ -228,6 +229,16 @@ export async function POST(req: Request) {
     }
     if (specialInstructions) {
       systemPrompt += `\n\nSPECIAL INSTRUCTIONS FROM INSTRUCTING LAWYER:\n${specialInstructions}`;
+    }
+    if (responseLength) {
+      const lengthMap: Record<string, string> = {
+        concise:  "RESPONSE LENGTH: Concise — produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
+        balanced: "RESPONSE LENGTH: Balanced — standard professional length. Include all required elements without padding.",
+        detailed: "RESPONSE LENGTH: Detailed — produce a thorough, comprehensive document. Include full explanations, recitals, and all optional protective clauses.",
+      };
+      if (lengthMap[responseLength]) {
+        systemPrompt += `\n\n${lengthMap[responseLength]}`;
+      }
     }
 
     // Build the message array

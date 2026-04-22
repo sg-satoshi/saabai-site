@@ -273,6 +273,7 @@ export default function LexPage() {
   const [draftParties, setDraftParties] = useState("");
   const [draftJurisdiction, setDraftJurisdiction] = useState("All Australian jurisdictions");
   const [draftInstructions, setDraftInstructions] = useState("");
+  const [draftResponseLength, setDraftResponseLength] = useState<"default" | "concise" | "balanced" | "detailed">("default");
   const [draftText, setDraftText] = useState("");
   const [draftQA, setDraftQA] = useState<QAReport | null>(null);
   const [draftLoading, setDraftLoading] = useState(false);
@@ -593,6 +594,7 @@ export default function LexPage() {
           parties: draftParties,
           jurisdiction: draftJurisdiction,
           specialInstructions: draftInstructions,
+          responseLength: draftResponseLength !== "default" ? draftResponseLength : undefined,
           messages: [],
         }),
         signal: draftAbortRef.current.signal,
@@ -1179,6 +1181,28 @@ export default function LexPage() {
                     fontFamily: "inherit",
                   }}
                 />
+              </div>
+
+              {/* Response Length override */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  Response Length
+                </label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["default", "concise", "balanced", "detailed"] as const).map(opt => (
+                    <button key={opt} onClick={() => setDraftResponseLength(opt)}
+                      style={{
+                        flex: 1, padding: "8px 0", borderRadius: 7, fontSize: 12, fontWeight: 700,
+                        cursor: "pointer", border: `1px solid ${draftResponseLength === opt ? C.gold : C.border}`,
+                        background: draftResponseLength === opt ? "rgba(201,168,76,0.1)" : "transparent",
+                        color: draftResponseLength === opt ? C.gold : C.textDim,
+                        textTransform: "capitalize",
+                      }}>
+                      {opt === "default" ? "Default" : opt}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: 10, color: C.textDim }}>Default uses your portal preference. Override here for this document only.</p>
               </div>
 
               {/* Special instructions */}

@@ -1158,7 +1158,8 @@ function ClientPortalInner() {
                   ))}
 
                   <div style={{ marginTop: 4 }}>
-                    <label style={labelStyle}>Response Length</label>
+                    <label style={labelStyle}>Default Response Length</label>
+                    <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim }}>Your preferred default. Individual documents in Lex can override this per job.</p>
                     <div style={{ display: "flex", gap: 8 }}>
                       {(["concise", "balanced", "detailed"] as const).map(opt => (
                         <button key={opt} onClick={() => setSettings(p => ({ ...p, responseLength: opt }))}

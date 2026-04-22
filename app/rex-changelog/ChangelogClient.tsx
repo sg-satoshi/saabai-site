@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "23:46", tag: "NEW", title: "Deep lawyer DNA section, PDF/URL ingestion, and portal redesign" },
       { time: "23:29", tag: "FIX", title: "Load portal settings by session email not teamEmail" },
       { time: "22:54", tag: "FIX", title: "Increase lex-draft timeout to 300s and add Custom document type" },
       { time: "16:06", tag: "UPDATE", title: "Strip conventional commit prefixes from entry titles" },
