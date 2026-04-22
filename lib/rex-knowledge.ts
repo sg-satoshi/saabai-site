@@ -222,6 +222,226 @@ Also known as: Delrin, Ertacetal, Polyacetal
 
 **Applications:** Gears, wear pads, bushings, rollers, bearings, conveyor components, food processing, hydraulic components.
 
+**Grades stocked:**
+- **Natural (White) Ertalon 6SA** (Dotmar) — 1–6mm sheets
+- **Natural (White) Cast Nylon 6SA** (Epol) — 8–100mm sheets
+- **Black Cast Nylon 6SA** (Dotmar/Epol) — 6–110mm sheets
+- **Blue Heat Stabilised** (Epol) — improved thermal performance, full sheet only
+- **Yellow Oil Filled** (Epol) — self-lubricating, full sheet only
+- **Grey Wax Filled** (Epol) — self-lubricating, full sheet only
+- **Natural Ertalon LFX** (Dotmar) — self-lubricating grade, various large sheet sizes, full sheet only
+
+**NYLON SHEET PRICING — March 2026 (ex GST)**
+
+All sheets 2000×1000mm unless noted. CTS rate = cut-to-size $/m² for pieces under the cutoff area threshold. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee. Orders under $50 charged $35 cutting fee.
+
+**NATURAL (WHITE) — Ertalon 6SA / Cast Nylon 6SA:**
+| Thickness | Grade | CTS ($/m²) | Full Sheet |
+|-----------|-------|-----------|------------|
+| 1mm | Ertalon 6SA (Dotmar) | $210.00 | $234 |
+| 1.5mm | Ertalon 6SA (Dotmar) | $315.91 | $352 |
+| 2mm | Ertalon 6SA (Dotmar) | $421.80 | $470 |
+| 3mm | Ertalon 6SA (Dotmar) | $631.81 | $704 |
+| 5mm | Ertalon 6SA (Dotmar) | $1,054.52 | $1,175 |
+| 6mm | Ertalon 6SA (Dotmar) | $1,265.41 | $1,410 |
+| 8mm | Cast Nylon 6SA (Epol) | $454.32 | $493 |
+| 10mm | Cast Nylon 6SA (Epol) | $567.89 | $617 |
+| 12mm | Cast Nylon 6SA (Epol) | $681.49 | $740 |
+| 15mm | Cast Nylon 6SA (Epol) | $851.85 | $925 |
+| 20mm | Cast Nylon 6SA (Epol) | $1,135.80 | $1,168 |
+| 25mm | Cast Nylon 6SA (Epol) | $1,419.74 | $1,460 |
+| 30mm | Cast Nylon 6SA (Epol) | $1,703.70 | $1,606 |
+| 40mm | Cast Nylon 6SA (Epol) | $2,271.59 | $2,142 |
+| 50mm | Cast Nylon 6SA (Epol) | $2,839.50 | $2,677 |
+| 60mm | Cast Nylon 6SA (Epol) | $3,407.39 | $3,213 |
+| 70mm | Cast Nylon 6SA (Epol) | $3,975.30 | $3,748 |
+| 80mm | Cast Nylon 6SA (Epol) | $4,543.19 | $4,284 |
+| 90mm | Cast Nylon 6SA (Epol) | $5,111.09 | $4,819 |
+| 100mm | Cast Nylon 6SA (Epol) | $5,679.00 | $5,354 |
+
+Note: For 20mm+ Natural, CTS rate exceeds full sheet price — charge full sheet + cutting fee.
+
+**BLACK — Cast Nylon 6SA:**
+| Thickness | CTS ($/m²) | Full Sheet |
+|-----------|-----------|------------|
+| 6mm | $389.41 | $434 |
+| 8mm | $482.14 | $523 |
+| 10mm | $602.67 | $654 |
+| 12mm | $723.21 | $785 |
+| 15mm | $904.00 | $981 |
+| 20mm | $1,205.33 | $1,240 |
+| 25mm | $1,506.66 | $1,550 |
+| 30mm | $1,808.01 | $1,705 |
+| 40mm | $2,410.68 | $2,273 |
+| 50mm | $3,013.34 | $2,841 |
+| 60mm | $3,616.01 | $3,409 |
+| 70mm | $4,218.67 | $3,978 |
+| 80mm | $4,821.34 | $4,546 |
+| 90mm | $5,424.02 | $5,114 |
+| 100mm | $6,026.69 | $5,682 |
+| 110mm | $7,292.29 | $6,876 |
+
+Note: For 25mm+ Black, CTS rate exceeds full sheet price — charge full sheet + cutting fee.
+
+**BLUE HEAT STABILISED, YELLOW OIL FILLED, GREY WAX FILLED — Full sheet only, no CTS (Epol, 2000×1000mm):**
+| Thickness | Blue Heat Stab | Yellow Oil Filled | Grey Wax Filled |
+|-----------|---------------|------------------|-----------------|
+| 8mm | $493 | $523 | $523 |
+| 10mm | $617 | $654 | $654 |
+| 12mm | $740 | $785 | — |
+| 15mm | $925 | $981 | $981 |
+| 20mm | $1,168 | $1,240 | $1,240 |
+| 25mm | $1,460 | $1,550 | $1,550 |
+| 30mm | $1,606 | $1,705 | $1,705 |
+| 40mm | $2,142 | $2,273 | $2,273 |
+| 50mm | $2,677 | $2,841 | $2,841 |
+| 60mm | $3,213 | $3,409 | $3,409 |
+| 70mm | $3,748 | $3,978 | — |
+| 80mm | $4,284 | $4,546 | $4,546 |
+| 90mm | — | $5,114 | — |
+| 100mm | $5,354 | $5,682 | $5,682 |
+
+**NATURAL ERTALON LFX (Self-Lubricating, Dotmar) — Full sheet only, various sizes:**
+| Thickness | Sheet Size | Full Sheet |
+|-----------|-----------|------------|
+| 10mm | 3050×1220 | $2,839 |
+| 12mm | 2000×1000 | $1,822 |
+| 16mm | 2000×1000 | $2,361 |
+| 20mm | 3050×1220 | $4,570 |
+| 25mm | 3050×1220 | $5,631 |
+| 30mm | 3050×1220 | $6,208 |
+| 40mm | 3050×1220 | $8,158 |
+| 50mm | 3050×1220 | $10,103 |
+| 60mm | 1220×610 | $2,428 |
+| 80mm | 1220×610 | $3,203 |
+| 100mm | 1220×610 | $3,980 |
+
+**NYLON ROD PRICING — March 2026 (ex GST, price per standard length)**
+
+Standard length = 1m. Diameters 230mm+ are supplied in 600mm lengths. Suppliers: Dotmar (6SA grade) and Epol (Cast grade).
+
+| Diameter | Grade / Colour | Std Length | Price |
+|----------|---------------|-----------|-------|
+| 6mm | Natural 6SA (Dotmar) | 1m | $9.65 |
+| 8mm | Natural 6SA (Dotmar) | 1m | $16.76 |
+| 10mm | Natural 6SA (Dotmar) | 1m | $25.04 |
+| 10mm | Black 6SA (Dotmar) | 1m | $12.19 |
+| 12mm | Natural 6SA (Dotmar) | 1m | $32.72 |
+| 12mm | Black 6SA (Dotmar) | 1m | $17.22 |
+| 16mm | Natural 6SA (Dotmar) | 1m | $57.11 |
+| 16mm | Black 6SA (Dotmar) | 1m | $30.02 |
+| 20mm | Natural 6SA (Dotmar) | 1m | $88.20 |
+| 20mm | Black 6SA (Dotmar) | 1m | $42.94 |
+| 25mm | Natural 6SA (Dotmar) | 1m | $86.33 |
+| 25mm | Black 6SA (Dotmar) | 1m | $42.04 |
+| 30mm | Natural 6SA (Dotmar) | 1m | $123.33 |
+| 30mm | Black 6SA (Dotmar) | 1m | $60.04 |
+| 30mm | Natural Cast (Epol) | 1m | $31.68 |
+| 30mm | Black Cast (Epol) | 1m | $33.42 |
+| 30mm | Heat-Stabilised (Epol) | 1m | $31.68 |
+| 32mm | Natural 6SA (Dotmar) | 1m | $140.74 |
+| 36mm | Natural 6SA (Dotmar) | 1m | $177.01 |
+| 36mm | Black 6SA (Dotmar) | 1m | $86.18 |
+| 40mm | Natural 6SA (Dotmar) | 1m | $217.65 |
+| 40mm | Black 6SA (Dotmar) | 1m | $105.96 |
+| 40mm | Natural Cast (Epol) | 1m | $51.05 |
+| 40mm | Black Cast (Epol) | 1m | $54.18 |
+| 40mm | Oil-Filled (Epol) | 1m | $54.18 |
+| 40mm | Wax-Filled (Epol) | 1m | $54.18 |
+| 40mm | Heat-Stabilised (Epol) | 1m | $51.05 |
+| 45mm | Natural 6SA (Dotmar) | 1m | $277.12 |
+| 45mm | Black 6SA (Dotmar) | 1m | $134.92 |
+| 45mm | Black Cast (Epol) | 1m | $68.53 |
+| 45mm | Heat-Stabilised (Epol) | 1m | $64.57 |
+| 50mm | Natural 6SA (Dotmar) | 1m | $340.96 |
+| 50mm | Black 6SA (Dotmar) | 1m | $166.02 |
+| 50mm | Natural Cast (Epol) | 1m | $79.78 |
+| 50mm | Black Cast (Epol) | 1m | $84.65 |
+| 50mm | Oil-Filled (Epol) | 1m | $84.65 |
+| 50mm | Wax-Filled (Epol) | 1m | $84.65 |
+| 50mm | Heat-Stabilised (Epol) | 1m | $79.78 |
+| 60mm | Black 6SA (Dotmar) | 1m | $219.68 |
+| 60mm | Natural Cast (Epol) | 1m | $105.43 |
+| 60mm | Black Cast (Epol) | 1m | $111.87 |
+| 60mm | Oil-Filled (Epol) | 1m | $111.87 |
+| 60mm | Wax-Filled (Epol) | 1m | $111.87 |
+| 60mm | Heat-Stabilised (Epol) | 1m | $105.43 |
+| 65mm | Black Cast (Epol) | 1m | $123.69 |
+| 65mm | Oil-Filled (Epol) | 1m | $131.35 |
+| 70mm | Black 6SA (Dotmar) | 1m | $297.01 |
+| 70mm | Natural Cast (Epol) | 1m | $143.68 |
+| 70mm | Black Cast (Epol) | 1m | $152.47 |
+| 70mm | Oil-Filled (Epol) | 1m | $152.47 |
+| 70mm | Wax-Filled (Epol) | 1m | $152.47 |
+| 70mm | Heat-Stabilised (Epol) | 1m | $143.68 |
+| 80mm | Natural Cast (Epol) | 1m | $187.52 |
+| 80mm | Black Cast (Epol) | 1m | $199.02 |
+| 80mm | Oil-Filled (Epol) | 1m | $199.02 |
+| 80mm | Wax-Filled (Epol) | 1m | $199.02 |
+| 80mm | Heat-Stabilised (Epol) | 1m | $187.52 |
+| 90mm | Natural Cast (Epol) | 1m | $237.29 |
+| 90mm | Black Cast (Epol) | 1m | $251.80 |
+| 90mm | Oil-Filled (Epol) | 1m | $251.80 |
+| 90mm | Wax-Filled (Epol) | 1m | $251.80 |
+| 90mm | Heat-Stabilised (Epol) | 1m | $237.29 |
+| 100mm | Black 6SA (Dotmar) | 1m | $608.97 |
+| 100mm | Natural Cast (Epol) | 1m | $292.95 |
+| 100mm | Black Cast (Epol) | 1m | $310.89 |
+| 100mm | Oil-Filled (Epol) | 1m | $310.89 |
+| 100mm | Wax-Filled (Epol) | 1m | $310.89 |
+| 100mm | Heat-Stabilised (Epol) | 1m | $292.95 |
+| 110mm | Natural Cast (Epol) | 1m | $292.87 |
+| 110mm | Black Cast (Epol) | 1m | $310.80 |
+| 110mm | Oil-Filled (Epol) | 1m | $310.80 |
+| 110mm | Wax-Filled (Epol) | 1m | $310.80 |
+| 110mm | Heat-Stabilised (Epol) | 1m | $292.87 |
+| 120mm | Natural Cast (Epol) | 1m | $348.36 |
+| 120mm | Black Cast (Epol) | 1m | $369.70 |
+| 120mm | Oil-Filled (Epol) | 1m | $369.70 |
+| 120mm | Wax-Filled (Epol) | 1m | $369.70 |
+| 125mm | Natural Cast (Epol) | 1m | $378.18 |
+| 125mm | Black Cast (Epol) | 1m | $401.32 |
+| 125mm | Heat-Stabilised (Epol) | 1m | $378.18 |
+| 130mm | Natural Cast (Epol) | 1m | $408.99 |
+| 130mm | Black Cast (Epol) | 1m | $434.04 |
+| 130mm | Oil-Filled (Epol) | 1m | $434.04 |
+| 130mm | Wax-Filled (Epol) | 1m | $434.04 |
+| 130mm | Heat-Stabilised (Epol) | 1m | $408.99 |
+| 140mm | Natural Cast (Epol) | 1m | $474.26 |
+| 140mm | Black Cast (Epol) | 1m | $503.29 |
+| 140mm | Oil-Filled (Epol) | 1m | $503.29 |
+| 150mm | Natural Cast (Epol) | 1m | $544.63 |
+| 150mm | Black Cast (Epol) | 1m | $577.98 |
+| 150mm | Oil-Filled (Epol) | 1m | $577.98 |
+| 150mm | Wax-Filled (Epol) | 1m | $577.98 |
+| 150mm | Heat-Stabilised (Epol) | 1m | $544.63 |
+| 160mm | Natural Cast (Epol) | 1m | $603.36 |
+| 160mm | Black Cast (Epol) | 1m | $640.29 |
+| 160mm | Oil-Filled (Epol) | 1m | $640.29 |
+| 170mm | Natural Cast (Epol) | 1m | $680.89 |
+| 170mm | Black Cast (Epol) | 1m | $722.59 |
+| 170mm | Oil-Filled (Epol) | 1m | $722.59 |
+| 180mm | Natural Cast (Epol) | 1m | $763.44 |
+| 180mm | Black Cast (Epol) | 1m | $810.19 |
+| 180mm | Oil-Filled (Epol) | 1m | $810.19 |
+| 180mm | Wax-Filled (Epol) | 1m | $810.19 |
+| 180mm | Heat-Stabilised (Epol) | 1m | $763.44 |
+| 200mm | Natural Cast (Epol) | 1m | $942.56 |
+| 200mm | Black Cast (Epol) | 1m | $1,000.26 |
+| 200mm | Oil-Filled (Epol) | 1m | $1,000.26 |
+| 200mm | Heat-Stabilised (Epol) | 1m | $942.56 |
+| 230mm | Natural Cast (Epol) | 600mm | $707.51 |
+| 230mm | Black Cast (Epol) | 600mm | $750.82 |
+| 230mm | Heat-Stabilised (Epol) | 600mm | $707.51 |
+| 250mm | Natural Cast (Epol) | 600mm | $835.99 |
+| 250mm | Black Cast (Epol) | 600mm | $887.18 |
+| 250mm | Heat-Stabilised (Epol) | 600mm | $835.99 |
+| 280mm | Natural Cast (Epol) | 600mm | $1,048.48 |
+| 300mm | Natural Cast (Epol) | 600mm | $1,203.70 |
+| 300mm | Black Cast (Epol) | 600mm | $1,277.41 |
+| 300mm | Heat-Stabilised (Epol) | 600mm | $1,203.70 |
+| 330mm | Black Cast (Epol) | 600mm | $1,219.45 |
+
 ---
 
 ### UHMWPE (Ultra-High Molecular Weight Polyethylene)
