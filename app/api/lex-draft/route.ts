@@ -34,7 +34,7 @@ import {
 } from "../../../lib/lex-document-types";
 
 export const runtime = "nodejs";
-export const maxDuration = 120; // Complex documents need more time
+export const maxDuration = 300; // Legal documents need extended time — searches + full draft
 
 // ── Type definitions ─────────────────────────────────────────────────────────
 
@@ -189,7 +189,8 @@ export async function POST(req: Request) {
     // ── Drafting Pass (Pass 1) ──────────────────────────────────────────────
 
     // Look up document type from registry (optional — enhances the system prompt)
-    const docTypeEntry = documentType ? getDocumentType(documentType) : undefined;
+    // "custom" means free-form: skip the preset document context
+    const docTypeEntry = (documentType && documentType !== "custom") ? getDocumentType(documentType) : undefined;
 
     // Build the full system prompt
     let systemPrompt = DRAFTING_SYSTEM_PROMPT;

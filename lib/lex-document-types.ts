@@ -10,7 +10,7 @@
 export interface DocumentType {
   id: string;
   name: string;
-  category: "trust" | "family-law" | "commercial" | "employment" | "property";
+  category: "trust" | "family-law" | "commercial" | "employment" | "property" | "custom";
   description: string;
   governingLegislation: { name: string; keySections: string[] }[];
   requiredElements: string[];
@@ -468,6 +468,21 @@ export const DOCUMENT_TYPES: DocumentType[] = [
       "commercial lease outgoings land tax restriction retail",
       "commercial lease make good obligations Australia",
     ],
+  },
+
+  // ── Custom ─────────────────────────────────────────────────────────────────
+
+  {
+    id: "custom",
+    name: "Custom / Blank Document",
+    category: "custom",
+    description:
+      "A free-form document for any matter not listed above. Describe what you need in the Instructions field — Lex will search for the applicable law and draft accordingly.",
+    governingLegislation: [],
+    requiredElements: [],
+    jurisdictionNotes: "",
+    draftingWarnings: [],
+    searchTerms: [],
   },
 ];
 

@@ -1119,6 +1119,7 @@ export default function LexPage() {
                     background: C.bg, border: `1px solid ${C.border}`,
                     color: C.text, fontSize: 13, cursor: "pointer", outline: "none",
                   }}>
+                  <option value="custom">Custom / Blank Document</option>
                   {(["trust", "family-law", "commercial", "employment", "property"] as const).map(cat => {
                     const docs = DOCUMENT_TYPES.filter(d => d.category === cat);
                     if (!docs.length) return null;
