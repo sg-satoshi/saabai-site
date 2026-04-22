@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "22 Apr 2026",
     entries: [
+      { time: "22:54", tag: "FIX", title: "Increase lex-draft timeout to 300s and add Custom document type" },
       { time: "16:06", tag: "UPDATE", title: "Strip conventional commit prefixes from entry titles" },
       { time: "15:07", tag: "FIX", title: "Ban em/en dashes and enforce spacing after punctuation in Rex" },
       { time: "13:01", tag: "NEW", title: "Lex conversation persistence scoped to logged-in user" },

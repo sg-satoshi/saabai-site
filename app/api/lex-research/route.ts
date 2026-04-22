@@ -2,6 +2,7 @@ import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } fr
 import { getPremiumModel } from "../../../lib/chat-config";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
+import { verifySession } from "../../../lib/portal-session";
 import {
   searchAustLII,
   searchATO,
@@ -38,10 +39,21 @@ export async function POST(req: Request) {
 
     const config = getLexConfig(clientId);
 
-    // Fetch portal settings for this firm and build an enhanced system prompt
+    // Load portal settings for the logged-in user.
+    // Use the session cookie email (the firm's login) — settings are saved per login email.
+    // Fall back to config.email.teamEmail for non-browser callers.
     let systemPromptContent = config.systemPrompt;
     try {
-      const portalSettings = await getPortalSettings(config.email.teamEmail);
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      const sessionToken = cookieHeader
+        .split(";")
+        .map(p => p.trim())
+        .find(p => p.startsWith("portal_session="))
+        ?.slice("portal_session=".length);
+      const session = sessionToken ? verifySession(sessionToken) : null;
+      const settingsEmail = session?.email ?? config.email.teamEmail;
+
+      const portalSettings = await getPortalSettings(settingsEmail);
       if (portalSettings) {
         systemPromptContent = config.systemPrompt + buildSystemPromptAddition(portalSettings);
       }

@@ -18,6 +18,8 @@
 
 import { streamText, generateText, tool, jsonSchema, stepCountIs } from "ai";
 import { getPremiumModel } from "../../../lib/chat-config";
+import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
+import { verifySession } from "../../../lib/portal-session";
 import {
   searchAustLII,
   searchATO,
@@ -199,6 +201,25 @@ export async function POST(req: Request) {
       systemPrompt += buildDocumentContextAddition(docTypeEntry, jurisdiction);
     } else if (docTypeEntry) {
       systemPrompt += buildDocumentContextAddition(docTypeEntry, "All Australian States/Territories");
+    }
+
+    // Inject firm's writing style settings from the portal if the user is logged in
+    try {
+      const cookieHeader = req.headers.get("cookie") ?? "";
+      const sessionToken = cookieHeader
+        .split(";")
+        .map(p => p.trim())
+        .find(p => p.startsWith("portal_session="))
+        ?.slice("portal_session=".length);
+      const session = sessionToken ? verifySession(sessionToken) : null;
+      if (session?.email) {
+        const portalSettings = await getPortalSettings(session.email);
+        if (portalSettings) {
+          systemPrompt += buildSystemPromptAddition(portalSettings);
+        }
+      }
+    } catch {
+      // Non-fatal
     }
 
     // Append parties and special instructions to the system prompt
