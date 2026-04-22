@@ -36,6 +36,11 @@ try {
     else if (lower.startsWith('test')) tag = 'DEBUG';
   }
 
+  // Strip conventional commit prefix (feat:, fix:, ui:, chore:, etc.) from display title
+  title = title.replace(/^[a-z]+:\s*/i, '');
+  // Capitalise first letter
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+
   // Format date: "2026-04-22" → "22 Apr 2026"
   const [year, month, day] = date.split('-');
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
