@@ -305,38 +305,82 @@ export default function LexPage() {
   const [submitDone, setSubmitDone]               = useState(false);
   const [submitError, setSubmitError]             = useState<string | null>(null);
 
-  const bottomRef  = useRef<HTMLDivElement>(null);
-  const inputRef   = useRef<HTMLTextAreaElement>(null);
-  const abortRef   = useRef<AbortController | null>(null);
+  const bottomRef    = useRef<HTMLDivElement>(null);
+  const inputRef     = useRef<HTMLTextAreaElement>(null);
+  const abortRef     = useRef<AbortController | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const activeThread = threads.find(t => t.id === activeId) ?? null;
   const messages = activeThread?.messages ?? [];
 
-  // Hydrate threads + projects + chips from client state after mount (avoids server/client mismatch)
+  // Hydrate threads + projects + chips after mount; then check auth and load from Redis
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
-      if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
-    } catch {}
-    try {
-      const savedProjects = JSON.parse(localStorage.getItem("lex_projects") ?? "[]") as Project[];
-      if (savedProjects.length > 0) {
-        setProjects(savedProjects);
-        setExpandedProjects(new Set(savedProjects.map(p => p.id)));
-      }
-    } catch {}
-    setChips(pickReplies());
+    async function init() {
+      // 1. Load from anonymous localStorage first (no flicker)
+      try {
+        const saved = JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
+        if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
+      } catch {}
+      try {
+        const savedProjects = JSON.parse(localStorage.getItem("lex_projects") ?? "[]") as Project[];
+        if (savedProjects.length > 0) {
+          setProjects(savedProjects);
+          setExpandedProjects(new Set(savedProjects.map(p => p.id)));
+        }
+      } catch {}
+      setChips(pickReplies());
+
+      // 2. Check auth and load user-scoped data from Redis
+      try {
+        const me = await fetch("/api/portal/me").then(r => r.json());
+        if (me.authenticated && me.email) {
+          setUserEmail(me.email);
+          // Prefer user-scoped localStorage (quick win while Redis loads)
+          const userKey = `lex_threads_${me.email}`;
+          try {
+            const localSaved = JSON.parse(localStorage.getItem(userKey) ?? "[]") as Thread[];
+            if (localSaved.length > 0) { setThreads(localSaved); setActiveId(localSaved[0].id); }
+          } catch {}
+          // Load from Redis — authoritative, works across devices
+          const res = await fetch("/api/lex-threads");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.threads) && data.threads.length > 0) {
+              setThreads(data.threads);
+              setActiveId(data.threads[0].id);
+            }
+          }
+        }
+      } catch {}
+    }
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist threads
+  // Persist threads — localStorage always, Redis (debounced 2s) when authenticated
   useEffect(() => {
-    try { localStorage.setItem("lex_threads", JSON.stringify(threads)); } catch {}
-  }, [threads]);
+    const storageKey = userEmail ? `lex_threads_${userEmail}` : "lex_threads";
+    try { localStorage.setItem(storageKey, JSON.stringify(threads)); } catch {}
+
+    if (userEmail) {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        fetch("/api/lex-threads", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ threads }),
+        }).catch(() => {});
+      }, 2000);
+    }
+  }, [threads, userEmail]);
 
   // Persist projects
   useEffect(() => {
-    try { localStorage.setItem("lex_projects", JSON.stringify(projects)); } catch {}
-  }, [projects]);
+    const storageKey = userEmail ? `lex_projects_${userEmail}` : "lex_projects";
+    try { localStorage.setItem(storageKey, JSON.stringify(projects)); } catch {}
+  }, [projects, userEmail]);
 
   // Close menus on outside click
   useEffect(() => {
