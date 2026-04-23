@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
+import { verifySession } from "./lib/portal-session";
 
 /**
  * Saabai Client Portal proxy (Next.js 16+).
@@ -9,7 +10,6 @@ import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
  */
 
 const PROTECTED = ["/rex-dashboard", "/rex-analytics", "/rex-changelog", "/saabai-admin"];
-const LEGACY_PW = process.env.REX_DASHBOARD_PASSWORD ?? "";
 
 async function isAuthenticated(req: NextRequest): Promise<boolean> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
@@ -17,9 +17,10 @@ async function isAuthenticated(req: NextRequest): Promise<boolean> {
     const session = await verifySessionToken(token);
     if (session) return true;
   }
-  if (LEGACY_PW) {
-    const legacy = req.cookies.get("rex_dash_auth")?.value;
-    if (legacy === LEGACY_PW) return true;
+  const legacy = req.cookies.get("rex_dash_auth")?.value;
+  if (legacy) {
+    const session = verifySession(legacy);
+    if (session?.email === "rex-dashboard") return true;
   }
   return false;
 }

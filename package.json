@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "atlas": "tsx ./atlas/atlas.ts",
-    "atlas:dev": "tsx watch ./atlas/atlas.ts"
+    "atlas:dev": "tsx watch ./atlas/atlas.ts",
+    "lint": "next lint"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
