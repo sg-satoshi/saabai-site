@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "23 Apr 2026",
     entries: [
+      { time: "10:12", tag: "FIX", title: "Remove debug routes, harden dashboard auth cookie, add lint script" },
       { time: "06:33", tag: "UPDATE", title: "Trigger changelog rebuild" },
       { time: "00:00", tag: "NEW", title: "Per-job response length override in Lex draft" }
     ],
