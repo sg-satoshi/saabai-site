@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "25 Apr 2026",
+    entries: [
+      { time: "09:47", tag: "NEW", title: "Redesign admin dashboard with dark navy theme and sidebar navigation" }
+    ],
+  },
+  {
     date: "23 Apr 2026",
     entries: [
       { time: "10:12", tag: "FIX", title: "Remove debug routes, harden dashboard auth cookie, add lint script" },

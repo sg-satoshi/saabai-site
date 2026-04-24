@@ -102,18 +102,18 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center font-[family-name:var(--font-geist-sans)]">
+    <div className="min-h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]" style={{ backgroundColor: "#07091a", color: "#eef0ff" }}>
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white border border-slate-300 mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6" style={{ backgroundColor: "#0e1128", border: "1px solid rgba(255,255,255,0.1)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="11" width="18" height="11" rx="2" stroke="#06B6D4" strokeWidth="1.5" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#06B6D4" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="12" cy="16" r="1.5" fill="#06B6D4" />
+              <rect x="3" y="11" width="18" height="11" rx="2" stroke="#25D366" strokeWidth="1.5" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#25D366" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="12" cy="16" r="1.5" fill="#25D366" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Mission Control</h1>
-          <p className="text-slate-500 text-sm mt-2">Enter your access code</p>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#eef0ff" }}>Mission Control</h1>
+          <p className="text-sm mt-2" style={{ color: "#727899" }}>Enter your access code</p>
         </div>
         <div className="flex flex-col gap-3">
           <input
@@ -123,9 +123,10 @@ function AuthGate({ onUnlock }: { onUnlock: () => void }) {
             onKeyDown={(e) => e.key === "Enter" && attempt()}
             placeholder="Access code"
             autoFocus
-            className={`w-full bg-white border rounded-xl px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-colors text-center tracking-widest ${error ? "border-slate-300" : "border-slate-300 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-100"}`}
+            className="w-full border rounded-xl px-4 py-3.5 text-sm focus:outline-none transition-colors text-center tracking-widest"
+            style={{ backgroundColor: "#131729", borderColor: error ? "#ef4444" : "rgba(255,255,255,0.12)", color: "#eef0ff" }}
           />
-          {error && <p className="text-slate-600 text-xs text-center">Incorrect — try again</p>}
+          {error && <p className="text-xs text-center" style={{ color: "#9aa0b8" }}>Incorrect — try again</p>}
           <button
             onClick={attempt}
             className="w-full bg-cyan-600 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
@@ -638,7 +639,7 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
   ];
 
   return (
-    <div className="min-h-screen bg-white p-8 max-w-5xl mx-auto w-full">
+    <div className="min-h-screen p-8 max-w-5xl mx-auto w-full">
 
       {/* Hero Header */}
       <div className="mb-12">
@@ -2506,7 +2507,39 @@ export default function MissionControl() {
   if (!authed) return <AuthGate onUnlock={() => setAuthed(true)} />;
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-[family-name:var(--font-geist-sans)] flex">
+    <>
+    <style>{`
+      .mc-dark { color-scheme: dark; }
+      .mc-dark .bg-white { background-color: #0e1128 !important; }
+      .mc-dark .border-slate-300 { border-color: rgba(255,255,255,0.09) !important; }
+      .mc-dark .border-slate-200 { border-color: rgba(255,255,255,0.06) !important; }
+      .mc-dark .text-slate-900 { color: #eef0ff !important; }
+      .mc-dark .text-slate-800 { color: #dde0f5 !important; }
+      .mc-dark .text-slate-700 { color: #c8ccdf !important; }
+      .mc-dark .text-slate-600 { color: #9aa0b8 !important; }
+      .mc-dark .text-slate-500 { color: #727899 !important; }
+      .mc-dark .text-slate-400 { color: #525873 !important; }
+      .mc-dark .bg-slate-100 { background-color: rgba(255,255,255,0.06) !important; }
+      .mc-dark .bg-slate-50 { background-color: rgba(255,255,255,0.03) !important; }
+      .mc-dark .border-slate-100 { border-color: rgba(255,255,255,0.05) !important; }
+      .mc-dark .bg-cyan-50 { background-color: rgba(37,211,102,0.06) !important; }
+      .mc-dark .bg-cyan-100 { background-color: rgba(37,211,102,0.1) !important; }
+      .mc-dark .border-cyan-200 { border-color: rgba(37,211,102,0.2) !important; }
+      .mc-dark .text-cyan-700 { color: #25D366 !important; }
+      .mc-dark .text-cyan-600 { color: #25D366 !important; }
+      .mc-dark input:not([type=checkbox]):not([type=radio]),
+      .mc-dark textarea,
+      .mc-dark select {
+        background-color: #131729 !important;
+        color: #eef0ff !important;
+        border-color: rgba(255,255,255,0.1) !important;
+      }
+      .mc-dark input::placeholder,
+      .mc-dark textarea::placeholder { color: #525873 !important; }
+      .mc-dark .divide-slate-200 > * + * { border-color: rgba(255,255,255,0.06) !important; }
+      .mc-dark .divide-slate-100 > * + * { border-color: rgba(255,255,255,0.04) !important; }
+    `}</style>
+    <div className="mc-dark min-h-screen bg-[#07091a] text-[#eef0ff] font-[family-name:var(--font-geist-sans)] flex">
 
       {/* Sidebar — hidden on mobile, collapsible on desktop */}
       <aside className={`shrink-0 border-r border-slate-800 hidden md:flex flex-col py-4 sticky top-0 h-screen transition-all duration-200 bg-slate-900 ${navCollapsed ? "w-12 px-1.5" : "w-56 px-4"}`}>
@@ -2884,5 +2917,6 @@ export default function MissionControl() {
 
       </main>
     </div>
+    </>
   );
 }
