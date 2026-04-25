@@ -218,7 +218,7 @@ function BroadcastPanel({
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,191,165,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: D.teal }}>BC</div>
           <div>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: D.text }}>Broadcast Email</p>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text }}>Broadcast Email</p>
             <p style={{ margin: 0, fontSize: 11, color: D.secondary }}>{recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected</p>
           </div>
         </div>
@@ -505,7 +505,7 @@ export default function SubscriberDashboard() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: D.teal }} />
-            <span style={{ fontSize: 15, fontWeight: 700, color: D.text }}>Subscriber Intelligence</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: D.text, letterSpacing: -0.5 }}>Subscriber Intelligence</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {someSelected && <span style={{ fontSize: 12, color: D.teal, fontWeight: 600 }}>{selected.size} selected</span>}
@@ -552,7 +552,7 @@ export default function SubscriberDashboard() {
           <div style={{ ...cardStyle, padding: "24px 28px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
-                <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: D.text }}>Subscriber Growth</p>
+                <p style={{ margin: "0 0 2px", fontSize: 16, fontWeight: 700, color: D.text }}>Subscriber Growth</p>
                 <p style={{ margin: 0, fontSize: 12, color: D.secondary }}>New sign-ups per day</p>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
@@ -566,7 +566,7 @@ export default function SubscriberDashboard() {
 
           {/* Industry breakdown */}
           <div style={{ ...cardStyle, padding: "24px 28px" }}>
-            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: D.text }}>Industry Mix</p>
+            <p style={{ margin: "0 0 2px", fontSize: 16, fontWeight: 700, color: D.text }}>Industry Mix</p>
             <p style={{ margin: "0 0 20px", fontSize: 12, color: D.secondary }}>Subscriber segments</p>
             {industryBreakdown.length === 0 ? (
               <p style={{ fontSize: 13, color: D.muted }}>No data yet</p>
@@ -612,7 +612,7 @@ export default function SubscriberDashboard() {
           {/* Table controls */}
           <div style={{ padding: "20px 24px", borderBottom: `1px solid ${D.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const }}>
             <div>
-              <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: D.text }}>All Subscribers</p>
+              <p style={{ margin: "0 0 2px", fontSize: 16, fontWeight: 700, color: D.text }}>All Subscribers</p>
               <p style={{ margin: 0, fontSize: 12, color: D.secondary }}>
                 {filtered.length} of {subs.length} shown{someSelected ? ` · ${selected.size} selected` : ""}
               </p>

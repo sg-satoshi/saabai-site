@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "25 Apr 2026",
     entries: [
+      { time: "13:43", tag: "NEW", title: "Dark theme for subscriber dashboard" },
       { time: "13:38", tag: "NEW", title: "Shared AdminSidebar across all admin sub-pages" },
       { time: "13:17", tag: "NEW", title: "Saabai-admin sidebar nav matches mission-control style" },
       { time: "13:11", tag: "NEW", title: "Update saabai-admin sidebar to match mission-control style" },
