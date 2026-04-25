@@ -133,6 +133,9 @@ const PRICING = [
 
 export default function CounselPage() {
   const [copied, setCopied] = useState(false);
+  const [monthlyEnquiries, setMonthlyEnquiries] = useState(20);
+  const [afterHoursPct, setAfterHoursPct] = useState(68);
+  const [avgMatterValue, setAvgMatterValue] = useState(3000);
 
   function copyEmail() {
     navigator.clipboard.writeText("hello@saabai.ai").then(() => {
@@ -152,6 +155,20 @@ export default function CounselPage() {
   const textSecondary = "#9ca3af";
   const textMuted = "#4b5563";
 
+  // ROI calculator — computed outputs
+  const afterHoursLeads = monthlyEnquiries * afterHoursPct / 100;
+  const missedLeads = afterHoursLeads * 0.6;
+  const monthlyRevenueLost = missedLeads * avgMatterValue;
+  const annualRevenueLost = monthlyRevenueLost * 12;
+  const lexGrowthYr1 = 499 * 12 + 2500; // $8,488
+  const roiYear1 = annualRevenueLost - lexGrowthYr1;
+  const paybackMonths = monthlyRevenueLost > 0 ? lexGrowthYr1 / monthlyRevenueLost : 0;
+
+  function fmtCurrency(n: number) {
+    if (n >= 1000) return "$" + Math.round(n / 1000) + "k";
+    return "$" + Math.round(n);
+  }
+
   return (
     <div style={{ background: bg, minHeight: "100vh", color: textPrimary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
 
@@ -166,7 +183,7 @@ export default function CounselPage() {
             <a href="#demo" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>See demo</a>
             <a href="#pricing" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>Pricing</a>
             <a
-              href="mailto:hello@saabai.ai?subject=Lex for Law Firms"
+              href="https://calendly.com/shanegoldberg/30min"
               style={{ fontSize: 13, background: gold, color: bg, padding: "8px 18px", borderRadius: 8, fontWeight: 700, textDecoration: "none", letterSpacing: "-0.1px" }}
             >
               Talk to us
@@ -197,7 +214,7 @@ export default function CounselPage() {
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const, alignItems: "center" }}>
             <a
-              href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Enquiry"
+              href="https://calendly.com/shanegoldberg/30min"
               style={{ display: "inline-flex", alignItems: "center", gap: 8, background: gold, color: bg, padding: "15px 30px", borderRadius: 10, fontWeight: 800, fontSize: 15, textDecoration: "none", letterSpacing: "-0.3px", boxShadow: `0 8px 32px rgba(201,168,76,0.25)` }}
             >
               Book a 30-min demo
@@ -349,7 +366,7 @@ export default function CounselPage() {
                 We build, train, and deploy your Lex agent. You approve the persona and practice areas. We handle everything else — from initial setup to ongoing optimisation.
               </p>
               <a
-                href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Enquiry"
+                href="https://calendly.com/shanegoldberg/30min"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, background: gold, color: bg, padding: "14px 28px", borderRadius: 10, fontWeight: 800, fontSize: 14, textDecoration: "none" }}
               >
                 Start the conversation
@@ -369,6 +386,143 @@ export default function CounselPage() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ROI Calculator */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Revenue at risk</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            See what your firm is losing<br />without Lex.
+          </h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
+            Adjust the numbers to match your firm. The output is conservative — it assumes you&apos;re only missing 60% of after-hours enquiries.
+          </p>
+        </div>
+
+        <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 24, padding: "48px 48px 40px", position: "relative" as const, overflow: "hidden" as const }}>
+          <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${gold}, transparent)` }} />
+
+          {/* Sliders */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 40, marginBottom: 48 }}>
+            {/* Slider 1 */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: textPrimary }}>Enquiries per month</label>
+                <span style={{ fontSize: 22, fontWeight: 900, color: gold, letterSpacing: "-1px" }}>{monthlyEnquiries}</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={100}
+                step={1}
+                value={monthlyEnquiries}
+                onChange={e => setMonthlyEnquiries(Number(e.target.value))}
+                style={{ width: "100%", accentColor: gold, cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontSize: 11, color: textMuted }}>5</span>
+                <span style={{ fontSize: 11, color: textMuted }}>100 / mo</span>
+              </div>
+            </div>
+
+            {/* Slider 2 */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: textPrimary }}>Arrive after hours</label>
+                <span style={{ fontSize: 22, fontWeight: 900, color: gold, letterSpacing: "-1px" }}>{afterHoursPct}%</span>
+              </div>
+              <input
+                type="range"
+                min={20}
+                max={90}
+                step={1}
+                value={afterHoursPct}
+                onChange={e => setAfterHoursPct(Number(e.target.value))}
+                style={{ width: "100%", accentColor: gold, cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontSize: 11, color: textMuted }}>20%</span>
+                <span style={{ fontSize: 11, color: textMuted }}>90%</span>
+              </div>
+            </div>
+
+            {/* Slider 3 */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: textPrimary }}>Avg matter value</label>
+                <span style={{ fontSize: 22, fontWeight: 900, color: gold, letterSpacing: "-1px" }}>{fmtCurrency(avgMatterValue)}</span>
+              </div>
+              <input
+                type="range"
+                min={500}
+                max={15000}
+                step={500}
+                value={avgMatterValue}
+                onChange={e => setAvgMatterValue(Number(e.target.value))}
+                style={{ width: "100%", accentColor: gold, cursor: "pointer" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <span style={{ fontSize: 11, color: textMuted }}>$500</span>
+                <span style={{ fontSize: 11, color: textMuted }}>$15k</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: border, marginBottom: 40 }} />
+
+          {/* Output stats */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 20, marginBottom: 32 }}>
+            {[
+              { label: "After-hours leads / mo", value: Math.round(afterHoursLeads).toString(), sub: "go unanswered without Lex" },
+              { label: "Leads lost / mo", value: Math.round(missedLeads).toString(), sub: "60% missed without 24/7 cover" },
+              { label: "Revenue lost / mo", value: fmtCurrency(monthlyRevenueLost), sub: "conservative estimate" },
+              { label: "Revenue lost / year", value: fmtCurrency(annualRevenueLost), sub: "before Lex", highlight: true },
+            ].map((stat, i) => (
+              <div
+                key={i}
+                style={{
+                  background: stat.highlight ? "rgba(201,168,76,0.06)" : "rgba(255,255,255,0.02)",
+                  border: `1px solid ${stat.highlight ? goldBorder : "rgba(255,255,255,0.06)"}`,
+                  borderRadius: 14,
+                  padding: "20px 20px 16px",
+                }}
+              >
+                <div style={{ fontSize: 11, color: stat.highlight ? gold : textMuted, fontWeight: 600, marginBottom: 8, letterSpacing: "0.3px" }}>{stat.label}</div>
+                <div style={{ fontSize: 32, fontWeight: 900, color: stat.highlight ? gold : textPrimary, letterSpacing: "-1.5px", lineHeight: 1 }}>{stat.value}</div>
+                <div style={{ fontSize: 11, color: textMuted, marginTop: 6, lineHeight: 1.4 }}>{stat.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ROI vs Lex */}
+          <div style={{ background: "rgba(201,168,76,0.05)", border: `1px solid ${goldBorder}`, borderRadius: 16, padding: "24px 28px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center" }}>
+            <div>
+              <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 700, color: gold }}>Year 1 ROI — Lex Growth plan</p>
+              <p style={{ margin: 0, fontSize: 13, color: textSecondary, lineHeight: 1.6 }}>
+                Lex Growth costs <strong style={{ color: textPrimary }}>$8,488 in year one</strong> ($499/mo + $2,500 setup).
+                Your firm is currently losing an estimated{" "}
+                <strong style={{ color: gold }}>{fmtCurrency(annualRevenueLost)}/year</strong> in missed leads.
+                {roiYear1 > 0
+                  ? <> That&apos;s a <strong style={{ color: gold }}>{fmtCurrency(roiYear1)} net gain</strong> in year one.</>
+                  : <> At this volume, Lex pays back in <strong style={{ color: gold }}>{paybackMonths < 1 ? "under 1 month" : `${Math.ceil(paybackMonths)} months`}</strong>.</>
+                }
+              </p>
+            </div>
+            <div style={{ textAlign: "center", flexShrink: 0 }}>
+              <div style={{ fontSize: 11, color: textMuted, marginBottom: 4, whiteSpace: "nowrap" as const }}>Payback period</div>
+              <div style={{ fontSize: 36, fontWeight: 900, color: gold, letterSpacing: "-1.5px", lineHeight: 1 }}>
+                {paybackMonths < 1 ? "<1" : Math.ceil(paybackMonths) > 24 ? "24+" : Math.ceil(paybackMonths)}
+              </div>
+              <div style={{ fontSize: 11, color: textMuted, marginTop: 2 }}>months</div>
+            </div>
+          </div>
+
+          <p style={{ textAlign: "center", fontSize: 12, color: textMuted, marginTop: 24, marginBottom: 0 }}>
+            Assumptions: 60% of after-hours enquiries are lost without 24/7 coverage · 80% conversion rate on captured leads · Year 1 includes setup fee
+          </p>
         </div>
       </div>
 
@@ -420,7 +574,7 @@ export default function CounselPage() {
                 ))}
               </div>
               <a
-                href={`mailto:hello@saabai.ai?subject=Lex%20%E2%80%94%20${plan.name}%20plan%20enquiry`}
+                href="https://calendly.com/shanegoldberg/30min"
                 style={{
                   display: "block", textAlign: "center", padding: "13px 20px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none",
                   background: plan.highlight ? gold : "transparent",
@@ -475,7 +629,7 @@ export default function CounselPage() {
         </p>
         <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" as const }}>
           <a
-            href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Book a Demo"
+            href="https://calendly.com/shanegoldberg/30min"
             style={{ display: "inline-flex", alignItems: "center", gap: 10, background: gold, color: bg, padding: "17px 36px", borderRadius: 12, fontWeight: 800, fontSize: 16, textDecoration: "none", letterSpacing: "-0.3px", boxShadow: `0 12px 40px rgba(201,168,76,0.3)` }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/></svg>

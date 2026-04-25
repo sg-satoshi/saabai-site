@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "26 Apr 2026",
+    entries: [
+      { time: "09:34", tag: "NEW", title: "/counsel — Lex sales page for law firms" }
+    ],
+  },
+  {
     date: "25 Apr 2026",
     entries: [
       { time: "14:30", tag: "NEW", title: "Logo links to /saabai-admin across all admin pages" },

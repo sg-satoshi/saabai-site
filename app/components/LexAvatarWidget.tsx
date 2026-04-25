@@ -96,9 +96,10 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
   const [isStarted, setIsStarted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef  = useRef<HTMLInputElement>(null);
-  const msgsRef   = useRef<ChatMessage[]>([]);
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const inputRef       = useRef<HTMLInputElement>(null);
+  const msgsRef        = useRef<ChatMessage[]>([]);
+  const msgsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -131,7 +132,10 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
   }, [messages, isOpen]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll within the container only — avoid scrollIntoView which propagates
+    // up through same-origin iframe boundaries and jumps the parent page.
+    const c = msgsContainerRef.current;
+    if (c) c.scrollTop = c.scrollHeight;
   }, [messages, loading]);
 
   // Pulse glow every 12s
@@ -302,7 +306,7 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex",
+        <div ref={msgsContainerRef} style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex",
           flexDirection: "column", gap: 10, background: "#fff" }}>
           {messages.map((msg, i) => {
             const isUser = msg.role === "user";
