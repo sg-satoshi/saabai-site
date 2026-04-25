@@ -152,7 +152,7 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
                 border: "none", borderRadius: 8,
                 cursor: "pointer", textAlign: "left" as const,
                 fontSize: 13, fontWeight: active ? 700 : 500,
-                color: active ? C.teal : "#9aa0b8",
+                color: active ? C.teal : "#ffffff",
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
@@ -172,10 +172,11 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
             style={{
               display: "flex", alignItems: "center",
               padding: "7px 10px", marginBottom: 2,
-              background: item.active ? "rgba(255,255,255,0.06)" : "transparent",
+              background: item.active ? "#0891b2" : "transparent",
+              border: item.active ? "1px solid #0891b2" : "1px solid transparent",
               borderRadius: 8, textDecoration: "none",
               fontSize: 13, fontWeight: item.active ? 600 : 400,
-              color: item.active ? "#eef0ff" : "#9aa0b8",
+              color: "#ffffff",
             }}
           >
             {item.label}
@@ -196,7 +197,7 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
               background: "transparent",
               borderRadius: 8, textDecoration: "none",
               fontSize: 13, fontWeight: 400,
-              color: "#9aa0b8",
+              color: "#ffffff",
             }}
           >
             {item.label}
