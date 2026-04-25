@@ -132,7 +132,7 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
       {/* Logo */}
       <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${C.border}` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/saabai-logo-white-v2.png" alt="Saabai" style={{ height: 22, width: "auto" }} />
+        <img src="/brand/saabai-logo.png" alt="Saabai" style={{ width: 110, height: "auto", opacity: 0.9 }} />
       </div>
 
       {/* Venture switcher */}
@@ -151,8 +151,8 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
                 background: active ? "rgba(37,211,102,0.1)" : "transparent",
                 border: "none", borderRadius: 8,
                 cursor: "pointer", textAlign: "left" as const,
-                fontSize: 12, fontWeight: active ? 700 : 500,
-                color: active ? C.teal : C.muted,
+                fontSize: 13, fontWeight: active ? 700 : 500,
+                color: active ? C.teal : "#9aa0b8",
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
@@ -174,8 +174,8 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
               padding: "7px 10px", marginBottom: 2,
               background: item.active ? "rgba(255,255,255,0.06)" : "transparent",
               borderRadius: 8, textDecoration: "none",
-              fontSize: 12, fontWeight: item.active ? 600 : 400,
-              color: item.active ? C.text : C.muted,
+              fontSize: 13, fontWeight: item.active ? 600 : 400,
+              color: item.active ? "#eef0ff" : "#9aa0b8",
             }}
           >
             {item.label}
@@ -195,8 +195,8 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
               padding: "7px 10px", marginBottom: 2,
               background: "transparent",
               borderRadius: 8, textDecoration: "none",
-              fontSize: 12, fontWeight: 400,
-              color: C.muted,
+              fontSize: 13, fontWeight: 400,
+              color: "#9aa0b8",
             }}
           >
             {item.label}
@@ -231,8 +231,8 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
           S
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>Shane Pearl</p>
-          <p style={{ margin: 0, fontSize: 10, color: C.muted }}>Admin</p>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#eef0ff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>Shane Pearl</p>
+          <p style={{ margin: 0, fontSize: 11, color: "#9aa0b8" }}>Admin</p>
         </div>
         <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
           <button
