@@ -457,7 +457,7 @@ export default function CounselPage() {
               <input
                 type="range"
                 min={500}
-                max={15000}
+                max={50000}
                 step={500}
                 value={avgMatterValue}
                 onChange={e => setAvgMatterValue(Number(e.target.value))}
@@ -465,7 +465,7 @@ export default function CounselPage() {
               />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                 <span style={{ fontSize: 11, color: textMuted }}>$500</span>
-                <span style={{ fontSize: 11, color: textMuted }}>$15k</span>
+                <span style={{ fontSize: 11, color: textMuted }}>$50k</span>
               </div>
             </div>
           </div>

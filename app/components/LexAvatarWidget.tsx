@@ -119,7 +119,10 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
         msgsRef.current = saved.messages;
         setMessages(saved.messages);
         setIsStarted(true);
-        if (saved.isOpen) setIsOpen(true);
+        // Don't auto-open when embedded in an iframe — it causes the parent
+        // page to scroll to the widget on load. User can still click to open.
+        const inIframe = (() => { try { return window !== window.parent; } catch { return true; } })();
+        if (saved.isOpen && !inIframe) setIsOpen(true);
       }
     } catch {}
   }, []);
