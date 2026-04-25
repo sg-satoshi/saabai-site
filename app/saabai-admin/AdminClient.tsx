@@ -132,7 +132,9 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
       {/* Logo */}
       <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${C.border}` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/saabai-logo.png" alt="Saabai" style={{ width: 110, height: "auto", opacity: 0.9 }} />
+        <a href="/saabai-admin" style={{ display: "inline-block" }}>
+          <img src="/brand/saabai-logo.png" alt="Saabai" style={{ width: 110, height: "auto", opacity: 0.9 }} />
+        </a>
       </div>
 
       {/* Venture switcher */}
