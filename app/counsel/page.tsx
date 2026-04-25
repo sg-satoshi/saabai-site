@@ -67,11 +67,13 @@ const USECASES = [
 const INCLUDED = [
   { label: "Custom AI agent", desc: "Trained on your practice areas, firm identity, and how you want to communicate" },
   { label: "24/7 intake coverage", desc: "Never miss an enquiry — weekends, public holidays, after hours" },
+  { label: "Unlimited team members", desc: "Every partner, associate, paralegal, and admin gets full access — no per-seat charges, ever" },
   { label: "Instant team notification", desc: "Email alert the moment a new lead comes in, with full conversation transcript" },
   { label: "Structured lead briefs", desc: "Every enquiry formatted into a matter brief — ready to action, no manual writeup" },
   { label: "Automated client follow-up", desc: "Follow-up email goes to every enquiry automatically, before your team has seen it" },
   { label: "Embedded on your website", desc: "Live on your site within 5 business days, invisible seam with your brand" },
   { label: "Full leads dashboard", desc: "Every lead, conversation, and pipeline value in one place" },
+  { label: "Your own AI account", desc: "Lex runs on your Anthropic account — your data never passes through us, and API costs go directly to you (typically $5–30/mo)" },
   { label: "Ongoing optimisation", desc: "Monthly review of conversation data — we tune it as your firm grows" },
 ];
 
@@ -89,6 +91,8 @@ const PRICING = [
       "Full conversation transcripts",
       "Basic leads dashboard",
       "Standard follow-up email",
+      "Unlimited team members",
+      "Your own Anthropic account (AI costs ~$5–30/mo direct)",
     ],
     cta: "Get started",
     highlight: false,
@@ -371,6 +375,22 @@ export default function CounselPage() {
               >
                 Start the conversation
               </a>
+
+              {/* BYOAK + unlimited seats callout */}
+              <div style={{ marginTop: 32, display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                {[
+                  { icon: "∞", heading: "Unlimited team members", body: "Every partner, associate, and admin gets access. No per-seat charges — ever." },
+                  { icon: "🔑", heading: "Your own AI account", body: "Lex runs on your Anthropic account. Your data is yours, and AI costs go directly to you at cost — typically $5–30/mo. We never mark up your API usage." },
+                ].map((item, i) => (
+                  <div key={i} style={{ background: "rgba(201,168,76,0.04)", border: `1px solid ${goldBorder}`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+                    <div>
+                      <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: textPrimary }}>{item.heading}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: textSecondary, lineHeight: 1.6 }}>{item.body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column" as const, gap: 4 }}>
               {INCLUDED.map((item, i) => (
@@ -533,8 +553,11 @@ export default function CounselPage() {
           <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
             Less than one missed matter<br />pays for a year.
           </h2>
-          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
-            Straightforward pricing. One setup fee, one monthly fee. No per-seat charges, no usage limits, no lock-in contracts.
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 540, margin: "0 auto 16px", lineHeight: 1.7 }}>
+            One setup fee, one monthly fee. Unlimited team members. No per-seat charges, no usage caps, no lock-in contracts.
+          </p>
+          <p style={{ fontSize: 14, color: textMuted, maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>
+            Lex runs on your own Anthropic account — your data stays yours, AI costs go directly to you at cost (typically $5–30/mo). Most legal software charges $50–150 per user per month on top of that. We don&apos;t.
           </p>
         </div>
 
@@ -588,8 +611,9 @@ export default function CounselPage() {
           ))}
         </div>
 
-        <p style={{ textAlign: "center", fontSize: 13, color: textMuted, marginTop: 32 }}>
+        <p style={{ textAlign: "center", fontSize: 13, color: textMuted, marginTop: 32, lineHeight: 1.7 }}>
           All plans include a 30-day review period. If Lex isn&apos;t capturing leads within the first month, we&apos;ll work with you until it is.
+          <br />AI processing runs on your Anthropic account — we&apos;ll walk you through the 5-minute setup as part of onboarding.
         </p>
       </div>
 
