@@ -1,0 +1,500 @@
+"use client";
+
+import { useState } from "react";
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+
+const STATS = [
+  { value: "68%", label: "of legal enquiries arrive outside business hours" },
+  { value: "4.2x", label: "higher conversion if responded to within 5 minutes" },
+  { value: "$180k+", label: "average annual revenue lost per unanswered lead" },
+];
+
+const PILLARS = [
+  {
+    number: "01",
+    title: "24/7 Intake — zero missed enquiries",
+    desc: "Lex handles every inbound enquiry — at 11pm on a Friday, over a long weekend, during trial. It asks the right questions, captures contact details, and qualifies the matter before your team sees it.",
+    outcome: "You stop losing leads to silence",
+  },
+  {
+    number: "02",
+    title: "Matter qualification — before the first call",
+    desc: "Instead of arriving at a first consultation with no context, your team gets a structured brief: matter type, urgency, key facts, what the client actually wants. Every time, automatically.",
+    outcome: "First call is focused and billable",
+  },
+  {
+    number: "03",
+    title: "Client-ready outputs — not just notes",
+    desc: "Lex doesn't just capture information. It structures it into briefing documents, follow-up emails, and intake summaries — formatted for your team and ready to act on, with no manual writeup required.",
+    outcome: "Junior intake work, automated",
+  },
+];
+
+const USECASES = [
+  {
+    area: "Tax & ATO Disputes",
+    scenario: "A client receives an ATO audit notice on Friday evening. They find your site in a panic. Lex captures everything: notice date, amounts, audit type, company structure. Your team gets a full brief Monday morning.",
+    outcome: "0 panic-enquiries lost to after-hours",
+  },
+  {
+    area: "Commercial Contracts",
+    scenario: "A business owner needs a contract reviewed before signing on Tuesday. Lex qualifies the urgency, captures the key parties and deal value, and books a consultation — all before your team logs in.",
+    outcome: "High-value matters captured instantly",
+  },
+  {
+    area: "Estate Planning",
+    scenario: "A client wants to discuss their will and succession. Lex guides them through a structured conversation about family structure, assets, and goals — so the first consultation has real substance.",
+    outcome: "Complex matters properly scoped",
+  },
+  {
+    area: "Property & Conveyancing",
+    scenario: "A buyer with exchange pressure at 9pm finds your site. Lex captures their property details, timeline, and key concerns. You wake up to a qualified lead, not a voicemail no-one can action.",
+    outcome: "Time-sensitive leads never missed",
+  },
+  {
+    area: "Employment Law",
+    scenario: "An employee contacts your firm after a dismissal. Lex sensitively captures the facts, assesses urgency, and lets you know if it's time-critical — so the right person picks it up first.",
+    outcome: "Urgency flagged before the first call",
+  },
+  {
+    area: "Business Disputes",
+    scenario: "A client with a dispute needs to know if they have a case — before paying for a consultation. Lex gathers the core facts and helps them feel heard, while your team gets the context they need.",
+    outcome: "Qualified prospects, not tyre-kickers",
+  },
+];
+
+const INCLUDED = [
+  { label: "Custom AI agent", desc: "Trained on your practice areas, firm identity, and how you want to communicate" },
+  { label: "24/7 intake coverage", desc: "Never miss an enquiry — weekends, public holidays, after hours" },
+  { label: "Instant team notification", desc: "Email alert the moment a new lead comes in, with full conversation transcript" },
+  { label: "Structured lead briefs", desc: "Every enquiry formatted into a matter brief — ready to action, no manual writeup" },
+  { label: "Automated client follow-up", desc: "Follow-up email goes to every enquiry automatically, before your team has seen it" },
+  { label: "Embedded on your website", desc: "Live on your site within 5 business days, invisible seam with your brand" },
+  { label: "Full leads dashboard", desc: "Every lead, conversation, and pipeline value in one place" },
+  { label: "Ongoing optimisation", desc: "Monthly review of conversation data — we tune it as your firm grows" },
+];
+
+const PRICING = [
+  {
+    name: "Starter",
+    price: "$299",
+    period: "/month",
+    setup: "+ $1,500 setup",
+    ideal: "Solo practitioners and small firms",
+    features: [
+      "Lex AI intake agent on your site",
+      "24/7 lead capture and qualification",
+      "Instant email notifications",
+      "Full conversation transcripts",
+      "Basic leads dashboard",
+      "Standard follow-up email",
+    ],
+    cta: "Get started",
+    highlight: false,
+  },
+  {
+    name: "Growth",
+    price: "$499",
+    period: "/month",
+    setup: "+ $2,500 setup",
+    ideal: "Established firms with active intake",
+    features: [
+      "Everything in Starter",
+      "Custom training on your practice areas",
+      "CRM and calendar integration",
+      "Structured matter briefs",
+      "Pipeline value tracking",
+      "Monthly performance review",
+    ],
+    cta: "Most popular",
+    highlight: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    setup: "Scoped per firm",
+    ideal: "Multi-practice or multi-location firms",
+    features: [
+      "Everything in Growth",
+      "Multiple practice area agents",
+      "Practice management integration",
+      "White-label widget option",
+      "Custom reporting",
+      "Priority support",
+    ],
+    cta: "Talk to us",
+    highlight: false,
+  },
+];
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function CounselPage() {
+  const [copied, setCopied] = useState(false);
+
+  function copyEmail() {
+    navigator.clipboard.writeText("hello@saabai.ai").then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const gold = "#c9a84c";
+  const goldDim = "rgba(201,168,76,0.2)";
+  const goldBorder = "rgba(201,168,76,0.25)";
+  const bg = "#080a0f";
+  const surface = "#0d0f14";
+  const card = "#111418";
+  const border = "#1a1d24";
+  const textPrimary = "#ffffff";
+  const textSecondary = "#9ca3af";
+  const textMuted = "#4b5563";
+
+  return (
+    <div style={{ background: bg, minHeight: "100vh", color: textPrimary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
+
+      {/* Nav */}
+      <div style={{ borderBottom: `1px solid ${border}`, padding: "0 32px", position: "sticky", top: 0, background: "rgba(8,10,15,0.92)", backdropFilter: "blur(12px)", zIndex: 50 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
+          <a href="https://www.saabai.ai" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/saabai-logo-white-v2.png" alt="Saabai" style={{ height: 22, width: "auto", opacity: 0.9 }} />
+          </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+            <a href="#demo" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>See demo</a>
+            <a href="#pricing" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>Pricing</a>
+            <a
+              href="mailto:hello@saabai.ai?subject=Lex for Law Firms"
+              style={{ fontSize: 13, background: gold, color: bg, padding: "8px 18px", borderRadius: 8, fontWeight: 700, textDecoration: "none", letterSpacing: "-0.1px" }}
+            >
+              Talk to us
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201,168,76,0.08)", border: `1px solid ${goldBorder}`, borderRadius: 20, padding: "6px 16px", marginBottom: 32 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: gold }} />
+          <span style={{ fontSize: 11, color: gold, letterSpacing: "1px", textTransform: "uppercase" as const, fontWeight: 700 }}>AI Intake Agent for Law Firms</span>
+        </div>
+
+        <div style={{ maxWidth: 760 }}>
+          <h1 style={{ fontSize: "clamp(36px, 5.5vw, 64px)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-2px", margin: "0 0 24px", color: textPrimary }}>
+            Your firm&apos;s first AI hire<br />
+            <span style={{ color: gold }}>works the hours you don&apos;t.</span>
+          </h1>
+
+          <p style={{ fontSize: 19, color: textSecondary, lineHeight: 1.7, margin: "0 0 16px", maxWidth: 620 }}>
+            Lex is an AI intake agent built for law firms. It qualifies new enquiries, captures matter details, and delivers structured client briefs — 24 hours a day, without a receptionist.
+          </p>
+          <p style={{ fontSize: 16, color: textMuted, lineHeight: 1.7, margin: "0 0 48px", maxWidth: 560 }}>
+            Every missed after-hours call is a matter that went to your competitor. Lex closes that gap permanently.
+          </p>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const, alignItems: "center" }}>
+            <a
+              href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Enquiry"
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: gold, color: bg, padding: "15px 30px", borderRadius: 10, fontWeight: 800, fontSize: 15, textDecoration: "none", letterSpacing: "-0.3px", boxShadow: `0 8px 32px rgba(201,168,76,0.25)` }}
+            >
+              Book a 30-min demo
+            </a>
+            <a
+              href="#demo"
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: textSecondary, padding: "15px 30px", borderRadius: 10, fontWeight: 600, fontSize: 15, textDecoration: "none", border: `1px solid ${border}` }}
+            >
+              Try Lex live ↓
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}`, background: surface }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 32px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 40 }}>
+          {STATS.map((s, i) => (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 44, fontWeight: 900, color: gold, letterSpacing: "-2px", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: 13, color: textMuted, marginTop: 10, lineHeight: 1.5, maxWidth: 200, margin: "10px auto 0" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* What Lex does */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>What Lex does</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            Not a chatbot.<br />An AI legal operator.
+          </h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 540, margin: 0, lineHeight: 1.7 }}>
+            Lex replaces the intake work that currently either falls through the cracks or takes a junior team member hours to complete manually.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
+          {PILLARS.map((p, i) => (
+            <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 20, padding: "32px 28px", position: "relative" as const, overflow: "hidden" as const }}>
+              <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${gold}, transparent)` }} />
+              <div style={{ fontSize: 11, fontWeight: 800, color: gold, letterSpacing: "1.5px", marginBottom: 20, opacity: 0.7 }}>{p.number}</div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: textPrimary, margin: "0 0 14px", lineHeight: 1.3, letterSpacing: "-0.3px" }}>{p.title}</h3>
+              <p style={{ fontSize: 14, color: textSecondary, lineHeight: 1.75, margin: "0 0 24px" }}>{p.desc}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 20, borderTop: `1px solid ${border}` }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: gold, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: gold, fontWeight: 700 }}>{p.outcome}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Live Demo */}
+      <div id="demo" style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 64, alignItems: "start" }}>
+
+            {/* Left: copy */}
+            <div>
+              <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Live Demo</p>
+              <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 20px", color: textPrimary, lineHeight: 1.1 }}>
+                This is Lex.<br />Say hello.
+              </h2>
+              <p style={{ fontSize: 16, color: textSecondary, lineHeight: 1.7, margin: "0 0 40px", maxWidth: 480 }}>
+                This is the actual agent — not a mockup. Ask it something a potential client at a law firm might ask.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 12, marginBottom: 40 }}>
+                {[
+                  "I've received an ATO audit notice",
+                  "I need to review a commercial contract before signing",
+                  "I want to update my will",
+                  "We have a business dispute with a former partner",
+                ].map((prompt, i) => (
+                  <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 11, color: gold, fontWeight: 700, letterSpacing: "0.5px", flexShrink: 0 }}>Try:</span>
+                    <span style={{ fontSize: 13, color: textSecondary, fontStyle: "italic" }}>"{prompt}"</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background: "rgba(201,168,76,0.06)", border: `1px solid ${goldBorder}`, borderRadius: 14, padding: "20px 24px" }}>
+                <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 800, color: gold, letterSpacing: "0.5px" }}>What happens after Lex captures a lead</p>
+                <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+                  {["Your team gets an instant email with the full conversation", "A structured matter brief is generated automatically", "A follow-up email goes to the client within seconds", "The lead appears in your Saabai dashboard"].map((step, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: goldDim, border: `1px solid ${goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M1 5l3 3 5-4" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                      <span style={{ fontSize: 13, color: textSecondary }}>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: phone */}
+            <div style={{ display: "flex", flexDirection: "column" as const, alignItems: "center" }}>
+              <div style={{ width: 340, height: 620, background: "#0a0c10", border: `2px solid #222530`, borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)", position: "relative" as const }}>
+                <div style={{ position: "absolute" as const, top: 0, left: "50%", transform: "translateX(-50%)", width: 100, height: 26, background: "#080a0f", borderRadius: "0 0 16px 16px", zIndex: 10 }} />
+                <iframe
+                  src="/lex-widget?client=tributumlaw"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  allow="microphone"
+                  title="Lex AI Agent — Live Demo"
+                />
+              </div>
+              <p style={{ fontSize: 11, color: textMuted, marginTop: 16, letterSpacing: "0.5px" }}>Live · Powered by Saabai</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Use Cases */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Practice areas</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>Where Lex earns its keep</h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 500, margin: 0, lineHeight: 1.7 }}>Lex works across practice areas — the intake process is the same whether it&apos;s tax, property, estates, or commercial work.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+          {USECASES.map((u, i) => (
+            <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: "26px 24px" }}>
+              <div style={{ display: "inline-block", background: goldDim, border: `1px solid ${goldBorder}`, borderRadius: 6, padding: "3px 10px", marginBottom: 16 }}>
+                <span style={{ fontSize: 11, color: gold, fontWeight: 700, letterSpacing: "0.5px" }}>{u.area}</span>
+              </div>
+              <p style={{ fontSize: 14, color: textSecondary, lineHeight: 1.75, margin: "0 0 20px" }}>{u.scenario}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 16, borderTop: `1px solid ${border}` }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: gold, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: gold, fontWeight: 700 }}>{u.outcome}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* What's included */}
+      <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }}>
+            <div>
+              <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>What&apos;s included</p>
+              <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 20px", color: textPrimary, lineHeight: 1.1 }}>
+                Done for you,<br />live in 5 days.
+              </h2>
+              <p style={{ fontSize: 16, color: textSecondary, lineHeight: 1.7, margin: "0 0 32px" }}>
+                We build, train, and deploy your Lex agent. You approve the persona and practice areas. We handle everything else — from initial setup to ongoing optimisation.
+              </p>
+              <a
+                href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Enquiry"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, background: gold, color: bg, padding: "14px 28px", borderRadius: 10, fontWeight: 800, fontSize: 14, textDecoration: "none" }}
+              >
+                Start the conversation
+              </a>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 4 }}>
+              {INCLUDED.map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "16px 0", borderBottom: i < INCLUDED.length - 1 ? `1px solid ${border}` : "none" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: goldDim, border: `1px solid ${goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M1 5l3 3 5-4" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: textPrimary }}>{item.label}</p>
+                    <p style={{ margin: 0, fontSize: 13, color: textMuted, lineHeight: 1.5 }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div id="pricing" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Pricing</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            Less than one missed matter<br />pays for a year.
+          </h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
+            Straightforward pricing. One setup fee, one monthly fee. No per-seat charges, no usage limits, no lock-in contracts.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+          {PRICING.map((plan, i) => (
+            <div
+              key={i}
+              style={{
+                background: plan.highlight ? "rgba(201,168,76,0.06)" : card,
+                border: `1px solid ${plan.highlight ? goldBorder : border}`,
+                borderRadius: 20,
+                padding: "32px 28px",
+                position: "relative" as const,
+              }}
+            >
+              {plan.highlight && (
+                <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${gold}, transparent)` }} />
+              )}
+              {plan.highlight && (
+                <div style={{ position: "absolute" as const, top: -12, left: "50%", transform: "translateX(-50%)", background: gold, color: bg, fontSize: 10, fontWeight: 800, padding: "4px 14px", borderRadius: 20, letterSpacing: "0.8px", whiteSpace: "nowrap" as const }}>
+                  MOST POPULAR
+                </div>
+              )}
+              <p style={{ margin: "0 0 6px", fontSize: 12, fontWeight: 700, color: textMuted, textTransform: "uppercase" as const, letterSpacing: "0.8px" }}>{plan.name}</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                <span style={{ fontSize: plan.price === "Custom" ? 32 : 40, fontWeight: 900, color: textPrimary, letterSpacing: "-2px", lineHeight: 1 }}>{plan.price}</span>
+                {plan.period && <span style={{ fontSize: 14, color: textMuted }}>{plan.period}</span>}
+              </div>
+              <p style={{ margin: "0 0 4px", fontSize: 12, color: textMuted }}>{plan.setup}</p>
+              <p style={{ margin: "0 0 28px", fontSize: 12, color: textSecondary, paddingTop: 12, borderTop: `1px solid ${border}` }}>{plan.ideal}</p>
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10, marginBottom: 28 }}>
+                {plan.features.map((f, j) => (
+                  <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><path d="M2 7l3.5 3.5 6.5-5" stroke={gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span style={{ fontSize: 13, color: textSecondary, lineHeight: 1.5 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a
+                href={`mailto:hello@saabai.ai?subject=Lex%20%E2%80%94%20${plan.name}%20plan%20enquiry`}
+                style={{
+                  display: "block", textAlign: "center", padding: "13px 20px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none",
+                  background: plan.highlight ? gold : "transparent",
+                  color: plan.highlight ? bg : gold,
+                  border: `1px solid ${plan.highlight ? gold : goldBorder}`,
+                }}
+              >
+                {plan.cta}
+              </a>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ textAlign: "center", fontSize: 13, color: textMuted, marginTop: 32 }}>
+          All plans include a 30-day review period. If Lex isn&apos;t capturing leads within the first month, we&apos;ll work with you until it is.
+        </p>
+      </div>
+
+      {/* About Saabai */}
+      <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 32px", display: "grid", gridTemplateColumns: "1fr auto", gap: 64, alignItems: "center" }}>
+          <div style={{ maxWidth: 580 }}>
+            <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>About Saabai</p>
+            <h2 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.8px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.2 }}>We build AI agents for professional services firms.</h2>
+            <p style={{ fontSize: 15, color: textSecondary, lineHeight: 1.8, margin: 0 }}>
+              Saabai is an AI automation business based in Adelaide. We don&apos;t sell off-the-shelf chatbots — we build custom agents trained on how your firm actually works. Rex has been running for Plastics Online for several months, capturing leads around the clock and auto-generating CRM records. Lex brings the same system to law firms.
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" as const, gap: 14, minWidth: 180 }}>
+            {[
+              { num: "24/7", label: "Intake coverage" },
+              { num: "<2s", label: "Response time" },
+              { num: "5 days", label: "Time to live" },
+            ].map((s, i) => (
+              <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 14, padding: "18px 22px" }}>
+                <div style={{ fontSize: 28, fontWeight: 900, color: gold, letterSpacing: "-1px", lineHeight: 1 }}>{s.num}</div>
+                <div style={{ fontSize: 12, color: textMuted, marginTop: 4 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Final CTA */}
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "96px 32px 112px", textAlign: "center" }}>
+        <h2 style={{ fontSize: "clamp(30px, 4.5vw, 52px)", fontWeight: 900, letterSpacing: "-1.5px", margin: "0 0 20px", color: textPrimary, lineHeight: 1.05 }}>
+          Your firm is losing leads<br />
+          <span style={{ color: gold }}>every night it doesn&apos;t have Lex.</span>
+        </h2>
+        <p style={{ fontSize: 17, color: textSecondary, margin: "0 0 48px", lineHeight: 1.7, maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>
+          Book a 30-minute demo. We&apos;ll show you how Lex works, walk through what the intake flow would look like for your firm, and tell you what it costs.
+        </p>
+        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" as const }}>
+          <a
+            href="mailto:hello@saabai.ai?subject=Lex for Law Firms — Book a Demo"
+            style={{ display: "inline-flex", alignItems: "center", gap: 10, background: gold, color: bg, padding: "17px 36px", borderRadius: 12, fontWeight: 800, fontSize: 16, textDecoration: "none", letterSpacing: "-0.3px", boxShadow: `0 12px 40px rgba(201,168,76,0.3)` }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/><polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/></svg>
+            Book a demo
+          </a>
+          <button
+            onClick={copyEmail}
+            style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "transparent", color: gold, padding: "17px 36px", borderRadius: 12, fontWeight: 600, fontSize: 16, border: `1px solid ${goldBorder}`, cursor: "pointer", letterSpacing: "-0.2px" }}
+          >
+            {copied ? (
+              <><svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M1 6l3.5 3.5 6.5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> Copied!</>
+            ) : (
+              <>hello@saabai.ai</>
+            )}
+          </button>
+        </div>
+        <p style={{ fontSize: 13, color: textMuted, marginTop: 32 }}>No lock-in contracts. Live in 5 business days.</p>
+      </div>
+
+    </div>
+  );
+}
