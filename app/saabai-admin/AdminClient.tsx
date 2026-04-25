@@ -38,7 +38,7 @@ function pct(a: number, b: number) {
 }
 
 function getGreeting() {
-  const h = new Date(Date.now() + 10 * 3600 * 1000).getHours();
+  const h = new Date(Date.now() + 10 * 3600 * 1000).getUTCHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
@@ -1080,10 +1080,10 @@ export default function AdminClient({
 
           {/* Greeting */}
           <div style={{ marginBottom: 24 }}>
-            <h1 style={{ margin: "0 0 4px", fontSize: 28, fontWeight: 800, color: C.text, letterSpacing: -0.8 }}>
+            <h1 style={{ margin: "0 0 6px", fontSize: 36, fontWeight: 800, color: "#eef0ff", letterSpacing: -1 }}>
               {getGreeting()}, Shane.
             </h1>
-            <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
+            <p style={{ margin: 0, fontSize: 14, color: "#9aa0b8" }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
           </div>
 
           {/* Atlas bar */}

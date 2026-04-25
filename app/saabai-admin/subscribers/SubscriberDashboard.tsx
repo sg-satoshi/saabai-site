@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import AdminShell from "../AdminSidebar";
 
 interface Subscriber {
   email: string;
@@ -546,27 +547,23 @@ export default function SubscriberDashboard() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ fontSize: 14, color: "#9ca3af" }}>Loading…</p>
-      </div>
+      <AdminShell activePath="/saabai-admin/subscribers">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+          <p style={{ fontSize: 14, color: "#9aa0b8" }}>Loading…</p>
+        </div>
+      </AdminShell>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+    <AdminShell activePath="/saabai-admin/subscribers">
 
-      {/* Header */}
-      <div style={{ background: "#0e0c2e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 40px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <a href="/saabai-admin" style={{ fontSize: 13, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-              ← Admin
-            </a>
-            <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00bfa5" }} />
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Subscriber Intelligence</span>
-            </div>
+      {/* Page header */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 40px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00bfa5" }} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#eef0ff" }}>Subscriber Intelligence</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {someSelected && (
@@ -615,7 +612,7 @@ export default function SubscriberDashboard() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px" }}>
+      <div style={{ padding: "32px 40px" }}>
 
         {/* KPI row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
@@ -857,10 +854,7 @@ export default function SubscriberDashboard() {
           </div>
         )}
 
-        <p style={{ marginTop: 32, textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
-          Saabai Subscriber Intelligence · <a href="/saabai-admin" style={{ color: "#00bfa5", textDecoration: "none" }}>← Back to admin</a>
-        </p>
       </div>
-    </div>
+    </AdminShell>
   );
 }

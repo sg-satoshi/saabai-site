@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import AdminShell from "../../AdminSidebar";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -794,73 +795,41 @@ export default function LinkedInAdminPage() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f4f6f9", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+    <AdminShell activePath="/saabai-admin/social/linkedin">
 
-      {/* Header */}
-      <div style={{ background: "#0e0c2e", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 32px" }}>
-          {/* Top bar */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <a href="/saabai-admin" style={{ fontSize: 13, color: "#8b8fa8", textDecoration: "none" }}>← Admin</a>
-              <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Social Media</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      {/* Page header */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 32px" }}>
+        {/* Platform tabs */}
+        <div style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#eef0ff", marginRight: 16 }}>Social Media</span>
+          {PLATFORMS.map(p => {
+            const activeColour = p.label === "Instagram" ? "#dc2743" : p.label === "Facebook" ? "#1877f2" : "#0077b5";
+            return (
               <a
-                href="https://www.linkedin.com/company/saabai"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
+                key={p.label}
+                href={p.href}
+                style={{
+                  padding: "6px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  color: p.active ? "#fff" : "#9aa0b8",
+                  borderBottom: p.active ? `2px solid ${activeColour}` : "2px solid transparent",
+                  display: "flex", alignItems: "center", gap: 6,
+                  opacity: p.soon ? 0.5 : 1,
+                  cursor: p.soon ? "default" : "pointer",
+                }}
               >
-                <span style={{ fontSize: 11, fontWeight: 900, padding: "1px 5px", borderRadius: 3, background: "#0077b5", color: "#fff" }}>in</span>
-                Saabai
+                {p.label === "LinkedIn"  && <span style={{ fontSize: 11, fontWeight: 900, background: "#0077b5", color: "#fff", padding: "1px 5px", borderRadius: 3 }}>in</span>}
+                {p.label === "Instagram" && <span style={{ fontSize: 10, fontWeight: 900, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", color: "#fff", padding: "1px 5px", borderRadius: 3 }}>Ig</span>}
+                {p.label === "Facebook"  && <span style={{ fontSize: 13, fontWeight: 900, background: "#1877f2", color: "#fff", padding: "1px 6px", borderRadius: 3, fontFamily: "Georgia, serif" }}>f</span>}
+                {p.label}
+                {p.soon && <span style={{ fontSize: 9, fontWeight: 700, color: "#9aa0b8", background: "rgba(255,255,255,0.08)", padding: "1px 5px", borderRadius: 4, letterSpacing: 0.5 }}>SOON</span>}
               </a>
-              <span style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-              <a
-                href="https://www.instagram.com/saabai.ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: 12, fontWeight: 600, color: "#8b8fa8", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <span style={{ fontSize: 10, fontWeight: 900, padding: "2px 5px", borderRadius: 3, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", color: "#fff" }}>Ig</span>
-                @saabai.ai
-              </a>
-            </div>
-          </div>
-
-          {/* Platform tabs */}
-          <div style={{ display: "flex", gap: 4 }}>
-            {PLATFORMS.map(p => {
-              const activeColour = p.label === "Instagram" ? "#dc2743" : p.label === "Facebook" ? "#1877f2" : "#0077b5";
-              return (
-                <a
-                  key={p.label}
-                  href={p.href}
-                  style={{
-                    padding: "10px 20px", fontSize: 13, fontWeight: 700, textDecoration: "none",
-                    color: p.active ? "#fff" : "#8b8fa8",
-                    borderBottom: p.active ? `2px solid ${activeColour}` : "2px solid transparent",
-                    display: "flex", alignItems: "center", gap: 6,
-                    opacity: p.soon ? 0.5 : 1,
-                    cursor: p.soon ? "default" : "pointer",
-                    transition: "color 0.15s",
-                  }}
-                >
-                  {p.label === "LinkedIn"  && <span style={{ fontSize: 11, fontWeight: 900, background: "#0077b5", color: "#fff", padding: "1px 5px", borderRadius: 3 }}>in</span>}
-                  {p.label === "Instagram" && <span style={{ fontSize: 10, fontWeight: 900, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", color: "#fff", padding: "1px 5px", borderRadius: 3 }}>Ig</span>}
-                  {p.label === "Facebook"  && <span style={{ fontSize: 13, fontWeight: 900, background: "#1877f2", color: "#fff", padding: "1px 6px", borderRadius: 3, fontFamily: "Georgia, serif" }}>f</span>}
-                  {p.label}
-                  {p.soon && <span style={{ fontSize: 9, fontWeight: 700, color: "#4b5563", background: "rgba(255,255,255,0.08)", padding: "1px 5px", borderRadius: 4, letterSpacing: 0.5 }}>SOON</span>}
-                </a>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ padding: "32px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Section jump nav */}
         <div style={{ display: "flex", gap: 8 }}>
@@ -869,7 +838,7 @@ export default function LinkedInAdminPage() {
             { label: "Scheduled Queue", href: "#queue" },
             { label: "Posted History", href: "#history" },
           ].map(({ label, href }) => (
-            <a key={href} href={href} style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", padding: "6px 14px", borderRadius: 20, background: "#fff", border: "1px solid #e5e7eb", textDecoration: "none" }}>
+            <a key={href} href={href} style={{ fontSize: 12, fontWeight: 600, color: "#9aa0b8", padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", textDecoration: "none" }}>
               {label}
             </a>
           ))}
@@ -888,6 +857,6 @@ export default function LinkedInAdminPage() {
         </div>
 
       </div>
-    </div>
+    </AdminShell>
   );
 }

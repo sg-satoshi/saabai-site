@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "25 Apr 2026",
     entries: [
+      { time: "13:17", tag: "NEW", title: "Saabai-admin sidebar nav matches mission-control style" },
       { time: "13:11", tag: "NEW", title: "Update saabai-admin sidebar to match mission-control style" },
       { time: "09:59", tag: "NEW", title: "Dark theme for mission-control and AtlasStats" },
       { time: "09:47", tag: "NEW", title: "Redesign admin dashboard with dark navy theme and sidebar navigation" }
