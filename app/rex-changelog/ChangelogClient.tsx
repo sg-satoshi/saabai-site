@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "18:35", tag: "FIX", title: "Handle errors properly in lex-settings API and client" },
       { time: "15:27", tag: "FIX", title: "Correct Firm Dashboard link in Lex sidebar (was 404)" },
       { time: "15:00", tag: "NEW", title: "Add AI Model Settings link to Lex sidebar footer" },
       { time: "14:47", tag: "FIX", title: "Match nav background to logo colour (#0b092e) on counsel and client-portal" },

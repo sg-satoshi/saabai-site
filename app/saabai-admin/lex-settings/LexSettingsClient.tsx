@@ -378,14 +378,19 @@ export default function LexSettingsClient() {
   }
 
   async function handleTest() {
-    if (!apiKey.trim()) { setTestMsg("Enter your API key first."); setTestStatus("fail"); return; }
+    // Allow testing with stored key if no new key has been entered
+    if (!apiKey.trim() && !currentConfig) {
+      setTestMsg("Enter your API key first.");
+      setTestStatus("fail");
+      return;
+    }
     setTestStatus("testing");
     setTestMsg("");
     try {
       const r = await fetch("/api/lex-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "test", clientId, provider: selectedProv, model: selectedModel, apiKey }),
+        body: JSON.stringify({ action: "test", clientId, provider: selectedProv, model: selectedModel, apiKey: apiKey || undefined }),
       });
       const res = await r.json();
       setTestStatus(res.ok ? "ok" : "fail");
@@ -397,14 +402,18 @@ export default function LexSettingsClient() {
   }
 
   async function handleSave() {
-    if (!apiKey.trim()) { setSaveMsg("Enter the API key before saving."); return; }
+    // Allow saving model change without re-entering the key if one is already stored
+    if (!apiKey.trim() && !currentConfig) {
+      setSaveMsg("Enter the API key before saving.");
+      return;
+    }
     setSaving(true);
     setSaveMsg("");
     try {
       const r = await fetch("/api/lex-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "save", clientId, provider: selectedProv, model: selectedModel, apiKey }),
+        body: JSON.stringify({ action: "save", clientId, provider: selectedProv, model: selectedModel, apiKey: apiKey || undefined }),
       });
       const res = await r.json();
       setSaving(false);

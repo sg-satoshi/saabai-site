@@ -5,6 +5,8 @@ import {
   buildModelFromConfig,
   encryptKey,
 } from "../../../lib/client-config";
+import { getRedis } from "../../../lib/redis";
+import type { ClientLLMConfig } from "../../../lib/client-config";
 import { generateText } from "ai";
 
 /** GET /api/lex-settings?clientId=xxx — returns config without the real key */
@@ -31,26 +33,39 @@ export async function POST(req: NextRequest) {
     clientId: string;
     provider: string;
     model:    string;
-    apiKey:   string;
+    apiKey?:  string;  // optional — if omitted, use stored key
   };
 
   const { action, clientId, provider, model, apiKey } = body;
 
-  if (!clientId || !provider || !model || !apiKey) {
+  if (!clientId || !provider || !model) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   if (action === "test") {
     try {
-      const tempConfig = {
-        provider,
-        model,
-        encryptedKey: encryptKey(apiKey),
-        keyHint: apiKey.slice(-4),
-        updatedAt: Date.now(),
-      };
+      let testConfig: ClientLLMConfig;
 
-      const llmModel = buildModelFromConfig(tempConfig);
+      if (apiKey?.trim()) {
+        // Test with a newly entered key
+        testConfig = {
+          provider,
+          model,
+          encryptedKey: encryptKey(apiKey),
+          keyHint:      apiKey.slice(-4),
+          updatedAt:    Date.now(),
+        };
+      } else {
+        // Test with the existing stored key
+        const stored = await getClientLLMConfig(clientId);
+        if (!stored) {
+          return NextResponse.json({ ok: false, error: "No API key saved yet. Enter your key first." });
+        }
+        // Allow testing a different model/provider against the stored key
+        testConfig = { ...stored, provider, model };
+      }
+
+      const llmModel = buildModelFromConfig(testConfig);
       if (!llmModel) {
         return NextResponse.json({ ok: false, error: "Unsupported provider" });
       }
@@ -70,7 +85,20 @@ export async function POST(req: NextRequest) {
 
   // action === "save"
   try {
-    await saveClientLLMConfig(clientId, { provider, model, apiKey });
+    if (apiKey?.trim()) {
+      // Save with a new key
+      await saveClientLLMConfig(clientId, { provider, model, apiKey });
+    } else {
+      // No new key — update model/provider only, keep existing encrypted key
+      const stored = await getClientLLMConfig(clientId);
+      if (!stored) {
+        return NextResponse.json({ ok: false, error: "No API key saved yet. Enter your key first." });
+      }
+      const redis = getRedis();
+      if (!redis) throw new Error("Redis not configured");
+      const updated: ClientLLMConfig = { ...stored, provider, model, updatedAt: Date.now() };
+      await redis.set(`lex:llm:${clientId}`, updated);
+    }
     return NextResponse.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
