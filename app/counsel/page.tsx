@@ -148,6 +148,7 @@ const PRICING = [
 
 export default function CounselPage() {
   const [copied, setCopied] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [monthlyEnquiries, setMonthlyEnquiries] = useState(20);
   const [afterHoursPct, setAfterHoursPct] = useState(68);
   const [avgMatterValue, setAvgMatterValue] = useState(3000);
@@ -178,6 +179,21 @@ export default function CounselPage() {
   const lexGrowthYr1 = 499 * 12 + 2500; // $8,488
   const roiYear1 = annualRevenueLost - lexGrowthYr1;
   const paybackMonths = monthlyRevenueLost > 0 ? lexGrowthYr1 / monthlyRevenueLost : 0;
+
+  async function handleCheckout(plan: string) {
+    setCheckoutLoading(plan);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch {
+      setCheckoutLoading(null);
+    }
+  }
 
   function fmtCurrency(n: number) {
     if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
@@ -617,17 +633,34 @@ export default function CounselPage() {
                   </div>
                 ))}
               </div>
-              <a
-                href="https://calendly.com/shanegoldberg/30min"
-                style={{
-                  display: "block", textAlign: "center", padding: "13px 20px", borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: "none",
-                  background: plan.highlight ? gold : "transparent",
-                  color: plan.highlight ? bg : gold,
-                  border: `1px solid ${plan.highlight ? gold : goldBorder}`,
-                }}
-              >
-                {plan.cta}
-              </a>
+              {plan.name === "Enterprise" ? (
+                <a
+                  href="https://calendly.com/shanegoldberg/30min"
+                  target="_blank" rel="noopener noreferrer"
+                  style={{
+                    display: "block", textAlign: "center", padding: "13px 20px", borderRadius: 10,
+                    fontWeight: 700, fontSize: 14, textDecoration: "none",
+                    background: "transparent", color: gold, border: `1px solid ${goldBorder}`,
+                  }}
+                >
+                  {plan.cta}
+                </a>
+              ) : (
+                <button
+                  onClick={() => handleCheckout(plan.name.toLowerCase())}
+                  disabled={checkoutLoading === plan.name.toLowerCase()}
+                  style={{
+                    width: "100%", padding: "13px 20px", borderRadius: 10,
+                    fontWeight: 700, fontSize: 14, cursor: checkoutLoading ? "wait" : "pointer",
+                    background: plan.highlight ? gold : "transparent",
+                    color: plan.highlight ? bg : gold,
+                    border: `1px solid ${plan.highlight ? gold : goldBorder}`,
+                    opacity: checkoutLoading === plan.name.toLowerCase() ? 0.7 : 1,
+                  }}
+                >
+                  {checkoutLoading === plan.name.toLowerCase() ? "Loading…" : plan.cta}
+                </button>
+              )}
             </div>
           ))}
         </div>
