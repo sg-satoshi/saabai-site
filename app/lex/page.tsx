@@ -973,7 +973,7 @@ export default function LexPage() {
           {/* Footer */}
           <div style={{ padding: "10px 10px 12px", borderTop: `1px solid ${C.border}` }}>
             <a
-              href="/client-portal/settings"
+              href="/client-portal"
               style={{
                 display: "flex", alignItems: "center", gap: 8,
                 padding: "7px 8px", borderRadius: 7, marginBottom: 2,

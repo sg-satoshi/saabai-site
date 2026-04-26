@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "15:00", tag: "NEW", title: "Add AI Model Settings link to Lex sidebar footer" },
       { time: "14:47", tag: "FIX", title: "Match nav background to logo colour (#0b092e) on counsel and client-portal" },
       { time: "14:44", tag: "FIX", title: "Proper Saabai logo on client portal nav and login screen" },
       { time: "14:40", tag: "NEW", title: "Add LLM / API key settings to client portal Settings tab" },
