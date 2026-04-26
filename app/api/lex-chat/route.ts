@@ -1,5 +1,6 @@
 import { streamText, stepCountIs } from "ai";
-import { getSaabaiModel } from "../../../lib/chat-config";
+import type { LanguageModel } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { getRedis } from "../../../lib/redis";
 import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
   }
 
   // 2. Load client LLM model (API key + model) — keyed by clientId
-  let model = getSaabaiModel();
+  //    Fall back to Haiku (fast, cheap) when no client key is saved
+  let model: LanguageModel = anthropic("claude-haiku-4-5-20251001");
   if (clientId) {
     try {
       const llmConfig = await getClientLLMConfig(clientId);
@@ -78,7 +80,8 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(line));
         }
       } catch (err) {
-        console.error("[lex-chat] stream error:", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[lex-chat] stream error:", msg);
       } finally {
         controller.close();
       }
