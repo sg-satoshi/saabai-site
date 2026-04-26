@@ -1,7 +1,7 @@
 export const runtime = "edge";
 
 // xAI TTS voices: ara (warm), eve (energetic), rex (confident), sal (smooth), leo (authoritative)
-const DEFAULT_VOICE = process.env.XAI_TTS_VOICE ?? "ara";
+const DEFAULT_VOICE = process.env.XAI_TTS_VOICE ?? "rex";
 
 export async function POST(req: Request) {
   const { text, voiceId } = await req.json();
