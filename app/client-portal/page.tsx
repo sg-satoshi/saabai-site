@@ -137,6 +137,14 @@ function ClientPortalInner() {
   const [testInput,    setTestInput]    = useState("");
   const [testLoading,  setTestLoading]  = useState(false);
   const [testError,    setTestError]    = useState<string | null>(null);
+  // Setup Chat (AI Customise assistant) state
+  const [setupMessages,    setSetupMessages]    = useState<TestMsg[]>([]);
+  const [setupInput,       setSetupInput]       = useState("");
+  const [setupLoading,     setSetupLoading]     = useState(false);
+  const [setupOpen,        setSetupOpen]        = useState(false);
+  const [setupStarted,     setSetupStarted]     = useState(false);
+  const [setupUpdates,     setSetupUpdates]     = useState<string[]>([]);
+  const [setupUpdateFlash, setSetupUpdateFlash] = useState(false);
   // Review Queue tab state
   type StoredReview = {
     id: string; firmId: string; submittedBy: string; matterNo: string; clientName: string;
@@ -400,6 +408,118 @@ function ClientPortalInner() {
       setSaveError("Failed to save. Please try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function startSetup() {
+    setSetupOpen(true);
+    setSetupStarted(true);
+    setSetupLoading(true);
+    try {
+      const res = await fetch("/api/portal/setup-chat", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [] }),
+      });
+      if (!res.body) throw new Error("No stream");
+      await readSetupStream(res, []);
+    } catch { /* ignore */ } finally {
+      setSetupLoading(false);
+    }
+  }
+
+  async function sendSetupMessage() {
+    const text = setupInput.trim();
+    if (!text || setupLoading) return;
+    const updated: TestMsg[] = [...setupMessages, { role: "user", content: text }];
+    setSetupMessages(updated);
+    setSetupInput("");
+    setSetupLoading(true);
+    try {
+      const res = await fetch("/api/portal/setup-chat", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updated }),
+      });
+      if (!res.body) throw new Error("No stream");
+      await readSetupStream(res, updated);
+    } catch { /* ignore */ } finally {
+      setSetupLoading(false);
+    }
+  }
+
+  async function readSetupStream(res: Response, priorMessages: TestMsg[]) {
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let assistantText = "";
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const parsed = JSON.parse(line.slice(6));
+
+          if (parsed.type === "text-delta" && parsed.delta) {
+            assistantText += parsed.delta;
+            if (!started) {
+              started = true;
+              setSetupMessages([...priorMessages, { role: "assistant", content: assistantText }]);
+            } else {
+              setSetupMessages(prev => {
+                const copy = [...prev];
+                copy[copy.length - 1] = { role: "assistant", content: assistantText };
+                return copy;
+              });
+            }
+          }
+
+          if (parsed.type === "config-update" && parsed.config) {
+            const cfg = parsed.config as Record<string, unknown>;
+            const updatedFields: string[] = [];
+
+            setSettings(prev => {
+              const next = { ...prev };
+              if (cfg.firmName)          { (next as Record<string,unknown>).firmName = cfg.firmName; updatedFields.push("Firm Name"); }
+              if (cfg.agentName)         { next.agentName = cfg.agentName as string; updatedFields.push("Agent Name"); }
+              if (cfg.welcomeMessage)    { next.welcomeMessage = cfg.welcomeMessage as string; updatedFields.push("Welcome Message"); }
+              if (cfg.primaryGoal)       { next.primaryGoal = cfg.primaryGoal as string; updatedFields.push("Primary Goal"); }
+              if (cfg.successDefinition) { next.successDefinition = cfg.successDefinition as string; updatedFields.push("Success Definition"); }
+              if (cfg.targetClient)      { next.targetClient = cfg.targetClient as string; updatedFields.push("Ideal Client"); }
+              if (Array.isArray(cfg.desiredOutcomes) && cfg.desiredOutcomes.length) { next.desiredOutcomes = cfg.desiredOutcomes as string[]; updatedFields.push("Desired Outcomes"); }
+              if (typeof cfg.formalityLevel === "number") { next.formalityLevel = cfg.formalityLevel; updatedFields.push("Formality"); }
+              if (typeof cfg.warmthLevel === "number")    { next.warmthLevel = cfg.warmthLevel; updatedFields.push("Warmth"); }
+              if (typeof cfg.humorLevel === "number")     { next.humorLevel = cfg.humorLevel; updatedFields.push("Humour"); }
+              if (cfg.responseLength)    { next.responseLength = cfg.responseLength as typeof next.responseLength; updatedFields.push("Response Length"); }
+              if (Array.isArray(cfg.personalityTraits) && cfg.personalityTraits.length) { next.personalityTraits = cfg.personalityTraits as string[]; updatedFields.push("Personality Traits"); }
+              if (Array.isArray(cfg.alwaysSay) && cfg.alwaysSay.length)   { next.alwaysSay = cfg.alwaysSay as string[]; updatedFields.push("Always Say"); }
+              if (Array.isArray(cfg.neverSay) && cfg.neverSay.length)     { next.neverSay = cfg.neverSay as string[]; updatedFields.push("Never Say"); }
+              if (cfg.practiceFocus)     { next.practiceFocus = cfg.practiceFocus as string; updatedFields.push("Practice Focus"); }
+              if (cfg.careerBackground)  { next.careerBackground = cfg.careerBackground as string; updatedFields.push("Career Background"); }
+              if (cfg.birthYear)         { next.birthYear = cfg.birthYear as string; updatedFields.push("Birth Year"); }
+              if (cfg.legalPhilosophy)   { next.legalPhilosophy = cfg.legalPhilosophy as string; updatedFields.push("Legal Philosophy"); }
+              if (cfg.formativeInfluences) { next.formativeInfluences = cfg.formativeInfluences as string; updatedFields.push("Influences"); }
+              if (Array.isArray(cfg.skillPacks) && cfg.skillPacks.length) { next.skillPacks = cfg.skillPacks as string[]; updatedFields.push("Skill Packs"); }
+              return next;
+            });
+
+            if (updatedFields.length) {
+              setSetupUpdates(prev => [...new Set([...prev, ...updatedFields])]);
+              setSetupUpdateFlash(true);
+              setTimeout(() => setSetupUpdateFlash(false), 2000);
+            }
+          }
+        } catch { /* skip */ }
+      }
     }
   }
 
@@ -887,6 +1007,242 @@ function ClientPortalInner() {
               <p style={{ color: C.muted, margin: "0 0 24px", fontSize: 14, lineHeight: 1.6 }}>
                 Every setting here becomes a guiding principle for {agentName} — shaping how it thinks, speaks, and drives your firm&apos;s goals across every conversation.
               </p>
+
+              {/* ── AI Setup Chat ── */}
+              <div style={{ marginBottom: 28 }}>
+                {!setupStarted ? (
+                  /* Entry card */
+                  <div style={{
+                    background: "linear-gradient(135deg, #0a1628 0%, #0d1f3a 50%, #0a1628 100%)",
+                    border: `1px solid ${C.goldBdr}`,
+                    borderRadius: 16, padding: "28px 32px",
+                    position: "relative", overflow: "hidden",
+                  }}>
+                    <div style={{
+                      position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                      background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`,
+                    }} />
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                        background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.15))`,
+                        border: `1px solid ${C.goldBdr}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                          <path d="M11 2a9 9 0 100 18A9 9 0 0011 2z" stroke={C.gold} strokeWidth="1.5"/>
+                          <path d="M8 9c0-1.657 1.343-3 3-3s3 1.343 3 3c0 1.5-1 2.5-3 3v1.5" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round"/>
+                          <circle cx="11" cy="16.5" r="0.75" fill={C.gold}/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.text }}>Set up with AI</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 4, padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Recommended</span>
+                        </div>
+                        <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
+                          Skip the form. Have a 5-minute conversation and our AI will configure your entire agent from your answers — capturing your voice, your goals, and how you think about law.
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                          <button
+                            onClick={startSetup}
+                            style={{
+                              background: `linear-gradient(135deg, ${C.gold}, #b8922a)`,
+                              color: C.bg, fontSize: 14, fontWeight: 800,
+                              padding: "11px 24px", borderRadius: 10, border: "none",
+                              cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                              boxShadow: `0 4px 20px rgba(201,168,76,0.25)`,
+                            }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                              <path d="M7.5 1L9.5 5.5H14L10.5 8.5L12 13L7.5 10L3 13L4.5 8.5L1 5.5H5.5L7.5 1Z" fill="currentColor"/>
+                            </svg>
+                            Start AI setup
+                          </button>
+                          <span style={{ fontSize: 12, color: C.dim }}>5 minutes · fills everything automatically</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Chat panel */
+                  <div style={{
+                    background: "linear-gradient(180deg, #08111f 0%, #0a1628 100%)",
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 16, overflow: "hidden",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+                  }}>
+                    {/* Chat header */}
+                    <div style={{
+                      padding: "16px 20px",
+                      borderBottom: `1px solid ${C.border}`,
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      background: "rgba(0,0,0,0.2)",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 10,
+                          background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
+                          border: `1px solid ${C.goldBdr}`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 1L8.5 4.5H12L9.5 6.5L10.5 10L7 8L3.5 10L4.5 6.5L2 4.5H5.5L7 1Z" fill={C.gold}/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>AI Setup Assistant</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, display: "inline-block" }} />
+                            <span style={{ fontSize: 11, color: C.green }}>Active</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Updated fields flash */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {setupUpdates.length > 0 && (
+                          <div style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            background: setupUpdateFlash ? "rgba(34,197,94,0.12)" : C.goldBg,
+                            border: `1px solid ${setupUpdateFlash ? C.greenBdr : C.goldBdr}`,
+                            borderRadius: 8, padding: "4px 10px",
+                            transition: "all 0.3s ease",
+                          }}>
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                              <path d="M1.5 5L4 7.5L8.5 2.5" stroke={setupUpdateFlash ? C.green : C.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: setupUpdateFlash ? C.green : C.goldB }}>
+                              {setupUpdates.length} field{setupUpdates.length !== 1 ? "s" : ""} updated
+                            </span>
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setSetupOpen(o => !o)}
+                          style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.muted, fontSize: 11, fontWeight: 600, padding: "4px 10px", cursor: "pointer" }}
+                        >
+                          {setupOpen ? "Collapse" : "Expand"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {setupOpen && (
+                      <>
+                        {/* Messages */}
+                        <div style={{ height: 380, overflowY: "auto", padding: "20px 20px 8px", display: "flex", flexDirection: "column", gap: 16 }}>
+                          {setupMessages.map((msg, i) => (
+                            <div key={i} style={{
+                              display: "flex",
+                              flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                              alignItems: "flex-end", gap: 10,
+                            }}>
+                              {msg.role === "assistant" && (
+                                <div style={{
+                                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                                  background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
+                                  border: `1px solid ${C.goldBdr}`,
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                    <path d="M6 1L7.2 4H10.5L7.9 5.8L8.9 9L6 7.2L3.1 9L4.1 5.8L1.5 4H4.8L6 1Z" fill={C.gold}/>
+                                  </svg>
+                                </div>
+                              )}
+                              <div style={{
+                                maxWidth: "75%",
+                                background: msg.role === "user"
+                                  ? `linear-gradient(135deg, ${C.gold}, #b8922a)`
+                                  : "rgba(255,255,255,0.05)",
+                                border: msg.role === "user" ? "none" : `1px solid ${C.border}`,
+                                borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                                padding: "11px 15px",
+                                color: msg.role === "user" ? C.bg : C.text,
+                                fontSize: 14, lineHeight: 1.65,
+                              }}>
+                                {msg.content}
+                              </div>
+                            </div>
+                          ))}
+                          {setupLoading && (
+                            <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+                              <div style={{
+                                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                                background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
+                                border: `1px solid ${C.goldBdr}`,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                              }}>
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                  <path d="M6 1L7.2 4H10.5L7.9 5.8L8.9 9L6 7.2L3.1 9L4.1 5.8L1.5 4H4.8L6 1Z" fill={C.gold}/>
+                                </svg>
+                              </div>
+                              <div style={{
+                                background: "rgba(255,255,255,0.05)", border: `1px solid ${C.border}`,
+                                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
+                                display: "flex", gap: 5, alignItems: "center",
+                              }}>
+                                {[0,1,2].map(i => (
+                                  <div key={i} style={{
+                                    width: 6, height: 6, borderRadius: "50%", background: C.gold,
+                                    animation: `setupPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+                                    opacity: 0.6,
+                                  }} />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Input bar */}
+                        <div style={{
+                          padding: "12px 16px", borderTop: `1px solid ${C.border}`,
+                          background: "rgba(0,0,0,0.15)",
+                          display: "flex", gap: 10, alignItems: "flex-end",
+                        }}>
+                          <textarea
+                            value={setupInput}
+                            onChange={e => setSetupInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendSetupMessage(); }}}
+                            placeholder="Type your answer…"
+                            rows={1}
+                            style={{
+                              flex: 1, background: "rgba(255,255,255,0.05)",
+                              border: `1px solid ${C.border}`, borderRadius: 10,
+                              padding: "10px 14px", color: C.text, fontSize: 14,
+                              outline: "none", resize: "none", fontFamily: "system-ui, sans-serif",
+                              lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
+                            }}
+                          />
+                          <button
+                            onClick={sendSetupMessage}
+                            disabled={!setupInput.trim() || setupLoading}
+                            style={{
+                              width: 40, height: 40, borderRadius: 10, border: "none",
+                              background: setupInput.trim() && !setupLoading
+                                ? `linear-gradient(135deg, ${C.gold}, #b8922a)`
+                                : C.raised,
+                              color: setupInput.trim() && !setupLoading ? C.bg : C.dim,
+                              cursor: setupInput.trim() && !setupLoading ? "pointer" : "not-allowed",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              flexShrink: 0, transition: "all 0.2s ease",
+                              boxShadow: setupInput.trim() && !setupLoading ? `0 2px 12px rgba(201,168,76,0.3)` : "none",
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M13.5 8L3 13.5V9.5L10 8L3 6.5V2.5L13.5 8Z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <style>{`
+                          @keyframes setupPulse {
+                            0%, 100% { transform: scale(1); opacity: 0.4; }
+                            50% { transform: scale(1.3); opacity: 1; }
+                          }
+                        `}</style>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* ── Configuration Health Score ── */}
               {(() => {
