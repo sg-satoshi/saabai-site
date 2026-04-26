@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "22:33", tag: "FIX", title: "Hide NewsTicker signal bar on /counsel page" },
       { time: "22:28", tag: "NEW", title: "Update logo to new SAABAI.ai brand mark across site" },
       { time: "21:23", tag: "NEW", title: "Update Stripe welcome + notification email copy" },
       { time: "21:08", tag: "NEW", title: "Stripe webhook — payment confirmation + welcome emails" },

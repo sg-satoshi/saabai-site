@@ -1,129 +1,95 @@
-import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import { streamText, stepCountIs } from "ai";
 import { getSaabaiModel } from "../../../lib/chat-config";
-import { getConversations } from "../../../lib/redis";
+import { getRedis } from "../../../lib/redis";
+import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
+import { verifySession } from "../../../lib/portal-session";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-function extractConversationPersistenceFields(payload: Record<string, unknown> | undefined) {
-  return {
-    threadId:
-      typeof payload?.threadId === "string" && payload.threadId.trim()
-        ? payload.threadId.trim()
-        : undefined,
-    projectId:
-      typeof payload?.projectId === "string" && payload.projectId.trim()
-        ? payload.projectId.trim()
-        : undefined,
-  };
-}
-
-
-type IncomingMessage = {
-  role: "user" | "assistant" | "system";
-  parts?: { type: string; text?: string }[];
-  content?: string;
-};
-
-type RequestBody = {
-  messages: IncomingMessage[];
-  threadId?: string;
-};
-
-function msgText(msg: IncomingMessage): string {
-  if (msg.parts && msg.parts.length > 0) {
-    return msg.parts
-      .filter((p) => p.type === "text" && typeof p.text === "string")
-      .map((p) => p.text)
-      .join(" ")
-      .trim();
+function parseCookie(header: string | null, name: string): string | undefined {
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const trimmed = part.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    if (trimmed.slice(0, eq) === name) return trimmed.slice(eq + 1);
   }
-
-  return typeof msg.content === "string" ? msg.content.trim() : "";
+  return undefined;
 }
 
-function normalizeMessages(messages: IncomingMessage[]) {
-  return messages.map((msg) => {
-    if (msg.parts && msg.parts.length > 0) {
-      return {
-        role: msg.role,
-        parts: msg.parts,
-      };
-    }
-
-    if (msg.content) {
-      return {
-        role: msg.role,
-        parts: [{ type: "text", text: msg.content }],
-      };
-    }
-
-    return {
-      role: msg.role,
-      parts: [],
-    };
-  });
-}
-
-async function loadPreviousMessagesByThreadId(threadId?: string) {
-  if (!threadId) return [];
-
-  const conversations = await getConversations(200);
-
-  const threadConversations = conversations.filter(
-    (c) => c.threadId === threadId
-  );
-
-  if (threadConversations.length === 0) return [];
-
-  // Sort oldest → newest
-  threadConversations.sort(
-    (a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
-
-  const messages: IncomingMessage[] = [];
-
-  for (const conv of threadConversations) {
-    if (conv.visitorFacts) {
-      messages.push({
-        role: "system",
-        content: `Known facts: ${JSON.stringify(conv.visitorFacts)}`,
-      });
-    }
-
-    if (conv.keyTopics && conv.keyTopics.length > 0) {
-      messages.push({
-        role: "system",
-        content: `Topics discussed: ${conv.keyTopics.join(", ")}`,
-      });
-    }
-  }
-
-  return messages;
-}
+type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as RequestBody;
+  const body = await req.json() as { messages?: Msg[]; clientId?: string };
+  const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
+  const clientId: string | undefined = body.clientId;
 
-  const { messages, threadId } = body;
+  // 1. Load system prompt — keyed by email from session cookie
+  let systemPrompt: string | undefined;
+  try {
+    const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
+    const session = sessionToken ? verifySession(sessionToken) : null;
+    if (session?.email) {
+      const redis = getRedis();
+      if (redis) {
+        const stored = await redis.get<string>(`portal:config:${session.email}`);
+        if (stored) systemPrompt = typeof stored === "string" ? stored : JSON.stringify(stored);
+      }
+    }
+  } catch {
+    // non-fatal — proceed without system prompt
+  }
 
-  const previousMessages = await loadPreviousMessagesByThreadId(threadId);
+  // 2. Load client LLM model (API key + model) — keyed by clientId
+  let model = getSaabaiModel();
+  if (clientId) {
+    try {
+      const llmConfig = await getClientLLMConfig(clientId);
+      if (llmConfig) {
+        const clientModel = buildModelFromConfig(llmConfig);
+        if (clientModel) model = clientModel;
+      }
+    } catch {
+      // non-fatal — fall back to default model
+    }
+  }
 
-  const combinedMessages = [
-    ...previousMessages,
-    ...normalizeMessages(messages),
-  ];
-
-  const model = getSaabaiModel();
+  // 3. Normalise messages — strip any system messages from client (we set system above)
+  const normalized = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role, content: m.content }));
 
   const result = streamText({
     model,
-    messages: await convertToModelMessages(
-      combinedMessages as Parameters<typeof convertToModelMessages>[0]
-    ),
+    ...(systemPrompt ? { system: systemPrompt } : {}),
+    messages: normalized,
     stopWhen: stepCountIs(4),
   });
 
-  return result.toUIMessageStreamResponse();
+  // 4. Stream in the SSE format both LexWidget and client portal expect:
+  //    data: {"type":"text-delta","delta":"<chunk>"}
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of result.textStream) {
+          const line = `data: ${JSON.stringify({ type: "text-delta", delta: chunk })}\n\n`;
+          controller.enqueue(encoder.encode(line));
+        }
+      } catch (err) {
+        console.error("[lex-chat] stream error:", err);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
