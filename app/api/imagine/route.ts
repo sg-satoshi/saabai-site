@@ -3,22 +3,26 @@ import { put } from "@vercel/blob";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-// Build an image-generation prompt from a post topic + platform
-function buildPrompt(topic: string, platform: "linkedin" | "instagram"): string {
+// Build an image-generation prompt from a post topic + platform + optional post content
+function buildPrompt(topic: string, platform: "linkedin" | "instagram", postContent?: string): string {
+  const context = postContent?.trim()
+    ? `The post reads: "${postContent.slice(0, 400).trim()}"`
+    : `Topic: "${topic}"`;
+
   if (platform === "instagram") {
     return (
-      `A bold, visually striking social media image for the topic: "${topic}". ` +
+      `A bold, visually striking social media image. ${context}. ` +
       "Style: modern tech-meets-professional-services aesthetic, dark navy background, " +
       "subtle teal and electric blue accents, abstract AI/automation visual elements, " +
-      "cinematic lighting. No text. Square 1:1 composition. Photorealistic."
+      "cinematic lighting. No text overlay. Square 1:1 composition. Ultra high quality photorealistic."
     );
   }
   // linkedin
   return (
-    `A clean, professional LinkedIn post image for the topic: "${topic}". ` +
+    `A clean, professional LinkedIn post header image. ${context}. ` +
     "Style: dark navy background (#0b092e), subtle teal accent, sophisticated corporate " +
-    "minimalism, soft abstract technology or business environment. No text. " +
-    "Photorealistic high quality."
+    "minimalism, soft abstract technology or business environment. No text overlay. " +
+    "Ultra high quality photorealistic, editorial photography feel."
   );
 }
 
@@ -30,13 +34,13 @@ export async function POST(req: Request) {
     return Response.json({ error: "BLOB_READ_WRITE_TOKEN not configured" }, { status: 500 });
   }
 
-  let body: { topic?: string; platform?: "linkedin" | "instagram"; prompt?: string };
+  let body: { topic?: string; platform?: "linkedin" | "instagram"; prompt?: string; postContent?: string };
   try { body = await req.json(); } catch {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const platform = body.platform ?? "linkedin";
-  const prompt = body.prompt?.trim() || (body.topic?.trim() ? buildPrompt(body.topic, platform) : null);
+  const prompt = body.prompt?.trim() || (body.topic?.trim() ? buildPrompt(body.topic, platform, body.postContent) : null);
 
   if (!prompt) return Response.json({ error: "topic or prompt required" }, { status: 400 });
 
@@ -54,6 +58,7 @@ export async function POST(req: Request) {
         prompt,
         n: 1,
         response_format: "b64_json",
+        resolution: "2k",
       }),
     });
 

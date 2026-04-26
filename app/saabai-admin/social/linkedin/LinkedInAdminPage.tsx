@@ -251,7 +251,7 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
       const res = await fetch("/api/imagine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, platform: "linkedin" }),
+        body: JSON.stringify({ topic, platform: "linkedin", postContent: generated }),
       });
       let data: { url?: string; error?: string } = {};
       try { data = await res.json(); } catch { /* non-JSON response (e.g. gateway timeout) */ }

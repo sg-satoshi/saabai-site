@@ -222,7 +222,7 @@ function CaptionGenerator({ onQueued }: { onQueued: () => void }) {
       const res = await fetch("/api/imagine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, platform: "instagram" }),
+        body: JSON.stringify({ topic, platform: "instagram", postContent: caption }),
       });
       let data: { url?: string; error?: string } = {};
       try { data = await res.json(); } catch { /* non-JSON response (e.g. gateway timeout) */ }
