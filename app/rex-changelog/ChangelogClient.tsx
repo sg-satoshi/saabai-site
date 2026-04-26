@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "14:38", tag: "FIX", title: "Use transparent logo on /counsel dark nav" },
       { time: "14:20", tag: "NEW", title: "Venture filter, LLM settings nav and Lex settings gear button" },
       { time: "13:39", tag: "NEW", title: "Per-client LLM settings page with BYOAK support" },
       { time: "10:20", tag: "NEW", title: "Add payment card logos to /counsel pricing section" },

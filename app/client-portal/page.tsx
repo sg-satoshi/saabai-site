@@ -122,6 +122,16 @@ function ClientPortalInner() {
   const [outcomeDraft,      setOutcomeDraft]        = useState("");
   const [sampleLabelDraft,  setSampleLabelDraft]    = useState("");
   const [sampleTextDraft,   setSampleTextDraft]     = useState("");
+  // LLM / API key settings state
+  const [llmProvider,     setLlmProvider]     = useState("anthropic");
+  const [llmModel,        setLlmModel]        = useState("claude-sonnet-4-6");
+  const [llmApiKey,       setLlmApiKey]       = useState("");
+  const [llmShowKey,      setLlmShowKey]      = useState(false);
+  const [llmCurrentCfg,   setLlmCurrentCfg]   = useState<{ provider: string; model: string; keyHint: string } | null>(null);
+  const [llmTestStatus,   setLlmTestStatus]   = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [llmTestMsg,      setLlmTestMsg]      = useState("");
+  const [llmSaving,       setLlmSaving]       = useState(false);
+  const [llmSaveMsg,      setLlmSaveMsg]      = useState("");
   // Test Agent tab state
   const [testMessages, setTestMessages] = useState<TestMsg[]>([]);
   const [testInput,    setTestInput]    = useState("");
@@ -149,6 +159,21 @@ function ClientPortalInner() {
     const t = searchParams.get("tab") as Tab | null;
     if (t && TABS.some(x => x.id === t)) setTab(t);
   }, [searchParams]);
+
+  // Load LLM config when settings tab is opened
+  useEffect(() => {
+    if (tab !== "settings" || !firm?.clientId) return;
+    fetch(`/api/lex-settings?clientId=${firm.clientId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.configured) {
+          setLlmCurrentCfg({ provider: data.provider, model: data.model, keyHint: data.keyHint });
+          setLlmProvider(data.provider);
+          setLlmModel(data.model);
+        }
+      })
+      .catch(() => {});
+  }, [tab, firm?.clientId]);
 
   // Load review queue when that tab is active
   useEffect(() => {
@@ -327,6 +352,35 @@ function ClientPortalInner() {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopied(key);
     setTimeout(() => setCopied(null), 2000);
+  }
+
+  async function testLlmConnection() {
+    if (!llmApiKey.trim()) { setLlmTestMsg("Enter your API key first."); setLlmTestStatus("fail"); return; }
+    setLlmTestStatus("testing"); setLlmTestMsg("");
+    const res = await fetch("/api/lex-settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "test", clientId, provider: llmProvider, model: llmModel, apiKey: llmApiKey }),
+    }).then(r => r.json());
+    setLlmTestStatus(res.ok ? "ok" : "fail");
+    setLlmTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
+  }
+
+  async function saveLlmConfig() {
+    if (!llmApiKey.trim()) { setLlmSaveMsg("Enter your API key before saving."); return; }
+    setLlmSaving(true); setLlmSaveMsg("");
+    const res = await fetch("/api/lex-settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save", clientId, provider: llmProvider, model: llmModel, apiKey: llmApiKey }),
+    }).then(r => r.json());
+    setLlmSaving(false);
+    if (res.ok) {
+      setLlmSaveMsg("Saved. Your Lex agent will use this model going forward.");
+      setLlmCurrentCfg({ provider: llmProvider, model: llmModel, keyHint: `****${llmApiKey.slice(-4)}` });
+      setLlmApiKey("");
+      setLlmTestStatus("idle");
+    } else {
+      setLlmSaveMsg(`Error: ${res.error ?? "Unknown error"}`);
+    }
   }
 
   async function saveSettings() {
@@ -1945,6 +1999,159 @@ function ClientPortalInner() {
                 </div>
               ))}
             </div>
+            {/* AI Model & API Key */}
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>AI Model &amp; API Key</h3>
+                {llmCurrentCfg && (
+                  <span style={{ fontSize: 11, fontWeight: 600, color: C.green, background: C.greenBg, border: `1px solid ${C.greenBdr}`, padding: "3px 10px", borderRadius: 20 }}>
+                    Active — {llmCurrentCfg.provider} / {llmCurrentCfg.model}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 13, color: C.muted, margin: "0 0 20px", lineHeight: 1.6 }}>
+                Your Lex agent runs on your own API account. Enter your key below — it is encrypted at rest and never shared.
+                You are billed directly by the provider based on your usage.
+              </p>
+
+              {/* Provider selector */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>Provider</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 8 }}>
+                  {([
+                    { id: "anthropic", name: "Anthropic",     color: "#d97706", note: "Recommended" },
+                    { id: "openai",    name: "OpenAI",        color: "#10a37f", note: "Good" },
+                    { id: "google",    name: "Google Gemini", color: "#4285f4", note: "Free tier" },
+                    { id: "xai",       name: "xAI Grok",     color: "#1d9bf0", note: "" },
+                  ] as const).map(p => {
+                    const selected = llmProvider === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setLlmProvider(p.id);
+                          setLlmModel(p.id === "anthropic" ? "claude-sonnet-4-6" : p.id === "openai" ? "gpt-4o" : p.id === "google" ? "gemini-2.0-flash" : "grok-3-mini");
+                          setLlmTestStatus("idle"); setLlmTestMsg("");
+                        }}
+                        style={{
+                          padding: "10px 12px", borderRadius: 8, cursor: "pointer", textAlign: "left" as const,
+                          background: selected ? `${p.color}15` : C.raised,
+                          border: `1px solid ${selected ? p.color + "50" : C.border}`,
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, color: selected ? p.color : C.text }}>{p.name}</div>
+                        {p.note && <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>{p.note}</div>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Model selector */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>Model</label>
+                <select
+                  value={llmModel}
+                  onChange={e => setLlmModel(e.target.value)}
+                  style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, outline: "none" }}
+                >
+                  {llmProvider === "anthropic" && (<>
+                    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest, lowest cost</option>
+                    <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — recommended for legal research</option>
+                    <option value="claude-opus-4-6">Claude Opus 4.6 — most capable</option>
+                  </>)}
+                  {llmProvider === "openai" && (<>
+                    <option value="gpt-4o-mini">GPT-4o Mini — best value</option>
+                    <option value="gpt-4o">GPT-4o — recommended</option>
+                  </>)}
+                  {llmProvider === "google" && (<>
+                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite — free tier</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash — recommended</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro — 2M context</option>
+                  </>)}
+                  {llmProvider === "xai" && (<>
+                    <option value="grok-3-mini">Grok 3 Mini</option>
+                    <option value="grok-3">Grok 3</option>
+                  </>)}
+                </select>
+              </div>
+
+              {/* API key input */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>API Key</label>
+                  <a
+                    href={llmProvider === "anthropic" ? "https://console.anthropic.com/settings/keys" : llmProvider === "openai" ? "https://platform.openai.com/api-keys" : llmProvider === "google" ? "https://aistudio.google.com/app/apikey" : "https://console.x.ai"}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 11, color: C.gold, textDecoration: "none", fontWeight: 600 }}
+                  >
+                    Get key ↗
+                  </a>
+                </div>
+                <div style={{ position: "relative" as const }}>
+                  <input
+                    type={llmShowKey ? "text" : "password"}
+                    value={llmApiKey}
+                    onChange={e => setLlmApiKey(e.target.value)}
+                    placeholder={llmCurrentCfg?.provider === llmProvider ? `Current key: ${llmCurrentCfg.keyHint} — enter new key to replace` : "Paste your API key here"}
+                    style={{
+                      width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6,
+                      padding: "10px 40px 10px 12px", color: C.text, fontSize: 13, outline: "none",
+                      fontFamily: llmApiKey ? "monospace" : "inherit", boxSizing: "border-box" as const,
+                    }}
+                  />
+                  <button
+                    onClick={() => setLlmShowKey(s => !s)}
+                    style={{ position: "absolute" as const, right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13 }}
+                  >
+                    {llmShowKey ? "🙈" : "👁"}
+                  </button>
+                </div>
+                <p style={{ fontSize: 11, color: C.dim, margin: "6px 0 0" }}>
+                  Encrypted with AES-256-GCM before storage. Never returned in plaintext.
+                </p>
+              </div>
+
+              {/* Test result */}
+              {llmTestStatus !== "idle" && (
+                <div style={{
+                  background: C.raised, borderRadius: 8, padding: "10px 14px", marginBottom: 12,
+                  border: `1px solid ${llmTestStatus === "ok" ? C.greenBdr : llmTestStatus === "fail" ? "rgba(248,113,113,0.3)" : C.border}`,
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <span style={{ fontSize: 13 }}>{llmTestStatus === "testing" ? "⏳" : llmTestStatus === "ok" ? "✓" : "✗"}</span>
+                  <span style={{ fontSize: 12, color: llmTestStatus === "ok" ? C.green : llmTestStatus === "fail" ? "#f87171" : C.muted }}>
+                    {llmTestStatus === "testing" ? "Testing connection…" : llmTestMsg}
+                  </span>
+                </div>
+              )}
+
+              {/* Save message */}
+              {llmSaveMsg && (
+                <div style={{ background: C.raised, border: `1px solid ${C.greenBdr}`, borderRadius: 8, padding: "10px 14px", marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, color: C.green }}>{llmSaveMsg}</span>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={testLlmConnection}
+                  disabled={llmTestStatus === "testing"}
+                  style={{ padding: "9px 18px", borderRadius: 7, border: `1px solid ${C.goldBdr}`, background: "transparent", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: llmTestStatus === "testing" ? 0.6 : 1 }}
+                >
+                  {llmTestStatus === "testing" ? "Testing…" : "Test connection"}
+                </button>
+                <button
+                  onClick={saveLlmConfig}
+                  disabled={llmSaving}
+                  style={{ padding: "9px 22px", borderRadius: 7, border: "none", background: C.gold, color: "#0d1b2a", fontSize: 12, fontWeight: 800, cursor: "pointer", opacity: llmSaving ? 0.7 : 1 }}
+                >
+                  {llmSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Current Plan</h3>
