@@ -83,16 +83,19 @@ const PRICING = [
     price: "$299",
     period: "/month",
     setup: "+ $1,500 setup",
-    ideal: "Solo practitioners and small firms",
+    ideal: "Solo practitioners and boutique firms",
+    upgrade: null as string | null,
     features: [
-      "Lex AI intake agent on your site",
+      "1 practice area covered",
+      "Standard Lex intake agent — live in 5 days",
       "24/7 lead capture and qualification",
-      "Instant email notifications",
+      "Instant email notifications to your whole team",
       "Full conversation transcripts",
       "Basic leads dashboard",
-      "Standard follow-up email",
-      "Unlimited team members",
-      "Your own Anthropic account (AI costs ~$5–30/mo direct)",
+      "Standard follow-up email template",
+      "Unlimited team logins",
+      "Email support — 48hr response",
+      "Quarterly performance review",
     ],
     cta: "Get started",
     highlight: false,
@@ -102,14 +105,18 @@ const PRICING = [
     price: "$499",
     period: "/month",
     setup: "+ $2,500 setup",
-    ideal: "Established firms with active intake",
+    ideal: "Established firms that want a competitive edge",
+    upgrade: "Custom training + 4 practice areas + CRM + monthly reviews",
     features: [
-      "Everything in Starter",
-      "Custom training on your practice areas",
+      "Up to 4 practice areas covered",
+      "Custom-trained on your firm's voice and matter types",
+      "Structured matter briefs — not just raw transcripts",
       "CRM and calendar integration",
-      "Structured matter briefs",
-      "Pipeline value tracking",
-      "Monthly performance review",
+      "Pipeline value and revenue tracking",
+      "Custom follow-up email sequences",
+      "Monthly performance review call",
+      "Priority email support — 24hr response",
+      "Unlimited team logins",
     ],
     cta: "Most popular",
     highlight: true,
@@ -119,14 +126,18 @@ const PRICING = [
     price: "Custom",
     period: "",
     setup: "Scoped per firm",
-    ideal: "Multi-practice or multi-location firms",
+    ideal: "Multi-practice and multi-location firms",
+    upgrade: "Unlimited agents + PM integration + dedicated account manager",
     features: [
-      "Everything in Growth",
-      "Multiple practice area agents",
-      "Practice management integration",
+      "Unlimited practice areas",
+      "Multiple specialist agents (by area or office)",
+      "Practice management integration (Clio, LEAP, etc.)",
+      "Dedicated account manager",
       "White-label widget option",
-      "Custom reporting",
-      "Priority support",
+      "Custom analytics and reporting",
+      "Phone and video support",
+      "SLA guarantee",
+      "Unlimited team logins",
     ],
     cta: "Talk to us",
     highlight: false,
@@ -588,7 +599,16 @@ export default function CounselPage() {
                 {plan.period && <span style={{ fontSize: 14, color: textMuted }}>{plan.period}</span>}
               </div>
               <p style={{ margin: "0 0 4px", fontSize: 12, color: textMuted }}>{plan.setup}</p>
-              <p style={{ margin: "0 0 28px", fontSize: 12, color: textSecondary, paddingTop: 12, borderTop: `1px solid ${border}` }}>{plan.ideal}</p>
+              <p style={{ margin: "0 0 16px", fontSize: 12, color: textSecondary, paddingTop: 12, borderTop: `1px solid ${border}` }}>{plan.ideal}</p>
+
+              {/* Upgrade callout — Growth and Enterprise only */}
+              {plan.upgrade && (
+                <div style={{ background: "rgba(201,168,76,0.07)", border: `1px solid ${goldBorder}`, borderRadius: 8, padding: "10px 14px", marginBottom: 20 }}>
+                  <p style={{ margin: "0 0 3px", fontSize: 10, fontWeight: 800, color: gold, letterSpacing: "0.8px", textTransform: "uppercase" as const }}>What you gain</p>
+                  <p style={{ margin: 0, fontSize: 12, color: textSecondary, lineHeight: 1.5 }}>{plan.upgrade}</p>
+                </div>
+              )}
+
               <div style={{ display: "flex", flexDirection: "column" as const, gap: 10, marginBottom: 28 }}>
                 {plan.features.map((f, j) => (
                   <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
