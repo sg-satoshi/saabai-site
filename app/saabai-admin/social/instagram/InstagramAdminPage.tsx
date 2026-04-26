@@ -282,7 +282,7 @@ function CaptionGenerator({ onQueued }: { onQueued: () => void }) {
         const res = await fetch("/api/instagram/queue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ caption, imageUrl, imageType, scheduledFor: scheduleDate, scheduledTime: scheduleTime }),
+          body: JSON.stringify({ caption, imageUrl, imageType, scheduledFor: `${scheduleDate}T${scheduleTime}:00+10:00` }),
         });
         if (res.ok) {
           setPubStatus("done");

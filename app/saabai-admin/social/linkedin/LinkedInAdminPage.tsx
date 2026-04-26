@@ -314,7 +314,7 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
         const res = await fetch("/api/linkedin/queue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: generated, scheduledFor: scheduleDate, imageUrl: imageUrl ?? undefined }),
+          body: JSON.stringify({ content: generated, scheduledFor: `${scheduleDate}T${scheduleTime}:00+10:00`, imageUrl: imageUrl ?? undefined }),
         });
         if (res.ok) {
           setPubStatus("done");
