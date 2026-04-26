@@ -59,7 +59,8 @@ export async function POST(req: Request) {
 
     if (!genRes.ok) {
       const err = await genRes.text();
-      return Response.json({ error: `Grok image API error: ${err}` }, { status: 502 });
+      console.error(`[imagine] xAI ${genRes.status}: ${err}`);
+      return Response.json({ error: `Grok image API error (${genRes.status}): ${err}` }, { status: 502 });
     }
 
     const genData = await genRes.json() as { data: { b64_json: string }[] };

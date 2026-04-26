@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "23:45", tag: "FIX", title: "Update xAI image model to grok-2-image-1212, increase timeout, improve error messages" },
       { time: "23:31", tag: "NEW", title: "Redesign admin dashboard for Lex business management" },
       { time: "23:12", tag: "NEW", title: "AI setup chat for client portal Customise tab" },
       { time: "22:56", tag: "NEW", title: "Client portal — prominent Open Lex CTA in nav + overview hero card" },
