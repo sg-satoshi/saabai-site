@@ -21,9 +21,10 @@ const NAV_WORKSPACE = [
 ];
 
 const NAV_BUILD = [
-  { label: "Social",      href: "/saabai-admin/social/linkedin" },
-  { label: "Subscribers", href: "/saabai-admin/subscribers" },
-  { label: "Actions",     href: "#actions" },
+  { label: "Social",       href: "/saabai-admin/social/linkedin" },
+  { label: "Subscribers",  href: "/saabai-admin/subscribers" },
+  { label: "LLM Settings", href: "/saabai-admin/lex-settings" },
+  { label: "Actions",      href: "#actions" },
 ];
 
 function Sidebar({ activePath }: { activePath: string }) {

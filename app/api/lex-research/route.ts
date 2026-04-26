@@ -1,5 +1,6 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getPremiumModel } from "../../../lib/chat-config";
+import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
@@ -75,8 +76,17 @@ export async function POST(req: Request) {
 
     const enabledTools = new Set(config.tools);
 
+    // Use the client's own API key + model if configured; otherwise fall back to Saabai's premium model.
+    let model;
+    try {
+      const clientLLMConfig = await getClientLLMConfig(config.id);
+      model = clientLLMConfig ? buildModelFromConfig(clientLLMConfig) ?? getPremiumModel() : getPremiumModel();
+    } catch {
+      model = getPremiumModel();
+    }
+
     const result = streamText({
-      model: getPremiumModel(),
+      model,
       system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(6),
