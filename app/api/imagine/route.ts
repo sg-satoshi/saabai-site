@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "grok-2-image-1212",
+        model: "aurora",
         prompt,
         n: 1,
         response_format: "b64_json",
