@@ -14,17 +14,22 @@ const SUPPRESS_PATHS = [
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
 ];
 
+// Pages where the NewsTicker/Signal bar should be hidden
+const SUPPRESS_TICKER_PATHS = ["/counsel"];
+
 export default function ConditionalWidgets() {
   const pathname = usePathname();
   const suppress = SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   if (suppress) return null;
 
+  const suppressTicker = SUPPRESS_TICKER_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
   return (
     <>
       <ChatWidget />
       <MobileCtaBar />
-      <NewsTicker />
+      {!suppressTicker && <NewsTicker />}
     </>
   );
 }
