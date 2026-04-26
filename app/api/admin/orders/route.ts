@@ -54,7 +54,9 @@ export async function GET() {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return Response.json({ error: "Stripe not configured" }, { status: 500 });
 
-  const stripe = new Stripe(stripeKey);
+  // Pin to a stable API version — the SDK default (2026-04-22.dahlia) has breaking changes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" as any });
 
   try {
     // 1. Subscriptions — no expand to keep it simple
