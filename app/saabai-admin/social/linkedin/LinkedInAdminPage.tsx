@@ -235,8 +235,33 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
   const [genError, setGenError] = useState("");
   const [topicPage, setTopicPage] = useState(0); // which set of 5 topics to show
 
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+
   const charCount = generated.length;
   const over = charCount > 3000;
+
+  async function generateImage() {
+    if (!topic.trim()) return;
+    setGeneratingImage(true);
+    setImageError("");
+    setImageUrl(null);
+    try {
+      const res = await fetch("/api/imagine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, platform: "linkedin" }),
+      });
+      const data = await res.json();
+      if (data.url) setImageUrl(data.url);
+      else setImageError(data.error ?? "Image generation failed — try again.");
+    } catch {
+      setImageError("Network error generating image.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  }
 
   async function generate() {
     if (!topic.trim()) return;
@@ -271,13 +296,14 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
         const res = await fetch("/api/linkedin/post", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: generated }),
+          body: JSON.stringify({ content: generated, imageUrl: imageUrl ?? undefined }),
         });
         if (res.ok) {
           setPubStatus("done");
           setGenerated("");
           setTopic("");
           setNotes("");
+          setImageUrl(null);
           onQueued();
         } else {
           setPubStatus("error");
@@ -287,7 +313,7 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
         const res = await fetch("/api/linkedin/queue", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: generated, scheduledFor: scheduleDate }),
+          body: JSON.stringify({ content: generated, scheduledFor: scheduleDate, imageUrl: imageUrl ?? undefined }),
         });
         if (res.ok) {
           setPubStatus("done");
@@ -514,6 +540,45 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
             >
               ↻ Regenerate
             </button>
+          )}
+
+          {/* Image generation */}
+          {generated && (
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px", background: "#f9fafb" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: imageUrl ? 12 : 0 }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#6b7280", textTransform: "uppercase" as const }}>
+                  Post Image <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0, color: "#9ca3af" }}>(optional)</span>
+                </p>
+                <button
+                  onClick={generatingImage ? undefined : (imageUrl ? () => { setImageUrl(null); setImageError(""); } : generateImage)}
+                  disabled={generatingImage}
+                  style={{
+                    padding: "6px 14px", borderRadius: 7, border: "1px solid",
+                    borderColor: imageUrl ? "#fca5a5" : "#0077b5",
+                    background: imageUrl ? "#fff5f5" : "#eff8ff",
+                    color: imageUrl ? "#ef4444" : "#0077b5",
+                    fontSize: 11, fontWeight: 700, cursor: generatingImage ? "not-allowed" : "pointer",
+                    opacity: generatingImage ? 0.6 : 1,
+                  }}
+                >
+                  {generatingImage ? "Generating…" : imageUrl ? "✕ Remove image" : "Generate image"}
+                </button>
+              </div>
+              {imageError && <p style={{ margin: "8px 0 0", fontSize: 11, color: "#ef4444" }}>{imageError}</p>}
+              {imageUrl && (
+                <div style={{ marginTop: 10 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Generated post image"
+                    style={{ width: "100%", borderRadius: 8, border: "1px solid #e5e7eb", display: "block" }}
+                  />
+                  <p style={{ margin: "6px 0 0", fontSize: 10, color: "#9ca3af" }}>
+                    AI-generated · will be attached to this post
+                  </p>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Publish controls */}

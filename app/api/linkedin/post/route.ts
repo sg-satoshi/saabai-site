@@ -11,6 +11,7 @@ export async function POST(req: Request) {
   let body: {
     content?: string;
     scheduledFor?: string;
+    imageUrl?: string;
     imageType?: "stat" | "insight" | "quote" | "beforeafter" | "none";
     imageParams?: Record<string, string>;
   };
@@ -32,9 +33,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Build image URL if requested
-  let imageUrl: string | null = null;
-  if (body.imageType && body.imageType !== "none") {
+  // Resolve image URL — direct URL takes priority over template type
+  let imageUrl: string | null = body.imageUrl?.trim() || null;
+  if (!imageUrl && body.imageType && body.imageType !== "none") {
     const params = new URLSearchParams({ type: body.imageType, ...body.imageParams });
     imageUrl = `${BASE_URL}/api/og/linkedin-card?${params.toString()}`;
   }
