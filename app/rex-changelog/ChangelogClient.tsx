@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "22:45", tag: "FIX", title: "Lex-chat fallback to Anthropic Haiku instead of xAI model" },
       { time: "22:39", tag: "FIX", title: "Lex-chat — load client system prompt + LLM config, fix stream format" },
       { time: "22:33", tag: "FIX", title: "Hide NewsTicker signal bar on /counsel page" },
       { time: "22:28", tag: "NEW", title: "Update logo to new SAABAI.ai brand mark across site" },

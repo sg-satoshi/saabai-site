@@ -26,8 +26,17 @@ export async function POST(req: Request) {
   const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
   const clientId: string | undefined = body.clientId;
 
+  // Base formatting rules applied to every Lex response regardless of client config
+  const BASE_RULES = `
+Formatting rules (always follow these):
+- Never use markdown asterisks for bold or italic. No **word** or *word*.
+- Never use em dashes (—). Use a comma, colon, or rewrite the sentence instead.
+- Never use hyphens as list bullets preceded by bold text. Use plain labels with a colon.
+- Write in plain conversational prose. No markdown formatting of any kind.
+`.trim();
+
   // 1. Load system prompt — keyed by email from session cookie
-  let systemPrompt: string | undefined;
+  let clientConfig: string | undefined;
   try {
     const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
     const session = sessionToken ? verifySession(sessionToken) : null;
@@ -35,12 +44,14 @@ export async function POST(req: Request) {
       const redis = getRedis();
       if (redis) {
         const stored = await redis.get<string>(`portal:config:${session.email}`);
-        if (stored) systemPrompt = typeof stored === "string" ? stored : JSON.stringify(stored);
+        if (stored) clientConfig = typeof stored === "string" ? stored : JSON.stringify(stored);
       }
     }
   } catch {
-    // non-fatal — proceed without system prompt
+    // non-fatal — proceed without client config
   }
+
+  const systemPrompt = clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES;
 
   // 2. Load client LLM model (API key + model) — keyed by clientId
   //    Fall back to Haiku (fast, cheap) when no client key is saved
@@ -64,7 +75,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model,
-    ...(systemPrompt ? { system: systemPrompt } : {}),
+    system: systemPrompt,
     messages: normalized,
     stopWhen: stepCountIs(4),
   });
