@@ -47,6 +47,16 @@ const NAV: {
         ),
       },
       {
+        label: "Orders",
+        href: "/saabai-admin/orders",
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M4.5 5.5h5M4.5 8h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
         label: "Client Portal",
         href: "/client-portal",
         icon: (
