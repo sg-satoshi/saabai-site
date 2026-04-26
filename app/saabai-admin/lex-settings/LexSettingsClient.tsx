@@ -381,31 +381,43 @@ export default function LexSettingsClient() {
     if (!apiKey.trim()) { setTestMsg("Enter your API key first."); setTestStatus("fail"); return; }
     setTestStatus("testing");
     setTestMsg("");
-    const res = await fetch("/api/lex-settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "test", clientId, provider: selectedProv, model: selectedModel, apiKey }),
-    }).then(r => r.json());
-    setTestStatus(res.ok ? "ok" : "fail");
-    setTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
+    try {
+      const r = await fetch("/api/lex-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test", clientId, provider: selectedProv, model: selectedModel, apiKey }),
+      });
+      const res = await r.json();
+      setTestStatus(res.ok ? "ok" : "fail");
+      setTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
+    } catch (err) {
+      setTestStatus("fail");
+      setTestMsg(err instanceof Error ? err.message : "Network error — could not reach server");
+    }
   }
 
   async function handleSave() {
     if (!apiKey.trim()) { setSaveMsg("Enter the API key before saving."); return; }
     setSaving(true);
     setSaveMsg("");
-    const res = await fetch("/api/lex-settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save", clientId, provider: selectedProv, model: selectedModel, apiKey }),
-    }).then(r => r.json());
-    setSaving(false);
-    if (res.ok) {
-      setSaveMsg("Saved. Lex will use this model for new conversations.");
-      setCurrentConfig({ provider: selectedProv, model: selectedModel, keyHint: `****${apiKey.slice(-4)}`, updatedAt: Date.now() });
-      setApiKey("");
-    } else {
-      setSaveMsg(`Error: ${res.error ?? "Unknown error"}`);
+    try {
+      const r = await fetch("/api/lex-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", clientId, provider: selectedProv, model: selectedModel, apiKey }),
+      });
+      const res = await r.json();
+      setSaving(false);
+      if (res.ok) {
+        setSaveMsg("Saved. Lex will use this model for new conversations.");
+        setCurrentConfig({ provider: selectedProv, model: selectedModel, keyHint: `****${apiKey.slice(-4)}`, updatedAt: Date.now() });
+        setApiKey("");
+      } else {
+        setSaveMsg(`Error: ${res.error ?? "Unknown error"}`);
+      }
+    } catch (err) {
+      setSaving(false);
+      setSaveMsg(err instanceof Error ? `Error: ${err.message}` : "Error: Network error — could not reach server");
     }
   }
 

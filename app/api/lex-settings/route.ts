@@ -41,21 +41,20 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "test") {
-    // Build a temporary config to test against
-    const tempConfig = {
-      provider,
-      model,
-      encryptedKey: encryptKey(apiKey),
-      keyHint: apiKey.slice(-4),
-      updatedAt: Date.now(),
-    };
-
-    const llmModel = buildModelFromConfig(tempConfig);
-    if (!llmModel) {
-      return NextResponse.json({ ok: false, error: "Unsupported provider" }, { status: 400 });
-    }
-
     try {
+      const tempConfig = {
+        provider,
+        model,
+        encryptedKey: encryptKey(apiKey),
+        keyHint: apiKey.slice(-4),
+        updatedAt: Date.now(),
+      };
+
+      const llmModel = buildModelFromConfig(tempConfig);
+      if (!llmModel) {
+        return NextResponse.json({ ok: false, error: "Unsupported provider" });
+      }
+
       const { text } = await generateText({
         model: llmModel,
         messages: [{ role: "user", content: "Reply with only the word: connected" }],
@@ -70,6 +69,11 @@ export async function POST(req: NextRequest) {
   }
 
   // action === "save"
-  await saveClientLLMConfig(clientId, { provider, model, apiKey });
-  return NextResponse.json({ ok: true });
+  try {
+    await saveClientLLMConfig(clientId, { provider, model, apiKey });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ ok: false, error: msg });
+  }
 }
