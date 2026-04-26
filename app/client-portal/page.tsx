@@ -502,9 +502,22 @@ function ClientPortalInner() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.green, display: "inline-block" }} />
             <span style={{ fontSize: 13, fontWeight: 700, color: C.goldB }}>{agentName} is live</span>
-            <span style={{ fontSize: 12, color: C.muted }}>
-              · <code style={{ color: C.gold }}>{clientId}</code>
-            </span>
+            <a
+              href={`/lex-widget?client=${clientId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: C.gold, color: C.bg, fontSize: 13, fontWeight: 800,
+                padding: "7px 16px", borderRadius: 8, textDecoration: "none",
+                letterSpacing: "-0.1px", display: "flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M6.5 1.5h-5v10h10v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 1.5h2.5v2.5M11.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Open {agentName}
+            </a>
             <button onClick={signOut} style={{ background: "none", border: `1px solid ${C.border}`,
               borderRadius: 6, color: C.muted, fontSize: 12, cursor: "pointer", padding: "5px 12px" }}>
               Sign out
@@ -544,7 +557,55 @@ function ClientPortalInner() {
             <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>
               Welcome back, {firmName}
             </h2>
-            <p style={{ color: C.muted, margin: "0 0 32px" }}>Your Lex agent is live and active.</p>
+
+            {/* Hero CTA card */}
+            <div style={{
+              background: "linear-gradient(135deg, #0f0d35 0%, #131040 100%)",
+              border: `1px solid ${C.goldBdr}`,
+              borderRadius: 16, padding: "28px 32px", marginBottom: 32,
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20,
+            }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.green, display: "inline-block" }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.green, letterSpacing: "0.8px", textTransform: "uppercase" }}>Live</span>
+                </div>
+                <h3 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: C.text }}>
+                  {agentName} is ready for clients
+                </h3>
+                <p style={{ margin: 0, fontSize: 14, color: C.muted, maxWidth: 420 }}>
+                  Your agent is active and capturing leads. Open it to have a live conversation or test it right here in the portal.
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <button
+                  onClick={() => setTab("test")}
+                  style={{
+                    background: "none", border: `1px solid ${C.goldBdr}`, color: C.goldB,
+                    fontSize: 14, fontWeight: 700, padding: "10px 20px", borderRadius: 10,
+                    cursor: "pointer",
+                  }}
+                >
+                  Test in portal
+                </button>
+                <a
+                  href={`/lex-widget?client=${clientId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: C.gold, color: C.bg, fontSize: 14, fontWeight: 800,
+                    padding: "10px 24px", borderRadius: 10, textDecoration: "none",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1.5H2.5a1 1 0 00-1 1v9a1 1 0 001 1H11a1 1 0 001-1V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M9.5 1.5H12.5V4.5M12.5 1.5l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Open {agentName}
+                </a>
+              </div>
+            </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
               {[
