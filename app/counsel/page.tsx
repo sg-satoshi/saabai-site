@@ -144,6 +144,66 @@ const PRICING = [
   },
 ];
 
+// ── Card badges ───────────────────────────────────────────────────────────────
+
+function CardBadges({ center = true }: { center?: boolean }) {
+  const W = 40; const H = 26; const R = 5;
+  const shadow = "0 2px 6px rgba(0,0,0,0.55)";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 7, justifyContent: center ? "center" : "flex-start", flexWrap: "wrap" as const }}>
+
+      {/* Visa */}
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ borderRadius: R, boxShadow: shadow, flexShrink: 0 }}>
+        <rect width={W} height={H} rx={R} fill="#1A1F71"/>
+        {/* White horizontal stripe at bottom — classic Visa detail */}
+        <rect y={H - 7} width={W} height={7} rx={0} fill="#F7B600" opacity="0.15"/>
+        <text x={W / 2} y={H * 0.69} textAnchor="middle" fill="white" fontSize="11.5" fontWeight="900" fontStyle="italic" fontFamily="Arial, Helvetica, sans-serif" letterSpacing="-0.3">VISA</text>
+      </svg>
+
+      {/* Mastercard */}
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ borderRadius: R, boxShadow: shadow, flexShrink: 0 }}>
+        <rect width={W} height={H} rx={R} fill="#1C1C1C"/>
+        {/* Left red circle */}
+        <circle cx={W * 0.37} cy={H / 2} r={H * 0.38} fill="#EB001B"/>
+        {/* Right yellow circle — overlaps, creating orange blend in centre */}
+        <circle cx={W * 0.63} cy={H / 2} r={H * 0.38} fill="#F79E1B" opacity="0.93"/>
+      </svg>
+
+      {/* Amex */}
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ borderRadius: R, boxShadow: shadow, flexShrink: 0 }}>
+        <defs>
+          <linearGradient id="amex-grad" x1="0" y1="0" x2={W} y2={H} gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#1F77C8"/>
+            <stop offset="100%" stopColor="#016FD0"/>
+          </linearGradient>
+        </defs>
+        <rect width={W} height={H} rx={R} fill="url(#amex-grad)"/>
+        <text x={W / 2} y={H * 0.63} textAnchor="middle" fill="white" fontSize="8.5" fontWeight="900" fontFamily="Arial, Helvetica, sans-serif" letterSpacing="0.8">AMEX</text>
+      </svg>
+
+      {/* Apple Pay */}
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ borderRadius: R, boxShadow: shadow, flexShrink: 0 }}>
+        <rect width={W} height={H} rx={R} fill="#000"/>
+        {/* Simplified Apple logo */}
+        <text x={W / 2 - 5} y={H * 0.67} fill="white" fontSize="11" fontFamily="Arial, Helvetica, sans-serif"></text>
+        <path d="M14.5 7.5c.7-.9.6-1.8.6-1.8s-.9.1-1.5.7c-.5.5-.8 1.3-.7 1.9.8.1 1.6-.3 1.6-.8z" fill="white"/>
+        <path d="M14.5 8.4c-.9 0-1.3.5-1.9.5-.6 0-1.1-.5-1.8-.5-1 0-2 .8-2 2.4 0 2.3 1.8 4.7 2.8 4.7.6 0 1-.4 1.8-.4.7 0 1 .4 1.8.4 1 0 2.8-2.3 2.8-4.4-.1-.1-1.6-.6-1.5-2.7z" fill="white"/>
+        <text x={W / 2 + 3} y={H * 0.66} textAnchor="middle" fill="white" fontSize="7" fontWeight="600" fontFamily="-apple-system, Arial, sans-serif">Pay</text>
+      </svg>
+
+      {/* Lock + Stripe */}
+      <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#6b7280", fontSize: 10, marginLeft: 1, flexShrink: 0 }}>
+        <svg width="9" height="11" viewBox="0 0 9 11" fill="none">
+          <path d="M1.8 4.4V3.2a2.7 2.7 0 0 1 5.4 0v1.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          <rect x="0.5" y="4.4" width="8" height="6.1" rx="1.5" fill="currentColor" opacity="0.65"/>
+          <circle cx="4.5" cy="7.5" r="0.9" fill="white" opacity="0.85"/>
+        </svg>
+        <span style={{ letterSpacing: "0.2px" }}>Secured by Stripe</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function CounselPage() {
@@ -584,9 +644,12 @@ export default function CounselPage() {
           <p style={{ fontSize: 16, color: textSecondary, maxWidth: 540, margin: "0 auto 16px", lineHeight: 1.7 }}>
             One setup fee, one monthly fee. Unlimited team members. No per-seat charges, no usage caps, no lock-in contracts.
           </p>
-          <p style={{ fontSize: 14, color: textMuted, maxWidth: 520, margin: "0 auto", lineHeight: 1.7 }}>
+          <p style={{ fontSize: 14, color: textMuted, maxWidth: 520, margin: "0 auto 28px", lineHeight: 1.7 }}>
             Lex runs on your own Anthropic account — your data stays yours, AI costs go directly to you at cost (typically $5–30/mo). Most legal software charges $50–150 per user per month on top of that. We don&apos;t.
           </p>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <CardBadges />
+          </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
@@ -646,20 +709,25 @@ export default function CounselPage() {
                   {plan.cta}
                 </a>
               ) : (
-                <button
-                  onClick={() => handleCheckout(plan.name.toLowerCase())}
-                  disabled={checkoutLoading === plan.name.toLowerCase()}
-                  style={{
-                    width: "100%", padding: "13px 20px", borderRadius: 10,
-                    fontWeight: 700, fontSize: 14, cursor: checkoutLoading ? "wait" : "pointer",
-                    background: plan.highlight ? gold : "transparent",
-                    color: plan.highlight ? bg : gold,
-                    border: `1px solid ${plan.highlight ? gold : goldBorder}`,
-                    opacity: checkoutLoading === plan.name.toLowerCase() ? 0.7 : 1,
-                  }}
-                >
-                  {checkoutLoading === plan.name.toLowerCase() ? "Loading…" : plan.cta}
-                </button>
+                <>
+                  <button
+                    onClick={() => handleCheckout(plan.name.toLowerCase())}
+                    disabled={checkoutLoading === plan.name.toLowerCase()}
+                    style={{
+                      width: "100%", padding: "13px 20px", borderRadius: 10,
+                      fontWeight: 700, fontSize: 14, cursor: checkoutLoading ? "wait" : "pointer",
+                      background: plan.highlight ? gold : "transparent",
+                      color: plan.highlight ? bg : gold,
+                      border: `1px solid ${plan.highlight ? gold : goldBorder}`,
+                      opacity: checkoutLoading === plan.name.toLowerCase() ? 0.7 : 1,
+                    }}
+                  >
+                    {checkoutLoading === plan.name.toLowerCase() ? "Loading…" : plan.cta}
+                  </button>
+                  <div style={{ marginTop: 14 }}>
+                    <CardBadges />
+                  </div>
+                </>
               )}
             </div>
           ))}
