@@ -971,12 +971,40 @@ export default function LexPage() {
           </div>
 
           {/* Footer */}
-          <div style={{ padding: "12px 16px", borderTop: `1px solid ${C.border}` }}>
-            <a href="/client-portal" style={{ display: "block", fontSize: 11, color: C.textMuted, textDecoration: "none", padding: "6px 0" }}>
-              ⚙ Firm Dashboard
+          <div style={{ padding: "10px 10px 12px", borderTop: `1px solid ${C.border}` }}>
+            <a
+              href="/client-portal/settings"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "7px 8px", borderRadius: 7, marginBottom: 2,
+                textDecoration: "none", fontSize: 12, color: C.textMuted,
+                transition: "background 0.12s, color 0.12s",
+              }}
+              onMouseEnter={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = C.surfaceRaised; a.style.color = C.text; }}
+              onMouseLeave={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "transparent"; a.style.color = C.textMuted; }}
+            >
+              <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>⊞</span>
+              Firm Dashboard
+            </a>
+            <a
+              href="/saabai-admin/lex-settings"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "7px 8px", borderRadius: 7, marginBottom: 6,
+                textDecoration: "none", fontSize: 12,
+                color: C.gold,
+                background: C.goldBg,
+                border: `1px solid ${C.goldBorder}`,
+                fontWeight: 600,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(201,168,76,0.14)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = C.goldBg; }}
+            >
+              <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>⚙</span>
+              AI Model Settings
             </a>
             <a href="https://saabai.ai" target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", fontSize: 10, color: C.textDim, textDecoration: "none", marginTop: 4 }}>
+              style={{ display: "block", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "2px 8px" }}>
               Powered by Saabai.ai
             </a>
           </div>
