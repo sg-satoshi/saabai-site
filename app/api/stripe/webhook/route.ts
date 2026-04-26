@@ -19,18 +19,18 @@ function getPlanLabel(amountTotal: number | null): { name: string; setup: string
 function buildWelcomeEmail(firstName: string | null, planName: string): { subject: string; html: string } {
   const greeting = firstName ? `Hi ${firstName},` : "Hi,";
   return {
-    subject: `Welcome to Lex ${planName} — here's what happens next`,
+    subject: `Welcome to Lex ${planName} — the fun part starts now`,
     html: `
       <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
         <div style="background: #0b092e; padding: 36px 40px 32px; border-radius: 16px 16px 0 0; position: relative; overflow: hidden;">
           <div style="position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(to right, transparent, #c9a84c, transparent);"></div>
           <p style="color: #c9a84c; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 10px; font-weight: 600;">Saabai · Lex ${planName}</p>
-          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3;">You're in. Let's get your agent live.</h1>
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3;">You're in. Let's find where your time is hiding.</h1>
         </div>
         <div style="background: #f7f7f9; padding: 32px 40px; border-radius: 0 0 16px 16px; border: 1px solid #e8e8ec; border-top: none;">
           <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">${greeting}</p>
-          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">Your Lex ${planName} subscription is confirmed. We'll be in touch within one business day — but the fastest way to get moving is to book your onboarding call now.</p>
-          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 28px;">It's 30 minutes. I'll come in knowing your plan details, so we skip the sales part and go straight to building your agent. Most firms are live within 5 business days of the call.</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 18px;">Your Lex ${planName} subscription is confirmed. You've just made a decision that most firms think about for months and then wish they'd made sooner. Welcome to the "why didn't we do this earlier" club.</p>
+          <p style="font-size: 15px; color: #333; line-height: 1.7; margin: 0 0 28px;">The onboarding call is 30 minutes. No slides, no awkward sales energy. Just a straight conversation about how your firm actually works, which tasks have been quietly stealing your team's time, and how we fix that. Most firms are genuinely surprised by how many there are.</p>
 
           <div style="text-align: center; margin-bottom: 12px;">
             <a href="${CALENDLY}" style="display: inline-block; background: #c9a84c; color: #0b092e; padding: 15px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book Your Onboarding Call →</a>
@@ -38,12 +38,12 @@ function buildWelcomeEmail(firstName: string | null, planName: string): { subjec
           <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 32px;">30 minutes · Pick a time that works for you</p>
 
           <div style="background: #ffffff; border: 1px solid #e8e8ec; border-radius: 12px; padding: 24px 28px; margin-bottom: 28px;">
-            <p style="font-size: 11px; font-weight: 800; color: #c9a84c; letter-spacing: 1px; text-transform: uppercase; margin: 0 0 16px;">What happens on the call</p>
+            <p style="font-size: 11px; font-weight: 800; color: #c9a84c; letter-spacing: 1px; text-transform: uppercase; margin: 0 0 16px;">What the call looks like</p>
             ${[
-              { step: "1", title: "Your firm & practice areas", desc: "We map out what Lex needs to know about your services, clients, and how you work." },
-              { step: "2", title: "Tone & brand voice", desc: "We nail how Lex should sound — professional, warm, direct. You approve it before anything goes live." },
-              { step: "3", title: "Connect your Anthropic account", desc: "Takes 5 minutes. Your agent runs on your API key — your data, full transparency." },
-              { step: "4", title: "Go live", desc: "Lex is embedded on your site and capturing leads within 5 business days." },
+              { step: "1", title: "How your firm actually works", desc: "We map the real flow of work — not the org chart version, the actual version where things fall through the cracks." },
+              { step: "2", title: "Where the time is going", desc: "Together we spot the tasks that feel like 'just how it is' but are really just slow. This part is usually eye-opening." },
+              { step: "3", title: "How Lex should sound", desc: "Your agent, your voice. Professional, sharp, on-brand. You approve everything before it goes anywhere near a client." },
+              { step: "4", title: "Go live in 5 days", desc: "We connect your Anthropic account (5 minutes), build your agent, and have Lex live on your site within 5 business days of the call." },
             ].map(item => `
               <div style="display: flex; gap: 14px; margin-bottom: 14px; align-items: flex-start;">
                 <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; font-weight: 800; color: #c9a84c; line-height: 24px; text-align: center;">${item.step}</div>
@@ -54,6 +54,8 @@ function buildWelcomeEmail(firstName: string | null, planName: string): { subjec
               </div>
             `).join("")}
           </div>
+
+          <p style="font-size: 14px; color: #555; line-height: 1.7; margin: 0 0 24px; font-style: italic;">The sooner you book, the sooner you stop paying humans to do things a well-trained agent can handle at 2am without complaining.</p>
 
           <div style="border-top: 1px solid #e8e8ec; padding-top: 20px;">
             <p style="font-size: 14px; color: #555; margin: 0 0 4px;">Shane Goldberg</p>
@@ -76,19 +78,21 @@ function buildNotificationEmail(
   return `
     <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 540px; margin: 0 auto; color: #1a1a1a;">
       <div style="background: #0b092e; padding: 28px 32px; border-radius: 12px 12px 0 0;">
-        <p style="color: #c9a84c; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 6px; font-weight: 600;">Saabai · New Signup</p>
-        <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Lex ${plan.name} — Payment Confirmed</h1>
+        <p style="color: #c9a84c; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 6px; font-weight: 600;">Saabai · New Client</p>
+        <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">Someone just bet on us. Lex ${plan.name}.</h1>
       </div>
       <div style="background: #f8f8f8; padding: 28px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
+        <p style="font-size: 14px; color: #555; line-height: 1.7; margin: 0 0 20px;">Payment confirmed. Welcome email and onboarding call link already sent to the client. Here's who just joined:</p>
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px; width: 160px;">Name</td><td style="padding: 7px 0; font-size: 14px; font-weight: 600;">${customerName || "—"}</td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Email</td><td style="padding: 7px 0; font-size: 14px;"><a href="mailto:${customerEmail}" style="color: #0b092e;">${customerEmail || "—"}</a></td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Plan</td><td style="padding: 7px 0; font-size: 14px; font-weight: 600;">Lex ${plan.name}</td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Pricing</td><td style="padding: 7px 0; font-size: 14px;">${plan.setup} setup + ${plan.monthly}</td></tr>
-          <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Amount charged</td><td style="padding: 7px 0; font-size: 14px; font-weight: 700; color: #0b092e;">${amount}</td></tr>
+          <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Charged today</td><td style="padding: 7px 0; font-size: 15px; font-weight: 700; color: #0b092e;">${amount}</td></tr>
         </table>
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e5e5;">
-          <p style="font-size: 13px; color: #888; margin: 0;">Welcome email sent to client. Book their onboarding: <a href="${CALENDLY}" style="color: #c9a84c;">${CALENDLY}</a></p>
+          <p style="font-size: 13px; color: #888; margin: 0 0 6px;">Book their onboarding before they book something else with their newfound enthusiasm:</p>
+          <p style="font-size: 13px; margin: 0;"><a href="${CALENDLY}" style="color: #c9a84c; font-weight: 600;">${CALENDLY}</a></p>
         </div>
       </div>
     </div>
