@@ -187,6 +187,301 @@ function fmtDate(d: string) {
   }) + " · 9:00am";
 }
 
+// ── Bulk Generation Helpers ───────────────────────────────────────────────────
+
+interface BulkPost {
+  id: string;
+  format: string;
+  topic: string;
+  content: string;
+  imageUrl: string | null;
+  scheduledFor: string;
+  status: "pending" | "text" | "image" | "done" | "error";
+  error?: string;
+}
+
+function pickTopics(count: number, fmt: string): Array<{ format: string; topic: string }> {
+  if (fmt !== "auto") {
+    const pool = [...(ALL_TOPICS[fmt] ?? [])].sort(() => Math.random() - 0.5);
+    return pool.slice(0, count).map(t => ({ format: fmt, topic: t }));
+  }
+  const fmts = FORMATS.map(f => f.value);
+  const used: Record<string, Set<string>> = {};
+  const result: Array<{ format: string; topic: string }> = [];
+  for (let i = 0; i < count; i++) {
+    const f = fmts[i % fmts.length];
+    if (!used[f]) used[f] = new Set();
+    const pool = (ALL_TOPICS[f] ?? []).filter(t => !used[f].has(t));
+    if (!pool.length) continue;
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    used[f].add(t);
+    result.push({ format: f, topic: t });
+  }
+  return result;
+}
+
+function buildScheduleDates(count: number, startDate: string, time: string, spacing: string): string[] {
+  const dates: string[] = [];
+  let d = new Date(`${startDate}T${time}:00+10:00`);
+  if (spacing === "mwf") {
+    while (dates.length < count) {
+      const day = d.getDay();
+      if (day === 1 || day === 3 || day === 5) dates.push(d.toISOString());
+      d = new Date(d.getTime() + 86400000);
+    }
+  } else {
+    const step = spacing === "every2" ? 172800000 : 86400000;
+    for (let i = 0; i < count; i++) {
+      dates.push(new Date(d.getTime() + i * step).toISOString());
+    }
+  }
+  return dates;
+}
+
+// ── Bulk Generator ────────────────────────────────────────────────────────────
+
+function BulkGenerator({ onQueued }: { onQueued: () => void }) {
+  const [count, setCount] = useState(5);
+  const [fmt, setFmt] = useState("auto");
+  const [startDate, setStartDate] = useState(todayAEST());
+  const [time, setTime] = useState("09:00");
+  const [spacing, setSpacing] = useState("mwf");
+  const [posts, setPosts] = useState<BulkPost[]>([]);
+  const [running, setRunning] = useState(false);
+  const [queuing, setQueuing] = useState(false);
+  const [queuedOk, setQueuedOk] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const donePosts = posts.filter(p => p.status === "done");
+  const hasResults = posts.length > 0;
+
+  async function generateAll() {
+    setRunning(true);
+    setQueuedOk(false);
+    const selections = pickTopics(count, fmt);
+    const dates = buildScheduleDates(selections.length, startDate, time, spacing);
+    const initial: BulkPost[] = selections.map((s, i) => ({
+      id: `b-${Date.now()}-${i}`,
+      format: s.format,
+      topic: s.topic,
+      content: "",
+      imageUrl: null,
+      scheduledFor: dates[i] ?? dates[dates.length - 1],
+      status: "pending",
+    }));
+    setPosts(initial);
+
+    for (let i = 0; i < initial.length; i++) {
+      // Step 1 — generate text
+      setPosts(prev => prev.map((p, idx) => idx === i ? { ...p, status: "text" } : p));
+      let content = "";
+      try {
+        const r = await fetch("/api/linkedin/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ format: initial[i].format, topic: initial[i].topic }),
+        });
+        const d = await r.json();
+        content = d.content ?? "";
+      } catch {
+        setPosts(prev => prev.map((p, idx) => idx === i ? { ...p, status: "error", error: "Text generation failed" } : p));
+        continue;
+      }
+
+      // Step 2 — generate image
+      setPosts(prev => prev.map((p, idx) => idx === i ? { ...p, content, status: "image" } : p));
+      let imageUrl: string | null = null;
+      try {
+        const r = await fetch("/api/imagine", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic: initial[i].topic, platform: "linkedin", postContent: content }),
+        });
+        const d = await r.json();
+        if (d.url) imageUrl = d.url;
+      } catch { /* image failed — post still usable */ }
+
+      setPosts(prev => prev.map((p, idx) => idx === i ? { ...p, content, imageUrl, status: "done" } : p));
+    }
+    setRunning(false);
+  }
+
+  async function queueAll() {
+    setQueuing(true);
+    let ok = 0;
+    for (const post of donePosts) {
+      try {
+        const r = await fetch("/api/linkedin/queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: post.content, scheduledFor: post.scheduledFor, imageUrl: post.imageUrl ?? undefined }),
+        });
+        if (r.ok) ok++;
+      } catch { /* continue */ }
+    }
+    setQueuing(false);
+    if (ok > 0) { setQueuedOk(true); setPosts([]); onQueued(); }
+  }
+
+  const card: React.CSSProperties = { background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: "24px 28px" };
+  const chipBtn = (active: boolean, accent = "#0077b5"): React.CSSProperties => ({
+    padding: "6px 14px", borderRadius: 8, border: `1.5px solid ${active ? accent : "#e5e7eb"}`,
+    background: active ? "#eff8ff" : "#f9fafb", color: active ? accent : "#374151",
+    fontSize: 12, fontWeight: active ? 700 : 500, cursor: "pointer", transition: "all 0.1s",
+  });
+  const label: React.CSSProperties = { margin: "0 0 8px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: "#9ca3af", textTransform: "uppercase" };
+  const inputStyle: React.CSSProperties = { padding: "9px 12px", border: "1px solid #e5e7eb", borderRadius: 8, fontSize: 13, color: "#111827", outline: "none", fontFamily: "inherit" };
+
+  const statusLabel: Record<BulkPost["status"], string> = {
+    pending: "Waiting…",
+    text: "Writing post…",
+    image: "Generating image…",
+    done: "Ready",
+    error: "Failed",
+  };
+  const statusColor: Record<BulkPost["status"], string> = {
+    pending: "#9ca3af", text: "#0077b5", image: "#7c3aed", done: "#059669", error: "#ef4444",
+  };
+  const statusBg: Record<BulkPost["status"], string> = {
+    pending: "#f3f4f6", text: "#eff8ff", image: "#f5f3ff", done: "#f0fdf4", error: "#fef2f2",
+  };
+
+  return (
+    <div style={card}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: collapsed ? 0 : 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 9, background: "linear-gradient(135deg, #1d4ed8 0%, #0077b5 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>⚡</div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#111827", letterSpacing: -0.3 }}>Bulk Post Generator</h2>
+            <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>Generate + image + schedule — up to 10 posts at once</p>
+          </div>
+        </div>
+        <button onClick={() => setCollapsed(v => !v)} style={{ fontSize: 11, color: "#6b7280", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}>
+          <span style={{ display: "inline-block", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+          {collapsed ? "Show" : "Hide"}
+        </button>
+      </div>
+
+      {!collapsed && (
+        <>
+          {/* Config row */}
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr 1fr auto", gap: 20, alignItems: "start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
+            {/* Count */}
+            <div>
+              <p style={label}>Posts</p>
+              <div style={{ display: "flex", gap: 5 }}>
+                {[3, 5, 7, 10].map(n => (
+                  <button key={n} onClick={() => setCount(n)} style={chipBtn(count === n)}>{n}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Spacing */}
+            <div>
+              <p style={label}>Spacing</p>
+              <div style={{ display: "flex", gap: 5 }}>
+                {[["mwf", "Mon/Wed/Fri"], ["daily", "Daily"], ["every2", "Every 2d"]].map(([v, l]) => (
+                  <button key={v} onClick={() => setSpacing(v)} style={chipBtn(spacing === v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Format */}
+            <div>
+              <p style={label}>Format</p>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {[["auto", "Auto-vary"], ...FORMATS.map(f => [f.value, f.label])].map(([v, l]) => (
+                  <button key={v} onClick={() => setFmt(v)} style={chipBtn(fmt === v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Start date + time */}
+            <div>
+              <p style={label}>Start Date &amp; Time (AEST)</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input type="date" value={startDate} min={todayAEST()} onChange={e => setStartDate(e.target.value)} style={{ ...inputStyle }} />
+                <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inputStyle, width: 90 }} />
+              </div>
+            </div>
+
+            {/* Generate button */}
+            <div style={{ display: "flex", alignItems: "flex-end" }}>
+              <button
+                onClick={generateAll}
+                disabled={running}
+                style={{
+                  padding: "10px 22px", borderRadius: 10, border: "none",
+                  background: running ? "#e5e7eb" : "linear-gradient(135deg, #1d4ed8 0%, #0077b5 100%)",
+                  color: running ? "#9ca3af" : "#fff",
+                  fontSize: 13, fontWeight: 800, cursor: running ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {running ? "Generating…" : `Generate ${count} posts`}
+              </button>
+            </div>
+          </div>
+
+          {/* Post cards */}
+          {hasResults && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {posts.map((post, i) => (
+                <div key={post.id} style={{ border: `1px solid ${post.status === "error" ? "#fecaca" : post.status === "done" ? "#a7f3d0" : "#e5e7eb"}`, borderRadius: 12, padding: "14px 16px", background: post.status === "done" ? "#f9fffe" : "#fff" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: post.content ? 10 : 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: statusColor[post.status], background: statusBg[post.status], padding: "3px 9px", borderRadius: 20, flexShrink: 0 }}>
+                      {post.status === "done" ? "✓" : post.status === "error" ? "✗" : "◌"} {statusLabel[post.status]}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#0077b5", background: "#eff8ff", padding: "2px 8px", borderRadius: 20, flexShrink: 0 }}>{post.format}</span>
+                    <span style={{ fontSize: 12, color: "#374151", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.topic}</span>
+                    {post.status === "done" && (
+                      <span style={{ fontSize: 11, color: "#6b7280", flexShrink: 0 }}>
+                        {new Date(post.scheduledFor).toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })} · {time}
+                      </span>
+                    )}
+                    {post.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={post.imageUrl} alt="" style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 6, flexShrink: 0, border: "1px solid #e5e7eb" }} />
+                    )}
+                  </div>
+                  {post.content && (
+                    <p style={{ margin: 0, fontSize: 12, color: "#4b5563", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {post.content}
+                    </p>
+                  )}
+                  {post.error && <p style={{ margin: 0, fontSize: 11, color: "#ef4444" }}>{post.error}</p>}
+                </div>
+              ))}
+
+              {/* Queue all */}
+              {!running && donePosts.length > 0 && !queuedOk && (
+                <button
+                  onClick={queueAll}
+                  disabled={queuing}
+                  style={{
+                    marginTop: 4, padding: "12px", borderRadius: 10, border: "none",
+                    background: queuing ? "#e5e7eb" : "#059669",
+                    color: queuing ? "#9ca3af" : "#fff",
+                    fontSize: 13, fontWeight: 800, cursor: queuing ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {queuing ? "Scheduling…" : `Queue all ${donePosts.length} posts`}
+                </button>
+              )}
+              {queuedOk && (
+                <p style={{ margin: 0, textAlign: "center", fontSize: 13, fontWeight: 700, color: "#059669" }}>
+                  ✓ All posts added to the queue
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function todayAEST() {
   return new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
 }
@@ -901,6 +1196,7 @@ export default function LinkedInAdminPage() {
         <div style={{ display: "flex", gap: 8 }}>
           {[
             { label: "Post Generator", href: "#generator" },
+            { label: "Bulk Generator", href: "#bulk" },
             { label: "Scheduled Queue", href: "#queue" },
             { label: "Posted History", href: "#history" },
           ].map(({ label, href }) => (
@@ -912,6 +1208,10 @@ export default function LinkedInAdminPage() {
 
         <div id="generator" style={{ scrollMarginTop: 20 }}>
           <PostGenerator onQueued={refresh} />
+        </div>
+
+        <div id="bulk" style={{ scrollMarginTop: 20 }}>
+          <BulkGenerator onQueued={refresh} />
         </div>
 
         <div id="queue" style={{ scrollMarginTop: 20 }}>
