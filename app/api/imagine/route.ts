@@ -5,24 +5,22 @@ export const maxDuration = 120;
 
 // Build an image-generation prompt from a post topic + platform + optional post content
 function buildPrompt(topic: string, platform: "linkedin" | "instagram", postContent?: string): string {
-  const context = postContent?.trim()
-    ? `The post reads: "${postContent.slice(0, 400).trim()}"`
-    : `Topic: "${topic}"`;
+  // Extract a short subject from post content or fall back to topic
+  const subject = postContent?.trim()
+    ? postContent.slice(0, 120).trim().replace(/\n+/g, " ")
+    : topic;
 
   if (platform === "instagram") {
     return (
-      `A bold, visually striking social media image. ${context}. ` +
-      "Style: modern tech-meets-professional-services aesthetic, dark navy background, " +
-      "subtle teal and electric blue accents, abstract AI/automation visual elements, " +
-      "cinematic lighting. No text overlay. Square 1:1 composition. Ultra high quality photorealistic."
+      `Cinematic photorealistic image: ${subject}. ` +
+      "Dark navy background, teal accent lighting, abstract professional aesthetic. " +
+      "No text, no words, no letters, no captions, no watermarks."
     );
   }
-  // linkedin
   return (
-    `A clean, professional LinkedIn post header image. ${context}. ` +
-    "Style: dark navy background (#0b092e), subtle teal accent, sophisticated corporate " +
-    "minimalism, soft abstract technology or business environment. No text overlay. " +
-    "Ultra high quality photorealistic, editorial photography feel."
+    `Professional editorial photograph: ${subject}. ` +
+    "Dark navy corporate environment, subtle teal lighting, clean minimalist composition. " +
+    "No text, no words, no letters, no captions, no watermarks."
   );
 }
 

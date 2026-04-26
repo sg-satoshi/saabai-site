@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "27 Apr 2026",
+    entries: [
+      { time: "00:00", tag: "FIX", title: "Image generation uses post content for prompt + 2k resolution" }
+    ],
+  },
+  {
     date: "26 Apr 2026",
     entries: [
       { time: "23:55", tag: "FIX", title: "Correct xAI image model ID to grok-imagine-image" },
