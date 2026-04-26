@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "19:07", tag: "NEW", title: "Swap TTS from ElevenLabs to xAI Grok ($4.20/1M chars)" },
       { time: "18:39", tag: "FIX", title: "Allow test/save with stored key — no re-entry required" },
       { time: "18:35", tag: "FIX", title: "Handle errors properly in lex-settings API and client" },
       { time: "15:27", tag: "FIX", title: "Correct Firm Dashboard link in Lex sidebar (was 404)" },
