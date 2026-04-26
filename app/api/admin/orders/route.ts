@@ -57,17 +57,34 @@ export async function GET() {
   const stripe = new Stripe(stripeKey);
 
   try {
-    // Subscriptions (with customer + latest invoice expanded)
+    // 1. Subscriptions — no expand to keep it simple
     let subscriptionsRes;
     try {
-      subscriptionsRes = await stripe.subscriptions.list({ limit: 100, expand: ["data.customer", "data.latest_invoice"] });
+      subscriptionsRes = await stripe.subscriptions.list({ limit: 100 });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[orders] subscriptions.list failed:", msg);
       return Response.json({ error: `subscriptions.list: ${msg}` }, { status: 500 });
     }
 
-    // Invoices
+    // 2. Collect unique customer IDs and fetch in parallel
+    const customerIds = [...new Set(
+      subscriptionsRes.data
+        .map(s => typeof s.customer === "string" ? s.customer : (s.customer as Stripe.Customer | null)?.id ?? "")
+        .filter(Boolean)
+    )];
+
+    const customerMap: Record<string, Stripe.Customer> = {};
+    await Promise.all(
+      customerIds.map(async id => {
+        try {
+          const c = await stripe.customers.retrieve(id);
+          if (c && !("deleted" in c)) customerMap[id] = c as Stripe.Customer;
+        } catch { /* skip */ }
+      })
+    );
+
+    // 3. Invoices
     let invoicesRes;
     try {
       invoicesRes = await stripe.invoices.list({ limit: 100 });
@@ -85,31 +102,25 @@ export async function GET() {
         : (inv.customer as Stripe.Customer | null)?.id ?? "";
       if (!custId) continue;
       if (!invoicesByCustomer[custId]) invoicesByCustomer[custId] = [];
-      const lineDesc = (inv.lines?.data?.[0] as { description?: string | null } | undefined)?.description;
       invoicesByCustomer[custId].push({
         id: inv.id,
         amount: inv.amount_paid,
-        status: inv.status ?? "paid",
+        status: "paid",
         date: inv.created,
-        description: lineDesc ?? ((inv as unknown as Record<string, unknown>).description as string) ?? "Payment",
+        description: inv.lines?.data?.[0]?.description ?? "Payment",
         hostedUrl: inv.hosted_invoice_url ?? null,
       });
     }
 
-    // Build order records
+    // 4. Build order records
     const orders: OrderRecord[] = subscriptionsRes.data.map(sub => {
-      const customer = typeof sub.customer === "object" && sub.customer !== null && !("deleted" in sub.customer)
-        ? (sub.customer as Stripe.Customer)
-        : null;
       const customerId = typeof sub.customer === "string" ? sub.customer
         : (sub.customer as Stripe.Customer | null)?.id ?? "";
+      const customer = customerMap[customerId] ?? null;
       const monthlyItem = sub.items.data.find(item => item.price?.recurring?.interval === "month");
       const monthlyAmount = monthlyItem?.price?.unit_amount ?? null;
       const invs = invoicesByCustomer[customerId] ?? [];
       const totalPaid = invs.reduce((sum, i) => sum + i.amount, 0);
-      const latestInv = typeof sub.latest_invoice === "object" && sub.latest_invoice !== null
-        ? (sub.latest_invoice as Stripe.Invoice)
-        : null;
 
       return {
         customerId,
@@ -117,13 +128,21 @@ export async function GET() {
         email: customer?.email ?? null,
         plan: derivePlan(monthlyAmount),
         status: sub.status,
-        currentPeriodEnd: latestInv?.period_end ?? null,
+        currentPeriodEnd: null, // derived from invoices below
         monthlyAmount,
         totalPaid,
         createdAt: sub.created,
         invoices: invs.sort((a, b) => b.date - a.date),
       };
     });
+
+    // Derive next billing from most recent invoice date + ~30 days
+    for (const order of orders) {
+      const latest = order.invoices[0];
+      if (latest && order.status === "active") {
+        order.currentPeriodEnd = latest.date + 30 * 86400;
+      }
+    }
 
     orders.sort((a, b) => b.createdAt - a.createdAt);
     return Response.json({ orders });
