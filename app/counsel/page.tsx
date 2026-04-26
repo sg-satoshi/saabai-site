@@ -169,7 +169,8 @@ export default function CounselPage() {
   const paybackMonths = monthlyRevenueLost > 0 ? lexGrowthYr1 / monthlyRevenueLost : 0;
 
   function fmtCurrency(n: number) {
-    if (n >= 1000) return "$" + Math.round(n / 1000) + "k";
+    if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
+    if (n >= 1_000) return "$" + Math.round(n / 1_000) + "k";
     return "$" + Math.round(n);
   }
 

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "09:58", tag: "NEW", title: "Add unlimited seats + BYOAK model to /counsel pricing" },
       { time: "09:51", tag: "FIX", title: "Prevent lex demo iframe from auto-scrolling counsel page on load" },
       { time: "09:41", tag: "NEW", title: "Add law-firm ROI calculator to /counsel; fix Lex chat scroll propagation" },
       { time: "09:34", tag: "NEW", title: "/counsel — Lex sales page for law firms" }
