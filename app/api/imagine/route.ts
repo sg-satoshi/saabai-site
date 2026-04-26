@@ -5,10 +5,21 @@ export const maxDuration = 120;
 
 // Build an image-generation prompt from a post topic + platform + optional post content
 function buildPrompt(topic: string, platform: "linkedin" | "instagram", postContent?: string): string {
-  // Extract a short subject from post content or fall back to topic
-  const subject = postContent?.trim()
-    ? postContent.slice(0, 120).trim().replace(/\n+/g, " ")
-    : topic;
+  // Topic is the primary subject. Extract a key concept from the post body to enrich it.
+  // Skip the opening hook (first 1-2 sentences) — it's rarely the core message.
+  let concept = "";
+  if (postContent?.trim()) {
+    const sentences = postContent
+      .replace(/\n+/g, " ")
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 40 && s.length < 200 && !s.startsWith("#") && !s.startsWith("http"));
+    // Pick from the middle of the post — more likely to be the core point
+    const pick = sentences[Math.floor(sentences.length / 2)] ?? sentences[1] ?? sentences[0] ?? "";
+    concept = pick ? ` — ${pick.slice(0, 120)}` : "";
+  }
+
+  const subject = `${topic}${concept}`;
 
   if (platform === "instagram") {
     return (
