@@ -40,10 +40,11 @@ export default function Nav({ activePage }: { activePage?: string }) {
       {/* Logo */}
       <a href="/">
         <Image
-          src="/brand/saabai-logo.png"
+          src="/brand/saabai-logo-full.png"
           alt="Saabai.ai"
-          width={212}
-          height={56}
+          width={160}
+          height={54}
+          style={{ height: 40, width: "auto" }}
           priority
         />
       </a>

@@ -15,10 +15,11 @@ export default function Footer() {
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 flex-wrap">
         <a href="/" className="shrink-0">
           <Image
-            src="/brand/saabai-logo.png"
+            src="/brand/saabai-logo-full.png"
             alt="Saabai.ai"
-            width={100}
-            height={28}
+            width={120}
+            height={40}
+            style={{ height: 32, width: "auto" }}
           />
         </a>
         <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

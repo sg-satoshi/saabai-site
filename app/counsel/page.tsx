@@ -267,7 +267,7 @@ export default function CounselPage() {
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 32px", position: "sticky", top: 0, background: "#0b092e", backdropFilter: "blur(12px)", zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           <a href="https://www.saabai.ai" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-            <Image src="/brand/saabai-logo.png" alt="Saabai" width={40} height={40} style={{ height: 40, width: "auto" }} priority />
+            <Image src="/brand/saabai-logo-full.png" alt="Saabai" width={144} height={48} style={{ height: 36, width: "auto" }} priority />
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <a href="#demo" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>See demo</a>
