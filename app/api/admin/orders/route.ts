@@ -57,11 +57,25 @@ export async function GET() {
   const stripe = new Stripe(stripeKey);
 
   try {
-    // Fetch subscriptions + customers in one round-trip; fetch all invoices separately
-    const [subscriptionsRes, invoicesRes] = await Promise.all([
-      stripe.subscriptions.list({ limit: 100, expand: ["data.customer", "data.latest_invoice"] }),
-      stripe.invoices.list({ limit: 200 }),
-    ]);
+    // Subscriptions (with customer + latest invoice expanded)
+    let subscriptionsRes;
+    try {
+      subscriptionsRes = await stripe.subscriptions.list({ limit: 100, expand: ["data.customer", "data.latest_invoice"] });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[orders] subscriptions.list failed:", msg);
+      return Response.json({ error: `subscriptions.list: ${msg}` }, { status: 500 });
+    }
+
+    // Invoices
+    let invoicesRes;
+    try {
+      invoicesRes = await stripe.invoices.list({ limit: 100 });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[orders] invoices.list failed:", msg);
+      return Response.json({ error: `invoices.list: ${msg}` }, { status: 500 });
+    }
 
     // Group paid invoices by customer ID
     const invoicesByCustomer: Record<string, InvoiceRecord[]> = {};

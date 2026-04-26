@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Apr 2026",
     entries: [
+      { time: "00:27", tag: "FIX", title: "Catch Stripe errors in orders route and surface error message" },
       { time: "00:25", tag: "FIX", title: "Inject trigger message for AI Setup Assistant opening greeting" },
       { time: "00:22", tag: "NEW", title: "Add Orders admin page with Stripe subscription and invoice data" },
       { time: "00:15", tag: "NEW", title: "Add Bulk Post Generator to LinkedIn admin page" },
