@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "13:39", tag: "NEW", title: "Per-client LLM settings page with BYOAK support" },
       { time: "10:20", tag: "NEW", title: "Add payment card logos to /counsel pricing section" },
       { time: "10:14", tag: "NEW", title: "Stripe checkout for Lex plans (setup fee + monthly subscription)" },
       { time: "10:05", tag: "NEW", title: "Redesign pricing tiers with clear differentiation and upgrade callouts" },

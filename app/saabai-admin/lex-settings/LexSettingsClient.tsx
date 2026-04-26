@@ -18,9 +18,9 @@ const PROVIDERS = [
     keyPrefix: "sk-ant-",
     available: true,
     models: [
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", cost: "~$0.80/M tokens", badge: "Fastest · cheapest" },
-      { id: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6", cost: "~$3/M tokens",   badge: "Recommended" },
-      { id: "claude-opus-4-6",           name: "Claude Opus 4.6",   cost: "~$15/M tokens",  badge: "Most capable" },
+      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", cost: "~$0.80/M tokens", badge: "Fastest · cheapest", context: "200K" },
+      { id: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6", cost: "~$3/M tokens",   badge: "Recommended",      context: "200K" },
+      { id: "claude-opus-4-6",           name: "Claude Opus 4.6",   cost: "~$15/M tokens",  badge: "Most capable",     context: "200K" },
     ],
     pricing: "Est. $5–40/mo for most firms",
   },
@@ -36,8 +36,8 @@ const PROVIDERS = [
     keyPrefix: "sk-",
     available: true,
     models: [
-      { id: "gpt-4o-mini", name: "GPT-4o Mini", cost: "~$0.15/M tokens", badge: "Best value" },
-      { id: "gpt-4o",      name: "GPT-4o",      cost: "~$2.50/M tokens", badge: "Recommended" },
+      { id: "gpt-4o-mini", name: "GPT-4o Mini", cost: "~$0.15/M tokens", badge: "Best value",  context: "128K" },
+      { id: "gpt-4o",      name: "GPT-4o",      cost: "~$2.50/M tokens", badge: "Recommended", context: "128K" },
     ],
     pricing: "Est. $2–20/mo for most firms",
   },
@@ -54,9 +54,9 @@ const PROVIDERS = [
     available: true,
     hasFree: true,
     models: [
-      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", cost: "Free tier + very low", badge: "Free tier" },
-      { id: "gemini-2.0-flash",      name: "Gemini 2.0 Flash",      cost: "~$0.10/M tokens",       badge: "Recommended" },
-      { id: "gemini-1.5-pro",        name: "Gemini 1.5 Pro",        cost: "~$1.25/M tokens",       badge: "" },
+      { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite", cost: "Free tier + very low", badge: "Free tier",    context: "1M" },
+      { id: "gemini-2.0-flash",      name: "Gemini 2.0 Flash",      cost: "~$0.10/M tokens",       badge: "Recommended", context: "1M" },
+      { id: "gemini-1.5-pro",        name: "Gemini 1.5 Pro",        cost: "~$1.25/M tokens",       badge: "",            context: "2M" },
     ],
     pricing: "Est. $0–10/mo · Free tier available",
   },
@@ -72,8 +72,8 @@ const PROVIDERS = [
     keyPrefix: "xai-",
     available: true,
     models: [
-      { id: "grok-3-mini", name: "Grok 3 Mini", cost: "Competitive", badge: "Recommended" },
-      { id: "grok-3",      name: "Grok 3",      cost: "Competitive", badge: "Most capable" },
+      { id: "grok-3-mini", name: "Grok 3 Mini", cost: "Competitive", badge: "Recommended",  context: "131K" },
+      { id: "grok-3",      name: "Grok 3",      cost: "Competitive", badge: "Most capable", context: "131K" },
     ],
     pricing: "See console.x.ai for pricing",
   },
@@ -90,8 +90,8 @@ const PROVIDERS = [
     available: false,
     hasFree: true,
     models: [
-      { id: "llama-3.1-8b-instant",    name: "Llama 3.1 8B",  cost: "Free tier", badge: "Free" },
-      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", cost: "Very low",  badge: "More capable" },
+      { id: "llama-3.1-8b-instant",    name: "Llama 3.1 8B",  cost: "Free tier", badge: "Free",         context: "128K" },
+      { id: "llama-3.3-70b-versatile", name: "Llama 3.3 70B", cost: "Very low",  badge: "More capable", context: "128K" },
     ],
     pricing: "Free tier · very low cost",
     comingSoon: true,
@@ -108,7 +108,7 @@ const PROVIDERS = [
     keyPrefix: "sk-",
     available: false,
     models: [
-      { id: "kimi-k2", name: "Kimi K2", cost: "Competitive", badge: "Recommended" },
+      { id: "kimi-k2", name: "Kimi K2", cost: "Competitive", badge: "Recommended", context: "128K" },
     ],
     pricing: "Competitive pricing",
     comingSoon: true,
@@ -116,6 +116,87 @@ const PROVIDERS = [
 ] as const;
 
 type ProviderId = typeof PROVIDERS[number]["id"];
+
+// ── Legal AI suitability per provider ─────────────────────────────────────────
+
+type LegalFit = {
+  rating: "recommended" | "good" | "caution";
+  ratingLabel: string;
+  ratingColor: string;
+  scores: { toolCalling: number; accuracy: number; instructions: number };
+  summary: string;
+  strengths: string[];
+  watchOut: string;
+  restriction?: string;
+};
+
+const LEGAL_FIT: Record<string, LegalFit> = {
+  anthropic: {
+    rating: "recommended",
+    ratingLabel: "Best for Lex",
+    ratingColor: "#00bfa5",
+    scores: { toolCalling: 5, accuracy: 5, instructions: 5 },
+    summary:
+      "The strongest choice for a legal AI. Claude is built for careful, verifiable reasoning and follows complex instruction sets with higher consistency than any other provider tested in this context.",
+    strengths: [
+      "Most reliable multi-step tool chains — rarely skips AustLII or verifySection calls",
+      "Follows the 'never fabricate citations' rule more tightly than any other provider",
+      "200K context window handles even the longest contracts or transcripts without truncation",
+      "Prompt caching reduces cost on long system prompts — a Lex-specific optimisation built in",
+    ],
+    watchOut:
+      "Haiku is too lightweight for complex research chains. Use it only for intake chat or simple Q&A — not for legislation verification or multi-hop case law research. Sonnet is the minimum for anything that touches section citations or document drafting.",
+  },
+  openai: {
+    rating: "good",
+    ratingLabel: "Good for Lex",
+    ratingColor: "#4ade80",
+    scores: { toolCalling: 4, accuracy: 4, instructions: 4 },
+    summary:
+      "A proven, enterprise-grade option. GPT-4o is reliable for legal research workflows and handles tool calling well — though it can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
+    strengths: [
+      "Battle-tested reliability — GPT-4o is widely deployed in legal tech globally",
+      "Consistent tool calling across most query types and jurisdictions",
+      "Strong comprehension of structured legal documents, contracts, and agreements",
+    ],
+    watchOut:
+      "GPT-4o Mini may skip tool steps on complex multi-jurisdiction queries — only suitable for intake and simple Q&A, not for research chains. Use GPT-4o as the minimum for anything touching case law, ATO guidance, or section citations.",
+  },
+  google: {
+    rating: "caution",
+    ratingLabel: "Use with caution",
+    ratingColor: "#f59e0b",
+    scores: { toolCalling: 3, accuracy: 3, instructions: 3 },
+    summary:
+      "Best-in-class context window (1M–2M tokens) makes Gemini attractive for large document work, but it is less consistent on multi-step legal research chains and has a higher rate of confident errors on Australian-specific law and ATO rulings.",
+    strengths: [
+      "1M–2M token context window — can process entire client files, judgments, or contracts in one pass",
+      "Free tier available via Google AI Studio — useful for initial piloting",
+      "Fast and cost-effective for document summarisation and intake tasks",
+    ],
+    watchOut:
+      "Gemini can be confidently wrong on Australian-specific legislation, state law nuances, and ATO interpretations — areas where Claude and GPT-4o are more carefully calibrated. It may also over-call tools, generating excessive searches that slow responses. Test thoroughly on your practice areas before using for client-facing research.",
+    restriction:
+      "Not recommended as the primary research model without thorough testing. Better suited for document summarisation or intake chat than for legislative citation work or advice memos.",
+  },
+  xai: {
+    rating: "caution",
+    ratingLabel: "Use with caution",
+    ratingColor: "#f59e0b",
+    scores: { toolCalling: 3, accuracy: 3, instructions: 3 },
+    summary:
+      "Grok is strong for general knowledge and real-time awareness, but multi-step legal research chains are where it becomes inconsistent — specifically the verifySection step that prevents hallucinated citations appearing in documents.",
+    strengths: [
+      "Strong general reasoning and broad up-to-date world knowledge",
+      "Competitive pricing relative to capability",
+      "Good for conversational intake and general client-facing Q&A",
+    ],
+    watchOut:
+      "On complex research chains, Grok may skip the verifySection call and cite legislation from memory — producing plausible but incorrect section numbers. If those numbers appear in a drafted document or advice memo, the firm carries the exposure. This is the single biggest risk of using a less-reliable model in a legal AI context.",
+    restriction:
+      "If using xAI, restrict this client's Lex to intake and general Q&A only. Do not use for legislation research, section citations, or document drafting workflows without extensive testing first.",
+  },
+};
 
 // ── Known clients ──────────────────────────────────────────────────────────────
 
@@ -137,7 +218,122 @@ const C = {
   teal:    "#00bfa5",
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Score dots ─────────────────────────────────────────────────────────────────
+
+function ScoreDots({ score, color }: { score: number; color: string }) {
+  return (
+    <span style={{ display: "inline-flex", gap: 4, alignItems: "center", flexShrink: 0 }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <span
+          key={i}
+          style={{
+            width: 9, height: 9, borderRadius: "50%",
+            background: i <= score ? color : "rgba(255,255,255,0.1)",
+            display: "inline-block",
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+// ── Legal fit assessment panel ─────────────────────────────────────────────────
+
+function LegalFitPanel({ providerId }: { providerId: string }) {
+  const fit = LEGAL_FIT[providerId];
+  if (!fit) return null;
+
+  const isWarning   = fit.rating === "caution";
+  const panelBorder = isWarning ? "rgba(245,158,11,0.28)" : fit.rating === "good" ? "rgba(74,222,128,0.2)" : "rgba(0,191,165,0.22)";
+  const panelBg     = isWarning ? "rgba(245,158,11,0.04)" : "rgba(0,191,165,0.03)";
+
+  return (
+    <div style={{ background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 16, padding: "24px", marginBottom: 20 }}>
+
+      {/* Rating badge + warning note */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" as const }}>
+        <div style={{
+          fontSize: 10, fontWeight: 800, letterSpacing: "0.8px", textTransform: "uppercase" as const,
+          color: fit.ratingColor,
+          background: `${fit.ratingColor}18`,
+          border: `1px solid ${fit.ratingColor}40`,
+          padding: "3px 10px", borderRadius: 5,
+        }}>
+          {fit.ratingLabel}
+        </div>
+        {isWarning && (
+          <span style={{ fontSize: 11, color: "#f59e0b", fontWeight: 600 }}>
+            Read the warnings below before saving this configuration
+          </span>
+        )}
+      </div>
+
+      {/* Summary */}
+      <p style={{ fontSize: 13, color: "#c4c8e0", lineHeight: 1.65, margin: "0 0 20px" }}>
+        {fit.summary}
+      </p>
+
+      {/* Score rows */}
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: "0.8px", textTransform: "uppercase" as const, margin: "0 0 10px" }}>
+          Legal AI reliability scores
+        </p>
+        {(
+          [
+            { label: "Tool calling reliability", score: fit.scores.toolCalling,   help: "Consistency calling AustLII, ATO, and verifySection in the right sequence" },
+            { label: "Legal accuracy",           score: fit.scores.accuracy,       help: "How often it fabricates cases, section numbers, or rulings" },
+            { label: "Instruction following",    score: fit.scores.instructions,   help: "Adherence to citation rules and the 'never fabricate' constraint" },
+          ] as const
+        ).map(row => {
+          const scoreColor = row.score >= 4 ? "#00bfa5" : row.score >= 3 ? "#f59e0b" : "#f87171";
+          const scoreLabel = row.score === 5 ? "Excellent" : row.score === 4 ? "Good" : row.score === 3 ? "Moderate" : "Poor";
+          return (
+            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ width: 190, fontSize: 12, color: C.sub, flexShrink: 0 }}>{row.label}</div>
+              <ScoreDots score={row.score} color={scoreColor} />
+              <span style={{ fontSize: 11, color: scoreColor, fontWeight: 600, width: 68, flexShrink: 0 }}>{scoreLabel}</span>
+              <span style={{ fontSize: 11, color: C.muted }}>{row.help}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Strengths */}
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: "0.8px", textTransform: "uppercase" as const, margin: "0 0 10px" }}>
+          Strengths for legal work
+        </p>
+        {fit.strengths.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+            <span style={{ color: C.teal, fontSize: 11, flexShrink: 0, marginTop: 2 }}>✓</span>
+            <span style={{ fontSize: 12, color: C.sub, lineHeight: 1.55 }}>{s}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Watch out */}
+      <div style={{
+        background: isWarning ? "rgba(245,158,11,0.07)" : "rgba(255,255,255,0.03)",
+        border: `1px solid ${isWarning ? "rgba(245,158,11,0.22)" : "rgba(255,255,255,0.07)"}`,
+        borderRadius: 10, padding: "14px 16px",
+      }}>
+        <p style={{ fontSize: 10, fontWeight: 800, color: isWarning ? "#f59e0b" : C.muted, letterSpacing: "0.8px", textTransform: "uppercase" as const, margin: "0 0 7px" }}>
+          {isWarning ? "⚠  Watch out" : "Note"}
+        </p>
+        <p style={{ fontSize: 12, color: isWarning ? "#fcd34d" : C.sub, lineHeight: 1.65, margin: 0 }}>
+          {fit.watchOut}
+        </p>
+        {fit.restriction && (
+          <p style={{ fontSize: 12, color: "#fca5a5", lineHeight: 1.65, margin: "10px 0 0", fontWeight: 600 }}>
+            {fit.restriction}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function LexSettingsClient() {
   const [clientId,       setClientId]       = useState(KNOWN_CLIENTS[0].id);
@@ -171,11 +367,9 @@ export default function LexSettingsClient() {
       .catch(() => {});
   }, [clientId]);
 
-  // Reset model when provider changes
   function selectProvider(id: ProviderId) {
     const p = PROVIDERS.find(pr => pr.id === id)!;
     setSelectedProv(id);
-    // Pick first model of the new provider
     if ("models" in p && p.models.length > 0) {
       setSelectedModel(p.models[0].id);
     }
@@ -193,7 +387,7 @@ export default function LexSettingsClient() {
       body: JSON.stringify({ action: "test", clientId, provider: selectedProv, model: selectedModel, apiKey }),
     }).then(r => r.json());
     setTestStatus(res.ok ? "ok" : "fail");
-    setTestMsg(res.ok ? `Connected · model replied: "${res.response}"` : (res.error ?? "Connection failed"));
+    setTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
   }
 
   async function handleSave() {
@@ -215,14 +409,14 @@ export default function LexSettingsClient() {
     }
   }
 
-  const testColor = testStatus === "ok" ? "#00bfa5" : testStatus === "fail" ? "#f87171" : C.sub;
+  const testColor = testStatus === "ok" ? C.teal : testStatus === "fail" ? "#f87171" : C.sub;
 
   return (
     <AdminShell activePath="/saabai-admin/lex-settings">
-      <div style={{ padding: "40px 40px 80px", maxWidth: 900 }}>
+      <div style={{ padding: "40px 40px 80px", maxWidth: 920 }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 36 }}>
+        <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-0.5px", margin: "0 0 8px" }}>
             LLM Configuration
           </h1>
@@ -231,8 +425,33 @@ export default function LexSettingsClient() {
           </p>
         </div>
 
+        {/* Stakes callout */}
+        <div style={{
+          background: "rgba(77,142,246,0.05)",
+          border: "1px solid rgba(77,142,246,0.18)",
+          borderRadius: 14, padding: "18px 22px", marginBottom: 32,
+        }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚡</div>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#c4c8e0", margin: "0 0 6px" }}>
+                Why model choice matters for Lex
+              </p>
+              <p style={{ fontSize: 12, color: C.sub, lineHeight: 1.65, margin: 0 }}>
+                Lex performs multi-step legal research: it queries AustLII, the ATO, and legislation databases in
+                sequence, then verifies every section reference before including it in a response. That verification
+                step is what stops a fabricated section number from appearing in a drafted document or client advice
+                memo. The step only runs reliably if the model handles multi-step tool chains consistently under
+                legal constraints. Not all models do this equally well — and the difference is not about being
+                "better" in a general sense. The assessments below reflect each provider's real-world reliability
+                for this specific use case.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Client selector */}
-        <div style={{ marginBottom: 36, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 24px" }}>
+        <div style={{ marginBottom: 32, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 24px" }}>
           <label style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: "1px", textTransform: "uppercase" as const, display: "block", marginBottom: 10 }}>
             Client
           </label>
@@ -250,7 +469,7 @@ export default function LexSettingsClient() {
               <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(0,191,165,0.08)", border: "1px solid rgba(0,191,165,0.2)", borderRadius: 8, padding: "7px 14px" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal }} />
                 <span style={{ fontSize: 12, color: C.teal, fontWeight: 600 }}>
-                  Configured · {currentConfig.provider}/{currentConfig.model} · key {currentConfig.keyHint}
+                  Configured — {currentConfig.provider}/{currentConfig.model} — key {currentConfig.keyHint}
                 </span>
               </div>
             )}
@@ -258,14 +477,15 @@ export default function LexSettingsClient() {
         </div>
 
         {/* Provider grid */}
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 20 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: "1px", textTransform: "uppercase" as const, margin: "0 0 14px" }}>
             Choose provider
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
             {PROVIDERS.map(p => {
-              const isSelected = selectedProv === p.id;
+              const isSelected  = selectedProv === p.id;
               const isAvailable = p.available;
+              const fit         = LEGAL_FIT[p.id];
               return (
                 <button
                   key={p.id}
@@ -281,18 +501,37 @@ export default function LexSettingsClient() {
                     transition: "border-color 0.15s",
                   }}
                 >
+                  {/* Coming soon badge */}
                   {"comingSoon" in p && p.comingSoon && (
                     <div style={{ position: "absolute" as const, top: 12, right: 12, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: "0.8px", textTransform: "uppercase" as const, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 7px" }}>
                       Coming soon
                     </div>
                   )}
+                  {/* Free tier badge */}
                   {"hasFree" in p && p.hasFree && !("comingSoon" in p && p.comingSoon) && (
                     <div style={{ position: "absolute" as const, top: 12, right: 12, fontSize: 9, fontWeight: 700, color: "#4ade80", letterSpacing: "0.8px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 4, padding: "2px 7px" }}>
                       Free tier
                     </div>
                   )}
+
                   <div style={{ fontSize: 13, fontWeight: 800, color: isSelected ? p.color : C.text, marginBottom: 4 }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>{p.tagline}</div>
+                  <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5, marginBottom: 10 }}>{p.tagline}</div>
+
+                  {/* Legal fit rating pill on available providers */}
+                  {isAvailable && fit && (
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      fontSize: 9, fontWeight: 800, letterSpacing: "0.6px", textTransform: "uppercase" as const,
+                      color: fit.ratingColor,
+                      background: `${fit.ratingColor}15`,
+                      border: `1px solid ${fit.ratingColor}35`,
+                      padding: "2px 8px", borderRadius: 4,
+                    }}>
+                      {fit.rating === "recommended" ? "★ " : fit.rating === "caution" ? "⚠ " : "✓ "}
+                      {fit.ratingLabel}
+                    </div>
+                  )}
+
                   {isSelected && (
                     <div style={{ marginTop: 8, fontSize: 11, color: p.color, fontWeight: 600 }}>{p.pricing}</div>
                   )}
@@ -301,6 +540,9 @@ export default function LexSettingsClient() {
             })}
           </div>
         </div>
+
+        {/* Legal fit panel for selected provider */}
+        <LegalFitPanel providerId={selectedProv} />
 
         {/* Model selection */}
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px", marginBottom: 20 }}>
@@ -324,7 +566,7 @@ export default function LexSettingsClient() {
                     style={{ accentColor: provider.color }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{m.name}</span>
                       {m.badge && (
                         <span style={{ fontSize: 9, fontWeight: 700, color: provider.color, background: provider.bg, border: `1px solid ${provider.border}`, borderRadius: 4, padding: "2px 7px", letterSpacing: "0.5px" }}>
@@ -332,7 +574,10 @@ export default function LexSettingsClient() {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{m.cost}</div>
+                    <div style={{ display: "flex", gap: 12, marginTop: 3 }}>
+                      <span style={{ fontSize: 11, color: C.muted }}>{m.cost}</span>
+                      <span style={{ fontSize: 11, color: C.muted }}>Context: {m.context}</span>
+                    </div>
                   </div>
                 </label>
               );
@@ -396,7 +641,7 @@ export default function LexSettingsClient() {
 
         {/* Save status */}
         {saveMsg && (
-          <div style={{ background: C.surface, border: `1px solid rgba(0,191,165,0.2)`, borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+          <div style={{ background: C.surface, border: "1px solid rgba(0,191,165,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
             <span style={{ fontSize: 13, color: C.teal }}>{saveMsg}</span>
           </div>
         )}
@@ -427,7 +672,7 @@ export default function LexSettingsClient() {
           </button>
         </div>
 
-        {/* Info footer */}
+        {/* How this works footer */}
         <div style={{ marginTop: 48, padding: "20px 24px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: C.sub, margin: "0 0 8px" }}>How this works</p>
           <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column" as const, gap: 6 }}>
@@ -435,12 +680,13 @@ export default function LexSettingsClient() {
               "The client's API key is encrypted with AES-256-GCM and stored in Redis. Saabai never has access to the plaintext key.",
               "When Lex receives a conversation, it looks up the client's stored config and routes the request through their key and chosen model.",
               "If no config is saved, Lex falls back to Saabai's default model — useful during onboarding.",
-              "The client's AI costs go directly to their provider account. Saabai's monthly fee covers everything else.",
+              "The client's AI usage costs go directly to their provider account. Saabai's monthly fee covers everything else.",
             ].map((item, i) => (
               <li key={i} style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{item}</li>
             ))}
           </ul>
         </div>
+
       </div>
     </AdminShell>
   );

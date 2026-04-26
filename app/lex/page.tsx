@@ -778,10 +778,27 @@ export default function LexPage() {
           <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <LexMark size={34} />
-              <div>
+              <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: 0.2 }}>Lex</p>
                 <p style={{ margin: 0, fontSize: 10, color: C.textMuted }}>Australian Legal Research</p>
               </div>
+              <a
+                href="/saabai-admin/lex-settings"
+                title="LLM Settings"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 30, height: 30, borderRadius: 8,
+                  background: "rgba(201,168,76,0.07)",
+                  border: `1px solid ${C.border}`,
+                  color: C.textMuted, textDecoration: "none", fontSize: 14,
+                  flexShrink: 0,
+                  transition: "background 0.15s, color 0.15s",
+                }}
+                onMouseEnter={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "rgba(201,168,76,0.14)"; a.style.color = C.gold; }}
+                onMouseLeave={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "rgba(201,168,76,0.07)"; a.style.color = C.textMuted; }}
+              >
+                ⚙
+              </a>
             </div>
           </div>
 

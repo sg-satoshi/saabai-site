@@ -111,9 +111,10 @@ const NAV_WORKSPACE = [
 ];
 
 const NAV_BUILD = [
-  { label: "Social",      href: "/saabai-admin/social/linkedin" },
-  { label: "Subscribers", href: "/saabai-admin/subscribers" },
-  { label: "Actions",     href: "#actions" },
+  { label: "Social",       href: "/saabai-admin/social/linkedin" },
+  { label: "Subscribers",  href: "/saabai-admin/subscribers" },
+  { label: "LLM Settings", href: "/saabai-admin/lex-settings" },
+  { label: "Actions",      href: "#actions" },
 ];
 
 function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: string) => void }) {
@@ -140,13 +141,46 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
       {/* Venture switcher */}
       <div style={{ padding: "16px 14px 10px" }}>
         <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Ventures</p>
-        {(["All", "Rex", "Lex"] as const).map(v => {
-          const dot = v === "Rex" ? C.orange : v === "Lex" ? C.blue : C.teal;
-          const active = venture === v;
+        {([
+          { label: "All", href: null },
+          { label: "Rex", href: "/rex-dashboard" },
+          { label: "Lex", href: "/lex" },
+        ] as const).map(v => {
+          const dot = v.label === "Rex" ? C.orange : v.label === "Lex" ? C.blue : C.teal;
+          const active = venture === v.label;
+          const inner = (
+            <>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
+              {v.label}
+              {v.href && <span style={{ marginLeft: "auto", fontSize: 10, color: C.muted, opacity: 0.7 }}>↗</span>}
+            </>
+          );
+          if (v.href) {
+            return (
+              <div key={v.label} style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
+                <button
+                  onClick={() => onVenture(v.label)}
+                  style={{
+                    flex: 1, display: "flex", alignItems: "center",
+                    padding: "7px 10px",
+                    background: active ? "rgba(37,211,102,0.1)" : "transparent",
+                    border: "none", borderRadius: 8,
+                    cursor: "pointer", textAlign: "left" as const,
+                    fontSize: 13, fontWeight: active ? 700 : 500,
+                    color: active ? C.teal : "#ffffff",
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
+                  {v.label}
+                </button>
+                <a href={v.href} title={`Open ${v.label}`} style={{ color: C.muted, fontSize: 12, padding: "4px 6px", textDecoration: "none", lineHeight: 1 }}>↗</a>
+              </div>
+            );
+          }
           return (
             <button
-              key={v}
-              onClick={() => onVenture(v)}
+              key={v.label}
+              onClick={() => onVenture(v.label)}
               style={{
                 display: "flex", alignItems: "center", width: "100%",
                 padding: "7px 10px", marginBottom: 2,
@@ -157,8 +191,7 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
                 color: active ? C.teal : "#ffffff",
               }}
             >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
-              {v}
+              {inner}
             </button>
           );
         })}
@@ -1137,11 +1170,13 @@ export default function AdminClient({
             />
           </div>
 
-          {/* Recent leads */}
-          <div style={{ marginBottom: 40 }}>
-            <SectionLabel>Recent Leads</SectionLabel>
-            <LeadsTable rexStats={rexStats} />
-          </div>
+          {/* Recent leads — Rex / All only */}
+          {venture !== "Lex" && (
+            <div style={{ marginBottom: 40 }}>
+              <SectionLabel>Recent Leads</SectionLabel>
+              <LeadsTable rexStats={rexStats} />
+            </div>
+          )}
 
           {/* Client accounts */}
           {visibleClients.length > 0 && (
@@ -1155,7 +1190,39 @@ export default function AdminClient({
             </div>
           )}
 
-          {/* Social */}
+          {/* Settings — Lex / All */}
+          {venture !== "Rex" && (
+            <div style={{ marginBottom: 40 }}>
+              <SectionLabel>Settings</SectionLabel>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+                <a
+                  href="/saabai-admin/lex-settings"
+                  style={{
+                    background: C.card, border: `1px solid ${C.border}`,
+                    borderLeft: "3px solid #4d8ef6",
+                    borderRadius: 14, padding: "20px 22px",
+                    textDecoration: "none", display: "block",
+                    transition: "border-left-color 0.2s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#93bbfc"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#4d8ef6"; }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,142,246,0.12)", border: "1px solid rgba(77,142,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      ⚙
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: "#4d8ef6", background: "rgba(77,142,246,0.1)", border: "1px solid rgba(77,142,246,0.25)", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LEX</span>
+                  </div>
+                  <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: C.text }}>LLM Configuration</p>
+                  <p style={{ margin: "0 0 14px", fontSize: 11, color: C.muted, lineHeight: 1.5 }}>Configure which AI model and API key powers each Lex client. Supports Anthropic, OpenAI, Google Gemini and xAI.</p>
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#4d8ef6" }}>Open Settings &rarr;</p>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Social / Subscribers / LinkedIn — Rex / All only */}
+          {venture !== "Lex" && (<>
           <div id="social" style={{ marginBottom: 40 }}>
             <SectionLabel>Social Media</SectionLabel>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
@@ -1234,6 +1301,7 @@ export default function AdminClient({
               <LinkedInPanel />
             </div>
           </div>
+          </>)}
 
           {/* Actions */}
           <div id="actions">
