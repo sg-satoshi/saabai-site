@@ -56,57 +56,66 @@ export async function GET() {
 
   const stripe = new Stripe(stripeKey);
 
-  // Fetch subscriptions + customers + invoices in one round-trip
-  const [subscriptionsRes, invoicesRes] = await Promise.all([
-    stripe.subscriptions.list({ limit: 100, expand: ["data.customer", "data.latest_invoice"] }),
-    stripe.invoices.list({ limit: 200, status: "paid" }),
-  ]);
+  try {
+    // Fetch subscriptions + customers in one round-trip; fetch all invoices separately
+    const [subscriptionsRes, invoicesRes] = await Promise.all([
+      stripe.subscriptions.list({ limit: 100, expand: ["data.customer", "data.latest_invoice"] }),
+      stripe.invoices.list({ limit: 200 }),
+    ]);
 
-  // Group invoices by customer ID
-  const invoicesByCustomer: Record<string, InvoiceRecord[]> = {};
-  for (const inv of invoicesRes.data) {
-    const custId = typeof inv.customer === "string" ? inv.customer : inv.customer?.id ?? "";
-    if (!custId) continue;
-    if (!invoicesByCustomer[custId]) invoicesByCustomer[custId] = [];
-    invoicesByCustomer[custId].push({
-      id: inv.id,
-      amount: inv.amount_paid,
-      status: inv.status ?? "paid",
-      date: inv.created,
-      description: inv.lines.data[0]?.description ?? inv.description ?? "Payment",
-      hostedUrl: inv.hosted_invoice_url ?? null,
+    // Group paid invoices by customer ID
+    const invoicesByCustomer: Record<string, InvoiceRecord[]> = {};
+    for (const inv of invoicesRes.data) {
+      if (inv.status !== "paid") continue;
+      const custId = typeof inv.customer === "string" ? inv.customer
+        : (inv.customer as Stripe.Customer | null)?.id ?? "";
+      if (!custId) continue;
+      if (!invoicesByCustomer[custId]) invoicesByCustomer[custId] = [];
+      const lineDesc = (inv.lines?.data?.[0] as { description?: string | null } | undefined)?.description;
+      invoicesByCustomer[custId].push({
+        id: inv.id,
+        amount: inv.amount_paid,
+        status: inv.status ?? "paid",
+        date: inv.created,
+        description: lineDesc ?? ((inv as unknown as Record<string, unknown>).description as string) ?? "Payment",
+        hostedUrl: inv.hosted_invoice_url ?? null,
+      });
+    }
+
+    // Build order records
+    const orders: OrderRecord[] = subscriptionsRes.data.map(sub => {
+      const customer = typeof sub.customer === "object" && sub.customer !== null && !("deleted" in sub.customer)
+        ? (sub.customer as Stripe.Customer)
+        : null;
+      const customerId = typeof sub.customer === "string" ? sub.customer
+        : (sub.customer as Stripe.Customer | null)?.id ?? "";
+      const monthlyItem = sub.items.data.find(item => item.price?.recurring?.interval === "month");
+      const monthlyAmount = monthlyItem?.price?.unit_amount ?? null;
+      const invs = invoicesByCustomer[customerId] ?? [];
+      const totalPaid = invs.reduce((sum, i) => sum + i.amount, 0);
+      const latestInv = typeof sub.latest_invoice === "object" && sub.latest_invoice !== null
+        ? (sub.latest_invoice as Stripe.Invoice)
+        : null;
+
+      return {
+        customerId,
+        name: customer?.name ?? null,
+        email: customer?.email ?? null,
+        plan: derivePlan(monthlyAmount),
+        status: sub.status,
+        currentPeriodEnd: latestInv?.period_end ?? null,
+        monthlyAmount,
+        totalPaid,
+        createdAt: sub.created,
+        invoices: invs.sort((a, b) => b.date - a.date),
+      };
     });
+
+    orders.sort((a, b) => b.createdAt - a.createdAt);
+    return Response.json({ orders });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[orders] Stripe error:", msg);
+    return Response.json({ error: `Stripe error: ${msg}` }, { status: 500 });
   }
-
-  // Build order records
-  const orders: OrderRecord[] = subscriptionsRes.data.map(sub => {
-    const customer = typeof sub.customer === "object" && sub.customer !== null && !("deleted" in sub.customer)
-      ? (sub.customer as Stripe.Customer)
-      : null;
-    const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? "";
-    const monthlyItem = sub.items.data.find(item => item.price.recurring?.interval === "month");
-    const monthlyAmount = monthlyItem?.price.unit_amount ?? null;
-    const invs = invoicesByCustomer[customerId] ?? [];
-    const totalPaid = invs.reduce((sum, i) => sum + i.amount, 0);
-
-    return {
-      customerId,
-      name: customer?.name ?? null,
-      email: customer?.email ?? null,
-      plan: derivePlan(monthlyAmount),
-      status: sub.status,
-      currentPeriodEnd: typeof sub.latest_invoice === "object" && sub.latest_invoice !== null
-        ? (sub.latest_invoice as Stripe.Invoice).period_end
-        : null,
-      monthlyAmount,
-      totalPaid,
-      createdAt: sub.created,
-      invoices: invs.sort((a, b) => b.date - a.date),
-    };
-  });
-
-  // Sort by most recently created
-  orders.sort((a, b) => b.createdAt - a.createdAt);
-
-  return Response.json({ orders });
 }
