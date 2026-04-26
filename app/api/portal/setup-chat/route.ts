@@ -79,12 +79,18 @@ export async function POST(req: Request) {
   const body = await req.json() as { messages?: Msg[] };
   const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
 
+  // Anthropic requires at least one user message. On the initial call (empty messages)
+  // inject a silent trigger so the model generates the opening greeting.
+  const requestMessages: Msg[] = messages.length === 0
+    ? [{ role: "user", content: "Hello" }]
+    : messages;
+
   const model = anthropic("claude-sonnet-4-6");
 
   const result = streamText({
     model,
     system: SYSTEM_PROMPT,
-    messages,
+    messages: requestMessages,
     stopWhen: stepCountIs(5),
     tools: {
       saveConfig: tool({
