@@ -1,7 +1,7 @@
 import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // Build an image-generation prompt from a post topic + platform
 function buildPrompt(topic: string, platform: "linkedin" | "instagram"): string {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "grok-2-image",
+        model: "grok-2-image-1212",
         prompt,
         n: 1,
         response_format: "b64_json",

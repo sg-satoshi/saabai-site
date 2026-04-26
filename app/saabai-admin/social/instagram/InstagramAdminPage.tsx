@@ -224,11 +224,12 @@ function CaptionGenerator({ onQueued }: { onQueued: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, platform: "instagram" }),
       });
-      const data = await res.json();
+      let data: { url?: string; error?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON response (e.g. gateway timeout) */ }
       if (data.url) setAiImageUrl(data.url);
-      else setImageGenError(data.error ?? "Image generation failed — try again.");
+      else setImageGenError(data.error ?? (res.ok ? "Image generation failed — try again." : `Server error (${res.status}) — try again.`));
     } catch {
-      setImageGenError("Network error generating image.");
+      setImageGenError("Request failed — check your connection and try again.");
     } finally {
       setGeneratingImage(false);
     }

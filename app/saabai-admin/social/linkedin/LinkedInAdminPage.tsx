@@ -253,11 +253,12 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, platform: "linkedin" }),
       });
-      const data = await res.json();
+      let data: { url?: string; error?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON response (e.g. gateway timeout) */ }
       if (data.url) setImageUrl(data.url);
-      else setImageError(data.error ?? "Image generation failed — try again.");
+      else setImageError(data.error ?? (res.ok ? "Image generation failed — try again." : `Server error (${res.status}) — try again.`));
     } catch {
-      setImageError("Network error generating image.");
+      setImageError("Request failed — check your connection and try again.");
     } finally {
       setGeneratingImage(false);
     }
