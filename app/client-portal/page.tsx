@@ -264,7 +264,7 @@ function ClientPortalInner() {
           {/* Brand */}
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo-transparent.png" alt="Saabai" style={{ height: 36, width: "auto", marginBottom: 14 }} />
+            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 44, width: "auto", marginBottom: 14 }} />
             <h1 style={{ margin: "0 0 4px", fontSize: 21, fontWeight: 800, color: C.text }}>Client Portal</h1>
             <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Manage your Lex agent and view firm stats</p>
           </div>
@@ -490,11 +490,11 @@ function ClientPortalInner() {
   return (
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, sans-serif" }}>
       {/* Nav */}
-      <nav style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <nav style={{ background: "#0b092e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 24px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo-transparent.png" alt="Saabai" style={{ height: 28, width: "auto" }} />
+            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 40, width: "auto" }} />
             <span style={{ color: C.gold, fontSize: 11, fontWeight: 700, background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 4, padding: "2px 8px" }}>
               Client Portal
             </span>

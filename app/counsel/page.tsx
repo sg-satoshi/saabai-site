@@ -265,11 +265,11 @@ export default function CounselPage() {
     <div style={{ background: bg, minHeight: "100vh", color: textPrimary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
 
       {/* Nav */}
-      <div style={{ borderBottom: `1px solid ${border}`, padding: "0 32px", position: "sticky", top: 0, background: "rgba(8,10,15,0.92)", backdropFilter: "blur(12px)", zIndex: 50 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-          <a href="https://www.saabai.ai" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 32px", position: "sticky", top: 0, background: "#0b092e", backdropFilter: "blur(12px)", zIndex: 50 }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+          <a href="https://www.saabai.ai" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo-transparent.png" alt="Saabai" style={{ height: 28, width: "auto" }} />
+            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 40, width: "auto" }} />
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
             <a href="#demo" style={{ fontSize: 13, color: textSecondary, textDecoration: "none", fontWeight: 500 }}>See demo</a>
