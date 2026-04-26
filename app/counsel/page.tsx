@@ -209,7 +209,7 @@ function CardBadges({ center = true }: { center?: boolean }) {
 
 export default function CounselPage() {
   const [copied, setCopied] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
   const [monthlyEnquiries, setMonthlyEnquiries] = useState(20);
   const [afterHoursPct, setAfterHoursPct] = useState(68);
   const [avgMatterValue, setAvgMatterValue] = useState(3000);
@@ -241,18 +241,16 @@ export default function CounselPage() {
   const roiYear1 = annualRevenueLost - lexGrowthYr1;
   const paybackMonths = monthlyRevenueLost > 0 ? lexGrowthYr1 / monthlyRevenueLost : 0;
 
-  async function handleCheckout(plan: string) {
-    setCheckoutLoading(plan);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch {
-      setCheckoutLoading(null);
+  // Stripe Payment Links — replace with Growth link when created
+  const PAYMENT_LINKS: Record<string, string> = {
+    starter: "https://buy.stripe.com/4gM14p1P0deydNZ6OD8og00",
+    growth:  "https://buy.stripe.com/eVqcN751ca2m5ht4Gv8og01",
+  };
+
+  function handleCheckout(plan: string) {
+    const url = PAYMENT_LINKS[plan];
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -712,17 +710,18 @@ export default function CounselPage() {
                 <>
                   <button
                     onClick={() => handleCheckout(plan.name.toLowerCase())}
-                    disabled={checkoutLoading === plan.name.toLowerCase()}
+                    disabled={!PAYMENT_LINKS[plan.name.toLowerCase()]}
                     style={{
                       width: "100%", padding: "13px 20px", borderRadius: 10,
-                      fontWeight: 700, fontSize: 14, cursor: checkoutLoading ? "wait" : "pointer",
+                      fontWeight: 700, fontSize: 14,
+                      cursor: PAYMENT_LINKS[plan.name.toLowerCase()] ? "pointer" : "not-allowed",
                       background: plan.highlight ? gold : "transparent",
                       color: plan.highlight ? bg : gold,
                       border: `1px solid ${plan.highlight ? gold : goldBorder}`,
-                      opacity: checkoutLoading === plan.name.toLowerCase() ? 0.7 : 1,
+                      opacity: PAYMENT_LINKS[plan.name.toLowerCase()] ? 1 : 0.45,
                     }}
                   >
-                    {checkoutLoading === plan.name.toLowerCase() ? "Loading…" : plan.cta}
+                    {plan.cta}
                   </button>
                   <div style={{ marginTop: 14 }}>
                     <CardBadges />

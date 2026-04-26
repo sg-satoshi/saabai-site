@@ -4,7 +4,6 @@ import { getPendingNurture, markNurtureSent } from "../../../../lib/redis";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -90,6 +89,7 @@ export async function GET(req: Request) {
     return Response.json({ skipped: "no resend key" });
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const now = Date.now();
   const records = await getPendingNurture();
 

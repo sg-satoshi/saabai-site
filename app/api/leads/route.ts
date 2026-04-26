@@ -5,8 +5,6 @@ import { saveNurtureRecord } from "../../../lib/redis";
 
 export const runtime = "nodejs";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
 function formatCurrency(n: number) {
@@ -951,6 +949,7 @@ function buildHotLeadEmail(lead: {
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const lead = await req.json();
 
   console.log("[lead captured]", JSON.stringify(lead));

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "20:27", tag: "UPDATE", title: "Trigger redeploy to pick up BLOB_READ_WRITE_TOKEN" },
       { time: "20:06", tag: "NEW", title: "AI image generation for LinkedIn and Instagram posts (Grok + Vercel Blob)" },
       { time: "19:54", tag: "NEW", title: "Set xAI TTS voice to Rex (confident, professional)" },
       { time: "19:26", tag: "FIX", title: "Use Next.js Image component for Lex counsel page logo" },

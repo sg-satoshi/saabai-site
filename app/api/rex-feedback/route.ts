@@ -10,7 +10,6 @@ import type { FeedbackItem, FeedbackCategory, AtlasReview } from "../../../lib/r
 
 export const runtime = "edge";
 
-const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
 const NOTIFY_EMAIL = process.env.SAABAI_NOTIFY_EMAIL ?? process.env.PLON_TEAM_EMAIL ?? "hello@saabai.ai";
 const FROM_EMAIL   = process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>";
 
@@ -80,6 +79,7 @@ const CATEGORY_COLORS: Record<FeedbackCategory, string> = {
 };
 
 async function sendFeedbackNotification(item: FeedbackItem): Promise<void> {
+  const resend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
   const catLabel = CATEGORY_LABELS[item.category];
   const catColor = CATEGORY_COLORS[item.category];
   const review   = item.atlasReview;
