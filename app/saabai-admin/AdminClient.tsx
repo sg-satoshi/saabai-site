@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ClientConfig } from "../../lib/clients";
 import type { RexStats, LeadEvent } from "../../lib/rex-stats";
+import AdminShell from "./AdminSidebar";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
@@ -1060,6 +1061,7 @@ export default function AdminClient({
   adminId: string;
 }) {
   const [venture, setVenture] = useState("All");
+  const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const todayStr   = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
@@ -1069,19 +1071,17 @@ export default function AdminClient({
 
   const today = new Date().toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  return (
-    <div style={{
-      display: "flex",
-      minHeight: "100vh",
-      background: C.bg,
-      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-      color: C.text,
-    }}>
-      {/* Sidebar */}
-      <Sidebar venture={venture} onVenture={setVenture} />
+  useEffect(() => {
+    fetch("/api/admin/lex-clients")
+      .then(r => r.json())
+      .then(data => { if (data.stats) setLexStats(data.stats); })
+      .catch(() => {});
+  }, []);
 
+  return (
+    <AdminShell activePath="/saabai-admin">
       {/* Main */}
-      <main style={{ marginLeft: 220, flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
 
         {/* Top bar */}
         <div style={{
@@ -1119,6 +1119,62 @@ export default function AdminClient({
               {getGreeting()}, Shane.
             </h1>
             <p style={{ margin: 0, fontSize: 14, color: "#9aa0b8" }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
+          </div>
+
+          {/* ── Lex Platform metrics ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+            {[
+              {
+                label: "Lex Firms",
+                value: lexStats ? String(lexStats.total) : "—",
+                sub: "Connected to platform",
+                color: "#C9A84C",
+                bg: "rgba(201,168,76,0.08)",
+                bdr: "rgba(201,168,76,0.20)",
+                href: "/saabai-admin/lex-clients",
+              },
+              {
+                label: "Configured",
+                value: lexStats ? String(lexStats.configured) : "—",
+                sub: "Agent setup complete",
+                color: C.green,
+                bg: "rgba(34,197,94,0.08)",
+                bdr: "rgba(34,197,94,0.22)",
+                href: "/saabai-admin/lex-clients",
+              },
+              {
+                label: "Custom LLM Keys",
+                value: lexStats ? String(lexStats.withLlmKey) : "—",
+                sub: "Using own API key",
+                color: C.blue,
+                bg: "rgba(77,142,246,0.08)",
+                bdr: "rgba(77,142,246,0.22)",
+                href: "/saabai-admin/lex-settings",
+              },
+              {
+                label: "Rex Leads (Today)",
+                value: String(todayCount),
+                sub: `${weekCount} this week`,
+                color: C.orange,
+                bg: "rgba(255,102,53,0.08)",
+                bdr: "rgba(255,102,53,0.20)",
+                href: "/rex-analytics",
+              },
+            ].map(s => (
+              <a
+                key={s.label}
+                href={s.href}
+                style={{
+                  background: s.bg, border: `1px solid ${s.bdr}`,
+                  borderRadius: 12, padding: "18px 20px",
+                  textDecoration: "none", display: "block",
+                }}
+              >
+                <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</p>
+                <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{s.label}</p>
+                <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
+              </a>
+            ))}
           </div>
 
           {/* Atlas bar */}
@@ -1315,6 +1371,6 @@ export default function AdminClient({
           </p>
         </div>
       </main>
-    </div>
+    </AdminShell>
   );
 }

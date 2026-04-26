@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "26 Apr 2026",
     entries: [
+      { time: "23:12", tag: "NEW", title: "AI setup chat for client portal Customise tab" },
       { time: "22:56", tag: "NEW", title: "Client portal — prominent Open Lex CTA in nav + overview hero card" },
       { time: "22:48", tag: "FIX", title: "Lex-chat — enforce plain text formatting (no markdown stars or em dashes)" },
       { time: "22:45", tag: "FIX", title: "Lex-chat fallback to Anthropic Haiku instead of xAI model" },
