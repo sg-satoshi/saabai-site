@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { xai } from "@ai-sdk/xai";
 import { getEdgeProfile, getEdgeSessions } from "../../../../lib/redis";
 import type { EdgeProfile, EdgeSession } from "../../../../lib/redis";
 
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: anthropic("claude-opus-4-6"),
+    model: xai("grok-4"),
     system: buildSystem(profile, sessions),
     messages: coreMessages,
   });
