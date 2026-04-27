@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "28 Apr 2026",
     entries: [
+      { time: "09:12", tag: "NEW", title: "Add REX_ANTHROPIC_API_KEY support for separate Rex billing" },
       { time: "09:09", tag: "NEW", title: "Trigger redeploy for new ANTHROPIC_API_KEY" }
     ],
   },
