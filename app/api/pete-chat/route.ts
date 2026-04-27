@@ -1,5 +1,5 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
-import { getModel } from "../../../lib/chat-config";
+import { getRexModel } from "../../../lib/chat-config";
 import { getClientConfig } from "../../../lib/rex-config";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     const enabledTools = new Set(config.tools);
 
     const result = streamText({
-      model: getModel(tier),
+      model: getRexModel(tier),
       system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(8),

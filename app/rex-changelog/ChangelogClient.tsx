@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "28 Apr 2026",
+    entries: [
+      { time: "09:09", tag: "NEW", title: "Trigger redeploy for new ANTHROPIC_API_KEY" }
+    ],
+  },
+  {
     date: "27 Apr 2026",
     entries: [
       { time: "06:37", tag: "FIX", title: "Pin Stripe API version to 2024-12-18.acacia in orders route" },

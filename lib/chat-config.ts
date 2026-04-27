@@ -17,7 +17,7 @@
  * Default tier is "default" (cost-efficient). Use "premium" for qualified leads.
  */
 
-import { anthropic } from "@ai-sdk/anthropic";
+import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { xai } from "@ai-sdk/xai";
@@ -76,6 +76,23 @@ export function getPremiumModel(): LanguageModel {
  */
 export function getModel(tier: "default" | "premium" = "default"): LanguageModel {
   return tier === "premium" ? getPremiumModel() : getDefaultModel();
+}
+
+/**
+ * Rex-specific model — uses REX_ANTHROPIC_API_KEY if set, so Rex runs on its
+ * own Anthropic billing account independently of Saabai's internal tools.
+ * Falls back to the standard model config if REX_ANTHROPIC_API_KEY is not set.
+ */
+export function getRexModel(tier: "default" | "premium" = "default"): LanguageModel {
+  const rexKey = process.env.REX_ANTHROPIC_API_KEY;
+  if (!rexKey) return getModel(tier);
+
+  const rexAnthropic = createAnthropic({ apiKey: rexKey });
+  const modelId = tier === "premium"
+    ? (process.env.PREMIUM_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-sonnet-4-6")
+    : (process.env.DEFAULT_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-haiku-4-5");
+
+  return rexAnthropic(modelId);
 }
 
 /**
