@@ -414,7 +414,7 @@ const PTFE_SHEETS: PtfeRow[] = [
   { thicknessMm: 1,  ctsLow: 172.54,  ctsMid: 223.66,  fullSheetPrice: 161.04 },
   { thicknessMm: 3,  ctsLow: 518.14,  ctsMid: 671.66,  fullSheetPrice: 483.59 },
   { thicknessMm: 6,  ctsLow: 900.73,  ctsMid: 1167.61, fullSheetPrice: 840.68 },
-  { thicknessMm: 10, ctsLow: 1441.28, ctsMid: 1601.42, fullSheetPrice: 1345.19 },
+  { thicknessMm: 10, ctsLow: 1441.28, ctsMid: 1601.42, fullSheetPrice: 1485.00 },
   { thicknessMm: 12, ctsLow: 1801.46, ctsMid: 2001.63, fullSheetPrice: 1681.37 },
   { thicknessMm: 15, ctsLow: 2161.65, ctsMid: 2401.83, fullSheetPrice: 2017.54 },
   { thicknessMm: 20, ctsLow: 3302.68, ctsMid: 3669.65, fullSheetPrice: 3082.50 },
