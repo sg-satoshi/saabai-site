@@ -365,6 +365,18 @@ const HDPE: SheetRow[] = [
   { colour: "yellow",  thicknessMm: 20,  sheetW: 3000, sheetH: 1500, ctsRate: null,   fullSheetPrice: 1142 },
 ];
 
+// HDPE oversized — BLACK PE-100, 4000×2000mm sheets (March 2026)
+const HDPE_OVERSIZED: OversizedRow[] = [
+  { thicknessMm: 6,  sheetW: 4000, sheetH: 2000, black: 567 },
+  { thicknessMm: 8,  sheetW: 4000, sheetH: 2000, black: 648 },
+  { thicknessMm: 10, sheetW: 4000, sheetH: 2000, black: 792 },
+  { thicknessMm: 12, sheetW: 4000, sheetH: 2000, black: 936 },
+  { thicknessMm: 15, sheetW: 4000, sheetH: 2000, black: 1206 },
+  { thicknessMm: 20, sheetW: 4000, sheetH: 2000, black: 1566 },
+  { thicknessMm: 25, sheetW: 4000, sheetH: 2000, black: 2016 },
+  { thicknessMm: 30, sheetW: 4000, sheetH: 2000, black: 2145 },
+];
+
 const SEABOARD: SheetRow[] = [
   // WHITE — 2440×1220 (AST) — March 2026
   { colour: "white", thicknessMm: 6,    sheetW: 2440, sheetH: 1220, ctsRate: 170.63, fullSheetPrice: 290 },
@@ -1102,6 +1114,15 @@ function pricePCSheet(col: string, thickness: number, width: number, height: num
   return priceWithOversized(row, PC_OVERSIZED, col, width, height, qty, url);
 }
 
+function priceHDPESheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
+  const url = getProductUrl("hdpe");
+  const row = HDPE.find(r => r.thicknessMm === thickness && r.colour === col);
+  if (!row) return notFound(url);
+  const std = calcStandardSheet(row, width, height);
+  if (std) return buildResult(std.unitPrice, qty, std.note, url);
+  return priceWithOversized(row, HDPE_OVERSIZED, col, width, height, qty, url);
+}
+
 function priceAcetalSheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
   const url = getProductUrl("acetal");
   const SHEET_W = 2000, SHEET_H = 1000;
@@ -1249,7 +1270,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "corflute":        return priceCorflute(col, thick, qty);
       case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"));
       case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, getProductUrl("polypropylene"));
-      case "hdpe":            return priceGenericSheet(HDPE, hdpeCol, thick, w, h, qty, getProductUrl("hdpe"));
+      case "hdpe":            return priceHDPESheet(hdpeCol, thick, w, h, qty);
       case "seaboard":        return priceGenericSheet(SEABOARD, (col === "natural" || col === "") ? "white" : col, thick, w, h, qty, getProductUrl("seaboard"));
       case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, getProductUrl("petg"));
       case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, getProductUrl("hips"));
