@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "28 Apr 2026",
     entries: [
+      { time: "15:02", tag: "NEW", title: "HDPE oversized sheet fallback for cut-to-size pieces up to 4000x2000mm" },
       { time: "13:17", tag: "FIX", title: "Correct 10mm PTFE full sheet price from $1345.19 to $1485.00" },
       { time: "09:16", tag: "NEW", title: "Switch Atlas (Edge chat) from Claude Opus to xAI grok-4" },
       { time: "09:13", tag: "UPDATE", title: "Trigger redeploy for REX_ANTHROPIC_API_KEY" },
