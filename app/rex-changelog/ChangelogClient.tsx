@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "5 May 2026",
     entries: [
+      { time: "22:50", tag: "UPDATE", title: "Update changelog for em dash fix" },
       { time: "22:50", tag: "FIX", title: "Ban em dashes in Rex and Lex system prompts" }
     ],
   },
