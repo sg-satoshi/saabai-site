@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 May 2026",
     entries: [
+      { time: "07:48", tag: "FIX", title: "Voice mode bubble colour and missing space after exclamation mark" },
       { time: "07:39", tag: "FIX", title: "Revert TTS from xAI back to ElevenLabs" }
     ],
   },

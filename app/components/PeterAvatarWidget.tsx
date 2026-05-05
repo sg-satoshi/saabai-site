@@ -526,7 +526,6 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
 
   async function playVoice(text: string) {
     if (!text.trim()) return;
-    stopAudio();
     stopListening();
     setError(null);
 
@@ -542,6 +541,11 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
       if (!blob.size) { setError("Empty audio"); return; }
 
       const url = URL.createObjectURL(blob);
+
+      // Stop previous audio only after the new blob is ready — avoids clearing the
+      // audio element before play(), which can trigger autoplay policy blocks on Safari
+      stopAudio();
+
       audioBlobUrlRef.current = url;
       const audio = audioRef.current!;
       audio.src = url;
@@ -726,7 +730,9 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
     setIsStarted(true);
     lastActivityRef.current = Date.now();
     reEngagementFiredRef.current = false;
-    messagesRef.current = [{ role: "assistant", content: greeting }];
+    const greetingMsg: ChatMessage = { role: "assistant", content: greeting };
+    messagesRef.current = [greetingMsg];
+    setDisplayMessages([greetingMsg]);
     await playVoice(greeting);
   }
 
