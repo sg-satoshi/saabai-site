@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "6 May 2026",
+    entries: [
+      { time: "07:39", tag: "FIX", title: "Revert TTS from xAI back to ElevenLabs" }
+    ],
+  },
+  {
     date: "5 May 2026",
     entries: [
       { time: "22:50", tag: "UPDATE", title: "Update changelog for em dash fix" },

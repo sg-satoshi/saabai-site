@@ -108,12 +108,10 @@ function playMessageSound() {
 }
 
 function renderContent(text: string, onLockIn?: (msg: string) => void) {
-  // Fix missing space after sentence-ending punctuation before a capital letter
-  // e.g. "right now.Our" → "right now. Our"
-  // e.g. "hi there!How" → "hi there! How"
-  // e.g. "that?Why" → "that? Why"
-  // (avoids touching decimals like $88.89)
-  text = text.replace(/([a-z\)])([.!?]) ?([A-Z])/g, "$1$2 $3");
+  // Fix missing space after sentence-ending punctuation
+  // Handles capital and lowercase next word; avoids touching decimals like $88.89
+  text = text.replace(/([a-z\d\)])(\.) ?([A-Z])/g, "$1. $3");
+  text = text.replace(/([a-z\d\)])([!?]) ?([A-Za-z])/g, "$1$2 $3");
   const paragraphs = text.split(/\n{2,}/);
   const result: React.ReactNode[] = [];
 
@@ -1278,7 +1276,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
                 if (!isActionable) return null;
                 return (
                   <div className="w-full px-1">
-                    <div className="bg-saabai-surface-raised border border-saabai-teal/30 rounded-xl px-3 py-2.5 text-xs leading-relaxed break-words text-saabai-text">
+                    <div className="rounded-2xl rounded-bl-sm px-3 py-2.5 text-xs leading-relaxed break-words text-white" style={{ background: "#0084FF" }}>
                       {renderContent(lastAssistant.content, handleUserMessage)}
                     </div>
                   </div>
