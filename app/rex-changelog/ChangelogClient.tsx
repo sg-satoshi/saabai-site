@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "5 May 2026",
+    entries: [
+      { time: "22:50", tag: "FIX", title: "Ban em dashes in Rex and Lex system prompts" }
+    ],
+  },
+  {
     date: "28 Apr 2026",
     entries: [
       { time: "15:02", tag: "NEW", title: "HDPE oversized sheet fallback for cut-to-size pieces up to 4000x2000mm" },
