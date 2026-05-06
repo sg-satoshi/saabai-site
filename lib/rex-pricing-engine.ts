@@ -308,22 +308,23 @@ const UHMWPE: SheetRow[] = [
 ];
 
 const POLYPROPYLENE: SheetRow[] = [
-  { colour: "grey",    thicknessMm: 2,   sheetW: 3000, sheetH: 1500, ctsRate: 47.91,   fullSheetPrice: 112.42 },
-  { colour: "natural", thicknessMm: 2,   sheetW: 2000, sheetH: 1000, ctsRate: 63.53,   fullSheetPrice: 66.25 },
-  { colour: "grey",    thicknessMm: 3,   sheetW: 3000, sheetH: 1500, ctsRate: 70.16,   fullSheetPrice: 164.62 },
-  { colour: "natural", thicknessMm: 3,   sheetW: 2000, sheetH: 1000, ctsRate: 96.25,   fullSheetPrice: 100.38 },
-  { colour: "natural", thicknessMm: 4,   sheetW: 2000, sheetH: 1000, ctsRate: 127.05,  fullSheetPrice: 132.50 },
-  { colour: "grey",    thicknessMm: 4.5, sheetW: 3000, sheetH: 1500, ctsRate: 105.23,  fullSheetPrice: 246.92 },
-  { colour: "natural", thicknessMm: 5,   sheetW: 2000, sheetH: 1000, ctsRate: 159.78,  fullSheetPrice: 166.62 },
-  { colour: "grey",    thicknessMm: 6,   sheetW: 3000, sheetH: 1500, ctsRate: 143.73,  fullSheetPrice: 337.26 },
-  { colour: "natural", thicknessMm: 6,   sheetW: 2000, sheetH: 1000, ctsRate: 221.38,  fullSheetPrice: 230.86 },
-  { colour: "grey",    thicknessMm: 10,  sheetW: 3000, sheetH: 1500, ctsRate: 229.29,  fullSheetPrice: 538.01 },
-  { colour: "grey",    thicknessMm: 12,  sheetW: 3000, sheetH: 1500, ctsRate: 280.62,  fullSheetPrice: 658.46 },
-  { colour: "grey",    thicknessMm: 15,  sheetW: 3000, sheetH: 1500, ctsRate: 359.33,  fullSheetPrice: 843.15 },
-  { colour: "grey",    thicknessMm: 20,  sheetW: 3000, sheetH: 1500, ctsRate: 467.99,  fullSheetPrice: 1098.10 },
-  { colour: "grey",    thicknessMm: 25,  sheetW: 3000, sheetH: 1500, ctsRate: 585.20,  fullSheetPrice: 1373.13 },
-  { colour: "grey",    thicknessMm: 30,  sheetW: 3000, sheetH: 1500, ctsRate: 767.43,  fullSheetPrice: 1603.39 },
-  { colour: "grey",    thicknessMm: 40,  sheetW: 3000, sheetH: 1500, ctsRate: 1004.42, fullSheetPrice: 2098.53 },
+  // PP sheets are full sheet only — no cut-to-size
+  { colour: "grey",    thicknessMm: 2,   sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 112.42 },
+  { colour: "natural", thicknessMm: 2,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 66.25 },
+  { colour: "grey",    thicknessMm: 3,   sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 164.62 },
+  { colour: "natural", thicknessMm: 3,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 100.38 },
+  { colour: "natural", thicknessMm: 4,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 132.50 },
+  { colour: "grey",    thicknessMm: 4.5, sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 246.92 },
+  { colour: "natural", thicknessMm: 5,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 166.62 },
+  { colour: "grey",    thicknessMm: 6,   sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 337.26 },
+  { colour: "natural", thicknessMm: 6,   sheetW: 2000, sheetH: 1000, ctsRate: null, fullSheetPrice: 230.86 },
+  { colour: "grey",    thicknessMm: 10,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 538.01 },
+  { colour: "grey",    thicknessMm: 12,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 658.46 },
+  { colour: "grey",    thicknessMm: 15,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 843.15 },
+  { colour: "grey",    thicknessMm: 20,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 1098.10 },
+  { colour: "grey",    thicknessMm: 25,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 1373.13 },
+  { colour: "grey",    thicknessMm: 30,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 1603.39 },
+  { colour: "grey",    thicknessMm: 40,  sheetW: 3000, sheetH: 1500, ctsRate: null, fullSheetPrice: 2098.53 },
 ];
 
 const HDPE: SheetRow[] = [
