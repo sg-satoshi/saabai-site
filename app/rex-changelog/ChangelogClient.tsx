@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 May 2026",
     entries: [
+      { time: "10:53", tag: "UPDATE", title: "Update changelog" },
       { time: "10:51", tag: "FIX", title: "PP cut-to-size available as custom order only" },
       { time: "10:42", tag: "NEW", title: "PP sheets full sheet only — no cut-to-size" },
       { time: "07:52", tag: "FIX", title: "Voice greeting not playing on mode start" },

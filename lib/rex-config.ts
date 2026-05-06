@@ -151,7 +151,7 @@ const PLON: RexClientConfig = {
   },
   shopUrl: "https://www.plasticonline.com.au/shop/",
   contactUrl: "https://www.plasticonline.com.au/contact/",
-  logoHtml: `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Gold Coast</p>`,
+  logoHtml: `<p style="margin:0;font-size:24px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;line-height:1;">Plastic<span style="color:#e13f00;">Online</span></p><p style="margin:5px 0 0;font-size:11px;color:#888888;letter-spacing:1.5px;text-transform:uppercase;">Cut-to-Size Plastics · Australia Wide</p>`,
 };
 
 // ── Tributum Law ─────────────────────────────────────────────────────────────
