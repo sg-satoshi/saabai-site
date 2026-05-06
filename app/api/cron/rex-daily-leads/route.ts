@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 const PRIORITY_THRESHOLD = 200;
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app";
-const TO_EMAIL = "hello@saabai.ai";
+const TO_EMAIL = ["hello@saabai.ai", "adam.boote@hollandplastics.com.au"];
 
 interface LeadEvent {
   timestamp: string;
