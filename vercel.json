@@ -5,6 +5,10 @@
       "schedule": "0 23 * * 0"
     },
     {
+      "path": "/api/cron/rex-daily-leads",
+      "schedule": "0 22 * * *"
+    },
+    {
       "path": "/api/cron/mia-nurture",
       "schedule": "0 0 * * *"
     },
