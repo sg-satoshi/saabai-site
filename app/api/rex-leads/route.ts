@@ -1001,19 +1001,20 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Team notification — Reply-To is set to the customer's actual email so hitting Reply
-    //    in any email client goes straight to them (not back to Rex).
-    //    Subject already includes customer name + email for visibility in Pipedrive.
-    tasks.push(
-      resend.emails.send({
-        from: FROM_EMAIL,
-        to: TEAM_EMAIL,
-        replyTo: email ? [email] : undefined,
-        headers: email ? { "Reply-To": email } : undefined,
-        subject: teamSubject,
-        html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, address, despatch, analysis, transcript),
-      })
-    );
+    // 3. Team notification — only send if we have at least an email or mobile.
+    //    Suppresses noise from anonymous one-question chats with no contact details.
+    if (email || mobile) {
+      tasks.push(
+        resend.emails.send({
+          from: FROM_EMAIL,
+          to: TEAM_EMAIL,
+          replyTo: email ? [email] : undefined,
+          headers: email ? { "Reply-To": email } : undefined,
+          subject: teamSubject,
+          html: teamNotificationHtml(leadName ?? undefined, email ?? "unknown", note ?? "", source ?? "unknown", mobile, address, despatch, analysis, transcript),
+        })
+      );
+    }
 
     // 4. Make.com webhook (if configured) — includes lead scoring & routing info
     if (process.env.LEAD_WEBHOOK_URL) {

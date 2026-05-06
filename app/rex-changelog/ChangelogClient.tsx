@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 May 2026",
     entries: [
+      { time: "15:47", tag: "NEW", title: "Add adam.boote@hollandplastics.com.au to daily leads digest" },
       { time: "15:32", tag: "NEW", title: "Daily priority leads digest email at 8am AEST" },
       { time: "14:52", tag: "FIX", title: "Raise P95 response time thresholds to 3.5s red / 2.5s yellow" },
       { time: "14:49", tag: "UPDATE", title: "Update changelog" },
