@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "7 May 2026",
+    entries: [
+      { time: "09:00", tag: "FIX", title: "Suppress team notification emails with no contact details" }
+    ],
+  },
+  {
     date: "6 May 2026",
     entries: [
       { time: "15:47", tag: "NEW", title: "Add adam.boote@hollandplastics.com.au to daily leads digest" },

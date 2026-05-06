@@ -173,6 +173,10 @@ export async function GET(req: Request) {
   // Sort newest first
   priorityLeads.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
+  if (priorityLeads.length === 0) {
+    return Response.json({ ok: true, sent: 0, skipped: "no priority leads in last 24h" });
+  }
+
   const { subject, html } = buildEmail(priorityLeads);
 
   const result = await resend.emails.send({
