@@ -131,15 +131,15 @@ async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
       healthStatus = "RED";
       healthReason = `Conversion rate ${conversionRate}% below 35% threshold`;
     }
-    // RED if response time > 2500ms (slow processing)
-    else if (p95ResponseTimeMs > 2500) {
+    // RED if response time > 3500ms (slow processing)
+    else if (p95ResponseTimeMs > 3500) {
       healthStatus = "RED";
-      healthReason = `P95 response time ${p95ResponseTimeMs}ms exceeds 2.5s threshold`;
+      healthReason = `P95 response time ${p95ResponseTimeMs}ms exceeds 3.5s threshold`;
     }
     // YELLOW for borderline conditions
     else if (
       (conversionRate < 50 && total > 5) ||
-      (p95ResponseTimeMs > 2000 && p95ResponseTimeMs <= 2500)
+      (p95ResponseTimeMs > 2500 && p95ResponseTimeMs <= 3500)
     ) {
       healthStatus = "YELLOW";
       healthReason = `Approaching thresholds: conversion ${conversionRate}%, P95 ${p95ResponseTimeMs}ms`;

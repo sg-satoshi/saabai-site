@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 May 2026",
     entries: [
+      { time: "14:49", tag: "UPDATE", title: "Update changelog" },
       { time: "13:56", tag: "FIX", title: "Update PLON email logo from Gold Coast to Australia Wide" },
       { time: "10:53", tag: "UPDATE", title: "Update changelog" },
       { time: "10:51", tag: "FIX", title: "PP cut-to-size available as custom order only" },

@@ -213,15 +213,15 @@ export default function RealtimeAnalytics() {
                   {metrics.p95ResponseTimeMs}ms
                 </p>
                 <p className={`text-xs font-semibold ${
-                  metrics.p95ResponseTimeMs > 2500
+                  metrics.p95ResponseTimeMs > 3500
                     ? "text-red-600"
-                    : metrics.p95ResponseTimeMs > 2000
+                    : metrics.p95ResponseTimeMs > 2500
                     ? "text-yellow-600"
                     : "text-green-600"
                 }`}>
-                  {metrics.p95ResponseTimeMs > 2500
+                  {metrics.p95ResponseTimeMs > 3500
                     ? "⚠️ High"
-                    : metrics.p95ResponseTimeMs > 2000
+                    : metrics.p95ResponseTimeMs > 2500
                     ? "⚠️ Caution"
                     : "✓ Good"}
                 </p>
@@ -242,11 +242,11 @@ export default function RealtimeAnalytics() {
           <ul className="space-y-1 text-xs">
             <li>
               <span className="font-medium">🔴 RED:</span> Conversion {"<"} 35% OR P95{" "}
-              {">"} 2500ms
+              {">"} 3500ms
             </li>
             <li>
               <span className="font-medium">🟡 YELLOW:</span> Conversion {"<"} 50% OR
-              P95 {">"} 2000ms
+              P95 {">"} 2500ms
             </li>
             <li>
               <span className="font-medium">🟢 GREEN:</span> All thresholds met
