@@ -133,6 +133,7 @@ export default function LexWidget() {
   const [sessionId] = useState(() => `lex_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -152,8 +153,10 @@ export default function LexWidget() {
   }, [messages]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (!open || (!messages.length && !loading)) return;
+    const c = messagesContainerRef.current;
+    if (c) c.scrollTop = c.scrollHeight;
+  }, [messages, loading, open]);
 
   // Opening greeting
   useEffect(() => {
@@ -372,7 +375,7 @@ export default function LexWidget() {
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 14px 8px", display: "flex", flexDirection: "column" }}>
+      <div ref={messagesContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px 14px 8px", display: "flex", flexDirection: "column" }}>
         {messages.map((msg, i) => (
           <Bubble key={i} msg={msg} isLast={i === messages.length - 1} />
         ))}

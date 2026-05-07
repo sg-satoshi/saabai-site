@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 May 2026",
     entries: [
+      { time: "09:14", tag: "FIX", title: "Skip daily digest email if no priority leads" },
       { time: "09:00", tag: "FIX", title: "Suppress team notification emails with no contact details" }
     ],
   },
