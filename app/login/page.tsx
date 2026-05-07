@@ -33,6 +33,7 @@ export default async function LoginPage({
       justifyContent: "center",
       padding: "24px",
       fontFamily: "var(--font-geist-sans), 'Helvetica Neue', Arial, sans-serif",
+      background: "#0e2554",
     }}>
 
       {/* Ambient glow */}
@@ -48,8 +49,8 @@ export default async function LoginPage({
       <div style={{
         position: "relative", zIndex: 1,
         width: "100%", maxWidth: 400,
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(98,197,209,0.14)",
+        background: "#0b092e",
+        border: "1px solid rgba(98,197,209,0.18)",
         borderRadius: 20,
         padding: "40px 40px 36px",
         backdropFilter: "blur(12px)",
