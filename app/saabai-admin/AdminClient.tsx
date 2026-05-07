@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ClientConfig } from "../../lib/clients";
 import type { RexStats, LeadEvent } from "../../lib/rex-stats";
+import type { PendingRequest } from "../../lib/portal-users";
 import AdminShell from "./AdminSidebar";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
@@ -1049,16 +1050,169 @@ function LinkedInPanel() {
   );
 }
 
+// ── Access Requests ────────────────────────────────────────────────────────────
+
+function AccessRequests({ initial }: { initial: PendingRequest[] }) {
+  const [requests, setRequests]       = useState<PendingRequest[]>(initial);
+  const [approving, setApproving]     = useState<string | null>(null);
+  const [passwords, setPasswords]     = useState<Record<string, string>>({});
+  const [dashUrls, setDashUrls]       = useState<Record<string, string>>({});
+  const [busy, setBusy]               = useState<string | null>(null);
+  const [message, setMessage]         = useState<{ email: string; text: string; ok: boolean } | null>(null);
+
+  if (requests.length === 0) return null;
+
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function approve(req: PendingRequest) {
+    const password = passwords[req.email]?.trim();
+    if (!password) return;
+    setBusy(req.email);
+    try {
+      const res = await fetch("/api/admin/portal-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "approve",
+          email: req.email,
+          name: req.name,
+          password,
+          dashboardUrl: dashUrls[req.email] || "/rex-dashboard",
+        }),
+      });
+      if (res.ok) {
+        setRequests(r => r.filter(x => x.email !== req.email));
+        setApproving(null);
+        setMessage({ email: req.email, text: `Approved and welcome email sent to ${req.name}.`, ok: true });
+        setTimeout(() => setMessage(null), 5000);
+      } else {
+        setMessage({ email: req.email, text: "Something went wrong.", ok: false });
+      }
+    } finally { setBusy(null); }
+  }
+
+  async function deny(req: PendingRequest) {
+    if (!confirm(`Deny access request from ${req.name}?`)) return;
+    setBusy(req.email);
+    try {
+      await fetch("/api/admin/portal-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deny", email: req.email }),
+      });
+      setRequests(r => r.filter(x => x.email !== req.email));
+    } finally { setBusy(null); }
+  }
+
+  return (
+    <DCard style={{ overflow: "hidden" }}>
+      <div style={{ padding: "18px 22px", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.amber, display: "inline-block", flexShrink: 0 }} />
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.text }}>Portal Access Requests</p>
+        <span style={{
+          marginLeft: 4, padding: "2px 8px", borderRadius: 20,
+          background: `${C.amber}18`, color: C.amber,
+          fontSize: 10, fontWeight: 700,
+        }}>{requests.length}</span>
+      </div>
+
+      {message && (
+        <div style={{ margin: "0 22px 14px", padding: "10px 14px", borderRadius: 8, background: message.ok ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${message.ok ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}` }}>
+          <p style={{ margin: 0, fontSize: 12, color: message.ok ? C.green : C.red }}>{message.text}</p>
+        </div>
+      )}
+
+      <div style={{ borderTop: `1px solid ${C.border}` }}>
+        {requests.map((req, i) => (
+          <div key={req.email} style={{ borderBottom: i < requests.length - 1 ? `1px solid ${C.border}` : "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 22px" }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "rgba(245,166,35,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 14, fontWeight: 700, color: C.amber, flexShrink: 0,
+              }}>
+                {req.name.charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: C.text }}>{req.name}</p>
+                <p style={{ margin: 0, fontSize: 11, color: C.muted }}>
+                  {req.email}{req.company ? ` · ${req.company}` : ""} · {fmtDate(req.requestedAt)}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={() => setApproving(a => a === req.email ? null : req.email)}
+                  disabled={busy === req.email}
+                  style={{ padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#000", fontSize: 11, fontWeight: 700 }}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => deny(req)}
+                  disabled={busy === req.email}
+                  style={{ padding: "6px 14px", borderRadius: 7, border: `1px solid ${C.border}`, cursor: "pointer", background: "transparent", color: C.muted, fontSize: 11, fontWeight: 600 }}
+                >
+                  Deny
+                </button>
+              </div>
+            </div>
+
+            {approving === req.email && (
+              <div style={{ margin: "0 22px 16px", padding: "14px 16px", background: C.surface, borderRadius: 10, border: `1px solid ${C.border}` }}>
+                <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: "uppercase" as const }}>Set credentials</p>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: "0 0 4px", fontSize: 10, color: C.muted }}>Password</p>
+                    <input
+                      type="text"
+                      placeholder="Set their password"
+                      value={passwords[req.email] ?? ""}
+                      onChange={e => setPasswords(p => ({ ...p, [req.email]: e.target.value }))}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", fontSize: 12, color: C.text, background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, outline: "none", fontFamily: "inherit" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: "0 0 4px", fontSize: 10, color: C.muted }}>Dashboard</p>
+                    <input
+                      type="text"
+                      placeholder="/rex-dashboard"
+                      value={dashUrls[req.email] ?? ""}
+                      onChange={e => setDashUrls(d => ({ ...d, [req.email]: e.target.value }))}
+                      style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", fontSize: 12, color: C.text, background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, outline: "none", fontFamily: "inherit" }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => approve(req)}
+                    disabled={!passwords[req.email]?.trim() || busy === req.email}
+                    style={{ padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#000", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const, opacity: !passwords[req.email]?.trim() ? 0.5 : 1 }}
+                  >
+                    {busy === req.email ? "Saving..." : "Confirm"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </DCard>
+  );
+}
+
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export default function AdminClient({
   clients,
   rexStats,
   adminId,
+  pendingRequests,
 }: {
   clients: ClientConfig[];
   rexStats: RexStats;
   adminId: string;
+  pendingRequests: PendingRequest[];
 }) {
   const [venture, setVenture] = useState("All");
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
@@ -1231,6 +1385,14 @@ export default function AdminClient({
             <div style={{ marginBottom: 40 }}>
               <SectionLabel>Recent Leads</SectionLabel>
               <LeadsTable rexStats={rexStats} />
+            </div>
+          )}
+
+          {/* Access requests */}
+          {pendingRequests.length > 0 && (
+            <div style={{ marginBottom: 40 }}>
+              <SectionLabel>Access Requests</SectionLabel>
+              <AccessRequests initial={pendingRequests} />
             </div>
           )}
 

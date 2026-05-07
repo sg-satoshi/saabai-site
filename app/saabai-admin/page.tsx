@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import { loadClients } from "../../lib/clients";
 import { fetchRexStats } from "../../lib/rex-stats";
+import { listPendingRequests } from "../../lib/portal-users";
 import AdminClient from "./AdminClient";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +29,11 @@ export default async function SaabaiAdminPage() {
     redirect(client?.dashboardUrl ?? "/rex-dashboard");
   }
 
-  // Load all clients + Rex stats in parallel
-  const [clients, rexStats] = await Promise.all([
+  const [clients, rexStats, pendingRequests] = await Promise.all([
     Promise.resolve(loadClients()),
     fetchRexStats(),
+    listPendingRequests(),
   ]);
 
-  return <AdminClient clients={clients} rexStats={rexStats} adminId={ADMIN_ID} />;
+  return <AdminClient clients={clients} rexStats={rexStats} adminId={ADMIN_ID} pendingRequests={pendingRequests} />;
 }

@@ -8,7 +8,7 @@ export const metadata = { title: "Client Portal — Saabai" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string; error?: string }>;
+  searchParams: Promise<{ redirect?: string; error?: string; registered?: string; reg_error?: string }>;
 }) {
   const params = await searchParams;
   const cookieStore = await cookies();
@@ -20,7 +20,9 @@ export default async function LoginPage({
     if (session) redirect(params.redirect ?? "/rex-dashboard");
   }
 
-  const isInvalid = params.error === "invalid";
+  const isInvalid  = params.error === "invalid";
+  const registered = params.registered === "1";
+  const regError   = params.reg_error ?? "";
   const redirectTo = params.redirect ?? "";
 
   return (
@@ -73,20 +75,12 @@ export default async function LoginPage({
         </div>
 
         {/* Form (client component — handles focus/hover events) */}
-        <LoginForm redirectTo={redirectTo} isInvalid={isInvalid} />
-
-        {/* Footer */}
-        <p style={{
-          marginTop: 28, marginBottom: 0,
-          textAlign: "center", fontSize: 12,
-          color: "rgba(131,153,192,0.5)",
-          lineHeight: 1.7,
-        }}>
-          Need access?{" "}
-          <a href="mailto:hello@saabai.ai" style={{ color: "rgba(98,197,209,0.6)", textDecoration: "none" }}>
-            Contact Saabai
-          </a>
-        </p>
+        <LoginForm
+          redirectTo={redirectTo}
+          isInvalid={isInvalid}
+          registered={registered}
+          regError={regError}
+        />
       </div>
     </div>
   );
