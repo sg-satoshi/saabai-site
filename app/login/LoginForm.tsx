@@ -44,9 +44,10 @@ export default function LoginForm({
   registered: boolean;
   regError: string;
 }) {
-  const [view, setView] = useState<"login" | "request">(registered ? "login" : "login");
+  const [view, setView] = useState<"login" | "request">("login");
+  const [showSuccess, setShowSuccess] = useState(registered);
 
-  if (registered) {
+  if (showSuccess) {
     return (
       <div>
         <div style={{
@@ -63,7 +64,7 @@ export default function LoginForm({
           </p>
         </div>
         <button
-          onClick={() => setView("login")}
+          onClick={() => setShowSuccess(false)}
           style={{
             width: "100%", padding: "11px",
             fontSize: 13, fontWeight: 600,
