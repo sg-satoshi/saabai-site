@@ -1275,6 +1275,14 @@ export default function AdminClient({
             <p style={{ margin: 0, fontSize: 14, color: "#9aa0b8" }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
           </div>
 
+          {/* Access requests */}
+          {pendingRequests.length > 0 && (
+            <div style={{ marginBottom: 40 }}>
+              <SectionLabel>Access Requests</SectionLabel>
+              <AccessRequests initial={pendingRequests} />
+            </div>
+          )}
+
           {/* ── Lex Platform metrics ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
             {[
@@ -1385,14 +1393,6 @@ export default function AdminClient({
             <div style={{ marginBottom: 40 }}>
               <SectionLabel>Recent Leads</SectionLabel>
               <LeadsTable rexStats={rexStats} />
-            </div>
-          )}
-
-          {/* Access requests */}
-          {pendingRequests.length > 0 && (
-            <div style={{ marginBottom: 40 }}>
-              <SectionLabel>Access Requests</SectionLabel>
-              <AccessRequests initial={pendingRequests} />
             </div>
           )}
 
