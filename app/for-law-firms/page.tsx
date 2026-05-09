@@ -15,9 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
+import CounselContent from "./counsel-content";
+
 export default function ForLawFirms() {
   return (
-    <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+    <>
+      <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
 
       <Nav />
 
@@ -357,6 +360,8 @@ export default function ForLawFirms() {
 
       <Footer />
 
-    </div>
+      </div>
+      <CounselContent />
+    </>
   );
 }
