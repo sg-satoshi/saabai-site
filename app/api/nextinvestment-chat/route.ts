@@ -1,5 +1,5 @@
 import { generateText, convertToModelMessages } from "ai";
-import { getSaabaiModel } from "../../../lib/chat-config";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -40,7 +40,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const messages = body.messages || [];
-    const model = getSaabaiModel();
+    
+    // Use a known valid model
+    const model = anthropic("claude-3-5-haiku-20241022");
 
     // Convert simple {role, content} format to UIMessage format for the AI SDK
     const uiMessages = messages.map((m: { role: string; content: string }) => ({
