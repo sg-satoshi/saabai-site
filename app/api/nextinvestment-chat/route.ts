@@ -37,21 +37,29 @@ When responding:
 - Always end with a soft next step (e.g., "Would you like me to explain how wholesale sourcing works?")`;
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const messages = body.messages || [];
-  const model = getSaabaiModel();
+  try {
+    const body = await req.json();
+    const messages = body.messages || [];
+    const model = getSaabaiModel();
 
-  // Convert simple {role, content} format to UIMessage format for the AI SDK
-  const uiMessages = messages.map((m: { role: string; content: string }) => ({
-    role: m.role,
-    parts: [{ type: "text" as const, text: m.content }],
-  }));
+    // Convert simple {role, content} format to UIMessage format for the AI SDK
+    const uiMessages = messages.map((m: { role: string; content: string }) => ({
+      role: m.role,
+      parts: [{ type: "text" as const, text: m.content }],
+    }));
 
-  const result = await generateText({
-    model,
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(uiMessages),
-  });
+    const result = await generateText({
+      model,
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(uiMessages),
+    });
 
-  return Response.json({ content: result.text });
+    return Response.json({ content: result.text });
+  } catch (error) {
+    console.error("NextInvestment chat error:", error);
+    return Response.json(
+      { error: "Failed to generate response", details: String(error) },
+      { status: 500 }
+    );
+  }
 }
