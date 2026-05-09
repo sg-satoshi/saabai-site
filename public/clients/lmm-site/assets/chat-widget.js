@@ -219,7 +219,7 @@
         body: JSON.stringify({
           messages: [
             { role: 'system', content: CONFIG.systemPrompt },
-            ...messages.slice(-10).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }))
+            ...messages.filter(m => m.text !== CONFIG.greeting).slice(-10).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }))
           ]
         })
       });
