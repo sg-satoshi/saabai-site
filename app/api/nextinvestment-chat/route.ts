@@ -1,5 +1,5 @@
 import { generateText, convertToModelMessages } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -41,8 +41,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = body.messages || [];
     
-    // Use a known valid model
-    const model = anthropic("claude-3-5-haiku-20241022");
+    // Use OpenRouter for reliable access
+    const openrouter = createOpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+    const model = openrouter("anthropic/claude-3.5-haiku");
 
     // Convert simple {role, content} format to UIMessage format for the AI SDK
     const uiMessages = messages.map((m: { role: string; content: string }) => ({
