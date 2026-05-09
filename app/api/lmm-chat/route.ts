@@ -36,13 +36,20 @@ When responding:
 - Always end with a soft next step`;
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const body = await req.json();
+  const messages = body.messages || [];
   const model = getSaabaiModel();
+
+  // Convert simple {role, content} format to UIMessage format for the AI SDK
+  const uiMessages = messages.map((m: { role: string; content: string }) => ({
+    role: m.role,
+    parts: [{ type: "text" as const, text: m.content }],
+  }));
 
   const result = await generateText({
     model,
     system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(uiMessages),
   });
 
   return Response.json({ content: result.text });
