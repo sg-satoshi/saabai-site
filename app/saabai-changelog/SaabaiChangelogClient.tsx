@@ -61,7 +61,7 @@ export default function SaabaiChangelogClient() {
             <img
               src="/brand/saabai-logo.png"
               alt="Saabai.ai"
-              style={{ height: 24, width: "auto" }}
+              style={{ height: 38, width: "auto" }}
             />
           </a>
           <div className="text-xs text-white/60">All development history for the Saabai platform</div>
