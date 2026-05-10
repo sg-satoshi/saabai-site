@@ -27,6 +27,7 @@ export default function SiteFactoryPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [style, setStyle] = useState("modern");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     fetchSites();
@@ -60,6 +61,7 @@ export default function SiteFactoryPage() {
           email,
           address,
           style,
+          description: description.trim(),
         }),
       });
       const data = await res.json();
@@ -86,6 +88,7 @@ export default function SiteFactoryPage() {
     setEmail("");
     setAddress("");
     setStyle("modern");
+    setDescription("");
   }
 
   const C = {
@@ -326,6 +329,34 @@ export default function SiteFactoryPage() {
                     outline: "none",
                   }}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6, color: C.textDim }}>
+                  Project Brief / Description
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what is needed, goals, target audience, inspiration sites, design notes, links to references, etc."
+                  rows={5}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: 8,
+                    border: `1px solid ${C.border}`,
+                    background: C.bg,
+                    color: C.text,
+                    fontSize: 14,
+                    outline: "none",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                    lineHeight: 1.5,
+                  }}
+                />
+                <p style={{ margin: "4px 0 0", fontSize: 11, color: C.textDim }}>
+                  This helps the AI understand exactly what you want. Include inspiration links, competitor sites, or specific design requests.
+                </p>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

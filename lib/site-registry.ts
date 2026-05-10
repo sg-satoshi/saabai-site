@@ -7,6 +7,7 @@ export interface SiteConfig {
   slug: string;
   name: string;
   niche?: string;
+  description?: string;
   status: "draft" | "live" | "archived";
   url: string;
   business: {

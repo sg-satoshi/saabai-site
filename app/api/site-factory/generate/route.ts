@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       email = "",
       address = "",
       style = "modern",
+      description = "",
     } = body;
 
     if (!businessName) {
@@ -68,7 +69,7 @@ Phone: ${phone || "Contact us for details"}
 Email: ${email || ""}
 Address: ${address || ""}
 Services: ${services.join(", ") || "Professional services"}
-
+${description ? `\nAdditional requirements / brief:\n${description}\n` : ""}
 Required sections:
 1. Hero — Business name, compelling tagline, primary CTA
 2. Services — 3-6 service cards with descriptions
@@ -111,6 +112,7 @@ Make it visually stunning and unique. Use gradients, subtle shadows, and modern 
       slug,
       name: businessName,
       niche,
+      description,
       status: "live",
       url: siteUrl,
       business: {
