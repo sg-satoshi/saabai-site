@@ -1,4 +1,4 @@
-import { generateText, convertToModelMessages } from "ai";
+import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
@@ -48,16 +48,18 @@ export async function POST(req: Request) {
     });
     const model = openrouter("anthropic/claude-3.5-haiku");
 
-    // Convert simple {role, content} format to UIMessage format for the AI SDK
-    const uiMessages = messages.map((m: { role: string; content: string }) => ({
-      role: m.role,
-      parts: [{ type: "text" as const, text: m.content }],
-    }));
+    // Filter out system messages — we use the system parameter instead
+    const chatMessages = messages
+      .filter((m: { role: string; content: string }) => m.role !== "system")
+      .map((m: { role: string; content: string }) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
 
     const result = await generateText({
       model,
       system: SYSTEM_PROMPT,
-      messages: await convertToModelMessages(uiMessages),
+      messages: chatMessages,
     });
 
     return Response.json({ content: result.text });
