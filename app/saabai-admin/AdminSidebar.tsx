@@ -35,6 +35,28 @@ const NAV: {
         ),
       },
       {
+        label: "Site Factory",
+        href: "/saabai-admin/site-factory",
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1.5L1.5 5l5.5 3.5 5.5-3.5-5.5-3.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M1.5 9l5.5 3.5 5.5-3.5M1.5 7l5.5 3.5 5.5-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+          </svg>
+        ),
+      },
+      {
+        label: "Users",
+        href: "/saabai-admin/users",
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
         label: "Clients",
         href: "/saabai-admin/lex-clients",
         icon: (
