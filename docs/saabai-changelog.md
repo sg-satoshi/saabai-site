@@ -31,6 +31,14 @@ Format: `YYYY-MM-DD — [Category] Description`
   - Admin dashboard (`/saabai-admin/site-factory`) — create, preview, manage sites
   - Auto-deploy on generation — git commit + push after each site
 
+### User Directory
+- **feat:** User management system (`lib/user-directory.ts`)
+  - Redis-backed user directory with roles (admin/user)
+  - API: list/create/delete users (`/api/user-directory`)
+  - Admin UI at `/saabai-admin/users` — add users with name, email, password, role
+  - Login now checks directory users alongside env clients
+  - Added Site Factory + Users nav links to admin sidebar
+
 ### Verified Live (E2E Testing)
 - ✅ New Matter intake modal — matter type, urgency, description all functional
 - ✅ Firm Settings modal — logo upload area + firm name field, saves to localStorage
