@@ -57,13 +57,13 @@ export default function SaabaiChangelogClient() {
       {/* Top nav bar - matching Rex style */}
       <nav className="border-b border-white/10 bg-[#0b092e] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">🛰️</div>
-            <div>
-              <div className="font-semibold text-lg tracking-tight">Saabai</div>
-              <div className="text-[10px] text-white/50 -mt-1">CHANGELOG</div>
-            </div>
-          </div>
+          <a href="/" className="flex items-center">
+            <img
+              src="/brand/saabai-logo.png"
+              alt="Saabai.ai"
+              style={{ height: 24, width: "auto" }}
+            />
+          </a>
           <div className="text-xs text-white/60">All development history for the Saabai platform</div>
         </div>
       </nav>
