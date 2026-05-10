@@ -1,10 +1,11 @@
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
+import { logAuditEvent } from "../../../lib/lex-audit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `You are Sophie, a knowledgeable and friendly Australian property buyer's advocate based in Adelaide. You work for Next Investment, helping clients buy wholesale residential property below market price across Australia, with deep expertise in South Australian markets.
+const SYSTEM_PROMPT = `You are Sophie...
 
 About Next Investment:
 - HQ: Suite 39/422 Pulteney Street, Adelaide SA 5000
@@ -69,5 +70,7 @@ export async function POST(req: Request) {
       { error: "Failed to generate response", details: String(error) },
       { status: 500 }
     );
+  } finally {
+    logAuditEvent("research_start", { site: "nextinvestment", model: "claude-3.5-haiku" }).catch(() => {});
   }
 }
