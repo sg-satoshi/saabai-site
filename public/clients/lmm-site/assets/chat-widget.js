@@ -167,21 +167,36 @@
     if (msg.role === 'bot') {
       div.innerHTML = `
         <img class="lmm-chat-message-avatar" src="${CONFIG.avatar}" alt="${CONFIG.name}">
-        <div class="lmm-chat-message-content">${escapeHtml(msg.text)}</div>
+        <div class="lmm-chat-message-content">${mdToHtml(msg.text)}</div>
       `;
     } else {
       div.innerHTML = `
         <div class="lmm-chat-message-user-avatar">You</div>
-        <div class="lmm-chat-message-content">${escapeHtml(msg.text)}</div>
+        <div class="lmm-chat-message-content">${mdToHtml(msg.text)}</div>
       `;
     }
     messagesContainer.appendChild(div);
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  function mdToHtml(text) {
+    let html = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Lists
+    html = html.split('\n').map(line => {
+      if (/^\s*-\s+/.test(line)) return '<li>' + line.replace(/^\s*-\s+/, '') + '</li>';
+      if (/^\s*\d+\.\s+/.test(line)) return '<li>' + line.replace(/^\s*\d+\.\s+/, '') + '</li>';
+      return line;
+    }).join('\n');
+    html = html.replace(/(<li>.*?<\/li>\n?)+/g, m => {
+      const tag = m.trim().startsWith('<li>1') ? 'ol' : 'ul';
+      return '<' + tag + '>' + m.replace(/\n/g, '') + '</' + tag + '>';
+    });
+    html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+    if (html.includes('<p>')) html = '<p>' + html + '</p>';
+    return html;
   }
 
   function showTyping() {
@@ -217,10 +232,10 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: CONFIG.systemPrompt },
-            ...messages.filter(m => m.text !== CONFIG.greeting).slice(-10).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }))
-          ]
+          messages: messages
+            .filter(m => m.text !== CONFIG.greeting && m.role !== 'system')
+            .slice(-10)
+            .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }))
         })
       });
 
@@ -229,12 +244,14 @@
         const data = await response.json();
         const reply = data.content || data.text || data.message?.content || "I'm sorry, I didn't catch that. Could you rephrase?";
         addMessage('bot', reply);
+      } else if (response.status >= 500) {
+        addMessage('bot', "I'm having trouble thinking right now. Please try again!");
       } else {
         addMessage('bot', "I'm having trouble connecting right now. Please try again in a moment!");
       }
     } catch (err) {
       hideTyping();
-      addMessage('bot', "Connection issue. Please check your internet and try again.");
+      addMessage('bot', "Connection lost. Please check your internet and try again.");
     }
     sendBtn.disabled = input.value.trim() === '';
   }

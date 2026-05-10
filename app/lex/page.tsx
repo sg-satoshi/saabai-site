@@ -359,6 +359,16 @@ export default function LexPage() {
   const [submitLoading, setSubmitLoading]         = useState(false);
   const [submitDone, setSubmitDone]               = useState(false);
   const [submitError, setSubmitError]             = useState<string | null>(null);
+  // Comparison state
+  const [reviewCompareMode, setReviewCompareMode] = useState(false);
+  const [reviewCompareInputMode, setReviewCompareInputMode] = useState<"upload" | "paste">("upload");
+  const [reviewComparePasteText, setReviewComparePasteText] = useState("");
+  const [reviewCompareFile, setReviewCompareFile] = useState<File | null>(null);
+  const [reviewCompareDragOver, setReviewCompareDragOver] = useState(false);
+  const [reviewCompareText, setReviewCompareText] = useState("");
+  const [reviewComparisonAnalysis, setReviewComparisonAnalysis] = useState("");
+  const [reviewComparisonLoading, setReviewComparisonLoading] = useState(false);
+  const reviewCompareFileRef = useRef<HTMLInputElement>(null);
 
   const bottomRef    = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLTextAreaElement>(null);
