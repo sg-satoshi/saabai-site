@@ -57,6 +57,13 @@ interface Customer {
   metadata: Record<string, unknown>;
 }
 
+interface CustomerNote {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: string;
+}
+
 function fmtAud(cents: number) {
   if (!cents) return "\u2014";
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(cents / 100);
@@ -111,6 +118,51 @@ function StatusBadge({ status }: { status: string }) {
 
 function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () => void }) {
   const m = customer.metadata as Record<string, unknown>;
+  const [notes, setNotes] = useState<CustomerNote[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [notesLoading, setNotesLoading] = useState(true);
+
+  useEffect(() => {
+    setNotesLoading(true);
+    fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/notes`)
+      .then(r => r.json())
+      .then(data => setNotes(data.notes ?? []))
+      .catch(() => setNotes([]))
+      .finally(() => setNotesLoading(false));
+  }, [customer.id]);
+
+  async function addNote() {
+    if (!noteText.trim()) return;
+    setSaving(true);
+    const res = await fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: noteText.trim() }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setNotes(prev => [data.note, ...prev]);
+      setNoteText("");
+    }
+    setSaving(false);
+  }
+
+  async function deleteNote(noteId: string) {
+    const res = await fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/notes`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ noteId }),
+    });
+    if (res.ok) setNotes(prev => prev.filter(n => n.id !== noteId));
+  }
+
+  function fmtNoteDate(iso: string) {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) + " at " +
+           d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+  }
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }} onClick={onClose}>
       <div style={{ width: 480, height: "100vh", background: C.card, borderLeft: `1px solid ${C.borderHi}`, display: "flex", flexDirection: "column", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
@@ -202,6 +254,60 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
               </a>
             )}
           </div>
+
+          {/* Notes */}
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
+            <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>Notes</p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Add a note..."
+                rows={2}
+                style={{
+                  flex: 1, padding: "8px 10px", borderRadius: 6,
+                  border: `1px solid ${C.border}`, background: C.card, color: C.text,
+                  fontSize: 12, resize: "vertical", outline: "none", fontFamily: "inherit",
+                }}
+              />
+              <button
+                onClick={addNote}
+                disabled={saving || !noteText.trim()}
+                style={{
+                  padding: "8px 14px", borderRadius: 6, cursor: saving || !noteText.trim() ? "not-allowed" : "pointer",
+                  background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+                  color: C.gold, fontSize: 12, fontWeight: 700,
+                  opacity: saving || !noteText.trim() ? 0.5 : 1,
+                  whiteSpace: "nowrap", alignSelf: "flex-start",
+                }}
+              >
+                {saving ? "Saving..." : "Add"}
+              </button>
+            </div>
+            {notesLoading ? (
+              <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Loading notes...</p>
+            ) : notes.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 11, color: C.muted, fontStyle: "italic" }}>No notes yet.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {notes.map(note => (
+                  <div key={note.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px" }}>
+                    <p style={{ margin: "0 0 6px", fontSize: 12, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{note.text}</p>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 10, color: C.muted }}>{note.author} \u00b7 {fmtNoteDate(note.createdAt)}</span>
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: C.red, fontSize: 10, opacity: 0.6, padding: 2 }}
+                        title="Delete note"
+                      >
+                        \u2715
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -216,6 +322,51 @@ function Row({ label, value, mono }: { label: string; value: React.ReactNode; mo
         {value}
       </span>
     </div>
+  );
+}
+
+function ExportButton({ customers }: { customers: Customer[] }) {
+  function downloadCsv() {
+    const headers = ["Name", "Email", "Type", "Project", "Status", "MRR", "Revenue", "Since"];
+    const rows = customers.map(c => [
+      c.name,
+      c.email,
+      c.type,
+      c.project,
+      c.status,
+      c.mrr ? (c.mrr / 100).toFixed(2) : "",
+      c.revenue ? (c.revenue / 100).toFixed(2) : "",
+      c.createdAt ? new Date(c.createdAt).toISOString() : "",
+    ]);
+
+    const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
+    const csv = [headers.join(","), ...rows.map(r => r.map(escape).join(","))].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `customers_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <button
+      onClick={downloadCsv}
+      disabled={customers.length === 0}
+      style={{
+        display: "flex", alignItems: "center", gap: 6,
+        padding: "8px 14px", borderRadius: 8, cursor: customers.length === 0 ? "not-allowed" : "pointer",
+        background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+        color: C.gold, fontSize: 12, fontWeight: 700,
+        opacity: customers.length === 0 ? 0.5 : 1,
+      }}
+    >
+      \u2193 Export CSV
+    </button>
   );
 }
 
@@ -269,6 +420,7 @@ export default function CustomersClient() {
           <h1 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>Customers</h1>
           <p style={{ margin: "2px 0 0", fontSize: 12, color: C.muted }}>Unified directory \u2014 all clients across Lex, Site Factory, Rex, and Stripe</p>
         </div>
+        <ExportButton customers={filtered} />
       </div>
 
       <div style={{ padding: "28px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
