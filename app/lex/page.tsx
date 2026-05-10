@@ -375,6 +375,14 @@ export default function LexPage() {
   const abortRef     = useRef<AbortController | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Email state ──────────────────────────────────────────────────────────
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const activeThread = threads.find(t => t.id === activeId) ?? null;
@@ -629,6 +637,25 @@ export default function LexPage() {
       setCopyFeedback("Copied!");
       setTimeout(() => setCopyFeedback(null), 1500);
     });
+  }
+
+  // ── Send email ──────────────────────────────────────────────────────────
+  async function sendEmail(documentText: string, type: "draft" | "review") {
+    if (!emailTo.trim() || !emailSubject.trim()) return;
+    setEmailSending(true);
+    setEmailSent(false);
+    try {
+      const res = await fetch("/api/lex-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: emailTo, subject: emailSubject, body: emailBody, documentText, type }),
+      });
+      if (res.ok) {
+        setEmailSent(true);
+        setTimeout(() => { setEmailSent(false); setEmailOpen(false); }, 2000);
+      }
+    } catch {}
+    setEmailSending(false);
   }
 
   const sendDraft = useCallback(async () => {
@@ -1208,6 +1235,12 @@ export default function LexPage() {
                 color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
               }}>
                 Export to Word
+              </button>
+              <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI — ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }} style={{
+                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
+                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
+              }}>
+                Send to Client
               </button>
               </>
             )}
@@ -1986,29 +2019,37 @@ export default function LexPage() {
                 return (
                   <div style={{ padding: "28px 32px" }}>
 
-                    {/* Submit for Supervision */}
+                    {/* Submit for Supervision + Send to Client */}
                     <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 12, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
                       <div>
-                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>Submit for Supervisor Review</p>
+                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>Actions</p>
                         <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textMuted }}>
-                          {submitDone ? "Submitted — supervisor has been notified." : "Send this review to a supervising partner for sign-off."}
+                          {submitDone ? "Submitted to supervisor." : "Send to client or submit for partner review."}
                         </p>
                         {submitError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>{submitError}</p>}
                       </div>
-                      {submitDone ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "#23344f" }}>
-                          <span style={{ fontSize: 13 }}>✓</span>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Submitted</span>
-                        </div>
-                      ) : (
-                        <button onClick={submitForSupervision} disabled={submitLoading} style={{
-                          padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: submitLoading ? "wait" : "pointer",
-                          background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, flexShrink: 0, whiteSpace: "nowrap",
-                          opacity: submitLoading ? 0.6 : 1,
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI — ${reviewReport.documentType}`); }} style={{
+                          padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                          background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, cursor: "pointer", whiteSpace: "nowrap",
                         }}>
-                          {submitLoading ? "Submitting…" : "Submit for Review"}
+                          Send to Client
                         </button>
-                      )}
+                        {submitDone ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "#23344f" }}>
+                            <span style={{ fontSize: 13 }}>✓</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Submitted</span>
+                          </div>
+                        ) : (
+                          <button onClick={submitForSupervision} disabled={submitLoading} style={{
+                            padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: submitLoading ? "wait" : "pointer",
+                            background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, flexShrink: 0, whiteSpace: "nowrap",
+                            opacity: submitLoading ? 0.6 : 1,
+                          }}>
+                            {submitLoading ? "Submitting…" : "Submit for Review"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Risk dashboard */}
@@ -2158,7 +2199,65 @@ export default function LexPage() {
           </div>
         )}
 
+      {/* ── Email form modal ─────────────────────────────────────────────── */}
+      {emailOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)", zIndex: 9998,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }} onClick={() => setEmailOpen(false)}>
+          <div style={{
+            background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`,
+            borderRadius: 14, padding: "24px 28px", width: 440, maxWidth: "90vw",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: C.text }}>Send to Client</p>
+              <button onClick={() => setEmailOpen(false)} style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>To</label>
+              <input type="email" value={emailTo} onChange={e => setEmailTo(e.target.value)}
+                placeholder="client@example.com"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Subject</label>
+              <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
+                placeholder="Document from Lex AI"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Message (optional)</label>
+              <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
+                placeholder="Please find the attached document..."
+                rows={3}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setEmailOpen(false)} style={{
+                padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
+              }}>Cancel</button>
+              <button
+                onClick={() => sendEmail(mode === "draft" ? draftText : reviewReport?.summary ?? "", mode as "draft" | "review")}
+                disabled={emailSending || !emailTo.trim() || !emailSubject.trim()}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  background: emailSent ? "#22c55e" : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
+                  border: "#23344f", color: emailSent ? "#fff" : C.bg, cursor: emailSending ? "wait" : "pointer",
+                  opacity: emailSending || !emailTo.trim() || !emailSubject.trim() ? 0.6 : 1,
+                }}
+              >
+                {emailSent ? "Sent!" : emailSending ? "Sending..." : "Send Email"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
     </div>
   );
 }
+
