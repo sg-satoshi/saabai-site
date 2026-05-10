@@ -21,7 +21,15 @@ Format: `YYYY-MM-DD — [Category] Description`
 - **feat:** Async Agent Task Queue (`lib/agent-queue.ts`) — Redis-based job queue for true async sub-agents
 - **feat:** Deployment Pipeline with QA Gates (`lib/deploy-pipeline.ts`, `app/api/deploy/route.ts`)
 - **feat:** Deployment script (`scripts/deploy-site.sh`)
-- **feat:** Firm logo upload + settings panel (`🏢 Firm Settings`) — custom firm name and logo in sidebar, branded DOCX exports
+### Site Factory
+- **feat:** Complete v1 Site Factory implementation
+  - Site registry (`lib/site-registry.ts`) — Redis-backed tracking
+  - AI site generation (`/api/site-factory/generate`) — Claude generates unique HTML per site
+  - Lead capture (`/api/site-factory/lead`) — stores enquiries per site
+  - Site list API (`/api/site-factory/list`) — dashboard data
+  - Chat widget (`/site-factory/chat-widget.js`) — reusable embedded bot
+  - Admin dashboard (`/saabai-admin/site-factory`) — create, preview, manage sites
+  - Auto-deploy on generation — git commit + push after each site
 
 ### Verified Live (E2E Testing)
 - ✅ New Matter intake modal — matter type, urgency, description all functional
