@@ -35,19 +35,18 @@ When responding:
 - If you don't know something specific, be honest and offer to connect them with the team
 - Always end with a soft next step`;
 
-export async function POST(req: Request) {
-  // CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  }
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
 
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const incomingMessages = body.messages || [];
