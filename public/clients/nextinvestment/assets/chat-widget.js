@@ -34,7 +34,7 @@
   // Create styles
   const styles = document.createElement('style');
   styles.textContent = `
-    .ni-chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: Inter, -apple-system, sans-serif; }
+    .ni-chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: Inter, -apple-system, sans-serif; -webkit-transform: translateZ(0); transform: translateZ(0); }
     .ni-chat-button {
       width: 60px; height: 60px; border-radius: 50%; border: none;
       background: ${CONFIG.accentColor}; color: white; cursor: pointer;
@@ -102,7 +102,10 @@
     .ni-chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
     @media (max-width: 480px) {
       .ni-chat-widget { bottom: 16px; right: 16px; }
-      .ni-chat-panel { width: calc(100vw - 32px); right: -8px; }
+      .ni-chat-button { width: 54px; height: 54px; }
+      .ni-chat-button img { width: 36px; height: 36px; }
+      .ni-chat-panel { width: calc(100vw - 32px); right: -8px; height: 70vh; max-height: 520px; }
+      .ni-chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
     }
   `;
   document.head.appendChild(styles);
