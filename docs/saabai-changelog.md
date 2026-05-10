@@ -8,18 +8,23 @@ Format: `YYYY-MM-DD — [Category] Description`
 
 ## 2026-05-10
 
-### Infrastructure
-- **feat:** Async Agent Task Queue (`lib/agent-queue.ts`) — Redis-based job queue for true asynchronous sub-agent execution
-- **feat:** Deployment Pipeline with QA Gates (`lib/deploy-pipeline.ts`, `app/api/deploy/route.ts`) — build → test → approve → deploy → verify workflow
-- **feat:** Deployment script (`scripts/deploy-site.sh`) — automated build, test, push, verify pipeline
-
 ### Lex (Legal AI)
-- **feat:** Email delivery API (`app/api/lex-send/route.ts`) — send branded DOCX/review emails via Resend
+- **feat:** DOCX export in draft mode — professional Word document with headers, footers, and styling
+- **feat:** Send-to-Client email — branded email delivery from draft and review modes via Resend
+- **feat:** Document comparison in review mode — compare two documents side-by-side, analyze differences
+- **feat:** Client intake flow — "New Matter" button with matter type, urgency, and description
+- **feat:** Contextual quick replies — property, family law, and commercial-specific suggestions
+- **feat:** Email delivery API (`app/api/lex-send/route.ts`) — Resend-powered branded emails
 - **feat:** Audit trail system (`lib/lex-audit.ts`) — fire-and-forget event logging for compliance
-- **feat:** DOCX export dependency installed (`docx` package)
+
+### Infrastructure
+- **feat:** Async Agent Task Queue (`lib/agent-queue.ts`) — Redis-based job queue for true async sub-agents
+- **feat:** Deployment Pipeline with QA Gates (`lib/deploy-pipeline.ts`, `app/api/deploy/route.ts`)
+- **feat:** Deployment script (`scripts/deploy-site.sh`)
+- **feat:** Saabai Changelog (`docs/saabai-changelog.md`)
 
 ### Chatbots
-- **fix:** NextInvestment chatbot (Sophie) — removed broken `convertToModelMessages`, added markdown rendering, improved error messages
+- **fix:** NextInvestment chatbot (Sophie) — markdown rendering, API fix, better errors
 - **fix:** LMM chatbot (Zara) — same fixes applied
 
 ---
