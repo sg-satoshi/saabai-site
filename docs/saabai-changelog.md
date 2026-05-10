@@ -21,7 +21,15 @@ Format: `YYYY-MM-DD — [Category] Description`
 - **feat:** Async Agent Task Queue (`lib/agent-queue.ts`) — Redis-based job queue for true async sub-agents
 - **feat:** Deployment Pipeline with QA Gates (`lib/deploy-pipeline.ts`, `app/api/deploy/route.ts`)
 - **feat:** Deployment script (`scripts/deploy-site.sh`)
-- **feat:** Saabai Changelog (`docs/saabai-changelog.md`)
+- **feat:** Firm logo upload + settings panel (`🏢 Firm Settings`) — custom firm name and logo in sidebar, branded DOCX exports
+
+### Verified Live (E2E Testing)
+- ✅ New Matter intake modal — matter type, urgency, description all functional
+- ✅ Firm Settings modal — logo upload area + firm name field, saves to localStorage
+- ✅ Send to Client email buttons — visible in both draft and review result panels
+- ✅ Contextual quick replies — property/family/commercial pools active
+- ✅ DOCX Export button — present in draft mode toolbar
+- ✅ Document comparison UI — present in review mode (toggle may need hard refresh due to Vercel CDN caching)
 
 ### Chatbots
 - **fix:** NextInvestment chatbot (Sophie) — markdown rendering, API fix, better errors
