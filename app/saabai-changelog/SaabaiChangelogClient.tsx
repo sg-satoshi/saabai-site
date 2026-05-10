@@ -53,23 +53,24 @@ export default function SaabaiChangelogClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <div className="border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">🛰️</div>
-              <div>
-                <h1 className="text-xl font-semibold">Saabai Changelog</h1>
-                <p className="text-sm text-white/60">All development history for the Saabai platform</p>
-              </div>
+    <div className="min-h-screen bg-[#0b092e] text-white font-sans">
+      {/* Top nav bar - matching Rex style */}
+      <nav className="border-b border-white/10 bg-[#0b092e] sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">🛰️</div>
+            <div>
+              <div className="font-semibold text-lg tracking-tight">Saabai</div>
+              <div className="text-[10px] text-white/50 -mt-1">CHANGELOG</div>
             </div>
           </div>
+          <div className="text-xs text-white/60">All development history for the Saabai platform</div>
         </div>
-      </div>
+      </nav>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex flex-wrap gap-2 mb-8">
+      <div className="max-w-5xl mx-auto px-6 pt-10 pb-20">
+        {/* Tag filters */}
+        <div className="flex flex-wrap gap-2 mb-10">
           {(Object.keys(TAG_STYLES) as Tag[]).map(tag => {
             const style = TAG_STYLES[tag];
             const isSelected = selectedTags.includes(tag);
@@ -77,11 +78,11 @@ export default function SaabaiChangelogClient() {
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className="px-3 py-1 text-xs rounded-full border transition-all"
+                className="px-4 py-1.5 text-xs font-medium rounded-full border transition-all hover:scale-[1.02]"
                 style={{
-                  backgroundColor: isSelected ? style.bg : "rgba(255,255,255,0.03)",
-                  borderColor: isSelected ? style.border : "rgba(255,255,255,0.1)",
-                  color: isSelected ? style.text : "#aaa",
+                  backgroundColor: isSelected ? style.bg : "rgba(255,255,255,0.04)",
+                  borderColor: isSelected ? style.border : "rgba(255,255,255,0.12)",
+                  color: isSelected ? style.text : "#a1a1aa",
                 }}
               >
                 {tag}
@@ -89,31 +90,47 @@ export default function SaabaiChangelogClient() {
             );
           })}
           {selectedTags.length > 0 && (
-            <button onClick={() => setSelectedTags([])} className="px-3 py-1 text-xs rounded-full border border-white/20 hover:bg-white/5">
-              Clear filters
+            <button
+              onClick={() => setSelectedTags([])}
+              className="px-4 py-1.5 text-xs font-medium rounded-full border border-white/20 hover:bg-white/5 text-white/60"
+            >
+              Clear
             </button>
           )}
         </div>
 
+        {/* Entries */}
         {filteredChangelog.length === 0 ? (
-          <div className="text-center py-12 text-white/60">No entries match the selected filters.</div>
+          <div className="text-center py-16 text-white/50">No entries match the selected filters.</div>
         ) : (
           filteredChangelog.map((day, index) => (
-            <div key={index} className="mb-10">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="text-lg font-medium">{day.date}</div>
+            <div key={index} className="mb-12">
+              <div className="flex items-baseline gap-4 mb-5">
+                <div className="text-sm font-semibold text-white/80 tracking-[0.5px]">{day.date}</div>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
-              <div className="space-y-3">
+
+              <div className="space-y-4 pl-1">
                 {day.entries.map((entry, entryIndex) => {
                   const style = TAG_STYLES[entry.tag];
                   return (
-                    <div key={entryIndex} className="flex gap-4 items-start group">
-                      <div className="font-mono text-xs text-white/40 pt-1 w-[42px] shrink-0 text-right">{entry.time}</div>
-                      <div className="px-3 py-1 rounded-full text-xs font-medium shrink-0" style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}>
-                        {entry.tag}
+                    <div key={entryIndex} className="flex gap-5 items-start group">
+                      <div className="font-mono text-xs text-white/40 pt-[3px] w-[38px] shrink-0 text-right tabular-nums">
+                        {entry.time}
                       </div>
-                      <div className="flex-1 text-[15px] text-white/90 pt-0.5 leading-snug">
+                      <div className="min-w-[76px]">
+                        <span
+                          className="inline-block px-3 py-px text-[10px] font-semibold rounded-full tracking-wide shadow-sm"
+                          style={{
+                            backgroundColor: style.bg,
+                            color: style.text,
+                            border: `1px solid ${style.border}`,
+                          }}
+                        >
+                          {entry.tag}
+                        </span>
+                      </div>
+                      <div className="flex-1 text-[14.5px] text-white/95 leading-tight pt-px">
                         {entry.title}
                       </div>
                     </div>
@@ -124,8 +141,10 @@ export default function SaabaiChangelogClient() {
           ))
         )}
 
-        <div className="mt-12 pt-8 border-t border-white/10 text-xs text-white/50">
-          This page is auto-updated from commits. For detailed project state see <a href="/saabai-admin" className="underline">Mission Control</a>.
+        {/* Footer note */}
+        <div className="pt-8 mt-14 border-t border-white/10 text-xs text-white/50">
+          This page is auto-updated on every commit. For detailed project state visit{" "}
+          <a href="/saabai-admin" className="text-white/70 underline hover:text-white">Mission Control</a>.
         </div>
       </div>
     </div>
