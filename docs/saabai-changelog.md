@@ -26,7 +26,7 @@ Format: `YYYY-MM-DD — [Category] Description`
   - Site registry (`lib/site-registry.ts`) — Redis-backed tracking
   - AI site generation (`/api/site-factory/generate`) — Claude generates unique HTML per site
   - Lead capture (`/api/site-factory/lead`) — stores enquiries per site
-  - Site list API (`/api/site-factory/list`) — dashboard data
+  - Site list API (`/api/site-factory/list`) — **includes legacy client sites (Next Investment, LMM) + new factory sites**
   - Chat widget (`/site-factory/chat-widget.js`) — reusable embedded bot
   - Admin dashboard (`/saabai-admin/site-factory`) — create, preview, manage sites
   - Auto-deploy on generation — git commit + push after each site
