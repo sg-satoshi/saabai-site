@@ -83,7 +83,8 @@ const PRICING = [
     name: "Starter",
     price: "$299",
     period: "/month",
-    setup: "+ $1,500 setup",
+    setup: "$1,500",
+    setupWaived: true,
     ideal: "Solo practitioners and boutique firms",
     upgrade: null as string | null,
     features: [
@@ -105,7 +106,8 @@ const PRICING = [
     name: "Growth",
     price: "$499",
     period: "/month",
-    setup: "+ $2,500 setup",
+    setup: "$2,500",
+    setupWaived: true,
     ideal: "Established firms that want a competitive edge",
     upgrade: "Custom training + 4 practice areas + CRM + monthly reviews",
     features: [
@@ -127,6 +129,7 @@ const PRICING = [
     price: "Custom",
     period: "",
     setup: "Scoped per firm",
+    setupWaived: false,
     ideal: "Multi-practice and multi-location firms",
     upgrade: "Unlimited agents + PM integration + dedicated account manager",
     features: [
@@ -237,7 +240,7 @@ export default function CounselPage() {
   const missedLeads = afterHoursLeads * 0.6;
   const monthlyRevenueLost = missedLeads * avgMatterValue;
   const annualRevenueLost = monthlyRevenueLost * 12;
-  const lexGrowthYr1 = 499 * 12 + 2500; // $8,488
+  const lexGrowthYr1 = 499 * 12; // $5,988 — setup fee waived for founding firms
   const roiYear1 = annualRevenueLost - lexGrowthYr1;
   const paybackMonths = monthlyRevenueLost > 0 ? lexGrowthYr1 / monthlyRevenueLost : 0;
 
@@ -608,7 +611,7 @@ export default function CounselPage() {
             <div>
               <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 700, color: gold }}>Year 1 ROI — Lex Growth plan</p>
               <p style={{ margin: 0, fontSize: 13, color: textSecondary, lineHeight: 1.6 }}>
-                Lex Growth costs <strong style={{ color: textPrimary }}>$8,488 in year one</strong> ($499/mo + $2,500 setup).
+                Lex Growth costs <strong style={{ color: textPrimary }}>$5,988 in year one</strong> ($499/mo — setup fee waived for founding firms).
                 Your firm is currently losing an estimated{" "}
                 <strong style={{ color: gold }}>{fmtCurrency(annualRevenueLost)}/year</strong> in missed leads.
                 {roiYear1 > 0
@@ -627,7 +630,7 @@ export default function CounselPage() {
           </div>
 
           <p style={{ textAlign: "center", fontSize: 12, color: textMuted, marginTop: 24, marginBottom: 0 }}>
-            Assumptions: 60% of after-hours enquiries are lost without 24/7 coverage · 80% conversion rate on captured leads · Year 1 includes setup fee
+            Assumptions: 60% of after-hours enquiries are lost without 24/7 coverage · 80% conversion rate on captured leads · Setup fee waived for founding firms
           </p>
         </div>
       </div>
@@ -636,6 +639,13 @@ export default function CounselPage() {
       <div id="pricing" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Pricing</p>
+
+          {/* Founder offer badge */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201,168,76,0.08)", border: `1px solid ${goldBorder}`, borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: gold }} />
+            <span style={{ fontSize: 11, color: gold, letterSpacing: "1px", textTransform: "uppercase" as const, fontWeight: 700 }}>Founding Firm Offer — Setup Fee Waived</span>
+          </div>
+
           <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
             Less than one missed matter<br />pays for a year.
           </h2>
@@ -675,7 +685,15 @@ export default function CounselPage() {
                 <span style={{ fontSize: plan.price === "Custom" ? 32 : 40, fontWeight: 900, color: textPrimary, letterSpacing: "-2px", lineHeight: 1 }}>{plan.price}</span>
                 {plan.period && <span style={{ fontSize: 14, color: textMuted }}>{plan.period}</span>}
               </div>
-              <p style={{ margin: "0 0 4px", fontSize: 12, color: textMuted }}>{plan.setup}</p>
+              {/* Setup fee display */}
+              {plan.setupWaived ? (
+                <div style={{ margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                  <span style={{ fontSize: 12, color: textMuted, textDecoration: "line-through", opacity: 0.6 }}>{plan.setup} setup</span>
+                  <span style={{ fontSize: 11, color: gold, fontWeight: 700, background: "rgba(201,168,76,0.08)", border: `1px solid ${goldBorder}`, borderRadius: 6, padding: "2px 8px" }}>Waived for founding firms</span>
+                </div>
+              ) : (
+                <p style={{ margin: "0 0 4px", fontSize: 12, color: textMuted }}>{plan.setup}</p>
+              )}
               <p style={{ margin: "0 0 16px", fontSize: 12, color: textSecondary, paddingTop: 12, borderTop: `1px solid ${border}` }}>{plan.ideal}</p>
 
               {/* Upgrade callout — Growth and Enterprise only */}
