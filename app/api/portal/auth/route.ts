@@ -51,13 +51,17 @@ export async function GET(req: Request) {
   // Consume token — one-time use
   await redis.del(`portal:token:${token}`);
 
+  // Check for stored redirect
+  const redirectTo = await redis.get(`portal:redirect:${token}`) as string | null;
+  await redis.del(`portal:redirect:${token}`);
+
   // Create a self-contained signed session token (no Redis needed to verify later)
   const sessionToken = signSession(email);
 
   // Return an HTML page (200 OK) that sets the cookie and redirects via JS.
   // Browsers always process cookies on 200 responses before running scripts —
   // no race condition, no CDN stripping issues.
-  const dest = `${BASE_URL}/client-portal`;
+  const dest = redirectTo ? (redirectTo.startsWith("http") ? redirectTo : `${BASE_URL}${redirectTo}`) : `${BASE_URL}/client-portal`;
   const html = `<!DOCTYPE html>
 <html>
 <head>

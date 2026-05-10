@@ -102,7 +102,7 @@ function magicLinkEmail(email: string, link: string): string {
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { email, redirect: redirectParam } = await req.json();
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return Response.json({ error: "Valid email required" }, { status: 400 });
@@ -113,13 +113,17 @@ export async function POST(req: Request) {
     // Generate token and store in Redis (15 min TTL)
     const redis = getRedis();
     if (!redis) {
-      // Graceful degradation — log and return ok so we don't surface infra issues
       console.error("[portal/login] Redis unavailable");
       return Response.json({ ok: true });
     }
 
     const token = generateToken();
     await redis.set(`portal:token:${token}`, normalised, { ex: 900 });
+
+    // Store redirect if provided
+    if (redirectParam && typeof redirectParam === "string") {
+      await redis.set(`portal:redirect:${token}`, redirectParam, { ex: 900 });
+    }
 
     // Build magic link
     const link = `${BASE_URL}/api/portal/auth?token=${token}`;
@@ -135,7 +139,6 @@ export async function POST(req: Request) {
         html: magicLinkEmail(normalised, link),
       });
     } else {
-      // Dev fallback — log link to console
       console.log("[portal/login] Magic link:", link);
     }
 
