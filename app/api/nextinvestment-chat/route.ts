@@ -38,6 +38,18 @@ When responding:
 - Always end with a soft next step (e.g., "Would you like me to explain how wholesale sourcing works?")`;
 
 export async function POST(req: Request) {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+
   try {
     const body = await req.json();
     const messages = body.messages || [];
@@ -63,12 +75,23 @@ export async function POST(req: Request) {
       messages: chatMessages,
     });
 
-    return Response.json({ content: result.text });
+    return new Response(JSON.stringify({ content: result.text }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   } catch (error) {
     console.error("NextInvestment chat error:", error);
-    return Response.json(
-      { error: "Failed to generate response", details: String(error) },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: "Failed to generate response", details: String(error) }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
   } finally {
     logAuditEvent("research_start", { site: "nextinvestment", model: "claude-3.5-haiku" }).catch(() => {});
