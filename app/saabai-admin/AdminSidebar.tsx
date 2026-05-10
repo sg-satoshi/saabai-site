@@ -277,9 +277,9 @@ function Sidebar({ activePath }: { activePath: string }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            Shane Goldberg
+            Saabai Admin
           </p>
-          <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Saabai Admin</p>
+          <p style={{ margin: 0, fontSize: 11, color: C.muted }}>hello@saabai.ai</p>
         </div>
         <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
           <button

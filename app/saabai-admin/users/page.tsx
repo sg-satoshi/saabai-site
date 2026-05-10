@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
 import UsersClient from "./UsersClient";
+import AdminShell from "../AdminSidebar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,5 +17,9 @@ export default async function UsersPage() {
   const session = await verifySessionToken(token);
   if (!session) redirect("/login?redirect=/saabai-admin/users");
 
-  return <UsersClient />;
+  return (
+    <AdminShell activePath="/saabai-admin/users">
+      <UsersClient />
+    </AdminShell>
+  );
 }
