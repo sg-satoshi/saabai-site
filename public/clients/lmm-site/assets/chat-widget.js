@@ -3,7 +3,7 @@
   
   const CONFIG = {
     name: 'Zara',
-    avatar: '/clients/lmm-site/assets/avatar-zara.png',
+    avatar: '/clients/lmm-site/assets/avatar-zara.png?v=2',
     brandColor: '#0b5d55',
     accentColor: '#c49a3a',
     bgColor: '#f8faf7',

@@ -3,7 +3,7 @@
   
   const CONFIG = {
     name: 'Sophie',
-    avatar: '/clients/nextinvestment/assets/avatar-sophie.png',
+    avatar: '/clients/nextinvestment/assets/avatar-sophie.png?v=2',
     brandColor: '#0a1628',
     accentColor: '#c9a227',
     bgColor: '#f5f0e8',
