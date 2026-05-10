@@ -35,6 +35,18 @@ const NAV: {
         ),
       },
       {
+        label: "Customers",
+        href: "/saabai-admin/customers",
+        icon: (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
         label: "Site Factory",
         href: "/saabai-admin/site-factory",
         icon: (
