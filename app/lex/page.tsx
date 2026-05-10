@@ -144,8 +144,8 @@ function thinkingFor(msg: string): string {
   return "Researching…";
 }
 
-// ── Quick replies ─────────────────────────────────────────────────────────────
-const QUICK_REPLIES = [
+// ── Quick replies ──────────────────────────────────────────────────────────
+const QUICK_REPLIES_GENERAL = [
   "What are the elements of negligence under Australian law?",
   "Summarise the duty of care test from Donoghue v Stevenson",
   "What does s 180 Corporations Act say about director duties?",
@@ -158,8 +158,45 @@ const QUICK_REPLIES = [
   "Explain the difference between binding and persuasive authority",
 ];
 
-function pickReplies() {
-  return [...QUICK_REPLIES].sort(() => Math.random() - 0.5).slice(0, 4);
+const QUICK_REPLIES_PROPERTY = [
+  "What are the standard special conditions in a NSW contract for sale?",
+  "Explain the 66W certificate and when it's used",
+  "What stamp duty concessions apply to first home buyers in Victoria?",
+  "Search for recent adverse possession cases in Queensland",
+  "What are the vendor disclosure requirements under s 52A Conveyancing Act?",
+  "Explain strata by-law enforcement procedures",
+  "What is the difference between joint tenancy and tenancy in common?",
+  "Search PEXA eligibility and mandatory e-conveyancing requirements",
+];
+
+const QUICK_REPLIES_FAMILY = [
+  "What factors does the court consider in parenting orders?",
+  "Explain the presumption of equal shared parental responsibility",
+  "What is the four-step process for property settlement?",
+  "Search for recent spousal maintenance cases",
+  "What are the requirements for a binding financial agreement?",
+  "Explain contravention of parenting orders and penalties",
+  "What is the test for de facto relationship under the Family Law Act?",
+  "Search for recent cases on superannuation splitting",
+];
+
+const QUICK_REPLIES_COMMERCIAL = [
+  "What are the essential terms of a valid contract under Australian law?",
+  "Explain the doctrine of privity and its exceptions",
+  "What is the difference between a warranty and a condition?",
+  "Search for recent unfair contract terms cases under the ACL",
+  "What are the director's duties under the Corporations Act?",
+  "Explain the piercing the corporate veil doctrine",
+  "What is required for a valid deed of company arrangement?",
+  "Search for recent insolvent trading cases",
+];
+
+function pickReplies(matterType?: string) {
+  let pool = QUICK_REPLIES_GENERAL;
+  if (matterType?.toLowerCase().includes("property")) pool = QUICK_REPLIES_PROPERTY;
+  else if (matterType?.toLowerCase().includes("family")) pool = QUICK_REPLIES_FAMILY;
+  else if (matterType?.toLowerCase().includes("commercial") || matterType?.toLowerCase().includes("corporate")) pool = QUICK_REPLIES_COMMERCIAL;
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
 }
 
 // ── Export draft to Word ──────────────────────────────────────────────────────
@@ -382,6 +419,13 @@ export default function LexPage() {
   const [emailBody, setEmailBody] = useState("");
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  // ── Client intake state ───────────────────────────────────────────────
+  const [intakeOpen, setIntakeOpen] = useState(false);
+  const [intakeClientName, setIntakeClientName] = useState("");
+  const [intakeMatterType, setIntakeMatterType] = useState("Property");
+  const [intakeUrgency, setIntakeUrgency] = useState<"low" | "medium" | "high">("medium");
+  const [intakeDescription, setIntakeDescription] = useState("");
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -906,6 +950,18 @@ export default function LexPage() {
               </svg>
               New Thread
             </button>
+            <button onClick={() => setIntakeOpen(true)} style={{
+              flex: 1, padding: "8px 10px", borderRadius: 8,
+              background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
+              color: "#22c55e", fontSize: 11, fontWeight: 700, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+            }}>
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M5.5 1C7.5 1 9 2.5 9 4.5C9 6.5 7.5 8 5.5 8C3.5 8 2 6.5 2 4.5C2 2.5 3.5 1 5.5 1Z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+                <path d="M8 8l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+              New Matter
+            </button>
             <button onClick={newProject} style={{
               flex: 1, padding: "8px 10px", borderRadius: 8,
               background: "rgba(91,141,238,0.08)", border: "#23344f",
@@ -1002,7 +1058,7 @@ export default function LexPage() {
                   {/* Threads inside project */}
                   {isExpanded && projectThreads.map(thread => (
                     <ThreadRow key={thread.id} thread={thread} activeId={activeId}
-                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
+                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies(thread.title)); }}
                       onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
                       renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
@@ -1045,7 +1101,7 @@ export default function LexPage() {
                   )}
                   {unorganised.map(thread => (
                     <ThreadRow key={thread.id} thread={thread} activeId={activeId}
-                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies()); }}
+                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies(thread.title)); }}
                       onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
                       renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
                       onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
@@ -1920,6 +1976,99 @@ export default function LexPage() {
                 )}
               </div>
 
+              {/* Document comparison toggle */}
+              <div style={{ marginBottom: 16, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
+                <button onClick={() => setReviewCompareMode(v => !v)} style={{
+                  width: "100%", background: "none", border: "#23344f", color: C.textMuted,
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
+                }}>
+                  <span>Compare with another document</span>
+                  <span style={{ color: C.gold, fontSize: 11 }}>{reviewCompareMode ? "▼" : "▶"}</span>
+                </button>
+
+                {reviewCompareMode && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                      {(["upload", "paste"] as const).map(m => (
+                        <button key={m} onClick={() => setReviewCompareInputMode(m)} style={{
+                          padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                          border: `1px solid ${reviewCompareInputMode === m ? C.gold : C.border}`,
+                          background: reviewCompareInputMode === m ? C.goldBg : "transparent",
+                          color: reviewCompareInputMode === m ? C.gold : C.textMuted,
+                        }}>
+                          {m === "upload" ? "Upload" : "Paste"}
+                        </button>
+                      ))}
+                    </div>
+
+                    {reviewCompareInputMode === "upload" && (
+                      <div
+                        onClick={() => reviewCompareFileRef.current?.click()}
+                        onDragOver={e => { e.preventDefault(); setReviewCompareDragOver(true); }}
+                        onDragLeave={() => setReviewCompareDragOver(false)}
+                        onDrop={e => { e.preventDefault(); setReviewCompareDragOver(false); const f = e.dataTransfer.files[0]; if (f) setReviewCompareFile(f); }}
+                        style={{
+                          border: `2px dashed ${reviewCompareDragOver ? C.gold : reviewCompareFile ? "#22c55e" : C.border}`,
+                          borderRadius: 8, padding: "12px 10px", textAlign: "center", cursor: "pointer",
+                          background: reviewCompareDragOver ? C.goldBg : reviewCompareFile ? "rgba(34,197,94,0.04)" : "transparent",
+                        }}>
+                        <input ref={reviewCompareFileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: "none" }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) setReviewCompareFile(f); }} />
+                        {reviewCompareFile ? (
+                          <p style={{ margin: 0, fontSize: 11, color: "#22c55e", fontWeight: 600 }}>{reviewCompareFile.name}</p>
+                        ) : (
+                          <p style={{ margin: 0, fontSize: 11, color: C.textDim }}>Drop or click to select comparison doc</p>
+                        )}
+                      </div>
+                    )}
+
+                    {reviewCompareInputMode === "paste" && (
+                      <textarea value={reviewComparePasteText} onChange={e => setReviewComparePasteText(e.target.value)}
+                        placeholder="Paste comparison document text..."
+                        rows={4}
+                        style={{ width: "100%", padding: "8px 10px", borderRadius: 6, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", resize: "vertical" }} />
+                    )}
+
+                    <button
+                      onClick={async () => {
+                        setReviewComparisonLoading(true);
+                        setReviewComparisonAnalysis("");
+                        try {
+                          let compareText = "";
+                          if (reviewCompareInputMode === "upload" && reviewCompareFile) {
+                            const form = new FormData();
+                            form.append("file", reviewCompareFile);
+                            const res = await fetch("/api/lex-extract", { method: "POST", body: form });
+                            if (res.ok) { const data = await res.json(); compareText = data.text; }
+                          } else {
+                            compareText = reviewComparePasteText;
+                          }
+                          const originalText = reviewInputMode === "paste" ? reviewPasteText : reviewReport?.summary ?? "";
+                          const res = await fetch("/api/lex-review", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ documentText: `ORIGINAL DOCUMENT:\n${originalText}\n\nCOMPARISON DOCUMENT:\n${compareText}`, documentType: "comparison", direction: "incoming", jurisdiction: reviewJurisdiction }),
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            setReviewComparisonAnalysis(data.summary || JSON.stringify(data, null, 2));
+                          }
+                        } catch {}
+                        setReviewComparisonLoading(false);
+                      }}
+                      disabled={reviewComparisonLoading || (reviewCompareInputMode === "upload" ? !reviewCompareFile : !reviewComparePasteText.trim())}
+                      style={{
+                        width: "100%", marginTop: 10, padding: "8px 0", borderRadius: 8,
+                        background: reviewComparisonLoading ? C.goldDim : C.goldBg,
+                        border: `1px solid ${C.goldBorder}`, color: C.gold,
+                        fontSize: 11, fontWeight: 700, cursor: reviewComparisonLoading ? "wait" : "pointer",
+                      }}>
+                      {reviewComparisonLoading ? "Analyzing..." : "Analyze Differences"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* What Lex checks */}
               <div style={{ marginBottom: 20, padding: "10px 12px", borderRadius: 8, background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
                 <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>
@@ -2095,6 +2244,14 @@ export default function LexPage() {
                       </div>
                     </div>
 
+                    {/* Comparison analysis */}
+                    {reviewComparisonAnalysis && (
+                      <div style={{ marginBottom: 20, padding: "16px 20px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}` }}>
+                        <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>Document Comparison</p>
+                        <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{reviewComparisonAnalysis}</p>
+                      </div>
+                    )}
+
                     {/* Summary */}
                     <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}` }}>
                       <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>Executive Summary</p>
@@ -2198,6 +2355,92 @@ export default function LexPage() {
             </div>
           </div>
         )}
+
+      {/* ── Intake form modal ─────────────────────────────────────────────── */}
+      {intakeOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.6)", zIndex: 9998,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }} onClick={() => setIntakeOpen(false)}>
+          <div style={{
+            background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`,
+            borderRadius: 14, padding: "24px 28px", width: 420, maxWidth: "90vw",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: C.text }}>New Matter Intake</p>
+              <button onClick={() => setIntakeOpen(false)} style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Client Name</label>
+              <input value={intakeClientName} onChange={e => setIntakeClientName(e.target.value)}
+                placeholder="e.g. Smith Holdings Pty Ltd"
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Matter Type</label>
+              <select value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value)}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
+                {["Property", "Family Law", "Corporate / Commercial", "Litigation", "Employment", "Wills & Estates", "Criminal", "Other"].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Urgency</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {(["low", "medium", "high"] as const).map(u => (
+                  <button key={u} onClick={() => setIntakeUrgency(u)} style={{
+                    flex: 1, padding: "7px 0", borderRadius: 7, fontSize: 12, fontWeight: 700,
+                    cursor: "pointer", border: `1px solid ${intakeUrgency === u ? C.gold : C.border}`,
+                    background: intakeUrgency === u ? C.goldBg : "transparent",
+                    color: intakeUrgency === u ? C.gold : C.textDim, textTransform: "capitalize",
+                  }}>{u}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Brief Description</label>
+              <textarea value={intakeDescription} onChange={e => setIntakeDescription(e.target.value)}
+                placeholder="Briefly describe the matter..."
+                rows={3}
+                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setIntakeOpen(false)} style={{
+                padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
+              }}>Cancel</button>
+              <button
+                onClick={() => {
+                  const title = `${intakeMatterType}: ${intakeClientName || "New matter"}`;
+                  const id = `t_${Date.now()}`;
+                  const thread: Thread = {
+                    id, title,
+                    messages: [{
+                      role: "user",
+                      content: `Matter: ${intakeMatterType} for ${intakeClientName || "client"}. Urgency: ${intakeUrgency}. ${intakeDescription}`,
+                    }],
+                    createdAt: Date.now(),
+                  };
+                  setThreads(prev => [thread, ...prev]);
+                  setActiveId(id);
+                  setIntakeOpen(false);
+                  setIntakeClientName(""); setIntakeMatterType("Property"); setIntakeUrgency("medium"); setIntakeDescription("");
+                }}
+                disabled={!intakeClientName.trim()}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                  background: `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
+                  border: "#23344f", color: C.bg, cursor: "pointer",
+                  opacity: !intakeClientName.trim() ? 0.6 : 1,
+                }}
+              >
+                Create Matter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Email form modal ─────────────────────────────────────────────── */}
       {emailOpen && (
