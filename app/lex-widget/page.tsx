@@ -19,6 +19,8 @@ const C = {
 };
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
+type DocContext = { text: string; fileName: string; summary: string; clauses: ClauseResult[] };
+type ClauseResult = { type: string; label: string; found: boolean; confidence: "high" | "medium" | "low"; snippets: string[] };
 
 // ── LexMark avatar ────────────────────────────────────────────────────────────
 function LexMark({ size = 24 }: { size?: number }) {
@@ -116,11 +118,18 @@ export default function LexWidgetPage() {
   const [thinkLabel, setThinkLabel] = useState("Researching…");
   const [privacyMode, setPrivacyMode] = useState(true);
   const [privacyStats, setPrivacyStats] = useState<{ tokensReplaced: number; types: Record<string, number> } | null>(null);
+  const [docContext, setDocContext] = useState<DocContext | null>(null);
+  const [analyzingDoc, setAnalyzingDoc] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
   const msgsRef   = useRef<ChatMessage[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const docRef    = useRef<DocContext | null>(null);
+
+  // Sync docRef with state
+  useEffect(() => { docRef.current = docContext; }, [docContext]);
 
   // Read clientId from URL search params (client-side only)
   useEffect(() => {
@@ -135,7 +144,7 @@ export default function LexWidgetPage() {
     const container = containerRef.current;
     if (!container) return;
     container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, analyzingDoc]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -163,11 +172,22 @@ export default function LexWidgetPage() {
     else if (/draft|write|letter|advice|memo/.test(l))     setThinkLabel("Drafting…");
     else                                                    setThinkLabel("Researching…");
 
+    // Build API messages: prepend document context if available
+    let apiMessages = updated;
+    const doc = docRef.current;
+    if (doc) {
+      const contextMsg: ChatMessage = {
+        role: "user",
+        content: `Document context from ${doc.fileName}:\n${doc.summary}\n\nDocument text (first 5000 characters):\n${doc.text.slice(0, 5000)}`,
+      };
+      apiMessages = [contextMsg, ...updated];
+    }
+
     try {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated, clientId, privacyMode }),
+        body: JSON.stringify({ messages: apiMessages, clientId, privacyMode }),
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
 
@@ -221,6 +241,81 @@ export default function LexWidgetPage() {
       setLoading(false);
     }
   }, [loading, clientId, privacyMode]);
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      const errMsg: ChatMessage[] = [
+        ...msgsRef.current,
+        { role: "assistant", content: "File too large (max 10MB). Please upload a smaller document." },
+      ];
+      msgsRef.current = errMsg;
+      setMessages(errMsg);
+      return;
+    }
+    setAnalyzingDoc(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/analyze-document", { method: "POST", body: form });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(err.error || "Upload failed");
+      }
+      const data = await res.json() as {
+        text: string; wordCount: number; pages: number; fileName: string;
+        clauses: ClauseResult[]; summary: string;
+      };
+      const ctx: DocContext = {
+        text: data.text,
+        fileName: data.fileName,
+        summary: data.summary,
+        clauses: data.clauses,
+      };
+      setDocContext(ctx);
+      docRef.current = ctx;
+
+      // Add visible user message for the upload
+      const uploadMsg: ChatMessage = { role: "user", content: `📎 Uploaded **${data.fileName}** (${data.wordCount.toLocaleString()} words, ~${data.pages} page${data.pages === 1 ? "" : "s"})` };
+
+      // Build clause summary for assistant message
+      const found = data.clauses.filter((c: ClauseResult) => c.found);
+      const notFound = data.clauses.filter((c: ClauseResult) => !c.found);
+      let clauseText = `**Document Analysis: ${data.fileName}**\n\n`;
+      if (found.length > 0) {
+        clauseText += `Detected **${found.length}** legal clause${found.length === 1 ? "" : "s"}:\n\n`;
+        found.forEach((c: ClauseResult) => {
+          clauseText += `• **${c.label}** \u2014 ${c.confidence} confidence`;
+          if (c.snippets.length > 0) {
+            const snip = c.snippets[0].replace(/^\s*[^a-zA-Z]*/, "").slice(0, 90);
+            clauseText += `\n  _“${snip}${snip.length >= 90 ? "…" : ""}”_`;
+          }
+          clauseText += "\n";
+        });
+      } else {
+        clauseText += "No standard legal clauses detected in this document.\n";
+      }
+      if (notFound.length > 0) {
+        clauseText += `\nNot detected: ${notFound.map((c: ClauseResult) => c.label).join(", ")}.\n`;
+      }
+      clauseText += "\nAsk me anything about this document — I’ll reference the full text when answering.";
+
+      const assistantMsg: ChatMessage = { role: "assistant", content: clauseText };
+      const updated = [...msgsRef.current, uploadMsg, assistantMsg];
+      msgsRef.current = updated;
+      setMessages(updated);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      const errMsgs: ChatMessage[] = [
+        ...msgsRef.current,
+        { role: "assistant", content: `Could not analyze document: ${message}` },
+      ];
+      msgsRef.current = errMsgs;
+      setMessages(errMsgs);
+    } finally {
+      setAnalyzingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, []);
 
   const hasMessages = messages.length > 0;
 
@@ -326,7 +421,7 @@ export default function LexWidgetPage() {
         }}>
 
           {/* Welcome state */}
-          {!hasMessages && !loading && (
+          {!hasMessages && !loading && !analyzingDoc && (
             <div style={{
               flex: 1, display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center",
@@ -403,6 +498,16 @@ export default function LexWidgetPage() {
             );
           })}
 
+          {/* Document analysis indicator */}
+          {analyzingDoc && (
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 7, animation: "lexFadeIn 0.2s ease" }}>
+              <div style={{ flexShrink: 0, marginBottom: 2 }}>
+                <LexMark size={20} />
+              </div>
+              <ThinkingDots label="Analyzing document…" />
+            </div>
+          )}
+
           {/* Thinking indicator */}
           {loading && (
             <div style={{ display: "flex", alignItems: "flex-end", gap: 7, animation: "lexFadeIn 0.2s ease" }}>
@@ -424,6 +529,47 @@ export default function LexWidgetPage() {
           padding: "10px 10px 8px",
         }}>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.doc,.txt"
+              style={{ display: "none" }}
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) handleFileUpload(f);
+              }}
+            />
+            {/* Upload button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading || analyzingDoc}
+              title="Upload PDF, DOCX, or TXT"
+              style={{
+                width: 36, height: 36,
+                borderRadius: 9,
+                border: `1px solid ${C.border}`,
+                flexShrink: 0,
+                background: "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "background 0.15s, border-color 0.15s",
+                cursor: loading || analyzingDoc ? "not-allowed" : "pointer",
+              }}
+              onMouseEnter={e => {
+                if (!loading && !analyzingDoc) {
+                  e.currentTarget.style.background = C.goldBg;
+                  e.currentTarget.style.borderColor = C.goldBorder;
+                }
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = C.border;
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+              </svg>
+            </button>
             <textarea
               ref={inputRef}
               value={input}
@@ -434,8 +580,8 @@ export default function LexWidgetPage() {
                   sendMessage(input);
                 }
               }}
-              placeholder="Ask a legal question…"
-              disabled={loading}
+              placeholder={docContext ? "Ask about this document…" : "Ask a legal question…"}
+              disabled={loading || analyzingDoc}
               rows={1}
               style={{
                 flex: 1,
@@ -454,16 +600,16 @@ export default function LexWidgetPage() {
             />
             <button
               onClick={() => sendMessage(input)}
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || loading || analyzingDoc}
               style={{
                 width: 36, height: 36,
                 borderRadius: 9,
                 border: "none",
                 flexShrink: 0,
-                background: input.trim() && !loading ? C.gold : C.goldBg,
+                background: input.trim() && !loading && !analyzingDoc ? C.gold : C.goldBg,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "background 0.15s",
-                cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+                cursor: input.trim() && !loading && !analyzingDoc ? "pointer" : "not-allowed",
               }}
             >
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
