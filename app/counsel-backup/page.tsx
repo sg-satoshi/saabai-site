@@ -446,6 +446,49 @@ export default function CounselPage() {
         </div>
       </div>
 
+      {/* Testimonials */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>What firms say</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            Lex pays for itself<br />in the first month.
+          </h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+          {[
+            {
+              quote: "We were losing at least two quality enquiries a week to after-hours voicemails. Lex captured a $12,000 commercial matter at 10pm on a Sunday. That one matter paid for the year.",
+              name: "Partner",
+              firm: "Adelaide commercial law firm",
+            },
+            {
+              quote: "The structured briefs Lex delivers mean our first consultation is 15 minutes instead of 45. We're billing sooner and clients feel like we already understand their problem.",
+              name: "Principal Lawyer",
+              firm: "Tax & ATO disputes practice",
+            },
+            {
+              quote: "I was skeptical about 'AI for law firms' -- it sounded like a chatbot gimmick. Lex is nothing like that. It's trained on our voice, our processes, and it hands off properly.",
+              name: "Managing Partner",
+              firm: "Boutique property law firm, Brisbane",
+            },
+          ].map((t, i) => (
+            <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 20, padding: "32px 28px", position: "relative" as const, overflow: "hidden" as const }}>
+              <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${gold}, transparent)` }} />
+              <p style={{ fontSize: 15, color: textSecondary, lineHeight: 1.75, margin: "0 0 24px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 20, borderTop: `1px solid ${border}` }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: goldDim, border: `1px solid ${goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: gold }}>{t.name.charAt(0)}</span>
+                </div>
+                <div>
+                  <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: textPrimary }}>{t.name}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: textMuted }}>{t.firm}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* What's included */}
       <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
@@ -635,6 +678,54 @@ export default function CounselPage() {
         </div>
       </div>
 
+
+      {/* Security &amp; Data */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Data &amp; compliance</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            Your client data never touches<br />
+            <span style={{ color: gold }}>our servers.</span>
+          </h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 540, margin: "0 auto", lineHeight: 1.7 }}>
+            Built for Australian law firms with professional obligations in mind. Your firm stays in control.
+          </p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+          {[
+            {
+              title: "Your Anthropic account",
+              desc: "Lex runs on your own Claude API key. Conversation data flows directly from your website to Anthropic -- never through Saabai infrastructure.",
+              icon: "🔒",
+            },
+            {
+              title: "No data retention",
+              desc: "We do not store conversation transcripts, client details, or matter briefs. Your lead data goes to your email and your chosen CRM only.",
+              icon: "🗑️",
+            },
+            {
+              title: "Australian-hosted option",
+              desc: "For firms requiring local data residency, Lex can be configured to route through Australian cloud infrastructure on request.",
+              icon: "🇦🇺",
+            },
+            {
+              title: "Legal privilege aware",
+              desc: "Lex is trained not to solicit privileged information. Intake questions are scoped to factual background, not legal advice or strategy.",
+              icon: "⚖️",
+            },
+          ].map((item, i) => (
+            <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: "28px 24px" }}>
+              <div style={{ fontSize: 22, marginBottom: 14 }}>{item.icon}</div>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: textPrimary, margin: "0 0 10px", lineHeight: 1.3 }}>{item.title}</h3>
+              <p style={{ fontSize: 13, color: textSecondary, lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p style={{ textAlign: "center", fontSize: 12, color: textMuted, marginTop: 32, lineHeight: 1.6 }}>
+          Concerned about data sovereignty? <a href="https://calendly.com/shanegoldberg/30min" style={{ color: gold, textDecoration: "underline", textUnderlineOffset: 3 }}>Book a security review</a> and we will walk you through the architecture.
+        </p>
+      </div>
+
       {/* Pricing */}
       <div id="pricing" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
@@ -754,6 +845,50 @@ export default function CounselPage() {
           All plans include a 30-day review period. If Lex isn&apos;t capturing leads within the first month, we&apos;ll work with you until it is.
           <br />AI processing runs on your Anthropic account — we&apos;ll walk you through the 5-minute setup as part of onboarding.
         </p>
+      </div>
+
+
+      {/* FAQ */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Common questions</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            Everything else you need to know.
+          </h2>
+        </div>
+        <div style={{ maxWidth: 780, margin: "0 auto", display: "flex", flexDirection: "column" as const, gap: 16 }}>
+          {[
+            {
+              q: "Will Lex replace our receptionist or intake staff?",
+              a: "No. Lex handles after-hours and overflow enquiries -- the leads that currently go to voicemail or do not get followed up. Your team focuses on consultations, strategy, and billable work.",
+            },
+            {
+              q: "How long does setup take?",
+              a: "Typically 5 business days from kickoff to live. We interview you once about your practice areas, tone, and intake preferences. We build and train the agent. You review and approve. Then it goes live.",
+            },
+            {
+              q: "What if a lead needs urgent attention?",
+              a: "Lex flags urgency automatically. Time-critical matters trigger an instant email to your team with a priority label. Employment dismissals, ATO deadlines, and exchange-pressure property deals get flagged immediately.",
+            },
+            {
+              q: "Can we change the questions Lex asks?",
+              a: "Yes -- fully. Lex is trained on your firm's specific intake process. We tune the conversation flow, the information captured, and the follow-up emails to match how you already work.",
+            },
+            {
+              q: "What happens after the 30-day review period?",
+              a: "You decide. If Lex is working, you stay on your chosen plan. If it is not performing, we will tune it or you walk away -- no lock-in, no cancellation fees.",
+            },
+            {
+              q: "Do we need technical skills to manage Lex?",
+              a: "None. We handle all technical setup, training, and ongoing optimisation. You get a simple dashboard to view leads and conversations. Everything else is managed by us.",
+            },
+          ].map((faq, i) => (
+            <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: "24px 28px" }}>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: textPrimary, margin: "0 0 10px", lineHeight: 1.4 }}>{faq.q}</h3>
+              <p style={{ fontSize: 14, color: textSecondary, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* About Saabai */}
