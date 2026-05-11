@@ -4,6 +4,7 @@ import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-co
 import { getLexConfig } from "../../../lib/lex-config";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
+import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
 import {
   searchAustLII,
   searchATO,
@@ -36,7 +37,7 @@ type MatterInput         = { name: string; email: string; phone?: string; practi
 
 export async function POST(req: Request) {
   try {
-    const { messages, clientId } = await req.json();
+    const { messages, clientId, privacyMode } = await req.json();
 
     const config = getLexConfig(clientId);
 
@@ -66,6 +67,31 @@ export async function POST(req: Request) {
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
+    // ── PRIVACY MODE: Tokenize PII before sending to LLM ──
+    let tokenMap: Record<string, string> = {};
+    let tokenizedMessages = coreMessages;
+    let privacyStats = { tokensReplaced: 0, types: {} as Record<string, number> };
+
+    if (privacyMode) {
+      const combinedTokenMap: Record<string, string> = {};
+      tokenizedMessages = coreMessages.map(m => {
+        const { tokenized, tokenMap: localMap, stats } = tokenizePII(m.content);
+        Object.assign(combinedTokenMap, localMap);
+        privacyStats.tokensReplaced += stats.tokensReplaced;
+        for (const [type, count] of Object.entries(stats.types)) {
+          privacyStats.types[type] = (privacyStats.types[type] ?? 0) + count;
+        }
+        return { ...m, content: tokenized };
+      });
+      tokenMap = combinedTokenMap;
+
+      // Add privacy instruction to system prompt
+      systemPromptContent += `
+
+---
+PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeholder tokens like {{PERSON_1}}, {{TRUST_1}}, {{EMAIL_1}}, etc. You MUST preserve these exact tokens in your responses. Do not expand, guess, or replace them with real names or values. Treat all {{TYPE_N}} tokens as opaque placeholders. Your tools will receive tokenized queries — search using legal doctrine and general terms, not personal identifiers.`;
+    }
+
     const cachedSystem: SystemModelMessage = {
       role: "system",
       content: systemPromptContent,
@@ -88,7 +114,7 @@ export async function POST(req: Request) {
     const result = streamText({
       model,
       system: cachedSystem,
-      messages: coreMessages,
+      messages: tokenizedMessages,
       stopWhen: stepCountIs(6),
       tools: {
 
@@ -334,6 +360,42 @@ export async function POST(req: Request) {
         }),
       },
     });
+
+    // ── PRIVACY MODE: Buffer stream, detokenize, re-stream ──
+    if (privacyMode) {
+      const fullText = await result.text;
+      const detokenized = rehydrateTokens(fullText, tokenMap);
+
+      // Emit as SSE compatible with the Lex widget client
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          // Break into natural chunks (sentences / clauses) for streaming effect
+          const chunks = detokenized.split(/(?<=[.!?]\s+)/);
+          let i = 0;
+          function send() {
+            if (i >= chunks.length) {
+              controller.close();
+              return;
+            }
+            const payload = JSON.stringify({ type: "text-delta", delta: chunks[i] });
+            controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+            i++;
+            // Small delay for visual streaming effect
+            setTimeout(send, 15);
+          }
+          send();
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
 
     return result.toUIMessageStreamResponse();
   } catch (err) {

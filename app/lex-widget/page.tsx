@@ -114,6 +114,8 @@ export default function LexWidgetPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkLabel, setThinkLabel] = useState("Researching…");
+  const [privacyMode, setPrivacyMode] = useState(true);
+  const [privacyStats, setPrivacyStats] = useState<{ tokensReplaced: number; types: Record<string, number> } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,7 +167,7 @@ export default function LexWidgetPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated, clientId }),
+        body: JSON.stringify({ messages: updated, clientId, privacyMode }),
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
 
@@ -218,7 +220,7 @@ export default function LexWidgetPage() {
     } finally {
       setLoading(false);
     }
-  }, [loading, clientId]);
+  }, [loading, clientId, privacyMode]);
 
   const hasMessages = messages.length > 0;
 
@@ -276,18 +278,44 @@ export default function LexWidgetPage() {
               </div>
             </div>
           </div>
-          {/* Right: powered by */}
-          <a
-            href="https://saabai.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontSize: 8, color: C.textDim,
-              textDecoration: "none", letterSpacing: 0.2,
-            }}
-          >
-            Powered by Saabai.ai
-          </a>
+          {/* Right: privacy toggle + powered by */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={() => setPrivacyMode(v => !v)}
+              title={privacyMode ? "Privacy Mode: PII is anonymized before sending to AI" : "Privacy Mode off"}
+              style={{
+                display: "flex", alignItems: "center", gap: 4,
+                padding: "3px 8px",
+                borderRadius: 6,
+                border: `1px solid ${privacyMode ? C.goldBorder : C.border}`,
+                background: privacyMode ? C.goldBg : "transparent",
+                cursor: "pointer",
+                fontSize: 9,
+                color: privacyMode ? C.gold : C.textDim,
+                fontWeight: 600,
+                letterSpacing: 0.3,
+                textTransform: "uppercase" as const,
+              }}
+            >
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: privacyMode ? "#4ade80" : C.textDim,
+                display: "inline-block",
+              }} />
+              {privacyMode ? "Privacy On" : "Privacy Off"}
+            </button>
+            <a
+              href="https://saabai.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 8, color: C.textDim,
+                textDecoration: "none", letterSpacing: 0.2,
+              }}
+            >
+              Powered by Saabai.ai
+            </a>
+          </div>
         </div>
 
         {/* ── Chat area ── */}
@@ -449,7 +477,13 @@ export default function LexWidgetPage() {
             marginTop: 5, fontSize: 8,
             color: C.textDim, textAlign: "center",
           }}>
-            Not legal advice. Verify all citations.
+            {privacyMode ? (
+              <span style={{ color: "#4ade80" }}>
+                ✦ Privacy Mode active — client identifiers are anonymized before AI processing
+              </span>
+            ) : (
+              "Not legal advice. Verify all citations."
+            )}
           </div>
         </div>
       </div>
