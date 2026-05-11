@@ -116,6 +116,7 @@ export default function LexWidgetPage() {
   const [thinkLabel, setThinkLabel] = useState("Researching…");
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
   const msgsRef   = useRef<ChatMessage[]>([]);
 
@@ -127,9 +128,11 @@ export default function LexWidgetPage() {
     try { window.parent.postMessage({ lexWidget: "ready" }, "*"); } catch {}
   }, []);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages (scroll container, NOT document)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
   // Auto-resize textarea
@@ -288,7 +291,7 @@ export default function LexWidgetPage() {
         </div>
 
         {/* ── Chat area ── */}
-        <div style={{
+        <div ref={containerRef} style={{
           flex: 1, overflowY: "auto",
           padding: 12,
           display: "flex", flexDirection: "column", gap: 10,
