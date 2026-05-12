@@ -34,8 +34,6 @@ const CHANGELOG: Day[] = [
     entries: [
       { time: "17:08", tag: "FIX", title: "Correct 6.0mm clear acrylic full sheet price from $530 to $252 ex GST" },
       { time: "10:55", tag: "FIX", title: "Correct 4.5mm clear acrylic full sheet price from $399 to $190 ex GST" },
-      { time: "10:42", tag: "NEW", title: "Add explainer video section with transcript timeline and demo CTA" },
-      { time: "09:28", tag: "NEW", title: "Add testimonials, security/compliance, and FAQ sections to /for-law-firms" }
     ],
   },
   {
