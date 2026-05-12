@@ -138,7 +138,7 @@ const ACRYLIC: SheetRow[] = [
   { colour: "tint",             thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 165.08, fullSheetPrice: 234 },
   { colour: "marine green tint",thicknessMm: 4.5, sheetW: 2440, sheetH: 1220, ctsRate: 162.25, fullSheetPrice: 230 },
   // 6mm
-  { colour: "clear",            thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 177.77, fullSheetPrice: 530 },
+  { colour: "clear",            thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 177.77, fullSheetPrice: 252 },
   { colour: "opal",             thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 191.88, fullSheetPrice: 272 },
   { colour: "opal satin",       thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 256.99, fullSheetPrice: 340 },
   { colour: "marine green tint",thicknessMm: 6, sheetW: 2440, sheetH: 1220, ctsRate: 227.16, fullSheetPrice: 322 },
