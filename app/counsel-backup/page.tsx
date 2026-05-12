@@ -489,6 +489,45 @@ export default function CounselPage() {
         </div>
       </div>
 
+      {/* Video / Explainer */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px 80px" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>Watch Lex in action</p>
+          <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>
+            See how a $12,000 commercial matter<br />was captured at 10pm on a Sunday.
+          </h2>
+          <p style={{ fontSize: 16, color: textSecondary, maxWidth: 540, margin: "0 auto", lineHeight: 1.7 }}>
+            90 seconds. No jargon. Just Lex qualifying a real lead, building a case brief, and handing it to the partner Monday morning.
+          </p>
+        </div>
+        <div style={{ position: "relative" as const, borderRadius: 20, overflow: "hidden" as const, border: `1px solid ${border}`, background: card, aspectRatio: "16 / 9", maxWidth: 920, margin: "0 auto" }}>
+          {/* Play button overlay */}
+          <div style={{ position: "absolute" as const, inset: 0, display: "flex", flexDirection: "column" as const, alignItems: "center", justifyContent: "center", gap: 18, cursor: "pointer" }}
+               onClick={() => window.open("https://calendly.com/shanegoldberg/30min", "_blank")}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: gold, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 12px 40px rgba(0, 0, 0, 0.35)" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill={bg}><polygon points="7,4 19,12 7,20"/></svg>
+            </div>
+            <span style={{ fontSize: 13, color: textSecondary, fontWeight: 600, letterSpacing: "0.3px" }}>Demo video coming soon — book a live walkthrough</span>
+          </div>
+        </div>
+        {/* Transcript preview */}
+        <div style={{ maxWidth: 720, margin: "40px auto 0" }}>
+          <p style={{ fontSize: 11, color: textMuted, letterSpacing: "1px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>In the demo</p>
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "14px 18px", fontSize: 14, color: textSecondary, lineHeight: 1.7 }}>
+            <span style={{ color: gold, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>0:00</span>
+            <span>The problem: what happens when a high-value enquiry hits your website at 10pm on a Sunday</span>
+            <span style={{ color: gold, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>0:15</span>
+            <span>Lex starts the conversation — no forms, no friction, just a natural chat on the page</span>
+            <span style={{ color: gold, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>0:35</span>
+            <span>Qualification in real time: matter type, urgency, key facts, budget indicators</span>
+            <span style={{ color: gold, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>0:55</span>
+            <span>The structured brief: what the partner sees Monday morning — ready to act on</span>
+            <span style={{ color: gold, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>1:10</span>
+            <span>Follow-up handled: the client already has a confirmed appointment and feels heard</span>
+          </div>
+        </div>
+      </div>
+
       {/* What's included */}
       <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
