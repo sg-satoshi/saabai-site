@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import AdvisoryEnquiryForm from "./AdvisoryEnquiryForm";
 
 export const metadata: Metadata = {
   title: "AI Advisory & Board Positions | Shane Goldberg | Saabai",
@@ -107,7 +108,7 @@ export default function Advisory() {
         </p>
 
         <a
-          href="mailto:hello@saabai.ai?subject=Advisory%20Enquiry"
+          href="#advisory-enquiry"
           className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
           Discuss an Advisory Role
@@ -234,7 +235,7 @@ export default function Advisory() {
       </section>
 
       {/* ── Final CTA ───────────────────────────────────────────────────── */}
-      <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
+      <section id="advisory-enquiry" className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden scroll-mt-24">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 80% 70% at 50% 50%, var(--saabai-glow-strong) 0%, transparent 65%)"
         }} />
@@ -258,14 +259,11 @@ export default function Advisory() {
         <p className="relative text-saabai-text-dim text-base mb-14 max-w-lg mx-auto leading-relaxed italic">
           These engagements are selective. If there&apos;s a fit, we&apos;ll know quickly.
         </p>
-        <a
-          href="mailto:hello@saabai.ai?subject=Advisory%20Enquiry"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
-        >
-          Send an Enquiry
-        </a>
+        <div className="relative">
+          <AdvisoryEnquiryForm />
+        </div>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
-          Email hello@saabai.ai directly. No forms, no funnels.
+          Confidential. Direct reply from Shane.
         </p>
       </section>
 
