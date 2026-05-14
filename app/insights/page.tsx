@@ -3,13 +3,13 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Insights — AI Automation for Professional Firms | Saabai",
+  title: "Insights, AI Automation for Professional Firms | Saabai",
   description:
     "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
   alternates: { canonical: "https://www.saabai.ai/insights" },
   openGraph: {
     url: "https://www.saabai.ai/insights",
-    title: "Insights — AI Automation for Professional Firms | Saabai",
+    title: "Insights, AI Automation for Professional Firms | Saabai",
     description:
       "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
   },
@@ -20,7 +20,7 @@ const articles = [
     category: "Law Firms",
     title: "The Hidden Cost of Manual Intake: What 12 Law Firms Told Us",
     excerpt:
-      "Manual intake is costing law firms 8–15 hours per week per fee earner in non-billable admin. Here's what we found — and what they did about it.",
+      "Manual intake is costing law firms 8–15 hours per week per fee earner in non-billable admin. Here's what we found, and what they did about it.",
     slug: "/insights/law-firm-intake-automation",
     date: "April 2026",
     published: true,
@@ -38,7 +38,7 @@ const articles = [
     category: "Real Estate",
     title: "Real Estate AI: Why Response Speed Is the Only KPI That Matters",
     excerpt:
-      "In property, the agent who responds first wins the listing. Here's how top agencies are using AI to be first — every time, around the clock.",
+      "In property, the agent who responds first wins the listing. Here's how top agencies are using AI to be first, every time, around the clock.",
     slug: null,
     date: "Coming soon",
     published: false,
@@ -92,7 +92,7 @@ export default function InsightsPage() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto leading-relaxed">
           We work inside law firms, accounting practices, and real estate agencies every week.
-          These are the real patterns we&apos;re seeing — what breaks, what works, and what
+          These are the real patterns we&apos;re seeing, what breaks, what works, and what
           makes automation actually stick.
         </p>
 
@@ -194,7 +194,7 @@ function ArticleCard({
         {article.title}
       </h2>
 
-      {/* Excerpt — two-line clamp */}
+      {/* Excerpt, two-line clamp */}
       <p className="text-saabai-text-muted text-sm leading-relaxed line-clamp-2 flex-1">
         {article.excerpt}
       </p>

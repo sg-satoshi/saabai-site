@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Saabai — AI Automation for Professional Firms";
+export const alt = "Saabai, AI Automation for Professional Firms";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -93,7 +93,7 @@ export default async function Image() {
             marginBottom: "48px",
           }}
         >
-          AI systems that recover 20+ hours a week — without adding staff or changing how your team works.
+          AI systems that recover 20+ hours a week, without adding staff or changing how your team works.
         </div>
 
         {/* Brand */}

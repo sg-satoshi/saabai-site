@@ -3,13 +3,13 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Our AI Automation Process — Audit to Deployment",
+  title: "Our AI Automation Process, Audit to Deployment",
   description:
     "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
   alternates: { canonical: "https://www.saabai.ai/process" },
   openGraph: {
     url: "https://www.saabai.ai/process",
-    title: "Our AI Automation Process — Audit to Deployment | Saabai",
+    title: "Our AI Automation Process, Audit to Deployment | Saabai",
     description:
       "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
   },
@@ -22,13 +22,13 @@ const steps = [
     description:
       "We map your workflows, tools, and team operations to identify exactly where automation will create the biggest impact.",
     detail:
-      "In a focused 90-minute session, we document your existing processes and bottlenecks. You receive a written report detailing every automation opportunity, ranked by business impact and ease of implementation — with projected time savings for each.",
+      "In a focused 90-minute session, we document your existing processes and bottlenecks. You receive a written report detailing every automation opportunity, ranked by business impact and ease of implementation, with projected time savings for each.",
   },
   {
     step: "02",
     title: "System Design",
     description:
-      "We design custom automation workflows tailored to your firm — not generic templates adapted to fit.",
+      "We design custom automation workflows tailored to your firm, not generic templates adapted to fit.",
     detail:
       "Every system is built around your specific tools, team structure, and commercial priorities. You get a clear implementation roadmap, architecture documentation, and a realistic picture of what gets built and in what order.",
   },
@@ -38,15 +38,15 @@ const steps = [
     description:
       "Your automation systems are implemented, integrated with your existing tools, and handed over with full documentation.",
     detail:
-      "We handle the full build, integration, and testing process. Your team doesn&apos;t need to manage the technical side — they just get working automation. Handover includes documentation and training so your team can operate the system confidently.",
+      "We handle the full build, integration, and testing process. Your team doesn&apos;t need to manage the technical side, they just get working automation. Handover includes documentation and training so your team can operate the system confidently.",
   },
   {
     step: "04",
     title: "Ongoing Optimisation",
     description:
-      "We monitor, refine, and improve your systems monthly — so they get better over time, not worse.",
+      "We monitor, refine, and improve your systems monthly, so they get better over time, not worse.",
     detail:
-      "Monthly review cycles, performance monitoring, and iterative improvements keep your systems compounding in value. Automation should get smarter the longer it runs. If something breaks or drifts, that&apos;s our problem to fix — not yours.",
+      "Monthly review cycles, performance monitoring, and iterative improvements keep your systems compounding in value. Automation should get smarter the longer it runs. If something breaks or drifts, that&apos;s our problem to fix, not yours.",
   },
 ];
 
@@ -81,7 +81,7 @@ export default function Process() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           A structured, four-step process that takes professional firms from
-          identifying the right workflows to automating them — without
+          identifying the right workflows to automating them, without
           disrupting how your team works.
         </p>
 
@@ -151,7 +151,7 @@ export default function Process() {
             Most firms have their first automations live within 2–4 weeks of the audit.
           </p>
           <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
-            The AI Audit is the starting point — a 90-minute session that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.
+            The AI Audit is the starting point, a 90-minute session that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.
           </p>
         </div>
       </section>
@@ -177,7 +177,7 @@ export default function Process() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows and
           identify exactly where automation will create the biggest impact in
-          your firm — no commitment required.
+          your firm, no commitment required.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

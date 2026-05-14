@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Case Studies — AI Automation Results | Saabai",
+  title: "Case Studies, AI Automation Results | Saabai",
   description:
-    "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms — and went live in 3 weeks.",
+    "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms, and went live in 3 weeks.",
   alternates: { canonical: "https://www.saabai.ai/case-studies" },
   openGraph: {
     url: "https://www.saabai.ai/case-studies",
-    title: "Case Studies — AI Automation Results | Saabai",
+    title: "Case Studies, AI Automation Results | Saabai",
     description:
-      "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms — and went live in 3 weeks.",
+      "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms, and went live in 3 weeks.",
   },
 };
 
@@ -46,7 +46,7 @@ export default function CaseStudies() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           These aren&apos;t projections. They&apos;re outcomes from businesses that deployed
-          Saabai AI agents and measured the difference — in hours recovered, leads
+          Saabai AI agents and measured the difference, in hours recovered, leads
           converted, and revenue captured after hours.
         </p>
 
@@ -55,7 +55,7 @@ export default function CaseStudies() {
         }} />
       </section>
 
-      {/* ── Case Study 1 — Tributum Law ─────────────────────────────────── */}
+      {/* ── Case Study 1, Tributum Law ─────────────────────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
@@ -76,7 +76,7 @@ export default function CaseStudies() {
           Tributum Law
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Specialist ATO dispute and tax law firm — Brisbane
+          Specialist ATO dispute and tax law firm, Brisbane
         </p>
 
         {/* Problem / Solution */}
@@ -90,7 +90,7 @@ export default function CaseStudies() {
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                After-hours client enquiries sat untouched until the next business day —
+                After-hours client enquiries sat untouched until the next business day,
                 a 2–14 hour window where stressed ATO dispute clients were left wondering
                 if anyone was there.
               </p>
@@ -103,14 +103,14 @@ export default function CaseStudies() {
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase">
-              The Solution — &ldquo;Lex&rdquo;
+              The Solution, &ldquo;Lex&rdquo;
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
               AI intake agent deployed across all channels
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                Saabai deployed &ldquo;Lex&rdquo; — an AI intake agent that handles all incoming
+                Saabai deployed &ldquo;Lex&rdquo;, an AI intake agent that handles all incoming
                 enquiries 24/7, qualifies the matter type, and captures key details
                 before a human is ever involved.
               </p>
@@ -131,13 +131,13 @@ export default function CaseStudies() {
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">90s</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              100% of enquiries responded to within 90 seconds — previously 2–14 hours
+              100% of enquiries responded to within 90 seconds, previously 2–14 hours
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">12 hrs</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Per week recovered across the intake team — returned to billable work
+              Per week recovered across the intake team, returned to billable work
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
@@ -162,13 +162,13 @@ export default function CaseStudies() {
             difference it&apos;s made to our conversion rate has been significant.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-            — Principal, Tributum Law
+           , Principal, Tributum Law
           </p>
         </blockquote>
 
       </section>
 
-      {/* ── Case Study 2 — National Plastics Supplier ───────────────────── */}
+      {/* ── Case Study 2, National Plastics Supplier ───────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
@@ -189,7 +189,7 @@ export default function CaseStudies() {
           National Plastics Supplier
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Large national plastics supplier (name withheld on request) — trade and retail
+          Large national plastics supplier (name withheld on request), trade and retail
           customers across Australia
         </p>
 
@@ -209,7 +209,7 @@ export default function CaseStudies() {
                 After-hours enquiries were lost entirely.
               </p>
               <p>
-                More than 60% of the team&apos;s day was consumed by quote requests — leaving
+                More than 60% of the team&apos;s day was consumed by quote requests, leaving
                 no capacity to build relationships with trade accounts or focus on
                 higher-value sales activity.
               </p>
@@ -217,20 +217,20 @@ export default function CaseStudies() {
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase">
-              The Solution — &ldquo;Rex&rdquo;
+              The Solution, &ldquo;Rex&rdquo;
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
               AI sales agent embedded on the supplier&apos;s website
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                Saabai deployed &ldquo;Rex&rdquo; — an AI sales agent that handles product enquiries,
+                Saabai deployed &ldquo;Rex&rdquo;, an AI sales agent that handles product enquiries,
                 calculates cut-to-size pricing in real time, and captures leads directly
                 on the supplier&apos;s website.
               </p>
               <p>
                 Complex orders are handed off to the sales team with full context already
-                captured — no repeated questions, no manual re-entry. Rex runs 24/7,
+                captured, no repeated questions, no manual re-entry. Rex runs 24/7,
                 so after-hours enquiries are quoted and captured automatically.
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function CaseStudies() {
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">Seconds</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Quotes delivered instantly — previously 2–4 hours per request
+              Quotes delivered instantly, previously 2–4 hours per request
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
@@ -257,7 +257,7 @@ export default function CaseStudies() {
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">24/7</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              After-hours enquiries now captured and quoted automatically — zero lost
+              After-hours enquiries now captured and quoted automatically, zero lost
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
@@ -273,10 +273,10 @@ export default function CaseStudies() {
           <p className="text-base italic text-saabai-text-muted leading-relaxed mb-5">
             &ldquo;Rex handles the quoting work our team was doing manually all day. They&apos;re
             actually selling now instead of answering the same questions. And the
-            after-hours enquiries — we were just losing those before.&rdquo;
+            after-hours enquiries, we were just losing those before.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-            — Operations Manager, National Plastics Supplier
+           , Operations Manager, National Plastics Supplier
           </p>
         </blockquote>
 
@@ -303,7 +303,7 @@ export default function CaseStudies() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows, identify
           where automation creates the biggest impact, and give you a clear picture
-          of what&apos;s possible — no obligation.
+          of what&apos;s possible, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

@@ -5,7 +5,7 @@ export const runtime = "edge";
 export async function POST() {
   try {
     // Check if any users exist
-    const existing = await getDirectoryUser("shane@saabai.ai");
+    const existing = await getDirectoryUser("hello@saabai.ai");
     if (existing) {
       return Response.json({ success: true, message: "Admin already exists" });
     }
@@ -13,7 +13,7 @@ export async function POST() {
     const user = {
       id: "shane-goldberg",
       name: "Shane Goldberg",
-      email: "shane@saabai.ai",
+      email: "hello@saabai.ai",
       password: "Saabai2026!",
       role: "admin" as const,
       dashboardUrl: "/saabai-admin",

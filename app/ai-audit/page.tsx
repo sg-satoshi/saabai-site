@@ -139,7 +139,7 @@ const audit_faqs = [
   },
   {
     q: "Can I pay by invoice instead of card?",
-    a: "Yes, for Professional and Enterprise tiers. Email shane@saabai.ai with your firm details and we'll send a Stripe invoice with net-7 payment terms. Essential is card payment only.",
+    a: "Yes, for Professional and Enterprise tiers. Email hello@saabai.ai with your firm details and we'll send a Stripe invoice with net-7 payment terms. Essential is card payment only.",
   },
 ];
 

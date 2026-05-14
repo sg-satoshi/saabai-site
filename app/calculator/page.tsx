@@ -202,7 +202,7 @@ export default function Calculator() {
             ))}
           </div>
 
-          {/* Annual cost — hero result */}
+          {/* Annual cost, hero result */}
           <div className="bg-saabai-surface border border-saabai-border-accent rounded-2xl overflow-hidden relative" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/60 to-transparent" />
             <div className="p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -233,7 +233,7 @@ export default function Calculator() {
             </div>
           </div>
 
-          {/* Weekly / monthly costs — supporting */}
+          {/* Weekly / monthly costs, supporting */}
           <div className="grid grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.2)" }}>
             {[
               { label: "Weekly labour cost", value: formatCurrency(weeklyCost) },
@@ -257,7 +257,7 @@ export default function Calculator() {
                       <path d="M1 5.5l3 3L10 1.5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <p className="text-sm text-saabai-text-muted">Your estimate is on its way — check your inbox.</p>
+                  <p className="text-sm text-saabai-text-muted">Your estimate is on its way, check your inbox.</p>
                 </div>
               ) : (
                 <>
@@ -332,7 +332,7 @@ export default function Calculator() {
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map the highest-value
-          automation opportunities in your operation — no obligation.
+          automation opportunities in your operation, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s | Saabai",
   },
   description:
-    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call — no obligation.",
+    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call, no obligation.",
   keywords: [
     "AI automation professional firms Australia",
     "AI automation law firms",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Saabai — AI Automation for Professional Firms",
+        alt: "Saabai, AI Automation for Professional Firms",
       },
     ],
   },

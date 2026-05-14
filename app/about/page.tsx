@@ -4,15 +4,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "About Saabai — AI Automation for Professional Firms",
+  title: "About Saabai, AI Automation for Professional Firms",
   description:
-    "Saabai was built to give professional firms the operational leverage of a larger organisation — without the headcount or complexity. Meet the founder, Shane Goldberg.",
+    "Saabai was built to give professional firms the operational leverage of a larger organisation, without the headcount or complexity. Meet the founder, Shane Goldberg.",
   alternates: { canonical: "https://www.saabai.ai/about" },
   openGraph: {
     url: "https://www.saabai.ai/about",
-    title: "About Saabai — AI Automation for Professional Firms",
+    title: "About Saabai, AI Automation for Professional Firms",
     description:
-      "Saabai was built to give professional firms the operational leverage of a larger organisation — without the headcount or complexity. Meet the founder.",
+      "Saabai was built to give professional firms the operational leverage of a larger organisation, without the headcount or complexity. Meet the founder.",
   },
 };
 
@@ -47,7 +47,7 @@ export default function About() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           An AI automation firm that actually understands how professional
-          service businesses operate — and builds systems that fit the way
+          service businesses operate, and builds systems that fit the way
           firms work, not the other way around.
         </p>
 
@@ -60,7 +60,7 @@ export default function About() {
       <section className="py-24 px-6 max-w-4xl mx-auto">
         <div className="grid md:grid-cols-[280px_1fr] gap-16 items-start">
 
-          {/* Left — headshot placeholder */}
+          {/* Left, headshot placeholder */}
           <div className="flex flex-col items-center md:items-start gap-5">
             <div
               className="w-48 h-48 rounded-2xl border border-saabai-border overflow-hidden"
@@ -68,7 +68,7 @@ export default function About() {
             >
               <Image
                 src="/shane-goldberg.png"
-                alt="Shane Goldberg — Founder, Saabai"
+                alt="Shane Goldberg, Founder, Saabai"
                 width={192}
                 height={192}
                 className="w-full h-full object-cover object-[center_25%]"
@@ -80,11 +80,11 @@ export default function About() {
             </div>
           </div>
 
-          {/* Right — founder narrative */}
+          {/* Right, founder narrative */}
           <div className="flex flex-col gap-6">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Saabai was built after years of watching talented professionals —
-              lawyers, accountants, advisers — spend half their working week on
+              Saabai was built after years of watching talented professionals,
+              lawyers, accountants, advisers, spend half their working week on
               work that had nothing to do with their expertise.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
@@ -94,7 +94,7 @@ export default function About() {
               built around how professional firms actually operate.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
-              Saabai exists to fix that — by designing automation systems that
+              Saabai exists to fix that, by designing automation systems that
               are specific to your firm, built and maintained by people who
               understand both the technology and the business. Not generic
               platforms. Not off-the-shelf tools with a logo swap. Systems
@@ -117,7 +117,7 @@ export default function About() {
           <div>
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
               Give professional firms the operational leverage of a much larger
-              organisation — without the headcount, the overhead, or the
+              organisation, without the headcount, the overhead, or the
               complexity. Every hour recovered from manual work is an hour
               returned to the expertise your clients are actually paying for.
             </p>
@@ -162,14 +162,14 @@ export default function About() {
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               We don&apos;t sell AI for the sake of it. Every system we build is
-              designed around a specific operational problem — with clear
+              designed around a specific operational problem, with clear
               metrics for what success looks like before we write a line of
               code. If it doesn&apos;t recover time or reduce cost, we haven&apos;t
               done our job.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               We also don&apos;t disappear after deployment. If something breaks or
-              drifts, that&apos;s our problem to fix — not yours. Ongoing
+              drifts, that&apos;s our problem to fix, not yours. Ongoing
               maintenance is part of how we work, not an add-on.
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function About() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows,
           identify where automation creates the biggest impact, and give you
-          a clear picture of what&apos;s possible — no obligation.
+          a clear picture of what&apos;s possible, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

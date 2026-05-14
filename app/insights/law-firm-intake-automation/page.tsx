@@ -5,7 +5,7 @@ import Footer from "../../components/Footer";
 export const metadata: Metadata = {
   title: "The Hidden Cost of Manual Intake: What Law Firms Are Missing | Saabai",
   description:
-    "Manual client intake is costing law firms 8–15 hours per week per fee earner. Here's what we found across 12 firms — and what they did about it.",
+    "Manual client intake is costing law firms 8–15 hours per week per fee earner. Here's what we found across 12 firms, and what they did about it.",
   alternates: {
     canonical: "https://www.saabai.ai/insights/law-firm-intake-automation",
   },
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     url: "https://www.saabai.ai/insights/law-firm-intake-automation",
     title: "The Hidden Cost of Manual Intake: What Law Firms Are Missing | Saabai",
     description:
-      "Manual client intake is costing law firms 8–15 hours per week per fee earner. Here's what we found across 12 firms — and what they did about it.",
+      "Manual client intake is costing law firms 8–15 hours per week per fee earner. Here's what we found across 12 firms, and what they did about it.",
   },
 };
 
@@ -85,7 +85,7 @@ export default function LawFirmIntakeAutomation() {
           <p className="text-article-body">
             By the time Sarah has triaged her inbox, responded to the urgent ones, opened three new
             matter files in the practice management system, and called back the two leads who left
-            voicemails — it&apos;s 11:15. She hasn&apos;t touched a single piece of billable work.
+            voicemails, it&apos;s 11:15. She hasn&apos;t touched a single piece of billable work.
           </p>
           <p className="text-article-body">
             This scenario isn&apos;t exceptional. Across the 12 law firms we&apos;ve audited in the
@@ -103,19 +103,19 @@ export default function LawFirmIntakeAutomation() {
 
           <p className="text-article-body">
             When we ask firm principals how much time their fee earners spend on client intake, the
-            typical answer is &ldquo;a couple of hours a week.&rdquo; When we actually track it —
-            logging every intake-related touch across a two-week period — the number is almost
+            typical answer is &ldquo;a couple of hours a week.&rdquo; When we actually track it,
+            logging every intake-related touch across a two-week period, the number is almost
             always between 8 and 15 hours per fee earner, per week.
           </p>
           <p className="text-article-body">
             The gap exists because intake time is scattered. It doesn&apos;t look like a single
-            task — it looks like dozens of small interruptions that no one thinks to count:
+            task, it looks like dozens of small interruptions that no one thinks to count:
           </p>
 
           <ul className="text-article-list">
             <li>
               <strong className="text-saabai-text">Email triaging.</strong> Reading, categorising,
-              and responding to new enquiries — often multiple times as the conversation develops
+              and responding to new enquiries, often multiple times as the conversation develops
               before a file is even opened.
             </li>
             <li>
@@ -126,7 +126,7 @@ export default function LawFirmIntakeAutomation() {
             <li>
               <strong className="text-saabai-text">Manual data entry.</strong> Transcribing
               information from emails or paper forms into the practice management system. For firms
-              using LEAP, Smokeball, or ActionStep, this is often done twice — once in a draft,
+              using LEAP, Smokeball, or ActionStep, this is often done twice, once in a draft,
               once confirmed.
             </li>
             <li>
@@ -136,14 +136,14 @@ export default function LawFirmIntakeAutomation() {
             </li>
             <li>
               <strong className="text-saabai-text">Conflict checking.</strong> Manually searching
-              existing client records to check for conflicts before opening a file — a critical
+              existing client records to check for conflicts before opening a file, a critical
               step that&apos;s often done by the most senior person in the room.
             </li>
           </ul>
 
           <p className="text-article-body">
             None of this individually feels like much. Collectively, it represents a fifth of a
-            fee earner&apos;s working week — written off as non-billable before they&apos;ve even
+            fee earner&apos;s working week, written off as non-billable before they&apos;ve even
             started.
           </p>
 
@@ -166,8 +166,8 @@ export default function LawFirmIntakeAutomation() {
           </p>
           <p className="text-article-body">
             In every firm we audited, the average response time to a new web enquiry was between
-            6 and 18 hours. For after-hours enquiries — which make up a meaningful proportion of
-            total volume — the wait was almost always overnight. Competitors who respond faster
+            6 and 18 hours. For after-hours enquiries, which make up a meaningful proportion of
+            total volume, the wait was almost always overnight. Competitors who respond faster
             win the client before the firm even knows they lost them.
           </p>
 
@@ -179,14 +179,14 @@ export default function LawFirmIntakeAutomation() {
           <h3 className="text-article-h3">2. The qualify-first bottleneck</h3>
           <p className="text-article-body">
             In most firms, the first meaningful interaction with a new enquiry happens with a
-            solicitor or senior associate. They spend 20–45 minutes qualifying the matter —
+            solicitor or senior associate. They spend 20–45 minutes qualifying the matter,
             understanding what the client needs, whether it&apos;s within the firm&apos;s practice
             areas, whether there are obvious conflicts, and whether the client is actually a good
             fit.
           </p>
           <p className="text-article-body">
-            This is expensive work for a system to do. A structured intake process — whether run
-            by a paralegal or an AI — can gather the same information in the same time, at a
+            This is expensive work for a system to do. A structured intake process, whether run
+            by a paralegal or an AI, can gather the same information in the same time, at a
             fraction of the cost. The fee earner&apos;s first touch should be a 10-minute
             confirmation call with a pre-qualified brief in front of them, not a 45-minute
             discovery session.
@@ -196,7 +196,7 @@ export default function LawFirmIntakeAutomation() {
           <p className="text-article-body">
             Across the firms we audited, between 30% and 45% of web enquiries arrived outside
             business hours. Most received no acknowledgement until the following morning. A
-            significant proportion — in some firms, more than a third — never converted.
+            significant proportion, in some firms, more than a third, never converted.
           </p>
           <p className="text-article-body">
             This isn&apos;t a staffing problem. It&apos;s a systems problem. The leads are there.
@@ -220,7 +220,7 @@ export default function LawFirmIntakeAutomation() {
             In smaller firms especially, intake is informal. There&apos;s no documented process.
             When Sarah handles an enquiry, she asks different questions than when James does. Some
             enquiries get full follow-up; others get a brief email and then silence. The quality
-            of the intake — and the likelihood of conversion — depends almost entirely on who
+            of the intake, and the likelihood of conversion, depends almost entirely on who
             happened to be in the office when the enquiry came in.
           </p>
 
@@ -236,7 +236,7 @@ export default function LawFirmIntakeAutomation() {
           <ul className="text-article-list">
             <li>
               <strong className="text-saabai-text">90-second response time, around the clock.</strong>{" "}
-              The moment an enquiry arrives — via web form, email, or chat — the AI acknowledges
+              The moment an enquiry arrives, via web form, email, or chat, the AI acknowledges
               it immediately, sets expectations, and begins gathering information. It doesn&apos;t
               matter if it&apos;s 3pm on a Wednesday or 10pm on a Sunday.
             </li>
@@ -249,14 +249,14 @@ export default function LawFirmIntakeAutomation() {
             <li>
               <strong className="text-saabai-text">Urgent matters flagged immediately.</strong>{" "}
               If the enquiry involves an urgent court date, a pending statutory deadline, or a
-              distressed client situation, the system flags it for immediate human attention —
+              distressed client situation, the system flags it for immediate human attention,
               regardless of the time.
             </li>
             <li>
               <strong className="text-saabai-text">Routine matters enter a follow-up sequence.</strong>{" "}
               Non-urgent enquiries are acknowledged, qualified, and placed into a structured
               sequence that nurtures the lead, collects necessary documents, and books a
-              consultation — automatically.
+              consultation, automatically.
             </li>
             <li>
               <strong className="text-saabai-text">Full context handed off to the fee earner.</strong>{" "}
@@ -275,7 +275,7 @@ export default function LawFirmIntakeAutomation() {
           <p className="text-article-body">
             The result isn&apos;t just time saved. Conversion rates improve because leads are
             engaged faster. Client experience improves because responses are faster, more
-            consistent, and more professional. And fee earners — freed from the inbox — spend
+            consistent, and more professional. And fee earners, freed from the inbox, spend
             their time doing the work clients are actually paying for.
           </p>
 
@@ -283,7 +283,7 @@ export default function LawFirmIntakeAutomation() {
           <SectionHeading>How long does it take?</SectionHeading>
 
           <p className="text-article-body">
-            This is the question we get asked most often — usually with a sceptical tone that
+            This is the question we get asked most often, usually with a sceptical tone that
             implies the asker expects the answer to be &ldquo;six months.&rdquo; It isn&apos;t.
             A well-scoped intake automation is typically live within three weeks. Here&apos;s
             how the time is structured:
@@ -293,17 +293,17 @@ export default function LawFirmIntakeAutomation() {
             <TimelineItem
               week="Week 1"
               label="Audit + design"
-              detail="We map your current intake process end-to-end — how enquiries arrive, who handles them, what questions are asked, where things slow down, and what your practice management system looks like. We design the automated flow against your existing tools and your firm's specific practice areas."
+              detail="We map your current intake process end-to-end, how enquiries arrive, who handles them, what questions are asked, where things slow down, and what your practice management system looks like. We design the automated flow against your existing tools and your firm's specific practice areas."
             />
             <TimelineItem
               week="Week 2"
               label="Build + test"
-              detail="We build the intake automation, connect it to your existing systems (email, practice management, calendar), and run it through a structured test process — including edge cases, urgent scenarios, and conflict check logic. Nothing goes live until it works correctly in every scenario."
+              detail="We build the intake automation, connect it to your existing systems (email, practice management, calendar), and run it through a structured test process, including edge cases, urgent scenarios, and conflict check logic. Nothing goes live until it works correctly in every scenario."
             />
             <TimelineItem
               week="Week 3"
               label="Deploy + refine"
-              detail="We deploy the system on a limited basis — typically starting with after-hours traffic or a single practice area — and monitor the first real interactions closely. We refine based on what we see. By the end of week three, the system is handling live enquiries with minimal intervention."
+              detail="We deploy the system on a limited basis, typically starting with after-hours traffic or a single practice area, and monitor the first real interactions closely. We refine based on what we see. By the end of week three, the system is handling live enquiries with minimal intervention."
             />
           </div>
 
@@ -316,7 +316,7 @@ export default function LawFirmIntakeAutomation() {
 
           {/* Closing CTA */}
           <p className="text-article-body">
-            If your intake is still manual, the cost is real. Not theoretical — real, measurable
+            If your intake is still manual, the cost is real. Not theoretical, real, measurable
             hours that aren&apos;t being billed and leads that aren&apos;t converting because
             no one was there when they arrived. The good news is that the fix is faster than most
             firms expect, and the return is visible within weeks of going live.
@@ -353,7 +353,7 @@ export default function LawFirmIntakeAutomation() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll audit your current intake process,
           identify exactly where leads are dropping, and show you what automated intake looks like
-          for your firm — no obligation.
+          for your firm, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -409,7 +409,7 @@ export default function LawFirmIntakeAutomation() {
         }
 
         .text-article-list li::before {
-          content: "—";
+          content: "·";
           position: absolute;
           left: 0;
           color: var(--saabai-teal);

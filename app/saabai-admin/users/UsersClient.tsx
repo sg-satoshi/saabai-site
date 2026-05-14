@@ -275,7 +275,7 @@ export default function UsersClient() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="shane@saabai.ai"
+                  placeholder="hello@saabai.ai"
                   required
                   style={{
                     width: "100%",

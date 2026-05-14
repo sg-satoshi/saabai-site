@@ -31,11 +31,11 @@ export default function EmailCapturePopup() {
   }, []);
 
   useEffect(() => {
-    // Exit intent — mouse leaves viewport from the top
+    // Exit intent, mouse leaves viewport from the top
     function onMouseLeave(e: MouseEvent) {
       if (e.clientY <= 0) show();
     }
-    // Time-based fallback — 35 seconds
+    // Time-based fallback, 35 seconds
     const timer = setTimeout(show, 35000);
 
     document.addEventListener("mouseleave", onMouseLeave);
@@ -67,7 +67,7 @@ export default function EmailCapturePopup() {
       });
       if (res.ok) {
         setStatus("done");
-        setCookie(COOKIE_KEY, 30); // subscribed — don't show for 30 days
+        setCookie(COOKIE_KEY, 30); // subscribed, don't show for 30 days
       } else {
         setStatus("error");
       }
@@ -131,7 +131,7 @@ export default function EmailCapturePopup() {
                 Checklist on its way
               </h2>
               <p style={{ margin: "0 0 24px", fontSize: 14, color: "#8b8fa8", lineHeight: 1.6 }}>
-                Check your inbox — the AI Readiness Audit is headed your way now.
+                Check your inbox, the AI Readiness Audit is headed your way now.
               </p>
               <button
                 onClick={() => setVisible(false)}
@@ -149,7 +149,7 @@ export default function EmailCapturePopup() {
             <>
               {/* Eyebrow */}
               <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, color: "#00bfa5", textTransform: "uppercase" }}>
-                Free — AI Readiness Audit
+                Free, AI Readiness Audit
               </p>
 
               <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 800, color: "#fff", lineHeight: 1.25, letterSpacing: -0.5 }}>
@@ -157,7 +157,7 @@ export default function EmailCapturePopup() {
               </h2>
 
               <p style={{ margin: "0 0 28px", fontSize: 14, color: "#8b8fa8", lineHeight: 1.65 }}>
-                12 questions. 5 minutes. A clear picture of your biggest automation opportunity — sent straight to your inbox.
+                12 questions. 5 minutes. A clear picture of your biggest automation opportunity, sent straight to your inbox.
               </p>
 
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -228,7 +228,7 @@ export default function EmailCapturePopup() {
 
                 {status === "error" && (
                   <p style={{ margin: 0, fontSize: 13, color: "#f87171", textAlign: "center" }}>
-                    Something went wrong — try again or email hello@saabai.ai
+                    Something went wrong, try again or email hello@saabai.ai
                   </p>
                 )}
 

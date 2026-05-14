@@ -401,7 +401,7 @@ export async function GET(req: NextRequest) {
     // ── Send operator email (Saabai / Shane) ───────────────────────────────────
     const saabaiResend = new Resend(process.env.RESEND_API_KEY);
     const saabaiFrom = process.env.SAABAI_FROM_EMAIL ?? "Atlas at Saabai <atlas@saabai.ai>";
-    const notifyEmail = process.env.SAABAI_NOTIFY_EMAIL ?? "shane@saabai.ai";
+    const notifyEmail = process.env.SAABAI_NOTIFY_EMAIL ?? "hello@saabai.ai";
 
     try {
       await saabaiResend.emails.send({

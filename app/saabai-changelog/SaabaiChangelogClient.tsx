@@ -28,6 +28,24 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "15 May 2026",
+    entries: [
+      { time: "01:30", tag: "NEW", title: "AI Audit pricing tie-in added to /for-accounting-firms and /for-real-estate" },
+      { time: "01:25", tag: "IMPROVEMENT", title: "Em-dash cleanup across all Saabai-branded pages" },
+      { time: "01:25", tag: "FIX", title: "Canonical hello@saabai.ai across user-facing copy and backend defaults" },
+      { time: "00:21", tag: "FIX", title: "Advisory notification email header now matches brand navy" },
+      { time: "00:17", tag: "UI", title: "Polish advisory notification email with Saabai logo and brand styling" },
+      { time: "00:09", tag: "NEW", title: "Inline enquiry form on /advisory replaces mailto buttons" },
+    ],
+  },
+  {
+    date: "14 May 2026",
+    entries: [
+      { time: "23:58", tag: "IMPROVEMENT", title: "Sectioned nav dropdown with AI Audit NEW badge and surfaced industry pages" },
+      { time: "23:47", tag: "NEW", title: "Productized AI Audit pricing page with three fixed-price tiers" },
+    ],
+  },
+  {
     date: "12 May 2026",
     entries: [
       { time: "10:42", tag: "NEW", title: "Add explainer video section with transcript timeline and demo CTA" },

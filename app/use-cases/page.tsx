@@ -43,7 +43,7 @@ const useCases = [
   {
     category: "Accounting Firms",
     description:
-      "Accounting firms operate on tight deadlines with high compliance requirements. Automation removes the manual coordination overhead — chasing clients for documents, sending reminders, generating reports — so your team can focus on advice.",
+      "Accounting firms operate on tight deadlines with high compliance requirements. Automation removes the manual coordination overhead, chasing clients for documents, sending reminders, generating reports, so your team can focus on advice.",
     examples: [
       "Automated client onboarding and document collection",
       "Deadline reminder sequences for tax and compliance lodgements",
@@ -55,7 +55,7 @@ const useCases = [
   {
     category: "Financial Advisory",
     description:
-      "Advisers spend a significant portion of their week on compliance documentation, review scheduling, and client communication — work that is highly repeatable and well-suited to automation.",
+      "Advisers spend a significant portion of their week on compliance documentation, review scheduling, and client communication, work that is highly repeatable and well-suited to automation.",
     examples: [
       "Annual review reminder and scheduling automation",
       "Pre-meeting data collection workflows",
@@ -67,14 +67,14 @@ const useCases = [
   {
     category: "Trade & E-commerce",
     description:
-      "Product businesses with a high volume of inbound enquiries are leaving money on the table every hour they're not available to respond. An AI agent can quote, qualify, and capture leads instantly — without a sales team on standby.",
+      "Product businesses with a high volume of inbound enquiries are leaving money on the table every hour they're not available to respond. An AI agent can quote, qualify, and capture leads instantly, without a sales team on standby.",
     examples: [
       "AI agent handles product Q&A, specifications, and pricing 24/7",
       "Cut-to-size and custom quoting handled in real time from a chat window",
       "Order status lookups without staff involvement",
       "Qualified leads automatically routed to CRM with full conversation context",
     ],
-    outcome: "Every inbound enquiry gets an instant, accurate response. Leads are captured and followed up automatically — day and night.",
+    outcome: "Every inbound enquiry gets an instant, accurate response. Leads are captured and followed up automatically, day and night.",
   },
   {
     category: "Compliance & Document Automation",
@@ -132,7 +132,7 @@ export default function UseCases() {
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-14 leading-relaxed">
           If your business runs on expertise, there&apos;s almost always a layer of
-          operational work that can be automated — without changing how you
+          operational work that can be automated, without changing how you
           deliver value to clients.
         </p>
 
@@ -158,7 +158,7 @@ export default function UseCases() {
           >
             <div className="grid md:grid-cols-2 gap-16 items-start">
 
-              {/* Left — text */}
+              {/* Left, text */}
               <div>
                 <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-4">
                   Use Case {String(i + 1).padStart(2, "0")}
@@ -181,7 +181,7 @@ export default function UseCases() {
                 </div>
               </div>
 
-              {/* Right — examples card */}
+              {/* Right, examples card */}
               <div className="bg-saabai-surface rounded-xl border border-saabai-border overflow-hidden relative" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
                 <div className="p-8">
@@ -202,7 +202,7 @@ export default function UseCases() {
             </div>
           </section>
 
-          {/* Inline CTA — after every 2nd use case */}
+          {/* Inline CTA, after every 2nd use case */}
           {(i === 1 || i === 3) && (
             <div className="px-6 py-12 max-w-5xl mx-auto border-t border-saabai-border">
               <div
@@ -248,7 +248,7 @@ export default function UseCases() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows,
           identify the highest-value automation opportunities, and give you a
-          clear picture of what&apos;s possible — no obligation.
+          clear picture of what&apos;s possible, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

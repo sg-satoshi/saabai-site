@@ -47,7 +47,7 @@ export default function ForRealEstate() {
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           Buyers and sellers don&apos;t wait until 9 am. Saabai deploys AI systems
           that respond within minutes, qualify every lead, and keep your agents
-          focused on negotiations — not inboxes.
+          focused on negotiations, not inboxes.
         </p>
 
         <a
@@ -84,7 +84,7 @@ export default function ForRealEstate() {
             <p className="text-base text-saabai-text-muted leading-relaxed">
               average industry response time to a new property enquiry. The leading
               agencies respond in under 2 minutes. That gap decides who gets the
-              inspection — and who gets the listing.
+              inspection, and who gets the listing.
             </p>
           </div>
           <div className="bg-saabai-surface p-12 flex flex-col gap-4">
@@ -98,7 +98,7 @@ export default function ForRealEstate() {
           <div className="bg-saabai-surface p-12 flex flex-col gap-4">
             <p className="stat-glow text-5xl font-semibold tracking-tight text-saabai-teal">6+ hrs</p>
             <p className="text-base text-saabai-text-muted leading-relaxed">
-              per agent per week lost to manual follow-up admin — logging enquiries,
+              per agent per week lost to manual follow-up admin, logging enquiries,
               sending inspection confirmations, chasing appraisal feedback, and
               updating vendors on campaign progress.
             </p>
@@ -135,13 +135,13 @@ export default function ForRealEstate() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 12 hrs recovered/week across the team</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 12 hrs recovered/week across the team</p>
               <p className="text-base font-medium mb-2">AI responds within 2 minutes, qualifies the buyer, books an inspection</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Your AI agent acknowledges the enquiry immediately, asks qualifying
                 questions (timeline, finance, property type), answers common questions
                 about the listing, and offers available inspection times. By Monday
-                morning your agent has a pre-qualified buyer already booked — not
+                morning your agent has a pre-qualified buyer already booked, not
                 a cold lead to call from scratch.
               </p>
             </div>
@@ -163,10 +163,10 @@ export default function ForRealEstate() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 5 hrs recovered/week</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 5 hrs recovered/week</p>
               <p className="text-base font-medium mb-2">A nurture sequence fires automatically after every appraisal</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
-                The moment an appraisal is logged, an automated sequence begins — a
+                The moment an appraisal is logged, an automated sequence begins, a
                 personalised summary email 24 hours later, a market update at 5 days,
                 a check-in at 2 weeks. Your agent is top of mind without lifting a
                 finger, and gets a live alert the moment the vendor signals readiness
@@ -181,7 +181,7 @@ export default function ForRealEstate() {
               <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-4">Before</p>
               <p className="text-base font-medium mb-2">Vendor reporting</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
-                Every week your agent sits down to write vendor updates — enquiry
+                Every week your agent sits down to write vendor updates, enquiry
                 numbers, inspection feedback, online views, comparable sales. It takes
                 30 minutes per listing. For an agent with 8 active listings, that&apos;s
                 4 hours a week of report writing.
@@ -191,12 +191,12 @@ export default function ForRealEstate() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 4 hrs recovered/week per agent</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 4 hrs recovered/week per agent</p>
               <p className="text-base font-medium mb-2">Reports assembled and delivered automatically each week</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Data from your CRM and portal analytics is pulled together automatically,
                 formatted into a professional vendor report, and delivered to the vendor
-                every Friday. Your agent reviews and sends — they don&apos;t write it. Vendors
+                every Friday. Your agent reviews and sends, they don&apos;t write it. Vendors
                 feel informed and confident; agents reclaim 4 hours a week.
               </p>
             </div>
@@ -224,7 +224,7 @@ export default function ForRealEstate() {
             <h3 className="text-lg font-semibold tracking-tight">24/7 instant enquiry response</h3>
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               An AI agent that responds to every buyer or tenant enquiry within
-              2 minutes — day, night, weekend. It qualifies the lead, answers listing
+              2 minutes, day, night, weekend. It qualifies the lead, answers listing
               questions, and offers inspection times. Your agents arrive Monday morning
               with a pipeline, not an inbox.
             </p>
@@ -236,7 +236,7 @@ export default function ForRealEstate() {
             <h3 className="text-lg font-semibold tracking-tight">Automated appraisal follow-up</h3>
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               A structured nurture sequence triggered automatically after every appraisal.
-              Personalised touchpoints at 1 day, 5 days, and 2 weeks — market updates,
+              Personalised touchpoints at 1 day, 5 days, and 2 weeks, market updates,
               comparable sales, readiness check-ins. Win more listings without relying
               on agents to remember to follow up.
             </p>
@@ -260,7 +260,7 @@ export default function ForRealEstate() {
             <h3 className="text-lg font-semibold tracking-tight">Vendor report generation</h3>
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               Weekly vendor reports assembled automatically from your CRM and portal
-              analytics — enquiry counts, inspection attendance, online views, and
+              analytics, enquiry counts, inspection attendance, online views, and
               market context. Formatted, branded, and delivered every Friday. Vendors
               stay informed; agents stay focused on selling.
             </p>
@@ -288,7 +288,7 @@ export default function ForRealEstate() {
             </summary>
             <div className="px-8 pb-8">
               <p className="text-saabai-text-muted text-sm leading-relaxed">
-                We build AI agents that are transparent about what they are — they&apos;re
+                We build AI agents that are transparent about what they are, they&apos;re
                 introduced as your agency&apos;s digital assistant, not a person. In practice,
                 buyers care far more about getting a fast, accurate response than who sent
                 it. An agent that replies in 2 minutes at 9 pm will win more trust than
@@ -308,7 +308,7 @@ export default function ForRealEstate() {
                 We integrate with the major Australian real estate CRMs including
                 Rex Software, VaultRE, Console Cloud, PropertyMe, and Agentbox. We
                 also connect with portal feeds from realestate.com.au and Domain.
-                If you use a CRM not listed here, get in touch — if it has an API
+                If you use a CRM not listed here, get in touch, if it has an API
                 or webhook capability, we can almost certainly work with it.
               </p>
             </div>
@@ -322,7 +322,7 @@ export default function ForRealEstate() {
             <div className="px-8 pb-8">
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Yes. Property management carries its own set of high-volume, repetitive
-                workflows — maintenance request triage, lease renewal reminders, routine
+                workflows, maintenance request triage, lease renewal reminders, routine
                 inspection scheduling, arrears follow-up. These are excellent candidates
                 for automation. Many agencies start with sales-side enquiry response and
                 then extend the same systems into their PM division. We can scope both
@@ -331,6 +331,62 @@ export default function ForRealEstate() {
             </div>
           </details>
 
+        </div>
+      </section>
+
+      {/* ── Start with an AI Audit ─────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          Start Here, Fixed-Price AI Audit
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
+          Know exactly what to automate first.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+          Every Saabai engagement starts with a fixed-price AI Audit that maps
+          your operation and ranks your highest-ROI automation opportunities.
+          Three tiers, sized to your firm.
+        </p>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {[
+            { name: "Essential", staff: "1–5 staff", price: "$3,500", duration: "1 week" },
+            { name: "Professional", staff: "6–20 staff", price: "$7,500", duration: "2 weeks", highlight: true },
+            { name: "Enterprise", staff: "20+ staff", price: "$15,000", duration: "3 weeks" },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className={`bg-saabai-surface border rounded-xl p-8 text-center ${
+                t.highlight ? "border-saabai-teal/60" : "border-saabai-border"
+              }`}
+              style={
+                t.highlight
+                  ? { boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.18)" }
+                  : undefined
+              }
+            >
+              <h3 className="text-xl font-semibold mb-1 tracking-tight">{t.name}</h3>
+              <p className="text-xs text-saabai-text-dim mb-5 tracking-wide">{t.staff}</p>
+              <div className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow mb-1">
+                {t.price}
+              </div>
+              <p className="text-xs text-saabai-text-dim tracking-wide">
+                AUD · Delivered in {t.duration}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <a
+            href="/ai-audit"
+            className="inline-block bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)]"
+          >
+            View AI Audit Details
+          </a>
+          <p className="text-xs text-saabai-text-dim mt-5 tracking-wide">
+            Or book a free call to discuss which tier fits your firm
+          </p>
         </div>
       </section>
 
@@ -355,7 +411,7 @@ export default function ForRealEstate() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your enquiry and
           follow-up workflows, identify where automation creates the biggest
-          impact, and give you a clear picture of what&apos;s possible — no obligation.
+          impact, and give you a clear picture of what&apos;s possible, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

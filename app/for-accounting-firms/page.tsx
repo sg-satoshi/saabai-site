@@ -5,13 +5,13 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Automation for Accounting Firms Australia | Saabai",
   description:
-    "Recover 15–25 hours a week in your accounting practice. Automated document chasing, deadline reminders, client onboarding — without changing your software stack.",
+    "Recover 15–25 hours a week in your accounting practice. Automated document chasing, deadline reminders, client onboarding, without changing your software stack.",
   alternates: { canonical: "https://www.saabai.ai/for-accounting-firms" },
   openGraph: {
     url: "https://www.saabai.ai/for-accounting-firms",
     title: "AI Automation for Accounting Firms Australia | Saabai",
     description:
-      "Recover 15–25 hours a week in your accounting practice. Automated document chasing, deadline reminders, client onboarding — without changing your software stack.",
+      "Recover 15–25 hours a week in your accounting practice. Automated document chasing, deadline reminders, client onboarding, without changing your software stack.",
   },
 };
 
@@ -45,7 +45,7 @@ export default function ForAccountingFirms() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          Document collection, deadline reminders, client onboarding — the
+          Document collection, deadline reminders, client onboarding, the
           work that buries your team every quarter. Saabai automates it so
           your accountants can focus on the advice clients actually pay for.
         </p>
@@ -83,13 +83,13 @@ export default function ForAccountingFirms() {
             <p className="stat-glow text-5xl font-semibold tracking-tight text-saabai-teal">10+ hrs</p>
             <p className="text-base text-saabai-text-muted leading-relaxed">
               per week spent chasing clients for source documents, bank statements,
-              and receipts — before any actual accounting work can begin.
+              and receipts, before any actual accounting work can begin.
             </p>
           </div>
           <div className="bg-saabai-surface p-12 flex flex-col gap-4">
             <p className="stat-glow text-5xl font-semibold tracking-tight text-saabai-teal">3 weeks</p>
             <p className="text-base text-saabai-text-muted leading-relaxed">
-              average onboarding time for new clients — manual back-and-forth,
+              average onboarding time for new clients, manual back-and-forth,
               engagement letters, software access, and data collection all done
               by hand, one email at a time.
             </p>
@@ -97,7 +97,7 @@ export default function ForAccountingFirms() {
           <div className="bg-saabai-surface p-12 flex flex-col gap-4">
             <p className="stat-glow text-5xl font-semibold tracking-tight text-saabai-teal">Every deadline</p>
             <p className="text-base text-saabai-text-muted leading-relaxed">
-              carries manual coordination overhead — BAS, tax returns, SMSF
+              carries manual coordination overhead, BAS, tax returns, SMSF
               lodgements. Someone on your team is tracking each one individually
               and chasing missing pieces as the date approaches.
             </p>
@@ -134,12 +134,12 @@ export default function ForAccountingFirms() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 10 hrs recovered/week</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 10 hrs recovered/week</p>
               <p className="text-base font-medium mb-2">Automated sequences with secure client portals</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Document requests go out automatically with a secure upload link
                 personalised to each client. Reminders escalate on a schedule.
-                Your team sees a live dashboard of what&apos;s outstanding — and only
+                Your team sees a live dashboard of what&apos;s outstanding, and only
                 steps in for genuinely stuck cases. Lodgements happen on time.
               </p>
             </div>
@@ -161,11 +161,11 @@ export default function ForAccountingFirms() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 4 hrs recovered/week</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 4 hrs recovered/week</p>
               <p className="text-base font-medium mb-2">Every client reminded automatically, every time</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Deadlines are pulled from your practice management system. Reminder
-                sequences fire automatically — 30 days out, 14 days, 7 days, and day
+                sequences fire automatically, 30 days out, 14 days, 7 days, and day
                 of. Clients arrive prepared. Late lodgements drop. And nobody on your
                 team has to maintain a reminder spreadsheet ever again.
               </p>
@@ -188,10 +188,10 @@ export default function ForAccountingFirms() {
               <span className="text-saabai-teal text-2xl">→</span>
             </div>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After — 6 hrs recovered/week</p>
+              <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase mb-4">After, 6 hrs recovered/week</p>
               <p className="text-base font-medium mb-2">Onboarding completes in days, not weeks</p>
               <p className="text-saabai-text-muted text-sm leading-relaxed">
-                A single trigger kicks off the entire onboarding sequence — welcome
+                A single trigger kicks off the entire onboarding sequence, welcome
                 message, engagement letter signature, software access, data collection
                 form. Each step fires when the previous one is complete. Clients are
                 fully set up within 3–5 business days with zero manual coordination
@@ -223,7 +223,7 @@ export default function ForAccountingFirms() {
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               Personalised document request sequences sent automatically to each client,
               with secure upload links and escalating reminders. Your team sees real-time
-              status across all active clients — no chasing, no spreadsheets.
+              status across all active clients, no chasing, no spreadsheets.
             </p>
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-4">
@@ -233,7 +233,7 @@ export default function ForAccountingFirms() {
             <h3 className="text-lg font-semibold tracking-tight">Deadline reminder sequences</h3>
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               Automated multi-stage reminders triggered from your practice management
-              system — BAS, income tax, SMSF lodgements, and more. Every client, every
+              system, BAS, income tax, SMSF lodgements, and more. Every client, every
               deadline, every time. Late lodgements and avoidable penalties become
               a thing of the past.
             </p>
@@ -245,7 +245,7 @@ export default function ForAccountingFirms() {
             <h3 className="text-lg font-semibold tracking-tight">Client onboarding automation</h3>
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               A sequenced onboarding flow triggered the moment a new engagement is
-              confirmed — welcome, engagement letter, software access, data collection.
+              confirmed, welcome, engagement letter, software access, data collection.
               New clients are fully set up in days, not weeks, and your team never
               has to manually coordinate a single step.
             </p>
@@ -258,7 +258,7 @@ export default function ForAccountingFirms() {
             <p className="text-saabai-text-muted text-sm leading-relaxed">
               Management reports, cash flow summaries, and year-end packages assembled
               and delivered automatically when the underlying data is ready. Your
-              accountants review and sign off — they don&apos;t spend hours pulling numbers
+              accountants review and sign off, they don&apos;t spend hours pulling numbers
               together from separate systems.
             </p>
           </div>
@@ -280,14 +280,14 @@ export default function ForAccountingFirms() {
 
           <details className="group bg-saabai-surface">
             <summary className="flex items-center justify-between gap-6 px-8 py-6 cursor-pointer list-none">
-              <span className="text-base font-medium">We use XPM / MYOB / Xero — will it work with our stack?</span>
+              <span className="text-base font-medium">We use XPM / MYOB / Xero, will it work with our stack?</span>
               <span className="text-saabai-teal text-xl flex-shrink-0 transition-transform group-open:rotate-45">+</span>
             </summary>
             <div className="px-8 pb-8">
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 Yes. We build integrations with XPM (Xero Practice Manager), MYOB Practice,
                 Xero, FYI Docs, and most other tools in the Australian accounting stack.
-                We don&apos;t ask you to change your software — we build automation layers that
+                We don&apos;t ask you to change your software, we build automation layers that
                 sit across your existing systems and make them work together. If your tool
                 has an API or export capability, we can work with it.
               </p>
@@ -296,13 +296,13 @@ export default function ForAccountingFirms() {
 
           <details className="group bg-saabai-surface">
             <summary className="flex items-center justify-between gap-6 px-8 py-6 cursor-pointer list-none">
-              <span className="text-base font-medium">What about the busy season — can we handle deployment then?</span>
+              <span className="text-base font-medium">What about the busy season, can we handle deployment then?</span>
               <span className="text-saabai-teal text-xl flex-shrink-0 transition-transform group-open:rotate-45">+</span>
             </summary>
             <div className="px-8 pb-8">
               <p className="text-saabai-text-muted text-sm leading-relaxed">
                 We recommend booking your strategy call well before peak season so
-                systems are live and bedded in before the pressure hits — not launched
+                systems are live and bedded in before the pressure hits, not launched
                 during it. Most practices deploy in the quieter months (January–February
                 or July) and arrive at tax season with their document collection and
                 deadline reminders already running. That said, if you need something
@@ -331,6 +331,62 @@ export default function ForAccountingFirms() {
         </div>
       </section>
 
+      {/* ── Start with an AI Audit ─────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          Start Here, Fixed-Price AI Audit
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
+          Know exactly what to automate first.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+          Every Saabai engagement starts with a fixed-price AI Audit that maps
+          your operation and ranks your highest-ROI automation opportunities.
+          Three tiers, sized to your firm.
+        </p>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {[
+            { name: "Essential", staff: "1–5 staff", price: "$3,500", duration: "1 week" },
+            { name: "Professional", staff: "6–20 staff", price: "$7,500", duration: "2 weeks", highlight: true },
+            { name: "Enterprise", staff: "20+ staff", price: "$15,000", duration: "3 weeks" },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className={`bg-saabai-surface border rounded-xl p-8 text-center ${
+                t.highlight ? "border-saabai-teal/60" : "border-saabai-border"
+              }`}
+              style={
+                t.highlight
+                  ? { boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.18)" }
+                  : undefined
+              }
+            >
+              <h3 className="text-xl font-semibold mb-1 tracking-tight">{t.name}</h3>
+              <p className="text-xs text-saabai-text-dim mb-5 tracking-wide">{t.staff}</p>
+              <div className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow mb-1">
+                {t.price}
+              </div>
+              <p className="text-xs text-saabai-text-dim tracking-wide">
+                AUD · Delivered in {t.duration}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <a
+            href="/ai-audit"
+            className="inline-block bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)]"
+          >
+            View AI Audit Details
+          </a>
+          <p className="text-xs text-saabai-text-dim mt-5 tracking-wide">
+            Or book a free call to discuss which tier fits your firm
+          </p>
+        </div>
+      </section>
+
       {/* ── Final CTA ───────────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
@@ -352,7 +408,7 @@ export default function ForAccountingFirms() {
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows,
           identify where automation creates the biggest impact, and give you a
-          clear picture of what&apos;s possible — no obligation.
+          clear picture of what&apos;s possible, no obligation.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

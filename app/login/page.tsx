@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import LoginForm from "./LoginForm";
 
-export const metadata = { title: "Client Portal — Saabai" };
+export const metadata = { title: "Client Portal, Saabai" };
 
 export default async function LoginPage({
   searchParams,
@@ -75,7 +75,7 @@ export default async function LoginPage({
           </p>
         </div>
 
-        {/* Form (client component — handles focus/hover events) */}
+        {/* Form (client component, handles focus/hover events) */}
         <LoginForm
           redirectTo={redirectTo}
           isInvalid={isInvalid}

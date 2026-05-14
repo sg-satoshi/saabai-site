@@ -67,7 +67,7 @@ export default async function AINewsPage() {
               AI is moving fast.<br />Your business should too.
             </h2>
             <p className="text-saabai-text-muted mb-8 leading-relaxed">
-              Book a free 30-minute strategy call. We will map exactly what AI automation can do for your business — no pitch, just a clear picture.
+              Book a free 30-minute strategy call. We will map exactly what AI automation can do for your business, no pitch, just a clear picture.
             </p>
             <a
               href="https://calendly.com/shanegoldberg/30min"

@@ -207,7 +207,7 @@ export default function AiNewsClient({ reddit, news, x }: Props) {
             <p className="text-[10px] font-bold tracking-[0.2em] text-saabai-teal uppercase mb-1">Your Feed</p>
             <p className="text-xs text-saabai-text-dim">
               {hasSelection
-                ? `${selected.size} source${selected.size > 1 ? "s" : ""} selected — showing ${customFeed.length} posts`
+                ? `${selected.size} source${selected.size > 1 ? "s" : ""} selected, showing ${customFeed.length} posts`
                 : "Select sources below to build your custom feed"}
             </p>
           </div>

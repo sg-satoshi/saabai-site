@@ -6,7 +6,7 @@ import Footer from "./components/Footer";
 export const metadata: Metadata = {
   title: "AI Automation for Professional Firms Australia | Saabai",
   description:
-    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call — no obligation.",
+    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call, no obligation.",
   alternates: { canonical: "https://www.saabai.ai" },
   openGraph: {
     url: "https://www.saabai.ai",
@@ -23,7 +23,7 @@ const organizationSchema = {
   url: "https://www.saabai.ai",
   logo: "https://www.saabai.ai/brand/saabai-logo.png",
   description:
-    "AI automation systems for professional service firms — law firms, accounting practices, real estate agencies, and financial advisers across Australia.",
+    "AI automation systems for professional service firms, law firms, accounting practices, real estate agencies, and financial advisers across Australia.",
   founder: {
     "@type": "Person",
     name: "Shane Goldberg",
@@ -49,7 +49,7 @@ export default function Home() {
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
 
-        {/* Layered glow — wide ambient + tight focal */}
+        {/* Layered glow, wide ambient + tight focal */}
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 90% 60% at 50% 30%, var(--saabai-glow-mid) 0%, transparent 65%)"
         }} />
@@ -76,7 +76,7 @@ export default function Home() {
         {/* Sub-headline */}
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-xl mx-auto mb-14 leading-relaxed">
           We build AI systems that recover 20+ hours a week for professional
-          firms — without adding staff or changing how your team works.
+          firms, without adding staff or changing how your team works.
         </p>
 
         {/* CTAs */}
@@ -191,7 +191,7 @@ export default function Home() {
             {
               tag: null,
               title: "AI Chat Agents",
-              body: "Custom AI agents embedded on your website — handling enquiries, quotes, lead qualification, and client support 24/7. Currently live across specialist law firms, trade businesses, and professional services.",
+              body: "Custom AI agents embedded on your website, handling enquiries, quotes, lead qualification, and client support 24/7. Currently live across specialist law firms, trade businesses, and professional services.",
               featured: false,
             },
             {
@@ -203,7 +203,7 @@ export default function Home() {
             {
               tag: null,
               title: "Systems Architecture",
-              body: "End-to-end AI infrastructure designed for your business model — scalable, secure, and built to handle volume growth without friction.",
+              body: "End-to-end AI infrastructure designed for your business model, scalable, secure, and built to handle volume growth without friction.",
               featured: false,
             },
             {
@@ -248,7 +248,7 @@ export default function Home() {
           {/* Filler cell */}
           <div className="bg-saabai-surface p-12 flex flex-col items-start justify-between gap-8">
             <p className="text-base text-saabai-text-dim leading-relaxed">
-              Most firms start with an AI Audit — a 90-minute session that identifies exactly where time and money are being lost, with a written roadmap of what to fix first.
+              Most firms start with an AI Audit, a 90-minute session that identifies exactly where time and money are being lost, with a written roadmap of what to fix first.
             </p>
             <a
               href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"
@@ -298,7 +298,7 @@ export default function Home() {
           Process
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-24 max-w-2xl mx-auto leading-snug">
-          From audit to operating advantage — in weeks.
+          From audit to operating advantage, in weeks.
         </h2>
 
         <div className="grid md:grid-cols-3 gap-12 md:gap-16">
@@ -311,7 +311,7 @@ export default function Home() {
             {
               step: "02",
               title: "Design",
-              body: "We build a custom automation architecture for your firm — specific to your systems, team size, and commercial priorities. No generic templates.",
+              body: "We build a custom automation architecture for your firm, specific to your systems, team size, and commercial priorities. No generic templates.",
             },
             {
               step: "03",
@@ -358,31 +358,31 @@ export default function Home() {
           What automation actually looks like in practice.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-20 leading-relaxed">
-          Not theory. Specific workflows — before and after a well-built system is in place.
+          Not theory. Specific workflows, before and after a well-built system is in place.
         </p>
 
         <div className="flex flex-col gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.35), 0 0 32px rgba(98,197,209,0.18)" }}>
           {[
             {
-              scenario: "New client enquiry — after hours",
+              scenario: "New client enquiry, after hours",
               before: "Partner checks emails at 8am. Client enquiry from the night before. Sends a manual reply, attaches intake form, waits for it back.",
               after: "Enquiry triggers automated response within 2 minutes. Client receives personalised acknowledgement, structured intake form, and calendar link. Partner opens their inbox to a completed intake and a booked appointment.",
               recovered: "2–3 hrs/week",
             },
             {
-              scenario: "Matter status updates — law firm",
+              scenario: "Matter status updates, law firm",
               before: "Fee earner drafts individual status update emails each week. Checks matter notes, writes update, sends to each client. Repeated across 20+ active matters.",
               after: "Status updates generated automatically from practice management data and sent on schedule. Fee earner reviews exceptions only.",
               recovered: "4–6 hrs/week",
             },
             {
-              scenario: "Document chasing — accounting firm",
+              scenario: "Document chasing, accounting firm",
               before: "Admin staff manually follow up clients for missing documents by phone and email. Chasing continues until lodgement deadline. Partner escalates the stragglers.",
               after: "Automated sequence sends reminders at set intervals, escalating in tone. Exceptions flagged to admin only when the sequence fails to get a response.",
               recovered: "5–8 hrs/week",
             },
             {
-              scenario: "Annual review scheduling — financial advisory",
+              scenario: "Annual review scheduling, financial advisory",
               before: "Practice coordinator emails clients individually to schedule annual reviews. Back-and-forth to find a time. Pre-meeting data collected manually.",
               after: "Review invitations sent automatically at the right intervals. Clients self-schedule via calendar link. Pre-meeting questionnaire collected and summarised before the appointment.",
               recovered: "3–5 hrs/week",
@@ -440,7 +440,7 @@ export default function Home() {
           Already working. Right now.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-20 leading-relaxed">
-          Not demos. Not pilots. Production systems handling real enquiries, quotes, and clients — every day.
+          Not demos. Not pilots. Production systems handling real enquiries, quotes, and clients, every day.
         </p>
 
         <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -453,7 +453,7 @@ export default function Home() {
             <h3 className="text-xl font-semibold mb-1 tracking-tight mt-6">National Plastics Supplier</h3>
             <p className="text-sm text-saabai-text-dim mb-5">AI Agent: Rex</p>
             <p className="text-base text-saabai-text-muted leading-relaxed mb-6">
-              Custom AI agent handling cut-to-size quotes across 100+ product variations, order status lookups, and product enquiries — 24 hours a day, without staff involvement. Qualified leads are automatically routed to CRM with full conversation context.
+              Custom AI agent handling cut-to-size quotes across 100+ product variations, order status lookups, and product enquiries, 24 hours a day, without staff involvement. Qualified leads are automatically routed to CRM with full conversation context.
             </p>
             <ul className="flex flex-col gap-2.5">
               {["Instant pricing for 100+ material and size variations", "Lead capture + CRM pipeline automated", "24/7 product Q&A with zero staff overhead"].map((b) => (
@@ -473,7 +473,7 @@ export default function Home() {
             <h3 className="text-xl font-semibold mb-1 tracking-tight mt-6">Tributum Law</h3>
             <p className="text-sm text-saabai-text-dim mb-5">AI Agent: Lex</p>
             <p className="text-base text-saabai-text-muted leading-relaxed mb-6">
-              AI intake agent qualifying ATO dispute enquiries, tax structuring matters, and trust law questions around the clock. Collects client context, flags urgent deadlines, and routes qualified leads to the principal — so no enquiry slips through after hours.
+              AI intake agent qualifying ATO dispute enquiries, tax structuring matters, and trust law questions around the clock. Collects client context, flags urgent deadlines, and routes qualified leads to the principal, so no enquiry slips through after hours.
             </p>
             <ul className="flex flex-col gap-2.5">
               {["24/7 intake across all tax and trust matter types", "Urgent ATO notices flagged and escalated immediately", "Qualified leads delivered with full conversation context"].map((b) => (
@@ -502,7 +502,7 @@ export default function Home() {
           <div className="bg-saabai-surface border border-saabai-border rounded-2xl p-10 relative overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.3), 0 0 24px rgba(98,197,209,0.15)" }}>
             <div className="h-px absolute top-0 left-12 right-12 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
             <p className="text-lg text-saabai-text-muted leading-relaxed mb-8">
-              &ldquo;Rex handles the quotes we used to miss — the Saturday afternoon ones, the after-midnight ones. Those enquiries used to go straight to a competitor. Now they get an answer within two minutes. We went live in three weeks and haven&apos;t looked back.&rdquo;
+              &ldquo;Rex handles the quotes we used to miss, the Saturday afternoon ones, the after-midnight ones. Those enquiries used to go straight to a competitor. Now they get an answer within two minutes. We went live in three weeks and haven&apos;t looked back.&rdquo;
             </p>
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-saabai-teal/10 border border-saabai-teal/30 flex items-center justify-center shrink-0">
@@ -542,7 +542,7 @@ export default function Home() {
             Automation built around <span className="text-gradient">how you actually work</span>
           </h2>
           <p className="text-saabai-text-muted text-center max-w-2xl mx-auto mb-14 text-lg">
-            Every professional services firm has the same problem — skilled people doing work a system should handle. The difference is where it hides.
+            Every professional services firm has the same problem, skilled people doing work a system should handle. The difference is where it hides.
           </p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -559,7 +559,7 @@ export default function Home() {
                 href: "/for-accounting-firms",
                 icon: "📊",
                 headline: "Document collection. Deadline reminders. Reports.",
-                detail: "Tax season coordination runs on email threads and manual chasing — until it doesn't have to.",
+                detail: "Tax season coordination runs on email threads and manual chasing, until it doesn't have to.",
                 stat: "12 hrs/week per staff",
               },
               {
@@ -649,26 +649,26 @@ export default function Home() {
           Questions we actually get asked.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-xl mx-auto mb-16 leading-relaxed">
-          Honest answers — no buzzword bingo, no sales spin.
+          Honest answers, no buzzword bingo, no sales spin.
         </p>
 
         <div className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 60px rgba(98,197,209,0.25), 0 0 24px rgba(98,197,209,0.15)" }}>
           {[
             {
               q: "We're not a tech company. Is this actually for us?",
-              a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers — these are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+              a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers, these are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
             },
             {
               q: "How long does it take to get something up and running?",
-              a: "Simple automations can go live in a week or two. More complex multi-system workflows typically take four to six weeks from design to deployment. We move fast — but not at the expense of building it properly.",
+              a: "Simple automations can go live in a week or two. More complex multi-system workflows typically take four to six weeks from design to deployment. We move fast, but not at the expense of building it properly.",
             },
             {
               q: "We already use [insert software here]. Will this work with our existing tools?",
-              a: "Almost certainly yes. We build on top of the tools you already have — your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out. If a tool has an API (or even just a web interface), we can typically automate around it.",
+              a: "Almost certainly yes. We build on top of the tools you already have, your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out. If a tool has an API (or even just a web interface), we can typically automate around it.",
             },
             {
               q: "We're an accounting or financial services firm. What about compliance and data security?",
-              a: "Fair question and a serious one. We design systems with data handling in mind — we're not connecting sensitive client data to random third-party tools. We discuss your compliance requirements upfront and design around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing.",
+              a: "Fair question and a serious one. We design systems with data handling in mind, we're not connecting sensitive client data to random third-party tools. We discuss your compliance requirements upfront and design around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing.",
             },
             {
               q: "Is the strategy call really free? What's the catch?",
@@ -676,7 +676,7 @@ export default function Home() {
             },
             {
               q: "We tried automation before and it didn't stick. Why would this be different?",
-              a: "Usually because the previous attempt was a generic off-the-shelf tool that wasn't designed around how your business actually operates. Or it got set up, then nobody maintained it, then it broke, then everyone went back to doing it manually. We build custom systems and stay involved post-launch. If something breaks or drifts, that's our problem to fix — not yours.",
+              a: "Usually because the previous attempt was a generic off-the-shelf tool that wasn't designed around how your business actually operates. Or it got set up, then nobody maintained it, then it broke, then everyone went back to doing it manually. We build custom systems and stay involved post-launch. If something breaks or drifts, that's our problem to fix, not yours.",
             },
           ].map(({ q, a }) => (
             <details key={q} className="group bg-saabai-surface">
@@ -722,12 +722,12 @@ export default function Home() {
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
           Find out exactly how much time<br />
-          <span className="text-gradient">your firm is losing — and how to get it back.</span>
+          <span className="text-gradient">your firm is losing, and how to get it back.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute call. We&apos;ll map the highest-value automation
           opportunities in your operation and give you a clear picture of
-          what&apos;s possible — no obligation, no jargon.
+          what&apos;s possible, no obligation, no jargon.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer"

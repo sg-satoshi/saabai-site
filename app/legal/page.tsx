@@ -3,7 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Lex — AI Legal Research for Australian Law Firms",
+  title: "Lex, AI Legal Research for Australian Law Firms",
   description:
     "AI-powered legal research, document drafting, and QA verification built for Australian solicitors. Search AustLII, ATO, Federal Legislation instantly. Draft trust deeds, BFAs, and commercial agreements with clause-by-clause verification.",
 };
@@ -161,7 +161,7 @@ export default function LegalPage() {
             maxWidth: 680, margin: "0 auto 40px",
             animation: "fadeUp 0.7s ease 0.2s both",
           }}>
-            Lex gives your firm instant access to AustLII, ATO rulings, Federal and State legislation — and drafts
+            Lex gives your firm instant access to AustLII, ATO rulings, Federal and State legislation, and drafts
             court-ready documents in seconds, with AI-powered QA verification.
           </p>
 
@@ -264,7 +264,7 @@ export default function LegalPage() {
               Everything Your Firm Needs
             </h2>
             <p style={{ fontSize: 16, color: C.textMuted, margin: 0 }}>
-              Purpose-built for Australian solicitors. No generic AI — jurisdiction-specific, legislation-verified.
+              Purpose-built for Australian solicitors. No generic AI, jurisdiction-specific, legislation-verified.
             </p>
           </div>
 
@@ -277,12 +277,12 @@ export default function LegalPage() {
               {
                 icon: <IconSearch />,
                 title: "Instant Legal Research",
-                desc: "Search AustLII, ATO rulings, Federal and State legislation, ASIC, AAT, Fair Work Commission, and Family Law databases simultaneously — in seconds.",
+                desc: "Search AustLII, ATO rulings, Federal and State legislation, ASIC, AAT, Fair Work Commission, and Family Law databases simultaneously, in seconds.",
               },
               {
                 icon: <IconDocument />,
                 title: "AI Document Drafting",
-                desc: "Trust deeds, BFAs, service agreements, employment contracts, commercial leases, shareholders agreements — ten document types, drafted with legislation references built in.",
+                desc: "Trust deeds, BFAs, service agreements, employment contracts, commercial leases, shareholders agreements, ten document types, drafted with legislation references built in.",
               },
               {
                 icon: <IconShield />,
@@ -292,7 +292,7 @@ export default function LegalPage() {
               {
                 icon: <IconMap />,
                 title: "Multi-Jurisdiction",
-                desc: "NSW, VIC, QLD, WA, SA, TAS, ACT, NT — and cross-border matters. Lex knows which legislation applies where.",
+                desc: "NSW, VIC, QLD, WA, SA, TAS, ACT, NT, and cross-border matters. Lex knows which legislation applies where.",
               },
               {
                 icon: <IconChat />,
@@ -302,7 +302,7 @@ export default function LegalPage() {
               {
                 icon: <IconChart />,
                 title: "Firm Dashboard",
-                desc: "See all research threads, document history, top questions, and usage by team member — from a single dashboard.",
+                desc: "See all research threads, document history, top questions, and usage by team member, from a single dashboard.",
               },
             ].map((f) => (
               <div key={f.title} style={{
@@ -358,7 +358,7 @@ export default function LegalPage() {
               {
                 num: "01",
                 title: "Ask a research question",
-                desc: "Type any legal question. Lex searches AustLII, ATO rulings, federal legislation, and more in real time — returning cited, current results.",
+                desc: "Type any legal question. Lex searches AustLII, ATO rulings, federal legislation, and more in real time, returning cited, current results.",
               },
               {
                 num: "02",
@@ -368,7 +368,7 @@ export default function LegalPage() {
               {
                 num: "03",
                 title: "Verify with QA",
-                desc: "Lex auto-runs a QA pass on every draft: clause confidence scores, critical issue flags, and recommended checks — before you sign off.",
+                desc: "Lex auto-runs a QA pass on every draft: clause confidence scores, critical issue flags, and recommended checks, before you sign off.",
               },
             ].map((step) => (
               <div key={step.num}>
@@ -409,7 +409,7 @@ export default function LegalPage() {
               Search Every Australian Legal Database
             </h2>
             <p style={{ fontSize: 15, color: C.textMuted, lineHeight: 1.7, margin: "0 0 28px" }}>
-              Lex searches the full breadth of Australian legal sources simultaneously — no tab-switching, no manual cross-referencing.
+              Lex searches the full breadth of Australian legal sources simultaneously, no tab-switching, no manual cross-referencing.
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
               {[
@@ -429,7 +429,7 @@ export default function LegalPage() {
                   }} />
                   <span style={{ fontSize: 14, color: C.text, lineHeight: 1.5 }}>
                     <strong style={{ color: C.text }}>{item.db}</strong>
-                    <span style={{ color: C.textMuted }}> — {item.note}</span>
+                    <span style={{ color: C.textMuted }}>, {item.note}</span>
                   </span>
                 </li>
               ))}
@@ -448,7 +448,7 @@ export default function LegalPage() {
             boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
           }}>
             <div style={{ color: C.gold, fontWeight: 700, marginBottom: 4, fontSize: 12, letterSpacing: "0.08em" }}>
-              Lex Research — AustLII
+              Lex Research, AustLII
             </div>
             <div style={{ color: C.border, marginBottom: 16 }}>
               ──────────────────────
@@ -520,7 +520,7 @@ export default function LegalPage() {
                 fontSize: 12,
               }}>
                 <span style={{ color: C.green, fontWeight: 700 }}>✓ QA Status: Verified</span>
-                <span style={{ color: C.textMuted }}> — 94% confidence</span>
+                <span style={{ color: C.textMuted }}>, 94% confidence</span>
               </div>
             </div>
           </div>
@@ -634,7 +634,7 @@ export default function LegalPage() {
                 Critical Issues
               </h3>
               <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                Flags legislation mismatches, missing required clauses, and jurisdiction conflicts before you sign off — not after.
+                Flags legislation mismatches, missing required clauses, and jurisdiction conflicts before you sign off, not after.
               </p>
             </div>
 
@@ -656,7 +656,7 @@ export default function LegalPage() {
                 Recommended Checks
               </h3>
               <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                Tells you exactly what a senior lawyer should verify before filing or executing — no guesswork, no surprises.
+                Tells you exactly what a senior lawyer should verify before filing or executing, no guesswork, no surprises.
               </p>
             </div>
           </div>

@@ -6,13 +6,13 @@ import AdvisoryEnquiryForm from "./AdvisoryEnquiryForm";
 export const metadata: Metadata = {
   title: "AI Advisory & Board Positions | Shane Goldberg | Saabai",
   description:
-    "Shane Goldberg brings hands-on AI implementation experience to advisory and board roles — helping leadership teams make confident decisions about AI strategy, investment, and risk.",
+    "Shane Goldberg brings hands-on AI implementation experience to advisory and board roles, helping leadership teams make confident decisions about AI strategy, investment, and risk.",
   alternates: { canonical: "https://www.saabai.ai/advisory" },
   openGraph: {
     url: "https://www.saabai.ai/advisory",
     title: "AI Advisory & Board Positions | Shane Goldberg | Saabai",
     description:
-      "Shane Goldberg brings hands-on AI implementation experience to advisory and board roles — helping leadership teams make confident decisions about AI strategy, investment, and risk.",
+      "Shane Goldberg brings hands-on AI implementation experience to advisory and board roles, helping leadership teams make confident decisions about AI strategy, investment, and risk.",
   },
 };
 
@@ -21,14 +21,14 @@ const engagements = [
     num: "01",
     title: "AI Advisory Retainer",
     description:
-      "Ongoing retained advisor — typically 2–4 days per month. Attends leadership meetings, helps evaluate AI investments, stress-tests vendor proposals, and keeps leadership ahead of the curve without requiring them to become AI experts themselves.",
+      "Ongoing retained advisor, typically 2–4 days per month. Attends leadership meetings, helps evaluate AI investments, stress-tests vendor proposals, and keeps leadership ahead of the curve without requiring them to become AI experts themselves.",
     suited: "Suited to: mid-market firms ($5M–$100M revenue) navigating AI adoption for the first time, or those who have started investing in AI and want an independent voice in the room.",
   },
   {
     num: "02",
     title: "Board of Directors",
     description:
-      "Formal director position where AI and automation strategy is a board-level priority. Brings lived experience building and deploying AI systems commercially — not theoretical knowledge from conferences, but real systems live in real businesses.",
+      "Formal director position where AI and automation strategy is a board-level priority. Brings lived experience building and deploying AI systems commercially, not theoretical knowledge from conferences, but real systems live in real businesses.",
     suited: "Suited to: businesses where AI is becoming a material strategic or operational risk, or where the board recognises a capability gap at director level.",
   },
   {
@@ -42,7 +42,7 @@ const engagements = [
     num: "04",
     title: "Implementation Oversight",
     description:
-      "Contracted for the duration of a specific AI project. Reviews vendor proposals, sets technical direction, stress-tests assumptions, and reports independently to the board on progress and risk. No vendor alignment — no incentive to tell you what you want to hear.",
+      "Contracted for the duration of a specific AI project. Reviews vendor proposals, sets technical direction, stress-tests assumptions, and reports independently to the board on progress and risk. No vendor alignment, no incentive to tell you what you want to hear.",
     suited: "Suited to: organisations undertaking a significant AI or automation investment who want independent oversight without adding permanent headcount.",
   },
 ];
@@ -50,7 +50,7 @@ const engagements = [
 const credentials = [
   {
     point: "Built and deployed AI agents commercially",
-    detail: "Across law, real estate, and industrial distribution — not proof-of-concepts, live systems in operating businesses.",
+    detail: "Across law, real estate, and industrial distribution, not proof-of-concepts, live systems in operating businesses.",
   },
   {
     point: "Systems generating revenue today",
@@ -102,7 +102,7 @@ export default function Advisory() {
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           Most leadership teams are making AI decisions without anyone in the room
           who has actually built and deployed an AI system. Shane Goldberg brings
-          real implementation experience — not theory — to advisory and board-level
+          real implementation experience, not theory, to advisory and board-level
           engagements, so leadership can make confident decisions about AI strategy,
           investment, and risk.
         </p>
@@ -167,7 +167,7 @@ export default function Advisory() {
               decisions based on a vendor&apos;s presentation deck.
             </p>
             <p className="text-base text-saabai-text-muted leading-relaxed max-w-3xl mb-6">
-              That&apos;s not a criticism — it&apos;s a capability gap that didn&apos;t exist five years ago and
+              That&apos;s not a criticism, it&apos;s a capability gap that didn&apos;t exist five years ago and
               didn&apos;t matter two years ago. It matters now. Businesses are spending serious money on
               AI initiatives, and the people approving that spend often have no way to evaluate
               whether the proposal in front of them is sound.
@@ -175,8 +175,8 @@ export default function Advisory() {
             <p className="text-base text-saabai-text-muted leading-relaxed max-w-3xl">
               The risk isn&apos;t moving too slowly. The risk is making a $500k decision based on a
               vendor&apos;s PowerPoint. Shane has built AI systems that are live in businesses right now
-              — generating revenue, handling client interactions, automating workflows. That
-              perspective — what actually works, what doesn&apos;t, and why — is what&apos;s missing from most boardrooms.
+             , generating revenue, handling client interactions, automating workflows. That
+              perspective, what actually works, what doesn&apos;t, and why, is what&apos;s missing from most boardrooms.
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export default function Advisory() {
           <span className="text-gradient">to your board?</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-6 max-w-lg mx-auto leading-relaxed">
-          Whether you&apos;re a CEO, Chair, investor, or existing board member — if AI
+          Whether you&apos;re a CEO, Chair, investor, or existing board member, if AI
           strategy is becoming a board-level question, let&apos;s have a conversation.
         </p>
         <p className="relative text-saabai-text-dim text-base mb-14 max-w-lg mx-auto leading-relaxed italic">

@@ -89,7 +89,7 @@ export default function CalculatorSection() {
 
       <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-2xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
 
-        {/* Left — Inputs */}
+        {/* Left, Inputs */}
         <div className="bg-saabai-surface p-10 flex flex-col gap-9">
           <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent -mt-10 mb-1" />
           <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
@@ -130,11 +130,11 @@ export default function CalculatorSection() {
           ))}
         </div>
 
-        {/* Right — Results */}
+        {/* Right, Results */}
         <div className="bg-saabai-surface p-10 flex flex-col justify-between gap-8">
           <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent -mt-10 mb-1" />
 
-          {/* Annual cost — hero */}
+          {/* Annual cost, hero */}
           <div>
             <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-4">
               Estimated Annual Labour Cost
@@ -185,7 +185,7 @@ export default function CalculatorSection() {
                   <path d="M1 5l2.5 2.5L9 1.5" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
-              <p className="text-sm text-saabai-text-muted">Sent — check your inbox.</p>
+              <p className="text-sm text-saabai-text-muted">Sent, check your inbox.</p>
             </div>
           ) : (
             <form onSubmit={submitEmail} className="flex gap-2">
