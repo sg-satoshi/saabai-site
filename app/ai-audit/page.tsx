@@ -31,7 +31,7 @@ const tiers = [
       "ROI ranking with time savings, complexity, and build cost estimates",
       "30-minute findings walkthrough call",
     ],
-    cta: "Buy Now ($3,500)",
+    cta: "Buy Now $3,500",
     ctaLink: "https://buy.stripe.com/4gMdRbeBM1vQ5ht2yn8og02",
     ctaType: "stripe" as const,
     secondaryCta: "Questions? Book a call",
@@ -55,7 +55,7 @@ const tiers = [
       "60-minute walkthrough call + recorded video summary",
       "30 days of post-delivery email support",
     ],
-    cta: "Buy Now ($7,500)",
+    cta: "Buy Now $7,500",
     ctaLink: "https://buy.stripe.com/9B6aEZgJU8Yi8tF1uj8og03",
     ctaType: "stripe" as const,
     secondaryCta: "Discuss first",
@@ -149,7 +149,7 @@ export default function AIAudit() {
       <Nav activePage="/ai-audit" />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
+      <section className="relative pt-52 pb-12 px-6 text-center max-w-5xl mx-auto overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -194,7 +194,7 @@ export default function AIAudit() {
       </section>
 
       {/* ── Pricing Tiers ────────────────────────────────────────────────── */}
-      <section className="py-16 px-6 max-w-7xl mx-auto">
+      <section className="pt-4 pb-16 px-6 max-w-7xl mx-auto">
         <div className="grid md:grid-cols-3 gap-6">
           {tiers.map((tier) => (
             <div

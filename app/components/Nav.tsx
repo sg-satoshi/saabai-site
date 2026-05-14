@@ -3,18 +3,47 @@
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "AI News", href: "/ai-news" },
-  { label: "Services", href: "/services" },
-  { label: "Advisory", href: "/advisory" },
-  { label: "Use Cases", href: "/use-cases" },
-  { label: "Case Studies", href: "/case-studies" },
-  { label: "Insights", href: "/insights" },
-  { label: "Process", href: "/process" },
-  { label: "Calculator", href: "/calculator" },
-  { label: "FAQ", href: "/faq" },
-  { label: "About", href: "/about" },
+type NavLink = { label: string; href: string; isNew?: boolean };
+type NavSection = { section: string | null; links: NavLink[] };
+
+const navSections: NavSection[] = [
+  {
+    section: "Work With Us",
+    links: [
+      { label: "AI Audit", href: "/ai-audit", isNew: true },
+      { label: "Services", href: "/services" },
+      { label: "Advisory", href: "/advisory" },
+      { label: "Process", href: "/process" },
+    ],
+  },
+  {
+    section: "Industries",
+    links: [
+      { label: "For Law Firms", href: "/for-law-firms" },
+      { label: "For Accounting Firms", href: "/for-accounting-firms" },
+      { label: "For Real Estate", href: "/for-real-estate" },
+    ],
+  },
+  {
+    section: "Proof",
+    links: [
+      { label: "Case Studies", href: "/case-studies" },
+      { label: "Use Cases", href: "/use-cases" },
+    ],
+  },
+  {
+    section: "Resources",
+    links: [
+      { label: "Calculator", href: "/calculator" },
+      { label: "AI News", href: "/ai-news" },
+      { label: "Insights", href: "/insights" },
+      { label: "FAQ", href: "/faq" },
+    ],
+  },
+  {
+    section: null,
+    links: [{ label: "About", href: "/about" }],
+  },
 ];
 
 export default function Nav({ activePage }: { activePage?: string }) {
@@ -75,23 +104,44 @@ export default function Nav({ activePage }: { activePage?: string }) {
           {/* Dropdown */}
           {open && (
             <div className="absolute right-0 top-full pt-2">
-              <div className="w-52 bg-saabai-surface border border-saabai-border rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                {navLinks.map(({ label, href }) => (
-                  <a
-                    key={href}
-                    href={href}
-                    onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 px-5 py-4 text-sm font-medium tracking-wide transition-colors ${
-                      activePage === href
-                        ? "text-saabai-teal bg-saabai-surface-raised"
-                        : "text-saabai-text-muted hover:text-saabai-text hover:bg-saabai-surface-raised"
-                    }`}
+              <div
+                className="w-72 bg-saabai-surface border border-saabai-border rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-[calc(100vh-120px)] overflow-y-auto"
+              >
+                {navSections.map(({ section, links }, sectionIdx) => (
+                  <div
+                    key={section ?? `__section-${sectionIdx}`}
+                    className={sectionIdx > 0 ? "border-t border-saabai-border" : ""}
                   >
-                    {activePage === href && (
-                      <span className="w-1 h-1 rounded-full bg-saabai-teal shrink-0" />
+                    {section && (
+                      <div className="px-5 pt-4 pb-2 text-[10px] font-semibold tracking-[0.2em] uppercase text-saabai-text-dim">
+                        {section}
+                      </div>
                     )}
-                    {label}
-                  </a>
+                    {links.map(({ label, href, isNew }) => (
+                      <a
+                        key={href}
+                        href={href}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-center justify-between gap-3 px-5 py-3 text-sm font-medium tracking-wide transition-colors ${
+                          activePage === href
+                            ? "text-saabai-teal bg-saabai-surface-raised"
+                            : "text-saabai-text-muted hover:text-saabai-text hover:bg-saabai-surface-raised"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          {activePage === href && (
+                            <span className="w-1 h-1 rounded-full bg-saabai-teal shrink-0" />
+                          )}
+                          {label}
+                        </span>
+                        {isNew && (
+                          <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-saabai-bg bg-saabai-teal px-2 py-0.5 rounded-full">
+                            New
+                          </span>
+                        )}
+                      </a>
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>
@@ -105,7 +155,7 @@ export default function Nav({ activePage }: { activePage?: string }) {
           rel="noopener noreferrer"
           className="text-sm font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
         >
-          Book a Strategy Call
+          Book a Free 30-Min Call
         </a>
       </div>
     </nav>
