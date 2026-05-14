@@ -5,13 +5,13 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Automation Services for Professional Firms",
   description:
-    "Custom AI automation services for professional firms — client intake, workflow automation, compliance document systems, and 24/7 AI agents. Book a free strategy call.",
+    "Custom AI automation services for professional firms: client intake, workflow automation, compliance document systems, and 24/7 AI agents. Book a free strategy call.",
   alternates: { canonical: "https://www.saabai.ai/services" },
   openGraph: {
     url: "https://www.saabai.ai/services",
     title: "AI Automation Services for Professional Firms | Saabai",
     description:
-      "Custom AI automation services for professional firms — client intake, workflow automation, compliance docs, and 24/7 AI agents. Book a free strategy call.",
+      "Custom AI automation services for professional firms: client intake, workflow automation, compliance docs, and 24/7 AI agents. Book a free strategy call.",
   },
 };
 
@@ -19,7 +19,7 @@ const services: { title: string; description: string; benefits: string[]; wide?:
   {
     title: "Client Intake & Lead Qualification",
     description:
-      "AI systems that screen enquiries, qualify leads, and route them correctly — before anyone on your team touches them.",
+      "AI systems that screen enquiries, qualify leads, and route them correctly before anyone on your team touches them.",
     benefits: [
       "Automated lead scoring and qualification",
       "Intelligent enquiry routing",
@@ -30,7 +30,7 @@ const services: { title: string; description: string; benefits: string[]; wide?:
   {
     title: "Client Communications & Support",
     description:
-      "AI-powered response systems that handle routine client queries 24/7 — so your team focuses on complex, high-value work.",
+      "AI-powered response systems that handle routine client queries 24/7, so your team focuses on complex, high-value work.",
     benefits: [
       "24/7 automated client responses",
       "Knowledge base integration",
@@ -52,7 +52,7 @@ const services: { title: string; description: string; benefits: string[]; wide?:
   {
     title: "Compliance & Document Automation",
     description:
-      "Automate compliance documentation, contract workflows, and audit trails — reducing risk and reclaiming hours.",
+      "Automate compliance documentation, contract workflows, and audit trails, reducing risk and reclaiming hours.",
     benefits: [
       "Automated document generation",
       "Compliance checklists and reminders",
@@ -63,11 +63,11 @@ const services: { title: string; description: string; benefits: string[]; wide?:
   {
     title: "AI Chat Agents",
     description:
-      "Custom AI agents embedded directly on your website — handling enquiries, quoting, lead qualification, and client support around the clock. Currently live across specialist law firms, trade businesses, and professional services. No staff required after hours.",
+      "Custom AI agents embedded directly on your website, handling enquiries, quoting, lead qualification, and client support around the clock. Currently live across specialist law firms, trade businesses, and professional services. No staff required after hours.",
     benefits: [
       "Custom-trained on your products, services, and pricing",
       "Captures and qualifies leads automatically",
-      "Instant responses — day, night, and weekends",
+      "Instant responses: day, night, and weekends",
       "CRM integration and email notification on every lead",
     ],
     wide: true,
@@ -88,7 +88,7 @@ const steps = [
   {
     step: "03",
     title: "Build & Deploy",
-    body: "Your automation systems are implemented and integrated into your existing tools — no ripping anything out.",
+    body: "Your automation systems are implemented and integrated into your existing tools, no ripping anything out.",
   },
   {
     step: "04",
@@ -106,7 +106,7 @@ const results = [
   {
     stat: "3×",
     label: "Faster response times",
-    detail: "AI agents respond to leads and clients instantly — day or night — without increasing headcount.",
+    detail: "AI agents respond to leads and clients instantly, day or night, without increasing headcount.",
   },
   {
     stat: "40%",
@@ -116,7 +116,7 @@ const results = [
   {
     stat: "24/7",
     label: "Automated coverage",
-    detail: "AI systems handle enquiries, follow-up, and routine tasks around the clock — no sick days, no overtime.",
+    detail: "AI systems handle enquiries, follow-up, and routine tasks around the clock. No sick days, no overtime.",
   },
 ];
 
@@ -151,7 +151,7 @@ export default function Services() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           We design and deploy custom automation systems that eliminate
-          operational drag — so your team can focus on high-value client work,
+          operational drag, so your team can focus on high-value client work,
           not the admin wrapped around it.
         </p>
 
@@ -186,7 +186,7 @@ export default function Services() {
               Advisory &amp; Board Roles
             </h2>
             <p className="text-base text-saabai-text-muted leading-relaxed max-w-xl">
-              Beyond implementation — Shane Goldberg is now available for advisory retainers,
+              Beyond implementation, Shane Goldberg is now available for advisory retainers,
               board of director positions, advisory board roles, and implementation oversight
               engagements. For leadership teams and boards that need AI expertise at the
               decision-making level, not just the operational level.
@@ -250,13 +250,69 @@ export default function Services() {
         </div>
       </section>
 
+      {/* ── AI Audit Pricing Preview ─────────────────────────────────────── */}
+      <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
+          Start Here: Fixed-Price AI Audit
+        </p>
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
+          Know exactly what to automate, before you spend a dollar building it.
+        </h2>
+        <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+          Every Saabai engagement starts with an AI Audit, a fixed-price,
+          fixed-deliverable audit that produces a written roadmap of your
+          highest-ROI automation opportunities. Three tiers, sized to your firm.
+        </p>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {[
+            { name: "Essential", staff: "1–5 staff", price: "$3,500", duration: "1 week" },
+            { name: "Professional", staff: "6–20 staff", price: "$7,500", duration: "2 weeks", highlight: true },
+            { name: "Enterprise", staff: "20+ staff", price: "$15,000", duration: "3 weeks" },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className={`bg-saabai-surface border rounded-xl p-8 text-center ${
+                t.highlight ? "border-saabai-teal/60" : "border-saabai-border"
+              }`}
+              style={
+                t.highlight
+                  ? { boxShadow: "0 0 60px rgba(98,197,209,0.35), 0 0 24px rgba(98,197,209,0.18)" }
+                  : undefined
+              }
+            >
+              <h3 className="text-xl font-semibold mb-1 tracking-tight">{t.name}</h3>
+              <p className="text-xs text-saabai-text-dim mb-5 tracking-wide">{t.staff}</p>
+              <div className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow mb-1">
+                {t.price}
+              </div>
+              <p className="text-xs text-saabai-text-dim tracking-wide">
+                AUD · Delivered in {t.duration}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <a
+            href="/ai-audit"
+            className="inline-block bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)]"
+          >
+            View AI Audit Details
+          </a>
+          <p className="text-xs text-saabai-text-dim mt-5 tracking-wide">
+            Or book a free call to discuss which tier fits your firm
+          </p>
+        </div>
+      </section>
+
       {/* ── How It Works ────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
           How We Work
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-24 max-w-2xl mx-auto leading-snug">
-          From bottleneck to automated — in weeks.
+          From bottleneck to automated, in weeks.
         </h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -318,12 +374,12 @@ export default function Services() {
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
           Find out exactly where your firm
           <br />
-          <span className="text-gradient">is losing time — and how to fix it.</span>
+          <span className="text-gradient">is losing time, and how to fix it.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map the highest-value
           automation opportunities in your operation and give you a clear
-          picture of what&apos;s possible — no obligation, no jargon.
+          picture of what&apos;s possible. No obligation, no jargon.
         </p>
 
         <a

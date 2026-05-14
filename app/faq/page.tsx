@@ -5,13 +5,13 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Automation FAQ for Professional Firms",
   description:
-    "Honest answers about AI automation for professional firms — cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+    "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
   alternates: { canonical: "https://www.saabai.ai/faq" },
   openGraph: {
     url: "https://www.saabai.ai/faq",
     title: "AI Automation FAQ for Professional Firms | Saabai",
     description:
-      "Honest answers about AI automation for professional firms — cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+      "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
   },
 };
 
@@ -24,7 +24,7 @@ const faqSchema = {
       name: "We're not a tech company. Is AI automation actually for us?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers — these are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        text: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
     },
     {
@@ -40,7 +40,7 @@ const faqSchema = {
       name: "Will AI automation work with our existing software tools?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Almost certainly yes. We build on top of the tools you already have — your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.",
+        text: "Almost certainly yes. We build on top of the tools you already have: your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.",
       },
     },
     {
@@ -48,7 +48,7 @@ const faqSchema = {
       name: "How much does AI automation typically cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "It depends on scope and complexity. We don't quote before understanding your operation — that's what the free strategy call is for. Most clients recover the investment inside the first few months through time and operational cost savings.",
+        text: "Every Saabai engagement starts with a fixed-price AI Audit: $3,500 for firms with 1–5 staff, $7,500 for firms with 6–20 staff, $15,000 for firms with 20+ staff. The audit produces a written roadmap of automation opportunities ranked by ROI. Full build engagements are quoted after the audit and typically range from $15,000 to $60,000 depending on scope. Most clients recover the investment inside the first few months through time and operational cost savings.",
       },
     },
     {
@@ -64,7 +64,7 @@ const faqSchema = {
       name: "We tried automation before and it didn't stick. Why would this be different?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal — not an afterthought.",
+        text: "Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal, not an afterthought.",
       },
     },
     {
@@ -72,7 +72,7 @@ const faqSchema = {
       name: "We're a law firm. What does AI automation look like for us?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "AI-assisted client intake that qualifies matters before anyone on your team touches it. Automated follow-up for enquiries. Document templates that populate from intake data. Billing and deadline reminders that go out automatically. None of this requires changing how you practise law — it removes the admin wrapped around it.",
+        text: "AI-assisted client intake that qualifies matters before anyone on your team touches it. Automated follow-up for enquiries. Document templates that populate from intake data. Billing and deadline reminders that go out automatically. None of this requires changing how you practise law. It removes the admin wrapped around it.",
       },
     },
     {
@@ -97,19 +97,19 @@ const faqs = [
       },
       {
         q: "We're not a tech company. Is this actually for us?",
-        a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers — these are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
       {
         q: "Is this just another \"digital transformation\" project that takes forever and costs a fortune?",
-        a: "No. We deliberately avoid the big-bang, rip-and-replace approach. We identify the highest-impact workflows, automate those first, and you start seeing results within weeks — not after a 12-month implementation programme. If something isn't working, we iterate quickly rather than defending a rigid plan.",
+        a: "No. We deliberately avoid the big-bang, rip-and-replace approach. We identify the highest-impact workflows, automate those first, and you start seeing results within weeks, not after a 12-month implementation programme. If something isn't working, we iterate quickly rather than defending a rigid plan.",
       },
       {
         q: "What makes Saabai different from other automation providers?",
-        a: "Most automation providers sell you a platform and leave you to figure it out. We design and build the actual systems for you, tailored to how your business operates — not a generic template. We also stay involved after deployment. If a workflow drifts or breaks, that's our problem to fix. You shouldn't need an internal IT team to keep your automations running.",
+        a: "Most automation providers sell you a platform and leave you to figure it out. We design and build the actual systems for you, tailored to how your business operates, not a generic template. We also stay involved after deployment. If a workflow drifts or breaks, that's our problem to fix. You shouldn't need an internal IT team to keep your automations running.",
       },
       {
         q: "Will this replace our staff?",
-        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time — so your people can focus on the work that actually requires their expertise. Most firms that automate well find their team becomes more effective, not redundant.",
+        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time, so your people can focus on the work that actually requires their expertise. Most firms that automate well find their team becomes more effective, not redundant.",
       },
     ],
   },
@@ -119,19 +119,27 @@ const faqs = [
     items: [
       {
         q: "How much does it typically cost?",
-        a: "It depends on scope and complexity. A focused single-workflow automation is materially different from building out a firm-wide operational system. We don't quote before understanding your operation — that's what the strategy call is for. What we will say: most clients recover the investment inside the first few months through time and operational cost savings.",
+        a: "Every Saabai engagement starts with a fixed-price AI Audit. Three tiers based on firm size: $3,500 for 1–5 staff, $7,500 for 6–20 staff, $15,000 for 20+ staff. The audit produces a written roadmap of your highest-ROI automation opportunities, with projected time savings and build cost estimates for each. Full build engagements are quoted separately after the audit and typically range from $15,000 to $60,000 depending on scope. See our AI Audit page for what's included at each tier.",
       },
       {
         q: "How do we measure the ROI?",
-        a: "We establish baseline metrics before we build — hours spent on a given task, response times, lead conversion rates, cost per outcome. After deployment, we track against those baselines so you can see exactly what's changed. Use our free calculator to get a rough estimate of what manual work is currently costing your business before we even speak.",
+        a: "We establish baseline metrics before we build: hours spent on a given task, response times, lead conversion rates, cost per outcome. After deployment, we track against those baselines so you can see exactly what's changed. Use our free calculator to get a rough estimate of what manual work is currently costing your business before we even speak.",
       },
       {
         q: "How long does it take to get something live?",
-        a: "Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. We move fast — but not at the expense of building it properly the first time.",
+        a: "Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. We move fast, but not at the expense of building it properly the first time.",
       },
       {
         q: "Is there ongoing cost after the initial build?",
-        a: "Yes — most automation systems have ongoing running costs (software subscriptions, API usage, hosting) and we offer optional monthly optimisation retainers to keep systems performing well. We'll give you a full picture of ongoing costs upfront so there are no surprises.",
+        a: "Yes, most automation systems have ongoing running costs (software subscriptions, API usage, hosting) and we offer optional monthly optimisation retainers to keep systems performing well. We'll give you a full picture of ongoing costs upfront so there are no surprises.",
+      },
+      {
+        q: "What if I buy an AI Audit and decide it's not for me?",
+        a: "You have 7 days from purchase to cancel for a full refund, no questions asked, provided the discovery session hasn't started yet. Once the discovery session begins, the engagement is non-refundable. We don't pressure anyone into proceeding to a build after the audit. If the audit shows there's nothing high-impact worth automating, we'll tell you.",
+      },
+      {
+        q: "Why is there a deposit option for the Enterprise audit?",
+        a: "Enterprise buyers typically want a kickoff conversation before committing the full amount. The $1,500 deposit secures your engagement slot, funds the initial discovery phase, and is fully credited toward the $15,000 total. The $13,500 balance is invoiced after the kickoff call once scope is confirmed.",
       },
     ],
   },
@@ -141,11 +149,11 @@ const faqs = [
     items: [
       {
         q: "We already use [insert software here]. Will this work with our existing tools?",
-        a: "Almost certainly yes. We build on top of the tools you already have — your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out. If a tool has an API (or even just a web interface), we can typically automate around it.",
+        a: "Almost certainly yes. We build on top of the tools you already have: your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out. If a tool has an API (or even just a web interface), we can typically automate around it.",
       },
       {
         q: "We're not particularly tech-savvy as a team. Will we actually be able to use this?",
-        a: "That's the whole point. If your team needs to understand how it works to get value from it, we haven't built it well enough. The systems we design are meant to be invisible — they just run. If something does need manual input, it's designed to be as simple as filling in a form.",
+        a: "That's the whole point. If your team needs to understand how it works to get value from it, we haven't built it well enough. The systems we design are meant to be invisible. They just run. If something does need manual input, it's designed to be as simple as filling in a form.",
       },
       {
         q: "What if we only want to automate one specific thing to start with?",
@@ -153,7 +161,7 @@ const faqs = [
       },
       {
         q: "We tried automation before and it didn't stick. Why would this be different?",
-        a: "Usually because the previous attempt was a generic off-the-shelf tool that wasn't designed around how your business actually operates. Or it got set up, nobody maintained it, it broke, and everyone quietly went back to doing it manually. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal — not an afterthought.",
+        a: "Usually because the previous attempt was a generic off-the-shelf tool that wasn't designed around how your business actually operates. Or it got set up, nobody maintained it, it broke, and everyone quietly went back to doing it manually. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal, not an afterthought.",
       },
     ],
   },
@@ -163,27 +171,27 @@ const faqs = [
     items: [
       {
         q: "We're a law firm. What does this actually look like for us?",
-        a: "Practically: AI-assisted client intake that qualifies matters and routes them correctly before anyone on your team touches it. Automated follow-up sequences for enquiries that went quiet. Document templates that populate from intake data. Billing and deadline reminders that go out without a principal chasing them. None of this requires changing how you practise law — it removes the admin wrapped around it.",
+        a: "Practically: AI-assisted client intake that qualifies matters and routes them correctly before anyone on your team touches it. Automated follow-up sequences for enquiries that went quiet. Document templates that populate from intake data. Billing and deadline reminders that go out without a principal chasing them. None of this requires changing how you practise law. It removes the admin wrapped around it.",
       },
       {
         q: "We run a real estate agency. Where does automation have the biggest impact?",
-        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: automated inspection reminders, appraisal follow-up sequences, listing update comms, and vendor report workflows. Your agents focus on relationships and negotiations — the system handles everything else.",
+        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: automated inspection reminders, appraisal follow-up sequences, listing update comms, and vendor report workflows. Your agents focus on relationships and negotiations. The system handles everything else.",
       },
       {
         q: "We're an accounting or financial services firm. What about compliance and data security?",
-        a: "Fair question and a serious one. We design systems with data handling in mind from the start — we're not connecting sensitive client data to random third-party tools. Your compliance requirements are discussed upfront and the architecture is built around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing. We're happy to walk through specifics on the call.",
+        a: "Fair question and a serious one. We design systems with data handling in mind from the start. We're not connecting sensitive client data to random third-party tools. Your compliance requirements are discussed upfront and the architecture is built around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing. We're happy to walk through specifics on the call.",
       },
       {
         q: "We're a financial advisory business. How does this apply to us?",
-        a: "Compliance documentation, review scheduling, and client communication are the usual starting points. Automating annual review reminders, pre-meeting data collection, post-meeting follow-up, and SOA preparation workflows can reclaim significant adviser time. We can also build client-facing tools that improve the experience without adding workload — things like automated portfolio update emails or onboarding portals.",
+        a: "Compliance documentation, review scheduling, and client communication are the usual starting points. Automating annual review reminders, pre-meeting data collection, post-meeting follow-up, and SOA preparation workflows can reclaim significant adviser time. We can also build client-facing tools that improve the experience without adding workload: things like automated portfolio update emails or onboarding portals.",
       },
       {
-        q: "We're a professional services or advisory business — not quite any of the above. Do you work with us?",
-        a: "Yes. The specifics vary but the pattern is the same — high-value people spending too much time on low-value operational work. If your business runs on expertise and relationships, there's almost always an automation opportunity that frees up time without compromising the quality of your output.",
+        q: "We're a professional services or advisory business, not quite any of the above. Do you work with us?",
+        a: "Yes. The specifics vary but the pattern is the same: high-value people spending too much time on low-value operational work. If your business runs on expertise and relationships, there's almost always an automation opportunity that frees up time without compromising the quality of your output.",
       },
       {
         q: "Do you work with e-commerce or product businesses, not just professional services?",
-        a: "Yes — and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups, and lead capture in real time — 24/7, without staff. A national plastics supplier is currently running one of these in production. If your business gets a lot of inbound enquiries that require a fast, accurate response, this is worth a conversation.",
+        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups, and lead capture in real time, 24/7, without staff. A national plastics supplier is currently running one of these in production. If your business gets a lot of inbound enquiries that require a fast, accurate response, this is worth a conversation.",
       },
     ],
   },
@@ -193,7 +201,7 @@ const faqs = [
     items: [
       {
         q: "What happens on the strategy call?",
-        a: "It's a 30-minute working conversation — not a sales presentation. We'll ask about your current workflows, where your team's time goes, and what's most frustrating to operate. By the end, you'll have a rough map of where automation could have the biggest impact in your business. You'll leave with something useful regardless of whether we work together.",
+        a: "It's a 30-minute working conversation, not a sales presentation. We'll ask about your current workflows, where your team's time goes, and what's most frustrating to operate. By the end, you'll have a rough map of where automation could have the biggest impact in your business. You'll leave with something useful regardless of whether we work together.",
       },
       {
         q: "Is the strategy call really free? What's the catch?",
@@ -246,7 +254,7 @@ export default function FAQ() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
           Everything you want to know about AI automation for professional
-          firms — answered plainly.
+          firms, answered plainly.
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-12 leading-relaxed">
           If your question isn&apos;t here, book a free strategy call. We&apos;re
