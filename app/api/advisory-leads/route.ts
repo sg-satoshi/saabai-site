@@ -57,26 +57,123 @@ export async function POST(req: Request) {
       dateStyle: "medium",
       timeStyle: "short",
     });
+    const firstName = name.split(/\s+/)[0];
+    const logoUrl = process.env.ADVISORY_LOGO_URL || "https://www.saabai.ai/brand/saabai-logo-full.png";
+    const siteUrl = "https://www.saabai.ai";
 
     const html = `<!DOCTYPE html>
-<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a1a1a;background:#fafafa;padding:32px;margin:0;">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #ebebeb;">
-    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#62c5d1;">Advisory Enquiry</p>
-    <h1 style="margin:0 0 24px;font-size:22px;font-weight:700;letter-spacing:-0.3px;line-height:1.3;">New advisory enquiry from ${escapeHtml(name)}</h1>
-    <table style="width:100%;border-collapse:collapse;font-size:14px;">
-      <tr><td style="padding:8px 0;color:#888;width:120px;font-weight:600;vertical-align:top;">Name</td><td style="padding:8px 0;">${escapeHtml(name)}</td></tr>
-      <tr><td style="padding:8px 0;color:#888;font-weight:600;vertical-align:top;">Email</td><td style="padding:8px 0;"><a href="mailto:${escapeHtml(email)}" style="color:#62c5d1;text-decoration:none;">${escapeHtml(email)}</a></td></tr>
-      <tr><td style="padding:8px 0;color:#888;font-weight:600;vertical-align:top;">Company</td><td style="padding:8px 0;">${escapeHtml(company)}</td></tr>
-      ${role ? `<tr><td style="padding:8px 0;color:#888;font-weight:600;vertical-align:top;">Role</td><td style="padding:8px 0;">${escapeHtml(role)}</td></tr>` : ""}
-      <tr><td style="padding:8px 0;color:#888;font-weight:600;vertical-align:top;">Submitted</td><td style="padding:8px 0;color:#666;">${ts} AEST</td></tr>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+  <title>Advisory enquiry from ${escapeHtml(name)}</title>
+  <style>
+    body,table,td,p,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+    table,td{mso-table-lspace:0pt;mso-table-rspace:0pt;}
+    img{-ms-interpolation-mode:bicubic;border:0;outline:none;text-decoration:none;display:block;}
+    body{margin:0;padding:0;background:#f5f5f5;}
+    a{text-decoration:none;}
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Advisory enquiry from ${escapeHtml(name)} at ${escapeHtml(company)}.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;">
+<tr><td align="center" style="padding:40px 16px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <!-- Header -->
+  <tr><td style="background:#0f1419;padding:30px 40px;border-radius:14px 14px 0 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="vertical-align:middle;">
+          <a href="${siteUrl}" style="text-decoration:none;">
+            <img src="${logoUrl}" alt="Saabai" height="36" style="height:36px;width:auto;display:block;border:0;">
+          </a>
+        </td>
+        <td align="right" style="vertical-align:middle;">
+          <p style="margin:0;font-size:10px;color:#62c5d1;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Advisory Enquiry</p>
+        </td>
+      </tr>
     </table>
-    <div style="margin-top:24px;padding:20px;background:#fafafa;border-left:3px solid #62c5d1;border-radius:6px;">
-      <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#62c5d1;">Message</p>
-      <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a1a;white-space:pre-wrap;">${escapeHtml(message)}</p>
-    </div>
-    <p style="margin:24px 0 0;font-size:12px;color:#999;">Reply directly to this email to respond to ${escapeHtml(name)}.</p>
-  </div>
-</body></html>`;
+  </td></tr>
+
+  <!-- Teal accent line -->
+  <tr><td style="background:#62c5d1;height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+  <!-- Body -->
+  <tr><td style="background:#ffffff;padding:40px 40px 32px;">
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#62c5d1;letter-spacing:1.8px;text-transform:uppercase;">New Enquiry</p>
+    <h1 style="margin:0 0 32px;font-size:24px;font-weight:700;color:#0f1419;letter-spacing:-0.4px;line-height:1.3;">${escapeHtml(name)} at ${escapeHtml(company)}</h1>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #ebebeb;margin:0 0 30px;">
+      <tr>
+        <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;width:110px;border-bottom:1px solid #ebebeb;vertical-align:top;">Email</td>
+        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;"><a href="mailto:${escapeHtml(email)}" style="color:#0f1419;text-decoration:none;font-weight:600;border-bottom:1px solid #62c5d1;">${escapeHtml(email)}</a></td>
+      </tr>
+      <tr>
+        <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid #ebebeb;vertical-align:top;">Company</td>
+        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;">${escapeHtml(company)}</td>
+      </tr>
+      ${role ? `<tr>
+        <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid #ebebeb;vertical-align:top;">Role</td>
+        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;">${escapeHtml(role)}</td>
+      </tr>` : ""}
+      <tr>
+        <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;vertical-align:top;">Submitted</td>
+        <td style="padding:14px 0;font-size:14px;color:#6a6a6a;">${ts} AEST</td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 12px;font-size:11px;font-weight:700;color:#62c5d1;letter-spacing:1.8px;text-transform:uppercase;">Message</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafbfc;border-left:3px solid #62c5d1;border-radius:0 8px 8px 0;margin:0 0 32px;">
+      <tr><td style="padding:22px 24px;">
+        <p style="margin:0;font-size:15px;line-height:1.75;color:#1a1a1a;white-space:pre-wrap;">${escapeHtml(message)}</p>
+      </td></tr>
+    </table>
+
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="background:#0f1419;border-radius:8px;mso-padding-alt:0;">
+          <a href="mailto:${escapeHtml(email)}?subject=Re%3A%20Your%20advisory%20enquiry" style="display:inline-block;padding:13px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.3px;border-radius:8px;">Reply to ${escapeHtml(firstName)} &rarr;</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:18px 0 0;font-size:12px;color:#9a9a9a;line-height:1.6;">
+      Reply-to is already set to ${escapeHtml(firstName)}, so hitting reply in any mail client works too.
+    </p>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="background:#0f1419;padding:24px 40px;border-radius:0 0 14px 14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="vertical-align:middle;">
+          <p style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.3px;">
+            <a href="${siteUrl}" style="color:#62c5d1;text-decoration:none;">saabai.ai</a>
+          </p>
+          <p style="margin:0;font-size:11px;color:#7a7a7a;letter-spacing:0.3px;line-height:1.6;">
+            AI advisory and automation for professional firms. Australia.
+          </p>
+        </td>
+        <td align="right" style="vertical-align:middle;">
+          <p style="margin:0;font-size:10px;color:#62c5d1;letter-spacing:1.6px;text-transform:uppercase;font-weight:700;">Confidential</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+
+</body>
+</html>`;
 
     await resend.emails.send({
       from: FROM_EMAIL,
