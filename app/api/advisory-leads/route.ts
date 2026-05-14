@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
   <!-- Header -->
-  <tr><td style="background:#0f1419;padding:30px 40px;border-radius:14px 14px 0 0;">
+  <tr><td style="background:#0b092e;padding:30px 40px;border-radius:14px 14px 0 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="vertical-align:middle;">
@@ -108,20 +108,20 @@ export async function POST(req: Request) {
   <!-- Body -->
   <tr><td style="background:#ffffff;padding:40px 40px 32px;">
     <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:#62c5d1;letter-spacing:1.8px;text-transform:uppercase;">New Enquiry</p>
-    <h1 style="margin:0 0 32px;font-size:24px;font-weight:700;color:#0f1419;letter-spacing:-0.4px;line-height:1.3;">${escapeHtml(name)} at ${escapeHtml(company)}</h1>
+    <h1 style="margin:0 0 32px;font-size:24px;font-weight:700;color:#0b092e;letter-spacing:-0.4px;line-height:1.3;">${escapeHtml(name)} at ${escapeHtml(company)}</h1>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #ebebeb;margin:0 0 30px;">
       <tr>
         <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;width:110px;border-bottom:1px solid #ebebeb;vertical-align:top;">Email</td>
-        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;"><a href="mailto:${escapeHtml(email)}" style="color:#0f1419;text-decoration:none;font-weight:600;border-bottom:1px solid #62c5d1;">${escapeHtml(email)}</a></td>
+        <td style="padding:14px 0;font-size:15px;color:#0b092e;border-bottom:1px solid #ebebeb;"><a href="mailto:${escapeHtml(email)}" style="color:#0b092e;text-decoration:none;font-weight:600;border-bottom:1px solid #62c5d1;">${escapeHtml(email)}</a></td>
       </tr>
       <tr>
         <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid #ebebeb;vertical-align:top;">Company</td>
-        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;">${escapeHtml(company)}</td>
+        <td style="padding:14px 0;font-size:15px;color:#0b092e;border-bottom:1px solid #ebebeb;">${escapeHtml(company)}</td>
       </tr>
       ${role ? `<tr>
         <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid #ebebeb;vertical-align:top;">Role</td>
-        <td style="padding:14px 0;font-size:15px;color:#0f1419;border-bottom:1px solid #ebebeb;">${escapeHtml(role)}</td>
+        <td style="padding:14px 0;font-size:15px;color:#0b092e;border-bottom:1px solid #ebebeb;">${escapeHtml(role)}</td>
       </tr>` : ""}
       <tr>
         <td style="padding:14px 0;font-size:11px;font-weight:700;color:#9a9a9a;text-transform:uppercase;letter-spacing:1.4px;vertical-align:top;">Submitted</td>
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
 
     <table role="presentation" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="background:#0f1419;border-radius:8px;mso-padding-alt:0;">
+        <td style="background:#0b092e;border-radius:8px;mso-padding-alt:0;">
           <a href="mailto:${escapeHtml(email)}?subject=Re%3A%20Your%20advisory%20enquiry" style="display:inline-block;padding:13px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.3px;border-radius:8px;">Reply to ${escapeHtml(firstName)} &rarr;</a>
         </td>
       </tr>
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
   </td></tr>
 
   <!-- Footer -->
-  <tr><td style="background:#0f1419;padding:24px 40px;border-radius:0 0 14px 14px;">
+  <tr><td style="background:#0b092e;padding:24px 40px;border-radius:0 0 14px 14px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="vertical-align:middle;">
