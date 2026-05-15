@@ -1181,7 +1181,7 @@ function QueuePanel({ refresh }: { refresh: number }) {
               <p style={{ margin: 0, fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "20px 0" }}>No posts scheduled.</p>
             ) : posts.map((post, i) => {
               const isDue = post.scheduledFor <= today;
-              const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+              const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
               return (
                 <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: i % 2 === 0 ? "#f9fafb" : "#fff", border: isDue ? "1px solid #fbbf24" : "1px solid transparent" }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: isDue ? "#d97706" : "#0077b5", background: isDue ? "#fef3c7" : "#eff8ff", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
@@ -1246,7 +1246,7 @@ function HistoryPanel({ refresh }: { refresh: number }) {
             {posts.length === 0 ? (
               <p style={{ margin: 0, fontSize: 13, color: "#9ca3af", textAlign: "center", padding: "20px 0" }}>No posts published yet.</p>
             ) : posts.map((post, i) => {
-              const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+              const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
               return (
                 <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: i % 2 === 0 ? "#f9fafb" : "#fff" }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: "#059669", background: "#f0fdf4", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
