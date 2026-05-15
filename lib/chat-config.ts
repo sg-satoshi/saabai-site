@@ -96,6 +96,22 @@ export function getRexModel(tier: "default" | "premium" = "default"): LanguageMo
 }
 
 /**
+ * Returns an Anthropic SDK provider bound to the Rex billing account.
+ * Used by Rex-specific routes that hardcode a model (e.g. claude-haiku-4-5
+ * for cost-sensitive transcript analysis, claude-sonnet-4-6 for feedback
+ * review) rather than going through DEFAULT_CHAT_MODEL.
+ *
+ * Falls back to the default `anthropic` export (ANTHROPIC_API_KEY) if
+ * REX_ANTHROPIC_API_KEY is unset, so behaviour is unchanged until the
+ * Rex key env var is populated.
+ */
+export function getRexAnthropic() {
+  const rexKey = process.env.REX_ANTHROPIC_API_KEY;
+  if (!rexKey) return anthropic;
+  return createAnthropic({ apiKey: rexKey });
+}
+
+/**
  * Model for Saabai's own chat (Mia / Atlas).
  * Controlled by SAABAI_CHAT_MODEL env var — completely independent of Rex model config.
  * Fallback: claude-haiku-4.5 (Anthropic only, never Google).

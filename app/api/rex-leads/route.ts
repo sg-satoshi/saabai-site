@@ -1,7 +1,9 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getRexAnthropic } from "../../../lib/chat-config";
 import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+
+const rexAnthropic = getRexAnthropic();
 import { trackResponseTime } from "../rex-analytics/realtime/route";
 import { getClientConfig, getResendKey } from "../../../lib/rex-config";
 import { createRexDeal } from "../../../lib/pipedrive-client";
@@ -155,7 +157,7 @@ interface ConversationAnalysis {
 async function analyseConversation(transcript: string): Promise<ConversationAnalysis | null> {
   try {
     const { text } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: rexAnthropic("claude-haiku-4-5-20251001"),
       prompt: `You are analysing a sales chat between Rex (AI sales agent at PlasticOnline) and a customer.
 
 TRANSCRIPT:

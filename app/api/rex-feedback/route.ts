@@ -1,6 +1,8 @@
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getRexAnthropic } from "../../../lib/chat-config";
 import { Resend } from "resend";
+
+const rexAnthropic = getRexAnthropic();
 import {
   trackFeedback,
   fetchFeedback,
@@ -28,7 +30,7 @@ async function runAtlasReview(
 ): Promise<AtlasReview | null> {
   try {
     const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: rexAnthropic("claude-sonnet-4-6"),
       prompt: `You are Atlas, an AI operations manager reviewing staff feedback about Rex — the AI sales agent at PlasticOnline (Australian cut-to-size plastics supplier). Rex helps customers quote acrylic, polycarbonate, HDPE, and 20+ other engineering plastics.
 
 FEEDBACK CATEGORY: ${CATEGORY_LABELS[category]}
