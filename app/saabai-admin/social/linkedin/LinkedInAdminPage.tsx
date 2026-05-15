@@ -533,6 +533,9 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState("");
+  const [imageMode, setImageMode] = useState<"generate" | "url" | "upload">("generate");
+  const [urlInput, setUrlInput] = useState("");
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const charCount = generated.length;
   const over = charCount > 3000;
@@ -557,6 +560,54 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
     } finally {
       setGeneratingImage(false);
     }
+  }
+
+  function handleUrlInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setUrlInput(v);
+    const trimmed = v.trim();
+    setImageUrl(trimmed || null);
+    if (imageError) setImageError("");
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("File too large (max 5MB).");
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingFile(true);
+    setImageError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+      const data: { url?: string; error?: string } = await res.json().catch(() => ({}));
+      if (data.url) {
+        setImageUrl(data.url);
+      } else {
+        setImageError(data.error ?? `Upload failed (status ${res.status}).`);
+      }
+    } catch {
+      setImageError("Upload failed. Check your connection and try again.");
+    } finally {
+      setUploadingFile(false);
+      e.target.value = "";
+    }
+  }
+
+  function clearImage() {
+    setImageUrl(null);
+    setUrlInput("");
+    setImageError("");
   }
 
   async function generate() {
@@ -838,39 +889,110 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
             </button>
           )}
 
-          {/* Image generation */}
+          {/* Image */}
           {generated && (
             <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "16px 18px", background: "#f9fafb" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: imageUrl ? 12 : 0 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "#6b7280", textTransform: "uppercase" as const }}>
                   Post Image <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0, color: "#9ca3af" }}>(optional)</span>
                 </p>
+                {imageUrl && (
+                  <button
+                    onClick={clearImage}
+                    style={{
+                      padding: "6px 14px", borderRadius: 7, border: "1px solid #fca5a5",
+                      background: "#fff5f5", color: "#ef4444",
+                      fontSize: 11, fontWeight: 700, cursor: "pointer",
+                    }}
+                  >
+                    ✕ Remove image
+                  </button>
+                )}
+              </div>
+
+              {/* Mode tabs */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                {(["generate", "url", "upload"] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setImageMode(m)}
+                    style={{
+                      flex: 1, padding: "8px", borderRadius: 8, border: "1.5px solid",
+                      borderColor: imageMode === m ? "#0077b5" : "#e5e7eb",
+                      background: imageMode === m ? "#eff8ff" : "#fff",
+                      color: imageMode === m ? "#0077b5" : "#6b7280",
+                      fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "all 0.12s",
+                    }}
+                  >
+                    {m === "generate" ? "Generate" : m === "url" ? "Paste URL" : "Upload file"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Mode-specific input */}
+              {imageMode === "generate" && !imageUrl && (
                 <button
-                  onClick={generatingImage ? undefined : (imageUrl ? () => { setImageUrl(null); setImageError(""); } : generateImage)}
+                  onClick={generatingImage ? undefined : generateImage}
                   disabled={generatingImage}
                   style={{
-                    padding: "6px 14px", borderRadius: 7, border: "1px solid",
-                    borderColor: imageUrl ? "#fca5a5" : "#0077b5",
-                    background: imageUrl ? "#fff5f5" : "#eff8ff",
-                    color: imageUrl ? "#ef4444" : "#0077b5",
-                    fontSize: 11, fontWeight: 700, cursor: generatingImage ? "not-allowed" : "pointer",
+                    width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #0077b5",
+                    background: "#eff8ff", color: "#0077b5",
+                    fontSize: 12, fontWeight: 700, cursor: generatingImage ? "not-allowed" : "pointer",
                     opacity: generatingImage ? 0.6 : 1,
                   }}
                 >
-                  {generatingImage ? "Generating…" : imageUrl ? "✕ Remove image" : "Generate image"}
+                  {generatingImage ? "Generating…" : "Generate image with AI"}
                 </button>
-              </div>
-              {imageError && <p style={{ margin: "8px 0 0", fontSize: 11, color: "#ef4444" }}>{imageError}</p>}
+              )}
+
+              {imageMode === "url" && (
+                <input
+                  type="url"
+                  placeholder="https://www.saabai.ai/social/ai-audit-launch.png"
+                  value={urlInput}
+                  onChange={handleUrlInput}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb",
+                    background: "#fff", color: "#111827",
+                    fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" as const,
+                  }}
+                />
+              )}
+
+              {imageMode === "upload" && !imageUrl && (
+                <label style={{
+                  display: "block", width: "100%", padding: "10px 14px", borderRadius: 8,
+                  border: "1px dashed #0077b5", background: "#eff8ff", color: "#0077b5",
+                  fontSize: 12, fontWeight: 700, cursor: uploadingFile ? "not-allowed" : "pointer",
+                  textAlign: "center" as const, opacity: uploadingFile ? 0.6 : 1,
+                  boxSizing: "border-box" as const,
+                }}>
+                  {uploadingFile ? "Uploading…" : "Choose file (jpg, png, webp, max 5MB)"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFileUpload}
+                    disabled={uploadingFile}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              )}
+
+              {imageError && <p style={{ margin: "10px 0 0", fontSize: 11, color: "#ef4444" }}>{imageError}</p>}
+
+              {/* Preview thumbnail */}
               {imageUrl && (
-                <div style={{ marginTop: 10 }}>
+                <div style={{ marginTop: 12 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imageUrl}
-                    alt="Generated post image"
-                    style={{ width: "100%", borderRadius: 8, border: "1px solid #e5e7eb", display: "block" }}
+                    alt="Post image preview"
+                    style={{ maxHeight: 120, maxWidth: "100%", width: "auto", borderRadius: 8, border: "1px solid #e5e7eb", display: "block", objectFit: "contain" as const, background: "#fff" }}
                   />
                   <p style={{ margin: "6px 0 0", fontSize: 10, color: "#9ca3af" }}>
-                    AI-generated · will be attached to this post
+                    {imageMode === "generate" ? "AI-generated · attached to this post"
+                      : imageMode === "url" ? "Linked URL · attached to this post"
+                      : "Uploaded · attached to this post"}
                   </p>
                 </div>
               )}
