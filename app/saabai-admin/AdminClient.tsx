@@ -767,7 +767,7 @@ function LinkedInQueue() {
           <div style={{ borderTop: `1px solid ${C.border}` }}>
             {posts.map((post, i) => {
               const isDue = post.scheduledFor <= today;
-              const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+              const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
               return (
                 <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
                   <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: isDue ? C.amber : C.blue, background: isDue ? `${C.amber}18` : `${C.blue}18`, padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
@@ -807,7 +807,7 @@ function LinkedInQueue() {
           ) : (
             <div style={{ borderTop: `1px solid ${C.border}` }}>
               {history.map((post, i) => {
-                const preview = post.content.split("\n").find(l => l.trim()) ?? "";
+                const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
                 const sentDate = post.sentAt
                   ? new Date(post.sentAt).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                   : fmtDate(post.scheduledFor);
