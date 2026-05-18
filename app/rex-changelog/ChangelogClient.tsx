@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 May 2026",
     entries: [
+      { time: "08:53", tag: "PRICING", title: "ACM / ACP now full-sheet only (director's policy) — CTS pricing removed from rex-knowledge tables and the pricing engine; Rex quotes the full sheet price for any cut size and explains we cut to size at no extra charge" },
       { time: "08:42", tag: "PRICING", title: "ACP / ACM pricing added to Rex — 51 SKUs across 3mm white (0.21mm & 0.30mm skin), 3mm black, 3mm white/black, 4mm all variants, standard PMS colours, specialty, and mirror finishes (March 2026 Mulfords)" },
     ],
   },
