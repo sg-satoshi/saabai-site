@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "19 May 2026",
+    entries: [
+      { time: "08:42", tag: "PRICING", title: "ACP / ACM pricing added to Rex — 51 SKUs across 3mm white (0.21mm & 0.30mm skin), 3mm black, 3mm white/black, 4mm all variants, standard PMS colours, specialty, and mirror finishes (March 2026 Mulfords)" },
+    ],
+  },
+  {
     date: "12 May 2026",
     entries: [
       { time: "17:08", tag: "FIX", title: "Correct 6.0mm clear acrylic full sheet price from $530 to $252 ex GST" },
