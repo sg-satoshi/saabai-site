@@ -1096,9 +1096,17 @@ function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, w
   return buildResult(result.unitPrice, qty, result.note, url);
 }
 
+// Basic colour names that map to the generic "colour" acrylic row when no
+// specific row exists. Acrylic stocks one standard-coloured-opaque price
+// covering most basic colours (blue, red, green, yellow, etc.). Specific
+// premium colours (sky blue, night blue, marine green tint, fluoro, etc.)
+// are matched by normColour BEFORE these and use their own rows.
+const ACRYLIC_GENERIC_COLOURS = new Set(["blue", "red", "green", "yellow", "orange", "purple", "pink"]);
+
 function priceAcrylicSheet(col: string, thickness: number, width: number, height: number, qty: number): PriceResult {
   const url = getProductUrl("acrylic");
-  const row = ACRYLIC.find(r => r.thicknessMm === thickness && r.colour === col);
+  const effectiveCol = ACRYLIC_GENERIC_COLOURS.has(col) ? "colour" : col;
+  const row = ACRYLIC.find(r => r.thicknessMm === thickness && r.colour === effectiveCol);
   if (!row) return notFound(url);
   // Use fits() to check both orientations — piece fits standard sheet if either rotation works
   const std = calcStandardSheet(row, width, height);
