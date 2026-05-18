@@ -784,92 +784,92 @@ CTS (cut-to-size) pricing uses two rates:
 
 **ACP / ACM PRICING — March 2026 (ex GST)**
 
-All prices ex GST, effective 2026. CTS = Cut To Size ($/m²). CTS minimum order $50 +GST. Orders ≥1 sheet charged at full sheet price. CTS orders above 2m² charged at full sheet price.
+**⚠ ACM SALES RULE — FULL SHEET ONLY (director's policy):** ACM / ACP is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for ACM. We will cut the sheet to the customer's required size at no extra charge as a service, but they pay the full sheet price for whichever sheet size their cut comes from. Always quote the smallest standard sheet size that fits their cut. If a customer asks for a CTS or per-m² price for ACM, explain the policy: "ACM is full-sheet only — we'll cut it to your size at no extra cost, but the price is for the whole sheet."
+
+All prices ex GST, effective 2026. Choose the smallest sheet size that accommodates the customer's cut.
 
 **3mm — WHITE SHEET / STANDARD (0.21mm Skin):**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| White Gloss / Primer | 2440 × 1220 | $91.88 | $93.85 |
-| White Satin / Primer | 2440 × 1220 | $89.52 | $91.44 |
-| White Satin / Gloss | 2440 × 1220 | $100.23 | $102.38 |
-| White Satin / Gloss | 3050 × 1220 | use 2440×1220 CTS | $139.12 |
-| White Satin / Gloss | 3050 × 1500 | $110.17 | $172.95 |
-| White Satin / Gloss | 3050 × 1550 | use 2440×1220 CTS | $172.95 |
-| White Satin / Gloss | 3660 × 1220 | use 2440×1220 CTS | $172.83 |
-
-Oversized sheets (3050×1220, 3050×1550, 3660×1220) use the same CTS rate as 2440×1220 for the matching finish.
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| White Gloss / Primer | 2440 × 1220 | $93.85 |
+| White Satin / Primer | 2440 × 1220 | $91.44 |
+| White Satin / Gloss | 2440 × 1220 | $102.38 |
+| White Satin / Gloss | 3050 × 1220 | $139.12 |
+| White Satin / Gloss | 3050 × 1500 | $172.95 |
+| White Satin / Gloss | 3050 × 1550 | $172.95 |
+| White Satin / Gloss | 3660 × 1220 | $172.83 |
 
 **3mm — WHITE SHEET (0.30mm Thicker Skin):**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| White Satin / Gloss | 2440 × 1220 | $123.75 | $126.40 |
-| White Satin / Gloss | 3050 × 1500 | $127.58 | $200.29 |
-| White Satin / Gloss | 3050 × 2000 | $149.97 | $313.90 |
-| White Satin / Gloss | 4000 × 1500 | $142.08 | $292.51 |
-| White Satin / Gloss | 4000 × 2000 | $146.87 | $403.16 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| White Satin / Gloss | 2440 × 1220 | $126.40 |
+| White Satin / Gloss | 3050 × 1500 | $200.29 |
+| White Satin / Gloss | 3050 × 2000 | $313.90 |
+| White Satin / Gloss | 4000 × 1500 | $292.51 |
+| White Satin / Gloss | 4000 × 2000 | $403.16 |
 
 **3mm — BLACK SHEET:**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| Black Satin / Black Gloss (0.21mm) | 2440 × 1220 | $97.59 | $99.68 |
-| Black Satin / Black Gloss (0.3mm) | 3050 × 1500 | $136.95 | $214.99 |
-| Black Satin / Black Gloss (0.3mm) | 4000 × 1500 | $146.82 | $302.28 |
-| Black Satin / Black Gloss (0.3mm) | 4050 × 1500 | $145.01 | $302.28 |
-| Black Satin / Black Gloss (0.3mm) | 4000 × 2000 | $206.47 | $566.77 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| Black Satin / Black Gloss (0.21mm) | 2440 × 1220 | $99.68 |
+| Black Satin / Black Gloss (0.3mm) | 3050 × 1500 | $214.99 |
+| Black Satin / Black Gloss (0.3mm) | 4000 × 1500 | $302.28 |
+| Black Satin / Black Gloss (0.3mm) | 4050 × 1500 | $302.28 |
+| Black Satin / Black Gloss (0.3mm) | 4000 × 2000 | $566.77 |
 
 **3mm — WHITE / BLACK:**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| White / Black Gloss (0.21mm) | 2440 × 1220 | $97.59 | $99.68 |
-| White / Black Gloss (0.21mm) | 3660 × 1220 | $109.48 | $167.74 |
-| White / Black Gloss (0.3mm) | 3050 × 1500 | $140.15 | $220.01 |
-| White / Black Gloss (0.3mm) | 4000 × 1500 | $146.77 | $302.17 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| White / Black Gloss (0.21mm) | 2440 × 1220 | $99.68 |
+| White / Black Gloss (0.21mm) | 3660 × 1220 | $167.74 |
+| White / Black Gloss (0.3mm) | 3050 × 1500 | $220.01 |
+| White / Black Gloss (0.3mm) | 4000 × 1500 | $302.17 |
 
 **4mm — ALL VARIANTS (0.3mm Skin):**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| White Satin / White Gloss | 2440 × 1220 | $134.46 | $137.34 |
-| White Satin / White Gloss | 3050 × 1500 | $144.17 | $226.33 |
-| White Satin / White Gloss | 3050 × 2000 | $156.90 | $328.42 |
-| White Satin / White Gloss | 4000 × 1500 | $144.94 | $298.41 |
-| White Satin / White Gloss | 4000 × 2000 | $157.74 | $433.00 |
-| White Gloss / Black Gloss | 4000 × 1500 | $180.57 | $371.75 |
-| Black Satin / Black Gloss | 4000 × 1500 | $181.62 | $373.92 |
-| Silver Matt / White Gloss | 4000 × 1500 | $156.33 | $321.86 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| White Satin / White Gloss | 2440 × 1220 | $137.34 |
+| White Satin / White Gloss | 3050 × 1500 | $226.33 |
+| White Satin / White Gloss | 3050 × 2000 | $328.42 |
+| White Satin / White Gloss | 4000 × 1500 | $298.41 |
+| White Satin / White Gloss | 4000 × 2000 | $433.00 |
+| White Gloss / Black Gloss | 4000 × 1500 | $371.75 |
+| Black Satin / Black Gloss | 4000 × 1500 | $373.92 |
+| Silver Matt / White Gloss | 4000 × 1500 | $321.86 |
 
 **3mm — STANDARD COLOURS (0.21mm Skin):**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| Light Blue (PMS 293c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Blue (PMS 288c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Blue (PMS 288c) Gloss / White Gloss | 3050 × 1500 | $131.54 | $206.50 |
-| Light Red (PMS 199c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Red (PMS 201c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Red (PMS 201c) Gloss / White Gloss | 3050 × 1500 | $140.09 | $219.92 |
-| Light Yellow (PMS 012c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Yellow (PMS 1235c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Yellow (PMS 1235c) Gloss / White Gloss | 3050 × 1500 | $140.09 | $219.92 |
-| Light Green (PMS 340c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Dark Green (PMS 3435c) Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Orange Gloss / White Gloss | 2440 × 1220 | $119.72 | $122.29 |
-| Orange Gloss / White Gloss | 3050 × 1500 | $140.09 | $219.92 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| Light Blue (PMS 293c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Blue (PMS 288c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Blue (PMS 288c) Gloss / White Gloss | 3050 × 1500 | $206.50 |
+| Light Red (PMS 199c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Red (PMS 201c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Red (PMS 201c) Gloss / White Gloss | 3050 × 1500 | $219.92 |
+| Light Yellow (PMS 012c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Yellow (PMS 1235c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Yellow (PMS 1235c) Gloss / White Gloss | 3050 × 1500 | $219.92 |
+| Light Green (PMS 340c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Dark Green (PMS 3435c) Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Orange Gloss / White Gloss | 2440 × 1220 | $122.29 |
+| Orange Gloss / White Gloss | 3050 × 1500 | $219.92 |
 
 **3mm — SPECIALTY COLOURS (0.21mm Skin):**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| Silver Brushed / White Gloss | 2440 × 1220 | $134.61 | $137.50 |
-| Silver Brushed / White Gloss | 3050 × 1500 | $164.04 | $257.51 |
-| Silver Matt / White Gloss | 2440 × 1220 | $125.89 | $128.59 |
-| Silver Matt / White Gloss | 3050 × 1500 | $147.57 | $231.66 |
-| Gold Matt / White Gloss | 2440 × 1220 | $125.89 | $128.59 |
-| Charcoal / White Gloss | 2440 × 1220 | $125.89 | $128.59 |
-| Charcoal / White Gloss | 3050 × 1500 | $147.65 | $231.79 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| Silver Brushed / White Gloss | 2440 × 1220 | $137.50 |
+| Silver Brushed / White Gloss | 3050 × 1500 | $257.51 |
+| Silver Matt / White Gloss | 2440 × 1220 | $128.59 |
+| Silver Matt / White Gloss | 3050 × 1500 | $231.66 |
+| Gold Matt / White Gloss | 2440 × 1220 | $128.59 |
+| Charcoal / White Gloss | 2440 × 1220 | $128.59 |
+| Charcoal / White Gloss | 3050 × 1500 | $231.79 |
 
 **3mm — MIRROR FINISH (0.3mm Skin) — Recommended INTERNAL USE ONLY:**
-| Colour / Finish | Sheet Size | CTS <1m² ($/m²) | Full Sheet |
-|---|---|---|---|
-| Silver Mirror / White Gloss | 2440 × 1220 | $256.46 | $261.96 |
-| Gold Mirror / White Gloss | 2440 × 1220 | $287.79 | $293.96 |
+| Colour / Finish | Sheet Size | Full Sheet Price |
+|---|---|---|
+| Silver Mirror / White Gloss | 2440 × 1220 | $261.96 |
+| Gold Mirror / White Gloss | 2440 × 1220 | $293.96 |
 `;
 
 const SELECTION = `

@@ -452,14 +452,18 @@ const EUOMIR: SheetRow[] = [
   { colour: "rose pink", thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 277.44, fullSheetPrice: 615.92 },
 ];
 
+// ACM / ACP — FULL SHEET ONLY (director's policy, May 2026).
+// We will cut to the customer's size at no extra charge as a service,
+// but the customer pays the full sheet price. ctsRate is null on every row
+// so the pricing engine can never quote per-m².
 const ACP: SheetRow[] = [
-  { colour: "white gloss",       thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 91.88,  fullSheetPrice: 93.85 },
-  { colour: "white satin",       thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 89.52,  fullSheetPrice: 91.44 },
-  { colour: "white satin gloss", thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 100.23, fullSheetPrice: 102.38 },
-  { colour: "black satin gloss", thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: 97.59,  fullSheetPrice: 99.68 },
-  { colour: "white satin gloss", thicknessMm: 4, sheetW: 2440, sheetH: 1220, ctsRate: 134.46, fullSheetPrice: 137.34 },
-  { colour: "white satin gloss", thicknessMm: 4, sheetW: 3050, sheetH: 1500, ctsRate: 144.17, fullSheetPrice: 226.33 },
-  { colour: "black satin gloss", thicknessMm: 4, sheetW: 4000, sheetH: 1500, ctsRate: 181.62, fullSheetPrice: 373.92 },
+  { colour: "white gloss",       thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: null, fullSheetPrice: 93.85 },
+  { colour: "white satin",       thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: null, fullSheetPrice: 91.44 },
+  { colour: "white satin gloss", thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: null, fullSheetPrice: 102.38 },
+  { colour: "black satin gloss", thicknessMm: 3, sheetW: 2440, sheetH: 1220, ctsRate: null, fullSheetPrice: 99.68 },
+  { colour: "white satin gloss", thicknessMm: 4, sheetW: 2440, sheetH: 1220, ctsRate: null, fullSheetPrice: 137.34 },
+  { colour: "white satin gloss", thicknessMm: 4, sheetW: 3050, sheetH: 1500, ctsRate: null, fullSheetPrice: 226.33 },
+  { colour: "black satin gloss", thicknessMm: 4, sheetW: 4000, sheetH: 1500, ctsRate: null, fullSheetPrice: 373.92 },
 ];
 
 const CORFLUTE: CorflutRow[] = [
