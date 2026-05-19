@@ -79,15 +79,41 @@ export function getModel(tier: "default" | "premium" = "default"): LanguageModel
 }
 
 /**
- * Rex-specific model — uses REX_ANTHROPIC_API_KEY if set, so Rex runs on its
- * own Anthropic billing account independently of Saabai's internal tools.
- * Falls back to the standard model config if REX_ANTHROPIC_API_KEY is not set.
+ * Per-route Rex Anthropic key lookup.
+ *
+ * Each Rex route can have its OWN Anthropic API key so the Anthropic
+ * console shows usage broken down by route natively. Setup:
+ *   REX_CHAT_ANTHROPIC_KEY      — pete-chat (the Rex chat widget)
+ *   REX_LEADS_ANTHROPIC_KEY     — rex-leads (post-chat lead extraction)
+ *   REX_FEEDBACK_ANTHROPIC_KEY  — rex-feedback (feedback analysis)
+ *
+ * Fallback chain when a route-specific key is missing:
+ *   route-specific key → REX_ANTHROPIC_API_KEY → default ANTHROPIC_API_KEY
+ *
+ * Create separate keys in the same Anthropic workspace and the dashboard
+ * will show per-key spend. No code changes needed once the env vars exist.
  */
-export function getRexModel(tier: "default" | "premium" = "default"): LanguageModel {
-  const rexKey = process.env.REX_ANTHROPIC_API_KEY;
-  if (!rexKey) return getModel(tier);
+type RexRoute = "chat" | "leads" | "feedback";
 
-  const rexAnthropic = createAnthropic({ apiKey: rexKey });
+function getRexKey(route?: RexRoute): string | undefined {
+  let specific: string | undefined;
+  switch (route) {
+    case "chat":     specific = process.env.REX_CHAT_ANTHROPIC_KEY; break;
+    case "leads":    specific = process.env.REX_LEADS_ANTHROPIC_KEY; break;
+    case "feedback": specific = process.env.REX_FEEDBACK_ANTHROPIC_KEY; break;
+  }
+  return specific || process.env.REX_ANTHROPIC_API_KEY;
+}
+
+/**
+ * Rex-specific model. Uses the route-specific Anthropic key if set,
+ * otherwise falls back to REX_ANTHROPIC_API_KEY, otherwise the default.
+ */
+export function getRexModel(tier: "default" | "premium" = "default", route?: RexRoute): LanguageModel {
+  const key = getRexKey(route);
+  if (!key) return getModel(tier);
+
+  const rexAnthropic = createAnthropic({ apiKey: key });
   const modelId = tier === "premium"
     ? (process.env.PREMIUM_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-sonnet-4-6")
     : (process.env.DEFAULT_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-haiku-4-5");
@@ -100,15 +126,11 @@ export function getRexModel(tier: "default" | "premium" = "default"): LanguageMo
  * Used by Rex-specific routes that hardcode a model (e.g. claude-haiku-4-5
  * for cost-sensitive transcript analysis, claude-sonnet-4-6 for feedback
  * review) rather than going through DEFAULT_CHAT_MODEL.
- *
- * Falls back to the default `anthropic` export (ANTHROPIC_API_KEY) if
- * REX_ANTHROPIC_API_KEY is unset, so behaviour is unchanged until the
- * Rex key env var is populated.
  */
-export function getRexAnthropic() {
-  const rexKey = process.env.REX_ANTHROPIC_API_KEY;
-  if (!rexKey) return anthropic;
-  return createAnthropic({ apiKey: rexKey });
+export function getRexAnthropic(route?: RexRoute) {
+  const key = getRexKey(route);
+  if (!key) return anthropic;
+  return createAnthropic({ apiKey: key });
 }
 
 /**

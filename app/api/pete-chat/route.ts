@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     const enabledTools = new Set(config.tools);
 
     const result = streamText({
-      model: getRexModel(tier),
+      model: getRexModel(tier, "chat"),
       system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(8),

@@ -2,7 +2,7 @@ import { generateText } from "ai";
 import { getRexAnthropic } from "../../../lib/chat-config";
 import { Resend } from "resend";
 
-const rexAnthropic = getRexAnthropic();
+const rexAnthropic = getRexAnthropic("feedback");
 import {
   trackFeedback,
   fetchFeedback,

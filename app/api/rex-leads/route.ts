@@ -3,7 +3,7 @@ import { generateText } from "ai";
 import { getRexAnthropic } from "../../../lib/chat-config";
 import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
 
-const rexAnthropic = getRexAnthropic();
+const rexAnthropic = getRexAnthropic("leads");
 import { trackResponseTime } from "../rex-analytics/realtime/route";
 import { getClientConfig, getResendKey } from "../../../lib/rex-config";
 import { createRexDeal } from "../../../lib/pipedrive-client";
