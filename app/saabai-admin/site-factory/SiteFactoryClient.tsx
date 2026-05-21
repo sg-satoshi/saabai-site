@@ -291,6 +291,8 @@ export default function SiteFactoryClient() {
         const displayText = fullText
           .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
           .replace(/<CHANGES>[\s\S]*$/g, "")
+          .replace(/<HTML>[A-Za-z0-9+/=]*<\/HTML>/g, "")
+          .replace(/<HTML>[A-Za-z0-9+/=]*$/g, "")
           .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
           .replace(/<RESULT>[\s\S]*$/g, "")
           .trim();
@@ -308,9 +310,21 @@ export default function SiteFactoryClient() {
 
       let newHtml: string | null = null;
       if (opsApplied > 0) {
-        // Reload the updated HTML from blob
-        const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
-        newHtml = await htmlRes.text();
+        // Use inline HTML from stream (avoids CDN propagation delay)
+        const htmlMatch = fullText.match(/<HTML>([A-Za-z0-9+/=]+)<\/HTML>/);
+        if (htmlMatch) {
+          try {
+            const bin = atob(htmlMatch[1]);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            newHtml = new TextDecoder().decode(bytes);
+          } catch { /* fall through to fetch */ }
+        }
+        // Fallback: fetch from server (catches cases where HTML wasn't inlined)
+        if (!newHtml) {
+          const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
+          newHtml = await htmlRes.text();
+        }
         versions.current = [...versions.current.slice(0, versionIdx === -1 ? versions.current.length : versionIdx + 1), newHtml];
         setVersionIdx(-1);
         setPreviewHtml(newHtml);
@@ -320,6 +334,7 @@ export default function SiteFactoryClient() {
       // Finalise the assistant message
       const displayText = fullText
         .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
+        .replace(/<HTML>[A-Za-z0-9+/=]*<\/HTML>/g, "")
         .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
         .trim();
 

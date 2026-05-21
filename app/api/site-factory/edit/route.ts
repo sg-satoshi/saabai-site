@@ -105,6 +105,7 @@ ${minHtml}`;
 
         // Extract and apply diff after stream completes
         let opsApplied = 0;
+        let updatedHtml: string | null = null;
         const changesMatch = fullText.match(/<CHANGES>([\s\S]*?)<\/CHANGES>/);
         if (changesMatch) {
           try {
@@ -124,6 +125,7 @@ ${minHtml}`;
                   addRandomSuffix: false,
                   allowOverwrite: true,
                 });
+                updatedHtml = newHtml;
               }
             }
           } catch (e) {
@@ -131,9 +133,13 @@ ${minHtml}`;
           }
         }
 
-        // Append result marker so client knows outcome
+        // Append result marker + inline updated HTML (avoids CDN propagation delay on client fetch)
         try {
-          controller.enqueue(encoder.encode(`<RESULT>{"opsApplied":${opsApplied}}</RESULT>`));
+          let tail = `<RESULT>{"opsApplied":${opsApplied}}</RESULT>`;
+          if (updatedHtml) {
+            tail += `<HTML>${Buffer.from(updatedHtml).toString("base64")}</HTML>`;
+          }
+          controller.enqueue(encoder.encode(tail));
         } catch { /* client gone */ }
         try { controller.close(); } catch { /* already closed */ }
       },
