@@ -140,15 +140,19 @@ SECTIONS REQUIRED (in this exact order):
 
     const readable = new ReadableStream({
       async start(controller) {
-        try {
-          const reader = textStream.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            fullText += value;
-            controller.enqueue(encoder.encode(value));
-          }
+        // Read every chunk from the AI SDK stream regardless of client state.
+        // controller.enqueue() is wrapped in try/catch so a client disconnect
+        // doesn't abort the loop — we still complete the read and save.
+        const reader = textStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          fullText += value;
+          try { controller.enqueue(encoder.encode(value)); } catch { /* client disconnected */ }
+        }
 
+        // Save after AI stream is fully consumed — independent of client state.
+        try {
           let html = fullText
             .trim()
             .replace(/^```html\n?/i, "")
@@ -158,14 +162,12 @@ SECTIONS REQUIRED (in this exact order):
           if (!html.toLowerCase().startsWith("<!doctype")) {
             html = `<!DOCTYPE html>\n${html}`;
           }
-
           await put(`sites/${slug}/index.html`, html, {
             access: "public",
             contentType: "text/html",
             addRandomSuffix: false,
             allowOverwrite: true,
           });
-
           await createSite({
             slug,
             name: businessName,
@@ -182,10 +184,10 @@ SECTIONS REQUIRED (in this exact order):
             },
           });
         } catch (e) {
-          console.error("Site factory stream/save error:", e);
-        } finally {
-          controller.close();
+          console.error("Site factory save error:", e);
         }
+
+        try { controller.close(); } catch { /* already closed */ }
       },
     });
 

@@ -23,6 +23,7 @@ export interface SiteConfig {
     greeting: string;
     systemPrompt: string;
   };
+  domains?: string[];
   createdAt: number;
   updatedAt: number;
 }
