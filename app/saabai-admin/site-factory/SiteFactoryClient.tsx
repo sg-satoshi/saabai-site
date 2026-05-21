@@ -418,7 +418,7 @@ export default function SiteFactoryClient() {
           style: imgStyle,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: res.status === 504 ? "Generation timed out — try a simpler prompt or try again" : `Server error ${res.status}` }));
       if (data.ok && data.url) {
         setGeneratedImgs(prev => [{ url: data.url, prompt: imgPrompt.trim() }, ...prev.slice(0, 5)]);
         setImgPrompt("");
@@ -445,7 +445,7 @@ export default function SiteFactoryClient() {
           style: "photo",
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: res.status === 504 ? "Generation timed out — try again" : `Server error ${res.status}` }));
       if (data.ok && data.url) {
         setBotSetupAvatarUrl(data.url);
       } else {

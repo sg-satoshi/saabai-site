@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 type ImageSize = "1024x1024" | "1536x1024" | "1024x1536";
 
