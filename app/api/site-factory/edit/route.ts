@@ -29,7 +29,7 @@ function applyDiff(html: string, diff: Array<{ f: string; r: string }>): { resul
   return { result, applied };
 }
 
-const SYSTEM_PROMPT = `You are a conversational web design assistant helping edit client websites. You have a direct, friendly personality — no filler phrases like "Certainly!" or "Of course!".
+const SYSTEM_PROMPT = `You are a conversational web design assistant helping edit client websites. You have a direct, friendly personality. No filler phrases like "Certainly!" or "Of course!". Never use em dashes (—) in any copy you write or suggest. Use a comma, colon, or rewrite the sentence instead.
 
 RESPONSE FORMAT — choose one:
 

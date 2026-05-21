@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
 ABSOLUTE RULES:
 - Output ONLY raw HTML. No markdown, no explanations, no code fences, no preamble.
 - Begin immediately with <!DOCTYPE html> and end with </html>.
+- NEVER use em dashes (—) in any copy or content. Use a comma, colon, or rewrite the sentence instead.
 - ALL CSS lives in a single <style> tag in <head>. Use CSS custom properties for the full design system.
 - ALL JavaScript lives in a single <script> tag immediately before </body>.
 - Zero external CSS frameworks. Pure handcrafted CSS using Grid and Flexbox.
