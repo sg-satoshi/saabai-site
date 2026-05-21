@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server";
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
 import { put, list } from "@vercel/blob";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-// Strip comments and collapse whitespace — reduces input tokens ~25-35%
 function minifyHtml(html: string): string {
   return html
     .replace(/<!--[\s\S]*?-->/g, "")
@@ -30,26 +29,33 @@ function applyDiff(html: string, diff: Array<{ f: string; r: string }>): { resul
   return { result, applied };
 }
 
-const SYSTEM_PROMPT = `You are an expert web developer making surgical edits to HTML files.
+const SYSTEM_PROMPT = `You are a conversational web design assistant helping edit client websites. You have a direct, friendly personality — no filler phrases like "Certainly!" or "Of course!".
 
-OUTPUT: A JSON array of find-replace operations. Nothing else — no markdown, no explanation, no code fences.
-Format: [{"f":"exact text to find","r":"replacement text"}]
+RESPONSE FORMAT — choose one:
 
-RULES:
-- Each "f" must be an EXACT verbatim substring of the provided HTML (whitespace included)
-- Use the minimum operations to achieve the requested change
-- For CSS: target only the specific property value(s) that change
-- Make each "f" long enough to be unique in the document — include surrounding context if needed
-- Output ONLY the raw JSON array, starting with [ and ending with ]`;
+1. MAKING CHANGES: Write one short sentence saying what you're doing, then immediately output:
+<CHANGES>[{"f":"exact text","r":"replacement"}]</CHANGES>
+
+2. CONVERSATION ONLY (clarifying, questions, explanations): Respond naturally — no <CHANGES> block.
+
+DIFF RULES — the HTML is MINIFIED (whitespace stripped, tags joined with "><"):
+- "f" must be EXACT verbatim — copy character-for-character from the HTML shown
+- Tags are joined: "</section><footer" not "</section> <footer"
+- CSS values have no spaces: "color:#fff" not "color: #fff"
+- Make each "f" 40-100 chars — unique enough to match exactly once
+- Minimum ops — one op per logical change
+- To add before footer: f="</section><footer", r="[new html]</section><footer"
+- To change a colour: f="background-color:#abc123", r="background-color:#newval"
+- NEVER wrap <CHANGES> in backticks or markdown`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { slug, instruction, imageUrl } = await req.json();
-    if (!slug || !instruction?.trim()) {
+    const { slug, instruction, imageUrl, history = [] } = await req.json();
+    if (!slug || (!instruction?.trim() && !imageUrl)) {
       return Response.json({ error: "slug and instruction are required" }, { status: 400 });
     }
 
-    // Fetch current HTML from Blob
+    // Fetch current HTML
     const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
     const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
     if (!blob) return Response.json({ error: "Site not found in storage" }, { status: 404 });
@@ -58,58 +64,86 @@ export async function POST(req: NextRequest) {
     const originalHtml = await htmlRes.text();
     const minHtml = minifyHtml(originalHtml);
 
-    const userText = `HTML:\n${minHtml}\n\n---\nInstruction: ${instruction.trim()}`;
+    // Build conversation history — text only, no HTML in prior turns
+    const priorMessages = (history as Array<{ role: string; content: string }>)
+      .filter(m => (m.role === "user" || m.role === "assistant") && m.content)
+      .slice(-8)
+      .map(m => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 400) }));
 
-    const { text: rawDiff } = await generateText({
+    // Current turn: instruction + fresh HTML
+    const currentText = `Instruction: ${instruction?.trim() || "Apply the uploaded image to the site (use as logo or hero background)"}
+
+Current site HTML (minified):
+${minHtml}`;
+
+    const currentContent = imageUrl
+      ? [{ type: "image" as const, image: new URL(imageUrl) }, { type: "text" as const, text: currentText }]
+      : currentText;
+
+    const { textStream } = streamText({
       model: getPremiumModel(),
       system: SYSTEM_PROMPT,
-      messages: [{
-        role: "user",
-        content: imageUrl
-          ? [{ type: "image" as const, image: new URL(imageUrl) }, { type: "text" as const, text: userText }]
-          : userText,
-      }],
+      messages: [
+        ...priorMessages,
+        { role: "user", content: currentContent },
+      ],
     });
 
-    // Parse diff and apply
-    let newHtml = minHtml;
-    let opsApplied = 0;
+    // Stream to client; accumulate full text server-side for diff extraction + save
+    const encoder = new TextEncoder();
+    let fullText = "";
 
-    try {
-      const clean = rawDiff.trim().replace(/^```json?\n?/i, "").replace(/```\s*$/i, "").trim();
-      const diff = JSON.parse(clean) as Array<{ f: string; r: string }>;
-      if (Array.isArray(diff) && diff.length > 0) {
-        const { result, applied } = applyDiff(minHtml, diff);
-        newHtml = result;
-        opsApplied = applied;
-      }
-    } catch (e) {
-      console.error("[edit-diff] parse error:", e, "\nraw:", rawDiff.slice(0, 300));
-    }
+    const readable = new ReadableStream({
+      async start(controller) {
+        const reader = textStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          fullText += value;
+          try { controller.enqueue(encoder.encode(value)); } catch { /* client disconnected */ }
+        }
 
-    // If diff produced nothing useful, 422 so client can show an error
-    if (opsApplied === 0) {
-      console.warn("[edit-diff] 0 ops applied — diff may have hallucinated find-strings");
-      return Response.json({ error: "Could not apply changes — please rephrase your instruction and try again." }, { status: 422 });
-    }
+        // Extract and apply diff after stream completes
+        let opsApplied = 0;
+        const changesMatch = fullText.match(/<CHANGES>([\s\S]*?)<\/CHANGES>/);
+        if (changesMatch) {
+          try {
+            const clean = changesMatch[1].trim().replace(/^```json?\n?/i, "").replace(/```\s*$/i, "").trim();
+            const diff = JSON.parse(clean) as Array<{ f: string; r: string }>;
+            if (Array.isArray(diff) && diff.length > 0) {
+              const { result, applied } = applyDiff(minHtml, diff);
+              opsApplied = applied;
+              if (applied > 0) {
+                let newHtml = result;
+                if (!newHtml.toLowerCase().includes("<!doctype")) {
+                  newHtml = `<!DOCTYPE html>\n${newHtml}`;
+                }
+                await put(`sites/${slug}/index.html`, newHtml, {
+                  access: "public",
+                  contentType: "text/html",
+                  addRandomSuffix: false,
+                  allowOverwrite: true,
+                });
+              }
+            }
+          } catch (e) {
+            console.error("[edit-diff] parse error:", e, "\nraw:", changesMatch[1].slice(0, 300));
+          }
+        }
 
-    if (!newHtml.toLowerCase().includes("<!doctype")) {
-      newHtml = `<!DOCTYPE html>\n${newHtml}`;
-    }
-
-    await put(`sites/${slug}/index.html`, newHtml, {
-      access: "public",
-      contentType: "text/html",
-      addRandomSuffix: false,
-      allowOverwrite: true,
+        // Append result marker so client knows outcome
+        try {
+          controller.enqueue(encoder.encode(`<RESULT>{"opsApplied":${opsApplied}}</RESULT>`));
+        } catch { /* client gone */ }
+        try { controller.close(); } catch { /* already closed */ }
+      },
     });
 
-    // Return the updated HTML directly so the client can refresh the preview instantly
-    return new Response(newHtml, {
+    return new Response(readable, {
       headers: {
-        "Content-Type": "text/html; charset=utf-8",
+        "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-store",
-        "X-Ops-Applied": String(opsApplied),
+        "X-Site-Slug": slug,
       },
     });
   } catch (error) {

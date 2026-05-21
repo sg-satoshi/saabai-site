@@ -81,13 +81,6 @@ function loadMsgs(slug: string): Message[] {
   } catch { return []; }
 }
 
-const EDIT_STAGES = [
-  "Thinking through your request...",
-  "Reading the current design...",
-  "Planning the changes...",
-  "Applying edits...",
-  "Saving the updated site...",
-];
 
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
@@ -232,80 +225,112 @@ export default function SiteFactoryClient() {
     const displayContent = text || `[Image: ${pendingImage?.name}]`;
 
     const userMsg: Message = { role: "user", content: displayContent, ts: Date.now(), imageUrl };
+    const historyForApi = [...messages]; // snapshot before we add new messages
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
     setInstruction("");
     setPendingImage(null);
     setIsEditing(true);
 
-    const assistantMsg: Message = { role: "assistant", content: EDIT_STAGES[0], ts: Date.now() };
+    // Start with empty streaming message
+    const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
     const withAssistant = [...nextMsgs, assistantMsg];
     setMessages(withAssistant);
-
-    // Cycle through human-readable stage messages while Claude works
-    let stageIdx = 0;
-    const stageTimer = setInterval(() => {
-      stageIdx = Math.min(stageIdx + 1, EDIT_STAGES.length - 1);
-      setMessages(prev => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last?.role === "assistant" && !last.htmlSnapshot) {
-          updated[updated.length - 1] = { ...last, content: EDIT_STAGES[stageIdx] };
-        }
-        return updated;
-      });
-    }, 4000);
 
     try {
       const res = await fetch("/api/site-factory/edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: activeSite.slug, instruction: text || "Apply the uploaded image to the site (use as logo or reference design)", imageUrl }),
+        body: JSON.stringify({
+          slug: activeSite.slug,
+          instruction: text || "Apply the uploaded image to the site",
+          imageUrl,
+          history: historyForApi.map(m => ({ role: m.role, content: m.content })),
+        }),
       });
 
-      clearInterval(stageTimer);
-
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
         throw new Error(err.error || `HTTP ${res.status}`);
       }
 
-      const newHtml = await res.text();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
 
-      versions.current = [...versions.current.slice(0, versionIdx === -1 ? versions.current.length : versionIdx + 1), newHtml];
-      setVersionIdx(-1);
-      setPreviewHtml(newHtml);
-      setIframeKey(k => k + 1);
+      // Stream chunks — update message in real-time (strip internal markers from display)
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        fullText += decoder.decode(value, { stream: true });
 
-      const doneMsg = { ...withAssistant[withAssistant.length - 1], content: `Done — "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml };
-      const finalMsgs = [...withAssistant.slice(0, -1), doneMsg];
+        const displayText = fullText
+          .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
+          .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
+          .trim();
+
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText };
+          return updated;
+        });
+      }
+
+      // Parse result marker
+      const resultMatch = fullText.match(/<RESULT>(.*?)<\/RESULT>/);
+      const opsApplied = resultMatch ? (JSON.parse(resultMatch[1]).opsApplied as number) : 0;
+
+      let newHtml: string | null = null;
+      if (opsApplied > 0) {
+        // Reload the updated HTML from blob
+        const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
+        newHtml = await htmlRes.text();
+        versions.current = [...versions.current.slice(0, versionIdx === -1 ? versions.current.length : versionIdx + 1), newHtml];
+        setVersionIdx(-1);
+        setPreviewHtml(newHtml);
+        setIframeKey(k => k + 1);
+      }
+
+      // Finalise the assistant message
+      const displayText = fullText
+        .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
+        .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
+        .trim();
+
+      const finalMsgs = withAssistant.map((m, i) =>
+        i === withAssistant.length - 1
+          ? { ...m, content: displayText, ...(newHtml ? { htmlSnapshot: newHtml } : {}) }
+          : m
+      );
       setMessages(finalMsgs);
       storeMsgs(activeSite.slug, finalMsgs);
 
-      if (isMobile) setSidebarOpen(false);
+      if (isMobile && newHtml) setSidebarOpen(false);
 
-      // Fetch suggestion chips in the background
-      fetch("/api/site-factory/suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lastInstruction: text, siteName: activeSite.name, niche: activeSite.niche, history: finalMsgs }),
-      }).then(r => r.json()).then(({ suggestions }) => {
-        if (!Array.isArray(suggestions) || suggestions.length === 0) return;
-        setMessages(prev => {
-          const updated = [...prev];
-          const last = updated[updated.length - 1];
-          if (last?.htmlSnapshot === newHtml) {
-            updated[updated.length - 1] = { ...last, suggestions };
-            storeMsgs(activeSite.slug, updated);
-          }
-          return updated;
-        });
-      }).catch(() => {});
+      // Fetch suggestion chips in the background (only if changes were made)
+      if (newHtml) {
+        const capturedHtml = newHtml;
+        fetch("/api/site-factory/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lastInstruction: text, siteName: activeSite.name, niche: activeSite.niche, history: finalMsgs }),
+        }).then(r => r.json()).then(({ suggestions }) => {
+          if (!Array.isArray(suggestions) || suggestions.length === 0) return;
+          setMessages(prev => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            if (last?.htmlSnapshot === capturedHtml) {
+              updated[updated.length - 1] = { ...last, suggestions };
+              storeMsgs(activeSite.slug, updated);
+            }
+            return updated;
+          });
+        }).catch(() => {});
+      }
     } catch (e) {
-      clearInterval(stageTimer);
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { ...updated[updated.length - 1], content: `${String(e)}` };
+        updated[updated.length - 1] = { ...updated[updated.length - 1], content: String(e) };
         return updated;
       });
     }
