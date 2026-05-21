@@ -68,10 +68,9 @@ function buildCarouselInner(reviews: ReviewItem[], rating?: number, totalReviews
     `<style>#${id}::-webkit-scrollbar{display:none}</style>` +
     `<script>window.addEventListener('load',function(){var t=document.getElementById('${id}');if(!t)return;` +
     `var p=false;` +
-    `t.addEventListener('mouseenter',function(){p=true});` +
-    `t.addEventListener('mouseleave',function(){p=false});` +
-    `var last=0;function tick(now){if(!p){var dt=now-last;if(dt>16){last=now;if(t.scrollLeft+t.clientWidth>=t.scrollWidth-2){t.scrollLeft=0;}else{t.scrollLeft+=0.5;}}}` +
-    `requestAnimationFrame(tick);}requestAnimationFrame(tick);});</script>` +
+    `t.addEventListener('mouseenter',function(){p=true;});` +
+    `t.addEventListener('mouseleave',function(){p=false;});` +
+    `setInterval(function(){if(!p){if(t.scrollLeft+t.clientWidth>=t.scrollWidth-2){t.scrollLeft=0;}else{t.scrollLeft+=1;}}},20);});</script>` +
     `</div>`
   );
 }
