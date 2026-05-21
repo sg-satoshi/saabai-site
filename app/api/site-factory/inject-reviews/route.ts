@@ -95,7 +95,7 @@ function buildStandaloneSection(reviews: ReviewItem[], rating?: number, totalRev
     `style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:36px;height:36px;border-radius:50%;` +
     `border:1px solid #dadce0;background:#fff;cursor:pointer;font-size:18px;color:#5f6368;` +
     `box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;padding:0;">&#8249;</button>` +
-    `<div id="${id}" style="display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;` +
+    `<div id="${id}" style="display:flex;gap:16px;overflow-x:auto;` +
     `-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px 2px 16px;">` +
     `${buildCards(reviews)}</div>` +
     `<button onclick="document.getElementById('${id}').scrollBy({left:296,behavior:'smooth'})" ` +
