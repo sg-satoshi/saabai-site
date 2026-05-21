@@ -25,10 +25,10 @@ export function buildChatWidget(cfg: ChatWidgetConfig): string {
     .join("");
 
   // ── Button content ───────────────────────────────────────────────────────
-  // With avatar: photo fills the circle (pulsing ring stays as ::before/::after)
+  // With avatar: photo fills the circle; on error just fade it out
   // Without avatar: speech-bubble SVG on accent background
   const btnInner = hasAvatar
-    ? `<img src="${cfg.avatarUrl}" alt="${cfg.botName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:relative;z-index:1" onerror="this.style.display='none';this.parentNode.innerHTML+='<svg width=22 height=22 viewBox=\\'0 0 24 24\\' fill=white><path d=\\'M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z\\'/></svg>'">`
+    ? `<img src="${cfg.avatarUrl}" alt="${cfg.botName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:relative;z-index:1" onerror="this.style.opacity=0">`
     : `<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>`;
 
   // ── Header avatar ────────────────────────────────────────────────────────
@@ -70,6 +70,7 @@ function save(){try{localStorage.setItem(CFG.storageKey,JSON.stringify(msgs.slic
 
 var style=document.createElement('style');
 style.textContent=
+'.sf-w{position:fixed;bottom:24px;right:24px;z-index:99999;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:flex-end}'+
 ${JSON.stringify(btnCss)}+
 '.sf-btn:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(0,0,0,.35)}'+
 '.sf-btn::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.25;animation:sf-pulse 2.2s infinite}'+

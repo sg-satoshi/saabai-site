@@ -228,19 +228,19 @@ export default function SiteFactoryClient() {
     setUploading(false);
   }
 
-  async function sendEdit() {
-    const text = instruction.trim();
-    if ((!text && !pendingImage) || !activeSite || isEditing) return;
+  async function sendEdit(overrideText?: string, overrideImageUrl?: string) {
+    const text = overrideText !== undefined ? overrideText : instruction.trim();
+    const imageUrl = overrideImageUrl !== undefined ? overrideImageUrl : pendingImage?.url;
+    if ((!text && !imageUrl) || !activeSite || isEditing) return;
 
-    const imageUrl = pendingImage?.url;
-    const displayContent = text || `[Image: ${pendingImage?.name}]`;
+    const displayContent = text || `[Image]`;
 
     const userMsg: Message = { role: "user", content: displayContent, ts: Date.now(), imageUrl };
-    const historyForApi = [...messages]; // snapshot before we add new messages
+    const historyForApi = [...messages];
     const nextMsgs = [...messages, userMsg];
     setMessages(nextMsgs);
-    setInstruction("");
-    setPendingImage(null);
+    if (overrideText === undefined) setInstruction("");
+    if (overrideImageUrl === undefined) setPendingImage(null);
     setIsEditing(true);
 
     // Start with empty streaming message
@@ -765,23 +765,33 @@ export default function SiteFactoryClient() {
                     </button>
                     {/* Generated image gallery */}
                     {generatedImgs.length > 0 && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Generated — click to use</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Generated — insert into site</p>
                         {generatedImgs.map((img, i) => (
-                          <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border2}`, cursor: "pointer" }}
-                            onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setShowImgGen(false); }}
-                          >
-                            <img src={img.url} alt={img.prompt} style={{ width: "100%", display: "block", maxHeight: 140, objectFit: "cover" }} />
-                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", transition: "background 0.15s", display: "flex", alignItems: "center", justifyContent: "center" }}
-                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.45)"}
-                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0)"}
-                            >
-                              <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, opacity: 0, transition: "opacity 0.15s", padding: "6px 12px", background: "rgba(0,0,0,.5)", borderRadius: 6 }}
-                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-                              >Add to chat →</span>
-                            </div>
-                            <div style={{ padding: "5px 8px", background: C.bg }}>
+                          <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border2}` }}>
+                            <img src={img.url} alt={img.prompt} style={{ width: "100%", display: "block", maxHeight: 120, objectFit: "cover" }} />
+                            <div style={{ padding: "7px 8px", background: C.bg, display: "flex", flexDirection: "column", gap: 5 }}>
                               <p style={{ margin: 0, fontSize: 10, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.prompt}</p>
+                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                {[
+                                  { label: "Hero bg", instruction: `Replace the hero section background image with this image: ${img.url}` },
+                                  { label: "About section", instruction: `Add this image to the about section: ${img.url}` },
+                                  { label: "Gallery", instruction: `Add this image to a gallery or images section: ${img.url}` },
+                                ].map(opt => (
+                                  <button key={opt.label}
+                                    onClick={() => { sendEdit(opt.instruction); setShowImgGen(false); }}
+                                    style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
+                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#a855f7"; (e.currentTarget as HTMLElement).style.color = "#a855f7"; }}
+                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                                  >{opt.label}</button>
+                                ))}
+                                <button
+                                  onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setShowImgGen(false); }}
+                                  style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
+                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                                >Custom →</button>
+                              </div>
                             </div>
                           </div>
                         ))}
