@@ -80,6 +80,23 @@ function loadMsgs(slug: string): Message[] {
   } catch { return []; }
 }
 
+function getEditStatus(html: string, charCount: number): string {
+  if (charCount === 0) return "Thinking through the changes...";
+  if (charCount < 300) return "Planning the layout...";
+  const h = html.toLowerCase();
+  if (h.includes("@import") && charCount < 2000) return "Loading fonts and design tokens...";
+  if ((h.includes(":root") || h.includes("--primary")) && charCount < 3000) return "Applying colour palette and CSS variables...";
+  if ((h.includes("@keyframes") || h.includes("transition:")) && charCount < 5000) return "Adding animations and transitions...";
+  if (h.includes("<nav") || h.includes("<header")) return "Building navigation header...";
+  if (h.includes("hero") || (h.includes("<section") && charCount < 8000)) return "Writing hero section...";
+  if (h.includes("service") && charCount < 12000) return "Building services grid...";
+  if (h.includes("process") || h.includes("how it works")) return "Writing process section...";
+  if (h.includes("stat") || h.includes("count-up")) return "Adding stats and social proof...";
+  if (h.includes("testimonial") || h.includes("review")) return "Crafting testimonials...";
+  if (h.includes("<footer")) return "Finishing footer and final touches...";
+  return `Writing... (${(charCount / 1000).toFixed(1)}k chars)`;
+}
+
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingSites, setLoadingSites] = useState(false);
@@ -98,9 +115,10 @@ export default function SiteFactoryClient() {
   const [versionIdx, setVersionIdx] = useState(-1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Upload state
+  // Upload + drag state
   const [pendingImage, setPendingImage] = useState<{ url: string; name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // DNS state
@@ -215,7 +233,7 @@ export default function SiteFactoryClient() {
     setPendingImage(null);
     setIsEditing(true);
 
-    const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
+    const assistantMsg: Message = { role: "assistant", content: getEditStatus("", 0), ts: Date.now() };
     const withAssistant = [...nextMsgs, assistantMsg];
     setMessages(withAssistant);
 
@@ -238,9 +256,10 @@ export default function SiteFactoryClient() {
         if (done) break;
         newHtml += decoder.decode(value, { stream: true });
         charCount = newHtml.length;
+        const status = getEditStatus(newHtml, charCount);
         setMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1] = { ...updated[updated.length - 1], content: `Updating... (${(charCount / 1000).toFixed(1)}k)` };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: status };
           return updated;
         });
       }
@@ -518,8 +537,27 @@ export default function SiteFactoryClient() {
                 </div>
               )}
 
-              {/* Message history */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Message history — also a drag-and-drop target */}
+              <div
+                style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, position: "relative", transition: "background 0.15s", background: isDragOver ? "rgba(15,157,142,0.07)" : "transparent" }}
+                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false); }}
+                onDrop={e => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.type.startsWith("image/")) uploadFile(file);
+                }}
+              >
+                {isDragOver && (
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, pointerEvents: "none" }}>
+                    <div style={{ border: `2px dashed ${C.teal}`, borderRadius: 12, padding: "24px 36px", background: "rgba(15,157,142,0.12)", textAlign: "center" }}>
+                      <p style={{ margin: 0, fontSize: 28 }}>📎</p>
+                      <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 600, color: C.teal }}>Drop image here</p>
+                      <p style={{ margin: "4px 0 0", fontSize: 11, color: C.textDim }}>logo, screenshot, reference</p>
+                    </div>
+                  </div>
+                )}
                 {messages.map((msg, i) => (
                   <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
                     {msg.imageUrl && (
@@ -550,12 +588,6 @@ export default function SiteFactoryClient() {
                     </span>
                   </div>
                 ))}
-                {isEditing && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.textDim, fontSize: 12 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal, animation: "pulse 1s infinite" }} />
-                    Applying edit...
-                  </div>
-                )}
                 <div ref={messagesEndRef} />
               </div>
 
