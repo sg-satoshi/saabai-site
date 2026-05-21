@@ -189,6 +189,7 @@ export default function SiteFactoryClient() {
   const [reviewsFetchTip, setReviewsFetchTip] = useState("");
   const [manualReviews, setManualReviews] = useState<Array<{ name: string; rating: number; text: string }>>([]);
   const [injectingReviews, setInjectingReviews] = useState(false);
+  const reviewsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -223,18 +224,25 @@ export default function SiteFactoryClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
-  // Persist reviews state to localStorage whenever it changes
+  // Persist reviews to localStorage immediately + debounced save to DB
   useEffect(() => {
     if (!activeSite) return;
-    saveReviews(activeSite.slug, {
-      url: reviewsUrl,
-      fetchedReviews,
-      manualReviews,
-      rating: reviewsRating,
-      totalReviews: reviewsTotalReviews,
-      businessName: reviewsBusinessName,
-      fetchTip: reviewsFetchTip,
-    });
+    const data = {
+      url: reviewsUrl, fetchedReviews, manualReviews,
+      rating: reviewsRating, totalReviews: reviewsTotalReviews,
+      businessName: reviewsBusinessName, fetchTip: reviewsFetchTip,
+    };
+    // Instant local cache
+    saveReviews(activeSite.slug, data);
+    // Debounced DB save (1s after last change)
+    if (reviewsSaveTimer.current) clearTimeout(reviewsSaveTimer.current);
+    reviewsSaveTimer.current = setTimeout(() => {
+      fetch("/api/site-factory/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug, reviews: data }),
+      }).catch(() => { /* silent — localStorage is the fallback */ });
+    }, 1000);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSite?.slug, reviewsUrl, fetchedReviews, manualReviews, reviewsRating, reviewsTotalReviews, reviewsBusinessName, reviewsFetchTip]);
 
@@ -275,25 +283,21 @@ export default function SiteFactoryClient() {
       setBotSetupAvatarUrl(site.chatbot.avatarUrl || "");
     }
 
-    // Restore reviews state for this site
-    const savedReviews = loadReviews(site.slug);
-    if (savedReviews) {
-      setReviewsUrl(savedReviews.url || "");
-      setFetchedReviews(savedReviews.fetchedReviews || []);
-      setManualReviews(savedReviews.manualReviews || []);
-      setReviewsRating(savedReviews.rating);
-      setReviewsTotalReviews(savedReviews.totalReviews);
-      setReviewsBusinessName(savedReviews.businessName || "");
-      setReviewsFetchTip(savedReviews.fetchTip || "");
-    } else {
-      setReviewsUrl("");
-      setFetchedReviews([]);
-      setManualReviews([]);
-      setReviewsRating(undefined);
-      setReviewsTotalReviews(undefined);
-      setReviewsBusinessName("");
-      setReviewsFetchTip("");
-    }
+    // Restore reviews: show localStorage immediately, then hydrate from DB
+    const applyReviews = (r: ReviewsData | null) => {
+      setReviewsUrl(r?.url || "");
+      setFetchedReviews(r?.fetchedReviews || []);
+      setManualReviews(r?.manualReviews || []);
+      setReviewsRating(r?.rating);
+      setReviewsTotalReviews(r?.totalReviews);
+      setReviewsBusinessName(r?.businessName || "");
+      setReviewsFetchTip(r?.fetchTip || "");
+    };
+    applyReviews(loadReviews(site.slug));
+    fetch(`/api/site-factory/reviews?slug=${site.slug}`)
+      .then(r => r.json())
+      .then(d => { if (d.ok && d.reviews) applyReviews(d.reviews); })
+      .catch(() => { /* stay with localStorage data */ });
 
     fetch(`/sites/${site.slug}`)
       .then(r => r.text())

@@ -25,6 +25,15 @@ export interface SiteConfig {
     avatarUrl?: string;
   };
   domains?: string[];
+  reviews?: {
+    url: string;
+    fetchedReviews: Array<{ name: string; rating: number; text: string; date?: string }>;
+    manualReviews: Array<{ name: string; rating: number; text: string }>;
+    rating?: number;
+    totalReviews?: number;
+    businessName: string;
+    fetchTip: string;
+  };
   createdAt: number;
   updatedAt: number;
 }
