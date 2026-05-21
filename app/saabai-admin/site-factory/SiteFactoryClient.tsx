@@ -88,6 +88,29 @@ function loadMsgs(slug: string): Message[] {
   } catch { return []; }
 }
 
+interface ReviewsData {
+  url: string;
+  fetchedReviews: Array<{ name: string; rating: number; text: string; date?: string }>;
+  manualReviews: Array<{ name: string; rating: number; text: string }>;
+  rating?: number;
+  totalReviews?: number;
+  businessName: string;
+  fetchTip: string;
+}
+
+function saveReviews(slug: string, data: ReviewsData) {
+  try {
+    localStorage.setItem(`sf:reviews:${slug}`, JSON.stringify(data));
+  } catch { /* storage full */ }
+}
+
+function loadReviews(slug: string): ReviewsData | null {
+  try {
+    const raw = localStorage.getItem(`sf:reviews:${slug}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
@@ -200,6 +223,21 @@ export default function SiteFactoryClient() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
+  // Persist reviews state to localStorage whenever it changes
+  useEffect(() => {
+    if (!activeSite) return;
+    saveReviews(activeSite.slug, {
+      url: reviewsUrl,
+      fetchedReviews,
+      manualReviews,
+      rating: reviewsRating,
+      totalReviews: reviewsTotalReviews,
+      businessName: reviewsBusinessName,
+      fetchTip: reviewsFetchTip,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSite?.slug, reviewsUrl, fetchedReviews, manualReviews, reviewsRating, reviewsTotalReviews, reviewsBusinessName, reviewsFetchTip]);
+
   async function fetchSites() {
     setLoadingSites(true);
     try {
@@ -235,6 +273,26 @@ export default function SiteFactoryClient() {
       setBotSetupName(site.chatbot.name || "");
       setBotSetupGreeting(site.chatbot.greeting || "");
       setBotSetupAvatarUrl(site.chatbot.avatarUrl || "");
+    }
+
+    // Restore reviews state for this site
+    const savedReviews = loadReviews(site.slug);
+    if (savedReviews) {
+      setReviewsUrl(savedReviews.url || "");
+      setFetchedReviews(savedReviews.fetchedReviews || []);
+      setManualReviews(savedReviews.manualReviews || []);
+      setReviewsRating(savedReviews.rating);
+      setReviewsTotalReviews(savedReviews.totalReviews);
+      setReviewsBusinessName(savedReviews.businessName || "");
+      setReviewsFetchTip(savedReviews.fetchTip || "");
+    } else {
+      setReviewsUrl("");
+      setFetchedReviews([]);
+      setManualReviews([]);
+      setReviewsRating(undefined);
+      setReviewsTotalReviews(undefined);
+      setReviewsBusinessName("");
+      setReviewsFetchTip("");
     }
 
     fetch(`/sites/${site.slug}`)
