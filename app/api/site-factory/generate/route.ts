@@ -128,9 +128,29 @@ SECTIONS REQUIRED (in this exact order):
       model: getPremiumModel(),
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
-      onFinish: async ({ text }) => {
+    });
+
+    // Pipe textStream manually so we can save to Blob before closing the connection.
+    // onFinish is unreliable in serverless — the function can be GC'd before the
+    // async Blob write completes. By delaying controller.close() until after put(),
+    // the HTTP connection stays open until the save is confirmed.
+    const { textStream } = stream;
+    const encoder = new TextEncoder();
+    let fullText = "";
+
+    const readable = new ReadableStream({
+      async start(controller) {
         try {
-          let html = text.trim()
+          const reader = textStream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            fullText += value;
+            controller.enqueue(encoder.encode(value));
+          }
+
+          let html = fullText
+            .trim()
             .replace(/^```html\n?/i, "")
             .replace(/^```\n?/, "")
             .replace(/```\s*$/i, "")
@@ -138,12 +158,14 @@ SECTIONS REQUIRED (in this exact order):
           if (!html.toLowerCase().startsWith("<!doctype")) {
             html = `<!DOCTYPE html>\n${html}`;
           }
+
           await put(`sites/${slug}/index.html`, html, {
             access: "public",
             contentType: "text/html",
             addRandomSuffix: false,
             allowOverwrite: true,
           });
+
           await createSite({
             slug,
             name: businessName,
@@ -160,13 +182,14 @@ SECTIONS REQUIRED (in this exact order):
             },
           });
         } catch (e) {
-          console.error("Site factory onFinish error:", e);
+          console.error("Site factory stream/save error:", e);
+        } finally {
+          controller.close();
         }
       },
     });
 
-    const textResponse = stream.toTextStreamResponse();
-    return new Response(textResponse.body, {
+    return new Response(readable, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "X-Site-Slug": slug,
