@@ -164,13 +164,23 @@ export async function POST(req: NextRequest) {
     const htmlRes = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
     let html = await htmlRes.text();
 
-    // Remove any previously injected standalone carousel section
-    html = html.replace(/<section[^>]+class="sf-reviews-carousel"[\s\S]*?<\/section>/i, "");
-    // Remove any previously injected inline carousel
-    html = html.replace(/<div[^>]+class="sf-reviews-carousel"[\s\S]*?<\/div>\s*<\/div>/i, "");
+    // Remove any previously injected standalone carousel section (sections don't nest so this is safe)
+    html = html.replace(/<section[^>]+class="sf-reviews-carousel"[\s\S]*?<\/section>/gi, "");
+
+    let injected = false;
+    const carouselInner = buildCarouselInner(reviews, rating, totalReviews);
+
+    // ── Strategy 0: replace a previously injected inline carousel div ────────
+    // On re-injection the testimonials-grid div is already gone — replaced by sf-reviews-carousel.
+    // Use the same depth-counting replacer to swap it for the updated carousel.
+    if (!injected) {
+      const result = replaceDivElement(html, /class="sf-reviews-carousel"/, carouselInner);
+      if (result) { html = result; injected = true; }
+    }
 
     // ── Strategy 1: replace an existing testimonials/reviews grid div ────────
-    // Common class names used by AI-generated sites for review/testimonial grids
+    // Common class names used by AI-generated sites for review/testimonial grids.
+    // Only match in the HTML body (not inside <style> blocks).
     const gridPatterns = [
       /class="testimonials-grid"/i,
       /class="reviews-grid"/i,
@@ -179,15 +189,15 @@ export async function POST(req: NextRequest) {
       /class="testimonials-list"/i,
     ];
 
-    let injected = false;
-    const carouselInner = buildCarouselInner(reviews, rating, totalReviews);
-
-    for (const pattern of gridPatterns) {
-      const result = replaceDivElement(html, pattern, carouselInner);
-      if (result) {
-        html = result;
-        injected = true;
-        break;
+    if (!injected) {
+      // Skip matches that appear inside <style> blocks
+      const styleEnd = html.lastIndexOf("</style>");
+      for (const pattern of gridPatterns) {
+        const m = html.match(pattern);
+        if (m && m.index !== undefined && m.index > styleEnd) {
+          const result = replaceDivElement(html, pattern, carouselInner);
+          if (result) { html = result; injected = true; break; }
+        }
       }
     }
 
