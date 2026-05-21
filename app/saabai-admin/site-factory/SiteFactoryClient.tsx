@@ -80,22 +80,13 @@ function loadMsgs(slug: string): Message[] {
   } catch { return []; }
 }
 
-function getEditStatus(html: string, charCount: number): string {
-  if (charCount === 0) return "Thinking through the changes...";
-  if (charCount < 300) return "Planning the layout...";
-  const h = html.toLowerCase();
-  if (h.includes("@import") && charCount < 2000) return "Loading fonts and design tokens...";
-  if ((h.includes(":root") || h.includes("--primary")) && charCount < 3000) return "Applying colour palette and CSS variables...";
-  if ((h.includes("@keyframes") || h.includes("transition:")) && charCount < 5000) return "Adding animations and transitions...";
-  if (h.includes("<nav") || h.includes("<header")) return "Building navigation header...";
-  if (h.includes("hero") || (h.includes("<section") && charCount < 8000)) return "Writing hero section...";
-  if (h.includes("service") && charCount < 12000) return "Building services grid...";
-  if (h.includes("process") || h.includes("how it works")) return "Writing process section...";
-  if (h.includes("stat") || h.includes("count-up")) return "Adding stats and social proof...";
-  if (h.includes("testimonial") || h.includes("review")) return "Crafting testimonials...";
-  if (h.includes("<footer")) return "Finishing footer and final touches...";
-  return `Writing... (${(charCount / 1000).toFixed(1)}k chars)`;
-}
+const EDIT_STAGES = [
+  "Thinking through your request...",
+  "Reading the current design...",
+  "Planning the changes...",
+  "Applying edits...",
+  "Saving the updated site...",
+];
 
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
@@ -233,11 +224,24 @@ export default function SiteFactoryClient() {
     setPendingImage(null);
     setIsEditing(true);
 
-    const assistantMsg: Message = { role: "assistant", content: getEditStatus("", 0), ts: Date.now() };
+    const assistantMsg: Message = { role: "assistant", content: EDIT_STAGES[0], ts: Date.now() };
     const withAssistant = [...nextMsgs, assistantMsg];
     setMessages(withAssistant);
 
-    let newHtml = "";
+    // Cycle through human-readable stage messages while Claude works
+    let stageIdx = 0;
+    const stageTimer = setInterval(() => {
+      stageIdx = Math.min(stageIdx + 1, EDIT_STAGES.length - 1);
+      setMessages(prev => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === "assistant" && !last.htmlSnapshot) {
+          updated[updated.length - 1] = { ...last, content: EDIT_STAGES[stageIdx] };
+        }
+        return updated;
+      });
+    }, 4000);
+
     try {
       const res = await fetch("/api/site-factory/edit", {
         method: "POST",
@@ -245,24 +249,14 @@ export default function SiteFactoryClient() {
         body: JSON.stringify({ slug: activeSite.slug, instruction: text || "Apply the uploaded image to the site (use as logo or reference design)", imageUrl }),
       });
 
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      clearInterval(stageTimer);
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let charCount = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        newHtml += decoder.decode(value, { stream: true });
-        charCount = newHtml.length;
-        const status = getEditStatus(newHtml, charCount);
-        setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { ...updated[updated.length - 1], content: status };
-          return updated;
-        });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `HTTP ${res.status}`);
       }
+
+      const newHtml = await res.text();
 
       versions.current = [...versions.current.slice(0, versionIdx === -1 ? versions.current.length : versionIdx + 1), newHtml];
       setVersionIdx(-1);
@@ -271,18 +265,18 @@ export default function SiteFactoryClient() {
 
       const finalMsgs = withAssistant.map((m, i) =>
         i === withAssistant.length - 1
-          ? { ...m, content: `Done. Applied: "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml }
+          ? { ...m, content: `Done — "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml }
           : m
       );
       setMessages(finalMsgs);
       storeMsgs(activeSite.slug, finalMsgs);
 
-      // On mobile, close sidebar after edit so user can see the result
       if (isMobile) setSidebarOpen(false);
     } catch (e) {
+      clearInterval(stageTimer);
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { ...updated[updated.length - 1], content: `Error: ${String(e)}` };
+        updated[updated.length - 1] = { ...updated[updated.length - 1], content: `${String(e)}` };
         return updated;
       });
     }
@@ -443,13 +437,14 @@ export default function SiteFactoryClient() {
             {!isMobile && <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8, fontFamily: "monospace" }}>/sites/{activeSite.slug}/</span>}
           </div>
 
-          {/* Chat toggle (always visible) */}
+          {/* Panel toggle */}
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            title={sidebarOpen ? "Hide chat" : "Show chat"}
-            style={{ padding: isMobile ? "6px 12px" : "5px 12px", borderRadius: 6, border: `1px solid ${sidebarOpen ? C.teal : C.border2}`, background: sidebarOpen ? C.tealBg : "none", color: sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+            title={sidebarOpen ? "Hide chat panel" : "Show chat panel"}
+            style={{ padding: isMobile ? "8px 14px" : "6px 14px", borderRadius: 6, border: `1.5px solid ${sidebarOpen ? C.teal : C.gold}`, background: sidebarOpen ? C.tealBg : C.goldBg, color: sidebarOpen ? C.teal : C.gold, fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", gap: 5 }}
           >
-            {sidebarOpen ? "✕ Chat" : "💬 Chat"}
+            <span style={{ fontSize: 14 }}>{sidebarOpen ? "◀" : "▶"}</span>
+            <span>{sidebarOpen ? "Hide" : "Chat"}</span>
           </button>
 
           {/* Device toggles — hidden on mobile */}

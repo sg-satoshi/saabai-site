@@ -1,26 +1,50 @@
 import { NextRequest } from "next/server";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
-import { put } from "@vercel/blob";
-import { list } from "@vercel/blob";
+import { put, list } from "@vercel/blob";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 120;
 
-const SYSTEM_PROMPT = `You are an expert web developer editing a live HTML website. The user will give you the current complete HTML and an instruction describing what to change.
+// Strip comments and collapse whitespace — reduces input tokens ~25-35%
+function minifyHtml(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n\s*\n/g, "\n")
+    .replace(/>\s+</g, "><")
+    .trim();
+}
+
+function applyDiff(html: string, diff: Array<{ f: string; r: string }>): { result: string; applied: number } {
+  let result = html;
+  let applied = 0;
+  for (const op of diff) {
+    if (op.f && result.includes(op.f)) {
+      result = result.replace(op.f, op.r ?? "");
+      applied++;
+    } else {
+      console.warn(`[edit-diff] no match for: "${op.f?.slice(0, 80)}"`);
+    }
+  }
+  return { result, applied };
+}
+
+const SYSTEM_PROMPT = `You are an expert web developer making surgical edits to HTML files.
+
+OUTPUT: A JSON array of find-replace operations. Nothing else — no markdown, no explanation, no code fences.
+Format: [{"f":"exact text to find","r":"replacement text"}]
 
 RULES:
-- Return the COMPLETE updated HTML file. Not a diff, not a snippet — the full <!DOCTYPE html> ... </html>.
-- Make ONLY the changes described. Preserve everything else exactly.
-- No markdown, no code fences, no explanations. Raw HTML only.
-- Start immediately with <!DOCTYPE html>.
-- If the instruction is ambiguous, make the most reasonable interpretation and apply it.
-- Quality bar: the result must look as good or better than before the edit.`;
+- Each "f" must be an EXACT verbatim substring of the provided HTML (whitespace included)
+- Use the minimum operations to achieve the requested change
+- For CSS: target only the specific property value(s) that change
+- Make each "f" long enough to be unique in the document — include surrounding context if needed
+- Output ONLY the raw JSON array, starting with [ and ending with ]`;
 
 export async function POST(req: NextRequest) {
   try {
     const { slug, instruction, imageUrl } = await req.json();
-
     if (!slug || !instruction?.trim()) {
       return Response.json({ error: "slug and instruction are required" }, { status: 400 });
     }
@@ -28,72 +52,64 @@ export async function POST(req: NextRequest) {
     // Fetch current HTML from Blob
     const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
     const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
-    if (!blob) {
-      return Response.json({ error: "Site not found in storage" }, { status: 404 });
-    }
+    if (!blob) return Response.json({ error: "Site not found in storage" }, { status: 404 });
 
     const htmlRes = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-    const currentHtml = await htmlRes.text();
+    const originalHtml = await htmlRes.text();
+    const minHtml = minifyHtml(originalHtml);
 
-    const userText = `Here is the current HTML:\n\n${currentHtml}\n\n---\n\nInstruction: ${instruction.trim()}\n\nReturn the complete updated HTML file.`;
-    const stream = streamText({
+    const userText = `HTML:\n${minHtml}\n\n---\nInstruction: ${instruction.trim()}`;
+
+    const { text: rawDiff } = await generateText({
       model: getPremiumModel(),
       system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: imageUrl
-            ? [
-                { type: "image" as const, image: new URL(imageUrl) },
-                { type: "text" as const, text: userText },
-              ]
-            : userText,
-        },
-      ],
+      messages: [{
+        role: "user",
+        content: imageUrl
+          ? [{ type: "image" as const, image: new URL(imageUrl) }, { type: "text" as const, text: userText }]
+          : userText,
+      }],
     });
 
-    const { textStream } = stream;
-    const encoder = new TextEncoder();
-    let fullText = "";
+    // Parse diff and apply
+    let newHtml = minHtml;
+    let opsApplied = 0;
 
-    const readable = new ReadableStream({
-      async start(controller) {
-        const reader = textStream.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          fullText += value;
-          try { controller.enqueue(encoder.encode(value)); } catch { /* client disconnected */ }
-        }
+    try {
+      const clean = rawDiff.trim().replace(/^```json?\n?/i, "").replace(/```\s*$/i, "").trim();
+      const diff = JSON.parse(clean) as Array<{ f: string; r: string }>;
+      if (Array.isArray(diff) && diff.length > 0) {
+        const { result, applied } = applyDiff(minHtml, diff);
+        newHtml = result;
+        opsApplied = applied;
+      }
+    } catch (e) {
+      console.error("[edit-diff] parse error:", e, "\nraw:", rawDiff.slice(0, 300));
+    }
 
-        try {
-          let html = fullText
-            .trim()
-            .replace(/^```html\n?/i, "")
-            .replace(/^```\n?/, "")
-            .replace(/```\s*$/i, "")
-            .trim();
-          if (!html.toLowerCase().startsWith("<!doctype")) {
-            html = `<!DOCTYPE html>\n${html}`;
-          }
-          await put(`sites/${slug}/index.html`, html, {
-            access: "public",
-            contentType: "text/html",
-            addRandomSuffix: false,
-            allowOverwrite: true,
-          });
-        } catch (e) {
-          console.error("Edit save error:", e);
-        }
+    // If diff produced nothing useful, 422 so client can show an error
+    if (opsApplied === 0) {
+      console.warn("[edit-diff] 0 ops applied — diff may have hallucinated find-strings");
+      return Response.json({ error: "Could not apply changes — please rephrase your instruction and try again." }, { status: 422 });
+    }
 
-        try { controller.close(); } catch { /* already closed */ }
-      },
+    if (!newHtml.toLowerCase().includes("<!doctype")) {
+      newHtml = `<!DOCTYPE html>\n${newHtml}`;
+    }
+
+    await put(`sites/${slug}/index.html`, newHtml, {
+      access: "public",
+      contentType: "text/html",
+      addRandomSuffix: false,
+      allowOverwrite: true,
     });
 
-    return new Response(readable, {
+    // Return the updated HTML directly so the client can refresh the preview instantly
+    return new Response(newHtml, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-store",
+        "X-Ops-Applied": String(opsApplied),
       },
     });
   } catch (error) {
