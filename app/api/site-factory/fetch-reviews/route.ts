@@ -56,10 +56,11 @@ async function scrape(url: string): Promise<{
         }
         for (const r of (item.review ?? [])) {
           const text = r.reviewBody ?? r.description ?? "";
-          if (text.length > 15) {
+          const ratingVal = parseFloat(r.reviewRating?.ratingValue ?? "5");
+          if (text.length > 15 && ratingVal >= 4) {
             reviews.push({
               name: typeof r.author === "string" ? r.author : (r.author?.name ?? "Google Reviewer"),
-              rating: parseFloat(r.reviewRating?.ratingValue ?? "5"),
+              rating: ratingVal,
               text: text.slice(0, 400),
               date: r.datePublished,
             });
@@ -83,10 +84,11 @@ async function scrape(url: string): Promise<{
     for (let i = 1; i + 2 < chunks.length && reviews.length < 8; i += 3) {
       const after = chunks[i + 2];
       const textMatch = after.match(/"([^"]{30,400})"/);
-      if (textMatch) {
+      const starCount = parseInt(chunks[i + 1]);
+      if (textMatch && starCount >= 4) {
         reviews.push({
           name: chunks[i],
-          rating: parseInt(chunks[i + 1]),
+          rating: starCount,
           text: textMatch[1].replace(/\\n/g, " ").replace(/\\u[\da-fA-F]{4}/g, ""),
         });
       }
