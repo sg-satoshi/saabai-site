@@ -138,7 +138,7 @@ export default function SiteFactoryClient() {
   const [chatbotPersonality, setChatbotPersonality] = useState("");
 
   // Sidebar active panel (tabs)
-  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns">("chat");
+  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews">("chat");
 
   // Inject chatbot into existing site
   const [injectingBot, setInjectingBot] = useState(false);
@@ -154,6 +154,17 @@ export default function SiteFactoryClient() {
   const [imgStyle, setImgStyle] = useState<"photo" | "illustration" | "abstract">("photo");
   const [generatingImg, setGeneratingImg] = useState(false);
   const [generatedImgs, setGeneratedImgs] = useState<Array<{ url: string; prompt: string }>>([]);
+
+  // Reviews state
+  const [reviewsUrl, setReviewsUrl] = useState("");
+  const [fetchingReviews, setFetchingReviews] = useState(false);
+  const [fetchedReviews, setFetchedReviews] = useState<Array<{ name: string; rating: number; text: string; date?: string }>>([]);
+  const [reviewsRating, setReviewsRating] = useState<number | undefined>();
+  const [reviewsTotalReviews, setReviewsTotalReviews] = useState<number | undefined>();
+  const [reviewsBusinessName, setReviewsBusinessName] = useState("");
+  const [reviewsFetchTip, setReviewsFetchTip] = useState("");
+  const [manualReviews, setManualReviews] = useState<Array<{ name: string; rating: number; text: string }>>([]);
+  const [injectingReviews, setInjectingReviews] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -491,6 +502,77 @@ export default function SiteFactoryClient() {
     setBotAvatarGenerating(false);
   }
 
+  async function fetchReviews() {
+    if (!reviewsUrl.trim() || fetchingReviews) return;
+    setFetchingReviews(true);
+    setFetchedReviews([]);
+    setReviewsFetchTip("");
+    try {
+      const res = await fetch("/api/site-factory/fetch-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: reviewsUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok && data.reviews?.length > 0) {
+        setFetchedReviews(data.reviews);
+        if (data.rating) setReviewsRating(data.rating);
+        if (data.totalReviews) setReviewsTotalReviews(data.totalReviews);
+        if (data.businessName) setReviewsBusinessName(data.businessName);
+      } else {
+        setReviewsFetchTip(data.tip || data.error || "No reviews found — paste them manually below.");
+      }
+    } catch (e) {
+      setReviewsFetchTip("Fetch failed: " + String(e));
+    }
+    setFetchingReviews(false);
+  }
+
+  async function injectReviewsToSite() {
+    if (!activeSite) return;
+    const allReviews = [...fetchedReviews, ...manualReviews].filter(r => r.text?.trim());
+    if (allReviews.length === 0) { alert("Add at least one review first."); return; }
+    setInjectingReviews(true);
+    try {
+      const res = await fetch("/api/site-factory/inject-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: activeSite.slug,
+          reviews: allReviews,
+          rating: reviewsRating,
+          totalReviews: reviewsTotalReviews,
+          businessName: reviewsBusinessName || activeSite.name,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (data.html) {
+          try {
+            const bin = atob(data.html);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const newHtml = new TextDecoder().decode(bytes);
+            versions.current = [...versions.current, newHtml];
+            setVersionIdx(-1);
+            setPreviewHtml(newHtml);
+            setIframeKey(k => k + 1);
+          } catch { /* fallback — preview will be stale but blob is updated */ }
+        }
+        setActivePanel("chat");
+        const count = allReviews.length;
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: `Reviews carousel added to ${activeSite.name} — ${count} review${count !== 1 ? "s" : ""} showing.`,
+          ts: Date.now(),
+        }]);
+      } else {
+        alert("Failed: " + (data.error || "unknown error"));
+      }
+    } catch (e) { alert(String(e)); }
+    setInjectingReviews(false);
+  }
+
   async function uploadBotAvatar(file: File) {
     if (!activeSite) return;
     try {
@@ -675,6 +757,7 @@ export default function SiteFactoryClient() {
           {!isMobile && <button onClick={() => { setActivePanel("image"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "image" && sidebarOpen ? "#a855f7" : C.border2}`, background: activePanel === "image" && sidebarOpen ? "rgba(168,85,247,0.1)" : "none", color: activePanel === "image" && sidebarOpen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
           {!isMobile && <button onClick={() => { setActivePanel("bot"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "bot" && sidebarOpen ? C.gold : C.border2}`, background: activePanel === "bot" && sidebarOpen ? C.goldBg : "none", color: activePanel === "bot" && sidebarOpen ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>🤖 Bot</button>}
           {!isMobile && <button onClick={() => { setActivePanel("dns"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "dns" && sidebarOpen ? C.teal : C.border2}`, background: activePanel === "dns" && sidebarOpen ? C.tealBg : "none", color: activePanel === "dns" && sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
+          {!isMobile && <button onClick={() => { setActivePanel("reviews"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "reviews" && sidebarOpen ? "#f97316" : C.border2}`, background: activePanel === "reviews" && sidebarOpen ? "rgba(249,115,22,0.1)" : "none", color: activePanel === "reviews" && sidebarOpen ? "#f97316" : C.textDim, fontSize: 12, cursor: "pointer" }}>★ Reviews</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
@@ -714,7 +797,8 @@ export default function SiteFactoryClient() {
                   { id: "chat",  label: "Chat",  accent: C.teal },
                   { id: "image", label: "Image", accent: "#a855f7" },
                   { id: "bot",   label: "Bot",   accent: C.gold },
-                  { id: "dns",   label: "DNS",   accent: "#64748b" },
+                  { id: "dns",     label: "DNS",     accent: "#64748b" },
+                  { id: "reviews", label: "Reviews", accent: "#f97316" },
                 ] as const).map(tab => (
                   <button
                     key={tab.id}
@@ -904,6 +988,146 @@ export default function SiteFactoryClient() {
                         : "Deploy Chatbot to Site"}
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* ── Panel: Reviews ──────────────────────────────── */}
+              {activePanel === "reviews" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#f97316" }}>Google Reviews</span>
+                    <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>Carousel</span>
+                  </div>
+                  <p style={{ margin: "0 0 14px", fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>Fetch reviews from a Google Maps URL or add them manually, then inject an auto-scrolling carousel into the site.</p>
+
+                  {/* URL fetch */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Google Maps URL</label>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        value={reviewsUrl}
+                        onChange={e => setReviewsUrl(e.target.value)}
+                        placeholder="https://maps.app.goo.gl/... or google.com/maps/..."
+                        style={inp({ flex: 1, fontSize: 11, padding: "7px 9px" })}
+                        onKeyDown={e => e.key === "Enter" && fetchReviews()}
+                      />
+                      <button
+                        onClick={fetchReviews}
+                        disabled={!reviewsUrl.trim() || fetchingReviews}
+                        style={{ padding: "7px 12px", borderRadius: 6, border: "none", background: !reviewsUrl.trim() || fetchingReviews ? C.border : "#f97316", color: !reviewsUrl.trim() || fetchingReviews ? C.textMuted : "#fff", fontSize: 11, fontWeight: 600, cursor: !reviewsUrl.trim() || fetchingReviews ? "not-allowed" : "pointer", flexShrink: 0 }}
+                      >
+                        {fetchingReviews ? "..." : "Fetch"}
+                      </button>
+                    </div>
+                    {reviewsFetchTip && (
+                      <p style={{ margin: "6px 0 0", fontSize: 11, color: C.gold, lineHeight: 1.4 }}>{reviewsFetchTip}</p>
+                    )}
+                  </div>
+
+                  {/* Fetched reviews */}
+                  {fetchedReviews.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#f97316", textTransform: "uppercase", letterSpacing: "0.06em" }}>{fetchedReviews.length} fetched</span>
+                        {reviewsRating && (
+                          <span style={{ fontSize: 11, color: C.textDim }}>
+                            {reviewsRating.toFixed(1)} ★{reviewsTotalReviews ? ` (${reviewsTotalReviews.toLocaleString()})` : ""}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        {fetchedReviews.map((r, i) => (
+                          <div key={i} style={{ padding: "8px 10px", background: C.bg, borderRadius: 6, border: `1px solid ${C.border2}`, fontSize: 11 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                              <span style={{ fontWeight: 600, color: C.text }}>{r.name}</span>
+                              <span style={{ color: "#fbbc04", letterSpacing: "1px" }}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                            </div>
+                            <p style={{ margin: 0, color: C.textDim, lineHeight: 1.4, overflow: "hidden", maxHeight: 36 }}>{r.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual reviews */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Manual entry</span>
+                      <button
+                        onClick={() => setManualReviews(prev => [...prev, { name: "", rating: 5, text: "" }])}
+                        style={{ fontSize: 11, padding: "3px 10px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, cursor: "pointer" }}
+                      >+ Add</button>
+                    </div>
+                    {manualReviews.length === 0 && fetchedReviews.length === 0 && (
+                      <p style={{ margin: 0, fontSize: 11, color: C.textMuted, fontStyle: "italic" }}>Fetch from URL above or add reviews manually.</p>
+                    )}
+                    {manualReviews.map((r, i) => (
+                      <div key={i} style={{ padding: "10px", background: C.bg, borderRadius: 7, border: `1px solid ${C.border2}`, marginBottom: 6 }}>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 6, alignItems: "center" }}>
+                          <input
+                            value={r.name}
+                            onChange={e => setManualReviews(prev => prev.map((m, j) => j === i ? { ...m, name: e.target.value } : m))}
+                            placeholder="Reviewer name"
+                            style={inp({ fontSize: 11, padding: "5px 8px", flex: 1 })}
+                          />
+                          <div style={{ display: "flex", flexShrink: 0 }}>
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <button key={star}
+                                onClick={() => setManualReviews(prev => prev.map((m, j) => j === i ? { ...m, rating: star } : m))}
+                                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 17, padding: "0 1px", color: star <= r.rating ? "#fbbc04" : C.border2, lineHeight: 1 }}
+                              >★</button>
+                            ))}
+                          </div>
+                          <button onClick={() => setManualReviews(prev => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 16, padding: "0 2px", lineHeight: 1, flexShrink: 0 }}>×</button>
+                        </div>
+                        <textarea
+                          value={r.text}
+                          onChange={e => setManualReviews(prev => prev.map((m, j) => j === i ? { ...m, text: e.target.value } : m))}
+                          placeholder="Review text..."
+                          rows={2}
+                          style={inp({ fontSize: 11, padding: "5px 8px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Display name + rating override */}
+                  {(fetchedReviews.length > 0 || manualReviews.length > 0) && (
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Display name</label>
+                        <input value={reviewsBusinessName} onChange={e => setReviewsBusinessName(e.target.value)} placeholder={activeSite?.name || "Business name"} style={inp({ fontSize: 11, padding: "6px 8px" })} />
+                      </div>
+                      <div style={{ width: 70 }}>
+                        <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Rating</label>
+                        <input
+                          value={reviewsRating ?? ""}
+                          onChange={e => setReviewsRating(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          placeholder="4.9"
+                          type="number"
+                          min="1" max="5" step="0.1"
+                          style={inp({ fontSize: 11, padding: "6px 8px" })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inject button */}
+                  {(() => {
+                    const total = fetchedReviews.length + manualReviews.filter(r => r.text.trim()).length;
+                    const disabled = injectingReviews || total === 0;
+                    return (
+                      <button
+                        onClick={injectReviewsToSite}
+                        disabled={disabled}
+                        style={{ width: "100%", padding: "10px", borderRadius: 7, border: "none", background: disabled ? C.border : "#f97316", color: disabled ? C.textMuted : "#fff", fontSize: 13, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+                      >
+                        {injectingReviews
+                          ? <><div style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(255,255,255,.2)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Injecting…</>
+                          : total > 0 ? `Inject Carousel (${total} review${total !== 1 ? "s" : ""})` : "Add reviews above"}
+                      </button>
+                    );
+                  })()}
                 </div>
               )}
 
