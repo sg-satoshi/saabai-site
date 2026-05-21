@@ -100,6 +100,7 @@ export default function SiteFactoryClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [instruction, setInstruction] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [queued, setQueued] = useState<{ instruction: string; imageUrl?: string } | null>(null);
   const [previewHtml, setPreviewHtml] = useState("");
   const [device, setDevice] = useState<Device>("desktop");
   const [iframeKey, setIframeKey] = useState(0);
@@ -169,6 +170,8 @@ export default function SiteFactoryClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const liveHtmlRef = useRef("");
+  const queuedRef = useRef<{ instruction: string; imageUrl?: string } | null>(null);
+  queuedRef.current = queued;
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const versions = useRef<string[]>([]);
@@ -186,6 +189,16 @@ export default function SiteFactoryClient() {
   }, []);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // Auto-fire queued message when current edit finishes
+  useEffect(() => {
+    if (!isEditing && queuedRef.current) {
+      const q = queuedRef.current;
+      setQueued(null);
+      sendEdit(q.instruction, q.imageUrl);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing]);
 
   async function fetchSites() {
     setLoadingSites(true);
@@ -250,6 +263,19 @@ export default function SiteFactoryClient() {
       }
     } catch (e) { alert("Upload error: " + String(e)); }
     setUploading(false);
+  }
+
+  function handleSendOrQueue() {
+    const text = instruction.trim();
+    const imageUrl = pendingImage?.url;
+    if (!text && !imageUrl) return;
+    if (isEditing) {
+      setQueued({ instruction: text, imageUrl });
+      setInstruction("");
+      setPendingImage(null);
+    } else {
+      sendEdit();
+    }
   }
 
   async function sendEdit(overrideText?: string, overrideImageUrl?: string) {
@@ -1188,6 +1214,13 @@ export default function SiteFactoryClient() {
 
                   {/* Input area */}
                   <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+                    {queued && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.goldBg, borderRadius: 6, border: `1px solid ${C.gold}` }}>
+                        <span style={{ fontSize: 13 }}>⏳</span>
+                        <span style={{ fontSize: 11, color: C.gold, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Queued: {queued.instruction || "[image]"}</span>
+                        <button onClick={() => setQueued(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
+                      </div>
+                    )}
                     {pendingImage && (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.surface2, borderRadius: 6, border: `1px solid ${C.border2}` }}>
                         <img src={pendingImage.url} alt="pending" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4 }} />
@@ -1199,20 +1232,35 @@ export default function SiteFactoryClient() {
                       ref={textareaRef}
                       value={instruction}
                       onChange={e => setInstruction(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendEdit(); } }}
-                      placeholder={pendingImage ? "Describe how to use this image… (optional)" : "Describe what to change…"}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendOrQueue(); } }}
+                      placeholder={isEditing && !queued ? "Type next change — will send automatically when done…" : pendingImage ? "Describe how to use this image… (optional)" : "Describe what to change…"}
                       rows={isMobile ? 2 : 3}
-                      disabled={isEditing}
-                      style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px", opacity: isEditing ? 0.6 : 1 }) }}
+                      style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px" }) }}
                     />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 7, gap: 6 }}>
-                      <button onClick={() => fileInputRef.current?.click()} disabled={isEditing || uploading} title="Upload image" style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: pendingImage ? C.tealBg : "none", color: pendingImage ? C.teal : C.textDim, fontSize: 14, cursor: isEditing || uploading ? "not-allowed" : "pointer", opacity: isEditing || uploading ? 0.5 : 1 }}>
+                      <button onClick={() => fileInputRef.current?.click()} disabled={uploading} title="Upload image" style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: pendingImage ? C.tealBg : "none", color: pendingImage ? C.teal : C.textDim, fontSize: 14, cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.5 : 1 }}>
                         {uploading ? "⏳" : "📎"}
                       </button>
                       <span style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>Shift+Enter newline</span>
-                      <button onClick={() => sendEdit()} disabled={(!instruction.trim() && !pendingImage) || isEditing} style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: (!instruction.trim() && !pendingImage) || isEditing ? C.border : C.gold, color: (!instruction.trim() && !pendingImage) || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: (!instruction.trim() && !pendingImage) || isEditing ? "not-allowed" : "pointer" }}>
-                        Send
-                      </button>
+                      {(() => {
+                        const hasContent = instruction.trim() || pendingImage;
+                        const isQueued = isEditing && !!queued;
+                        const willQueue = isEditing && !queued && !!hasContent;
+                        return (
+                          <button
+                            onClick={handleSendOrQueue}
+                            disabled={!hasContent || isQueued}
+                            style={{
+                              padding: "6px 16px", borderRadius: 6, border: "none", fontSize: 13, fontWeight: 600, cursor: !hasContent || isQueued ? "not-allowed" : "pointer",
+                              background: isQueued ? C.border : willQueue ? C.goldBg : hasContent ? C.gold : C.border,
+                              color: isQueued ? C.textMuted : willQueue ? C.gold : hasContent ? "#000" : C.textMuted,
+                              ...(willQueue ? { border: `1px solid ${C.gold}` } : {}),
+                            }}
+                          >
+                            {isQueued ? "Queued ✓" : willQueue ? "Queue" : "Send"}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </>
