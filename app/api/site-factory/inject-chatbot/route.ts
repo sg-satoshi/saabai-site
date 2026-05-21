@@ -8,7 +8,7 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { slug, botName, greeting, systemPrompt, personality } = await req.json();
+    const { slug, botName, greeting, systemPrompt, personality, avatarUrl } = await req.json();
     if (!slug) return Response.json({ error: "slug required" }, { status: 400 });
 
     // Load site config
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       greeting: resolvedGreeting,
       ...colors,
       placeholder: `Ask about ${site.business?.name || site.name}…`,
+      ...(avatarUrl ? { avatarUrl } : {}),
     });
 
     // Inject before </body>
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
         name: resolvedBotName,
         greeting: resolvedGreeting,
         systemPrompt: resolvedSystemPrompt,
+        ...(avatarUrl ? { avatarUrl } : {}),
       },
     });
 

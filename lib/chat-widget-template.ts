@@ -6,22 +6,47 @@ export interface ChatWidgetConfig {
   accentColor: string;
   bgColor: string;
   textColor: string;
+  avatarUrl?: string;   // photo URL — DALL-E generated or uploaded
   placeholder?: string;
   apiBase?: string;
 }
 
 // Generates a complete self-contained chat widget <script> block.
-// The widget has zero external dependencies — safe to inline in any HTML file.
+// Zero external dependencies — safe to inline in any HTML file.
 export function buildChatWidget(cfg: ChatWidgetConfig): string {
-  const api = cfg.apiBase ?? "https://www.saabai.ai";
+  const api = (cfg.apiBase ?? "https://www.saabai.ai") + "/api/site-factory-chat";
   const placeholder = cfg.placeholder ?? "Type a message…";
+  const hasAvatar = !!cfg.avatarUrl;
 
-  // Derive initials for the avatar circle
   const initials = cfg.botName
     .split(" ")
     .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
+    .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
+
+  // ── Button content ───────────────────────────────────────────────────────
+  // With avatar: photo fills the circle (pulsing ring stays as ::before/::after)
+  // Without avatar: speech-bubble SVG on accent background
+  const btnInner = hasAvatar
+    ? `<img src="${cfg.avatarUrl}" alt="${cfg.botName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:relative;z-index:1" onerror="this.style.display='none';this.parentNode.innerHTML+='<svg width=22 height=22 viewBox=\\'0 0 24 24\\' fill=white><path d=\\'M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z\\'/></svg>'">`
+    : `<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>`;
+
+  // ── Header avatar ────────────────────────────────────────────────────────
+  const headAv = hasAvatar
+    ? `<img src="${cfg.avatarUrl}" alt="${cfg.botName}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid ${cfg.accentColor};flex-shrink:0">`
+    : `<div class="sf-head-av">${initials}</div>`;
+
+  // ── Button CSS ───────────────────────────────────────────────────────────
+  // Avatar mode: border instead of solid background so photo shows through
+  const btnCss = hasAvatar
+    ? `.sf-btn{width:62px;height:62px;border-radius:50%;border:3px solid ${cfg.accentColor};background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .2s,box-shadow .2s;position:relative;padding:0;overflow:hidden}`
+    : `.sf-btn{width:58px;height:58px;border-radius:50%;border:none;background:${cfg.accentColor};cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:transform .2s,box-shadow .2s;position:relative}`;
+
+  // ── Message avatar (bot side) ────────────────────────────────────────────
+  // Stored as a JS expression evaluated at render time so initials fallback works
+  const msgAvExpr = hasAvatar
+    ? `'<img class="sf-msg-av-img" src="${cfg.avatarUrl}" alt="'+CFG.name+'">'`
+    : `'<div class="sf-msg-av">'+CFG.initials+'</div>'`;
 
   return `<script id="sf-chat-widget">
 (function(){
@@ -36,7 +61,7 @@ var CFG={
   bg:${JSON.stringify(cfg.bgColor)},
   text:${JSON.stringify(cfg.textColor)},
   placeholder:${JSON.stringify(placeholder)},
-  api:${JSON.stringify(api + "/api/site-factory-chat")},
+  api:${JSON.stringify(api)},
   storageKey:${JSON.stringify("sf-chat:" + cfg.slug)}
 };
 var msgs=[],isOpen=false,isTyping=false;
@@ -44,17 +69,16 @@ try{var saved=localStorage.getItem(CFG.storageKey);if(saved)msgs=JSON.parse(save
 function save(){try{localStorage.setItem(CFG.storageKey,JSON.stringify(msgs.slice(-40)));}catch(e){}}
 
 var style=document.createElement('style');
-style.textContent='.sf-w{position:fixed;bottom:24px;right:24px;z-index:9999;font-family:-apple-system,Inter,sans-serif}'+
-'.sf-btn{width:58px;height:58px;border-radius:50%;border:none;background:'+CFG.accent+';cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:transform .2s,box-shadow .2s;position:relative}'+
+style.textContent=
+${JSON.stringify(btnCss)}+
 '.sf-btn:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(0,0,0,.35)}'+
-'.sf-btn::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.3;animation:sf-pulse 2s infinite}'+
-'.sf-btn::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.15;animation:sf-pulse 2s .5s infinite}'+
-'@keyframes sf-pulse{0%{transform:scale(1);opacity:.3}80%,100%{transform:scale(1.7);opacity:0}}'+
-'.sf-avatar{width:36px;height:36px;border-radius:50%;background:'+CFG.primary+';color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.6);letter-spacing:.02em}'+
-'.sf-panel{position:absolute;bottom:74px;right:0;width:340px;max-width:calc(100vw - 48px);height:480px;max-height:calc(100vh - 120px);background:'+CFG.bg+';border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;transition:opacity .25s,transform .25s;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none}'+
+'.sf-btn::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.25;animation:sf-pulse 2.2s infinite}'+
+'.sf-btn::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.12;animation:sf-pulse 2.2s .6s infinite}'+
+'@keyframes sf-pulse{0%{transform:scale(1);opacity:.25}80%,100%{transform:scale(1.75);opacity:0}}'+
+'.sf-panel{position:absolute;bottom:78px;right:0;width:340px;max-width:calc(100vw - 48px);height:490px;max-height:calc(100vh - 120px);background:'+CFG.bg+';border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;transition:opacity .25s,transform .25s;opacity:0;transform:translateY(12px) scale(.97);pointer-events:none}'+
 '.sf-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all}'+
-'.sf-head{padding:14px 18px;background:'+CFG.primary+';color:#fff;display:flex;align-items:center;gap:10px;flex-shrink:0}'+
-'.sf-head-av{width:38px;height:38px;border-radius:50%;background:'+CFG.accent+';color:'+CFG.primary+';font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,.3)}'+
+'.sf-head{padding:14px 18px;background:'+CFG.primary+';color:#fff;display:flex;align-items:center;gap:12px;flex-shrink:0}'+
+'.sf-head-av{width:42px;height:42px;border-radius:50%;background:'+CFG.accent+';color:'+CFG.primary+';font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,.3)}'+
 '.sf-head-info{flex:1}'+
 '.sf-head-name{font-weight:700;font-size:14px;line-height:1.2}'+
 '.sf-head-status{font-size:11px;opacity:.75;display:flex;align-items:center;gap:5px;margin-top:2px}'+
@@ -62,10 +86,11 @@ style.textContent='.sf-w{position:fixed;bottom:24px;right:24px;z-index:9999;font
 '.sf-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;line-height:1;padding:0 2px;margin-left:auto}'+
 '.sf-close:hover{color:#fff}'+
 '.sf-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}'+
-'.sf-msg{display:flex;gap:8px;max-width:88%}'+
+'.sf-msg{display:flex;gap:8px;max-width:90%}'+
 '.sf-msg.user{align-self:flex-end;flex-direction:row-reverse}'+
 '.sf-msg.bot{align-self:flex-start}'+
 '.sf-msg-av{width:30px;height:30px;border-radius:50%;background:'+CFG.accent+';color:'+CFG.primary+';font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}'+
+'.sf-msg-av-img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+CFG.accent+'}'+
 '.sf-msg-uav{width:30px;height:30px;border-radius:50%;background:'+CFG.primary+';color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}'+
 '.sf-msg-body{padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;word-break:break-word}'+
 '.sf-msg.bot .sf-msg-body{background:#fff;color:'+CFG.text+';border-bottom-left-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.07)}'+
@@ -79,19 +104,19 @@ style.textContent='.sf-w{position:fixed;bottom:24px;right:24px;z-index:9999;font
 '.sf-inp:focus{border-color:'+CFG.accent+'}'+
 '.sf-send{width:38px;height:38px;border-radius:50%;border:none;background:'+CFG.accent+';cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0}'+
 '.sf-send:hover{transform:scale(1.08)}.sf-send:disabled{opacity:.4;cursor:default}'+
-'.sf-powered{text-align:center;font-size:10px;color:rgba(0,0,0,.3);padding:4px 0 8px;flex-shrink:0}'+
-'.sf-powered a{color:rgba(0,0,0,.3);text-decoration:none}'+
-'.sf-powered a:hover{text-decoration:underline}';
+'.sf-powered{text-align:center;font-size:10px;color:rgba(0,0,0,.28);padding:4px 0 8px;flex-shrink:0}'+
+'.sf-powered a{color:rgba(0,0,0,.28);text-decoration:none}';
 document.head.appendChild(style);
 
 var widget=document.createElement('div');
 widget.className='sf-w';
-widget.innerHTML='<button class="sf-btn" id="sf-btn" aria-label="Chat with us">'+
-  '<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>'+
+widget.innerHTML=
+'<button class="sf-btn" id="sf-btn" aria-label="Chat with '+CFG.name+'">'+
+  ${JSON.stringify(btnInner)}+
 '</button>'+
 '<div class="sf-panel" id="sf-panel">'+
   '<div class="sf-head">'+
-    '<div class="sf-head-av">'+CFG.initials+'</div>'+
+    ${JSON.stringify(headAv)}+
     '<div class="sf-head-info"><div class="sf-head-name">'+CFG.name+'</div><div class="sf-head-status">Online now</div></div>'+
     '<button class="sf-close" id="sf-close" aria-label="Close">&#x2715;</button>'+
   '</div>'+
@@ -119,7 +144,6 @@ function toggle(){
   if(isOpen&&msgs.length===0)addMsg('bot',CFG.greeting);
   if(isOpen)setTimeout(function(){inp.focus();},100);
 }
-
 btn.addEventListener('click',toggle);
 closeBtn.addEventListener('click',toggle);
 
@@ -140,10 +164,11 @@ function md(t){
   return res.join('');
 }
 
+function botAvHtml(){return ${msgAvExpr};}
+
 function addMsg(role,text){
   msgs.push({role:role,text:text,ts:Date.now()});
-  save();
-  renderMsg({role:role,text:text});
+  save();renderMsg({role:role,text:text});
   msgsEl.scrollTop=msgsEl.scrollHeight;
 }
 
@@ -151,7 +176,7 @@ function renderMsg(m){
   var d=document.createElement('div');
   d.className='sf-msg '+m.role;
   if(m.role==='bot'){
-    d.innerHTML='<div class="sf-msg-av">'+CFG.initials+'</div><div class="sf-msg-body">'+md(m.text)+'</div>';
+    d.innerHTML=botAvHtml()+'<div class="sf-msg-body">'+md(m.text)+'</div>';
   }else{
     d.innerHTML='<div class="sf-msg-uav">You</div><div class="sf-msg-body">'+md(m.text)+'</div>';
   }
@@ -161,13 +186,10 @@ function renderMsg(m){
 function showTyping(){
   if(isTyping)return;isTyping=true;
   var d=document.createElement('div');d.className='sf-msg bot';d.id='sf-typing';
-  d.innerHTML='<div class="sf-msg-av">'+CFG.initials+'</div><div class="sf-typing"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div>';
+  d.innerHTML=botAvHtml()+'<div class="sf-typing"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div>';
   msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;
 }
-
-function hideTyping(){
-  isTyping=false;var el=document.getElementById('sf-typing');if(el)el.remove();
-}
+function hideTyping(){isTyping=false;var el=document.getElementById('sf-typing');if(el)el.remove();}
 
 async function send(){
   var text=inp.value.trim();if(!text||isTyping)return;
@@ -179,17 +201,15 @@ async function send(){
     hideTyping();
     if(res.ok){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that — could you rephrase?");}
     else{addMsg('bot',"Something went wrong. Please try again shortly.");}
-  }catch(e){hideTyping();addMsg('bot',"Connection error. Please check your internet and try again.");}
+  }catch(e){hideTyping();addMsg('bot',"Connection error. Please try again.");}
   sendBtn.disabled=inp.value.trim()==='';
 }
 
 sendBtn.addEventListener('click',send);
 inp.addEventListener('keypress',function(e){if(e.key==='Enter')send();});
 inp.addEventListener('input',function(){sendBtn.disabled=inp.value.trim()==='';});
-
 msgs.forEach(renderMsg);
 msgsEl.scrollTop=msgsEl.scrollHeight;
-
 setTimeout(function(){if(!isOpen&&msgs.length===0)toggle();},50000);
 })();
 </script>`;
@@ -197,14 +217,12 @@ setTimeout(function(){if(!isOpen&&msgs.length===0)toggle();},50000);
 
 // Niche-specific default colors to match the generated site palette
 export const NICHE_WIDGET_COLORS: Record<string, Pick<ChatWidgetConfig, "primaryColor" | "accentColor" | "bgColor" | "textColor">> = {
-  trades:                { primaryColor: "#1a2744", accentColor: "#f97316", bgColor: "#f8fafc", textColor: "#0f172a" },
-  "allied-health":       { primaryColor: "#1e4d3b", accentColor: "#4a90d9", bgColor: "#f0fdf4", textColor: "#1a2e25" },
-  "professional-services": { primaryColor: "#1e293b", accentColor: "#d4a017", bgColor: "#f8fafc", textColor: "#0f172a" },
-  retail:                { primaryColor: "#4c1d95", accentColor: "#ec4899", bgColor: "#faf5ff", textColor: "#1e1b4b" },
-  hospitality:           { primaryColor: "#1b4332", accentColor: "#d97706", bgColor: "#faf7f2", textColor: "#1a2e1e" },
-  other:                 { primaryColor: "#0f172a", accentColor: "#0d9488", bgColor: "#f9fafb", textColor: "#111827" },
-  // massage/spa — similar to allied-health but warmer
-  "allied-health-massage": { primaryColor: "#1e4d3b", accentColor: "#c9a84c", bgColor: "#fdfbf7", textColor: "#1a2e25" },
+  trades:                  { primaryColor: "#1a2744", accentColor: "#f97316", bgColor: "#f8fafc",  textColor: "#0f172a" },
+  "allied-health":         { primaryColor: "#1e4d3b", accentColor: "#4a90d9", bgColor: "#f0fdf4",  textColor: "#1a2e25" },
+  "professional-services": { primaryColor: "#1e293b", accentColor: "#d4a017", bgColor: "#f8fafc",  textColor: "#0f172a" },
+  retail:                  { primaryColor: "#4c1d95", accentColor: "#ec4899", bgColor: "#faf5ff",  textColor: "#1e1b4b" },
+  hospitality:             { primaryColor: "#1b4332", accentColor: "#d97706", bgColor: "#faf7f2",  textColor: "#1a2e1e" },
+  other:                   { primaryColor: "#0f172a", accentColor: "#0d9488", bgColor: "#f9fafb",  textColor: "#111827" },
 };
 
 export function getNicheColors(niche: string) {

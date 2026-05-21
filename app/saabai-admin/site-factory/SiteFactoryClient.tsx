@@ -135,6 +135,8 @@ export default function SiteFactoryClient() {
   const [injectingBot, setInjectingBot] = useState(false);
   const [showBotSetup, setShowBotSetup] = useState(false);
   const [botSetupName, setBotSetupName] = useState("");
+  const [botSetupAvatarUrl, setBotSetupAvatarUrl] = useState("");
+  const [botAvatarGenerating, setBotAvatarGenerating] = useState(false);
 
   // Image generation panel
   const [showImgGen, setShowImgGen] = useState(false);
@@ -147,6 +149,7 @@ export default function SiteFactoryClient() {
   const [botSetupPersonality, setBotSetupPersonality] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const liveHtmlRef = useRef("");
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -380,12 +383,13 @@ export default function SiteFactoryClient() {
           botName: botSetupName || undefined,
           greeting: botSetupGreeting || undefined,
           personality: botSetupPersonality || undefined,
+          avatarUrl: botSetupAvatarUrl || undefined,
         }),
       });
       const data = await res.json();
       if (data.ok) {
         setShowBotSetup(false);
-        setBotSetupName(""); setBotSetupGreeting(""); setBotSetupPersonality("");
+        setBotSetupName(""); setBotSetupGreeting(""); setBotSetupPersonality(""); setBotSetupAvatarUrl("");
         // Reload preview
         const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
         const html = await htmlRes.text();
@@ -423,6 +427,48 @@ export default function SiteFactoryClient() {
       }
     } catch (e) { alert(String(e)); }
     setGeneratingImg(false);
+  }
+
+  async function generateBotAvatar() {
+    if (!activeSite || botAvatarGenerating) return;
+    setBotAvatarGenerating(true);
+    const name = botSetupName.trim() || activeSite.name;
+    try {
+      const res = await fetch("/api/site-factory/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: `professional portrait photo of a friendly AI assistant named ${name}, warm smile, clean neutral background, looking directly at camera`,
+          slug: activeSite.slug,
+          niche: activeSite.niche,
+          size: "square",
+          style: "photo",
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.url) {
+        setBotSetupAvatarUrl(data.url);
+      } else {
+        alert(data.error || "Image generation failed");
+      }
+    } catch (e) { alert(String(e)); }
+    setBotAvatarGenerating(false);
+  }
+
+  async function uploadBotAvatar(file: File) {
+    if (!activeSite) return;
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("slug", activeSite.slug);
+      const res = await fetch("/api/site-factory/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) {
+        setBotSetupAvatarUrl(data.url);
+      } else {
+        alert("Upload failed: " + (data.error || "unknown"));
+      }
+    } catch (e) { alert("Upload error: " + String(e)); }
   }
 
   async function generateSite() {
@@ -543,13 +589,20 @@ export default function SiteFactoryClient() {
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
 
-        {/* Hidden file input */}
+        {/* Hidden file inputs */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           style={{ display: "none" }}
           onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) uploadBotAvatar(f); e.target.value = ""; }}
         />
 
         {/* Top bar */}
@@ -744,6 +797,37 @@ export default function SiteFactoryClient() {
                   <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 600, color: C.gold }}>AI Chatbot Setup</p>
                   <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim }}>Adds a trained AI assistant to this site for visitors to chat with.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {/* Avatar section */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "6px 0 10px", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", flexShrink: 0, border: `2px solid ${botSetupAvatarUrl ? C.gold : C.border2}`, overflow: "hidden", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {botSetupAvatarUrl ? (
+                          <img src={botSetupAvatarUrl} alt="Bot avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <span style={{ fontSize: 26, lineHeight: 1 }}>🤖</span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bot Avatar</p>
+                        <div style={{ display: "flex", gap: 5 }}>
+                          <button
+                            onClick={generateBotAvatar}
+                            disabled={botAvatarGenerating}
+                            style={{ flex: 1, padding: "6px 6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: botAvatarGenerating ? C.textMuted : C.textDim, fontSize: 11, cursor: botAvatarGenerating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
+                          >
+                            {botAvatarGenerating ? <><div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.2)", borderTopColor: C.textDim, animation: "spin 0.8s linear infinite" }} />Gen…</> : "🎨 Generate"}
+                          </button>
+                          <button
+                            onClick={() => avatarInputRef.current?.click()}
+                            style={{ flex: 1, padding: "6px 6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}
+                          >
+                            📎 Upload
+                          </button>
+                        </div>
+                        {botSetupAvatarUrl && (
+                          <button onClick={() => setBotSetupAvatarUrl("")} style={{ fontSize: 10, color: C.textMuted, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>Remove</button>
+                        )}
+                      </div>
+                    </div>
                     <div>
                       <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Bot name</label>
                       <input value={botSetupName} onChange={e => setBotSetupName(e.target.value)} placeholder={`${activeSite.name} Assistant`} style={inp({ fontSize: 12, padding: "7px 10px" })} />
