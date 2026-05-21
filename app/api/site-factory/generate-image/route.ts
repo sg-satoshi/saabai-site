@@ -4,11 +4,11 @@ import { put } from "@vercel/blob";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-type DalleSize = "1024x1024" | "1792x1024" | "1024x1792";
+type ImageSize = "1024x1024" | "1536x1024" | "1024x1536";
 
-const SIZE_MAP: Record<string, DalleSize> = {
-  landscape: "1792x1024",
-  portrait:  "1024x1792",
+const SIZE_MAP: Record<string, ImageSize> = {
+  landscape: "1536x1024",
+  portrait:  "1024x1536",
   square:    "1024x1024",
 };
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "prompt is required" }, { status: 400 });
     }
 
-    const dalleSize = SIZE_MAP[size] ?? SIZE_MAP.landscape;
+    const imgSize = SIZE_MAP[size] ?? SIZE_MAP.landscape;
     const nicheStyle = NICHE_STYLE[niche] ?? NICHE_STYLE.other;
 
     const styleGuide =
@@ -56,11 +56,11 @@ export async function POST(req: NextRequest) {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "dall-e-3",
+        model: "gpt-image-1",
         prompt: fullPrompt,
         n: 1,
-        size: dalleSize,
-        quality: "hd",
+        size: imgSize,
+        quality: "high",
       }),
     });
 
@@ -73,15 +73,23 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: msg }, { status: 500 });
     }
 
-    const json = await openaiRes.json() as { data: Array<{ url: string }> };
-    const imageUrl = json.data?.[0]?.url;
-    if (!imageUrl) {
-      return Response.json({ error: "No image returned from DALL-E" }, { status: 500 });
+    const json = await openaiRes.json() as { data: Array<{ b64_json?: string; url?: string }> };
+    const item = json.data?.[0];
+    if (!item) {
+      return Response.json({ error: "No image returned from OpenAI" }, { status: 500 });
     }
 
-    // Download the image and re-upload to Vercel Blob (OpenAI URLs expire after ~1h)
-    const imgRes = await fetch(imageUrl);
-    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    // gpt-image-1 returns base64; fall back to URL download for other models
+    let buffer: Buffer;
+    if (item.b64_json) {
+      buffer = Buffer.from(item.b64_json, "base64");
+    } else if (item.url) {
+      const imgRes = await fetch(item.url);
+      buffer = Buffer.from(await imgRes.arrayBuffer());
+    } else {
+      return Response.json({ error: "No image data returned from OpenAI" }, { status: 500 });
+    }
+
     const filename = `sites/${slug || "shared"}/generated/${Date.now()}.png`;
     const blob = await put(filename, buffer, {
       access: "public",
@@ -93,7 +101,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       ok: true,
       url: blob.url,
-      size: dalleSize,
+      size: imgSize,
       prompt: fullPrompt,
     });
   } catch (e: unknown) {
