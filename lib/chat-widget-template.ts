@@ -70,7 +70,7 @@ function save(){try{localStorage.setItem(CFG.storageKey,JSON.stringify(msgs.slic
 
 var style=document.createElement('style');
 style.textContent=
-'.sf-w{position:fixed!important;bottom:24px!important;right:24px!important;z-index:99999!important;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:flex-end}'+
+'.sf-w{position:fixed;bottom:24px;right:24px;z-index:99999;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:flex-end}'+
 ${JSON.stringify(btnCss)}+
 '.sf-btn:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(0,0,0,.35)}'+
 '.sf-btn::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.25;animation:sf-pulse 2.2s infinite}'+
@@ -131,8 +131,21 @@ widget.innerHTML=
   '<div class="sf-powered">Powered by <a href="https://www.saabai.ai" target="_blank" rel="noopener">Saabai AI</a></div>'+
 '</div>';
 document.body.appendChild(widget);
-// Inline styles override any page CSS that might reset positioning
-widget.style.cssText='position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;align-items:flex-end;font-family:system-ui,-apple-system,sans-serif';
+// JS-driven positioning: works even when position:fixed is broken by ancestor CSS transforms
+var _sfPos=function(){
+  var sx=window.pageXOffset||document.documentElement.scrollLeft||0;
+  var sy=window.pageYOffset||document.documentElement.scrollTop||0;
+  widget.style.position='absolute';
+  widget.style.top=(sy+window.innerHeight-96)+'px';
+  widget.style.left=(sx+window.innerWidth-96)+'px';
+  widget.style.bottom='auto';widget.style.right='auto';
+  widget.style.zIndex='99999';
+  widget.style.display='flex';widget.style.flexDirection='column';widget.style.alignItems='flex-end';
+  widget.style.fontFamily='system-ui,-apple-system,sans-serif';
+};
+_sfPos();
+window.addEventListener('scroll',_sfPos,{passive:true});
+window.addEventListener('resize',_sfPos,{passive:true});
 
 var btn=document.getElementById('sf-btn');
 var panel=document.getElementById('sf-panel');

@@ -23,7 +23,7 @@ export async function GET(
         status: 200,
         headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+          "Cache-Control": "no-store",
         },
       });
     }
