@@ -540,13 +540,15 @@ export default function SiteFactoryClient() {
         body: JSON.stringify({ url: reviewsUrl.trim() }),
       });
       const data = await res.json();
-      if (data.ok && data.reviews?.length > 0) {
-        setFetchedReviews(data.reviews);
+      if (data.ok) {
+        if (data.reviews?.length > 0) setFetchedReviews(data.reviews);
         if (data.rating) setReviewsRating(data.rating);
         if (data.totalReviews) setReviewsTotalReviews(data.totalReviews);
         if (data.businessName) setReviewsBusinessName(data.businessName);
+        if (data.tip) setReviewsFetchTip(data.tip);
+        if (!data.reviews?.length && !data.tip) setReviewsFetchTip("No reviews found — add them manually below.");
       } else {
-        setReviewsFetchTip(data.tip || data.error || "No reviews found — paste them manually below.");
+        setReviewsFetchTip(data.tip || data.error || "Fetch failed — add reviews manually below.");
       }
     } catch (e) {
       setReviewsFetchTip("Fetch failed: " + String(e));

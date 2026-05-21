@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import https from "https";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -10,27 +11,78 @@ export interface ReviewItem {
   date?: string;
 }
 
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-AU,en;q=0.9",
+  "Cookie": "CONSENT=YES+srp.gws-20220101-0-RC1.en+FX+666;",
+};
+
+// maps.app.goo.gl returns a JS-redirect page to fetch() — only a raw HEAD request
+// gets the HTTP 302 Location header with the actual Maps URL.
+function resolveShortUrl(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    const req = https.request(url, { method: "HEAD" }, (res) => {
+      const loc = res.headers["location"];
+      resolve(typeof loc === "string" && loc.startsWith("https://") ? loc : url);
+    });
+    req.setTimeout(8000, () => { req.destroy(); resolve(url); });
+    req.on("error", () => resolve(url));
+    req.end();
+  });
+}
+
+// Extract the /maps/preview/place URL embedded in the Maps page — it returns
+// aggregate rating + business info as a compact JSON blob.
+async function fetchPreviewData(mapsHtml: string, referer: string): Promise<{ rating?: number; totalReviews?: number; businessName?: string }> {
+  const match = mapsHtml.match(/href="(\/maps\/preview\/place\?[^"]+)"/);
+  if (!match) return {};
+  const previewUrl = "https://www.google.com" + match[1].replace(/&amp;/g, "&");
+  try {
+    const res = await fetch(previewUrl, {
+      headers: { ...BROWSER_HEADERS, "Referer": referer },
+      signal: AbortSignal.timeout(8000),
+    });
+    const text = await res.text();
+    // Rating is a float like 4.9 embedded in the array data
+    const ratingMatch = text.match(/,([4-5]\.[0-9]),/);
+    const rating = ratingMatch ? parseFloat(ratingMatch[1]) : undefined;
+    // Review count — look for a plausible 2-3 digit integer near the rating
+    const countMatch = text.match(/,(\d{2,3}),/g);
+    const totalReviews = countMatch
+      ? parseInt(countMatch.find(n => parseInt(n.slice(1, -1)) > 5) ?? "") || undefined
+      : undefined;
+    // Business name often appears early in the response as a plain string
+    const nameMatch = text.match(/,"([A-Z][^"]{3,60}(?:Massage|Thai|Spa|Plumb|Electric|Dental|Physio|Care|Health)[^"]{0,40})"/i);
+    const businessName = nameMatch?.[1];
+    return { rating, totalReviews, businessName };
+  } catch {
+    return {};
+  }
+}
+
+// Extract business name from a decoded Maps URL path
+function nameFromUrl(url: string): string | undefined {
+  const m = url.match(/\/maps\/place\/([^/@?]+)/);
+  if (!m) return undefined;
+  return decodeURIComponent(m[1]).replace(/\+/g, " ").replace(/,.*$/, "").trim();
+}
+
 async function scrape(url: string): Promise<{
   reviews: ReviewItem[];
   rating?: number;
   totalReviews?: number;
   businessName?: string;
+  tip?: string;
 }> {
-  // Expand short URLs (maps.app.goo.gl etc.)
+  // Resolve short links (maps.app.goo.gl) via raw HEAD — fetch() alone doesn't follow them
   let target = url;
   if (/goo\.gl|maps\.app/i.test(url)) {
-    try {
-      const r = await fetch(url, { redirect: "follow" });
-      target = r.url || url;
-    } catch { /* use original */ }
+    target = await resolveShortUrl(url);
   }
 
   const res = await fetch(target, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-AU,en;q=0.9",
-    },
+    headers: BROWSER_HEADERS,
     signal: AbortSignal.timeout(12000),
   });
 
@@ -42,7 +94,8 @@ async function scrape(url: string): Promise<{
   let businessName: string | undefined;
   const reviews: ReviewItem[] = [];
 
-  // ── Strategy 1: JSON-LD structured data ──────────────────────────────────
+  // ── Strategy 1: JSON-LD structured data ─────────────────────────────────
+  // Works for some third-party sites and older Maps pages — rarely for current Google Maps.
   const ldRe = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
   while ((m = ldRe.exec(html)) !== null) {
@@ -72,14 +125,11 @@ async function scrape(url: string): Promise<{
 
   if (reviews.length > 0) return { reviews: reviews.slice(0, 8), rating, totalReviews, businessName };
 
-  // ── Strategy 2: Google Maps embedded APP_INITIALIZATION_STATE ────────────
-  // Google encodes place data as a giant nested array in the page source.
-  // Reviews appear as strings that follow a specific reviewer name + stars pattern.
-  // We pull them from the raw JS data using regex.
+  // ── Strategy 2: APP_INITIALIZATION_STATE reviewer pattern ───────────────
+  // Google embeds some data here but since ~2024 review text is loaded via XHR,
+  // not in the initial HTML. This catches older-format pages if they exist.
   const appState = html.match(/APP_INITIALIZATION_STATE\s*=\s*(\[\[[\s\S]{200,}?\]\])\s*;/)?.[1];
   if (appState) {
-    // Extract reviewer name + star count + review text triplets
-    // Pattern: reviewer strings followed by numeric rating 1-5 and text paragraphs
     const chunks = appState.split(/"([A-Z][a-zA-Z\s]{2,40})","[^"]{0,50}",(?:null,){0,5}\[null,null,([1-5])\]/g);
     for (let i = 1; i + 2 < chunks.length && reviews.length < 8; i += 3) {
       const after = chunks[i + 2];
@@ -95,18 +145,31 @@ async function scrape(url: string): Promise<{
     }
   }
 
-  // ── Strategy 3: Aggregate rating from meta/title ────────────────────────
-  if (!rating) {
-    const rMatch = html.match(/(\d\.\d)\s*(?:stars?|★).*?(\d[\d,]+)\s*(?:reviews?|ratings?)/i) ??
-                   html.match(/"ratingValue"\s*:\s*"?([\d.]+)"?[\s\S]{0,200}"reviewCount"\s*:\s*"?(\d+)"?/i);
-    if (rMatch) { rating = parseFloat(rMatch[1]); totalReviews = parseInt(rMatch[2].replace(",", "")); }
-  }
+  if (reviews.length > 0) return { reviews: reviews.slice(0, 8), rating, totalReviews, businessName };
+
+  // ── Strategy 3: Aggregate rating + business name from preview API ────────
+  // Google Maps loads reviews dynamically via XHR — they're never in the server-rendered
+  // HTML. We can still get the aggregate rating and business name from the preview API
+  // endpoint that's embedded as a <link> in the page.
+  const preview = await fetchPreviewData(html, target);
+  if (preview.rating) rating = preview.rating;
+  if (preview.totalReviews) totalReviews = preview.totalReviews;
+  if (preview.businessName) businessName = preview.businessName;
+
+  // Fall back: extract business name from the Maps URL itself
+  if (!businessName) businessName = nameFromUrl(target);
+
+  // Fall back: title tag
   if (!businessName) {
     const t = html.match(/<title>([^<]+)<\/title>/);
     if (t) businessName = t[1].replace(/\s*[-–|].*$/, "").replace(" - Google Maps", "").trim();
   }
 
-  return { reviews: reviews.slice(0, 8), rating, totalReviews, businessName };
+  const tip = rating
+    ? `Google loads individual reviews dynamically — they can't be scraped. ${businessName ? businessName + "'s " : ""}overall rating (${rating}/5) has been pre-filled. Add the review text manually below.`
+    : "Google loads reviews dynamically and they can't be fetched without an API key. Add reviews manually below — the carousel will look great.";
+
+  return { reviews: [], rating, totalReviews, businessName, tip };
 }
 
 export async function POST(req: NextRequest) {
@@ -118,6 +181,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ ok: true, ...result });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    return Response.json({ ok: false, error: msg, reviews: [], tip: "Auto-fetch failed — paste reviews manually below." });
+    return Response.json({ ok: false, error: msg, reviews: [], tip: "Fetch failed — add reviews manually below." });
   }
 }
