@@ -33,7 +33,7 @@ const SYSTEM_PROMPT = `You are a conversational web design assistant helping edi
 
 RESPONSE FORMAT — choose one:
 
-1. MAKING CHANGES: Write one short sentence saying what you're doing, then immediately output:
+1. MAKING CHANGES: Write ONE short plain-English sentence (no HTML, no code) saying what you changed, then immediately output:
 <CHANGES>[{"f":"exact text","r":"replacement"}]</CHANGES>
 
 2. CONVERSATION ONLY (clarifying, questions, explanations): Respond naturally — no <CHANGES> block.

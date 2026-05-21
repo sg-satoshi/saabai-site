@@ -277,7 +277,9 @@ export default function SiteFactoryClient() {
 
         const displayText = fullText
           .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
+          .replace(/<CHANGES>[\s\S]*$/g, "")
           .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
+          .replace(/<RESULT>[\s\S]*$/g, "")
           .trim();
 
         setMessages(prev => {
