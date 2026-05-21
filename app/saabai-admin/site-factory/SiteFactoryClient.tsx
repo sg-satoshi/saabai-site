@@ -95,7 +95,6 @@ export default function SiteFactoryClient() {
   const [isEditing, setIsEditing] = useState(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [device, setDevice] = useState<Device>("desktop");
-  const [showDns, setShowDns] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [versionIdx, setVersionIdx] = useState(-1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -131,22 +130,23 @@ export default function SiteFactoryClient() {
   const [chatbotGreeting, setChatbotGreeting] = useState("");
   const [chatbotPersonality, setChatbotPersonality] = useState("");
 
+  // Sidebar active panel (tabs)
+  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns">("chat");
+
   // Inject chatbot into existing site
   const [injectingBot, setInjectingBot] = useState(false);
-  const [showBotSetup, setShowBotSetup] = useState(false);
   const [botSetupName, setBotSetupName] = useState("");
   const [botSetupAvatarUrl, setBotSetupAvatarUrl] = useState("");
   const [botAvatarGenerating, setBotAvatarGenerating] = useState(false);
+  const [botSetupGreeting, setBotSetupGreeting] = useState("");
+  const [botSetupPersonality, setBotSetupPersonality] = useState("");
 
   // Image generation panel
-  const [showImgGen, setShowImgGen] = useState(false);
   const [imgPrompt, setImgPrompt] = useState("");
   const [imgSize, setImgSize] = useState<"landscape" | "portrait" | "square">("landscape");
   const [imgStyle, setImgStyle] = useState<"photo" | "illustration" | "abstract">("photo");
   const [generatingImg, setGeneratingImg] = useState(false);
   const [generatedImgs, setGeneratedImgs] = useState<Array<{ url: string; prompt: string }>>([]);
-  const [botSetupGreeting, setBotSetupGreeting] = useState("");
-  const [botSetupPersonality, setBotSetupPersonality] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -390,7 +390,7 @@ export default function SiteFactoryClient() {
       });
       const data = await res.json();
       if (data.ok) {
-        setShowBotSetup(false);
+        setActivePanel("chat");
         setBotSetupName(""); setBotSetupGreeting(""); setBotSetupPersonality(""); setBotSetupAvatarUrl("");
         // Reload preview
         const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
@@ -638,9 +638,9 @@ export default function SiteFactoryClient() {
           )}
 
           {!isMobile && <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>}
-          {!isMobile && <button onClick={() => { setShowImgGen(!showImgGen); setShowBotSetup(false); setShowDns(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showImgGen ? "#a855f7" : C.border2}`, background: showImgGen ? "rgba(168,85,247,0.1)" : "none", color: showImgGen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
-          {!isMobile && <button onClick={() => { setShowBotSetup(!showBotSetup); setShowImgGen(false); setShowDns(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>}
-          {!isMobile && <button onClick={() => { setShowDns(!showDns); setShowImgGen(false); setShowBotSetup(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
+          {!isMobile && <button onClick={() => { setActivePanel("image"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "image" && sidebarOpen ? "#a855f7" : C.border2}`, background: activePanel === "image" && sidebarOpen ? "rgba(168,85,247,0.1)" : "none", color: activePanel === "image" && sidebarOpen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
+          {!isMobile && <button onClick={() => { setActivePanel("bot"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "bot" && sidebarOpen ? C.gold : C.border2}`, background: activePanel === "bot" && sidebarOpen ? C.goldBg : "none", color: activePanel === "bot" && sidebarOpen ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>🤖 Bot</button>}
+          {!isMobile && <button onClick={() => { setActivePanel("dns"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "dns" && sidebarOpen ? C.teal : C.border2}`, background: activePanel === "dns" && sidebarOpen ? C.tealBg : "none", color: activePanel === "dns" && sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
@@ -659,13 +659,11 @@ export default function SiteFactoryClient() {
               ...(isMobile ? { position: "absolute", inset: 0, zIndex: 50 } : {}),
             }}>
 
-              {/* Mobile: DNS + Undo + Bot controls inside sidebar */}
+              {/* Mobile: device + undo strip */}
               {isMobile && (
-                <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                  <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
-                  <button onClick={() => { setShowImgGen(!showImgGen); setShowBotSetup(false); setShowDns(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showImgGen ? "#a855f7" : C.border2}`, background: showImgGen ? "rgba(168,85,247,0.1)" : "none", color: showImgGen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Img</button>
-                  <button onClick={() => { setShowBotSetup(!showBotSetup); setShowImgGen(false); setShowDns(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>
-                  <button onClick={() => { setShowDns(!showDns); setShowImgGen(false); setShowBotSetup(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
+                <div style={{ display: "flex", gap: 6, padding: "8px 12px", borderBottom: `1px solid ${C.border}`, flexShrink: 0, alignItems: "center" }}>
+                  <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 11, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
+                  <div style={{ flex: 1 }} />
                   <div style={{ display: "flex", gap: 3, border: `1px solid ${C.border2}`, borderRadius: 6, padding: 2 }}>
                     {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
                       <button key={d} onClick={() => { setDevice(d); setSidebarOpen(false); }} title={d} style={{ padding: "5px 8px", borderRadius: 4, border: "none", background: device === d ? C.surface2 : "none", color: device === d ? C.text : C.textDim, fontSize: 10, cursor: "pointer" }}>
@@ -676,17 +674,34 @@ export default function SiteFactoryClient() {
                 </div>
               )}
 
-              {/* DNS panel */}
-              {showDns && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "55vh", overflowY: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: `3px solid ${C.teal}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, textTransform: "uppercase", letterSpacing: "0.08em" }}>Custom Domain</span>
-                    </div>
-                    <button onClick={() => setShowDns(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
-                  </div>
-                  <div style={{ padding: "0 16px 14px" }}>
-                  <p style={{ margin: "0 0 8px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
+              {/* ── Tab bar ──────────────────────────────────────── */}
+              <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                {([
+                  { id: "chat",  label: "Chat",  accent: C.teal },
+                  { id: "image", label: "Image", accent: "#a855f7" },
+                  { id: "bot",   label: "Bot",   accent: C.gold },
+                  { id: "dns",   label: "DNS",   accent: "#64748b" },
+                ] as const).map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActivePanel(tab.id)}
+                    style={{
+                      flex: 1, padding: "11px 0 9px", background: "none", border: "none",
+                      borderBottom: `2px solid ${activePanel === tab.id ? tab.accent : "transparent"}`,
+                      color: activePanel === tab.id ? tab.accent : C.textMuted,
+                      fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      textTransform: "uppercase", letterSpacing: "0.07em",
+                      transition: "color 0.15s, border-color 0.15s",
+                    }}
+                  >{tab.label}</button>
+                ))}
+              </div>
+
+              {/* ── Panel: DNS ──────────────────────────────────── */}
+              {activePanel === "dns" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+                  <p style={{ margin: "0 0 4px", fontSize: 12, fontWeight: 700, color: C.teal }}>Custom Domain</p>
+                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
                   {domains.length > 0 && (
                     <div style={{ marginBottom: 10 }}>
                       {domains.map(d => (
@@ -718,22 +733,17 @@ export default function SiteFactoryClient() {
                       )}
                     </div>
                   )}
-                  </div>
                 </div>
               )}
 
-              {/* Image generation panel */}
-              {showImgGen && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "65vh", overflowY: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: "3px solid #a855f7" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#a855f7", textTransform: "uppercase", letterSpacing: "0.08em" }}>AI Image</span>
-                      <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>GPT-Image · HD</span>
-                    </div>
-                    <button onClick={() => setShowImgGen(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+              {/* ── Panel: Image ─────────────────────────────────── */}
+              {activePanel === "image" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#a855f7" }}>AI Image Generator</span>
+                    <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>GPT-Image · HD</span>
                   </div>
-                  <div style={{ padding: "0 16px 14px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     <textarea
                       value={imgPrompt}
                       onChange={e => setImgPrompt(e.target.value)}
@@ -742,24 +752,21 @@ export default function SiteFactoryClient() {
                       rows={3}
                       style={inp({ fontSize: 12, padding: "8px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })}
                     />
-                    {/* Size + Style toggles */}
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Size</p>
-                        <div style={{ display: "flex", gap: 4 }}>
-                          {(["landscape", "portrait", "square"] as const).map(s => (
-                            <button key={s} onClick={() => setImgSize(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgSize === s ? "#a855f7" : C.border2}`, background: imgSize === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgSize === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgSize === s ? 600 : 400 }}>
-                              {s === "landscape" ? "⬛ Wide" : s === "portrait" ? "▬ Tall" : "◼ Square"}
-                            </button>
-                          ))}
-                        </div>
+                    <div>
+                      <p style={{ margin: "0 0 5px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Size</p>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {(["landscape", "portrait", "square"] as const).map(s => (
+                          <button key={s} onClick={() => setImgSize(s)} style={{ flex: 1, padding: "6px 0", borderRadius: 5, border: `1px solid ${imgSize === s ? "#a855f7" : C.border2}`, background: imgSize === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgSize === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgSize === s ? 600 : 400 }}>
+                            {s === "landscape" ? "⬛ Wide" : s === "portrait" ? "▬ Tall" : "◼ Square"}
+                          </button>
+                        ))}
                       </div>
                     </div>
                     <div>
-                      <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Style</p>
+                      <p style={{ margin: "0 0 5px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Style</p>
                       <div style={{ display: "flex", gap: 4 }}>
                         {(["photo", "illustration", "abstract"] as const).map(s => (
-                          <button key={s} onClick={() => setImgStyle(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgStyle === s ? "#a855f7" : C.border2}`, background: imgStyle === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgStyle === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgStyle === s ? 600 : 400, textTransform: "capitalize" }}>
+                          <button key={s} onClick={() => setImgStyle(s)} style={{ flex: 1, padding: "6px 0", borderRadius: 5, border: `1px solid ${imgStyle === s ? "#a855f7" : C.border2}`, background: imgStyle === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgStyle === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgStyle === s ? 600 : 400, textTransform: "capitalize" }}>
                             {s}
                           </button>
                         ))}
@@ -768,13 +775,12 @@ export default function SiteFactoryClient() {
                     <button
                       onClick={generateSiteImage}
                       disabled={!imgPrompt.trim() || generatingImg}
-                      style={{ width: "100%", padding: "9px", borderRadius: 6, border: "none", background: !imgPrompt.trim() || generatingImg ? C.border : "#a855f7", color: !imgPrompt.trim() || generatingImg ? C.textMuted : "#fff", fontSize: 13, fontWeight: 600, cursor: !imgPrompt.trim() || generatingImg ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                      style={{ width: "100%", padding: "10px", borderRadius: 6, border: "none", background: !imgPrompt.trim() || generatingImg ? C.border : "#a855f7", color: !imgPrompt.trim() || generatingImg ? C.textMuted : "#fff", fontSize: 13, fontWeight: 600, cursor: !imgPrompt.trim() || generatingImg ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
                     >
-                      {generatingImg ? (
-                        <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
-                      ) : "Generate image"}
+                      {generatingImg
+                        ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
+                        : "Generate image"}
                     </button>
-                    {/* Generated image gallery */}
                     {generatedImgs.length > 0 && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
                         <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Generated — insert into site</p>
@@ -790,14 +796,14 @@ export default function SiteFactoryClient() {
                                   { label: "Gallery", instruction: `Add this image to a gallery or images section: ${img.url}` },
                                 ].map(opt => (
                                   <button key={opt.label}
-                                    onClick={() => { sendEdit(opt.instruction); setShowImgGen(false); }}
+                                    onClick={() => { sendEdit(opt.instruction); setActivePanel("chat"); }}
                                     style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
                                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#a855f7"; (e.currentTarget as HTMLElement).style.color = "#a855f7"; }}
                                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
                                   >{opt.label}</button>
                                 ))}
                                 <button
-                                  onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setShowImgGen(false); }}
+                                  onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setActivePanel("chat"); }}
                                   style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
                                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
                                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
@@ -809,46 +815,31 @@ export default function SiteFactoryClient() {
                       </div>
                     )}
                   </div>
-                  </div>
                 </div>
               )}
 
-              {/* Bot setup panel */}
-              {showBotSetup && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "70vh", overflowY: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: `3px solid ${C.gold}` }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: "0.08em" }}>AI Chatbot</span>
-                      <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>Setup</span>
-                    </div>
-                    <button onClick={() => setShowBotSetup(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+              {/* ── Panel: Bot ───────────────────────────────────── */}
+              {activePanel === "bot" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.gold }}>AI Chatbot Setup</span>
+                    <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>Deploy</span>
                   </div>
-                  <div style={{ padding: "0 16px 14px" }}>
-                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>Deploy a trained AI assistant to this site. Visitors can chat, ask questions, and get guided to book or call.</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Avatar section */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "6px 0 10px", borderBottom: `1px solid ${C.border}` }}>
+                  <p style={{ margin: "0 0 14px", fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>Deploy a trained AI assistant to this site. Visitors can chat, ask questions, and get guided to book or call.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "0 0 12px", borderBottom: `1px solid ${C.border}` }}>
                       <div style={{ width: 64, height: 64, borderRadius: "50%", flexShrink: 0, border: `2px solid ${botSetupAvatarUrl ? C.gold : C.border2}`, overflow: "hidden", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {botSetupAvatarUrl ? (
-                          <img src={botSetupAvatarUrl} alt="Bot avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 26, lineHeight: 1 }}>🤖</span>
-                        )}
+                        {botSetupAvatarUrl
+                          ? <img src={botSetupAvatarUrl} alt="Bot avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <span style={{ fontSize: 26, lineHeight: 1 }}>🤖</span>}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
                         <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bot Avatar</p>
                         <div style={{ display: "flex", gap: 5 }}>
-                          <button
-                            onClick={generateBotAvatar}
-                            disabled={botAvatarGenerating}
-                            style={{ flex: 1, padding: "6px 6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: botAvatarGenerating ? C.textMuted : C.textDim, fontSize: 11, cursor: botAvatarGenerating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
-                          >
+                          <button onClick={generateBotAvatar} disabled={botAvatarGenerating} style={{ flex: 1, padding: "6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: botAvatarGenerating ? C.textMuted : C.textDim, fontSize: 11, cursor: botAvatarGenerating ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                             {botAvatarGenerating ? <><div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.2)", borderTopColor: C.textDim, animation: "spin 0.8s linear infinite" }} />Gen…</> : "🎨 Generate"}
                           </button>
-                          <button
-                            onClick={() => avatarInputRef.current?.click()}
-                            style={{ flex: 1, padding: "6px 6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}
-                          >
+                          <button onClick={() => avatarInputRef.current?.click()} style={{ flex: 1, padding: "6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
                             📎 Upload
                           </button>
                         </div>
@@ -867,138 +858,107 @@ export default function SiteFactoryClient() {
                     </div>
                     <div>
                       <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Personality & specialty notes</label>
-                      <textarea value={botSetupPersonality} onChange={e => setBotSetupPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, expert in Thai massage and relaxation techniques, knows all our services and pricing, encourages online bookings..." rows={3} style={inp({ fontSize: 12, padding: "7px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                      <textarea value={botSetupPersonality} onChange={e => setBotSetupPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, expert in Thai massage, knows all services and pricing, encourages bookings..." rows={3} style={inp({ fontSize: 12, padding: "7px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
                     </div>
                     <button
                       onClick={injectChatbot}
                       disabled={injectingBot}
-                      style={{ width: "100%", padding: "10px", borderRadius: 7, border: "none", background: injectingBot ? C.border : `linear-gradient(135deg, ${C.gold}, #a8841f)`, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 700, cursor: injectingBot ? "not-allowed" : "pointer", letterSpacing: "0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+                      style={{ width: "100%", padding: "10px", borderRadius: 7, border: "none", background: injectingBot ? C.border : `linear-gradient(135deg, ${C.gold}, #a8841f)`, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 700, cursor: injectingBot ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                     >
                       {injectingBot
-                        ? <><div style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(0,0,0,.2)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} />Deploying chatbot…</>
+                        ? <><div style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(0,0,0,.2)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} />Deploying…</>
                         : "Deploy Chatbot to Site"}
                     </button>
-                  </div>
                   </div>
                 </div>
               )}
 
-              {/* Chat section header — clear visual break between tools and chat */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px 0", flexShrink: 0 }}>
-                <div style={{ flex: 1, height: 1, background: C.border }} />
-                <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em" }}>Edit Chat</span>
-                <div style={{ flex: 1, height: 1, background: C.border }} />
-              </div>
-
-              {/* Message history — also a drag-and-drop target */}
-              <div
-                style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, position: "relative", transition: "background 0.15s", background: isDragOver ? "rgba(15,157,142,0.07)" : "transparent" }}
-                onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
-                onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false); }}
-                onDrop={e => {
-                  e.preventDefault();
-                  setIsDragOver(false);
-                  const file = e.dataTransfer.files?.[0];
-                  if (file && file.type.startsWith("image/")) uploadFile(file);
-                }}
-              >
-                {isDragOver && (
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, pointerEvents: "none" }}>
-                    <div style={{ border: `2px dashed ${C.teal}`, borderRadius: 12, padding: "24px 36px", background: "rgba(15,157,142,0.12)", textAlign: "center" }}>
-                      <p style={{ margin: 0, fontSize: 28 }}>📎</p>
-                      <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 600, color: C.teal }}>Drop image here</p>
-                      <p style={{ margin: "4px 0 0", fontSize: 11, color: C.textDim }}>logo, screenshot, reference</p>
-                    </div>
-                  </div>
-                )}
-                {messages.map((msg, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                    {msg.imageUrl && (
-                      <img src={msg.imageUrl} alt="upload" style={{ maxWidth: 160, maxHeight: 100, borderRadius: 6, marginBottom: 4, objectFit: "cover", border: `1px solid ${C.border2}` }} />
-                    )}
-                    <div style={{
-                      maxWidth: "88%",
-                      padding: "8px 12px",
-                      borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                      background: msg.role === "user" ? C.gold : C.surface2,
-                      color: msg.role === "user" ? "#000" : C.text,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      fontWeight: msg.role === "user" ? 500 : 400,
-                    }}>
-                      {msg.content}
-                    </div>
-                    {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
-                      <button
-                        onClick={() => restoreVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))}
-                        style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}
-                      >
-                        Restore this version
-                      </button>
-                    )}
-                    {msg.suggestions && msg.suggestions.length > 0 && (
-                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5, alignSelf: "stretch" }}>
-                        <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Try next</span>
-                        {msg.suggestions.map((s, si) => (
-                          <button
-                            key={si}
-                            onClick={() => { setInstruction(s); textareaRef.current?.focus(); }}
-                            style={{ textAlign: "left", padding: "7px 12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", lineHeight: 1.4, transition: "border-color 0.15s, color 0.15s" }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
-                          >
-                            {s}
-                          </button>
-                        ))}
+              {/* ── Panel: Chat ──────────────────────────────────── */}
+              {activePanel === "chat" && (
+                <>
+                  {/* Message history */}
+                  <div
+                    style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, position: "relative", transition: "background 0.15s", background: isDragOver ? "rgba(15,157,142,0.07)" : "transparent" }}
+                    onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false); }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      setIsDragOver(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith("image/")) uploadFile(file);
+                    }}
+                  >
+                    {isDragOver && (
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, pointerEvents: "none" }}>
+                        <div style={{ border: `2px dashed ${C.teal}`, borderRadius: 12, padding: "24px 36px", background: "rgba(15,157,142,0.12)", textAlign: "center" }}>
+                          <p style={{ margin: 0, fontSize: 28 }}>📎</p>
+                          <p style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 600, color: C.teal }}>Drop image here</p>
+                          <p style={{ margin: "4px 0 0", fontSize: 11, color: C.textDim }}>logo, screenshot, reference</p>
+                        </div>
                       </div>
                     )}
-                    <span style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>
-                      {new Date(msg.ts).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                    {messages.map((msg, i) => (
+                      <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                        {msg.imageUrl && (
+                          <img src={msg.imageUrl} alt="upload" style={{ maxWidth: 160, maxHeight: 100, borderRadius: 6, marginBottom: 4, objectFit: "cover", border: `1px solid ${C.border2}` }} />
+                        )}
+                        <div style={{ maxWidth: "88%", padding: "8px 12px", borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px", background: msg.role === "user" ? C.gold : C.surface2, color: msg.role === "user" ? "#000" : C.text, fontSize: 13, lineHeight: 1.5, fontWeight: msg.role === "user" ? 500 : 400 }}>
+                          {msg.content}
+                        </div>
+                        {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
+                          <button onClick={() => restoreVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))} style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>
+                            Restore this version
+                          </button>
+                        )}
+                        {msg.suggestions && msg.suggestions.length > 0 && (
+                          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5, alignSelf: "stretch" }}>
+                            <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Try next</span>
+                            {msg.suggestions.map((s, si) => (
+                              <button key={si} onClick={() => { setInstruction(s); textareaRef.current?.focus(); }} style={{ textAlign: "left", padding: "7px 12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", lineHeight: 1.4, transition: "border-color 0.15s, color 0.15s" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}>
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <span style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>
+                          {new Date(msg.ts).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
 
-              {/* Input area */}
-              <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
-                {/* Pending image preview */}
-                {pendingImage && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.surface2, borderRadius: 6, border: `1px solid ${C.border2}` }}>
-                    <img src={pendingImage.url} alt="pending" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4 }} />
-                    <span style={{ fontSize: 11, color: C.textDim, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pendingImage.name}</span>
-                    <button onClick={() => setPendingImage(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  {/* Input area */}
+                  <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+                    {pendingImage && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.surface2, borderRadius: 6, border: `1px solid ${C.border2}` }}>
+                        <img src={pendingImage.url} alt="pending" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4 }} />
+                        <span style={{ fontSize: 11, color: C.textDim, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pendingImage.name}</span>
+                        <button onClick={() => setPendingImage(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
+                      </div>
+                    )}
+                    <textarea
+                      ref={textareaRef}
+                      value={instruction}
+                      onChange={e => setInstruction(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendEdit(); } }}
+                      placeholder={pendingImage ? "Describe how to use this image… (optional)" : "Describe what to change…"}
+                      rows={isMobile ? 2 : 3}
+                      disabled={isEditing}
+                      style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px", opacity: isEditing ? 0.6 : 1 }) }}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 7, gap: 6 }}>
+                      <button onClick={() => fileInputRef.current?.click()} disabled={isEditing || uploading} title="Upload image" style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: pendingImage ? C.tealBg : "none", color: pendingImage ? C.teal : C.textDim, fontSize: 14, cursor: isEditing || uploading ? "not-allowed" : "pointer", opacity: isEditing || uploading ? 0.5 : 1 }}>
+                        {uploading ? "⏳" : "📎"}
+                      </button>
+                      <span style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>Shift+Enter newline</span>
+                      <button onClick={() => sendEdit()} disabled={(!instruction.trim() && !pendingImage) || isEditing} style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: (!instruction.trim() && !pendingImage) || isEditing ? C.border : C.gold, color: (!instruction.trim() && !pendingImage) || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: (!instruction.trim() && !pendingImage) || isEditing ? "not-allowed" : "pointer" }}>
+                        Send
+                      </button>
+                    </div>
                   </div>
-                )}
-                <textarea
-                  ref={textareaRef}
-                  value={instruction}
-                  onChange={e => setInstruction(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendEdit(); } }}
-                  placeholder={pendingImage ? "Describe how to use this image… (optional)" : "Describe what to change…"}
-                  rows={isMobile ? 2 : 3}
-                  disabled={isEditing}
-                  style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px", opacity: isEditing ? 0.6 : 1 }) }}
-                />
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 7, gap: 6 }}>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isEditing || uploading}
-                    title="Upload image (logo, screenshot, reference)"
-                    style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: pendingImage ? C.tealBg : "none", color: pendingImage ? C.teal : C.textDim, fontSize: 14, cursor: isEditing || uploading ? "not-allowed" : "pointer", opacity: isEditing || uploading ? 0.5 : 1 }}
-                  >
-                    {uploading ? "⏳" : "📎"}
-                  </button>
-                  <span style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>Shift+Enter newline</span>
-                  <button
-                    onClick={() => sendEdit()}
-                    disabled={(!instruction.trim() && !pendingImage) || isEditing}
-                    style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: (!instruction.trim() && !pendingImage) || isEditing ? C.border : C.gold, color: (!instruction.trim() && !pendingImage) || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: (!instruction.trim() && !pendingImage) || isEditing ? "not-allowed" : "pointer" }}
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
 
