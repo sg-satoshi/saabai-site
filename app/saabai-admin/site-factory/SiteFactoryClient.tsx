@@ -135,6 +135,14 @@ export default function SiteFactoryClient() {
   const [injectingBot, setInjectingBot] = useState(false);
   const [showBotSetup, setShowBotSetup] = useState(false);
   const [botSetupName, setBotSetupName] = useState("");
+
+  // Image generation panel
+  const [showImgGen, setShowImgGen] = useState(false);
+  const [imgPrompt, setImgPrompt] = useState("");
+  const [imgSize, setImgSize] = useState<"landscape" | "portrait" | "square">("landscape");
+  const [imgStyle, setImgStyle] = useState<"photo" | "illustration" | "abstract">("photo");
+  const [generatingImg, setGeneratingImg] = useState(false);
+  const [generatedImgs, setGeneratedImgs] = useState<Array<{ url: string; prompt: string }>>([]);
   const [botSetupGreeting, setBotSetupGreeting] = useState("");
   const [botSetupPersonality, setBotSetupPersonality] = useState("");
 
@@ -391,6 +399,32 @@ export default function SiteFactoryClient() {
     setInjectingBot(false);
   }
 
+  async function generateSiteImage() {
+    if (!imgPrompt.trim() || !activeSite || generatingImg) return;
+    setGeneratingImg(true);
+    try {
+      const res = await fetch("/api/site-factory/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: imgPrompt.trim(),
+          slug: activeSite.slug,
+          niche: activeSite.niche,
+          size: imgSize,
+          style: imgStyle,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.url) {
+        setGeneratedImgs(prev => [{ url: data.url, prompt: imgPrompt.trim() }, ...prev.slice(0, 5)]);
+        setImgPrompt("");
+      } else {
+        alert(data.error || "Image generation failed");
+      }
+    } catch (e) { alert(String(e)); }
+    setGeneratingImg(false);
+  }
+
   async function generateSite() {
     if (!businessName.trim()) return;
     setPhase("generating");
@@ -549,8 +583,9 @@ export default function SiteFactoryClient() {
           )}
 
           {!isMobile && <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>}
-          {!isMobile && <button onClick={() => setShowBotSetup(!showBotSetup)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>}
-          {!isMobile && <button onClick={() => setShowDns(!showDns)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
+          {!isMobile && <button onClick={() => { setShowImgGen(!showImgGen); setShowBotSetup(false); setShowDns(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showImgGen ? "#a855f7" : C.border2}`, background: showImgGen ? "rgba(168,85,247,0.1)" : "none", color: showImgGen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
+          {!isMobile && <button onClick={() => { setShowBotSetup(!showBotSetup); setShowImgGen(false); setShowDns(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>}
+          {!isMobile && <button onClick={() => { setShowDns(!showDns); setShowImgGen(false); setShowBotSetup(false); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
@@ -573,8 +608,9 @@ export default function SiteFactoryClient() {
               {isMobile && (
                 <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                   <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
-                  <button onClick={() => setShowBotSetup(!showBotSetup)} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>
-                  <button onClick={() => setShowDns(!showDns)} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
+                  <button onClick={() => { setShowImgGen(!showImgGen); setShowBotSetup(false); setShowDns(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showImgGen ? "#a855f7" : C.border2}`, background: showImgGen ? "rgba(168,85,247,0.1)" : "none", color: showImgGen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Img</button>
+                  <button onClick={() => { setShowBotSetup(!showBotSetup); setShowImgGen(false); setShowDns(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>
+                  <button onClick={() => { setShowDns(!showDns); setShowImgGen(false); setShowBotSetup(false); }} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
                   <div style={{ display: "flex", gap: 3, border: `1px solid ${C.border2}`, borderRadius: 6, padding: 2 }}>
                     {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
                       <button key={d} onClick={() => { setDevice(d); setSidebarOpen(false); }} title={d} style={{ padding: "5px 8px", borderRadius: 4, border: "none", background: device === d ? C.surface2 : "none", color: device === d ? C.text : C.textDim, fontSize: 10, cursor: "pointer" }}>
@@ -621,6 +657,84 @@ export default function SiteFactoryClient() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Image generation panel */}
+              {showImgGen && (
+                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#a855f7" }}>🎨 Generate Image</p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>DALL-E 3 · HD quality</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <textarea
+                      value={imgPrompt}
+                      onChange={e => setImgPrompt(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generateSiteImage(); } }}
+                      placeholder={`e.g. "${activeSite.name} therapist treating a client in a peaceful green spa room"`}
+                      rows={3}
+                      style={inp({ fontSize: 12, padding: "8px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })}
+                    />
+                    {/* Size + Style toggles */}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Size</p>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {(["landscape", "portrait", "square"] as const).map(s => (
+                            <button key={s} onClick={() => setImgSize(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgSize === s ? "#a855f7" : C.border2}`, background: imgSize === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgSize === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgSize === s ? 600 : 400 }}>
+                              {s === "landscape" ? "⬛ Wide" : s === "portrait" ? "▬ Tall" : "◼ Square"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Style</p>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        {(["photo", "illustration", "abstract"] as const).map(s => (
+                          <button key={s} onClick={() => setImgStyle(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgStyle === s ? "#a855f7" : C.border2}`, background: imgStyle === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgStyle === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgStyle === s ? 600 : 400, textTransform: "capitalize" }}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={generateSiteImage}
+                      disabled={!imgPrompt.trim() || generatingImg}
+                      style={{ width: "100%", padding: "9px", borderRadius: 6, border: "none", background: !imgPrompt.trim() || generatingImg ? C.border : "#a855f7", color: !imgPrompt.trim() || generatingImg ? C.textMuted : "#fff", fontSize: 13, fontWeight: 600, cursor: !imgPrompt.trim() || generatingImg ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                    >
+                      {generatingImg ? (
+                        <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
+                      ) : "Generate with DALL-E 3"}
+                    </button>
+                    {/* Generated image gallery */}
+                    {generatedImgs.length > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Generated — click to use</p>
+                        {generatedImgs.map((img, i) => (
+                          <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border2}`, cursor: "pointer" }}
+                            onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setShowImgGen(false); }}
+                          >
+                            <img src={img.url} alt={img.prompt} style={{ width: "100%", display: "block", maxHeight: 140, objectFit: "cover" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", transition: "background 0.15s", display: "flex", alignItems: "center", justifyContent: "center" }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.45)"}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0)"}
+                            >
+                              <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, opacity: 0, transition: "opacity 0.15s", padding: "6px 12px", background: "rgba(0,0,0,.5)", borderRadius: 6 }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                              >Add to chat →</span>
+                            </div>
+                            <div style={{ padding: "5px 8px", background: C.bg }}>
+                              <p style={{ margin: 0, fontSize: 10, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.prompt}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
