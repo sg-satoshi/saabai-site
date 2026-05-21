@@ -19,6 +19,7 @@ interface Message {
   ts: number;
   imageUrl?: string;
   htmlSnapshot?: string;
+  suggestions?: string[];
 }
 
 type Phase = "list" | "new" | "generating" | "editing";
@@ -263,15 +264,30 @@ export default function SiteFactoryClient() {
       setPreviewHtml(newHtml);
       setIframeKey(k => k + 1);
 
-      const finalMsgs = withAssistant.map((m, i) =>
-        i === withAssistant.length - 1
-          ? { ...m, content: `Done — "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml }
-          : m
-      );
+      const doneMsg = { ...withAssistant[withAssistant.length - 1], content: `Done — "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml };
+      const finalMsgs = [...withAssistant.slice(0, -1), doneMsg];
       setMessages(finalMsgs);
       storeMsgs(activeSite.slug, finalMsgs);
 
       if (isMobile) setSidebarOpen(false);
+
+      // Fetch suggestion chips in the background
+      fetch("/api/site-factory/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lastInstruction: text, siteName: activeSite.name, niche: activeSite.niche, history: finalMsgs }),
+      }).then(r => r.json()).then(({ suggestions }) => {
+        if (!Array.isArray(suggestions) || suggestions.length === 0) return;
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.htmlSnapshot === newHtml) {
+            updated[updated.length - 1] = { ...last, suggestions };
+            storeMsgs(activeSite.slug, updated);
+          }
+          return updated;
+        });
+      }).catch(() => {});
     } catch (e) {
       clearInterval(stageTimer);
       setMessages(prev => {
@@ -577,6 +593,22 @@ export default function SiteFactoryClient() {
                       >
                         Restore this version
                       </button>
+                    )}
+                    {msg.suggestions && msg.suggestions.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5, alignSelf: "stretch" }}>
+                        <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Try next</span>
+                        {msg.suggestions.map((s, si) => (
+                          <button
+                            key={si}
+                            onClick={() => { setInstruction(s); textareaRef.current?.focus(); }}
+                            style={{ textAlign: "left", padding: "7px 12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", lineHeight: 1.4, transition: "border-color 0.15s, color 0.15s" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
                     )}
                     <span style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>
                       {new Date(msg.ts).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
