@@ -1119,26 +1119,24 @@ export default function SiteFactoryClient() {
                     ))}
                   </div>
 
-                  {/* Display name + rating override */}
-                  {(fetchedReviews.length > 0 || manualReviews.length > 0) && (
-                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Display name</label>
-                        <input value={reviewsBusinessName} onChange={e => setReviewsBusinessName(e.target.value)} placeholder={activeSite?.name || "Business name"} style={inp({ fontSize: 11, padding: "6px 8px" })} />
-                      </div>
-                      <div style={{ width: 70 }}>
-                        <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Rating</label>
-                        <input
-                          value={reviewsRating ?? ""}
-                          onChange={e => setReviewsRating(e.target.value ? parseFloat(e.target.value) : undefined)}
-                          placeholder="4.9"
-                          type="number"
-                          min="1" max="5" step="0.1"
-                          style={inp({ fontSize: 11, padding: "6px 8px" })}
-                        />
-                      </div>
+                  {/* Display name + rating — always visible */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Display name</label>
+                      <input value={reviewsBusinessName} onChange={e => setReviewsBusinessName(e.target.value)} placeholder={activeSite?.name || "Business name"} style={inp({ fontSize: 11, padding: "6px 8px" })} />
                     </div>
-                  )}
+                    <div style={{ width: 70 }}>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Rating</label>
+                      <input
+                        value={reviewsRating ?? ""}
+                        onChange={e => setReviewsRating(e.target.value ? parseFloat(e.target.value) : undefined)}
+                        placeholder="4.9"
+                        type="number"
+                        min="1" max="5" step="0.1"
+                        style={inp({ fontSize: 11, padding: "6px 8px" })}
+                      />
+                    </div>
+                  </div>
 
                   {/* Inject button */}
                   {(() => {

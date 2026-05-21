@@ -44,17 +44,24 @@ async function fetchPreviewData(mapsHtml: string, referer: string): Promise<{ ra
       signal: AbortSignal.timeout(8000),
     });
     const text = await res.text();
-    // Rating is a float like 4.9 embedded in the array data
-    const ratingMatch = text.match(/,([4-5]\.[0-9]),/);
-    const rating = ratingMatch ? parseFloat(ratingMatch[1]) : undefined;
-    // Review count — look for a plausible 2-3 digit integer near the rating
-    const countMatch = text.match(/,(\d{2,3}),/g);
-    const totalReviews = countMatch
-      ? parseInt(countMatch.find(n => parseInt(n.slice(1, -1)) > 5) ?? "") || undefined
-      : undefined;
-    // Business name often appears early in the response as a plain string
-    const nameMatch = text.match(/,"([A-Z][^"]{3,60}(?:Massage|Thai|Spa|Plumb|Electric|Dental|Physio|Care|Health)[^"]{0,40})"/i);
-    const businessName = nameMatch?.[1];
+
+    // Rating appears as a bare float (e.g. 4.9, 4.8) in the JSON array blob.
+    // Match any X.Y float between 1.0 and 5.0 — take the highest value found
+    // (aggregate ratings are always the largest float near the place data).
+    const ratingMatches = [...text.matchAll(/[,\[](([1-5])\.(\d))[,\]]/g)].map(m => parseFloat(m[1]));
+    const rating = ratingMatches.length > 0 ? Math.max(...ratingMatches) : undefined;
+
+    // Review count — look for integers 5–9999 in the blob; skip tile/zoom numbers
+    // (those are typically large like 3521 or tiny like 13). Review counts are 5–999.
+    const countMatches = [...text.matchAll(/[,\[](\d{1,4})[,\]]/g)]
+      .map(m => parseInt(m[1]))
+      .filter(n => n >= 5 && n <= 999 && n !== 13 && n !== 17);
+    const totalReviews = countMatches.length > 0 ? countMatches[0] : undefined;
+
+    // Business name: quoted string of 4–80 chars starting with a capital letter
+    const nameMatch = text.match(/,"([A-Z][^"]{3,79})"/);
+    const businessName = nameMatch?.[1]?.replace(/\\u[\da-fA-F]{4}/g, "");
+
     return { rating, totalReviews, businessName };
   } catch {
     return {};
