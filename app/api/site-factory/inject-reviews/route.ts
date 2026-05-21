@@ -66,13 +66,12 @@ function buildCarouselInner(reviews: ReviewItem[], rating?: number, totalReviews
     `display:flex;align-items:center;justify-content:center;padding:0;">&#8250;</button>` +
     `</div>` +
     `<style>#${id}::-webkit-scrollbar{display:none}</style>` +
-    `<script>(function(){var t=document.getElementById('${id}');if(!t)return;` +
-    `var p=false,f=0;` +
+    `<script>window.addEventListener('load',function(){var t=document.getElementById('${id}');if(!t)return;` +
+    `var p=false;` +
     `t.addEventListener('mouseenter',function(){p=true});` +
     `t.addEventListener('mouseleave',function(){p=false});` +
-    `function tick(){if(!p&&++f%2===0){if(t.scrollLeft+t.clientWidth>=t.scrollWidth-4){t.scrollLeft=0}else{t.scrollLeft+=1}}` +
-    `requestAnimationFrame(tick)}requestAnimationFrame(tick);` +
-    `})()</script>` +
+    `var last=0;function tick(now){if(!p){var dt=now-last;if(dt>16){last=now;if(t.scrollLeft+t.clientWidth>=t.scrollWidth-2){t.scrollLeft=0;}else{t.scrollLeft+=0.5;}}}` +
+    `requestAnimationFrame(tick);}requestAnimationFrame(tick);});</script>` +
     `</div>`
   );
 }
