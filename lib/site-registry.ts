@@ -22,6 +22,7 @@ export interface SiteConfig {
     name: string;
     greeting: string;
     systemPrompt: string;
+    avatarUrl?: string;
   };
   domains?: string[];
   createdAt: number;

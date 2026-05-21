@@ -11,6 +11,13 @@ interface Site {
   url: string;
   createdAt: number;
   domains?: string[];
+  chatbot?: {
+    enabled?: boolean;
+    name?: string;
+    greeting?: string;
+    systemPrompt?: string;
+    avatarUrl?: string;
+  };
 }
 
 interface Message {
@@ -199,6 +206,12 @@ export default function SiteFactoryClient() {
     setVersionIdx(-1);
     setPendingImage(null);
     fetchDomains(site.slug);
+    // Pre-populate Bot panel with existing chatbot config
+    if (site.chatbot) {
+      setBotSetupName(site.chatbot.name || "");
+      setBotSetupGreeting(site.chatbot.greeting || "");
+      setBotSetupAvatarUrl(site.chatbot.avatarUrl || "");
+    }
 
     fetch(`/sites/${site.slug}`)
       .then(r => r.text())
@@ -390,14 +403,20 @@ export default function SiteFactoryClient() {
       });
       const data = await res.json();
       if (data.ok) {
-        setActivePanel("chat");
-        setBotSetupName(""); setBotSetupGreeting(""); setBotSetupPersonality(""); setBotSetupAvatarUrl("");
         // Reload preview
         const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
         const html = await htmlRes.text();
         setPreviewHtml(html);
         setIframeKey(k => k + 1);
-        setMessages(prev => [...prev, { role: "assistant", content: `AI chatbot added to ${activeSite.name}. Visitors can now chat with ${data.botName}.`, ts: Date.now() }]);
+        // Update local site state so Bot panel stays populated on next open
+        setActiveSite(prev => prev ? { ...prev, chatbot: { enabled: true, name: data.botName, greeting: botSetupGreeting, avatarUrl: botSetupAvatarUrl || undefined } } : prev);
+        setActivePanel("chat");
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: `${data.botName} chatbot deployed to ${activeSite.name}.${botSetupAvatarUrl ? " Avatar saved." : ""}`,
+          ts: Date.now(),
+          ...(botSetupAvatarUrl ? { imageUrl: botSetupAvatarUrl } : {}),
+        }]);
       } else {
         alert("Failed: " + (data.error || "unknown error"));
       }
