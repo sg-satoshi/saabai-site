@@ -17,6 +17,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   ts: number;
+  imageUrl?: string;
   htmlSnapshot?: string;
 }
 
@@ -64,10 +65,26 @@ const NICHES = [
 
 const STYLES = ["modern", "classic", "minimal", "bold"];
 
+function storeMsgs(slug: string, msgs: Message[]) {
+  try {
+    // Store without htmlSnapshot (too large) — restore buttons only work within session
+    const slim = msgs.map(({ htmlSnapshot: _snap, ...m }) => m);
+    localStorage.setItem(`sf:msgs:${slug}`, JSON.stringify(slim.slice(-60)));
+  } catch { /* storage full */ }
+}
+
+function loadMsgs(slug: string): Message[] {
+  try {
+    const raw = localStorage.getItem(`sf:msgs:${slug}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingSites, setLoadingSites] = useState(false);
   const [phase, setPhase] = useState<Phase>("list");
+  const [isMobile, setIsMobile] = useState(false);
 
   // Editor state
   const [activeSite, setActiveSite] = useState<Site | null>(null);
@@ -78,13 +95,19 @@ export default function SiteFactoryClient() {
   const [device, setDevice] = useState<Device>("desktop");
   const [showDns, setShowDns] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
-  const [versionIdx, setVersionIdx] = useState(-1); // -1 = latest
+  const [versionIdx, setVersionIdx] = useState(-1);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Upload state
+  const [pendingImage, setPendingImage] = useState<{ url: string; name: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // DNS state
   const [domains, setDomains] = useState<string[]>([]);
   const [newDomain, setNewDomain] = useState("");
   const [dnsLoading, setDnsLoading] = useState(false);
-  const [dnsResult, setDnsResult] = useState<{ok: boolean; domain: string; instructions: {type:string;name:string;value:string;note:string}[]; vercelConnected: boolean; vercelError?: string} | null>(null);
+  const [dnsResult, setDnsResult] = useState<{ ok: boolean; domain: string; instructions: { type: string; name: string; value: string; note: string }[]; vercelConnected: boolean; vercelError?: string } | null>(null);
 
   // Generation state
   const [businessName, setBusinessName] = useState("");
@@ -105,7 +128,18 @@ export default function SiteFactoryClient() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const versions = useRef<string[]>([]);
 
-  useEffect(() => { fetchSites(); }, []);
+  useEffect(() => {
+    fetchSites();
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   async function fetchSites() {
@@ -128,39 +162,69 @@ export default function SiteFactoryClient() {
 
   function openEditor(site: Site) {
     setActiveSite(site);
-    setMessages([{ role: "assistant", content: `Site loaded. What would you like to change on **${site.name}**?`, ts: Date.now() }]);
+    const saved = loadMsgs(site.slug);
+    const initial: Message[] = saved.length > 0
+      ? saved
+      : [{ role: "assistant", content: `Site loaded. What would you like to change on **${site.name}**?`, ts: Date.now() }];
+    setMessages(initial);
     setPreviewHtml("");
     versions.current = [];
     setVersionIdx(-1);
+    setPendingImage(null);
     fetchDomains(site.slug);
 
-    // Load current HTML from the serving route
     fetch(`/sites/${site.slug}`)
       .then(r => r.text())
       .then(html => { setPreviewHtml(html); versions.current = [html]; })
       .catch(() => {});
 
     setPhase("editing");
+    // On mobile: keep sidebar closed so preview is visible first
+    if (isMobile) setSidebarOpen(false);
+  }
+
+  async function uploadFile(file: File) {
+    if (!activeSite) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("slug", activeSite.slug);
+      const res = await fetch("/api/site-factory/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) {
+        setPendingImage({ url: data.url, name: file.name });
+      } else {
+        alert("Upload failed: " + (data.error || "unknown"));
+      }
+    } catch (e) { alert("Upload error: " + String(e)); }
+    setUploading(false);
   }
 
   async function sendEdit() {
     const text = instruction.trim();
-    if (!text || !activeSite || isEditing) return;
+    if ((!text && !pendingImage) || !activeSite || isEditing) return;
 
-    const userMsg: Message = { role: "user", content: text, ts: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
+    const imageUrl = pendingImage?.url;
+    const displayContent = text || `[Image: ${pendingImage?.name}]`;
+
+    const userMsg: Message = { role: "user", content: displayContent, ts: Date.now(), imageUrl };
+    const nextMsgs = [...messages, userMsg];
+    setMessages(nextMsgs);
     setInstruction("");
+    setPendingImage(null);
     setIsEditing(true);
 
     const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
-    setMessages(prev => [...prev, assistantMsg]);
+    const withAssistant = [...nextMsgs, assistantMsg];
+    setMessages(withAssistant);
 
     let newHtml = "";
     try {
       const res = await fetch("/api/site-factory/edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: activeSite.slug, instruction: text }),
+        body: JSON.stringify({ slug: activeSite.slug, instruction: text || "Apply the uploaded image to the site (use as logo or reference design)", imageUrl }),
       });
 
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
@@ -176,26 +240,26 @@ export default function SiteFactoryClient() {
         charCount = newHtml.length;
         setMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1] = { ...updated[updated.length - 1], content: `Updating site... (${(charCount/1000).toFixed(1)}k)` };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: `Updating... (${(charCount / 1000).toFixed(1)}k)` };
           return updated;
         });
       }
 
-      // Save snapshot and update preview
       versions.current = [...versions.current.slice(0, versionIdx === -1 ? versions.current.length : versionIdx + 1), newHtml];
       setVersionIdx(-1);
       setPreviewHtml(newHtml);
       setIframeKey(k => k + 1);
 
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          ...updated[updated.length - 1],
-          content: `Done. Applied: "${text}"`,
-          htmlSnapshot: newHtml,
-        };
-        return updated;
-      });
+      const finalMsgs = withAssistant.map((m, i) =>
+        i === withAssistant.length - 1
+          ? { ...m, content: `Done. Applied: "${displayContent.slice(0, 60)}${displayContent.length > 60 ? "…" : ""}"`, htmlSnapshot: newHtml }
+          : m
+      );
+      setMessages(finalMsgs);
+      storeMsgs(activeSite.slug, finalMsgs);
+
+      // On mobile, close sidebar after edit so user can see the result
+      if (isMobile) setSidebarOpen(false);
     } catch (e) {
       setMessages(prev => {
         const updated = [...prev];
@@ -218,7 +282,6 @@ export default function SiteFactoryClient() {
     if (target >= 0) restoreVersion(v[target], target);
   }
 
-  // Generation flow
   const startPreviewUpdater = useCallback(() => {
     if (previewTimerRef.current) clearInterval(previewTimerRef.current);
     previewTimerRef.current = setInterval(() => {
@@ -237,7 +300,6 @@ export default function SiteFactoryClient() {
     setStreamedHtml("");
     liveHtmlRef.current = "";
     startPreviewUpdater();
-
     const slug = slugify(businessName.trim());
 
     try {
@@ -267,18 +329,8 @@ export default function SiteFactoryClient() {
 
       stopPreviewUpdater();
       setStreamedHtml(html);
-
-      // Fetch the registered site and open editor
       await fetchSites();
-      const fakeSite: Site = {
-        id: `site_${Date.now()}`,
-        slug,
-        name: businessName.trim(),
-        niche,
-        status: "live",
-        url: `https://www.saabai.ai/sites/${slug}/`,
-        createdAt: Date.now(),
-      };
+      const fakeSite: Site = { id: `site_${Date.now()}`, slug, name: businessName.trim(), niche, status: "live", url: `https://www.saabai.ai/sites/${slug}/`, createdAt: Date.now() };
       setTimeout(() => openEditor(fakeSite), 800);
     } catch (e) {
       stopPreviewUpdater();
@@ -299,21 +351,14 @@ export default function SiteFactoryClient() {
       });
       const data = await res.json();
       setDnsResult(data);
-      if (data.ok) {
-        setDomains(prev => prev.includes(data.domain) ? prev : [...prev, data.domain]);
-        setNewDomain("");
-      }
+      if (data.ok) { setDomains(prev => prev.includes(data.domain) ? prev : [...prev, data.domain]); setNewDomain(""); }
     } catch (e) { alert(String(e)); }
     setDnsLoading(false);
   }
 
   async function removeDomain(domain: string) {
     if (!activeSite) return;
-    await fetch("/api/site-factory/domain", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: activeSite.slug, domain }),
-    });
+    await fetch("/api/site-factory/domain", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: activeSite.slug, domain }) });
     setDomains(prev => prev.filter(d => d !== domain));
   }
 
@@ -327,7 +372,7 @@ export default function SiteFactoryClient() {
     <label style={{ display: "block", fontSize: 11, fontWeight: 600, marginBottom: 5, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t}</label>
   );
 
-  // ─── GENERATING SCREEN ──────────────────────────────────────────────
+  // ─── GENERATING ──────────────────────────────────────────────────────
   if (phase === "generating") {
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -351,145 +396,213 @@ export default function SiteFactoryClient() {
     );
   }
 
-  // ─── EDITING SCREEN ─────────────────────────────────────────────────
+  // ─── EDITING ─────────────────────────────────────────────────────────
   if (phase === "editing" && activeSite) {
     const canUndo = versions.current.length > 1 && (versionIdx === -1 ? versions.current.length - 1 : versionIdx) > 0;
     const liveUrl = `https://www.saabai.ai/sites/${activeSite.slug}/`;
 
+    const sidebarWidth = isMobile ? "100%" : "320px";
+
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
 
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) uploadFile(f); e.target.value = ""; }}
+        />
+
         {/* Top bar */}
-        <div style={{ padding: "10px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: C.surface }}>
-          <button onClick={() => { setPhase("list"); fetchSites(); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 18, cursor: "pointer", lineHeight: 1, padding: "0 4px" }} title="Back to list">←</button>
+        <div style={{ padding: isMobile ? "8px 12px" : "10px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: isMobile ? 8 : 10, flexShrink: 0, background: C.surface }}>
+          <button onClick={() => { setPhase("list"); fetchSites(); }} style={{ background: "none", border: "none", color: C.textDim, fontSize: 18, cursor: "pointer", lineHeight: 1, padding: "0 4px", flexShrink: 0 }} title="Back">←</button>
+
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>{activeSite.name}</span>
-            <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8, fontFamily: "monospace" }}>/sites/{activeSite.slug}/</span>
+            <span style={{ fontWeight: 600, fontSize: isMobile ? 13 : 14 }}>{activeSite.name}</span>
+            {!isMobile && <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8, fontFamily: "monospace" }}>/sites/{activeSite.slug}/</span>}
           </div>
 
-          {/* Device toggles */}
-          <div style={{ display: "flex", gap: 4, border: `1px solid ${C.border2}`, borderRadius: 7, padding: 3 }}>
-            {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
-              <button key={d} onClick={() => setDevice(d)} title={d} style={{ padding: "4px 10px", borderRadius: 5, border: "none", background: device === d ? C.surface2 : "none", color: device === d ? C.text : C.textDim, fontSize: 11, cursor: "pointer", fontWeight: device === d ? 600 : 400 }}>
-                {d === "desktop" ? "⬛ Desktop" : d === "tablet" ? "▪ Tablet" : "▫ Mobile"}
-              </button>
-            ))}
-          </div>
+          {/* Chat toggle (always visible) */}
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            title={sidebarOpen ? "Hide chat" : "Show chat"}
+            style={{ padding: isMobile ? "6px 12px" : "5px 12px", borderRadius: 6, border: `1px solid ${sidebarOpen ? C.teal : C.border2}`, background: sidebarOpen ? C.tealBg : "none", color: sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+          >
+            {sidebarOpen ? "✕ Chat" : "💬 Chat"}
+          </button>
 
-          <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
-          <button onClick={() => { setShowDns(!showDns); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
-          <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600 }}>Open ↗</a>
+          {/* Device toggles — hidden on mobile */}
+          {!isMobile && (
+            <div style={{ display: "flex", gap: 4, border: `1px solid ${C.border2}`, borderRadius: 7, padding: 3 }}>
+              {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
+                <button key={d} onClick={() => setDevice(d)} title={d} style={{ padding: "4px 10px", borderRadius: 5, border: "none", background: device === d ? C.surface2 : "none", color: device === d ? C.text : C.textDim, fontSize: 11, cursor: "pointer", fontWeight: device === d ? 600 : 400 }}>
+                  {d === "desktop" ? "⬛ Desktop" : d === "tablet" ? "▪ Tablet" : "▫ Mobile"}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!isMobile && <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>}
+          {!isMobile && <button onClick={() => setShowDns(!showDns)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
+          <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
 
-          {/* ── Left: Chat panel ──────────────────────────────── */}
-          <div style={{ width: 320, flexShrink: 0, borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", background: C.surface, overflow: "hidden" }}>
+          {/* ── Sidebar (Chat + DNS) ─────────────────────────────── */}
+          {sidebarOpen && (
+            <div style={{
+              width: sidebarWidth,
+              flexShrink: 0,
+              borderRight: isMobile ? "none" : `1px solid ${C.border}`,
+              display: "flex",
+              flexDirection: "column",
+              background: C.surface,
+              overflow: "hidden",
+              ...(isMobile ? { position: "absolute", inset: 0, zIndex: 50 } : {}),
+            }}>
 
-            {/* DNS panel (slides in) */}
-            {showDns && (
-              <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2 }}>
-                <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600 }}>Custom Domain</p>
-                <p style={{ margin: "0 0 8px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
-                {domains.length > 0 && (
-                  <div style={{ marginBottom: 10 }}>
-                    {domains.map(d => (
-                      <div key={d} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", background: C.bg, borderRadius: 5, marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontFamily: "monospace", color: C.teal }}>{d}</span>
-                        <button onClick={() => removeDomain(d)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
-                      </div>
+              {/* Mobile: DNS + Undo controls inside sidebar */}
+              {isMobile && (
+                <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                  <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
+                  <button onClick={() => setShowDns(!showDns)} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
+                  <div style={{ display: "flex", gap: 3, border: `1px solid ${C.border2}`, borderRadius: 6, padding: 2 }}>
+                    {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
+                      <button key={d} onClick={() => { setDevice(d); setSidebarOpen(false); }} title={d} style={{ padding: "5px 8px", borderRadius: 4, border: "none", background: device === d ? C.surface2 : "none", color: device === d ? C.text : C.textDim, fontSize: 10, cursor: "pointer" }}>
+                        {d === "desktop" ? "🖥" : d === "tablet" ? "📱" : "📲"}
+                      </button>
                     ))}
                   </div>
-                )}
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input value={newDomain} onChange={e => setNewDomain(e.target.value)} placeholder="clientdomain.com.au" style={inp({ flex: 1, fontSize: 12, padding: "7px 10px" })} onKeyDown={e => e.key === "Enter" && addDomain()} />
-                  <button onClick={addDomain} disabled={dnsLoading || !newDomain.trim()} style={{ padding: "7px 12px", borderRadius: 6, border: "none", background: C.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: dnsLoading ? "not-allowed" : "pointer" }}>
-                    {dnsLoading ? "..." : "Add"}
-                  </button>
-                </div>
-                {dnsResult && (
-                  <div style={{ marginTop: 10, padding: 10, background: C.bg, borderRadius: 6, fontSize: 11 }}>
-                    <p style={{ margin: "0 0 6px", fontWeight: 600, color: dnsResult.ok ? C.teal : C.red }}>{dnsResult.ok ? `Domain added${dnsResult.vercelConnected ? " + connected to Vercel" : " (add to Vercel manually)"}` : `Error: ${dnsResult.vercelError}`}</p>
-                    {dnsResult.ok && (
-                      <>
-                        <p style={{ margin: "0 0 4px", color: C.textDim }}>Configure at your registrar:</p>
-                        {dnsResult.instructions.map(r => (
-                          <div key={r.type + r.name} style={{ fontFamily: "monospace", marginBottom: 3, color: C.text }}>
-                            <span style={{ color: C.gold }}>{r.type}</span> {r.name} → {r.value} <span style={{ color: C.textDim }}>({r.note})</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Message history */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {messages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                  <div style={{
-                    maxWidth: "88%",
-                    padding: "8px 12px",
-                    borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                    background: msg.role === "user" ? C.gold : C.surface2,
-                    color: msg.role === "user" ? "#000" : C.text,
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    fontWeight: msg.role === "user" ? 500 : 400,
-                  }}>
-                    {msg.content}
-                  </div>
-                  {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
-                    <button
-                      onClick={() => restoreVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))}
-                      style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}
-                    >
-                      Restore this version
-                    </button>
-                  )}
-                  <span style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>
-                    {new Date(msg.ts).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                </div>
-              ))}
-              {isEditing && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.textDim, fontSize: 12 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal, animation: "pulse 1s infinite" }} />
-                  Applying edit...
                 </div>
               )}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Input */}
-            <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface }}>
-              <textarea
-                ref={textareaRef}
-                value={instruction}
-                onChange={e => setInstruction(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendEdit(); } }}
-                placeholder="Describe what to change… (Enter to send)"
-                rows={3}
-                disabled={isEditing}
-                style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px", opacity: isEditing ? 0.6 : 1 }) }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 7 }}>
-                <span style={{ fontSize: 11, color: C.textMuted }}>Shift+Enter for new line</span>
-                <button
-                  onClick={sendEdit}
-                  disabled={!instruction.trim() || isEditing}
-                  style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: !instruction.trim() || isEditing ? C.border : C.gold, color: !instruction.trim() || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: !instruction.trim() || isEditing ? "not-allowed" : "pointer" }}
-                >
-                  Send
-                </button>
+              {/* DNS panel */}
+              {showDns && (
+                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
+                  <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600 }}>Custom Domain</p>
+                  <p style={{ margin: "0 0 8px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
+                  {domains.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      {domains.map(d => (
+                        <div key={d} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", background: C.bg, borderRadius: 5, marginBottom: 4 }}>
+                          <span style={{ fontSize: 12, fontFamily: "monospace", color: C.teal }}>{d}</span>
+                          <button onClick={() => removeDomain(d)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input value={newDomain} onChange={e => setNewDomain(e.target.value)} placeholder="clientdomain.com.au" style={inp({ flex: 1, fontSize: 12, padding: "7px 10px" })} onKeyDown={e => e.key === "Enter" && addDomain()} />
+                    <button onClick={addDomain} disabled={dnsLoading || !newDomain.trim()} style={{ padding: "7px 12px", borderRadius: 6, border: "none", background: C.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: dnsLoading ? "not-allowed" : "pointer" }}>
+                      {dnsLoading ? "..." : "Add"}
+                    </button>
+                  </div>
+                  {dnsResult && (
+                    <div style={{ marginTop: 10, padding: 10, background: C.bg, borderRadius: 6, fontSize: 11 }}>
+                      <p style={{ margin: "0 0 6px", fontWeight: 600, color: dnsResult.ok ? C.teal : C.red }}>{dnsResult.ok ? `Domain added${dnsResult.vercelConnected ? " + connected to Vercel" : " (add to Vercel manually)"}` : `Error: ${dnsResult.vercelError}`}</p>
+                      {dnsResult.ok && (
+                        <>
+                          <p style={{ margin: "0 0 4px", color: C.textDim }}>Configure at your registrar:</p>
+                          {dnsResult.instructions.map(r => (
+                            <div key={r.type + r.name} style={{ fontFamily: "monospace", marginBottom: 3, color: C.text }}>
+                              <span style={{ color: C.gold }}>{r.type}</span> {r.name} → {r.value} <span style={{ color: C.textDim }}>({r.note})</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Message history */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {messages.map((msg, i) => (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                    {msg.imageUrl && (
+                      <img src={msg.imageUrl} alt="upload" style={{ maxWidth: 160, maxHeight: 100, borderRadius: 6, marginBottom: 4, objectFit: "cover", border: `1px solid ${C.border2}` }} />
+                    )}
+                    <div style={{
+                      maxWidth: "88%",
+                      padding: "8px 12px",
+                      borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                      background: msg.role === "user" ? C.gold : C.surface2,
+                      color: msg.role === "user" ? "#000" : C.text,
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                      fontWeight: msg.role === "user" ? 500 : 400,
+                    }}>
+                      {msg.content}
+                    </div>
+                    {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
+                      <button
+                        onClick={() => restoreVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))}
+                        style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}
+                      >
+                        Restore this version
+                      </button>
+                    )}
+                    <span style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>
+                      {new Date(msg.ts).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+                {isEditing && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: C.textDim, fontSize: 12 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal, animation: "pulse 1s infinite" }} />
+                    Applying edit...
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input area */}
+              <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+                {/* Pending image preview */}
+                {pendingImage && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.surface2, borderRadius: 6, border: `1px solid ${C.border2}` }}>
+                    <img src={pendingImage.url} alt="pending" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 4 }} />
+                    <span style={{ fontSize: 11, color: C.textDim, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pendingImage.name}</span>
+                    <button onClick={() => setPendingImage(null)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  </div>
+                )}
+                <textarea
+                  ref={textareaRef}
+                  value={instruction}
+                  onChange={e => setInstruction(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendEdit(); } }}
+                  placeholder={pendingImage ? "Describe how to use this image… (optional)" : "Describe what to change…"}
+                  rows={isMobile ? 2 : 3}
+                  disabled={isEditing}
+                  style={{ ...inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13, padding: "9px 12px", opacity: isEditing ? 0.6 : 1 }) }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 7, gap: 6 }}>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isEditing || uploading}
+                    title="Upload image (logo, screenshot, reference)"
+                    style={{ padding: "6px 10px", borderRadius: 6, border: `1px solid ${C.border2}`, background: pendingImage ? C.tealBg : "none", color: pendingImage ? C.teal : C.textDim, fontSize: 14, cursor: isEditing || uploading ? "not-allowed" : "pointer", opacity: isEditing || uploading ? 0.5 : 1 }}
+                  >
+                    {uploading ? "⏳" : "📎"}
+                  </button>
+                  <span style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>Shift+Enter newline</span>
+                  <button
+                    onClick={sendEdit}
+                    disabled={(!instruction.trim() && !pendingImage) || isEditing}
+                    style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: (!instruction.trim() && !pendingImage) || isEditing ? C.border : C.gold, color: (!instruction.trim() && !pendingImage) || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: (!instruction.trim() && !pendingImage) || isEditing ? "not-allowed" : "pointer" }}
+                  >
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* ── Right: Preview pane ───────────────────────────── */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#1a1a2e" }}>
+          {/* ── Preview pane ─────────────────────────────────────── */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#1a1a2e", minWidth: 0 }}>
             <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "auto", padding: device === "desktop" ? 0 : "20px 0" }}>
               <div style={{ width: DEVICE_WIDTHS[device], height: "100%", minHeight: device !== "desktop" ? 600 : "100%", position: "relative", transition: "width 0.25s ease", flexShrink: 0, boxShadow: device !== "desktop" ? "0 8px 48px rgba(0,0,0,.6)" : "none", borderRadius: device !== "desktop" ? 12 : 0, overflow: "hidden" }}>
                 {previewHtml ? (
@@ -516,6 +629,16 @@ export default function SiteFactoryClient() {
                 )}
               </div>
             </div>
+
+            {/* Mobile: floating chat button when sidebar is closed */}
+            {isMobile && !sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                style={{ position: "absolute", bottom: 20, right: 20, zIndex: 40, padding: "12px 20px", borderRadius: 30, background: C.gold, color: "#000", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(201,162,39,.4)" }}
+              >
+                💬 Chat
+              </button>
+            )}
           </div>
         </div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>

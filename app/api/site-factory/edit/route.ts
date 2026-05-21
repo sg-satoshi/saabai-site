@@ -19,7 +19,7 @@ RULES:
 
 export async function POST(req: NextRequest) {
   try {
-    const { slug, instruction } = await req.json();
+    const { slug, instruction, imageUrl } = await req.json();
 
     if (!slug || !instruction?.trim()) {
       return Response.json({ error: "slug and instruction are required" }, { status: 400 });
@@ -35,13 +35,19 @@ export async function POST(req: NextRequest) {
     const htmlRes = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
     const currentHtml = await htmlRes.text();
 
+    const userText = `Here is the current HTML:\n\n${currentHtml}\n\n---\n\nInstruction: ${instruction.trim()}\n\nReturn the complete updated HTML file.`;
     const stream = streamText({
       model: getPremiumModel(),
       system: SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content: `Here is the current HTML:\n\n${currentHtml}\n\n---\n\nInstruction: ${instruction.trim()}\n\nReturn the complete updated HTML file.`,
+          content: imageUrl
+            ? [
+                { type: "image" as const, image: new URL(imageUrl) },
+                { type: "text" as const, text: userText },
+              ]
+            : userText,
         },
       ],
     });

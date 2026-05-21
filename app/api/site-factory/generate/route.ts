@@ -122,7 +122,7 @@ SECTIONS REQUIRED (in this exact order):
 
 11. FOOTER — Dark bg (--primary). 3 columns: Brand (logo, tagline, 4 social SVG icon links), Quick Links (6 nav links), Contact (address, phone, email). Bottom bar: copyright ${new Date().getFullYear()} ${businessName}. Privacy Policy + Terms links.
 
-12. FLOATING BUTTON — Bottom-right: phone/WhatsApp button, --secondary bg, pulsing ring animation, links to tel:${phone || "#"}.`;
+12. FLOATING CHAT BUTTON — Bottom-right corner: a chat bubble button (NOT a phone icon). Use an inline SVG speech-bubble icon (white, 24×24). Button: 56×56px circle, bg --secondary, pulsing ring animation (box-shadow 0 0 0 0 → 0 0 0 12px transparent, 2s infinite). On click, toggles a small chat popup div above it: "Hi! How can we help?" heading, a simple text input + Send button (form submit to https://www.saabai.ai/api/site-factory/lead). The popup has a close × button. Include all JS inline in the single script tag.`;
 
     const stream = streamText({
       model: getPremiumModel(),
