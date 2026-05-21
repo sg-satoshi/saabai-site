@@ -132,6 +132,19 @@ export default function SiteFactoryClient() {
   const [genCharCount, setGenCharCount] = useState(0);
   const [streamedHtml, setStreamedHtml] = useState("");
 
+  // Chatbot config state (for new site form)
+  const [chatbotEnabled, setChatbotEnabled] = useState(true);
+  const [chatbotName, setChatbotName] = useState("");
+  const [chatbotGreeting, setChatbotGreeting] = useState("");
+  const [chatbotPersonality, setChatbotPersonality] = useState("");
+
+  // Inject chatbot into existing site
+  const [injectingBot, setInjectingBot] = useState(false);
+  const [showBotSetup, setShowBotSetup] = useState(false);
+  const [botSetupName, setBotSetupName] = useState("");
+  const [botSetupGreeting, setBotSetupGreeting] = useState("");
+  const [botSetupPersonality, setBotSetupPersonality] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const liveHtmlRef = useRef("");
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -322,6 +335,37 @@ export default function SiteFactoryClient() {
     if (previewTimerRef.current) { clearInterval(previewTimerRef.current); previewTimerRef.current = null; }
   }, []);
 
+  async function injectChatbot() {
+    if (!activeSite) return;
+    setInjectingBot(true);
+    try {
+      const res = await fetch("/api/site-factory/inject-chatbot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: activeSite.slug,
+          botName: botSetupName || undefined,
+          greeting: botSetupGreeting || undefined,
+          personality: botSetupPersonality || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setShowBotSetup(false);
+        setBotSetupName(""); setBotSetupGreeting(""); setBotSetupPersonality("");
+        // Reload preview
+        const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
+        const html = await htmlRes.text();
+        setPreviewHtml(html);
+        setIframeKey(k => k + 1);
+        setMessages(prev => [...prev, { role: "assistant", content: `AI chatbot added to ${activeSite.name}. Visitors can now chat with ${data.botName}.`, ts: Date.now() }]);
+      } else {
+        alert("Failed: " + (data.error || "unknown error"));
+      }
+    } catch (e) { alert(String(e)); }
+    setInjectingBot(false);
+  }
+
   async function generateSite() {
     if (!businessName.trim()) return;
     setPhase("generating");
@@ -339,6 +383,11 @@ export default function SiteFactoryClient() {
           businessName: businessName.trim(), niche, location,
           services: services.split(",").map(s => s.trim()).filter(Boolean),
           phone, email, address, style, description: description.trim(),
+          chatbot: chatbotEnabled ? {
+            name: chatbotName || undefined,
+            greeting: chatbotGreeting || undefined,
+            personality: chatbotPersonality || undefined,
+          } : { enabled: false },
         }),
       });
 
@@ -475,6 +524,7 @@ export default function SiteFactoryClient() {
           )}
 
           {!isMobile && <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>}
+          {!isMobile && <button onClick={() => setShowBotSetup(!showBotSetup)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>}
           {!isMobile && <button onClick={() => setShowDns(!showDns)} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
@@ -494,10 +544,11 @@ export default function SiteFactoryClient() {
               ...(isMobile ? { position: "absolute", inset: 0, zIndex: 50 } : {}),
             }}>
 
-              {/* Mobile: DNS + Undo controls inside sidebar */}
+              {/* Mobile: DNS + Undo + Bot controls inside sidebar */}
               {isMobile && (
                 <div style={{ display: "flex", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                   <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>
+                  <button onClick={() => setShowBotSetup(!showBotSetup)} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showBotSetup ? C.gold : C.border2}`, background: showBotSetup ? C.goldBg : "none", color: showBotSetup ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>💬 Bot</button>
                   <button onClick={() => setShowDns(!showDns)} style={{ flex: 1, padding: "7px", borderRadius: 6, border: `1px solid ${showDns ? C.teal : C.border2}`, background: showDns ? C.tealBg : "none", color: showDns ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>
                   <div style={{ display: "flex", gap: 3, border: `1px solid ${C.border2}`, borderRadius: 6, padding: 2 }}>
                     {(["desktop", "tablet", "mobile"] as Device[]).map(d => (
@@ -545,6 +596,35 @@ export default function SiteFactoryClient() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Bot setup panel */}
+              {showBotSetup && (
+                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
+                  <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 600, color: C.gold }}>AI Chatbot Setup</p>
+                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim }}>Adds a trained AI assistant to this site for visitors to chat with.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Bot name</label>
+                      <input value={botSetupName} onChange={e => setBotSetupName(e.target.value)} placeholder={`${activeSite.name} Assistant`} style={inp({ fontSize: 12, padding: "7px 10px" })} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Greeting message</label>
+                      <input value={botSetupGreeting} onChange={e => setBotSetupGreeting(e.target.value)} placeholder={`Hi! I'm here to help with ${activeSite.name}…`} style={inp({ fontSize: 12, padding: "7px 10px" })} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Personality & specialty notes</label>
+                      <textarea value={botSetupPersonality} onChange={e => setBotSetupPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, expert in Thai massage and relaxation techniques, knows all our services and pricing, encourages online bookings..." rows={3} style={inp({ fontSize: 12, padding: "7px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                    </div>
+                    <button
+                      onClick={injectChatbot}
+                      disabled={injectingBot}
+                      style={{ width: "100%", padding: "9px", borderRadius: 6, border: "none", background: injectingBot ? C.border : C.gold, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: injectingBot ? "not-allowed" : "pointer" }}
+                    >
+                      {injectingBot ? "Adding chatbot…" : "Add AI Chatbot to Site"}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -794,6 +874,34 @@ export default function SiteFactoryClient() {
                   ))}
                 </div>
               </div>
+              {/* Chatbot config */}
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: chatbotEnabled ? 12 : 0 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>AI Chatbot</p>
+                    <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>Add a trained assistant for site visitors</p>
+                  </div>
+                  <button
+                    onClick={() => setChatbotEnabled(e => !e)}
+                    style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${chatbotEnabled ? C.gold : C.border2}`, background: chatbotEnabled ? C.goldBg : "none", color: chatbotEnabled ? C.gold : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    {chatbotEnabled ? "On" : "Off"}
+                  </button>
+                </div>
+                {chatbotEnabled && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>{lbl("Bot name")}<input value={chatbotName} onChange={e => setChatbotName(e.target.value)} placeholder={businessName ? `${businessName} Assistant` : "e.g. Lily"} style={inp()} /></div>
+                      <div>{lbl("Greeting")}<input value={chatbotGreeting} onChange={e => setChatbotGreeting(e.target.value)} placeholder="Hi! How can I help?" style={inp()} /></div>
+                    </div>
+                    <div>
+                      {lbl("Personality & training notes")}
+                      <textarea value={chatbotPersonality} onChange={e => setChatbotPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, specialist in Thai massage. Knows services, pricing, and booking process. Encourages visitors to book online or call..." rows={2} style={inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button onClick={generateSite} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
                 Generate Site
               </button>

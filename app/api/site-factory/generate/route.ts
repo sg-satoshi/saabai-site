@@ -3,6 +3,7 @@ import { streamText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
 import { createSite } from "../../../../lib/site-registry";
 import { put } from "@vercel/blob";
+import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       address = "",
       style = "modern",
       description = "",
+      chatbot: chatbotInput = {},
     } = body;
 
     if (!businessName) {
@@ -162,6 +164,35 @@ SECTIONS REQUIRED (in this exact order):
           if (!html.toLowerCase().startsWith("<!doctype")) {
             html = `<!DOCTYPE html>\n${html}`;
           }
+
+          // Build chatbot config — use user-supplied values or sensible defaults
+          const botName = chatbotInput.name || businessName;
+          const botGreeting = chatbotInput.greeting || `Hi! I'm ${botName}. How can I help you today?`;
+          const botSystemPrompt = chatbotInput.systemPrompt || [
+            `You are ${botName}, a friendly assistant for ${businessName}, a ${niche} business in ${location}.`,
+            chatbotInput.personality ? `Personality: ${chatbotInput.personality}` : "Be warm, professional, and concise.",
+            phone ? `Phone: ${phone}` : "",
+            email ? `Email: ${email}` : "",
+            address ? `Address: ${address}` : "",
+            services.length ? `Services: ${services.join(", ")}` : "",
+            description ? `About: ${description}` : "",
+            "Answer questions about the business and its services. Keep responses under 120 words.",
+          ].filter(Boolean).join("\n");
+
+          // Inject chat widget — remove any old floating button first, then add proper widget
+          html = html.replace(/<script id="sf-chat-widget">[\s\S]*?<\/script>/i, "");
+          const colors = getNicheColors(niche);
+          const widget = buildChatWidget({
+            slug,
+            botName,
+            greeting: botGreeting,
+            ...colors,
+            placeholder: `Ask about ${businessName}…`,
+          });
+          html = html.includes("</body>")
+            ? html.replace("</body>", `${widget}\n</body>`)
+            : html + `\n${widget}`;
+
           await put(`sites/${slug}/index.html`, html, {
             access: "public",
             contentType: "text/html",
@@ -178,9 +209,9 @@ SECTIONS REQUIRED (in this exact order):
             business: { name: businessName, tagline: "", phone, email, address },
             chatbot: {
               enabled: true,
-              name: businessName,
-              greeting: `Hi! I'm the assistant for ${businessName}. How can I help?`,
-              systemPrompt: `You are a helpful assistant for ${businessName}, a ${niche} business in ${location}. Be friendly and concise.`,
+              name: botName,
+              greeting: botGreeting,
+              systemPrompt: botSystemPrompt,
             },
           });
         } catch (e) {
