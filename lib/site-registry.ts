@@ -36,13 +36,19 @@ export async function createSite(config: Omit<SiteConfig, "id" | "createdAt" | "
 }
 
 export async function getSite(id: string): Promise<SiteConfig | null> {
-  const data = await redis.hget<string>("saabai:sites", id);
-  return data ? JSON.parse(data) : null;
+  const data = await redis.hget<SiteConfig>("saabai:sites", id);
+  return data ?? null;
+}
+
+export async function getSiteBySlug(slug: string): Promise<SiteConfig | null> {
+  const sites = await listSites();
+  return sites.find(s => s.slug === slug) ?? null;
 }
 
 export async function listSites(): Promise<SiteConfig[]> {
-  const data = await redis.hgetall<Record<string, string>>("saabai:sites");
-  return data ? Object.values(data).map(s => JSON.parse(s)) : [];
+  const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
+  if (!data) return [];
+  return Object.values(data).map(v => (typeof v === "string" ? JSON.parse(v) : v));
 }
 
 export async function updateSite(id: string, updates: Partial<SiteConfig>): Promise<void> {

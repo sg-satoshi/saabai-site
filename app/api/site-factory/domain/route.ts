@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getSite, updateSite } from "../../../../lib/site-registry";
+import { getSiteBySlug, updateSite } from "../../../../lib/site-registry";
 
 export const runtime = "nodejs";
 
@@ -36,7 +36,7 @@ async function vercelRemoveDomain(domain: string): Promise<{ ok: boolean }> {
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) return Response.json({ error: "slug required" }, { status: 400 });
-  const site = await getSite(slug).catch(() => null);
+  const site = await getSiteBySlug(slug).catch(() => null);
   const domains = site?.domains || [];
   return Response.json({ domains });
 }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     const vercelResult = await vercelAddDomain(cleanDomain);
 
     // Store in Redis regardless of Vercel result
-    const site = await getSite(slug);
+    const site = await getSiteBySlug(slug);
     if (site) {
       const existing = site.domains || [];
       if (!existing.includes(cleanDomain)) {
@@ -85,7 +85,7 @@ export async function DELETE(req: NextRequest) {
 
     await vercelRemoveDomain(domain);
 
-    const site = await getSite(slug);
+    const site = await getSiteBySlug(slug);
     if (site) {
       const existing = site.domains || [];
       await updateSite(site.id, { domains: existing.filter((d) => d !== domain) });

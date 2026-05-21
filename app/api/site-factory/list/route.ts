@@ -22,7 +22,7 @@ function scanLegacySites() {
         name: nameMap[slug] || slug,
         niche: "professional-services",
         status: "live",
-        url: `https://saabai-site.vercel.app/clients/${slug}/`,
+        url: `https://www.saabai.ai/sites/${slug}/`,
         business: { name: nameMap[slug] || slug },
         chatbot: { enabled: true, name: "Assistant", greeting: "", systemPrompt: "" },
         createdAt: 0,
