@@ -676,8 +676,14 @@ export default function SiteFactoryClient() {
 
               {/* DNS panel */}
               {showDns && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
-                  <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600 }}>Custom Domain</p>
+                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "55vh", overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: `3px solid ${C.teal}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, textTransform: "uppercase", letterSpacing: "0.08em" }}>Custom Domain</span>
+                    </div>
+                    <button onClick={() => setShowDns(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  </div>
+                  <div style={{ padding: "0 16px 14px" }}>
                   <p style={{ margin: "0 0 8px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
                   {domains.length > 0 && (
                     <div style={{ marginBottom: 10 }}>
@@ -710,18 +716,21 @@ export default function SiteFactoryClient() {
                       )}
                     </div>
                   )}
+                  </div>
                 </div>
               )}
 
               {/* Image generation panel */}
               {showImgGen && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#a855f7" }}>🎨 Generate Image</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>DALL-E 3 · HD quality</p>
+                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "65vh", overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: "3px solid #a855f7" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#a855f7", textTransform: "uppercase", letterSpacing: "0.08em" }}>AI Image</span>
+                      <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>GPT-Image · HD</span>
                     </div>
+                    <button onClick={() => setShowImgGen(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
                   </div>
+                  <div style={{ padding: "0 16px 14px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <textarea
                       value={imgPrompt}
@@ -761,7 +770,7 @@ export default function SiteFactoryClient() {
                     >
                       {generatingImg ? (
                         <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
-                      ) : "Generate with DALL-E 3"}
+                      ) : "Generate image"}
                     </button>
                     {/* Generated image gallery */}
                     {generatedImgs.length > 0 && (
@@ -798,14 +807,22 @@ export default function SiteFactoryClient() {
                       </div>
                     )}
                   </div>
+                  </div>
                 </div>
               )}
 
               {/* Bot setup panel */}
               {showBotSetup && (
-                <div style={{ borderBottom: `1px solid ${C.border}`, padding: 16, background: C.surface2, flexShrink: 0 }}>
-                  <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 600, color: C.gold }}>AI Chatbot Setup</p>
-                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim }}>Adds a trained AI assistant to this site for visitors to chat with.</p>
+                <div style={{ borderBottom: `1px solid ${C.border}`, background: C.surface2, flexShrink: 0, maxHeight: "70vh", overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 10px", borderLeft: `3px solid ${C.gold}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: "0.08em" }}>AI Chatbot</span>
+                      <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>Setup</span>
+                    </div>
+                    <button onClick={() => setShowBotSetup(false)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 18, lineHeight: 1, padding: "0 2px" }}>×</button>
+                  </div>
+                  <div style={{ padding: "0 16px 14px" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>Deploy a trained AI assistant to this site. Visitors can chat, ask questions, and get guided to book or call.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {/* Avatar section */}
                     <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "6px 0 10px", borderBottom: `1px solid ${C.border}` }}>
@@ -853,13 +870,23 @@ export default function SiteFactoryClient() {
                     <button
                       onClick={injectChatbot}
                       disabled={injectingBot}
-                      style={{ width: "100%", padding: "9px", borderRadius: 6, border: "none", background: injectingBot ? C.border : C.gold, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: injectingBot ? "not-allowed" : "pointer" }}
+                      style={{ width: "100%", padding: "10px", borderRadius: 7, border: "none", background: injectingBot ? C.border : `linear-gradient(135deg, ${C.gold}, #a8841f)`, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 700, cursor: injectingBot ? "not-allowed" : "pointer", letterSpacing: "0.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                     >
-                      {injectingBot ? "Adding chatbot…" : "Add AI Chatbot to Site"}
+                      {injectingBot
+                        ? <><div style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(0,0,0,.2)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} />Deploying chatbot…</>
+                        : "Deploy Chatbot to Site"}
                     </button>
+                  </div>
                   </div>
                 </div>
               )}
+
+              {/* Chat section header — clear visual break between tools and chat */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px 0", flexShrink: 0 }}>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+                <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.12em" }}>Edit Chat</span>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+              </div>
 
               {/* Message history — also a drag-and-drop target */}
               <div
@@ -962,7 +989,7 @@ export default function SiteFactoryClient() {
                   </button>
                   <span style={{ fontSize: 11, color: C.textMuted, flex: 1 }}>Shift+Enter newline</span>
                   <button
-                    onClick={sendEdit}
+                    onClick={() => sendEdit()}
                     disabled={(!instruction.trim() && !pendingImage) || isEditing}
                     style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: (!instruction.trim() && !pendingImage) || isEditing ? C.border : C.gold, color: (!instruction.trim() && !pendingImage) || isEditing ? C.textMuted : "#000", fontSize: 13, fontWeight: 600, cursor: (!instruction.trim() && !pendingImage) || isEditing ? "not-allowed" : "pointer" }}
                   >
