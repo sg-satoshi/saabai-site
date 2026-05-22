@@ -571,6 +571,29 @@ const MATERIALS_SIGNAGE = `
 
 **Applications:** Electronic enclosures, automotive interiors, appliance housings, prototypes, guards, thermoformed components.
 
+**ABS SHEET PRICING — March 2026 (ex GST)**
+
+All sheets 2540×1350mm (AST). CTS = cut-to-size $/m². Orders under $50 charged a $35 cutting fee.
+
+**ABS BLACK:**
+| Thickness | Finish | CTS ($/m²) | Full Sheet |
+|-----------|--------|-----------|------------|
+| 1.5mm | Haircell | $48.98 | $96 |
+| 2mm | Gloss | $64.43 | $126 |
+| 2mm | Haircell | $64.38 | $126 |
+| 3mm | Gloss | $96.58 | $189 |
+| 3mm | Haircell | $98.03 | $192 |
+| 4.5mm | Gloss | $162.42 | $318 |
+| 4.5mm | Haircell | $146.62 | $287 |
+| 6mm | Haircell | $193.30 | $379 |
+
+**ABS WHITE:**
+| Thickness | Finish | CTS ($/m²) | Full Sheet |
+|-----------|--------|-----------|------------|
+| 2mm | Gloss | $77.65 | $152 |
+| 3mm | Gloss | $97.54 | $191 |
+| 3mm | Haircell | $96.50 | $189 |
+
 ---
 
 ### FOAM PVC (Forex / Foamex / Celtex / PVC Foam Board)
