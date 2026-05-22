@@ -52,15 +52,19 @@ DIFF RULES — HTML is MINIFIED (whitespace stripped, tags joined with "><"):
 - Never use em dashes (—) in any copy you write. Use a comma, colon, or rewrite instead.`;
 
 // Fetch a URL and return its visible text content (strips tags, collapses whitespace)
-async function fetchUrlContent(url: string): Promise<string> {
+async function fetchUrlContent(url: string): Promise<{ text: string; imageUrls: string[] }> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteFactory/1.0)" },
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" },
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return `[Could not fetch ${url}: HTTP ${res.status}]`;
+    if (!res.ok) return { text: `[Could not fetch ${url}: HTTP ${res.status}]`, imageUrls: [] };
     const html = await res.text();
-    // Strip scripts, styles, nav, footer, then extract text
+
+    // Extract image URLs before stripping tags
+    const imgMatches = [...html.matchAll(/(?:src|data-src)=["'](https?:\/\/[^"']+\.(?:jpg|jpeg|png|webp|gif)[^"']*)/gi)];
+    const imageUrls = [...new Set(imgMatches.map(m => m[1]))].slice(0, 12);
+
     const cleaned = html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -71,9 +75,32 @@ async function fetchUrlContent(url: string): Promise<string> {
       .replace(/&[a-z]+;/gi, " ")
       .replace(/\s{2,}/g, " ")
       .trim();
-    return cleaned.slice(0, 6000);
+    return { text: cleaned.slice(0, 6000), imageUrls };
   } catch {
-    return `[Could not fetch ${url}]`;
+    return { text: `[Could not fetch ${url}]`, imageUrls: [] };
+  }
+}
+
+// Download an image URL and re-upload to Vercel Blob, returning the public blob URL
+async function proxyImage(srcUrl: string, slug: string): Promise<string | null> {
+  try {
+    const res = await fetch(srcUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteFactory/1.0)", "Referer": new URL(srcUrl).origin },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > 8_000_000) return null; // skip > 8MB
+    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+    const ext = srcUrl.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg","jpeg","png","webp","gif"].includes(ext) ? ext : "jpg";
+    const hash = Buffer.from(srcUrl).toString("base64url").slice(0, 16);
+    const { url } = await put(`sites/${slug}/images/${hash}.${safeExt}`, buf, {
+      access: "public", contentType, addRandomSuffix: false, allowOverwrite: true,
+    });
+    return url;
+  } catch {
+    return null;
   }
 }
 
@@ -93,15 +120,46 @@ export async function POST(req: NextRequest) {
     const originalHtml = await htmlRes.text();
     const minHtml = minifyHtml(originalHtml);
 
-    // Extract any URLs from the instruction and fetch their content
+    // Extract any URLs from the instruction — fetch content AND proxy any images found
     const urlMatches = instruction?.match(/https?:\/\/[^\s"'>]+/g) ?? [];
+
+    // Split: page URLs (html) vs direct image URLs
+    const imageExtRe = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i;
+    const directImageUrls = urlMatches.filter((u: string) => imageExtRe.test(u));
+    const pageUrls = urlMatches.filter((u: string) => !imageExtRe.test(u));
+
+    // Fetch page content + embedded image list
     const fetchedPages = await Promise.all(
-      urlMatches.slice(0, 3).map(async (url: string) => {
-        const content = await fetchUrlContent(url);
-        return `\n--- Content fetched from ${url} ---\n${content}\n---`;
+      pageUrls.slice(0, 3).map(async (url: string) => {
+        const { text, imageUrls } = await fetchUrlContent(url);
+        // Proxy all images found on the page
+        const proxied = await Promise.all(
+          imageUrls.map(async (imgUrl: string) => {
+            const blobUrl = await proxyImage(imgUrl, slug);
+            return blobUrl ? `  ${imgUrl}\n  -> USE THIS URL: ${blobUrl}` : null;
+          })
+        );
+        const imgSection = proxied.filter(Boolean).length > 0
+          ? `\nImages from this page (proxied to Vercel Blob — use the "USE THIS URL" versions):\n${proxied.filter(Boolean).join("\n")}`
+          : "";
+        return `\n--- Content fetched from ${url} ---\n${text}${imgSection}\n---`;
       })
     );
-    const urlContext = fetchedPages.join("\n");
+
+    // Proxy any direct image URLs pasted in the instruction
+    const proxiedDirectImages = await Promise.all(
+      directImageUrls.slice(0, 5).map(async (imgUrl: string) => {
+        const blobUrl = await proxyImage(imgUrl, slug);
+        return blobUrl
+          ? `  Original: ${imgUrl}\n  USE THIS URL: ${blobUrl}`
+          : `  [Could not proxy ${imgUrl}]`;
+      })
+    );
+    const directImgContext = proxiedDirectImages.length > 0
+      ? `\n--- Direct image URLs (proxied to Vercel Blob) ---\n${proxiedDirectImages.join("\n")}\n---`
+      : "";
+
+    const urlContext = [...fetchedPages, directImgContext].join("\n");
 
     // Build conversation history — text only, no HTML in prior turns
     const priorMessages = (history as Array<{ role: string; content: string }>)
