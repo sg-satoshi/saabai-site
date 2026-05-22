@@ -144,6 +144,7 @@ export default function SiteFactoryClient() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarPx, setSidebarPx] = useState(320);
   const sidebarPxRef = useRef(320);
+  const sidebarDivRef = useRef<HTMLDivElement>(null);
   const isDraggingPanel = useRef(false);
   const dragStartX = useRef(0);
   const dragStartW = useRef(320);
@@ -157,23 +158,29 @@ export default function SiteFactoryClient() {
   }, []);
 
   // Global mouse/touch handlers for panel drag
+  // Uses direct DOM mutation (no React state) during drag to avoid re-renders and
+  // iframe event capture. setSidebarPx is only called on mouseup to commit the value.
   useEffect(() => {
     const onMove = (e: MouseEvent | TouchEvent) => {
       if (!isDraggingPanel.current) return;
+      if (e.cancelable) e.preventDefault();
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const delta = clientX - dragStartX.current;
-      const newW = Math.min(750, Math.max(280, dragStartW.current + delta));
+      const newW = Math.min(750, Math.max(280, dragStartW.current + (clientX - dragStartX.current)));
       sidebarPxRef.current = newW;
-      setSidebarPx(newW);
+      if (sidebarDivRef.current) sidebarDivRef.current.style.width = `${newW}px`;
     };
     const onUp = () => {
       if (!isDraggingPanel.current) return;
       isDraggingPanel.current = false;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
-      localStorage.setItem("sf_sidebar_w", String(sidebarPxRef.current));
+      // Re-enable iframe pointer events
+      if (iframeRef.current) iframeRef.current.style.pointerEvents = "";
+      const finalW = sidebarPxRef.current;
+      setSidebarPx(finalW);
+      localStorage.setItem("sf_sidebar_w", String(finalW));
     };
-    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mousemove", onMove, { passive: false });
     document.addEventListener("mouseup", onUp);
     document.addEventListener("touchmove", onMove, { passive: false });
     document.addEventListener("touchend", onUp);
@@ -183,7 +190,7 @@ export default function SiteFactoryClient() {
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onUp);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Upload + drag state
   const [pendingImage, setPendingImage] = useState<{ url: string; name: string } | null>(null);
@@ -1098,16 +1105,18 @@ export default function SiteFactoryClient() {
 
           {/* ── Sidebar (Chat + DNS) ─────────────────────────────── */}
           {sidebarOpen && (
-            <div style={{
-              width: sidebarWidth,
-              flexShrink: 0,
-              borderRight: isMobile ? "none" : `1px solid ${C.border}`,
-              display: "flex",
-              flexDirection: "column",
-              background: C.surface,
-              overflow: "hidden",
-              ...(isMobile ? { position: "absolute", inset: 0, zIndex: 50 } : {}),
-            }}>
+            <div
+              ref={sidebarDivRef}
+              style={{
+                width: sidebarWidth,
+                flexShrink: 0,
+                borderRight: isMobile ? "none" : `1px solid ${C.border}`,
+                display: "flex",
+                flexDirection: "column",
+                background: C.surface,
+                overflow: "hidden",
+                ...(isMobile ? { position: "absolute", inset: 0, zIndex: 50 } : {}),
+              }}>
 
               {/* Mobile: device + undo strip */}
               {isMobile && (
@@ -1708,20 +1717,23 @@ export default function SiteFactoryClient() {
                 dragStartW.current = sidebarPxRef.current;
                 document.body.style.cursor = "col-resize";
                 document.body.style.userSelect = "none";
+                // Block iframe from stealing mouse events during drag
+                if (iframeRef.current) iframeRef.current.style.pointerEvents = "none";
                 e.preventDefault();
               }}
               onTouchStart={e => {
                 isDraggingPanel.current = true;
                 dragStartX.current = e.touches[0].clientX;
                 dragStartW.current = sidebarPxRef.current;
+                if (iframeRef.current) iframeRef.current.style.pointerEvents = "none";
               }}
               title="Drag to resize panel"
               style={{
-                width: 6, flexShrink: 0, cursor: "col-resize", background: "transparent",
+                width: 8, flexShrink: 0, cursor: "col-resize", background: "transparent",
                 position: "relative", zIndex: 10, transition: "background 0.15s",
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(201,162,39,0.35)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              onMouseLeave={e => { if (!isDraggingPanel.current) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
               <div style={{
                 position: "absolute", top: "50%", left: "50%",
