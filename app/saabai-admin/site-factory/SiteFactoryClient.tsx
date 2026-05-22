@@ -138,6 +138,48 @@ export default function SiteFactoryClient() {
   const [iframeKey, setIframeKey] = useState(0);
   const [versionIdx, setVersionIdx] = useState(-1);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarPx, setSidebarPx] = useState(320);
+  const sidebarPxRef = useRef(320);
+  const isDraggingPanel = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartW = useRef(320);
+
+  // Initialise sidebar width from localStorage after mount
+  useEffect(() => {
+    const stored = parseInt(typeof window !== "undefined" ? (localStorage.getItem("sf_sidebar_w") || "320") : "320", 10);
+    const clamped = Math.min(750, Math.max(280, stored));
+    setSidebarPx(clamped);
+    sidebarPxRef.current = clamped;
+  }, []);
+
+  // Global mouse/touch handlers for panel drag
+  useEffect(() => {
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDraggingPanel.current) return;
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const delta = clientX - dragStartX.current;
+      const newW = Math.min(750, Math.max(280, dragStartW.current + delta));
+      sidebarPxRef.current = newW;
+      setSidebarPx(newW);
+    };
+    const onUp = () => {
+      if (!isDraggingPanel.current) return;
+      isDraggingPanel.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      localStorage.setItem("sf_sidebar_w", String(sidebarPxRef.current));
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onUp);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onUp);
+    };
+  }, []);
 
   // Upload + drag state
   const [pendingImage, setPendingImage] = useState<{ url: string; name: string } | null>(null);
@@ -859,7 +901,7 @@ export default function SiteFactoryClient() {
     const canUndo = versions.current.length > 1 && (versionIdx === -1 ? versions.current.length - 1 : versionIdx) > 0;
     const liveUrl = `https://www.saabai.ai/sites/${activeSite.slug}/`;
 
-    const sidebarWidth = isMobile ? "100%" : "320px";
+    const sidebarWidth = isMobile ? "100%" : `${sidebarPx}px`;
 
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif", overflow: "hidden" }}>
@@ -1423,6 +1465,40 @@ export default function SiteFactoryClient() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* ── Drag handle ──────────────────────────────────────── */}
+          {!isMobile && sidebarOpen && (
+            <div
+              onMouseDown={e => {
+                isDraggingPanel.current = true;
+                dragStartX.current = e.clientX;
+                dragStartW.current = sidebarPxRef.current;
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+                e.preventDefault();
+              }}
+              onTouchStart={e => {
+                isDraggingPanel.current = true;
+                dragStartX.current = e.touches[0].clientX;
+                dragStartW.current = sidebarPxRef.current;
+              }}
+              title="Drag to resize panel"
+              style={{
+                width: 6, flexShrink: 0, cursor: "col-resize", background: "transparent",
+                position: "relative", zIndex: 10, transition: "background 0.15s",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(201,162,39,0.35)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              <div style={{
+                position: "absolute", top: "50%", left: "50%",
+                transform: "translate(-50%,-50%)",
+                display: "flex", flexDirection: "column", gap: 3, pointerEvents: "none",
+              }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(255,255,255,0.25)" }} />)}
+              </div>
             </div>
           )}
 
