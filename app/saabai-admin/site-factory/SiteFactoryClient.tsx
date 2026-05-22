@@ -500,9 +500,10 @@ export default function SiteFactoryClient() {
     if (previewTimerRef.current) { clearInterval(previewTimerRef.current); previewTimerRef.current = null; }
   }, []);
 
-  async function injectChatbot() {
+  async function injectChatbot(overrideAvatarUrl?: string) {
     if (!activeSite) return;
     setInjectingBot(true);
+    const resolvedAvatarUrl = overrideAvatarUrl !== undefined ? overrideAvatarUrl : botSetupAvatarUrl;
     try {
       const res = await fetch("/api/site-factory/inject-chatbot", {
         method: "POST",
@@ -512,7 +513,7 @@ export default function SiteFactoryClient() {
           botName: botSetupName || undefined,
           greeting: botSetupGreeting || undefined,
           personality: botSetupPersonality || undefined,
-          avatarUrl: botSetupAvatarUrl || undefined,
+          avatarUrl: resolvedAvatarUrl || undefined,
         }),
       });
       const data = await res.json();
@@ -523,13 +524,13 @@ export default function SiteFactoryClient() {
         setPreviewHtml(html);
         setIframeKey(k => k + 1);
         // Update local site state so Bot panel stays populated on next open
-        setActiveSite(prev => prev ? { ...prev, chatbot: { enabled: true, name: data.botName, greeting: botSetupGreeting, avatarUrl: botSetupAvatarUrl || undefined } } : prev);
+        setActiveSite(prev => prev ? { ...prev, chatbot: { enabled: true, name: data.botName, greeting: botSetupGreeting, avatarUrl: resolvedAvatarUrl || undefined } } : prev);
         setActivePanel("chat");
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: `${data.botName} chatbot deployed to ${activeSite.name}.${botSetupAvatarUrl ? " Avatar saved." : ""}`,
+          content: `${data.botName} chatbot deployed to ${activeSite.name}.${resolvedAvatarUrl ? " Avatar saved." : ""}`,
           ts: Date.now(),
-          ...(botSetupAvatarUrl ? { imageUrl: botSetupAvatarUrl } : {}),
+          ...(resolvedAvatarUrl ? { imageUrl: resolvedAvatarUrl } : {}),
         }]);
       } else {
         alert("Failed: " + (data.error || "unknown error"));
@@ -673,6 +674,8 @@ export default function SiteFactoryClient() {
       const data = await res.json();
       if (data.url) {
         setBotSetupAvatarUrl(data.url);
+        // Re-inject immediately so the live site reflects the new avatar
+        await injectChatbot(data.url);
       } else {
         alert("Upload failed: " + (data.error || "unknown"));
       }
@@ -1069,7 +1072,7 @@ export default function SiteFactoryClient() {
                       <textarea value={botSetupPersonality} onChange={e => setBotSetupPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, expert in Thai massage, knows all services and pricing, encourages bookings..." rows={3} style={inp({ fontSize: 12, padding: "7px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
                     </div>
                     <button
-                      onClick={injectChatbot}
+                      onClick={() => injectChatbot()}
                       disabled={injectingBot}
                       style={{ width: "100%", padding: "10px", borderRadius: 7, border: "none", background: injectingBot ? C.border : `linear-gradient(135deg, ${C.gold}, #a8841f)`, color: injectingBot ? C.textMuted : "#000", fontSize: 13, fontWeight: 700, cursor: injectingBot ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                     >
