@@ -163,6 +163,10 @@ export default function SiteFactoryClient() {
 
   // Sidebar active panel (tabs)
   const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews">("chat");
+  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews") {
+    setActivePanel(panel);
+    if (panel === "image" && activeSite) loadGallery(activeSite.slug);
+  }
 
   // Inject chatbot into existing site
   const [injectingBot, setInjectingBot] = useState(false);
@@ -178,6 +182,8 @@ export default function SiteFactoryClient() {
   const [imgStyle, setImgStyle] = useState<"photo" | "illustration" | "abstract">("photo");
   const [generatingImg, setGeneratingImg] = useState(false);
   const [generatedImgs, setGeneratedImgs] = useState<Array<{ url: string; prompt: string }>>([]);
+  const [galleryImgs, setGalleryImgs] = useState<Array<{ url: string; ts: number; prompt?: string }>>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
 
   // Reviews state
   const [reviewsUrl, setReviewsUrl] = useState("");
@@ -275,7 +281,10 @@ export default function SiteFactoryClient() {
     versions.current = [];
     setVersionIdx(-1);
     setPendingImage(null);
+    setGalleryImgs([]);
+    setGeneratedImgs([]);
     fetchDomains(site.slug);
+    loadGallery(site.slug);
     // Pre-populate Bot panel with existing chatbot config
     if (site.chatbot) {
       setBotSetupName(site.chatbot.name || "");
@@ -556,13 +565,34 @@ export default function SiteFactoryClient() {
       });
       const data = await res.json().catch(() => ({ error: res.status === 504 ? "Generation timed out — try a simpler prompt or try again" : `Server error ${res.status}` }));
       if (data.ok && data.url) {
-        setGeneratedImgs(prev => [{ url: data.url, prompt: imgPrompt.trim() }, ...prev.slice(0, 5)]);
+        const newImg = { url: data.url, prompt: imgPrompt.trim(), ts: Date.now() };
+        setGeneratedImgs(prev => [{ url: data.url, prompt: imgPrompt.trim() }, ...prev.slice(0, 19)]);
+        setGalleryImgs(prev => [newImg, ...prev]);
         setImgPrompt("");
       } else {
         alert(data.error || "Image generation failed");
       }
     } catch (e) { alert(String(e)); }
     setGeneratingImg(false);
+  }
+
+  async function loadGallery(slug: string) {
+    setGalleryLoading(true);
+    try {
+      const res = await fetch(`/api/site-factory/images?slug=${encodeURIComponent(slug)}`);
+      const data = await res.json();
+      if (data.ok) {
+        // Merge blob images with session prompt data where available
+        setGalleryImgs(prev => {
+          const sessionMap = new Map(prev.map(img => [img.url, img.prompt]));
+          return (data.images as Array<{ url: string; ts: number }>).map(img => ({
+            ...img,
+            prompt: sessionMap.get(img.url),
+          }));
+        });
+      }
+    } catch { /* non-fatal */ }
+    setGalleryLoading(false);
   }
 
   async function generateBotAvatar() {
@@ -847,7 +877,7 @@ export default function SiteFactoryClient() {
           )}
 
           {!isMobile && <button onClick={canUndo ? undoLast : undefined} disabled={!canUndo} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: canUndo ? C.textDim : C.textMuted, fontSize: 12, cursor: canUndo ? "pointer" : "default" }}>Undo</button>}
-          {!isMobile && <button onClick={() => { setActivePanel("image"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "image" && sidebarOpen ? "#a855f7" : C.border2}`, background: activePanel === "image" && sidebarOpen ? "rgba(168,85,247,0.1)" : "none", color: activePanel === "image" && sidebarOpen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
+          {!isMobile && <button onClick={() => { switchPanel("image"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "image" && sidebarOpen ? "#a855f7" : C.border2}`, background: activePanel === "image" && sidebarOpen ? "rgba(168,85,247,0.1)" : "none", color: activePanel === "image" && sidebarOpen ? "#a855f7" : C.textDim, fontSize: 12, cursor: "pointer" }}>🎨 Image</button>}
           {!isMobile && <button onClick={() => { setActivePanel("bot"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "bot" && sidebarOpen ? C.gold : C.border2}`, background: activePanel === "bot" && sidebarOpen ? C.goldBg : "none", color: activePanel === "bot" && sidebarOpen ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>🤖 Bot</button>}
           {!isMobile && <button onClick={() => { setActivePanel("dns"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "dns" && sidebarOpen ? C.teal : C.border2}`, background: activePanel === "dns" && sidebarOpen ? C.tealBg : "none", color: activePanel === "dns" && sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           {!isMobile && <button onClick={() => { setActivePanel("reviews"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "reviews" && sidebarOpen ? "#f97316" : C.border2}`, background: activePanel === "reviews" && sidebarOpen ? "rgba(249,115,22,0.1)" : "none", color: activePanel === "reviews" && sidebarOpen ? "#f97316" : C.textDim, fontSize: 12, cursor: "pointer" }}>★ Reviews</button>}
@@ -895,7 +925,7 @@ export default function SiteFactoryClient() {
                 ] as const).map(tab => (
                   <button
                     key={tab.id}
-                    onClick={() => setActivePanel(tab.id)}
+                    onClick={() => switchPanel(tab.id)}
                     style={{
                       flex: 1, padding: "11px 0 9px", background: "none", border: "none",
                       borderBottom: `2px solid ${activePanel === tab.id ? tab.accent : "transparent"}`,
@@ -949,82 +979,112 @@ export default function SiteFactoryClient() {
 
               {/* ── Panel: Image ─────────────────────────────────── */}
               {activePanel === "image" && (
-                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {/* Header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#a855f7" }}>AI Image Generator</span>
                     <span style={{ fontSize: 10, color: C.textMuted, background: C.surface, border: `1px solid ${C.border2}`, padding: "1px 7px", borderRadius: 20 }}>GPT-Image · HD</span>
+                    {isEditing && (
+                      <span style={{ marginLeft: "auto", fontSize: 10, color: C.teal, display: "flex", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", border: `1.5px solid ${C.teal}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+                        Applying…
+                      </span>
+                    )}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <textarea
-                      value={imgPrompt}
-                      onChange={e => setImgPrompt(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generateSiteImage(); } }}
-                      placeholder={`e.g. "${activeSite.name} therapist treating a client in a peaceful green spa room"`}
-                      rows={3}
-                      style={inp({ fontSize: 12, padding: "8px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })}
-                    />
-                    <div>
-                      <p style={{ margin: "0 0 5px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Size</p>
-                      <div style={{ display: "flex", gap: 4 }}>
+
+                  {/* Prompt input */}
+                  <textarea
+                    value={imgPrompt}
+                    onChange={e => setImgPrompt(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); generateSiteImage(); } }}
+                    placeholder={`e.g. "${activeSite.name} team working in a modern office"`}
+                    rows={3}
+                    style={inp({ fontSize: 12, padding: "8px 10px", resize: "none", fontFamily: "inherit", lineHeight: 1.5 })}
+                  />
+
+                  {/* Size + Style selectors */}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Size</p>
+                      <div style={{ display: "flex", gap: 3 }}>
                         {(["landscape", "portrait", "square"] as const).map(s => (
-                          <button key={s} onClick={() => setImgSize(s)} style={{ flex: 1, padding: "6px 0", borderRadius: 5, border: `1px solid ${imgSize === s ? "#a855f7" : C.border2}`, background: imgSize === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgSize === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgSize === s ? 600 : 400 }}>
-                            {s === "landscape" ? "⬛ Wide" : s === "portrait" ? "▬ Tall" : "◼ Square"}
+                          <button key={s} onClick={() => setImgSize(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgSize === s ? "#a855f7" : C.border2}`, background: imgSize === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgSize === s ? "#a855f7" : C.textDim, fontSize: 9, cursor: "pointer", fontWeight: imgSize === s ? 600 : 400 }}>
+                            {s === "landscape" ? "⬛ Wide" : s === "portrait" ? "▬ Tall" : "◼ Sq"}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <p style={{ margin: "0 0 5px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Style</p>
-                      <div style={{ display: "flex", gap: 4 }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Style</p>
+                      <div style={{ display: "flex", gap: 3 }}>
                         {(["photo", "illustration", "abstract"] as const).map(s => (
-                          <button key={s} onClick={() => setImgStyle(s)} style={{ flex: 1, padding: "6px 0", borderRadius: 5, border: `1px solid ${imgStyle === s ? "#a855f7" : C.border2}`, background: imgStyle === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgStyle === s ? "#a855f7" : C.textDim, fontSize: 10, cursor: "pointer", fontWeight: imgStyle === s ? 600 : 400, textTransform: "capitalize" }}>
+                          <button key={s} onClick={() => setImgStyle(s)} style={{ flex: 1, padding: "5px 0", borderRadius: 5, border: `1px solid ${imgStyle === s ? "#a855f7" : C.border2}`, background: imgStyle === s ? "rgba(168,85,247,0.12)" : C.bg, color: imgStyle === s ? "#a855f7" : C.textDim, fontSize: 9, cursor: "pointer", fontWeight: imgStyle === s ? 600 : 400, textTransform: "capitalize" }}>
                             {s}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <button
-                      onClick={generateSiteImage}
-                      disabled={!imgPrompt.trim() || generatingImg}
-                      style={{ width: "100%", padding: "10px", borderRadius: 6, border: "none", background: !imgPrompt.trim() || generatingImg ? C.border : "#a855f7", color: !imgPrompt.trim() || generatingImg ? C.textMuted : "#fff", fontSize: 13, fontWeight: 600, cursor: !imgPrompt.trim() || generatingImg ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                    >
-                      {generatingImg
-                        ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
-                        : "Generate image"}
-                    </button>
-                    {generatedImgs.length > 0 && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
-                        <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Generated — insert into site</p>
-                        {generatedImgs.map((img, i) => (
-                          <div key={i} style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border2}` }}>
-                            <img src={img.url} alt={img.prompt} style={{ width: "100%", display: "block", maxHeight: 120, objectFit: "cover" }} />
-                            <div style={{ padding: "7px 8px", background: C.bg, display: "flex", flexDirection: "column", gap: 5 }}>
-                              <p style={{ margin: 0, fontSize: 10, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{img.prompt}</p>
-                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  </div>
+
+                  {/* Generate button */}
+                  <button
+                    onClick={generateSiteImage}
+                    disabled={!imgPrompt.trim() || generatingImg}
+                    style={{ width: "100%", padding: "10px", borderRadius: 6, border: "none", background: !imgPrompt.trim() || generatingImg ? C.border : "#a855f7", color: !imgPrompt.trim() || generatingImg ? C.textMuted : "#fff", fontSize: 13, fontWeight: 600, cursor: !imgPrompt.trim() || generatingImg ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                  >
+                    {generatingImg
+                      ? <><div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} /> Generating (~15s)…</>
+                      : "Generate image"}
+                  </button>
+
+                  {/* Gallery */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        Gallery {galleryImgs.length > 0 ? `· ${galleryImgs.length}` : ""}
+                      </p>
+                      {galleryLoading && <div style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.textMuted}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />}
+                    </div>
+
+                    {galleryImgs.length === 0 && !galleryLoading && (
+                      <p style={{ margin: 0, fontSize: 11, color: C.textMuted, textAlign: "center", padding: "24px 0" }}>No images yet — generate one above</p>
+                    )}
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                      {galleryImgs.map((img, i) => {
+                        const sessionMatch = generatedImgs.find(g => g.url === img.url);
+                        const prompt = sessionMatch?.prompt || img.prompt || "";
+                        return (
+                          <div key={i} style={{ borderRadius: 7, overflow: "hidden", border: `1px solid ${C.border2}`, background: C.bg, display: "flex", flexDirection: "column" }}>
+                            <div style={{ position: "relative", aspectRatio: "4/3", overflow: "hidden" }}>
+                              <img src={img.url} alt={prompt} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                              {/* Hover overlay with quick insert actions */}
+                              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 5, gap: 3, opacity: 0, transition: "opacity 0.15s" }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.55)"; (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0)"; (e.currentTarget as HTMLElement).style.opacity = "0"; }}
+                              >
                                 {[
-                                  { label: "Hero bg", instruction: `Replace the hero section background image with this image: ${img.url}` },
-                                  { label: "About section", instruction: `Add this image to the about section: ${img.url}` },
-                                  { label: "Gallery", instruction: `Add this image to a gallery or images section: ${img.url}` },
+                                  { label: "Hero bg", instruction: `Set this as the hero section background image. Use this exact URL as the src: ${img.url}` },
+                                  { label: "About", instruction: `Add this image to the about section. Use this exact URL as the src: ${img.url}` },
                                 ].map(opt => (
                                   <button key={opt.label}
-                                    onClick={() => { sendEdit(opt.instruction); setActivePanel("chat"); }}
-                                    style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#a855f7"; (e.currentTarget as HTMLElement).style.color = "#a855f7"; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                                    onClick={() => sendEdit(opt.instruction)}
+                                    style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(255,255,255,0.92)", color: "#111", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
                                   >{opt.label}</button>
                                 ))}
                                 <button
-                                  onClick={() => { setPendingImage({ url: img.url, name: img.prompt.slice(0, 40) }); setActivePanel("chat"); }}
-                                  style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", fontWeight: 500 }}
-                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
-                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
-                                >Custom →</button>
+                                  onClick={() => { setPendingImage({ url: img.url, name: (prompt || "image").slice(0, 40) }); switchPanel("chat"); }}
+                                  style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(168,85,247,0.9)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
+                                >Custom use →</button>
                               </div>
                             </div>
+                            {prompt && (
+                              <p style={{ margin: 0, padding: "4px 6px", fontSize: 9, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.4 }}>{prompt}</p>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
