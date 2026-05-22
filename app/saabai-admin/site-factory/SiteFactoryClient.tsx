@@ -576,6 +576,34 @@ export default function SiteFactoryClient() {
     setGeneratingImg(false);
   }
 
+  async function setHeroImage(imageUrl: string) {
+    if (!activeSite || isEditing) return;
+    setIsEditing(true);
+    setMessages(prev => [...prev, { role: "user", content: "Set this as the hero background image.", ts: Date.now() }]);
+    try {
+      const res = await fetch("/api/site-factory/set-hero-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug, imageUrl }),
+      });
+      const data = await res.json();
+      if (data.ok && data.html) {
+        versions.current = [...versions.current, data.html];
+        setVersionIdx(-1);
+        setPreviewHtml(data.html);
+        setIframeKey(k => k + 1);
+        setMessages(prev => [...prev, { role: "assistant", content: "Hero background swapped. You can see it in the preview.", ts: Date.now() }]);
+        switchPanel("chat");
+      } else {
+        const errMsg = data.error || "Could not replace hero image";
+        setMessages(prev => [...prev, { role: "assistant", content: `Could not update hero: ${errMsg}`, ts: Date.now() }]);
+      }
+    } catch (e) {
+      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${String(e)}`, ts: Date.now() }]);
+    }
+    setIsEditing(false);
+  }
+
   async function loadGallery(slug: string) {
     setGalleryLoading(true);
     try {
@@ -1063,15 +1091,14 @@ export default function SiteFactoryClient() {
                                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.55)"; (e.currentTarget as HTMLElement).style.opacity = "1"; }}
                                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0)"; (e.currentTarget as HTMLElement).style.opacity = "0"; }}
                               >
-                                {[
-                                  { label: "Hero bg", instruction: `Set this as the hero section background image. Use this exact URL as the src: ${img.url}` },
-                                  { label: "About", instruction: `Add this image to the about section. Use this exact URL as the src: ${img.url}` },
-                                ].map(opt => (
-                                  <button key={opt.label}
-                                    onClick={() => sendEdit(opt.instruction)}
-                                    style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(255,255,255,0.92)", color: "#111", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
-                                  >{opt.label}</button>
-                                ))}
+                                <button
+                                  onClick={() => setHeroImage(img.url)}
+                                  style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(255,255,255,0.92)", color: "#111", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
+                                >Hero bg</button>
+                                <button
+                                  onClick={() => sendEdit(`Add this image to the about section. Use this exact URL as the src: ${img.url}`)}
+                                  style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(255,255,255,0.92)", color: "#111", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
+                                >About</button>
                                 <button
                                   onClick={() => { setPendingImage({ url: img.url, name: (prompt || "image").slice(0, 40) }); switchPanel("chat"); }}
                                   style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(168,85,247,0.9)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
