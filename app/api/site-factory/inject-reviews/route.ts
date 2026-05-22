@@ -155,8 +155,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "reviews array required" }, { status: 400 });
     }
 
-    const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
-    const blob = blobs.find(b => b.pathname === `sites/${slug}/index.html`);
+    const { blobs } = await list({ prefix: `sites/${slug}/` });
+    const draftBlob = blobs.find(b => b.pathname === `sites/${slug}/draft.html`);
+    const liveBlob  = blobs.find(b => b.pathname === `sites/${slug}/index.html`);
+    const blob = draftBlob ?? liveBlob;
     if (!blob) return Response.json({ error: "Site not found" }, { status: 404 });
 
     const htmlRes = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
@@ -212,7 +214,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await put(`sites/${slug}/index.html`, html, {
+    await put(`sites/${slug}/draft.html`, html, {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,

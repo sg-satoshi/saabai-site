@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
 
-/**
- * Saabai Client Portal proxy (Next.js 16+).
- *
- * NOTE: proxyConfig matcher alone is not sufficient — always guard explicitly
- * inside the function so static assets, login, and API routes are never blocked.
- */
+const redis = Redis.fromEnv();
 
 const PROTECTED = ["/rex-dashboard", "/rex-analytics", "/rex-changelog", "/saabai-admin"];
 
@@ -26,13 +22,32 @@ async function isAuthenticated(req: NextRequest): Promise<boolean> {
 }
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const host = req.headers.get("host") || "";
+  const hostname = host.split(":")[0];
 
-  // Always pass through: static assets, login page, auth routes, everything else
+  // Custom domain routing — rewrite to /sites/${slug}
+  if (
+    hostname !== "saabai.ai" &&
+    !hostname.endsWith(".saabai.ai") &&
+    !hostname.endsWith(".vercel.app") &&
+    hostname !== "localhost" &&
+    !hostname.startsWith("127.")
+  ) {
+    const lookupHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+    const slug = await redis.hget<string>("saabai:domain-map", lookupHost);
+    if (slug) {
+      const url = req.nextUrl.clone();
+      const pathname = url.pathname;
+      url.pathname = pathname === "/" || pathname === "" ? `/sites/${slug}` : `/sites/${slug}${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
+  // Auth protection for admin/dashboard routes
+  const { pathname } = req.nextUrl;
   const isProtected = PROTECTED.some(p => pathname === p || pathname.startsWith(p + "/"));
   if (!isProtected) return NextResponse.next();
 
-  // Check authentication for protected routes only
   const authed = await isAuthenticated(req);
   if (authed) return NextResponse.next();
 
@@ -42,10 +57,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const proxyConfig = {
-  matcher: [
-    "/rex-dashboard/:path*",
-    "/rex-analytics/:path*",
-    "/rex-changelog/:path*",
-    "/saabai-admin/:path*",
-  ],
+  matcher: ["/((?!_next/|_static/|_vercel|favicon.ico).*)"],
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 interface Site {
   id: string;
@@ -127,6 +127,10 @@ export default function SiteFactoryClient() {
     toastTimer.current = setTimeout(() => setToast(null), 3500);
   }
 
+  // Draft/publish state
+  const [hasDraft, setHasDraft] = useState(false);
+  const [unpublishedCount, setUnpublishedCount] = useState(0);
+
   // Editor state
   const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -192,6 +196,7 @@ export default function SiteFactoryClient() {
   const [newDomain, setNewDomain] = useState("");
   const [dnsLoading, setDnsLoading] = useState(false);
   const [dnsResult, setDnsResult] = useState<{ ok: boolean; domain: string; instructions: { type: string; name: string; value: string; note: string }[]; vercelConnected: boolean; vercelError?: string } | null>(null);
+  const [dnsCheckResults, setDnsCheckResults] = useState<Record<string, { live: boolean; checking: boolean }>>({});
 
   // Generation state
   const [businessName, setBusinessName] = useState("");
@@ -248,6 +253,7 @@ export default function SiteFactoryClient() {
   const [injectingReviews, setInjectingReviews] = useState(false);
   const reviewsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const liveHtmlRef = useRef("");
@@ -256,6 +262,41 @@ export default function SiteFactoryClient() {
   const previewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const versions = useRef<string[]>([]);
+
+  const SECTION_LABELS: Record<string, string> = {
+    hero: "Hero", header: "Header", about: "About", services: "Services",
+    "our-services": "Services", contact: "Contact", footer: "Footer",
+    testimonials: "Reviews", reviews: "Reviews", gallery: "Gallery",
+    team: "Team", pricing: "Pricing", faq: "FAQ", blog: "Blog",
+    portfolio: "Portfolio", features: "Features", clients: "Clients",
+  };
+
+  // Parse section jump targets from the preview HTML
+  const sections = useMemo(() => {
+    if (!previewHtml) return [];
+    const matches = [...previewHtml.matchAll(/<(?:section|nav|header|footer|main|div)[^>]+(?:id=["']([^"']+)["']|class=["']([^"']+)["'])[^>]*>/gi)];
+    const seen = new Set<string>();
+    const result: Array<{ selector: string; label: string }> = [];
+    for (const m of matches) {
+      const id = m[1];
+      const cls = m[2]?.split(/\s+/)[0];
+      const key = id || cls || "";
+      if (!key || seen.has(key) || key.length > 40) continue;
+      seen.add(key);
+      const selector = id ? `#${id}` : `.${cls}`;
+      const label = SECTION_LABELS[key.toLowerCase()] ||
+        (key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, " ").slice(0, 14));
+      result.push({ selector, label });
+      if (result.length >= 8) break;
+    }
+    return result;
+  }, [previewHtml]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function scrollToSection(selector: string) {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.querySelector(selector)?.scrollIntoView({ behavior: "smooth" });
+  }
 
   useEffect(() => {
     fetchSites();
@@ -332,6 +373,8 @@ export default function SiteFactoryClient() {
     versions.current = [];
     setVersionIdx(-1);
     setPendingImage(null);
+    setHasDraft(false);
+    setUnpublishedCount(0);
     setGalleryImgs([]);
     setGeneratedImgs([]);
     fetchDomains(site.slug);
@@ -359,9 +402,12 @@ export default function SiteFactoryClient() {
       .then(d => { if (d.ok && d.reviews) applyReviews(d.reviews); })
       .catch(() => { /* stay with localStorage data */ });
 
-    fetch(`/sites/${site.slug}`)
-      .then(r => r.text())
-      .then(html => { setPreviewHtml(html); versions.current = [html]; })
+    fetch(`/api/site-factory/load-draft?slug=${site.slug}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.html) { setPreviewHtml(d.html); versions.current = [d.html]; }
+        setHasDraft(!!d.hasDraft);
+      })
       .catch(() => {});
 
     setPhase("editing");
@@ -488,6 +534,8 @@ export default function SiteFactoryClient() {
         setVersionIdx(-1);
         setPreviewHtml(newHtml);
         setIframeKey(k => k + 1);
+        setHasDraft(true);
+        setUnpublishedCount(c => c + 1);
       }
 
       // Finalise the assistant message
@@ -507,9 +555,11 @@ export default function SiteFactoryClient() {
 
       if (isMobile && newHtml) setSidebarOpen(false);
 
-      // Fetch suggestion chips in the background (only if changes were made)
-      if (newHtml) {
+      // Fetch suggestion chips after every response
+      {
         const capturedHtml = newHtml;
+        const slugForSugg = activeSite.slug;
+        const msgTs = assistantMsg.ts;
         fetch("/api/site-factory/suggest", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -519,9 +569,12 @@ export default function SiteFactoryClient() {
           setMessages(prev => {
             const updated = [...prev];
             const last = updated[updated.length - 1];
-            if (last?.htmlSnapshot === capturedHtml) {
+            const isMatch = capturedHtml
+              ? last?.htmlSnapshot === capturedHtml
+              : last?.role === "assistant" && last?.ts === msgTs;
+            if (isMatch) {
               updated[updated.length - 1] = { ...last, suggestions };
-              storeMsgs(activeSite.slug, updated);
+              storeMsgs(slugForSugg, updated);
             }
             return updated;
           });
@@ -578,11 +631,13 @@ export default function SiteFactoryClient() {
       });
       const data = await res.json();
       if (data.ok) {
-        // Reload preview
-        const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
-        const html = await htmlRes.text();
+        // Reload preview from draft
+        const loadRes = await fetch(`/api/site-factory/load-draft?slug=${activeSite.slug}`);
+        const { html } = await loadRes.json();
         setPreviewHtml(html);
         setIframeKey(k => k + 1);
+        setHasDraft(true);
+        setUnpublishedCount(c => c + 1);
         // Update local site state so Bot panel stays populated on next open
         setActiveSite(prev => prev ? { ...prev, chatbot: { enabled: true, name: data.botName, greeting: botSetupGreeting, avatarUrl: resolvedAvatarUrl || undefined } } : prev);
         setActivePanel("chat");
@@ -642,6 +697,8 @@ export default function SiteFactoryClient() {
         setVersionIdx(-1);
         setPreviewHtml(data.html);
         setIframeKey(k => k + 1);
+        setHasDraft(true);
+        setUnpublishedCount(c => c + 1);
         showToast("Image replaced successfully");
       } else {
         showToast(data.error || "Could not replace hero image", "error");
@@ -754,6 +811,8 @@ export default function SiteFactoryClient() {
             setVersionIdx(-1);
             setPreviewHtml(newHtml);
             setIframeKey(k => k + 1);
+            setHasDraft(true);
+            setUnpublishedCount(c => c + 1);
           } catch { /* fallback — preview will be stale but blob is updated */ }
         }
         setActivePanel("chat");
@@ -860,6 +919,63 @@ export default function SiteFactoryClient() {
     if (!activeSite) return;
     await fetch("/api/site-factory/domain", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: activeSite.slug, domain }) });
     setDomains(prev => prev.filter(d => d !== domain));
+    setDnsCheckResults(prev => { const n = { ...prev }; delete n[domain]; return n; });
+  }
+
+  async function checkDns(domain: string) {
+    setDnsCheckResults(prev => ({ ...prev, [domain]: { live: false, checking: true } }));
+    try {
+      const res = await fetch(`/api/site-factory/domain-check?domain=${encodeURIComponent(domain)}`);
+      const data = await res.json();
+      setDnsCheckResults(prev => ({ ...prev, [domain]: { live: data.live, checking: false } }));
+    } catch {
+      setDnsCheckResults(prev => ({ ...prev, [domain]: { live: false, checking: false } }));
+    }
+  }
+
+  function copyText(text: string, label: string) {
+    navigator.clipboard.writeText(text).then(() => showToast(`Copied ${label}`));
+  }
+
+  async function publishDraft() {
+    if (!activeSite || !hasDraft) return;
+    try {
+      const res = await fetch("/api/site-factory/publish-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setHasDraft(false);
+        setUnpublishedCount(0);
+        showToast("Changes published live");
+      } else {
+        showToast(data.error || "Publish failed", "error");
+      }
+    } catch (e) { showToast(String(e), "error"); }
+  }
+
+  async function discardDraft() {
+    if (!activeSite || !hasDraft) return;
+    try {
+      const res = await fetch("/api/site-factory/discard-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const loadRes = await fetch(`/api/site-factory/load-draft?slug=${activeSite.slug}`);
+        const d = await loadRes.json();
+        if (d.html) { setPreviewHtml(d.html); versions.current = [d.html]; setVersionIdx(-1); setIframeKey(k => k + 1); }
+        setHasDraft(false);
+        setUnpublishedCount(0);
+        showToast("Draft discarded — reverted to live");
+      } else {
+        showToast(data.error || "Discard failed", "error");
+      }
+    } catch (e) { showToast(String(e), "error"); }
   }
 
   const inp = (extra: React.CSSProperties = {}): React.CSSProperties => ({
@@ -930,6 +1046,24 @@ export default function SiteFactoryClient() {
             <span style={{ fontWeight: 600, fontSize: isMobile ? 13 : 14 }}>{activeSite.name}</span>
             {!isMobile && <span style={{ fontSize: 11, color: C.textDim, marginLeft: 8, fontFamily: "monospace" }}>/sites/{activeSite.slug}/</span>}
           </div>
+
+          {/* Draft indicator + publish/discard */}
+          {hasDraft && (
+            <>
+              <button
+                onClick={publishDraft}
+                style={{ padding: isMobile ? "6px 12px" : "5px 14px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
+                title="Publish all draft changes to live site"
+              >
+                ↑ Publish{unpublishedCount > 0 ? ` (${unpublishedCount})` : ""}
+              </button>
+              <button
+                onClick={discardDraft}
+                style={{ padding: isMobile ? "5px 8px" : "4px 8px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textMuted, fontSize: 11, cursor: "pointer", flexShrink: 0 }}
+                title="Discard all unpublished changes"
+              >Discard</button>
+            </>
+          )}
 
           {/* Panel toggle */}
           <button
@@ -1016,40 +1150,137 @@ export default function SiteFactoryClient() {
 
               {/* ── Panel: DNS ──────────────────────────────────── */}
               {activePanel === "dns" && (
-                <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-                  <p style={{ margin: "0 0 4px", fontSize: 12, fontWeight: 700, color: C.teal }}>Custom Domain</p>
-                  <p style={{ margin: "0 0 12px", fontSize: 11, color: C.textDim }}>Current: <span style={{ fontFamily: "monospace", color: C.text }}>{liveUrl}</span></p>
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 14 }}>
+
+                  {/* Current URL */}
+                  <div>
+                    <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Current URL</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 10px", background: C.bg, borderRadius: 6, border: `1px solid ${C.border}` }}>
+                      <span style={{ fontSize: 11, fontFamily: "monospace", color: C.textDim, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{liveUrl}</span>
+                      <button onClick={() => copyText(liveUrl, "URL")} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 12, padding: "0 2px", flexShrink: 0 }} title="Copy">⎘</button>
+                    </div>
+                  </div>
+
+                  {/* Saved domains with check status */}
                   {domains.length > 0 && (
-                    <div style={{ marginBottom: 10 }}>
-                      {domains.map(d => (
-                        <div key={d} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", background: C.bg, borderRadius: 5, marginBottom: 4 }}>
-                          <span style={{ fontSize: 12, fontFamily: "monospace", color: C.teal }}>{d}</span>
-                          <button onClick={() => removeDomain(d)} style={{ background: "none", border: "none", color: C.textDim, cursor: "pointer", fontSize: 14, lineHeight: 1 }}>×</button>
+                    <div>
+                      <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Custom Domains</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                        {domains.map(d => {
+                          const check = dnsCheckResults[d];
+                          return (
+                            <div key={d} style={{ padding: "7px 10px", background: C.bg, borderRadius: 6, border: `1px solid ${check?.live ? "rgba(15,157,142,0.4)" : C.border}` }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontSize: 12, fontFamily: "monospace", color: C.teal, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{d}</span>
+                                {check?.live && <span style={{ fontSize: 10, color: C.teal, fontWeight: 700 }}>● Live</span>}
+                                {check && !check.live && !check.checking && <span style={{ fontSize: 10, color: C.gold, fontWeight: 600 }}>⧗ Pending DNS</span>}
+                                <button
+                                  onClick={() => checkDns(d)}
+                                  disabled={check?.checking}
+                                  style={{ padding: "3px 8px", borderRadius: 4, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: check?.checking ? "not-allowed" : "pointer", flexShrink: 0 }}
+                                >
+                                  {check?.checking ? "..." : "Check"}
+                                </button>
+                                <button onClick={() => removeDomain(d)} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "0 2px", flexShrink: 0 }}>×</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add domain */}
+                  <div>
+                    <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Add Custom Domain</p>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <input
+                        value={newDomain}
+                        onChange={e => setNewDomain(e.target.value)}
+                        placeholder="clientdomain.com.au"
+                        style={inp({ flex: 1, fontSize: 12, padding: "7px 10px" })}
+                        onKeyDown={e => e.key === "Enter" && addDomain()}
+                      />
+                      <button
+                        onClick={addDomain}
+                        disabled={dnsLoading || !newDomain.trim()}
+                        style={{ padding: "7px 14px", borderRadius: 6, border: "none", background: dnsLoading || !newDomain.trim() ? C.border2 : C.teal, color: dnsLoading || !newDomain.trim() ? C.textMuted : "#fff", fontSize: 12, fontWeight: 600, cursor: dnsLoading || !newDomain.trim() ? "not-allowed" : "pointer", flexShrink: 0 }}
+                      >
+                        {dnsLoading ? "..." : "Add"}
+                      </button>
+                    </div>
+                    {dnsResult && !dnsResult.ok && (
+                      <p style={{ margin: "5px 0 0", fontSize: 11, color: C.red }}>{dnsResult.vercelError || "Failed to add domain"}</p>
+                    )}
+                    {dnsResult?.ok && !dnsResult.vercelConnected && (
+                      <p style={{ margin: "5px 0 0", fontSize: 11, color: C.gold }}>Saved. Add VERCEL_ACCESS_TOKEN env var to auto-register with Vercel.</p>
+                    )}
+                    {dnsResult?.ok && dnsResult.vercelConnected && (
+                      <p style={{ margin: "5px 0 0", fontSize: 11, color: C.teal }}>Domain registered with Vercel. Now set DNS records below.</p>
+                    )}
+                  </div>
+
+                  {/* DNS records — always visible */}
+                  <div style={{ background: C.bg, borderRadius: 8, border: `1px solid ${C.border2}`, overflow: "hidden" }}>
+                    <div style={{ padding: "9px 12px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>DNS Records to Set</span>
+                      <span style={{ fontSize: 10, color: C.textMuted }}>Send these to your client</span>
+                    </div>
+                    <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                      <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.5 }}>
+                        Client logs in to their domain registrar (GoDaddy, CrazyDomains, Cloudflare, etc.) → <strong style={{ color: C.text }}>DNS Management</strong> → adds these records:
+                      </p>
+
+                      {[
+                        { type: "CNAME", name: "www", value: "cname.vercel-dns.com", use: "www.domain.com.au" },
+                        { type: "A", name: "@", value: "76.76.21.21", use: "domain.com.au (no www)" },
+                      ].map(r => (
+                        <div key={r.type} style={{ padding: "10px", background: C.surface, borderRadius: 6, border: `1px solid ${C.border}` }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: r.type === "CNAME" ? "rgba(15,157,142,0.15)" : "rgba(201,162,39,0.15)", color: r.type === "CNAME" ? C.teal : C.gold, padding: "2px 7px", borderRadius: 3 }}>{r.type}</span>
+                            <span style={{ fontSize: 10, color: C.textMuted }}>for {r.use}</span>
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                            <div>
+                              <p style={{ margin: "0 0 3px", fontSize: 9, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Name / Host</p>
+                              <code style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{r.name}</code>
+                            </div>
+                            <div>
+                              <p style={{ margin: "0 0 3px", fontSize: 9, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Value / Points to</p>
+                              <code style={{ fontSize: 11, color: C.text, wordBreak: "break-all" }}>{r.value}</code>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => copyText(r.value, `${r.type} value`)}
+                            style={{ width: "100%", padding: "6px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}
+                          >
+                            Copy {r.type} value
+                          </button>
                         </div>
                       ))}
+
+                      <div style={{ padding: "8px 10px", background: "rgba(201,162,39,0.05)", borderRadius: 6, border: `1px solid rgba(201,162,39,0.2)` }}>
+                        <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.7 }}>
+                          <strong style={{ color: C.gold }}>Which to use?</strong><br />
+                          Add <strong>CNAME</strong> → for <code style={{ fontSize: 10 }}>www.domain.com.au</code><br />
+                          Add <strong>A record</strong> → for <code style={{ fontSize: 10 }}>domain.com.au</code> (no www)<br />
+                          Add <strong>both</strong> → for either version<br />
+                          <span style={{ color: C.textMuted, fontSize: 10 }}>TTL: leave as default. Takes 5–60 mins to go live.</span>
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => copyText(
+                          `Hi,\n\nTo point your domain to your new website, please log in to wherever your domain is registered (GoDaddy, CrazyDomains, Cloudflare, etc.) and go to DNS Management.\n\nAdd the following DNS records:\n\nFor www.yourdomain.com.au:\n  Type: CNAME\n  Name: www\n  Value: cname.vercel-dns.com\n\nFor yourdomain.com.au (no www):\n  Type: A\n  Name: @ (or leave blank)\n  Value: 76.76.21.21\n\nIf you want both to work, add both records.\nLeave TTL as default. Changes take 5–60 minutes.\n\nLet me know once done and I'll confirm everything is live.`,
+                          "email template"
+                        )}
+                        style={{ width: "100%", padding: "8px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}
+                      >
+                        Copy client email template
+                      </button>
                     </div>
-                  )}
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <input value={newDomain} onChange={e => setNewDomain(e.target.value)} placeholder="clientdomain.com.au" style={inp({ flex: 1, fontSize: 12, padding: "7px 10px" })} onKeyDown={e => e.key === "Enter" && addDomain()} />
-                    <button onClick={addDomain} disabled={dnsLoading || !newDomain.trim()} style={{ padding: "7px 12px", borderRadius: 6, border: "none", background: C.teal, color: "#fff", fontSize: 12, fontWeight: 600, cursor: dnsLoading ? "not-allowed" : "pointer" }}>
-                      {dnsLoading ? "..." : "Add"}
-                    </button>
                   </div>
-                  {dnsResult && (
-                    <div style={{ marginTop: 10, padding: 10, background: C.bg, borderRadius: 6, fontSize: 11 }}>
-                      <p style={{ margin: "0 0 6px", fontWeight: 600, color: dnsResult.ok ? C.teal : C.red }}>{dnsResult.ok ? `Domain added${dnsResult.vercelConnected ? " + connected to Vercel" : " (add to Vercel manually)"}` : `Error: ${dnsResult.vercelError}`}</p>
-                      {dnsResult.ok && (
-                        <>
-                          <p style={{ margin: "0 0 4px", color: C.textDim }}>Configure at your registrar:</p>
-                          {dnsResult.instructions.map(r => (
-                            <div key={r.type + r.name} style={{ fontFamily: "monospace", marginBottom: 3, color: C.text }}>
-                              <span style={{ color: C.gold }}>{r.type}</span> {r.name} → {r.value} <span style={{ color: C.textDim }}>({r.note})</span>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  )}
+
                 </div>
               )}
 
@@ -1398,7 +1629,7 @@ export default function SiteFactoryClient() {
                           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5, alignSelf: "stretch" }}>
                             <span style={{ fontSize: 10, color: C.textMuted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Try next</span>
                             {msg.suggestions.map((s, si) => (
-                              <button key={si} onClick={() => { setInstruction(s); textareaRef.current?.focus(); }} style={{ textAlign: "left", padding: "7px 12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", lineHeight: 1.4, transition: "border-color 0.15s, color 0.15s" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}>
+                              <button key={si} onClick={() => sendEdit(s)} style={{ textAlign: "left", padding: "7px 12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", lineHeight: 1.4, transition: "border-color 0.15s, color 0.15s" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}>
                                 {s}
                               </button>
                             ))}
@@ -1504,11 +1735,30 @@ export default function SiteFactoryClient() {
 
           {/* ── Preview pane ─────────────────────────────────────── */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#1a1a2e", minWidth: 0 }}>
+
+            {/* Section jump nav */}
+            {sections.length > 0 && (
+              <div style={{ display: "flex", gap: 4, padding: "5px 8px", borderBottom: `1px solid ${C.border}`, overflowX: "auto", flexShrink: 0, scrollbarWidth: "none", background: C.surface }}>
+                {sections.map(sec => (
+                  <button
+                    key={sec.selector}
+                    onClick={() => scrollToSection(sec.selector)}
+                    style={{ padding: "3px 10px", borderRadius: 20, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 10, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 500, flexShrink: 0 }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                  >
+                    {sec.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "auto", padding: device === "desktop" ? 0 : "20px 0" }}>
               <div style={{ width: DEVICE_WIDTHS[device], height: "100%", minHeight: device !== "desktop" ? 600 : "100%", position: "relative", transition: "width 0.25s ease", flexShrink: 0, boxShadow: device !== "desktop" ? "0 8px 48px rgba(0,0,0,.6)" : "none", borderRadius: device !== "desktop" ? 12 : 0, overflow: "hidden" }}>
                 {previewHtml ? (
                   <iframe
                     key={iframeKey}
+                    ref={iframeRef}
                     srcDoc={previewHtml}
                     style={{ width: "100%", height: "100%", border: "none", display: "block" }}
                     title="Site preview"

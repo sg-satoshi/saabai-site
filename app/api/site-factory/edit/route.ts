@@ -111,9 +111,11 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "slug and instruction are required" }, { status: 400 });
     }
 
-    // Fetch current HTML
-    const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
-    const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+    // Fetch current HTML — prefer draft over live
+    const { blobs } = await list({ prefix: `sites/${slug}/` });
+    const draftBlob = blobs.find((b) => b.pathname === `sites/${slug}/draft.html`);
+    const liveBlob  = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+    const blob = draftBlob ?? liveBlob;
     if (!blob) return Response.json({ error: "Site not found in storage" }, { status: 404 });
 
     const htmlRes = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
@@ -216,7 +218,7 @@ ${minHtml}`;
                 if (!newHtml.toLowerCase().includes("<!doctype")) {
                   newHtml = `<!DOCTYPE html>\n${newHtml}`;
                 }
-                await put(`sites/${slug}/index.html`, newHtml, {
+                await put(`sites/${slug}/draft.html`, newHtml, {
                   access: "public",
                   contentType: "text/html",
                   addRandomSuffix: false,

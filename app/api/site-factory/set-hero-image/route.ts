@@ -10,8 +10,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "slug and imageUrl required" }, { status: 400 });
     }
 
-    const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
-    const blob = blobs.find(b => b.pathname === `sites/${slug}/index.html`);
+    const { blobs } = await list({ prefix: `sites/${slug}/` });
+    const draftBlob = blobs.find(b => b.pathname === `sites/${slug}/draft.html`);
+    const liveBlob  = blobs.find(b => b.pathname === `sites/${slug}/index.html`);
+    const blob = draftBlob ?? liveBlob;
     if (!blob) return Response.json({ error: "Site HTML not found" }, { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Could not find a hero background image to replace — no background-image found in site CSS" }, { status: 422 });
     }
 
-    await put(`sites/${slug}/index.html`, html, {
+    await put(`sites/${slug}/draft.html`, html, {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,

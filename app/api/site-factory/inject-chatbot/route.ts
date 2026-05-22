@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
     // Load blob HTML
     const { blobs } = await list({ prefix: `sites/${slug}/` });
-    const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+    const draftBlob = blobs.find((b) => b.pathname === `sites/${slug}/draft.html`);
+    const liveBlob  = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+    const blob = draftBlob ?? liveBlob;
     if (!blob) return Response.json({ error: "Site HTML not found in storage" }, { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
@@ -72,8 +74,8 @@ export async function POST(req: NextRequest) {
       html += `\n${widget}`;
     }
 
-    // Save updated HTML
-    await put(`sites/${slug}/index.html`, html, {
+    // Save updated HTML to draft
+    await put(`sites/${slug}/draft.html`, html, {
       access: "public",
       contentType: "text/html",
       addRandomSuffix: false,
