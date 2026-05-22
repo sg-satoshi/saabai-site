@@ -118,6 +118,15 @@ export default function SiteFactoryClient() {
   const [phase, setPhase] = useState<Phase>("list");
   const [isMobile, setIsMobile] = useState(false);
 
+  // Toast notification
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function showToast(msg: string, type: "success" | "error" = "success") {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, type });
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  }
+
   // Editor state
   const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -579,7 +588,6 @@ export default function SiteFactoryClient() {
   async function setHeroImage(imageUrl: string) {
     if (!activeSite || isEditing) return;
     setIsEditing(true);
-    setMessages(prev => [...prev, { role: "user", content: "Set this as the hero background image.", ts: Date.now() }]);
     try {
       const res = await fetch("/api/site-factory/set-hero-image", {
         method: "POST",
@@ -592,14 +600,12 @@ export default function SiteFactoryClient() {
         setVersionIdx(-1);
         setPreviewHtml(data.html);
         setIframeKey(k => k + 1);
-        setMessages(prev => [...prev, { role: "assistant", content: "Hero background swapped. You can see it in the preview.", ts: Date.now() }]);
-        switchPanel("chat");
+        showToast("Image replaced successfully");
       } else {
-        const errMsg = data.error || "Could not replace hero image";
-        setMessages(prev => [...prev, { role: "assistant", content: `Could not update hero: ${errMsg}`, ts: Date.now() }]);
+        showToast(data.error || "Could not replace hero image", "error");
       }
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${String(e)}`, ts: Date.now() }]);
+      showToast(String(e), "error");
     }
     setIsEditing(false);
   }
@@ -843,7 +849,7 @@ export default function SiteFactoryClient() {
             </div>
           )}
         </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}`}</style>
       </div>
     );
   }
@@ -1446,6 +1452,37 @@ export default function SiteFactoryClient() {
                     </div>
                   </div>
                 )}
+                {toast && (
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 50 }}>
+                    <div style={{
+                      background: toast.type === "success" ? "rgba(16,185,129,0.97)" : "rgba(239,68,68,0.97)",
+                      color: "#fff",
+                      borderRadius: 20,
+                      padding: "28px 44px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 14,
+                      boxShadow: "0 8px 48px rgba(0,0,0,0.5)",
+                      animation: "toastIn 0.25s ease",
+                      textAlign: "center",
+                    }}>
+                      {toast.type === "success" ? (
+                        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                          <circle cx="28" cy="28" r="28" fill="rgba(255,255,255,0.2)" />
+                          <path d="M16 28.5l8 8 16-16" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                          <circle cx="28" cy="28" r="28" fill="rgba(255,255,255,0.2)" />
+                          <path d="M20 20l16 16M36 20L20 36" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" />
+                        </svg>
+                      )}
+                      <p style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>{toast.type === "success" ? "Success" : "Error"}</p>
+                      <p style={{ margin: 0, fontSize: 14, opacity: 0.9 }}>{toast.msg}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1460,7 +1497,7 @@ export default function SiteFactoryClient() {
             )}
           </div>
         </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}`}</style>
       </div>
     );
   }
