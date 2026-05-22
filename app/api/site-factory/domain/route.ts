@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
+import { Redis } from "@upstash/redis";
 import { getSiteBySlug, updateSite } from "../../../../lib/site-registry";
 
 export const runtime = "nodejs";
+
+const redis = Redis.fromEnv();
 
 const VERCEL_TOKEN = process.env.VERCEL_ACCESS_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || "prj_1p5i2LakOMkQJaSDAYd8Y1N3k3Ci";
@@ -46,7 +49,10 @@ export async function POST(req: NextRequest) {
     const { slug, domain } = await req.json();
     if (!slug || !domain) return Response.json({ error: "slug and domain required" }, { status: 400 });
 
-    const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const cleanDomain = domain.trim().toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/$/, "");
 
     // Add to Vercel project
     const vercelResult = await vercelAddDomain(cleanDomain);
@@ -58,6 +64,8 @@ export async function POST(req: NextRequest) {
       if (!existing.includes(cleanDomain)) {
         await updateSite(site.id, { domains: [...existing, cleanDomain] });
       }
+      // Reverse lookup: domain → slug (used by middleware for custom domain routing)
+      await redis.hset("saabai:domain-map", { [cleanDomain]: site.slug });
     }
 
     // DNS instructions
@@ -83,12 +91,18 @@ export async function DELETE(req: NextRequest) {
     const { slug, domain } = await req.json();
     if (!slug || !domain) return Response.json({ error: "slug and domain required" }, { status: 400 });
 
-    await vercelRemoveDomain(domain);
+    const cleanDomain = domain.trim().toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      .replace(/\/$/, "");
+
+    await vercelRemoveDomain(cleanDomain);
 
     const site = await getSiteBySlug(slug);
     if (site) {
       const existing = site.domains || [];
-      await updateSite(site.id, { domains: existing.filter((d) => d !== domain) });
+      await updateSite(site.id, { domains: existing.filter((d) => d !== cleanDomain) });
+      await redis.hdel("saabai:domain-map", cleanDomain);
     }
 
     return Response.json({ ok: true });
