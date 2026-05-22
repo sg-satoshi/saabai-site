@@ -51,6 +51,32 @@ DIFF RULES — HTML is MINIFIED (whitespace stripped, tags joined with "><"):
 - NEVER wrap <CHANGES> in backticks or markdown
 - Never use em dashes (—) in any copy you write. Use a comma, colon, or rewrite instead.`;
 
+// Fetch a URL and return its visible text content (strips tags, collapses whitespace)
+async function fetchUrlContent(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SiteFactory/1.0)" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return `[Could not fetch ${url}: HTTP ${res.status}]`;
+    const html = await res.text();
+    // Strip scripts, styles, nav, footer, then extract text
+    const cleaned = html
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replace(/<header[\s\S]*?<\/header>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&[a-z]+;/gi, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    return cleaned.slice(0, 6000);
+  } catch {
+    return `[Could not fetch ${url}]`;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { slug, instruction, imageUrl, history = [] } = await req.json();
@@ -67,15 +93,25 @@ export async function POST(req: NextRequest) {
     const originalHtml = await htmlRes.text();
     const minHtml = minifyHtml(originalHtml);
 
+    // Extract any URLs from the instruction and fetch their content
+    const urlMatches = instruction?.match(/https?:\/\/[^\s"'>]+/g) ?? [];
+    const fetchedPages = await Promise.all(
+      urlMatches.slice(0, 3).map(async (url: string) => {
+        const content = await fetchUrlContent(url);
+        return `\n--- Content fetched from ${url} ---\n${content}\n---`;
+      })
+    );
+    const urlContext = fetchedPages.join("\n");
+
     // Build conversation history — text only, no HTML in prior turns
     const priorMessages = (history as Array<{ role: string; content: string }>)
       .filter(m => (m.role === "user" || m.role === "assistant") && m.content)
       .slice(-8)
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 400) }));
 
-    // Current turn: instruction + fresh HTML
+    // Current turn: instruction + fetched URL content + fresh HTML
     const currentText = `Instruction: ${instruction?.trim() || "Apply the uploaded image to the site (use as logo or hero background)"}
-
+${urlContext}
 Current site HTML (minified):
 ${minHtml}`;
 
