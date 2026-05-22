@@ -142,6 +142,55 @@ Also known as: Lexan, Makrolon, Tuffak
 
 **Applications:** Machine guards, safety barriers, skylights, greenhouse panels, boat windows, security glazing, roofing, industrial enclosures.
 
+**POLYCARBONATE SHEET PRICING — March 2026 (ex GST)**
+
+Standard UV2 grade. CTS = cut-to-size rate per m².
+
+| Thickness | Colour | Sheet Size | CTS $/m² | Full Sheet |
+|-----------|--------|------------|----------|------------|
+| 1mm | Clear | 2440×1220 | $64.90 | $101.20 |
+| 1.5mm | Clear | 2440×1220 | $77.60 | $121.00 |
+| 2mm | Clear | 2440×1220 | $91.71 | $143.00 |
+| 3mm | Clear | 2440×1220 | $115.69 | $180.40 |
+| 3mm | Clear | 2440×1830 | — | $279.40 |
+| 3mm | Clear | 3050×2030 | — | $385.70 |
+| 3mm | Opal | 2440×1220 | $132.63 | $206.80 |
+| 3mm | Opal | 2440×1883 | — | $319.00 |
+| 3mm | Opal | 3050×2030 | — | $383.80 |
+| 3mm | Grey Tint | 2440×1220 | $132.63 | $206.80 |
+| 3mm | Grey Tint | 2440×1830 | — | $319.00 |
+| 4.5mm | Clear | 2440×1220 | $157.01 | $233.70 |
+| 4.5mm | Clear | 2440×1830 | — | $362.90 |
+| 4.5mm | Clear | 3050×2030 | — | $579.50 |
+| 4.5mm | Opal | 2440×1220 | $179.99 | $267.90 |
+| 4.5mm | Grey Tint | 2440×1220 | $179.99 | $267.90 |
+| 4.5mm | Grey Tint | 2440×1830 | — | $414.20 |
+| 6mm | Clear | 2440×1220 | $209.35 | $311.60 |
+| 6mm | Clear | 2440×1830 | — | $482.60 |
+| 6mm | Clear | 3050×2030 | — | $771.40 |
+| 6mm | Opal | 2440×1220 | $239.99 | $357.20 |
+| 6mm | Opal | 2440×1830 | — | $551.00 |
+| 6mm | Grey Tint | 2440×1220 | $229.78 | $342.00 |
+| 6mm | Grey Tint | 2440×1830 | — | $551.00 |
+| 8mm | Clear | 2440×1220 | $280.84 | $418.00 |
+| 9.5mm | Clear | 2440×1220 | $331.90 | $494.00 |
+| 9.5mm | Clear | 2440×1830 | — | $763.80 |
+| 9.5mm | Clear | 3050×2030 | — | $1,221.70 |
+| 9.5mm | Grey Tint | 2440×1220 | $380.41 | $566.20 |
+| 9.5mm | Grey Tint | 2440×1830 | — | $872.10 |
+| 12mm | Clear | 2440×1220 | $418.70 | $623.20 |
+
+**ABRASION RESISTANT (AR) POLYCARBONATE — March 2026 (ex GST)**
+
+| Thickness | Colour | Sheet Size | CTS $/m² | Full Sheet |
+|-----------|--------|------------|----------|------------|
+| 6mm AR2 | Clear | 2440×1220 | $887.46 | $1,069.30 |
+| 6mm AR2 | Clear | 2440×1830 | — | $1,604.80 |
+| 9.5mm AR2 | Clear | 2440×1220 | $1,406.68 | $1,694.90 |
+| 9.5mm AR2 | Clear | 2440×1830 | — | $2,541.50 |
+| 12.7mm AR2 | Clear | 2440×1220 | $1,879.33 | $2,264.40 |
+| 12.7mm AR2 | Clear | 2440×1830 | — | $3,396.60 |
+
 **POLYCARBONATE LIGHT DIFFUSER PRICING — April 2026 (ex GST)**
 
 | Thickness | Type | Size | CTS ($/m²) | Full Sheet |
