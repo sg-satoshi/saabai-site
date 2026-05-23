@@ -546,11 +546,17 @@ export default function SiteFactoryClient() {
       }
 
       // Finalise the assistant message
-      const displayText = fullText
+      let displayText = fullText
         .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
         .replace(/<HTML>[A-Za-z0-9+/=]*<\/HTML>/g, "")
         .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
         .trim();
+
+      // If the AI included a <CHANGES> block but nothing was applied, tell the user
+      const hadChanges = /<CHANGES>/.test(fullText);
+      if (hadChanges && opsApplied === 0) {
+        displayText += "\n\nThe change didn't apply — the text I targeted wasn't found exactly in the HTML. Please describe the text to change more precisely, or paste the exact words, and I'll try again.";
+      }
 
       const finalMsgs = withAssistant.map((m, i) =>
         i === withAssistant.length - 1

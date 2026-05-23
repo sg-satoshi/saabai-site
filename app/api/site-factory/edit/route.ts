@@ -49,7 +49,14 @@ DIFF RULES — HTML is MINIFIED (whitespace stripped, tags joined with "><"):
 - To add before footer: f="</section><footer", r="[new html]</section><footer"
 - To change a colour: f="background-color:#abc123", r="background-color:#newval"
 - NEVER wrap <CHANGES> in backticks or markdown
-- Never use em dashes (—) in any copy you write. Use a comma, colon, or rewrite instead.`;
+- Never use em dashes (—) in any copy you write. Use a comma, colon, or rewrite instead.
+
+CRITICAL — ANIMATED COUNTERS: Numbers that animate on scroll are NOT plain text in the HTML.
+They use a data attribute like: data-target="200" (the JS reads this to run the count-up).
+To change "200+" to "569+": f='data-target="200"', r='data-target="569"'
+NEVER use the rendered display text (e.g. "200+ Clients Advised") as the "f" value — that text is not in the HTML source.
+
+CRITICAL — "f" MUST EXIST VERBATIM: Before writing any "f", locate it visually in the minified HTML shown to you. If you cannot find the exact string in the HTML, do NOT guess — ask the user to clarify what text to change. A patch with a wrong "f" silently fails.`;
 
 // Fetch a URL and return its visible text content (strips tags, collapses whitespace)
 async function fetchUrlContent(url: string): Promise<{ text: string; imageUrls: string[] }> {
