@@ -264,8 +264,11 @@ IMAGES:
 - All images: loading="lazy", explicit width/height.
 
 SEO:
-- JSON-LD LocalBusiness schema in <head>.
-- Complete Open Graph + Twitter Card meta tags.
+- JSON-LD schema in <head> — use the most specific @type for the niche (e.g. LegalService, MedicalBusiness, HomeAndConstructionBusiness, etc.), NOT just LocalBusiness.
+- Schema must include: name, description, url, telephone, email, address (with streetAddress, addressLocality, addressRegion, postalCode, addressCountry), geo (latitude/longitude for the suburb), openingHoursSpecification, priceRange, areaServed, image (logo URL), sameAs (empty array — placeholder for GMB/social).
+- If a FAQ section is generated, ALSO add a FAQPage schema block: {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Q?","acceptedAnswer":{"@type":"Answer","text":"A."}},...]}
+- Add <meta name="robots" content="index, follow"> to <head>.
+- Complete Open Graph + Twitter Card meta tags. og:image must use the hero Unsplash URL.
 - Semantic HTML5: header, main, section, article, footer, nav, address.
 
 ━━━ SECTIONS (adapt styling to the design personality above) ━━━━━

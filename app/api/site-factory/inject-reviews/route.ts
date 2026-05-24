@@ -214,6 +214,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Update AggregateRating in existing JSON-LD schema
+    if (rating && reviews.length > 0) {
+      const avgRating = (reviews.reduce((s: number, r: ReviewItem) => s + r.rating, 0) / reviews.length).toFixed(1);
+      const ratingCount = totalReviews || reviews.length;
+      const aggregateRatingJson = `"aggregateRating":{"@type":"AggregateRating","ratingValue":"${avgRating}","reviewCount":${ratingCount},"bestRating":"5","worstRating":"1"}`;
+      // Replace existing aggregateRating if present
+      if (/"aggregateRating"/.test(html)) {
+        html = html.replace(/"aggregateRating"\s*:\s*\{[^}]+\}/, aggregateRatingJson);
+      } else {
+        // Inject before closing brace of first ld+json block
+        html = html.replace(
+          /(<script[^>]+application\/ld\+json[^>]*>)([\s\S]*?)(<\/script>)/i,
+          (_, open, body, close) => {
+            const trimmed = body.trim();
+            const withRating = trimmed.endsWith("}")
+              ? trimmed.slice(0, -1) + `,${aggregateRatingJson}}`
+              : trimmed;
+            return `${open}${withRating}${close}`;
+          }
+        );
+      }
+    }
+
     await put(`sites/${slug}/draft.html`, html, {
       access: "public",
       contentType: "text/html",
