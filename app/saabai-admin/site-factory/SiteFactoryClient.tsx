@@ -1725,16 +1725,39 @@ export default function SiteFactoryClient() {
                   {seoChecks.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                       <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Checks</p>
-                      {seoChecks.map(c => (
-                        <div key={c.key} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 8px", borderRadius: 5, background: c.passed ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)", border: `1px solid ${c.passed ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
-                          <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>{c.passed ? "✅" : "❌"}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: C.text }}>{c.label}</p>
-                            {c.detail && <p style={{ margin: "1px 0 0", fontSize: 9, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.detail}</p>}
+                      {seoChecks.map(c => {
+                        const fixPrompts: Record<string, string> = {
+                          meta_desc: "Rewrite my meta description to be 130-155 characters, include my main keyword naturally, and have a clear call to action. Update it in the HTML.",
+                          title: "Rewrite my meta title to be 50-60 characters, keyword-rich for my niche, and compelling. Update it in the HTML.",
+                          h1: "Fix my H1 tag — ensure there is exactly one H1 that is keyword-rich, compelling, and under 70 characters.",
+                          schema: "Add a complete JSON-LD LocalBusiness schema block to the <head> of my site including name, description, address, telephone, and url.",
+                          faq_schema: "Extract all questions and answers from the FAQ section and inject a FAQPage JSON-LD schema block into the <head>. This enables Google rich snippets.",
+                          robots_meta: 'Add <meta name="robots" content="index, follow"> to the <head> of my site.',
+                          img_alt: "Find all images missing alt text and add descriptive, keyword-relevant alt attributes to each one.",
+                          og: "Add complete Open Graph meta tags (og:title, og:description, og:image, og:url, og:type) to the <head>.",
+                          sitemap_ref: 'Add <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml"> to the <head> of my site.',
+                          address: "Add the business address to the JSON-LD schema and ensure it appears in the contact section of the page.",
+                          geo: "Add geo coordinates (latitude and longitude) to the JSON-LD schema for local SEO.",
+                        };
+                        const fixPrompt = !c.passed ? fixPrompts[c.key] : undefined;
+                        return (
+                          <div key={c.key} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 8px", borderRadius: 5, background: c.passed ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)", border: `1px solid ${c.passed ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
+                            <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>{c.passed ? "✅" : "❌"}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: C.text }}>{c.label}</p>
+                              {c.detail && <p style={{ margin: "1px 0 0", fontSize: 9, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.detail}</p>}
+                            </div>
+                            {fixPrompt ? (
+                              <button
+                                onClick={() => { sendEdit(fixPrompt); switchPanel("chat"); }}
+                                style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, border: "none", background: "rgba(239,68,68,0.15)", color: "#ef4444", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}
+                              >Fix</button>
+                            ) : (
+                              <span style={{ fontSize: 9, color: C.textMuted, flexShrink: 0 }}>{c.points}pt</span>
+                            )}
                           </div>
-                          <span style={{ fontSize: 9, color: C.textMuted, flexShrink: 0 }}>{c.points}pt</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 

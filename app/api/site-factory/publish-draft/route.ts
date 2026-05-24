@@ -82,6 +82,22 @@ export async function POST(req: NextRequest) {
     const lastmod = new Date().toISOString().split("T")[0];
     const sitemapUrl = `${canonicalBase}/sitemap.xml`;
 
+    // Inject sitemap link tag if missing
+    if (!/<link[^>]+rel=["']sitemap["']/i.test(html)) {
+      html = html.replace(
+        /(<link[^>]+rel=["']canonical["'][^>]*>)/i,
+        `$1\n<link rel="sitemap" type="application/xml" title="Sitemap" href="${sitemapUrl}">`
+      );
+    }
+
+    // Inject robots meta if missing
+    if (!/<meta[^>]+name=["']robots["']/i.test(html)) {
+      html = html.replace(
+        /(<meta[^>]+name=["']viewport["'][^>]*>)/i,
+        `$1\n<meta name="robots" content="index, follow">`
+      );
+    }
+
     await Promise.all([
       put(`sites/${slug}/index.html`, html, {
         access: "public", contentType: "text/html",
