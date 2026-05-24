@@ -722,6 +722,18 @@ export default function SiteFactoryClient() {
     setIsEditing(false);
   }
 
+  async function deleteGalleryImage(url: string) {
+    if (!activeSite) return;
+    try {
+      await fetch("/api/site-factory/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug, url }),
+      });
+      setGalleryImgs(prev => prev.filter(img => img.url !== url));
+    } catch { /* non-fatal */ }
+  }
+
   async function loadGallery(slug: string) {
     setGalleryLoading(true);
     try {
@@ -1397,6 +1409,10 @@ export default function SiteFactoryClient() {
                                   onClick={() => { setPendingImage({ url: img.url, name: (prompt || "image").slice(0, 40) }); switchPanel("chat"); }}
                                   style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(168,85,247,0.9)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
                                 >Custom use →</button>
+                                <button
+                                  onClick={() => { if (confirm("Delete this image?")) deleteGalleryImage(img.url); }}
+                                  style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(220,38,38,0.85)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
+                                >Delete</button>
                               </div>
                             </div>
                             {prompt && (
