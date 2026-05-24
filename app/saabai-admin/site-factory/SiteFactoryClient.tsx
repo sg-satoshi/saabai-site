@@ -225,11 +225,21 @@ export default function SiteFactoryClient() {
   const [chatbotPersonality, setChatbotPersonality] = useState("");
 
   // Sidebar active panel (tabs)
-  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews">("chat");
-  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews") {
+  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo">("chat");
+  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo") {
     setActivePanel(panel);
     if (panel === "image" && activeSite) loadGallery(activeSite.slug);
+    if (panel === "seo" && activeSite) loadSeoScore(activeSite.slug);
   }
+
+  // SEO panel state
+  const [seoScore, setSeoScore] = useState<number | null>(null);
+  const [seoChecks, setSeoChecks] = useState<Array<{ key: string; label: string; passed: boolean; detail?: string; points: number }>>([]);
+  const [seoLoading, setSeoLoading] = useState(false);
+  const [pageSpeed, setPageSpeed] = useState<{ mobile: number | null; desktop: number | null; seoScore: number | null } | null>(null);
+  const [pageSpeedLoading, setPageSpeedLoading] = useState(false);
+  const [indexSubmitting, setIndexSubmitting] = useState(false);
+  const [indexResult, setIndexResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Inject chatbot into existing site
   const [injectingBot, setInjectingBot] = useState(false);
@@ -734,6 +744,52 @@ export default function SiteFactoryClient() {
     } catch { /* non-fatal */ }
   }
 
+  async function loadSeoScore(slug: string) {
+    setSeoLoading(true);
+    setSeoScore(null);
+    setSeoChecks([]);
+    setPageSpeed(null);
+    setIndexResult(null);
+    try {
+      const res = await fetch(`/api/site-factory/seo-score?slug=${encodeURIComponent(slug)}`);
+      const data = await res.json();
+      if (data.ok) { setSeoScore(data.score); setSeoChecks(data.checks); }
+    } catch { /* non-fatal */ }
+    setSeoLoading(false);
+  }
+
+  async function loadPageSpeed(slug: string) {
+    setPageSpeedLoading(true);
+    try {
+      const res = await fetch(`/api/site-factory/seo-score?slug=${encodeURIComponent(slug)}&pagespeed=1`);
+      const data = await res.json();
+      if (data.ok) setPageSpeed(data.pageSpeed);
+    } catch { /* non-fatal */ }
+    setPageSpeedLoading(false);
+  }
+
+  async function submitToGoogle() {
+    if (!activeSite || indexSubmitting) return;
+    setIndexSubmitting(true);
+    setIndexResult(null);
+    try {
+      const res = await fetch("/api/site-factory/submit-index", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug }),
+      });
+      const data = await res.json();
+      if (data.needsSetup) {
+        setIndexResult({ ok: false, msg: "Google service account not configured yet" });
+      } else if (data.ok) {
+        setIndexResult({ ok: true, msg: "Submitted — Google will crawl within hours" });
+      } else {
+        setIndexResult({ ok: false, msg: data.error || "Submission failed" });
+      }
+    } catch (e) { setIndexResult({ ok: false, msg: String(e) }); }
+    setIndexSubmitting(false);
+  }
+
   async function loadGallery(slug: string) {
     setGalleryLoading(true);
     try {
@@ -974,7 +1030,9 @@ export default function SiteFactoryClient() {
       if (data.ok) {
         setHasDraft(false);
         setUnpublishedCount(0);
-        showToast("Changes published live");
+        showToast("Changes published live — sitemap + robots.txt updated");
+        // Refresh SEO score in background
+        if (activeSite) loadSeoScore(activeSite.slug);
       } else {
         showToast(data.error || "Publish failed", "error");
       }
@@ -1116,6 +1174,7 @@ export default function SiteFactoryClient() {
           {!isMobile && <button onClick={() => { setActivePanel("bot"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "bot" && sidebarOpen ? C.gold : C.border2}`, background: activePanel === "bot" && sidebarOpen ? C.goldBg : "none", color: activePanel === "bot" && sidebarOpen ? C.gold : C.textDim, fontSize: 12, cursor: "pointer" }}>🤖 Bot</button>}
           {!isMobile && <button onClick={() => { setActivePanel("dns"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "dns" && sidebarOpen ? C.teal : C.border2}`, background: activePanel === "dns" && sidebarOpen ? C.tealBg : "none", color: activePanel === "dns" && sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           {!isMobile && <button onClick={() => { setActivePanel("reviews"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "reviews" && sidebarOpen ? "#f97316" : C.border2}`, background: activePanel === "reviews" && sidebarOpen ? "rgba(249,115,22,0.1)" : "none", color: activePanel === "reviews" && sidebarOpen ? "#f97316" : C.textDim, fontSize: 12, cursor: "pointer" }}>★ Reviews</button>}
+          {!isMobile && <button onClick={() => { switchPanel("seo"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "seo" && sidebarOpen ? "#22c55e" : C.border2}`, background: activePanel === "seo" && sidebarOpen ? "rgba(34,197,94,0.1)" : "none", color: activePanel === "seo" && sidebarOpen ? "#22c55e" : C.textDim, fontSize: 12, cursor: "pointer" }}>📈 SEO</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
@@ -1616,6 +1675,145 @@ export default function SiteFactoryClient() {
                       </button>
                     );
                   })()}
+                </div>
+              )}
+
+              {/* ── Panel: SEO ───────────────────────────────────── */}
+              {activePanel === "seo" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  {/* Header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#22c55e" }}>SEO Analyser</span>
+                    {seoLoading && <div style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid #22c55e`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />}
+                    {!seoLoading && activeSite && (
+                      <button onClick={() => loadSeoScore(activeSite.slug)} style={{ marginLeft: "auto", fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>↺ Refresh</button>
+                    )}
+                  </div>
+
+                  {/* Score ring */}
+                  {seoScore !== null && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", background: C.bg, borderRadius: 8, border: `1px solid ${C.border2}` }}>
+                      <div style={{ position: "relative", width: 64, height: 64, flexShrink: 0 }}>
+                        <svg width="64" height="64" viewBox="0 0 64 64">
+                          <circle cx="32" cy="32" r="26" fill="none" stroke={C.border2} strokeWidth="6" />
+                          <circle cx="32" cy="32" r="26" fill="none"
+                            stroke={seoScore >= 80 ? "#22c55e" : seoScore >= 60 ? "#f59e0b" : "#ef4444"}
+                            strokeWidth="6" strokeLinecap="round"
+                            strokeDasharray={`${(seoScore / 100) * 163.4} 163.4`}
+                            transform="rotate(-90 32 32)" />
+                        </svg>
+                        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: seoScore >= 80 ? "#22c55e" : seoScore >= 60 ? "#f59e0b" : "#ef4444" }}>{seoScore}</span>
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.text }}>
+                          {seoScore >= 80 ? "Strong SEO" : seoScore >= 60 ? "Needs work" : "Poor SEO"}
+                        </p>
+                        <p style={{ margin: "3px 0 0", fontSize: 10, color: C.textMuted }}>
+                          {seoChecks.filter(c => c.passed).length} of {seoChecks.length} checks passing
+                        </p>
+                        {activeSite && (
+                          <button
+                            onClick={() => sendEdit("Audit my site SEO and improve the meta title, description, and heading structure to rank better for my target keywords. Make sure the H1 is keyword-rich and the meta description is compelling and 120-160 characters.")}
+                            style={{ marginTop: 6, padding: "3px 8px", fontSize: 10, borderRadius: 4, border: "none", background: "rgba(34,197,94,0.15)", color: "#22c55e", cursor: "pointer", fontWeight: 600 }}
+                          >✦ AI fix all →</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Checks list */}
+                  {seoChecks.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Checks</p>
+                      {seoChecks.map(c => (
+                        <div key={c.key} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 8px", borderRadius: 5, background: c.passed ? "rgba(34,197,94,0.06)" : "rgba(239,68,68,0.06)", border: `1px solid ${c.passed ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)"}` }}>
+                          <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>{c.passed ? "✅" : "❌"}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: C.text }}>{c.label}</p>
+                            {c.detail && <p style={{ margin: "1px 0 0", fontSize: 9, color: C.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.detail}</p>}
+                          </div>
+                          <span style={{ fontSize: 9, color: C.textMuted, flexShrink: 0 }}>{c.points}pt</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {seoLoading && seoChecks.length === 0 && (
+                    <p style={{ margin: 0, fontSize: 11, color: C.textMuted, textAlign: "center", padding: "20px 0" }}>Analysing site…</p>
+                  )}
+
+                  {/* Submit to Google */}
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+                    <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Google Indexing</p>
+                    <button
+                      onClick={submitToGoogle}
+                      disabled={indexSubmitting}
+                      style={{ width: "100%", padding: "9px", borderRadius: 6, border: "none", background: indexSubmitting ? C.border : "#22c55e", color: indexSubmitting ? C.textMuted : "#fff", fontSize: 12, fontWeight: 600, cursor: indexSubmitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                    >
+                      {indexSubmitting
+                        ? <><div style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Submitting…</>
+                        : "Submit to Google"}
+                    </button>
+                    {indexResult && (
+                      <p style={{ margin: "6px 0 0", fontSize: 10, color: indexResult.ok ? "#22c55e" : "#ef4444", textAlign: "center" }}>{indexResult.msg}</p>
+                    )}
+                    <p style={{ margin: "6px 0 0", fontSize: 9, color: C.textMuted, lineHeight: 1.5 }}>
+                      Asks Google to crawl immediately. Requires Google service account — setup guide in docs.
+                    </p>
+                  </div>
+
+                  {/* PageSpeed */}
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>PageSpeed</p>
+                      {pageSpeedLoading && <div style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.textMuted}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />}
+                    </div>
+                    {pageSpeed ? (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {[
+                          { label: "Mobile", val: pageSpeed.mobile },
+                          { label: "Desktop", val: pageSpeed.desktop },
+                          { label: "SEO", val: pageSpeed.seoScore },
+                        ].map(({ label, val }) => (
+                          <div key={label} style={{ flex: 1, textAlign: "center", padding: "8px 4px", background: C.bg, borderRadius: 6, border: `1px solid ${C.border2}` }}>
+                            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: val == null ? C.textMuted : val >= 90 ? "#22c55e" : val >= 50 ? "#f59e0b" : "#ef4444" }}>
+                              {val ?? "–"}
+                            </p>
+                            <p style={{ margin: "2px 0 0", fontSize: 9, color: C.textMuted }}>{label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => activeSite && loadPageSpeed(activeSite.slug)}
+                        disabled={pageSpeedLoading}
+                        style={{ width: "100%", padding: "8px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: pageSpeedLoading ? "not-allowed" : "pointer" }}
+                      >
+                        {pageSpeedLoading ? "Running test (~15s)…" : "Run PageSpeed test"}
+                      </button>
+                    )}
+                    <p style={{ margin: "6px 0 0", fontSize: 9, color: C.textMuted }}>Uses Google Lighthouse. Scores: 90+ green, 50–89 amber, under 50 red.</p>
+                  </div>
+
+                  {/* Quick AI SEO actions */}
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+                    <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Quick AI fixes</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {[
+                        ["Inject FAQ schema", "Extract all questions and answers from the FAQ section of my site and inject a FAQPage JSON-LD schema block into the <head>. This enables Google rich snippets."],
+                        ["Improve meta title", "Rewrite my meta title to be 50-60 characters, keyword-rich for my niche, and compelling. Update it in the HTML."],
+                        ["Improve meta description", "Rewrite my meta description to be 130-155 characters, include my main keyword naturally, and have a clear call to action."],
+                        ["Add robots meta", "Add a <meta name=\"robots\" content=\"index, follow\"> tag to the <head> of my site."],
+                        ["Improve H1 keyword density", "Rewrite my H1 heading to naturally include my main service keyword and city. Keep it compelling and under 70 characters."],
+                      ].map(([label, prompt]) => (
+                        <button
+                          key={label}
+                          onClick={() => { sendEdit(prompt); switchPanel("chat"); }}
+                          style={{ padding: "7px 10px", borderRadius: 5, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 11, cursor: "pointer", textAlign: "left", fontWeight: 400 }}
+                        >{label}</button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
