@@ -220,6 +220,11 @@ export default function SiteFactoryClient() {
   const [dnsResult, setDnsResult] = useState<{ ok: boolean; domain: string; instructions: { type: string; name: string; value: string; note: string }[]; vercelConnected: boolean; vercelError?: string } | null>(null);
   const [dnsCheckResults, setDnsCheckResults] = useState<Record<string, { live: boolean; checking: boolean }>>({});
 
+  // Delete confirmation state
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState("");
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+
   // Generation state
   const [businessName, setBusinessName] = useState("");
   const [niche, setNiche] = useState("trades");
@@ -393,6 +398,24 @@ export default function SiteFactoryClient() {
       if (data.sites) setSites(data.sites);
     } catch { console.error("Failed to fetch sites"); }
     setLoadingSites(false);
+  }
+
+  async function deleteSiteConfirmed() {
+    if (!deletingSlug || deleteInProgress) return;
+    setDeleteInProgress(true);
+    try {
+      const res = await fetch(`/api/site-factory/delete?slug=${encodeURIComponent(deletingSlug)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.ok) {
+        setSites(prev => prev.filter(s => s.slug !== deletingSlug));
+        showToast("Site deleted");
+      } else {
+        showToast(data.error || "Delete failed", "error");
+      }
+    } catch (e) { showToast(String(e), "error"); }
+    setDeleteInProgress(false);
+    setDeletingSlug(null);
+    setDeleteConfirmName("");
   }
 
   async function fetchDomains(slug: string) {
@@ -2208,12 +2231,63 @@ export default function SiteFactoryClient() {
                 <div style={{ display: "flex", gap: 7, flexShrink: 0 }}>
                   <span style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.border2}`, color: C.textDim, fontSize: 12 }}>Edit →</span>
                   <a href={`https://www.saabai.ai/sites/${site.slug}/`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.gold}`, color: C.gold, textDecoration: "none", fontSize: 12, background: C.goldBg }}>Preview</a>
+                  <button
+                    onClick={e => { e.stopPropagation(); setDeletingSlug(site.slug); setDeleteConfirmName(""); }}
+                    style={{ padding: "5px 10px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textMuted, fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                    title="Delete site"
+                  >🗑</button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingSlug && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: 20 }} onClick={() => { if (!deleteInProgress) { setDeletingSlug(null); setDeleteConfirmName(""); } }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.red}`, borderRadius: 14, width: "100%", maxWidth: 420, padding: "28px 28px 24px" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 10, background: C.redBg, border: `1px solid ${C.red}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>⚠️</div>
+              <div>
+                <h3 style={{ margin: "0 0 5px", fontSize: 16, fontWeight: 700, color: C.text }}>Delete site?</h3>
+                <p style={{ margin: 0, fontSize: 12, color: C.textDim, lineHeight: 1.6 }}>
+                  This permanently removes all files, images, and data for <strong style={{ color: C.text }}>/sites/{deletingSlug}/</strong>. There is no undo.
+                </p>
+              </div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, color: C.textDim, marginBottom: 6 }}>
+                Type <strong style={{ color: C.text, fontFamily: "monospace" }}>{deletingSlug}</strong> to confirm
+              </label>
+              <input
+                value={deleteConfirmName}
+                onChange={e => setDeleteConfirmName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && deleteConfirmName === deletingSlug) deleteSiteConfirmed(); }}
+                placeholder={deletingSlug}
+                autoFocus
+                style={{ width: "100%", boxSizing: "border-box", padding: "9px 11px", borderRadius: 7, border: `1px solid ${deleteConfirmName === deletingSlug ? C.red : C.border2}`, background: C.bg, color: C.text, fontSize: 13, fontFamily: "monospace", outline: "none" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => { setDeletingSlug(null); setDeleteConfirmName(""); }}
+                disabled={deleteInProgress}
+                style={{ flex: 1, padding: "10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 13, cursor: "pointer" }}
+              >Cancel</button>
+              <button
+                onClick={deleteSiteConfirmed}
+                disabled={deleteConfirmName !== deletingSlug || deleteInProgress}
+                style={{ flex: 1, padding: "10px", borderRadius: 7, border: "none", background: deleteConfirmName === deletingSlug && !deleteInProgress ? C.red : C.border, color: deleteConfirmName === deletingSlug && !deleteInProgress ? "#fff" : C.textMuted, fontSize: 13, fontWeight: 700, cursor: deleteConfirmName === deletingSlug && !deleteInProgress ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+              >
+                {deleteInProgress
+                  ? <><div style={{ width: 13, height: 13, borderRadius: "50%", border: "2px solid rgba(255,255,255,.3)", borderTopColor: "#fff", animation: "spin 0.8s linear infinite" }} />Deleting…</>
+                  : "Delete forever"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New Site Modal */}
       {phase === "new" && (
