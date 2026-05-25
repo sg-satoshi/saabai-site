@@ -215,7 +215,7 @@ export default function UsersClient() {
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 15, fontWeight: 600 }}>{user.name}</span>
+                        <span onClick={() => user.source !== "env" && openEdit(user)} style={{ fontSize: 15, fontWeight: 600, cursor: user.source !== "env" ? "pointer" : "default", textDecoration: user.source !== "env" ? "underline" : "none", textDecorationStyle: "dotted", textUnderlineOffset: 3 }}>{user.name}</span>
                         <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: rc.bg, color: rc.color, textTransform: "uppercase", fontWeight: 600 }}>{user.role}</span>
                         {user.source === "env" && <span style={{ fontSize: 11, color: C.textMuted }}>env</span>}
                       </div>
