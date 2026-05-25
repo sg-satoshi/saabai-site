@@ -1424,29 +1424,24 @@ export default function SiteFactoryClient() {
               {/* ── Panel: Image ─────────────────────────────────── */}
               {activePanel === "image" && (
                 <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                  {/* Favicon section */}
-                  <div style={{ padding: "12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.surface }}>
-                    <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Site Favicon</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 6, border: `1px solid ${C.border2}`, background: C.bg, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {faviconUrl
-                          ? <img src={`${faviconUrl}?t=${Date.now()}`} alt="favicon" style={{ width: 32, height: 32, objectFit: "contain" }} />
-                          : <span style={{ fontSize: 18 }}>🌐</span>}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ margin: "0 0 5px", fontSize: 10, color: C.textDim }}>{faviconUrl ? "Favicon active" : "No favicon set"}</p>
-                        <button
-                          onClick={() => faviconInputRef.current?.click()}
-                          disabled={faviconUploading}
-                          style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.border2}`, background: faviconUploading ? C.surface : C.surface2, color: faviconUploading ? C.textMuted : C.text, fontSize: 11, cursor: faviconUploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
-                        >
-                          {faviconUploading
-                            ? <><div style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.textMuted}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />Uploading…</>
-                            : "Upload favicon"}
-                        </button>
-                      </div>
+                  {/* Favicon — compact single row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.surface }}>
+                    <div style={{ width: 24, height: 24, borderRadius: 4, border: `1px solid ${C.border}`, background: C.bg, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {faviconUrl
+                        ? <img src={`${faviconUrl}?t=${Date.now()}`} alt="favicon" style={{ width: 20, height: 20, objectFit: "contain" }} />
+                        : <span style={{ fontSize: 12 }}>🌐</span>}
                     </div>
-                    <p style={{ margin: "8px 0 0", fontSize: 9, color: C.textMuted }}>PNG, ICO, or SVG · Shown in browser tab</p>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em", flex: 1 }}>Favicon</span>
+                    <span style={{ fontSize: 10, color: C.textMuted }}>{faviconUrl ? "Active" : "None"}</span>
+                    <button
+                      onClick={() => faviconInputRef.current?.click()}
+                      disabled={faviconUploading}
+                      style={{ padding: "4px 10px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: faviconUploading ? C.textMuted : C.textDim, fontSize: 10, cursor: faviconUploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}
+                    >
+                      {faviconUploading
+                        ? <><div style={{ width: 8, height: 8, borderRadius: "50%", border: `1.5px solid ${C.textMuted}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />…</>
+                        : "Upload"}
+                    </button>
                   </div>
                   <input
                     ref={faviconInputRef}
