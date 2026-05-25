@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { listDirectoryUsers, saveDirectoryUser, deleteDirectoryUser, getDirectoryUser } from "../../../lib/user-directory";
 import { loadClients } from "../../../lib/clients";
+import { getRedis } from "../../../lib/redis";
 
 export const runtime = "edge";
 
@@ -53,6 +54,39 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Create user error:", error);
     return Response.json({ error: "Failed to create user" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { originalEmail, name, email, password, role, dashboardUrl } = body;
+    if (!originalEmail) return Response.json({ error: "originalEmail required" }, { status: 400 });
+
+    const existing = await getDirectoryUser(originalEmail);
+    if (!existing) return Response.json({ error: "User not found" }, { status: 404 });
+
+    const newEmail = (email || originalEmail).toLowerCase();
+    const updated = {
+      ...existing,
+      name: name ?? existing.name,
+      email: newEmail,
+      role: role ?? existing.role,
+      dashboardUrl: dashboardUrl ?? existing.dashboardUrl,
+      ...(password ? { password } : {}),
+    };
+
+    // If email changed, delete old key first
+    if (newEmail !== originalEmail.toLowerCase()) {
+      const redis = getRedis();
+      if (redis) await redis.hdel("saabai:users", originalEmail.toLowerCase());
+    }
+
+    await saveDirectoryUser(updated);
+    return Response.json({ success: true, user: { ...updated, password: undefined } });
+  } catch (error) {
+    console.error("Update user error:", error);
+    return Response.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
 
