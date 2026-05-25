@@ -19,152 +19,192 @@ function pickByName(name: string, count: number): number {
   return Math.abs(h) % count;
 }
 
-// ── COLOUR PALETTES ──────────────────────────────────────────────────────────
-// Multiple per niche so different businesses in the same industry look unique.
-// Format: CSS custom-property declarations fed into the :root block.
-const NICHE_PALETTES: Record<string, string[]> = {
-  trades: [
-    "--primary:#1a2744;--secondary:#f97316;--accent:#fbbf24;--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text-muted:#94a3b8",
-    "--primary:#111827;--secondary:#ef4444;--accent:#dc2626;--bg:#f9fafb;--surface:#ffffff;--text:#111827;--text-muted:#6b7280",
-    "--primary:#1c1917;--secondary:#f59e0b;--accent:#d97706;--bg:#fafaf9;--surface:#ffffff;--text:#1c1917;--text-muted:#78716c",
-    "--primary:#0c1a30;--secondary:#22c55e;--accent:#16a34a;--bg:#f0fdf4;--surface:#ffffff;--text:#052e16;--text-muted:#4b7a5a",
-  ],
-  "allied-health": [
-    "--primary:#1e4d3b;--secondary:#4a90d9;--accent:#34d399;--bg:#f0fdf4;--surface:#ffffff;--text:#1a2e25;--text-muted:#6b7280",
-    "--primary:#164e63;--secondary:#06b6d4;--accent:#0891b2;--bg:#f0f9ff;--surface:#ffffff;--text:#0c4a6e;--text-muted:#64748b",
-    "--primary:#312e81;--secondary:#818cf8;--accent:#6366f1;--bg:#eef2ff;--surface:#ffffff;--text:#1e1b4b;--text-muted:#6b7280",
-    "--primary:#4a044e;--secondary:#c026d3;--accent:#9333ea;--bg:#fdf4ff;--surface:#ffffff;--text:#3b0764;--text-muted:#6b7280",
-  ],
-  "professional-services": [
-    "--primary:#1e293b;--secondary:#d4a017;--accent:#f59e0b;--bg:#f8fafc;--surface:#ffffff;--text:#0f172a;--text-muted:#64748b",
-    "--primary:#0a0a0a;--secondary:#c9b06b;--accent:#b8972f;--bg:#fafaf9;--surface:#ffffff;--text:#0a0a0a;--text-muted:#737373",
-    "--primary:#1a1523;--secondary:#a78bfa;--accent:#7c3aed;--bg:#faf5ff;--surface:#ffffff;--text:#1a1523;--text-muted:#6b7280",
-    "--primary:#172554;--secondary:#3b82f6;--accent:#1d4ed8;--bg:#eff6ff;--surface:#ffffff;--text:#172554;--text-muted:#64748b",
-  ],
-  retail: [
-    "--primary:#4c1d95;--secondary:#ec4899;--accent:#f43f5e;--bg:#faf5ff;--surface:#ffffff;--text:#1e1b4b;--text-muted:#6b7280",
-    "--primary:#0f172a;--secondary:#f97316;--accent:#ea580c;--bg:#fff7ed;--surface:#ffffff;--text:#0f172a;--text-muted:#6b7280",
-    "--primary:#1a1a2e;--secondary:#e94560;--accent:#c0392b;--bg:#f9fafb;--surface:#ffffff;--text:#1a1a2e;--text-muted:#6b7280",
-    "--primary:#134e4a;--secondary:#2dd4bf;--accent:#0d9488;--bg:#f0fdfa;--surface:#ffffff;--text:#134e4a;--text-muted:#5f9ea0",
-  ],
-  hospitality: [
-    "--primary:#1b4332;--secondary:#d97706;--accent:#fbbf24;--bg:#faf7f2;--surface:#ffffff;--text:#1a2e1e;--text-muted:#6b7280",
-    "--primary:#1c1410;--secondary:#e07b39;--accent:#c2541a;--bg:#fffbf5;--surface:#ffffff;--text:#1c1410;--text-muted:#92400e",
-    "--primary:#0f0f23;--secondary:#f5c518;--accent:#e2a900;--bg:#0f0f23;--surface:#1a1a38;--text:#f1f5f9;--text-muted:#94a3b8",
-    "--primary:#3b1f0a;--secondary:#b45309;--accent:#92400e;--bg:#fef3c7;--surface:#ffffff;--text:#3b1f0a;--text-muted:#78350f",
-  ],
-  beauty: [
-    "--primary:#1c0f2e;--secondary:#d946ef;--accent:#a21caf;--bg:#fdf4ff;--surface:#ffffff;--text:#1c0f2e;--text-muted:#6b7280",
-    "--primary:#1a0a0a;--secondary:#f43f5e;--accent:#e11d48;--bg:#fff1f2;--surface:#ffffff;--text:#1a0a0a;--text-muted:#6b7280",
-    "--primary:#2d1b69;--secondary:#f9a8d4;--accent:#ec4899;--bg:#fdf2f8;--surface:#ffffff;--text:#2d1b69;--text-muted:#6b7280",
-  ],
-  automotive: [
-    "--primary:#0a0a0a;--secondary:#dc2626;--accent:#b91c1c;--bg:#f9fafb;--surface:#ffffff;--text:#0a0a0a;--text-muted:#6b7280",
-    "--primary:#172554;--secondary:#f97316;--accent:#ea580c;--bg:#eff6ff;--surface:#ffffff;--text:#172554;--text-muted:#64748b",
-    "--primary:#0c1a30;--secondary:#64748b;--accent:#475569;--bg:#0c1a30;--surface:#1e293b;--text:#f1f5f9;--text-muted:#94a3b8",
-  ],
-  technology: [
-    "--primary:#0f172a;--secondary:#0d9488;--accent:#06b6d4;--bg:#f9fafb;--surface:#ffffff;--text:#0f172a;--text-muted:#6b7280",
-    "--primary:#020617;--secondary:#6366f1;--accent:#4f46e5;--bg:#020617;--surface:#0f172a;--text:#f1f5f9;--text-muted:#94a3b8",
-    "--primary:#0a0a0a;--secondary:#22d3ee;--accent:#06b6d4;--bg:#fafafa;--surface:#ffffff;--text:#0a0a0a;--text-muted:#737373",
-  ],
-  other: [
-    "--primary:#0f172a;--secondary:#0d9488;--accent:#06b6d4;--bg:#f9fafb;--surface:#ffffff;--text:#111827;--text-muted:#6b7280",
-    "--primary:#1e293b;--secondary:#8b5cf6;--accent:#7c3aed;--bg:#f5f3ff;--surface:#ffffff;--text:#1e293b;--text-muted:#64748b",
-    "--primary:#18181b;--secondary:#f59e0b;--accent:#d97706;--bg:#fffbeb;--surface:#ffffff;--text:#18181b;--text-muted:#71717a",
-  ],
-};
+// ── DESIGN THEMES ─────────────────────────────────────────────────────────────
+// 8 named themes. Each one produces a structurally distinct website.
+// palette:      CSS custom properties (complete design token set)
+// fontImport:   Google Fonts @import line
+// headingCss:   CSS for h1–h4 elements
+// bodyCss:      CSS for body/p elements
+// hero:         Explicit hero section layout instruction
+// sections:     Section render order for this theme
+// rules:        Hard structural constraints the AI must follow
+interface ThemeDef {
+  palette: string;
+  fontImport: string;
+  headingCss: string;
+  bodyCss: string;
+  hero: string;
+  sections: string;
+  rules: string[];
+  dark: boolean;
+}
 
-// ── FONT PAIRINGS ─────────────────────────────────────────────────────────────
-// Heading font + body font. Each creates a distinct visual personality.
-const FONT_PAIRS = [
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');`,
-    heading: "Inter", body: "Inter",
-    headingCss: "font-family:'Inter',sans-serif; font-weight:700; letter-spacing:-0.03em;",
-    bodyCss: "font-family:'Inter',sans-serif;",
-    feel: "modern/tech",
-  },
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');`,
-    heading: "Playfair Display", body: "Lato",
+const THEMES: Record<string, ThemeDef> = {
+
+  // ── 1. ONYX — Dark luxury, gold accents, serif headings ──────────────────
+  onyx: {
+    dark: true,
+    palette: "--primary:#0a0a0a;--secondary:#c9a227;--accent:#d4a017;--bg:#0d0d0d;--surface:#181818;--text:#f5f0e8;--text-muted:#8a8075",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lato:wght@300;400;700&display=swap');`,
     headingCss: "font-family:'Playfair Display',serif; font-weight:700; letter-spacing:-0.01em;",
-    bodyCss: "font-family:'Lato',sans-serif;",
-    feel: "elegant/luxury",
+    bodyCss: "font-family:'Lato',sans-serif; font-weight:300;",
+    hero: "Full-viewport dark hero (#0d0d0d background). NO photo. Centred layout. Headline 80px desktop / 40px mobile in Playfair Display — key 2-3 words wrapped in a <span> with a thin 2px solid gold (#c9a227) underline drawn via border-bottom. Subheading in --text-muted 20px Lato. Two CTAs side by side: primary filled gold, secondary ghost (1px gold border, transparent bg). A subtle repeating dot-grid SVG pattern at 4% opacity as a background-image overlay. A small framed Unsplash photo (max 440px wide, 2px solid rgba(201,162,39,0.25) border, no border-radius) floats to the RIGHT on desktop via absolute positioning, hidden on mobile.",
+    sections: "NAV (transparent → opaque dark on scroll, gold CTA) → HERO → SERVICES → ABOUT (photo right, text left) → STATS (gold bg, black text — inverted) → TESTIMONIALS → PROCESS → FAQ → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "ALL section backgrounds must be #0d0d0d or #181818 — zero white sections anywhere",
+      "Gold (#c9a227) is used ONLY for accents, key headings, CTA buttons, and thin decorative lines — never as a large fill except the stats band",
+      "Cards: border-radius 0px. Border: 1px solid rgba(201,162,39,0.18). Hover: border-color rgba(201,162,39,0.55) + subtle gold glow box-shadow",
+      "Section headings: Playfair Display italic, centred, followed by a 40px-wide 1px gold horizontal rule centred beneath",
+      "Stats band: background #c9a227, text #0a0a0a (fully inverted from rest of site)",
+      "Nav logo: Playfair Display italic in gold. Links in Lato, letter-spacing 0.08em uppercase 11px",
+    ],
   },
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@300;400;600&display=swap');`,
-    heading: "Montserrat", body: "Open Sans",
-    headingCss: "font-family:'Montserrat',sans-serif; font-weight:800; letter-spacing:-0.02em; text-transform:uppercase;",
-    bodyCss: "font-family:'Open Sans',sans-serif;",
-    feel: "bold/energetic",
-  },
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');`,
-    heading: "Space Grotesk", body: "DM Sans",
-    headingCss: "font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:-0.025em;",
-    bodyCss: "font-family:'DM Sans',sans-serif;",
-    feel: "contemporary/startup",
-  },
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Libre+Franklin:wght@300;400;500;600&display=swap');`,
-    heading: "Fraunces", body: "Libre Franklin",
-    headingCss: "font-family:'Fraunces',serif; font-weight:700; letter-spacing:-0.01em; font-style:italic;",
-    bodyCss: "font-family:'Libre Franklin',sans-serif;",
-    feel: "editorial/distinguished",
-  },
-  {
-    import: `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');`,
-    heading: "Plus Jakarta Sans", body: "Plus Jakarta Sans",
+
+  // ── 2. COAST — Airy, clean, ocean-inspired ───────────────────────────────
+  coast: {
+    dark: false,
+    palette: "--primary:#0c4a6e;--secondary:#0d9488;--accent:#06b6d4;--bg:#f0f9ff;--surface:#ffffff;--text:#0c4a6e;--text-muted:#64748b",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');`,
     headingCss: "font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; letter-spacing:-0.03em;",
     bodyCss: "font-family:'Plus Jakarta Sans',sans-serif; font-weight:400;",
-    feel: "clean/professional",
+    hero: "SPLIT LAYOUT — 50/50 desktop grid. LEFT side: sky-blue (#f0f9ff) background, left-aligned headline (64px desktop, 36px mobile), 20px subtext, two pill-shaped CTAs stacked on mobile / side-by-side on desktop. RIGHT side: a large rounded rectangle Unsplash photo (border-radius:28px, box-shadow:0 24px 64px rgba(13,148,136,0.2)) with a soft teal blob SVG shape (opacity 0.12, teal fill, border-radius 62% 38% 55% 45%) behind it. Entire hero min-height:90vh, vertically centred.",
+    sections: "NAV (white bg, teal CTA pill) → HERO → TRUST BAR (teal icon circles) → SERVICES → PROCESS → ABOUT → TESTIMONIALS → STATS → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 16px standard, 28px large cards, 99px buttons/pills",
+      "Service cards: white surface, 16px radius, teal icon in a 48px circle (teal-10% bg), hover translateY(-6px) + teal box-shadow",
+      "Alternating sections: --bg (#f0f9ff) and #ffffff — gentle rhythm, no harsh contrast",
+      "A subtle wave SVG divider (fill:#f0f9ff or #ffffff) separates 2-3 key section transitions",
+      "Stats band: teal (#0d9488) background with white text and white count-up numbers",
+      "Trust bar: icons in teal circles, text in --primary — no dark backgrounds",
+    ],
   },
-];
 
-// ── DESIGN STYLE SYSTEMS ──────────────────────────────────────────────────────
-// Controls border-radius, card treatment, hero style, section rhythm.
-const DESIGN_STYLES = {
-  modern: {
-    radius: "12px", radiusLg: "20px", radiusFull: "99px",
-    btnStyle: "rounded corners, solid fill, subtle hover lift",
-    cardStyle: "white card with soft shadow (0 4px 24px rgba(0,0,0,.08)), hover lifts 4px",
-    heroStyle: "full-viewport Unsplash photo with dark gradient overlay, text centered with generous padding",
-    sectionRhythm: "alternating white and very-light-grey section backgrounds",
-    colourUse: "primary for nav/footer, secondary as accent on CTAs and icons",
+  // ── 3. EDGE — Bold, asymmetric, oversized typography ─────────────────────
+  edge: {
+    dark: false,
+    palette: "--primary:#111827;--secondary:#4f46e5;--accent:#7c3aed;--bg:#ffffff;--surface:#f9fafb;--text:#111827;--text-muted:#6b7280",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');`,
+    headingCss: "font-family:'Space Grotesk',sans-serif; font-weight:700; letter-spacing:-0.04em;",
+    bodyCss: "font-family:'DM Sans',sans-serif; font-weight:400;",
+    hero: "ASYMMETRIC full-viewport hero. White background. OVERSIZED headline: 96px desktop / 44px mobile Space Grotesk, hard left-aligned, one word or phrase on its own line highlighted with a vivid indigo (#4f46e5) background-color rectangle (use CSS highlight trick: display:inline; background:#4f46e5; color:#fff; padding:0 8px; box-decoration-break:clone). Below headline: 18px DM Sans italic subtext in --text-muted. Then two CTAs: primary indigo filled (0px radius), secondary plain text with arrow →. RIGHT of headline on desktop: a Unsplash photo inside a hard-edged frame (0px radius, 4px solid #111827 border) rotated 2deg, overlapping a large decorative section number '01' in 280px Space Grotesk at 6% opacity behind it.",
+    sections: "NAV (white, indigo CTA, 0px radius) → HERO → STATS (black band, indigo numbers) → SERVICES → TESTIMONIALS → PROCESS → ABOUT → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 0px everywhere — no rounded corners at all, not even on buttons",
+      "Section headings: Space Grotesk 700, hard left-aligned, a large decorative section number (02, 03...) in 140px at 5% opacity behind/above the heading",
+      "Cards: flat white, 2px solid #111827 border, hover: 2px solid #4f46e5 + thin indigo box-shadow",
+      "Stats band: #111827 full-width, white labels, indigo (#4f46e5) count-up numbers in 64px Space Grotesk",
+      "Every section heading has a vivid 4px indigo left-border accent on a short 32px-wide bar above it",
+      "Testimonials: simple left-aligned quote mark (200px, 5% opacity) behind each card — editorial style",
+    ],
   },
-  bold: {
-    radius: "4px", radiusLg: "8px", radiusFull: "4px",
-    btnStyle: "sharp corners, bold filled, uppercase label, strong hover darken",
-    cardStyle: "flat cards with 3px solid left-border in --secondary, no shadow",
-    heroStyle: "split layout: left 55% bold headline + CTAs on --primary bg, right 45% Unsplash photo (clip-path diagonal cut)",
-    sectionRhythm: "bold colored bands alternating with white; use --primary bg for alternate sections with light text",
-    colourUse: "heavy use of --primary as full-section backgrounds, --secondary for highlights",
+
+  // ── 4. GROVE — Warm, organic, artisan ────────────────────────────────────
+  grove: {
+    dark: false,
+    palette: "--primary:#1b4332;--secondary:#b45309;--accent:#d97706;--bg:#fdf8f2;--surface:#ffffff;--text:#1c1410;--text-muted:#78716c",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Libre+Franklin:wght@300;400;500;600&display=swap');`,
+    headingCss: "font-family:'Fraunces',serif; font-weight:700; letter-spacing:-0.02em;",
+    bodyCss: "font-family:'Libre Franklin',sans-serif; font-weight:400;",
+    hero: "FULL-BLEED warm photo hero. A high-quality Unsplash photo fills 100vw × 90vh. Warm amber overlay gradient (linear-gradient from rgba(28,20,16,0.55) to rgba(28,20,16,0.2)). Centred content overlay: italic Fraunces headline 72px desktop / 38px mobile in warm white (#fdf8f2), a thin decorative horizontal line above and below the headline (80px wide, 1px, rgba(253,248,242,0.45)), then 18px Libre Franklin body text, then an amber-coloured pill CTA (background:#b45309, white text, 99px radius) + ghost CTA. A small hand-drawn-style SVG leaf or botanical motif (simple, 3-4 paths, stroke:#fdf8f2, opacity:0.35) floats bottom-left of hero.",
+    sections: "NAV (transparent on hero, cream bg after scroll, forest green logo) → HERO → ABOUT (story-first — two columns, photo left, warm story text right) → SERVICES → PROCESS → TESTIMONIALS → STATS → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 20px standard, 32px large cards/panels, 99px pills",
+      "Sections alternate between #fdf8f2 (warm cream) and #ffffff — soft, warm rhythm",
+      "Decorative elements: thin SVG horizontal rules with small diamond/leaf in centre between sections",
+      "Service cards: warm cream bg (#fdf8f2), forest green top-border accent (4px), Fraunces italic heading, no shadow — minimal and artisan",
+      "Stats band: forest green (#1b4332) bg, amber number colour, cream text — warm and organic",
+      "Footer: deep forest green bg (#0f2419), cream text, amber accent links",
+    ],
   },
-  elegant: {
-    radius: "2px", radiusLg: "4px", radiusFull: "2px",
-    btnStyle: "no border-radius, thin 1px border, uppercase spaced label, hover fills",
-    cardStyle: "minimal: 1px border only, generous internal padding, hover adds subtle background tint",
-    heroStyle: "minimal hero: centered text on white/very-light background, large elegant headline, single thin horizontal rule decoration, no full-bleed photo",
-    sectionRhythm: "all white/cream backgrounds, generous whitespace between sections, thin dividers",
-    colourUse: "restraint — use colour only on accent elements, icons, and one CTA; rest is black/grey",
+
+  // ── 5. SLATE — Conservative corporate trust ───────────────────────────────
+  slate: {
+    dark: false,
+    palette: "--primary:#0f172a;--secondary:#2563eb;--accent:#1d4ed8;--bg:#f8fafc;--surface:#ffffff;--text:#0f172a;--text-muted:#64748b",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`,
+    headingCss: "font-family:'Inter',sans-serif; font-weight:700; letter-spacing:-0.025em;",
+    bodyCss: "font-family:'Inter',sans-serif; font-weight:400;",
+    hero: "GEOMETRIC PATTERN HERO. Full-width, min-height:85vh. Background: --primary (#0f172a) with a subtle SVG dot-grid pattern (dots 1.5px, spacing 24px, rgba(255,255,255,0.06)) as background-image. LEFT-ALIGNED content (max-width 640px, left padding 10%). Headline 68px Inter 800, white, key word/phrase underlined with a 4px solid blue (#2563eb) underline (border-bottom trick). 18px Inter 300 subtext in rgba(255,255,255,0.7). Two CTAs: primary blue filled (8px radius), secondary white ghost (8px radius, 1px white border). RIGHT side on desktop: a clean white card (16px radius, padding 32px) containing a condensed contact form or a key metric grid — not a photo.",
+    sections: "NAV (navy bg, blue CTA) → HERO → TRUST BAR → STATS (immediately after trust bar, on white) → SERVICES → ABOUT → TESTIMONIALS → PROCESS → FAQ → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 8px standard, 12px large cards, 8px buttons — conservative and precise",
+      "Cards: white surface, 1.5px solid #e2e8f0 border, no shadow at rest, hover: 1.5px solid #2563eb + blue glow box-shadow",
+      "Service icon container: square 44px, background:#eff6ff (blue tint), blue icon",
+      "Sections: alternating #f8fafc and #ffffff — cool grey/white, professional and clean",
+      "Stats placed in section 3 (not at end) — corporate sites lead with proof, then services",
+      "All section headings: Inter 700 left-aligned with a 3px × 36px blue rectangle before the heading text",
+    ],
   },
-  friendly: {
-    radius: "16px", radiusLg: "28px", radiusFull: "99px",
-    btnStyle: "pill shape (99px radius), soft filled, friendly hover bounce animation",
-    cardStyle: "rounded cards with pastel --secondary tinted background, no border, light shadow",
-    heroStyle: "organic hero: floating card or device mockup to the right, headline left-aligned, large friendly emoji or icon decorations",
-    sectionRhythm: "soft pastel background tints per section, rounded section corners",
-    colourUse: "warm and inviting, coloured section backgrounds, icons with coloured circle backgrounds",
+
+  // ── 6. SPARK — Vibrant gradient, modern SaaS energy ──────────────────────
+  spark: {
+    dark: false,
+    palette: "--primary:#1e1b4b;--secondary:#7c3aed;--accent:#ec4899;--bg:#ffffff;--surface:#faf5ff;--text:#1e1b4b;--text-muted:#6b7280",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Open+Sans:wght@300;400;600&display=swap');`,
+    headingCss: "font-family:'Montserrat',sans-serif; font-weight:800; letter-spacing:-0.03em;",
+    bodyCss: "font-family:'Open Sans',sans-serif; font-weight:400;",
+    hero: "GRADIENT HERO. Full-viewport white background. Centred layout. A large gradient blob (linear-gradient 135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.08)) as an absolutely positioned background shape (border-radius:62% 38% 46% 54%, size 800×600px, centred, no overflow). Headline 72px Montserrat 900, centred, dark --primary. Key phrase wrapped in a <span> with gradient text (background:linear-gradient(90deg,#7c3aed,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent). 20px Open Sans subtext centred. Gradient CTA button (background:linear-gradient(90deg,#7c3aed,#ec4899), white text, 99px radius, bold). Secondary ghost CTA (99px radius). Below CTAs: a row of 3-4 social-proof badges (e.g. '★ 4.9 on Google', '500+ clients') in small pill chips.",
+    sections: "NAV (white, gradient CTA pill) → HERO → TRUST BAR (gradient icon badges) → SERVICES → STATS → TESTIMONIALS → ABOUT → CTA BAND (gradient background) → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 16px standard, 24px large cards, 99px buttons — everything rounded and friendly",
+      "Use gradient accents throughout: gradient borders (border:2px solid transparent; background-clip:padding-box + gradient background trick), gradient icons, gradient underlines",
+      "Service cards: white bg, 2px gradient border on hover, purple icon circle, soft shadow",
+      "CTA band: gradient background (linear-gradient 135deg, #7c3aed, #ec4899), white text",
+      "Stats numbers: gradient text (purple to pink), large 60px Montserrat 900",
+      "Section headings: centred, small gradient pill chip above heading (e.g. 'OUR SERVICES' in gradient bg chip), then the large heading below",
+    ],
   },
-  corporate: {
-    radius: "6px", radiusLg: "10px", radiusFull: "6px",
-    btnStyle: "standard rounded, solid primary, professional hover state",
-    cardStyle: "outlined cards (1.5px border), icon in square --secondary bg box, hover fills card subtly",
-    heroStyle: "geometric hero: --primary dark background with subtle grid/dot pattern SVG, large white headline, brand accent underline on key phrase",
-    sectionRhythm: "white sections with thin top/bottom borders as separators; stats band in --primary",
-    colourUse: "structured: primary for authority, secondary for actions only, muted greys for supporting text",
+
+  // ── 7. CRAFT — Artisan boutique, warm and premium ────────────────────────
+  craft: {
+    dark: false,
+    palette: "--primary:#1c1410;--secondary:#c2410c;--accent:#9a3412;--bg:#faf7f2;--surface:#ffffff;--text:#1c1410;--text-muted:#78716c",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Nunito:wght@300;400;600;700&display=swap');`,
+    headingCss: "font-family:'Cormorant Garamond',serif; font-weight:600; letter-spacing:0.01em;",
+    bodyCss: "font-family:'Nunito',sans-serif; font-weight:400;",
+    hero: "EDITORIAL SPLIT HERO. Min-height:95vh. LEFT half: warm off-white (#faf7f2) background, bottom-aligned content (padding-bottom:80px). Large Cormorant Garamond italic headline 88px desktop / 40px mobile in --primary. Thin decorative rule (80px, 1px, --secondary) above the headline. Two-sentence tagline in Nunito 18px --text-muted. Terracotta brick CTA button (background:#c2410c, white text, 6px radius) + ghost link-style CTA. RIGHT half: a full-height Unsplash photo (object-fit:cover, height:100%) — no border-radius, bleeds to viewport edge. A thin 4px terracotta vertical rule divides the two halves.",
+    sections: "NAV (cream bg, terracotta logo, minimal) → HERO → ABOUT (story and founder, warm narrative) → SERVICES → TESTIMONIALS → PROCESS → STATS → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 6px standard, 10px large — restrained, premium, not overly rounded",
+      "Warm tones throughout: cream (#faf7f2) and white surfaces only, terracotta as the accent colour",
+      "Cards: 1px solid rgba(28,20,16,0.1) border, hover: terracotta top-border appears (3px solid #c2410c), cream bg",
+      "Cormorant Garamond italic used for all section headings — creates distinct editorial feel",
+      "Stats band: cream (#faf7f2) bg — NOT a coloured band. Large Cormorant numbers in terracotta, Nunito labels below",
+      "Thin horizontal rules (1px solid rgba(28,20,16,0.12)) with small diamond SVG centred within them as section dividers",
+    ],
   },
+
+  // ── 8. APEX — Industrial bold, dark navy + vivid orange ──────────────────
+  apex: {
+    dark: true,
+    palette: "--primary:#0c1a30;--secondary:#f97316;--accent:#ea580c;--bg:#0c1a30;--surface:#162035;--text:#f1f5f9;--text-muted:#94a3b8",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Roboto:wght@300;400;500&display=swap');`,
+    headingCss: "font-family:'Montserrat',sans-serif; font-weight:900; letter-spacing:-0.02em; text-transform:uppercase;",
+    bodyCss: "font-family:'Roboto',sans-serif; font-weight:400;",
+    hero: "DIAGONAL CUT HERO. Full-viewport. Background: --bg (#0c1a30). Layout: LEFT 58% contains all text content (left-aligned, padding-left:8%). RIGHT 42% has a vivid orange diagonal shape (clip-path:polygon(15% 0, 100% 0, 100% 100%, 0% 100%) in --secondary colour #f97316) with a Unsplash industry photo inside it (mix-blend-mode:multiply or luminosity on the photo). Headline: 80px Montserrat 900 UPPERCASE white, key word in --secondary orange. Subheading: 18px Roboto 300 in --text-muted. Orange filled CTA button (4px radius) + white ghost CTA (4px radius, 1px white border). A bold horizontal orange line (4px, 64px wide) above the headline.",
+    sections: "NAV (dark navy, orange CTA, uppercase logo) → HERO → TRUST BAR (dark surface cards) → SERVICES → STATS (orange band) → PROCESS → TESTIMONIALS → CTA BAND → CONTACT → FOOTER",
+    rules: [
+      "Border-radius: 4px everywhere — industrial, not friendly",
+      "ALL section backgrounds: --bg (#0c1a30) or --surface (#162035) — this is a full dark site",
+      "Orange (#f97316) used for: CTA buttons, accent lines, stat numbers, icon fills, hover states",
+      "Service cards: --surface bg, 4px radius, 3px solid left-border in #f97316, no shadow, hover: bg lighten slightly",
+      "Stats band: #f97316 orange background, --primary (#0c1a30) text — fully inverted",
+      "All text must be white or --text-muted (#94a3b8) — no dark text on dark backgrounds",
+    ],
+  },
+};
+
+// Auto-suggest theme based on niche keywords
+const NICHE_THEME_DEFAULTS: Record<string, string> = {
+  "trades": "apex",
+  "allied-health": "coast",
+  "professional-services": "onyx",
+  "retail": "spark",
+  "hospitality": "craft",
+  "beauty": "coast",
+  "automotive": "apex",
+  "technology": "edge",
+  "other": "slate",
 };
 
 export async function POST(req: NextRequest) {
@@ -178,7 +218,7 @@ export async function POST(req: NextRequest) {
       phone = "",
       email = "",
       address = "",
-      style = "modern",
+      style = "",
       description = "",
       chatbot: chatbotInput = {},
     } = body;
@@ -190,16 +230,11 @@ export async function POST(req: NextRequest) {
     const slug = slugify(businessName);
     const siteUrl = `https://www.saabai.ai/sites/${slug}/`;
 
-    // Pick palette, font pair and design style deterministically from business name
-    const palettes = NICHE_PALETTES[niche] ?? NICHE_PALETTES.other;
-    const palette = palettes[pickByName(businessName, palettes.length)];
-    const font = FONT_PAIRS[pickByName(businessName + niche, FONT_PAIRS.length)];
-    const designStyle = DESIGN_STYLES[style as keyof typeof DESIGN_STYLES] ?? DESIGN_STYLES.modern;
+    // Resolve theme — explicit choice wins, then niche default
+    const themeKey = (style && THEMES[style]) ? style : (NICHE_THEME_DEFAULTS[niche] ?? "slate");
+    const theme = THEMES[themeKey];
 
-    // Detect if palette is dark-mode based on --bg value
-    const isDark = palette.includes("--bg:#0") || palette.includes("--bg:#1");
-
-    const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised Australian small business websites. Each site you produce feels completely custom — no two look alike. You draw on diverse design movements: Swiss minimalism, bold editorial, luxury restraint, friendly organic, dark-tech, warm artisan. Your output rivals Lovable, Webflow and Framer at $5,000+ quality.
+    const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised Australian small business websites. Each site you produce is structurally and visually unique — you have been given an explicit named design theme with exact rules you must follow precisely.
 
 ABSOLUTE RULES:
 - Output ONLY raw HTML. No markdown, no explanations, no code fences, no preamble.
@@ -209,91 +244,91 @@ ABSOLUTE RULES:
 - ALL JavaScript in one <script> tag immediately before </body>.
 - Zero external CSS frameworks. Pure handcrafted CSS using Grid and Flexbox.
 - Fully responsive: mobile-first. Breakpoints: 768px tablet, 1024px desktop.
-- You have been given a DESIGN PERSONALITY below — honour it faithfully. The design personality determines border-radii, card treatment, hero layout, section rhythm, and colour usage. Do not default to a generic modern template.`;
+- The THEME RULES below are hard constraints, not suggestions. Every structural, layout, and styling rule must be followed exactly. Do not fall back to a generic template.`;
 
     const servicesList = services.length
       ? services.join(", ")
       : "choose 6 highly relevant services for this specific business niche";
 
-    const userPrompt = `Build a complete production website for this Australian business. Write real, compelling copy — not Lorem Ipsum.
-
-BUSINESS: ${businessName}
-NICHE: ${niche}
-LOCATION: ${location}
-PHONE: ${phone || "Contact us for a free quote"}
-EMAIL: ${email || ""}
-ADDRESS: ${address || location}
-SERVICES: ${servicesList}
-${description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : ""}
-
-━━━ DESIGN SYSTEM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-COLOUR PALETTE (define at :root):
-${palette}
-Also define: --shadow:0 4px 24px rgba(0,0,0,.08); --shadow-lg:0 16px 48px rgba(0,0,0,.16); --transition:0.2s ease;
-Spacing scale --s1 through --s16 (4px per step: --s1=4px, --s2=8px, --s4=16px, --s6=24px, --s8=32px, --s10=40px, --s12=48px, --s16=64px).
-
-TYPOGRAPHY:
-${font.import}
-Headings: ${font.headingCss}
-Body: ${font.bodyCss} 16px/1.7.
-Type scale: 12px caption, 14px small, 16px body, 20px lead, 24px h4, 32px h3, 40px h2, 56px h1, 72px hero.
-
-DESIGN PERSONALITY: ${style.toUpperCase()} — honour every detail below:
-- Border radius: ${designStyle.radius} (standard), ${designStyle.radiusLg} (large cards/panels), ${designStyle.radiusFull} (buttons/pills)
-- Button style: ${designStyle.btnStyle}
-- Card treatment: ${designStyle.cardStyle}
-- Hero layout: ${designStyle.heroStyle}
-- Section rhythm: ${designStyle.sectionRhythm}
-- Colour usage: ${designStyle.colourUse}
-${isDark ? "- This is a DARK-THEME site. Ensure all text is light and readable on dark backgrounds." : ""}
-
-INTERACTION QUALITY:
-- Buttons: hover scale(1.02) + shadow-lg + subtle colour shift, 0.2s ease. Focus-visible ring.
-- Cards: hover translateY(-4px) + shadow-lg (or per card style above).
-- Inputs: border-colour transition on focus, custom focus ring in --secondary.
-
-ANIMATIONS:
-- Sticky nav: becomes opaque with box-shadow when scrollY > 60.
-- IntersectionObserver: .reveal elements animate from opacity:0 + translateY(24px) to visible on enter.
-- Stats: count-up from 0 over 1.8s when in view.
-
-IMAGES:
-- Use real Unsplash URLs: https://images.unsplash.com/photo-XXXXXXXX?w=1200&q=80
-- Pick photo IDs that genuinely match the business niche and feel.
-- All images: loading="lazy", explicit width/height.
-
-SEO:
-- JSON-LD schema in <head> — use the most specific @type for the niche (e.g. LegalService, MedicalBusiness, HomeAndConstructionBusiness, etc.), NOT just LocalBusiness.
-- Schema must include: name, description, url, telephone, email, address (with streetAddress, addressLocality, addressRegion, postalCode, addressCountry), geo (latitude/longitude for the suburb), openingHoursSpecification, priceRange, areaServed, image (logo URL), sameAs (empty array — placeholder for GMB/social).
-- If a FAQ section is generated, ALSO add a FAQPage schema block: {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Q?","acceptedAnswer":{"@type":"Answer","text":"A."}},...]}
-- Add <meta name="robots" content="index, follow"> to <head>.
-- Complete Open Graph + Twitter Card meta tags. og:image must use the hero Unsplash URL.
-- Semantic HTML5: header, main, section, article, footer, nav, address.
-
-━━━ SECTIONS (adapt styling to the design personality above) ━━━━━
-
-1. STICKY NAV — Logo text left (${businessName}). Nav links centre. CTA button right ("Get Free Quote" or equivalent). Transparent start, opaque on scroll.
-
-2. HERO — ${designStyle.heroStyle}. Headline: 72px desktop / 36px mobile. Address the customer's #1 pain point for ${niche}. Two CTAs: primary + secondary. Add .reveal class to text elements.
-
-3. TRUST BAR — 4 trust signals with inline SVG icons. Examples: licensed/insured, Google rating, jobs completed, response time. Adapt icons and labels to suit ${niche}.
-
-4. SERVICES — Section heading + lead text. CSS Grid: 3 cols desktop, 2 tablet, 1 mobile. 6 service cards styled per the design personality card treatment. Each card: SVG icon, service name, 2-line benefit. .reveal on cards.
-
-5. PROCESS — "How It Works". 3 numbered steps. Horizontal desktop, vertical mobile. Step numbers in --secondary.
-
-6. STATS — 4 animated count-up metrics in a full-width band. Background: --primary. Large number + label.
-
-7. TESTIMONIALS — 3 cards. 5 gold stars, specific result quote (3-4 sentences), first name + last initial, Australian suburb, job type. Make quotes feel authentic.
-
-8. ABOUT — Two columns: Unsplash photo left, story text right. 2 paragraphs + 4 differentiating bullet points. .reveal.
-
-9. CTA BAND — Full-width, bg --secondary, bold white headline, 1 sentence, one large white button.
-
-10. CONTACT — Two columns: left has large clickable phone, email, address, condensed hours (Mon-Fri / weekends); right has a contact form (Name, Email, Phone, Message) with floating-label CSS inputs. Form POSTs JSON to https://www.saabai.ai/api/site-factory/lead with {name,email,phone,message,siteSlug:"${slug}"}, shows success/error state inline.
-
-11. FOOTER — Dark bg (--primary). 3 columns: brand + tagline + LinkedIn + email social icons; Quick Links; Contact details. Bottom bar: copyright ${new Date().getFullYear()} ${businessName} + Privacy Policy + Terms of Use links (href="#").`;
+    const userPrompt = [
+      `Build a complete production website for this Australian business. Write real, compelling copy -- not Lorem Ipsum.`,
+      ``,
+      `BUSINESS: ${businessName}`,
+      `NICHE: ${niche}`,
+      `LOCATION: ${location}`,
+      `PHONE: ${phone || "Contact us for a free quote"}`,
+      `EMAIL: ${email || ""}`,
+      `ADDRESS: ${address || location}`,
+      `SERVICES: ${servicesList}`,
+      description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : "",
+      ``,
+      `━━━ DESIGN THEME: ${themeKey.toUpperCase()} ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `COLOUR PALETTE -- define exactly at :root:`,
+      theme.palette,
+      `Also define: --shadow:0 4px 24px rgba(0,0,0,.08); --shadow-lg:0 16px 48px rgba(0,0,0,.16); --transition:0.2s ease;`,
+      `Spacing: --s1=4px; --s2=8px; --s3=12px; --s4=16px; --s6=24px; --s8=32px; --s10=40px; --s12=48px; --s16=64px;`,
+      ``,
+      `TYPOGRAPHY:`,
+      theme.fontImport,
+      `Headings (h1-h4): ${theme.headingCss}`,
+      `Body: ${theme.bodyCss} font-size:16px; line-height:1.75;`,
+      `Type scale: 12px caption, 14px small, 16px body, 20px lead, 24px h4, 32px h3, 44px h2, 60px h1, 80px hero.`,
+      theme.dark ? "DARK THEME: all text must use --text or --text-muted. Zero dark text on dark backgrounds." : "",
+      ``,
+      `━━━ HERO SECTION (implement exactly as described) ━━━━━━━━━━━━━━━`,
+      ``,
+      theme.hero,
+      ``,
+      `Address the customer's #1 pain point for ${niche}. Add .reveal CSS class to all main text elements.`,
+      ``,
+      `━━━ SECTION ORDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `Build sections in this exact order:`,
+      theme.sections,
+      ``,
+      `━━━ THEME STRUCTURAL RULES (all mandatory) ━━━━━━━━━━━━━━━━`,
+      ``,
+      ...theme.rules.map((r: string, i: number) => `${i + 1}. ${r}`),
+      ``,
+      `━━━ INTERACTION & ANIMATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `- Sticky nav: becomes opaque with box-shadow when scrollY > 60.`,
+      `- IntersectionObserver: .reveal elements animate from opacity:0 + translateY(24px) to visible.`,
+      `- Stats: count-up from 0 over 1.8s when in view using data-target attribute on the number element.`,
+      `- Buttons: hover scale(1.02) + shadow-lg + colour shift, 0.2s ease. Focus-visible ring.`,
+      `- Card hover: translateY(-4px) or per theme rules above.`,
+      `- Inputs: border-colour transition on focus, focus ring in --secondary.`,
+      ``,
+      `━━━ IMAGES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `- Use real Unsplash URLs: https://images.unsplash.com/photo-XXXXXXXX?w=1200&q=80`,
+      `- Pick photo IDs that genuinely match the business niche and the visual feel of this theme.`,
+      `- All images: loading="lazy", explicit width/height.`,
+      ``,
+      `━━━ SEO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `- JSON-LD -- most specific @type (LegalService, MedicalBusiness, HomeAndConstructionBusiness, etc.).`,
+      `- Schema: name, description, url, telephone, email, address (full AU), geo, openingHoursSpecification, priceRange, areaServed, image, sameAs:[].`,
+      `- FAQPage schema if FAQ section present.`,
+      `- <meta name="robots" content="index, follow">.`,
+      `- Full Open Graph + Twitter Card. og:image = hero photo URL.`,
+      `- Semantic HTML5: header, main, section, article, footer, nav, address.`,
+      ``,
+      `━━━ SECTION CONTENT SPECS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      ``,
+      `NAV: Logo text left (${businessName}). Nav links centre (hamburger on mobile). CTA button right. Transparent to opaque on scroll.`,
+      `TRUST BAR: 4 trust signals with inline SVG icons. Adapt to ${niche}.`,
+      `SERVICES: 6 cards, CSS Grid 3-col/2-col/1-col. SVG icon + name + 2-line benefit. .reveal.`,
+      `PROCESS: 3 numbered steps. Horizontal desktop, vertical mobile.`,
+      `STATS: 4 count-up metrics. data-target="NUMBER" on each stat.`,
+      `TESTIMONIALS: 3 cards -- 5 stars, 3-4 sentence quote, first name + last initial, Australian suburb.`,
+      `ABOUT: Photo + story (2 paragraphs + 4 bullets). .reveal.`,
+      `FAQ: 6 questions in <details><summary>. JS toggles +/- icon.`,
+      `CTA BAND: Full-width, themed background, bold headline, one button.`,
+      `CONTACT: Two columns -- contact details left, form right. POSTs to https://www.saabai.ai/api/site-factory/lead with {name,email,phone,message,siteSlug:"${slug}"}.`,
+      `FOOTER: 3 columns -- brand+social, links, contact. Copyright ${new Date().getFullYear()} ${businessName}. Privacy + Terms links (href="#").`,
+    ].filter(Boolean).join("\n");
 
     const stream = streamText({
       model: getPremiumModel(),

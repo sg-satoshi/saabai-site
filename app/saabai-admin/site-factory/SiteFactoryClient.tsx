@@ -71,7 +71,22 @@ const NICHES = [
   { value: "other", label: "Other" },
 ];
 
-const STYLES = ["modern", "classic", "minimal", "bold"];
+const THEMES = [
+  { id: "onyx",  label: "Onyx",  tagline: "Dark luxury",      colors: ["#0d0d0d","#c9a227","#181818"], niches: ["professional-services","automotive"] },
+  { id: "coast", label: "Coast", tagline: "Clean & airy",     colors: ["#f0f9ff","#0d9488","#0c4a6e"], niches: ["allied-health","beauty"] },
+  { id: "edge",  label: "Edge",  tagline: "Bold geometric",   colors: ["#ffffff","#4f46e5","#111827"], niches: ["technology"] },
+  { id: "grove", label: "Grove", tagline: "Warm organic",     colors: ["#fdf8f2","#1b4332","#b45309"], niches: ["hospitality"] },
+  { id: "slate", label: "Slate", tagline: "Corporate trust",  colors: ["#f8fafc","#0f172a","#2563eb"], niches: ["other"] },
+  { id: "spark", label: "Spark", tagline: "Vibrant gradient", colors: ["#ffffff","#7c3aed","#ec4899"], niches: ["retail"] },
+  { id: "craft", label: "Craft", tagline: "Artisan boutique", colors: ["#faf7f2","#c2410c","#1c1410"], niches: ["hospitality"] },
+  { id: "apex",  label: "Apex",  tagline: "Industrial bold",  colors: ["#0c1a30","#f97316","#162035"], niches: ["trades","automotive"] },
+];
+
+const NICHE_THEME_DEFAULT: Record<string, string> = {
+  "trades": "apex", "allied-health": "coast", "professional-services": "onyx",
+  "retail": "spark", "hospitality": "craft", "beauty": "coast",
+  "automotive": "apex", "technology": "edge", "other": "slate",
+};
 
 function storeMsgs(slug: string, msgs: Message[]) {
   try {
@@ -208,12 +223,13 @@ export default function SiteFactoryClient() {
   // Generation state
   const [businessName, setBusinessName] = useState("");
   const [niche, setNiche] = useState("trades");
+  const [themeOverridden, setThemeOverridden] = useState(false);
   const [location, setLocation] = useState("Australia");
   const [services, setServices] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
-  const [style, setStyle] = useState("modern");
+  const [style, setStyle] = useState(NICHE_THEME_DEFAULT["trades"]);
   const [description, setDescription] = useState("");
   const [genCharCount, setGenCharCount] = useState(0);
   const [streamedHtml, setStreamedHtml] = useState("");
@@ -2151,7 +2167,7 @@ export default function SiteFactoryClient() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>{lbl("Business Name *")}<input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Smith Plumbing" style={inp()} autoFocus /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>{lbl("Industry")}<select value={niche} onChange={e => setNiche(e.target.value)} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
+                <div>{lbl("Industry")}<select value={niche} onChange={e => { const n = e.target.value; setNiche(n); if (!themeOverridden) setStyle(NICHE_THEME_DEFAULT[n] ?? "slate"); }} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
                 <div>{lbl("Location")}<input value={location} onChange={e => setLocation(e.target.value)} placeholder="Sydney, NSW" style={inp()} /></div>
               </div>
               <div>{lbl("Services (comma separated)")}<input value={services} onChange={e => setServices(e.target.value)} placeholder="Emergency plumbing, Blocked drains..." style={inp()} /></div>
@@ -2165,11 +2181,20 @@ export default function SiteFactoryClient() {
                 <div>{lbl("Address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" style={inp()} /></div>
               </div>
               <div>
-                {lbl("Style")}
-                <div style={{ display: "flex", gap: 6 }}>
-                  {STYLES.map(s => (
-                    <button key={s} onClick={() => setStyle(s)} style={{ flex: 1, padding: "7px 0", borderRadius: 5, border: `1px solid ${style === s ? C.gold : C.border2}`, background: style === s ? C.goldBg : C.bg, color: style === s ? C.gold : C.textDim, fontSize: 12, cursor: "pointer", textTransform: "capitalize" }}>{s}</button>
-                  ))}
+                {lbl("Design Theme")}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                  {THEMES.map(t => {
+                    const selected = style === t.id;
+                    return (
+                      <button key={t.id} onClick={() => { setStyle(t.id); setThemeOverridden(true); }} style={{ padding: "8px 6px", borderRadius: 7, border: `1.5px solid ${selected ? C.gold : C.border2}`, background: selected ? C.goldBg : C.bg, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s" }}>
+                        <div style={{ display: "flex", gap: 3 }}>
+                          {t.colors.map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, border: "1px solid rgba(255,255,255,0.12)" }} />)}
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: selected ? C.gold : C.text, letterSpacing: "0.03em" }}>{t.label}</span>
+                        <span style={{ fontSize: 9, color: selected ? C.gold : C.textMuted, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t.tagline}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               {/* Chatbot config */}
