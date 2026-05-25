@@ -203,7 +203,8 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    console.error("[pete-chat]", err);
-    return new Response(String(err), { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[pete-chat] Fatal:", msg);
+    return new Response(msg, { status: 500 });
   }
 }

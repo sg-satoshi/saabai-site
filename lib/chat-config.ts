@@ -114,9 +114,16 @@ export function getRexModel(tier: "default" | "premium" = "default", route?: Rex
   if (!key) return getModel(tier);
 
   const rexAnthropic = createAnthropic({ apiKey: key });
-  const modelId = tier === "premium"
-    ? (process.env.PREMIUM_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-sonnet-4-6")
-    : (process.env.DEFAULT_CHAT_MODEL?.replace(/^anthropic:/, "") ?? "claude-haiku-4-5");
+
+  // Rex billing keys are Anthropic-only. If PREMIUM/DEFAULT_CHAT_MODEL is set to a
+  // non-Anthropic provider (e.g. xai:grok-3-mini), we cannot use it with the Rex key —
+  // fall back to a safe Anthropic default instead of passing a bad model ID.
+  const envValue = tier === "premium" ? process.env.PREMIUM_CHAT_MODEL : process.env.DEFAULT_CHAT_MODEL;
+  const safeDefault = tier === "premium" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
+  const isAnthropicModel = !envValue || envValue.startsWith("anthropic:");
+  const modelId = isAnthropicModel
+    ? (envValue?.replace(/^anthropic:/, "") ?? safeDefault)
+    : safeDefault;
 
   return rexAnthropic(modelId);
 }
