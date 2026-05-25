@@ -8,12 +8,39 @@ const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },
   "robots.txt": { ext: "txt", contentType: "text/plain; charset=utf-8" },
 };
+const FAVICON_EXTS: Record<string, string> = {
+  "favicon.ico": "image/x-icon",
+  "favicon.png": "image/png",
+  "favicon.svg": "image/svg+xml",
+};
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string; page: string }> }
 ) {
   const { slug, page } = await params;
+
+  // Favicon files — served as binary from blob
+  const faviconMime = FAVICON_EXTS[page];
+  if (faviconMime) {
+    try {
+      const { blobs } = await list({ prefix: `sites/${slug}/${page}` });
+      const blob = blobs.find((b) => b.pathname === `sites/${slug}/${page}`);
+      if (!blob) return new Response("Not found", { status: 404 });
+      const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
+      const buffer = await res.arrayBuffer();
+      return new Response(buffer, {
+        status: 200,
+        headers: {
+          "Content-Type": faviconMime,
+          "Cache-Control": "public, max-age=86400",
+        },
+      });
+    } catch (e) {
+      console.error("Favicon serve error:", e);
+      return new Response("Error", { status: 500 });
+    }
+  }
 
   // SEO files — served directly from blob
   const seoFile = SEO_FILES[page];

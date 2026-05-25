@@ -244,7 +244,10 @@ export default function SiteFactoryClient() {
   const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo">("chat");
   function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo") {
     setActivePanel(panel);
-    if (panel === "image" && activeSite) loadGallery(activeSite.slug);
+    if (panel === "image" && activeSite) {
+      loadGallery(activeSite.slug);
+      loadFavicon(activeSite.slug);
+    }
     if (panel === "seo" && activeSite) loadSeoScore(activeSite.slug);
   }
 
@@ -273,6 +276,11 @@ export default function SiteFactoryClient() {
   const [generatedImgs, setGeneratedImgs] = useState<Array<{ url: string; prompt: string }>>([]);
   const [galleryImgs, setGalleryImgs] = useState<Array<{ url: string; ts: number; prompt?: string }>>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
+
+  // Favicon state
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [faviconUploading, setFaviconUploading] = useState(false);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   // Reviews state
   const [reviewsUrl, setReviewsUrl] = useState("");
@@ -804,6 +812,33 @@ export default function SiteFactoryClient() {
       }
     } catch (e) { setIndexResult({ ok: false, msg: String(e) }); }
     setIndexSubmitting(false);
+  }
+
+  async function loadFavicon(slug: string) {
+    try {
+      const res = await fetch(`/api/site-factory/favicon?slug=${encodeURIComponent(slug)}`);
+      const data = await res.json();
+      setFaviconUrl(data.url ?? null);
+    } catch { /* non-fatal */ }
+  }
+
+  async function uploadFavicon(file: File) {
+    if (!activeSite || faviconUploading) return;
+    setFaviconUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("slug", activeSite.slug);
+      fd.append("file", file);
+      const res = await fetch("/api/site-factory/favicon", { method: "PUT", body: fd });
+      const data = await res.json();
+      if (data.ok) {
+        setFaviconUrl(data.url);
+        showToast("Favicon updated");
+      } else {
+        showToast(data.error || "Upload failed", "error");
+      }
+    } catch (e) { showToast(String(e), "error"); }
+    setFaviconUploading(false);
   }
 
   async function loadGallery(slug: string) {
@@ -1389,6 +1424,38 @@ export default function SiteFactoryClient() {
               {/* ── Panel: Image ─────────────────────────────────── */}
               {activePanel === "image" && (
                 <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {/* Favicon section */}
+                  <div style={{ padding: "12px", borderRadius: 8, border: `1px solid ${C.border2}`, background: C.surface }}>
+                    <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 600, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Site Favicon</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 6, border: `1px solid ${C.border2}`, background: C.bg, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        {faviconUrl
+                          ? <img src={`${faviconUrl}?t=${Date.now()}`} alt="favicon" style={{ width: 32, height: 32, objectFit: "contain" }} />
+                          : <span style={{ fontSize: 18 }}>🌐</span>}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: "0 0 5px", fontSize: 10, color: C.textDim }}>{faviconUrl ? "Favicon active" : "No favicon set"}</p>
+                        <button
+                          onClick={() => faviconInputRef.current?.click()}
+                          disabled={faviconUploading}
+                          style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.border2}`, background: faviconUploading ? C.surface : C.surface2, color: faviconUploading ? C.textMuted : C.text, fontSize: 11, cursor: faviconUploading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
+                        >
+                          {faviconUploading
+                            ? <><div style={{ width: 10, height: 10, borderRadius: "50%", border: `1.5px solid ${C.textMuted}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />Uploading…</>
+                            : "Upload favicon"}
+                        </button>
+                      </div>
+                    </div>
+                    <p style={{ margin: "8px 0 0", fontSize: 9, color: C.textMuted }}>PNG, ICO, or SVG · Shown in browser tab</p>
+                  </div>
+                  <input
+                    ref={faviconInputRef}
+                    type="file"
+                    accept=".png,.ico,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml"
+                    style={{ display: "none" }}
+                    onChange={e => { const f = e.target.files?.[0]; if (f) { uploadFavicon(f); e.target.value = ""; } }}
+                  />
+
                   {/* Header */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#a855f7" }}>AI Image Generator</span>
