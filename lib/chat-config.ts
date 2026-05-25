@@ -109,23 +109,16 @@ function getRexKey(route?: RexRoute): string | undefined {
  * Rex-specific model. Uses the route-specific Anthropic key if set,
  * otherwise falls back to REX_ANTHROPIC_API_KEY, otherwise the default.
  */
+// Rex always uses Anthropic regardless of DEFAULT_CHAT_MODEL / PREMIUM_CHAT_MODEL.
+// Model IDs are hardcoded here — change them here if Rex's model needs updating.
+const REX_MODEL_PREMIUM = "claude-sonnet-4-6";
+const REX_MODEL_DEFAULT = "claude-haiku-4-5-20251001";
+
 export function getRexModel(tier: "default" | "premium" = "default", route?: RexRoute): LanguageModel {
   const key = getRexKey(route);
-  if (!key) return getModel(tier);
-
-  const rexAnthropic = createAnthropic({ apiKey: key });
-
-  // Rex billing keys are Anthropic-only. If PREMIUM/DEFAULT_CHAT_MODEL is set to a
-  // non-Anthropic provider (e.g. xai:grok-3-mini), we cannot use it with the Rex key —
-  // fall back to a safe Anthropic default instead of passing a bad model ID.
-  const envValue = tier === "premium" ? process.env.PREMIUM_CHAT_MODEL : process.env.DEFAULT_CHAT_MODEL;
-  const safeDefault = tier === "premium" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001";
-  const isAnthropicModel = !envValue || envValue.startsWith("anthropic:");
-  const modelId = isAnthropicModel
-    ? (envValue?.replace(/^anthropic:/, "") ?? safeDefault)
-    : safeDefault;
-
-  return rexAnthropic(modelId);
+  const modelId = tier === "premium" ? REX_MODEL_PREMIUM : REX_MODEL_DEFAULT;
+  if (key) return createAnthropic({ apiKey: key })(modelId);
+  return anthropic(modelId);
 }
 
 /**
