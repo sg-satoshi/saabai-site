@@ -127,11 +127,70 @@ function loadReviews(slug: string): ReviewsData | null {
 }
 
 
+// ─── List helpers ────────────────────────────────────────────────────────────
+
+function siteColor(name: string): string {
+  const palette = ["#0f9d8e","#c9a227","#3b82f6","#a855f7","#f97316","#ef4444","#22c55e","#ec4899","#14b8a6","#8b5cf6"];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return palette[Math.abs(h) % palette.length];
+}
+
+function relTime(ts: number): string {
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  if (d < 1) return "today";
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.floor(d / 7)}w ago`;
+  if (d < 365) return `${Math.floor(d / 30)}mo ago`;
+  return `${Math.floor(d / 365)}y ago`;
+}
+
+function deduplicateSites(sites: Site[]): Site[] {
+  const map = new Map<string, Site>();
+  // Sort so properly-slugged, domain-having entries win
+  const sorted = [...sites].sort((a, b) => {
+    const aScore = (a.domains?.length ? 2 : 0) + (/^[a-z0-9-]+$/.test(a.slug) ? 1 : 0);
+    const bScore = (b.domains?.length ? 2 : 0) + (/^[a-z0-9-]+$/.test(b.slug) ? 1 : 0);
+    return bScore - aScore;
+  });
+  for (const site of sorted) {
+    const key = site.name.toLowerCase().trim();
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, site);
+    } else {
+      // Merge domains onto the winner
+      const merged = [...new Set([...(existing.domains || []), ...(site.domains || [])])];
+      map.set(key, { ...existing, domains: merged });
+    }
+  }
+  return Array.from(map.values());
+}
+
+const NICHE_META: Record<string, { label: string; color: string; bg: string }> = {
+  trades:                { label: "Trades",               color: "#c9a227", bg: "rgba(201,162,39,0.12)" },
+  "allied-health":       { label: "Allied Health",        color: "#0f9d8e", bg: "rgba(15,157,142,0.12)" },
+  "professional-services":{ label: "Professional Svcs",   color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  retail:                { label: "Retail",               color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
+  hospitality:           { label: "Hospitality",          color: "#f97316", bg: "rgba(249,115,22,0.12)" },
+  other:                 { label: "Other",                color: "#6b7e94", bg: "rgba(107,126,148,0.12)" },
+  legal:                 { label: "Legal",                color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  finance:               { label: "Finance",              color: "#22c55e", bg: "rgba(34,197,94,0.12)"  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function SiteFactoryClient() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingSites, setLoadingSites] = useState(false);
   const [phase, setPhase] = useState<Phase>("list");
   const [isMobile, setIsMobile] = useState(false);
+
+  // List filter/search state
+  const [listSearch, setListSearch] = useState("");
+  const [listNiche, setListNiche] = useState("all");
+  const [listStatus, setListStatus] = useState("all");
+  const [listSort, setListSort] = useState<"newest"|"oldest"|"az"|"za">("newest");
 
   // Toast notification
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -2185,61 +2244,246 @@ export default function SiteFactoryClient() {
   }
 
   // ─── LIST VIEW ──────────────────────────────────────────────────────
+  const dedupedSites = deduplicateSites(sites);
+
+  // Derived stats
+  const statLive    = dedupedSites.filter(s => s.status === "live").length;
+  const statDraft   = dedupedSites.filter(s => s.status === "draft").length;
+  const statDomains = dedupedSites.filter(s => (s.domains || []).length > 0).length;
+
+  // Unique niches for filter dropdown
+  const nicheOptions = Array.from(new Set(dedupedSites.map(s => s.niche).filter(Boolean)));
+
+  // Filter + sort
+  const filteredSites = dedupedSites
+    .filter(s => {
+      const q = listSearch.toLowerCase();
+      const matchSearch = !q || s.name.toLowerCase().includes(q) || (s.domains || []).some(d => d.toLowerCase().includes(q)) || s.slug.toLowerCase().includes(q);
+      const matchNiche  = listNiche === "all" || s.niche === listNiche;
+      const matchStatus = listStatus === "all" || (listStatus === "custom-domain" ? (s.domains || []).length > 0 : s.status === listStatus);
+      return matchSearch && matchNiche && matchStatus;
+    })
+    .sort((a, b) => {
+      if (listSort === "newest") return b.createdAt - a.createdAt;
+      if (listSort === "oldest") return a.createdAt - b.createdAt;
+      if (listSort === "az")     return a.name.localeCompare(b.name);
+      if (listSort === "za")     return b.name.localeCompare(a.name);
+      return 0;
+    });
+
+  const hasFilters = listSearch || listNiche !== "all" || listStatus !== "all";
+
+  const COL = isMobile
+    ? "36px 1fr auto"
+    : "36px minmax(160px,2fr) minmax(140px,2fr) 120px 80px 72px 100px";
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
-      <div style={{ padding: "22px 28px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: C.surface }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Site Factory</h1>
-          <p style={{ margin: "3px 0 0", color: C.textDim, fontSize: 12 }}>Generate and edit AI websites for clients</p>
-        </div>
-        <button onClick={() => setPhase("new")} style={{ background: C.goldBg, border: `1px solid ${C.gold}`, color: C.gold, padding: "9px 18px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          + New Site
-        </button>
-      </div>
 
-      <div style={{ padding: "20px 28px" }}>
-        {loadingSites ? (
-          <p style={{ color: C.textDim, fontSize: 13 }}>Loading...</p>
-        ) : sites.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: C.textDim }}>
-            <p style={{ fontSize: 40, margin: "0 0 12px" }}>🏗</p>
-            <p style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px", color: C.text }}>No sites yet</p>
-            <p style={{ fontSize: 13, margin: 0 }}>Click &quot;+ New Site&quot; to generate your first client website</p>
+      {/* ── Header ── */}
+      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: isMobile ? "16px 16px 0" : "20px 28px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>Site Factory</h1>
+            <p style={{ margin: "3px 0 0", color: C.textDim, fontSize: 12 }}>AI-generated client websites</p>
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: 10 }}>
-            {[...sites].sort((a, b) => b.createdAt - a.createdAt).map(site => (
-              <div
-                key={site.id}
-                onClick={() => openEditor(site)}
-                style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, cursor: "pointer", transition: "border-color 0.15s, background 0.15s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.background = C.surface2; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.background = C.surface; }}
+          <button
+            onClick={() => setPhase("new")}
+            style={{ background: C.teal, border: "none", color: "#fff", padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+          >
+            + New Site
+          </button>
+        </div>
+
+        {/* ── Stat chips ── */}
+        {!loadingSites && sites.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+            {([
+              { label: "Total",          value: dedupedSites.length, color: C.text,     bg: C.surface2,              filter: "all"           },
+              { label: "Live",           value: statLive,            color: "#22c55e",  bg: "rgba(34,197,94,0.08)",  filter: "live"          },
+              { label: "Custom domains", value: statDomains,         color: C.teal,     bg: "rgba(15,157,142,0.08)", filter: "custom-domain" },
+              { label: "Draft",          value: statDraft,           color: C.gold,     bg: C.goldBg,                filter: "draft"         },
+            ] as const).map(chip => (
+              <button
+                key={chip.label}
+                onClick={() => setListStatus(listStatus === chip.filter ? "all" : chip.filter)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 11px", borderRadius: 20, border: `1px solid ${listStatus === chip.filter ? chip.color : C.border}`, background: listStatus === chip.filter ? chip.bg : "transparent", cursor: "pointer", transition: "all 0.15s" }}
               >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                    <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{site.name}</h3>
-                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 4, background: site.status === "live" ? "rgba(34,197,94,0.12)" : C.goldBg, color: site.status === "live" ? "#22c55e" : C.gold, fontWeight: 700, textTransform: "uppercase" }}>
-                      {site.status}
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, color: C.textDim, fontSize: 11, fontFamily: "monospace" }}>/sites/{site.slug}/</p>
-                  {site.domains && site.domains.length > 0 && (
-                    <p style={{ margin: "2px 0 0", fontSize: 11, color: C.teal, fontFamily: "monospace" }}>{site.domains[0]}</p>
-                  )}
-                </div>
-                <div style={{ display: "flex", gap: 7, flexShrink: 0 }}>
-                  <span style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.border2}`, color: C.textDim, fontSize: 12 }}>Edit →</span>
-                  <a href={`https://www.saabai.ai/sites/${site.slug}/`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ padding: "5px 12px", borderRadius: 5, border: `1px solid ${C.gold}`, color: C.gold, textDecoration: "none", fontSize: 12, background: C.goldBg }}>Preview</a>
-                  <button
-                    onClick={e => { e.stopPropagation(); setDeletingSlug(site.slug); setDeleteConfirmName(""); }}
-                    style={{ padding: "5px 10px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textMuted, fontSize: 14, cursor: "pointer", lineHeight: 1 }}
-                    title="Delete site"
-                  >🗑</button>
-                </div>
-              </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: chip.color }}>{chip.value}</span>
+                <span style={{ fontSize: 11, color: listStatus === chip.filter ? chip.color : C.textDim }}>{chip.label}</span>
+              </button>
             ))}
           </div>
+        )}
+
+        {/* ── Controls bar ── */}
+        {!loadingSites && sites.length > 0 && (
+          <div style={{ display: "flex", gap: 8, paddingBottom: 14, flexWrap: "wrap" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
+              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.textMuted, fontSize: 13, pointerEvents: "none" }}>⌕</span>
+              <input
+                value={listSearch}
+                onChange={e => setListSearch(e.target.value)}
+                placeholder="Search by name or domain…"
+                style={{ width: "100%", boxSizing: "border-box", paddingLeft: 28, paddingRight: 10, paddingTop: 7, paddingBottom: 7, borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+              />
+            </div>
+            {nicheOptions.length > 1 && (
+              <select value={listNiche} onChange={e => setListNiche(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: listNiche === "all" ? C.textDim : C.text, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                <option value="all">All niches</option>
+                {nicheOptions.map(n => <option key={n} value={n}>{NICHE_META[n!]?.label ?? n}</option>)}
+              </select>
+            )}
+            <select value={listSort} onChange={e => setListSort(e.target.value as typeof listSort)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
+            {hasFilters && (
+              <button onClick={() => { setListSearch(""); setListNiche("all"); setListStatus("all"); }} style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Table ── */}
+      <div style={{ padding: isMobile ? "0 0 40px" : "0 0 40px" }}>
+        {loadingSites ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "40px 28px", color: C.textDim, fontSize: 13 }}>
+            <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${C.border2}`, borderTopColor: C.teal, animation: "spin 0.8s linear infinite" }} />
+            Loading sites…
+          </div>
+        ) : sites.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "80px 20px", color: C.textDim }}>
+            <div style={{ fontSize: 40, marginBottom: 14, opacity: 0.4 }}>◻</div>
+            <p style={{ fontSize: 15, fontWeight: 600, margin: "0 0 6px", color: C.text }}>No sites yet</p>
+            <p style={{ fontSize: 12, margin: "0 0 20px" }}>Generate your first client website in about 90 seconds</p>
+            <button onClick={() => setPhase("new")} style={{ padding: "9px 20px", borderRadius: 7, border: "none", background: C.teal, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ New Site</button>
+          </div>
+        ) : filteredSites.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: C.textDim }}>
+            <p style={{ fontSize: 14, margin: "0 0 10px", color: C.text }}>No sites match your filters</p>
+            <button onClick={() => { setListSearch(""); setListNiche("all"); setListStatus("all"); }} style={{ padding: "7px 16px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Clear filters</button>
+          </div>
+        ) : (
+          <>
+            {/* Column headers — desktop only */}
+            {!isMobile && (
+              <div style={{ display: "grid", gridTemplateColumns: COL, gap: 0, padding: "8px 28px", borderBottom: `1px solid ${C.border}` }}>
+                <div />
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Name</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Domain</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Niche</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Status</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Created</span>
+                <span />
+              </div>
+            )}
+
+            {/* Rows */}
+            {filteredSites.map(site => {
+              const color   = siteColor(site.name);
+              const initials = site.name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+              const customDomain = site.domains?.[0];
+              const previewUrl = customDomain ? `https://${customDomain}` : `https://www.saabai.ai/sites/${site.slug}/`;
+              const niche = NICHE_META[site.niche ?? "other"] ?? NICHE_META.other;
+              const isLive = site.status === "live";
+
+              return (
+                <div
+                  key={site.id}
+                  onClick={() => openEditor(site)}
+                  style={{ display: "grid", gridTemplateColumns: COL, gap: 0, alignItems: "center", padding: isMobile ? "12px 16px" : "0 28px", minHeight: isMobile ? "auto" : 52, borderBottom: `1px solid ${C.border}`, cursor: "pointer", transition: "background 0.12s" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = C.surface}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                >
+                  {/* Avatar */}
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: color + "22", border: `1.5px solid ${color}44`, display: "flex", alignItems: "center", justifyContent: "center", color, fontSize: 11, fontWeight: 700, flexShrink: 0, letterSpacing: "-0.02em" }}>
+                      {initials}
+                    </div>
+                  </div>
+
+                  {/* Name */}
+                  <div style={{ minWidth: 0, paddingRight: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{site.name}</span>
+                    {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted }}>{customDomain || `/sites/${site.slug}/`}</span>}
+                  </div>
+
+                  {/* Domain — desktop only */}
+                  {!isMobile && (
+                    <div style={{ paddingRight: 12, minWidth: 0 }}>
+                      {customDomain ? (
+                        <span style={{ fontSize: 11, fontFamily: "monospace", color: C.teal, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{customDomain}</span>
+                      ) : (
+                        <span style={{ fontSize: 11, fontFamily: "monospace", color: C.textMuted, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>/sites/{site.slug}/</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Niche — desktop only */}
+                  {!isMobile && (
+                    <div style={{ paddingRight: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: niche.bg, color: niche.color, whiteSpace: "nowrap" }}>{niche.label}</span>
+                    </div>
+                  )}
+
+                  {/* Status — desktop only */}
+                  {!isMobile && (
+                    <div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: isLive ? "#22c55e" : C.gold, display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: isLive ? "#22c55e" : C.gold, flexShrink: 0 }} />
+                        {isLive ? "Live" : "Draft"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Created — desktop only */}
+                  {!isMobile && (
+                    <span style={{ fontSize: 11, color: C.textMuted }}>{relTime(site.createdAt)}</span>
+                  )}
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }} onClick={e => e.stopPropagation()}>
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Preview"
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, textDecoration: "none", fontSize: 13, background: "none", transition: "all 0.12s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.teal; (e.currentTarget as HTMLElement).style.color = C.teal; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                    >↗</a>
+                    <button
+                      onClick={() => openEditor(site)}
+                      title="Edit"
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, fontSize: 13, background: "none", cursor: "pointer", transition: "all 0.12s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.gold; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textDim; }}
+                    >✎</button>
+                    <button
+                      onClick={() => { setDeletingSlug(site.slug); setDeleteConfirmName(""); }}
+                      title="Delete"
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border2}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 12, background: "none", cursor: "pointer", transition: "all 0.12s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.red; (e.currentTarget as HTMLElement).style.color = C.red; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border2; (e.currentTarget as HTMLElement).style.color = C.textMuted; }}
+                    >⊗</button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Footer count */}
+            <div style={{ padding: "12px 28px", borderTop: `1px solid ${C.border}` }}>
+              <span style={{ fontSize: 11, color: C.textMuted }}>
+                {filteredSites.length} {filteredSites.length === 1 ? "site" : "sites"}
+                {hasFilters ? ` of ${dedupedSites.length} total` : ""}
+              </span>
+            </div>
+          </>
         )}
       </div>
 
