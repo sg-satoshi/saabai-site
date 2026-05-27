@@ -1281,10 +1281,10 @@ export default function LinkedInAdminPage() {
     <AdminShell activePath="/saabai-admin/social/linkedin">
 
       {/* Page header */}
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 32px" }}>
+      <div style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
         {/* Platform tabs */}
         <div style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#eef0ff", marginRight: 16 }}>Social Media</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginRight: 16 }}>Social Media</span>
           {PLATFORMS.map(p => {
             const activeColour = p.label === "Instagram" ? "#dc2743" : p.label === "Facebook" ? "#1877f2" : "#0077b5";
             return (
@@ -1293,7 +1293,7 @@ export default function LinkedInAdminPage() {
                 href={p.href}
                 style={{
                   padding: "6px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
-                  color: p.active ? "#fff" : "#9aa0b8",
+                  color: p.active ? "#111827" : "#6b7280",
                   borderBottom: p.active ? `2px solid ${activeColour}` : "2px solid transparent",
                   display: "flex", alignItems: "center", gap: 6,
                   opacity: p.soon ? 0.5 : 1,
@@ -1304,7 +1304,7 @@ export default function LinkedInAdminPage() {
                 {p.label === "Instagram" && <span style={{ fontSize: 10, fontWeight: 900, background: "linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%)", color: "#fff", padding: "1px 5px", borderRadius: 3 }}>Ig</span>}
                 {p.label === "Facebook"  && <span style={{ fontSize: 13, fontWeight: 900, background: "#1877f2", color: "#fff", padding: "1px 6px", borderRadius: 3, fontFamily: "Georgia, serif" }}>f</span>}
                 {p.label}
-                {p.soon && <span style={{ fontSize: 9, fontWeight: 700, color: "#9aa0b8", background: "rgba(255,255,255,0.08)", padding: "1px 5px", borderRadius: 4, letterSpacing: 0.5 }}>SOON</span>}
+                {p.soon && <span style={{ fontSize: 9, fontWeight: 700, color: "#9ca3af", background: "rgba(0,0,0,0.06)", padding: "1px 5px", borderRadius: 4, letterSpacing: 0.5 }}>SOON</span>}
               </a>
             );
           })}
@@ -1322,7 +1322,7 @@ export default function LinkedInAdminPage() {
             { label: "Scheduled Queue", href: "#queue" },
             { label: "Posted History", href: "#history" },
           ].map(({ label, href }) => (
-            <a key={href} href={href} style={{ fontSize: 12, fontWeight: 600, color: "#9aa0b8", padding: "6px 14px", borderRadius: 20, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", textDecoration: "none" }}>
+            <a key={href} href={href} style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", padding: "6px 14px", borderRadius: 20, background: "#ffffff", border: "1px solid #e5e7eb", textDecoration: "none" }}>
               {label}
             </a>
           ))}
