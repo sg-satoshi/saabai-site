@@ -3,18 +3,18 @@
 import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
 
-// ── Dark theme tokens ─────────────────────────────────────────────────────────
+// ── Light theme tokens ────────────────────────────────────────────────────────
 
 const D = {
-  bg:       "#07091a",
-  card:     "#0e1128",
-  surface:  "#131729",
-  border:   "rgba(255,255,255,0.07)",
-  borderHi: "rgba(255,255,255,0.12)",
-  text:     "#eef0ff",
-  secondary:"#9aa0b8",
-  muted:    "#525873",
-  teal:     "#00bfa5",
+  bg:       "#f5f5f7",
+  card:     "#ffffff",
+  surface:  "#f3f4f6",
+  border:   "rgba(0,0,0,0.08)",
+  borderHi: "rgba(0,0,0,0.12)",
+  text:     "#111827",
+  secondary:"#6b7280",
+  muted:    "#9ca3af",
+  teal:     "#0891b2",
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ function BarChart({ data }: { data: { date: string; count: number }[] }) {
                 style={{
                   width: "100%",
                   height: d.count === 0 ? 2 : `${Math.max(4, Math.round((d.count / max) * 80))}px`,
-                  background: d.count > 0 ? "linear-gradient(180deg, #00e5cc 0%, #00bfa5 100%)" : "rgba(255,255,255,0.08)",
+                  background: d.count > 0 ? "linear-gradient(180deg, #0891b2 0%, #0284c7 100%)" : "rgba(0,0,0,0.06)",
                   borderRadius: "3px 3px 0 0",
                   transition: "height 0.3s ease",
                   cursor: "default",
@@ -214,9 +214,9 @@ function BroadcastPanel({
     <div style={{ background: D.card, border: `1px solid ${D.border}`, borderRadius: 16, overflow: "hidden" }}>
 
       {/* Panel header */}
-      <div style={{ background: "rgba(0,191,165,0.06)", borderBottom: `1px solid ${D.border}`, padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ background: "rgba(8,145,178,0.06)", borderBottom: `1px solid ${D.border}`, padding: "18px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(0,191,165,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: D.teal }}>BC</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(8,145,178,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, color: D.teal }}>BC</div>
           <div>
             <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: D.text }}>Broadcast Email</p>
             <p style={{ margin: 0, fontSize: 11, color: D.secondary }}>{recipients.length} recipient{recipients.length !== 1 ? "s" : ""} selected</p>
@@ -244,7 +244,7 @@ function BroadcastPanel({
                     cursor: matches.length === 0 ? "default" : "pointer",
                     opacity: matches.length === 0 ? 0.4 : 1,
                   }}
-                  onMouseEnter={e => { if (matches.length) { e.currentTarget.style.background = "rgba(0,191,165,0.1)"; e.currentTarget.style.borderColor = "rgba(0,191,165,0.4)"; e.currentTarget.style.color = D.teal; } }}
+                  onMouseEnter={e => { if (matches.length) { e.currentTarget.style.background = "rgba(8,145,178,0.1)"; e.currentTarget.style.borderColor = "rgba(8,145,178,0.4)"; e.currentTarget.style.color = D.teal; } }}
                   onMouseLeave={e => { e.currentTarget.style.background = D.surface; e.currentTarget.style.borderColor = D.borderHi; e.currentTarget.style.color = D.secondary; }}
                 >
                   {seg.label} <span style={{ color: D.muted, fontWeight: 400 }}>({matches.length})</span>
@@ -259,7 +259,7 @@ function BroadcastPanel({
           <p style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, color: D.muted, textTransform: "uppercase" as const }}>Recipients ({recipients.length})</p>
           <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 5, maxHeight: 72, overflowY: "auto" as const }}>
             {recipients.map(s => (
-              <span key={s.email} style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: "rgba(0,191,165,0.1)", color: D.teal, border: "1px solid rgba(0,191,165,0.25)", fontWeight: 500 }}>
+              <span key={s.email} style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, background: "rgba(8,145,178,0.1)", color: D.teal, border: "1px solid rgba(8,145,178,0.25)", fontWeight: 500 }}>
                 {s.firstName || s.email}
               </span>
             ))}
@@ -284,7 +284,7 @@ function BroadcastPanel({
                   style={{
                     padding: "4px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600, border: "1px solid",
                     borderColor: (tab === "Preview") === preview ? D.teal : D.borderHi,
-                    background: (tab === "Preview") === preview ? "rgba(0,191,165,0.15)" : D.surface,
+                    background: (tab === "Preview") === preview ? "rgba(8,145,178,0.15)" : D.surface,
                     color: (tab === "Preview") === preview ? D.teal : D.secondary,
                     cursor: "pointer",
                   }}
@@ -349,8 +349,8 @@ function BroadcastPanel({
               disabled={!ready || sending}
               style={{
                 padding: "9px 22px", borderRadius: 8, border: "none",
-                background: ready && !sending ? D.teal : "rgba(255,255,255,0.08)",
-                color: ready && !sending ? "#0e0c2e" : D.muted,
+                background: ready && !sending ? D.teal : "rgba(0,0,0,0.08)",
+                color: ready && !sending ? "#ffffff" : D.muted,
                 fontSize: 12, fontWeight: 700, cursor: ready && !sending ? "pointer" : "not-allowed",
               }}
             >
@@ -384,7 +384,7 @@ function BroadcastPanel({
               <button
                 onClick={send}
                 disabled={sending}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: sending ? "rgba(255,255,255,0.08)" : "#059669", color: sending ? D.muted : "#fff", fontSize: 12, fontWeight: 700, cursor: sending ? "not-allowed" : "pointer" }}
+                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: sending ? "rgba(0,0,0,0.08)" : "#059669", color: sending ? D.muted : "#fff", fontSize: 12, fontWeight: 700, cursor: sending ? "not-allowed" : "pointer" }}
               >
                 {sending ? "Sending…" : "Confirm send"}
               </button>
@@ -511,7 +511,7 @@ export default function SubscriberDashboard() {
             {someSelected && <span style={{ fontSize: 12, color: D.teal, fontWeight: 600 }}>{selected.size} selected</span>}
             {exportMsg && <span style={{ fontSize: 12, color: D.teal }}>{exportMsg}</span>}
             {someSelected && (
-              <button onClick={() => setBroadcastOpen(true)} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#0e0c2e", cursor: "pointer" }}>
+              <button onClick={() => setBroadcastOpen(true)} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: D.teal, border: "none", color: "#ffffff", cursor: "pointer" }}>
                 Send Email →
               </button>
             )}
@@ -520,7 +520,7 @@ export default function SubscriberDashboard() {
                 {deleting ? "Deleting…" : `Delete ${selected.size}`}
               </button>
             )}
-            <button onClick={exportCSV} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(0,191,165,0.1)", border: "1px solid rgba(0,191,165,0.25)", color: D.teal, cursor: "pointer" }}>
+            <button onClick={exportCSV} style={{ padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(8,145,178,0.1)", border: "1px solid rgba(8,145,178,0.25)", color: D.teal, cursor: "pointer" }}>
               ↓ {someSelected ? `Export ${selected.size}` : "Export CSV"}
             </button>
           </div>
@@ -557,7 +557,7 @@ export default function SubscriberDashboard() {
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 {[7, 14, 30].map(d => (
-                  <button key={d} onClick={() => setChartDays(d)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: chartDays === d ? D.teal : D.surface, color: chartDays === d ? "#0e0c2e" : D.secondary, border: "none", cursor: "pointer" }}>{d}d</button>
+                  <button key={d} onClick={() => setChartDays(d)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: chartDays === d ? D.teal : D.surface, color: chartDays === d ? "#ffffff" : D.secondary, border: "none", cursor: "pointer" }}>{d}d</button>
                 ))}
               </div>
             </div>
@@ -583,7 +583,7 @@ export default function SubscriberDashboard() {
                         </div>
                         <span style={{ fontSize: 12, fontWeight: 700, color: D.text }}>{c} <span style={{ color: D.muted, fontWeight: 400 }}>({pct}%)</span></span>
                       </div>
-                      <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                      <div style={{ height: 6, borderRadius: 3, background: "rgba(0,0,0,0.06)", overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${pct}%`, background: ic.dot, borderRadius: 3, transition: "width 0.4s ease" }} />
                       </div>
                     </div>
@@ -677,7 +677,7 @@ export default function SubscriberDashboard() {
                   display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px",
                   padding: "13px 24px", alignItems: "center",
                   borderBottom: i < filtered.length - 1 ? `1px solid ${D.border}` : "none",
-                  background: selected.has(s.email) ? "rgba(0,191,165,0.07)" : i % 2 === 0 ? D.card : "rgba(255,255,255,0.01)",
+                  background: selected.has(s.email) ? "rgba(8,145,178,0.07)" : i % 2 === 0 ? D.card : "rgba(0,0,0,0.02)",
                   transition: "background 0.1s",
                   cursor: "pointer",
                 }}
@@ -708,8 +708,8 @@ export default function SubscriberDashboard() {
                   {s.ip && <p style={{ margin: "2px 0 0", fontSize: 10, color: D.muted, fontFamily: "monospace" }} title={`IP: ${s.ip}`}>{s.ip}</p>}
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: D.secondary }}>{fmtDate(s.subscribedAt)}</p>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 20, background: "rgba(34,197,94,0.1)", color: "#4ade80", fontSize: 11, fontWeight: 700, width: "fit-content" }}>
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e" }} />
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 20, background: "rgba(22,163,74,0.1)", color: "#16a34a", fontSize: 11, fontWeight: 700, width: "fit-content" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#16a34a" }} />
                   Active
                 </span>
               </div>
