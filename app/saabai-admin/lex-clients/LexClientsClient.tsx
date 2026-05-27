@@ -1,35 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AdminShell from "../AdminSidebar";
 import type { LexClientRow } from "../../api/admin/lex-clients/route";
 
 const C = {
-  bg:           "#0b092e",
-  surface:      "#14123a",
-  surface2:     "#1a1748",
-  rowHover:     "rgba(255,255,255,0.025)",
-  border:       "rgba(255,255,255,0.07)",
-  border2:      "rgba(255,255,255,0.10)",
-  divider:      "rgba(255,255,255,0.05)",
-  gold:         "#C9A84C",
-  goldB:        "#E0BC6A",
-  goldBg:       "rgba(201,168,76,0.10)",
-  goldBdr:      "rgba(201,168,76,0.30)",
-  green:        "#4ade80",
-  greenBg:      "rgba(74,222,128,0.10)",
-  greenBdr:     "rgba(74,222,128,0.30)",
-  amber:        "#f5a623",
-  amberBg:      "rgba(245,166,35,0.10)",
-  red:          "#f87171",
-  redBg:        "rgba(248,113,113,0.10)",
-  redBdr:       "rgba(248,113,113,0.30)",
-  blue:         "#60a5fa",
-  blueBg:       "rgba(96,165,250,0.10)",
-  blueBdr:      "rgba(96,165,250,0.30)",
-  text:         "#e2e4f0",
-  textDim:      "#8a90b0",
-  muted:        "#505570",
+  bg:           "#f5f5f7",
+  surface:      "#ffffff",
+  surface2:     "#f3f4f6",
+  rowHover:     "rgba(0,0,0,0.025)",
+  border:       "rgba(0,0,0,0.08)",
+  border2:      "rgba(0,0,0,0.12)",
+  divider:      "rgba(0,0,0,0.06)",
+  gold:         "#b45309",
+  goldB:        "#d97706",
+  goldBg:       "rgba(180,83,9,0.08)",
+  goldBdr:      "rgba(180,83,9,0.25)",
+  green:        "#16a34a",
+  greenBg:      "rgba(22,163,74,0.08)",
+  greenBdr:     "rgba(22,163,74,0.25)",
+  amber:        "#d97706",
+  amberBg:      "rgba(217,119,6,0.08)",
+  red:          "#dc2626",
+  blue:         "#2563eb",
+  blueBg:       "rgba(37,99,235,0.08)",
+  blueBdr:      "rgba(37,99,235,0.25)",
+  text:         "#111827",
+  textDim:      "#6b7280",
+  muted:        "#9ca3af",
 };
 
 type Stats = { total: number; configured: number; withLlmKey: number };
@@ -73,6 +70,17 @@ function ModeBadge({ mode }: { mode: "internal" | "external" }) {
   );
 }
 
+function Row({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, gap: 12 }}>
+      <span style={{ fontSize: 11, color: C.muted, flexShrink: 0, paddingTop: 1 }}>{label}</span>
+      <span style={{ fontSize: 12, color: C.text, textAlign: "right" as const, fontFamily: mono ? "monospace" : "inherit", wordBreak: "break-all" as const }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose: () => void }) {
   const s = client.settingsSummary;
 
@@ -107,10 +115,7 @@ function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose:
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              color: C.muted, fontSize: 18, padding: "2px 4px", lineHeight: 1,
-            }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 18, padding: "2px 4px", lineHeight: 1 }}
           >✕</button>
         </div>
 
@@ -130,8 +135,7 @@ function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose:
               {client.practiceAreas.map(a => (
                 <span key={a} style={{
                   fontSize: 11, padding: "3px 9px", borderRadius: 4,
-                  background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.goldB,
-                  fontWeight: 600,
+                  background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.goldB, fontWeight: 600,
                 }}>{a}</span>
               ))}
             </div>
@@ -155,11 +159,7 @@ function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose:
           )}
 
           {!s && (
-            <div style={{
-              background: C.amberBg,
-              border: `1px solid rgba(245,166,35,0.22)`,
-              borderRadius: 10, padding: "16px 18px",
-            }}>
+            <div style={{ background: C.amberBg, border: `1px solid rgba(245,166,35,0.22)`, borderRadius: 10, padding: "16px 18px" }}>
               <p style={{ margin: 0, fontSize: 13, color: C.amber }}>
                 No portal configuration saved yet. The client hasn&apos;t completed setup.
               </p>
@@ -204,17 +204,6 @@ function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose:
   );
 }
 
-function Row({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
-  return (
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, gap: 12 }}>
-      <span style={{ fontSize: 11, color: C.muted, flexShrink: 0, paddingTop: 1 }}>{label}</span>
-      <span style={{ fontSize: 12, color: C.text, textAlign: "right" as const, fontFamily: mono ? "monospace" : "inherit", wordBreak: "break-all" as const }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
 export default function LexClientsClient() {
   const [clients, setClients] = useState<LexClientRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -238,157 +227,193 @@ export default function LexClientsClient() {
   const filtered = clients.filter(c => filterMode === "all" || c.mode === filterMode);
 
   return (
-    <AdminShell activePath="/saabai-admin/lex-clients">
-      <div style={{ padding: "40px 40px 60px", maxWidth: 1060 }}>
-
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: -0.5 }}>
-            Lex Clients
+    <div style={{
+      minHeight: "100vh", background: C.bg, color: C.text,
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* Page header */}
+      <header style={{
+        padding: "22px 28px",
+        borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+      }}>
+        <div>
+          <h1 style={{
+            margin: "0 0 4px",
+            fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em",
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <span>Lex Clients</span>
+            <span style={{
+              fontSize: 11, color: C.textDim,
+              background: "rgba(0,0,0,0.04)",
+              border: `1px solid ${C.border}`,
+              padding: "2px 8px", borderRadius: 4, fontWeight: 600,
+            }}>{clients.length}</span>
           </h1>
-          <p style={{ margin: 0, fontSize: 14, color: C.muted }}>
+          <p style={{ margin: 0, fontSize: 13, color: C.textDim }}>
             All law firms connected to the Lex platform — configuration status, agent settings, and LLM keys.
           </p>
         </div>
 
-        {/* Stats row */}
+        {/* Stat pills */}
         {stats && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {[
-              { label: "Total Firms",    value: stats.total,      color: C.gold,  bg: C.goldBg,  bdr: C.goldBdr },
-              { label: "Configured",     value: stats.configured, color: C.green, bg: C.greenBg, bdr: C.greenBdr },
-              { label: "Custom LLM Key", value: stats.withLlmKey, color: C.blue,  bg: C.blueBg,  bdr: C.blueBdr },
+              { label: "Configured", value: stats.configured, color: C.green, bg: C.greenBg, bdr: C.greenBdr },
+              { label: "Custom LLM", value: stats.withLlmKey, color: C.blue, bg: C.blueBg, bdr: C.blueBdr },
             ].map(s => (
               <div key={s.label} style={{
-                background: C.surface, border: `1px solid ${C.border}`,
-                borderTop: `3px solid ${s.color}`,
-                borderRadius: 12, padding: "18px 20px",
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "5px 12px",
+                background: s.bg, border: `1px solid ${s.bdr}`,
+                borderRadius: 6, fontSize: 12,
               }}>
-                <p style={{ margin: "0 0 4px", fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</p>
-                <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{s.label}</p>
+                <span style={{ fontWeight: 700, color: s.color }}>{s.value}</span>
+                <span style={{ color: C.muted }}>{s.label}</span>
               </div>
             ))}
           </div>
         )}
+      </header>
 
-        {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-          {(["all", "internal", "external"] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilterMode(f)}
-              style={{
-                padding: "5px 12px", borderRadius: 6, fontSize: 12,
-                fontWeight: filterMode === f ? 700 : 500,
-                border: `1px solid ${filterMode === f ? C.goldBdr : C.border}`,
-                background: filterMode === f ? C.goldBg : "transparent",
-                color: filterMode === f ? C.gold : C.muted,
-                cursor: "pointer",
-                textTransform: "capitalize" as const,
-                transition: "all 0.15s",
-              }}
-            >
-              {f === "all"
-                ? `All (${clients.length})`
-                : f === "internal"
-                  ? `Internal (${clients.filter(c => c.mode === "internal").length})`
-                  : `External (${clients.filter(c => c.mode === "external").length})`}
-            </button>
+      {/* Toolbar */}
+      <div style={{
+        padding: "12px 28px",
+        borderBottom: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", gap: 6,
+      }}>
+        {(["all", "internal", "external"] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilterMode(f)}
+            style={{
+              padding: "5px 12px", borderRadius: 6, fontSize: 12,
+              fontWeight: filterMode === f ? 700 : 500,
+              border: `1px solid ${filterMode === f ? C.goldBdr : C.border}`,
+              background: filterMode === f ? C.goldBg : "transparent",
+              color: filterMode === f ? C.gold : C.muted,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {f === "all"
+              ? `All ${clients.length}`
+              : f === "internal"
+                ? `Internal ${clients.filter(c => c.mode === "internal").length}`
+                : `External ${clients.filter(c => c.mode === "external").length}`}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{ margin: "24px 28px", background: "rgba(0,0,0,0.02)", border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+        {/* Header row */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(200px,1fr) 200px 110px 130px 120px 80px",
+          borderBottom: `1px solid ${C.border}`,
+          background: "#f9fafb",
+        }}>
+          {["Firm", "Email", "Mode", "Portal Config", "LLM Key", ""].map(h => (
+            <div key={h} style={{
+              padding: "0 16px", fontSize: 10, fontWeight: 700,
+              letterSpacing: "0.10em", textTransform: "uppercase" as const,
+              color: C.muted, display: "flex", alignItems: "center", height: 36,
+            }}>{h}</div>
           ))}
         </div>
 
-        {/* Table */}
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-          {/* Header */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1.8fr 1fr 1fr 1fr 80px",
-            gap: 12, padding: "10px 20px",
-            borderBottom: `1px solid ${C.border}`,
-            background: C.surface2,
-          }}>
-            {["Firm", "Email", "Mode", "Portal Config", "LLM Key", ""].map(h => (
-              <p key={h} style={{ margin: 0, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>{h}</p>
-            ))}
+        {loading && (
+          <div style={{ padding: "60px 20px", textAlign: "center" as const, color: C.textDim }}>
+            <div style={{ fontSize: 14 }}>Loading clients…</div>
           </div>
+        )}
+        {error && (
+          <div style={{ padding: "60px 20px", textAlign: "center" as const }}>
+            <div style={{ fontSize: 14, color: C.red }}>{error}</div>
+          </div>
+        )}
 
-          {loading && (
-            <div style={{ padding: "40px 20px", textAlign: "center" as const }}>
-              <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Loading clients…</p>
-            </div>
-          )}
-          {error && (
-            <div style={{ padding: "40px 20px", textAlign: "center" as const }}>
-              <p style={{ margin: 0, fontSize: 13, color: C.red }}>{error}</p>
-            </div>
-          )}
+        {!loading && !error && filtered.length === 0 && (
+          <div style={{ padding: "60px 20px", textAlign: "center" as const, color: C.textDim }}>
+            <div style={{ fontSize: 14, marginBottom: 6 }}>No clients found</div>
+            <div style={{ fontSize: 12, color: C.muted }}>Try a different filter.</div>
+          </div>
+        )}
 
-          {!loading && !error && filtered.map((client, i) => (
-            <div
-              key={client.id}
-              onMouseEnter={() => setHoveredRow(client.id)}
-              onMouseLeave={() => setHoveredRow(null)}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 1.8fr 1fr 1fr 1fr 80px",
-                gap: 12, padding: "14px 20px",
-                borderBottom: i < filtered.length - 1 ? `1px solid ${C.divider}` : "none",
-                background: hoveredRow === client.id ? C.rowHover : "transparent",
-                alignItems: "center",
-                transition: "background 0.1s",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                  {client.firmName}
-                </p>
-                <p style={{ margin: 0, fontSize: 10, color: C.muted, fontFamily: "monospace" }}>
-                  {client.id}
-                </p>
+        {!loading && !error && filtered.map((client, i) => (
+          <div
+            key={client.id}
+            onMouseEnter={() => setHoveredRow(client.id)}
+            onMouseLeave={() => setHoveredRow(null)}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(200px,1fr) 200px 110px 130px 120px 80px",
+              height: 56,
+              background: hoveredRow === client.id ? C.rowHover : "transparent",
+              borderBottom: i < filtered.length - 1 ? `1px solid ${C.divider}` : "none",
+              transition: "background 0.08s",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ padding: "0 16px", minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                {client.firmName}
               </div>
-              <p style={{ margin: 0, fontSize: 12, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                {client.email}
-              </p>
-              <div><ModeBadge mode={client.mode} /></div>
-              <div><StatusBadge ok={client.hasPortalSettings} label={client.hasPortalSettings ? "Done" : "Pending"} /></div>
-              <div><StatusBadge ok={client.hasLlmConfig} label={client.hasLlmConfig ? "Set" : "Default"} /></div>
+              <div style={{ fontSize: 11, color: C.muted, fontFamily: "monospace", marginTop: 1 }}>
+                {client.id}
+              </div>
+            </div>
+
+            <div style={{ padding: "0 16px", fontSize: 12, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+              {client.email}
+            </div>
+
+            <div style={{ padding: "0 16px" }}>
+              <ModeBadge mode={client.mode} />
+            </div>
+
+            <div style={{ padding: "0 16px" }}>
+              <StatusBadge ok={client.hasPortalSettings} label={client.hasPortalSettings ? "Done" : "Pending"} />
+            </div>
+
+            <div style={{ padding: "0 16px" }}>
+              <StatusBadge ok={client.hasLlmConfig} label={client.hasLlmConfig ? "Set" : "Default"} />
+            </div>
+
+            <div style={{ padding: "0 16px" }}>
               <button
                 onClick={() => setSelected(client)}
                 style={{
                   padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
                   background: C.goldBg, border: `1px solid ${C.goldBdr}`,
                   color: C.gold, cursor: "pointer",
-                  transition: "all 0.1s",
                 }}
               >
                 View →
               </button>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
 
-          {!loading && !error && filtered.length === 0 && (
-            <div style={{ padding: "48px 20px", textAlign: "center" as const }}>
-              <p style={{ margin: 0, fontSize: 13, color: C.muted }}>No clients found.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer note */}
-        <div style={{
-          marginTop: 16, padding: "14px 18px", borderRadius: 10,
-          background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`,
-        }}>
-          <p style={{ margin: 0, fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
-            Clients are registered in <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>lib/lex-config.ts</code>.
-            Add a new entry to <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>LEX_CLIENT_REGISTRY</code> for each new firm,
-            then send them a portal sign-in link to <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>/client-portal</code>.
-          </p>
-        </div>
+      {/* Footer note */}
+      <div style={{
+        margin: "0 28px 28px",
+        padding: "12px 16px", borderRadius: 8,
+        background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`,
+        fontSize: 12, color: C.muted, lineHeight: 1.6,
+      }}>
+        Clients are registered in <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>lib/lex-config.ts</code>.
+        Add a new entry to <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>LEX_CLIENT_REGISTRY</code> for each new firm,
+        then send them a portal sign-in link to <code style={{ fontFamily: "monospace", color: C.gold, fontSize: 11 }}>/client-portal</code>.
       </div>
 
       {selected && (
         <ClientDetailPanel client={selected} onClose={() => setSelected(null)} />
       )}
-    </AdminShell>
+    </div>
   );
 }

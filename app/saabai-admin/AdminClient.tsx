@@ -9,22 +9,22 @@ import AdminShell from "./AdminSidebar";
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:           "#07091a",
-  sidebar:      "#080b1e",
-  card:         "#0e1128",
-  surface:      "#131729",
-  surfaceHi:    "#181c32",
-  border:       "rgba(255,255,255,0.07)",
-  borderBright: "rgba(255,255,255,0.14)",
-  text:         "#e2e4f0",
-  muted:        "#525873",
-  dim:          "#2a2d47",
-  teal:         "#25D366",
-  orange:       "#ff6635",
-  blue:         "#4d8ef6",
-  amber:        "#f5a623",
-  green:        "#22c55e",
-  red:          "#ef4444",
+  bg:           "#f5f5f7",
+  sidebar:      "#08062a",
+  card:         "#ffffff",
+  surface:      "#f3f4f6",
+  surfaceHi:    "#e9eaec",
+  border:       "rgba(0,0,0,0.08)",
+  borderBright: "rgba(0,0,0,0.12)",
+  text:         "#111827",
+  muted:        "#9ca3af",
+  dim:          "#e5e7eb",
+  teal:         "#0891b2",
+  orange:       "#ea580c",
+  blue:         "#2563eb",
+  amber:        "#d97706",
+  green:        "#16a34a",
+  red:          "#dc2626",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -428,7 +428,7 @@ function LeadsTable({ rexStats }: { rexStats: RexStats }) {
               style={{
                 padding: "5px 12px", borderRadius: 20,
                 border: `1px solid ${tab === t ? C.borderBright : C.border}`,
-                background: tab === t ? "rgba(255,255,255,0.07)" : "transparent",
+                background: tab === t ? "rgba(0,0,0,0.08)" : "transparent",
                 color: tab === t ? C.text : C.muted,
                 fontSize: 11, fontWeight: tab === t ? 700 : 500,
                 cursor: "pointer",
@@ -460,7 +460,7 @@ function LeadsTable({ rexStats }: { rexStats: RexStats }) {
                 display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 0.9fr 1.2fr",
                 gap: 10, padding: "11px 22px",
                 borderBottom: `1px solid ${C.border}`,
-                background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)",
+                background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)",
               }}
             >
               <div style={{ minWidth: 0 }}>
@@ -689,7 +689,7 @@ function LinkedInQueue() {
 
   const modalCard: React.CSSProperties = {
     background: C.card, border: `1px solid ${C.borderBright}`, borderRadius: 16,
-    width: "100%", maxWidth: 560, boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+    width: "100%", maxWidth: 560, boxShadow: "0 24px 64px rgba(0,0,0,0.15)",
   };
 
   return (
@@ -898,7 +898,7 @@ function SubscriberPanel() {
                   )}
                 </div>
                 {s.industry && (
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, color: INDUSTRY_COLOURS[s.industry] ?? C.muted, background: "rgba(255,255,255,0.05)", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, color: INDUSTRY_COLOURS[s.industry] ?? C.muted, background: "rgba(0,0,0,0.04)", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
                     {s.industry}
                   </span>
                 )}

@@ -37,23 +37,23 @@ function slugify(name: string) {
 }
 
 const C = {
-  bg: "#080d11",
-  surface: "#0f1923",
-  surface2: "#162130",
-  border: "#1a2535",
-  border2: "#243040",
-  text: "#e2dfd8",
-  textDim: "#6b7e94",
-  textMuted: "#3d5168",
-  gold: "#c9a227",
-  goldBg: "rgba(201,162,39,0.1)",
-  teal: "#0f9d8e",
-  tealBg: "rgba(15,157,142,0.1)",
-  tealDk: "#0c8077",
-  red: "#ef4444",
-  redBg: "rgba(239,68,68,0.08)",
-  blue: "#3b82f6",
-  blueBg: "rgba(59,130,246,0.1)",
+  bg: "#f5f5f7",
+  surface: "#ffffff",
+  surface2: "#f3f4f6",
+  border: "rgba(0,0,0,0.08)",
+  border2: "rgba(0,0,0,0.12)",
+  text: "#111827",
+  textDim: "#6b7280",
+  textMuted: "#9ca3af",
+  gold: "#b45309",
+  goldBg: "rgba(180,83,9,0.08)",
+  teal: "#0891b2",
+  tealBg: "rgba(8,145,178,0.08)",
+  tealDk: "#0284c7",
+  red: "#dc2626",
+  redBg: "rgba(220,38,38,0.08)",
+  blue: "#2563eb",
+  blueBg: "rgba(37,99,235,0.08)",
 };
 
 const DEVICE_WIDTHS: Record<Device, string> = {
@@ -2498,7 +2498,7 @@ export default function SiteFactoryClient() {
                       flexDirection: "column",
                       alignItems: "center",
                       gap: 14,
-                      boxShadow: "0 8px 48px rgba(0,0,0,0.5)",
+                      boxShadow: "0 8px 48px rgba(0,0,0,0.15)",
                       animation: "toastIn 0.25s ease",
                       textAlign: "center",
                     }}>
@@ -2938,7 +2938,7 @@ export default function SiteFactoryClient() {
                     return (
                       <button key={t.id} onClick={() => { setStyle(t.id); setThemeOverridden(true); }} style={{ padding: "8px 6px", borderRadius: 7, border: `1.5px solid ${selected ? C.gold : C.border2}`, background: selected ? C.goldBg : C.bg, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s" }}>
                         <div style={{ display: "flex", gap: 3 }}>
-                          {t.colors.map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, border: "1px solid rgba(255,255,255,0.12)" }} />)}
+                          {t.colors.map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, border: "1px solid rgba(0,0,0,0.10)" }} />)}
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 700, color: selected ? C.gold : C.text, letterSpacing: "0.03em" }}>{t.label}</span>
                         <span style={{ fontSize: 9, color: selected ? C.gold : C.textMuted, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t.tagline}</span>

@@ -4,29 +4,29 @@ import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
 
 const C = {
-  bg:       "#07091a",
-  card:     "#0e1128",
-  surface:  "#131729",
-  surfaceHi:"#181c32",
-  border:   "rgba(255,255,255,0.07)",
-  borderHi: "rgba(255,255,255,0.13)",
-  text:     "#e2e4f0",
-  muted:    "#525873",
-  dim:      "#2a2d47",
-  gold:     "#C9A84C",
-  goldBg:   "rgba(201,168,76,0.08)",
-  goldBdr:  "rgba(201,168,76,0.20)",
-  goldHi:   "#E0BC6A",
-  green:    "#22c55e",
-  greenBg:  "rgba(34,197,94,0.10)",
-  blue:     "#4d8ef6",
-  blueBg:   "rgba(77,142,246,0.10)",
-  orange:   "#ff6635",
-  orangeBg: "rgba(255,102,53,0.10)",
-  teal:     "#25D366",
-  tealBg:   "rgba(37,211,102,0.10)",
-  amber:    "#f5a623",
-  red:      "#ef4444",
+  bg:       "#f5f5f7",
+  card:     "#ffffff",
+  surface:  "#f3f4f6",
+  surfaceHi:"#e9eaec",
+  border:   "rgba(0,0,0,0.08)",
+  borderHi: "rgba(0,0,0,0.12)",
+  text:     "#111827",
+  muted:    "#9ca3af",
+  dim:      "#e5e7eb",
+  gold:     "#b45309",
+  goldBg:   "rgba(180,83,9,0.08)",
+  goldBdr:  "rgba(180,83,9,0.25)",
+  goldHi:   "#d97706",
+  green:    "#16a34a",
+  greenBg:  "rgba(22,163,74,0.08)",
+  blue:     "#2563eb",
+  blueBg:   "rgba(37,99,235,0.08)",
+  orange:   "#ea580c",
+  orangeBg: "rgba(234,88,12,0.08)",
+  teal:     "#0891b2",
+  tealBg:   "rgba(8,145,178,0.08)",
+  amber:    "#d97706",
+  red:      "#dc2626",
 };
 
 const TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -75,7 +75,7 @@ function fmtDate(ts: number) {
 }
 
 function TypeBadge({ type }: { type: string }) {
-  const m = TYPE_META[type] ?? { label: type, color: C.muted, bg: "rgba(255,255,255,0.05)" };
+  const m = TYPE_META[type] ?? { label: type, color: C.muted, bg: "rgba(0,0,0,0.04)" };
   return (
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
@@ -88,7 +88,7 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function ProjectBadge({ project }: { project: string }) {
-  const m = PROJECT_META[project] ?? { color: C.muted, bg: "rgba(255,255,255,0.05)" };
+  const m = PROJECT_META[project] ?? { color: C.muted, bg: "rgba(0,0,0,0.04)" };
   return (
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
@@ -107,7 +107,7 @@ function StatusBadge({ status }: { status: string }) {
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
       color: isActive ? C.green : isWarning ? C.amber : C.muted,
-      background: isActive ? C.greenBg : isWarning ? "rgba(245,166,35,0.10)" : "rgba(255,255,255,0.04)",
+      background: isActive ? C.greenBg : isWarning ? "rgba(245,166,35,0.10)" : "rgba(0,0,0,0.04)",
       letterSpacing: 0.5, textTransform: "uppercase" as const,
       whiteSpace: "nowrap",
     }}>
@@ -515,7 +515,7 @@ export default function CustomersClient() {
               </thead>
               <tbody>
                 {filtered.map((c, i) => (
-                  <tr key={c.id} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)", cursor: "pointer" }} onClick={() => setSelected(c)}>
+                  <tr key={c.id} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)", cursor: "pointer" }} onClick={() => setSelected(c)}>
                     <td style={td}>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.text }}>{c.name}</p>
                       <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>{c.email || "\u2014"}</p>

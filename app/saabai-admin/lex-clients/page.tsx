@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
 import LexClientsClient from "./LexClientsClient";
+import AdminShell from "../AdminSidebar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,5 +20,9 @@ export default async function LexClientsPage() {
     redirect("/login?redirect=/saabai-admin/lex-clients");
   }
 
-  return <LexClientsClient />;
+  return (
+    <AdminShell activePath="/saabai-admin/lex-clients">
+      <LexClientsClient />
+    </AdminShell>
+  );
 }

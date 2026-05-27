@@ -30,31 +30,31 @@ type DeleteTarget = User | BulkTarget | null;
 
 // ── Tokens (marketing teal on indigo-navy) ───────────────────────────────
 const C = {
-  bg:           "#0b092e",
+  bg:           "#f5f5f7",
   sidebar:      "#08062a",
-  surface:      "#14123a",
-  surface2:     "#1a1748",
-  rowHover:     "rgba(255,255,255,0.025)",
-  rowSelected:  "rgba(98,197,209,0.06)",
-  border:       "rgba(255,255,255,0.07)",
-  border2:      "rgba(255,255,255,0.10)",
-  divider:      "rgba(255,255,255,0.05)",
-  teal:         "#62c5d1",
-  tealBright:   "#7dd9e3",
-  tealBg:       "rgba(98,197,209,0.10)",
-  tealBdr:      "rgba(98,197,209,0.30)",
-  tealSoft:     "rgba(98,197,209,0.05)",
-  green:        "#4ade80",
-  greenBg:      "rgba(74,222,128,0.10)",
-  greenBdr:     "rgba(74,222,128,0.30)",
-  red:          "#f87171",
-  redBg:        "rgba(248,113,113,0.10)",
-  redBdr:       "rgba(248,113,113,0.30)",
-  blue:         "#60a5fa",
-  blueBg:       "rgba(96,165,250,0.10)",
-  text:         "#e2e4f0",
-  textDim:      "#8a90b0",
-  muted:        "#505570",
+  surface:      "#ffffff",
+  surface2:     "#f3f4f6",
+  rowHover:     "rgba(0,0,0,0.025)",
+  rowSelected:  "rgba(8,145,178,0.06)",
+  border:       "rgba(0,0,0,0.08)",
+  border2:      "rgba(0,0,0,0.12)",
+  divider:      "rgba(0,0,0,0.06)",
+  teal:         "#0891b2",
+  tealBright:   "#0284c7",
+  tealBg:       "rgba(8,145,178,0.08)",
+  tealBdr:      "rgba(8,145,178,0.25)",
+  tealSoft:     "rgba(8,145,178,0.04)",
+  green:        "#16a34a",
+  greenBg:      "rgba(22,163,74,0.08)",
+  greenBdr:     "rgba(22,163,74,0.25)",
+  red:          "#dc2626",
+  redBg:        "rgba(220,38,38,0.08)",
+  redBdr:       "rgba(220,38,38,0.25)",
+  blue:         "#2563eb",
+  blueBg:       "rgba(37,99,235,0.08)",
+  text:         "#111827",
+  textDim:      "#6b7280",
+  muted:        "#9ca3af",
 };
 
 const DASHBOARD_PRESETS = [
@@ -126,7 +126,7 @@ function Avatar({ name, email, size = 28, role = "user" }: {
     <div style={{
       width: size, height: size, borderRadius: "50%",
       background: palette[0],
-      border: `1px solid ${isAdmin ? C.tealBdr : "rgba(255,255,255,0.07)"}`,
+      border: `1px solid ${isAdmin ? C.tealBdr : "rgba(0,0,0,0.10)"}`,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: palette[1],
       fontSize: Math.max(11, size * 0.40),
@@ -199,9 +199,9 @@ function IconBtn({ children, title, danger, onClick }: {
       onMouseLeave={() => setHover(false)}
       style={{
         width: 26, height: 26, borderRadius: 6,
-        border: `1px solid ${hover ? "rgba(255,255,255,0.10)" : "transparent"}`,
-        background: hover ? "rgba(255,255,255,0.05)" : "transparent",
-        color: danger ? (hover ? C.red : "rgba(248,113,113,0.7)") : (hover ? C.text : C.textDim),
+        border: `1px solid ${hover ? "rgba(0,0,0,0.10)" : "transparent"}`,
+        background: hover ? "rgba(0,0,0,0.05)" : "transparent",
+        color: danger ? (hover ? C.red : "rgba(220,38,38,0.6)") : (hover ? C.text : C.textDim),
         display: "inline-flex", alignItems: "center", justifyContent: "center",
         transition: "all 0.1s",
         cursor: "pointer",
@@ -238,7 +238,7 @@ function TextInput({ value, onChange, placeholder, type = "text", autoFocus }: {
   return (
     <div style={{
       display: "flex", alignItems: "center",
-      background: "rgba(0,0,0,0.30)",
+      background: "#ffffff",
       border: `1px solid ${focus ? C.tealBdr : C.border2}`,
       borderRadius: 8,
       transition: "border-color 0.1s",
@@ -266,7 +266,7 @@ function RoleSegment({ value, onChange }: { value: string; onChange: (v: string)
   return (
     <div style={{
       display: "grid", gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 6,
-      padding: 4, background: "rgba(0,0,0,0.25)",
+      padding: 4, background: "rgba(0,0,0,0.04)",
       border: `1px solid ${C.border2}`, borderRadius: 8,
     }}>
       {options.map(opt => {
@@ -308,14 +308,14 @@ function DashboardPicker({ value, onChange }: { value: string; onChange: (v: str
               display: "flex", alignItems: "center", gap: 12,
               padding: "10px 12px", borderRadius: 8,
               border: `1px solid ${active ? C.tealBdr : C.border}`,
-              background: active ? C.tealBg : "rgba(0,0,0,0.15)",
+              background: active ? C.tealBg : "rgba(0,0,0,0.03)",
               color: C.text, textAlign: "left",
               transition: "all 0.12s", cursor: "pointer",
             }}
           >
             <span style={{
               width: 14, height: 14, borderRadius: "50%",
-              border: `1px solid ${active ? C.teal : "rgba(255,255,255,0.15)"}`,
+              border: `1px solid ${active ? C.teal : "rgba(0,0,0,0.15)"}`,
               display: "inline-flex", alignItems: "center", justifyContent: "center",
               flexShrink: 0,
             }}>
@@ -328,7 +328,7 @@ function DashboardPicker({ value, onChange }: { value: string; onChange: (v: str
             <code style={{
               fontFamily: "ui-monospace, monospace", fontSize: 11,
               color: active ? C.teal : C.muted,
-              background: "rgba(0,0,0,0.25)",
+              background: "rgba(0,0,0,0.05)",
               padding: "2px 7px", borderRadius: 4, flexShrink: 0,
             }}>{opt.value}</code>
           </button>
@@ -344,9 +344,9 @@ function PrimaryBtn({ onClick, children, disabled, danger, type = "button" }: {
 }) {
   const [hover, setHover] = useState(false);
   const bg = disabled
-    ? "rgba(255,255,255,0.05)"
-    : (danger ? (hover ? "#fa8d8d" : C.red) : (hover ? C.tealBright : C.teal));
-  const color = disabled ? C.muted : (danger ? "#1a0808" : C.bg);
+    ? "rgba(0,0,0,0.08)"
+    : (danger ? (hover ? "#b91c1c" : C.red) : (hover ? C.tealBright : C.teal));
+  const color = disabled ? C.muted : (danger ? "#ffffff" : "#ffffff");
   return (
     <button
       type={type} onClick={onClick} disabled={disabled}
@@ -374,7 +374,7 @@ function SecondaryBtn({ onClick, children, type = "button" }: {
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{
         padding: "9px 14px",
-        background: hover ? "rgba(255,255,255,0.04)" : "transparent",
+        background: hover ? "rgba(0,0,0,0.05)" : "transparent",
         color: hover ? C.text : C.textDim,
         border: `1px solid ${C.border2}`,
         borderRadius: 8, fontSize: 13, fontWeight: 500,
@@ -423,7 +423,7 @@ function Modal({ open, onClose, title, subtitle, width = 480, children, danger }
           background: C.surface,
           border: `1px solid ${danger ? C.redBdr : C.border2}`,
           borderRadius: 14,
-          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
           maxHeight: "calc(100vh - 40px)",
           display: "flex", flexDirection: "column",
         }}
@@ -518,7 +518,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
         <Field label="Onboarding">
           <label style={{
             display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-            padding: "8px 12px", background: "rgba(0,0,0,0.15)",
+            padding: "8px 12px", background: "rgba(0,0,0,0.03)",
             border: `1px solid ${C.border}`, borderRadius: 8,
           }}>
             <input
@@ -576,7 +576,7 @@ function SortMenu({ sort, setSort }: { sort: string; setSort: (s: string) => voi
         onClick={() => setOpen(v => !v)}
         style={{
           padding: "8px 12px",
-          background: "rgba(0,0,0,0.25)",
+          background: "#ffffff",
           border: `1px solid ${C.border2}`,
           borderRadius: 8, color: C.textDim, fontSize: 12,
           display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
@@ -595,7 +595,7 @@ function SortMenu({ sort, setSort }: { sort: string; setSort: (s: string) => voi
           position: "absolute", right: 0, top: "calc(100% + 4px)",
           background: C.surface, border: `1px solid ${C.border2}`,
           borderRadius: 8, padding: 4, minWidth: 200, zIndex: 50,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         }}>
           {options.map(o => (
             <button
@@ -632,12 +632,12 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
       display: "flex", alignItems: "center", gap: 12,
       padding: "16px 28px",
       borderBottom: `1px solid ${C.border}`,
-      background: "rgba(255,255,255,0.015)",
+      background: "rgba(0,0,0,0.02)",
       flexWrap: "wrap",
     }}>
       <div style={{
         display: "flex", gap: 4, padding: 3, borderRadius: 8,
-        border: `1px solid ${C.border2}`, background: "rgba(0,0,0,0.25)",
+        border: `1px solid ${C.border2}`, background: "rgba(0,0,0,0.05)",
       }}>
         {[
           { key: "all",   label: "All",   count: counts.all },
@@ -662,7 +662,7 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
               <span style={{
                 fontSize: 11, fontWeight: 600,
                 color: active ? C.teal : C.muted,
-                background: active ? "rgba(98,197,209,0.10)" : "rgba(255,255,255,0.05)",
+                background: active ? C.tealBg : "rgba(0,0,0,0.05)",
                 padding: "0 6px", borderRadius: 4,
                 minWidth: 18, textAlign: "center",
               }}>{f.count}</span>
@@ -687,7 +687,7 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
           style={{
             width: "100%",
             padding: "8px 32px 8px 32px",
-            background: "rgba(0,0,0,0.25)",
+            background: "#ffffff",
             border: `1px solid ${C.border2}`,
             borderRadius: 8, color: C.text, fontSize: 13, outline: "none",
           }}
@@ -709,7 +709,7 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
       <button
         onClick={onAdd}
         style={{
-          background: C.teal, color: C.bg,
+          background: C.teal, color: "#ffffff",
           border: `1px solid ${C.teal}`,
           padding: "8px 16px", borderRadius: 8,
           fontSize: 13, fontWeight: 700,
@@ -774,14 +774,14 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
   return (
     <div style={{
       margin: "0 28px 24px",
-      background: "rgba(255,255,255,0.012)",
+      background: "#ffffff",
       border: `1px solid ${C.border}`,
       borderRadius: 10, overflow: "hidden",
     }}>
       <div style={{
         display: "grid", gridTemplateColumns: cols,
         borderBottom: `1px solid ${C.border}`,
-        background: "rgba(0,0,0,0.18)",
+        background: "#f9fafb",
       }}>
         <div style={{ ...headStyle, justifyContent: "center" }}>
           <Checkbox checked={allSelected} indeterminate={someSelected} onChange={toggleAll} />
@@ -882,7 +882,7 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
         <code style={{
           fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
           fontSize: 11.5, color: C.textDim,
-          background: "rgba(255,255,255,0.025)",
+          background: "rgba(0,0,0,0.04)",
           border: `1px solid ${C.border}`,
           padding: "2px 7px", borderRadius: 4,
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -988,7 +988,7 @@ function Pagination({ page, pageCount, pageSize, setPage, setPageSize, total }: 
           <select
             value={pageSize} onChange={e => setPageSize(parseInt(e.target.value, 10))}
             style={{
-              padding: "3px 8px", background: "rgba(0,0,0,0.25)",
+              padding: "3px 8px", background: "#ffffff",
               border: `1px solid ${C.border2}`, borderRadius: 6,
               color: C.text, fontSize: 12,
             }}
@@ -1042,7 +1042,7 @@ function BulkBar({ count, onClear, onDelete, onChangeRole, onExport }: {
       background: C.surface,
       border: `1px solid ${C.tealBdr}`,
       borderRadius: 10,
-      boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+      boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
       zIndex: 90,
     }}>
       <span style={{
@@ -1052,7 +1052,7 @@ function BulkBar({ count, onClear, onDelete, onChangeRole, onExport }: {
       }}>{count}</span>
       <span style={{ fontSize: 13, color: C.text, marginRight: 8 }}>selected</span>
 
-      <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.08)" }} />
+      <div style={{ width: 1, height: 18, background: "rgba(0,0,0,0.10)" }} />
 
       <BulkBtn onClick={onChangeRole}>
         <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -1073,7 +1073,7 @@ function BulkBar({ count, onClear, onDelete, onChangeRole, onExport }: {
         Delete
       </BulkBtn>
 
-      <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.08)" }} />
+      <div style={{ width: 1, height: 18, background: "rgba(0,0,0,0.10)" }} />
 
       <button
         onClick={onClear}
@@ -1097,8 +1097,8 @@ function BulkBtn({ children, danger, onClick }: { children: ReactNode; danger?: 
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         padding: "6px 10px", borderRadius: 6,
-        border: `1px solid ${hover ? "rgba(255,255,255,0.12)" : "transparent"}`,
-        background: hover ? "rgba(255,255,255,0.04)" : "transparent",
+        border: `1px solid ${hover ? "rgba(0,0,0,0.10)" : "transparent"}`,
+        background: hover ? "rgba(0,0,0,0.04)" : "transparent",
         color, fontSize: 12, fontWeight: 500,
         transition: "all 0.1s", cursor: "pointer",
       }}
@@ -1357,7 +1357,7 @@ export default function UsersClient() {
             <span>User Directory</span>
             <span style={{
               fontSize: 11, color: C.textDim,
-              background: "rgba(255,255,255,0.04)",
+              background: "rgba(0,0,0,0.05)",
               border: `1px solid ${C.border}`,
               padding: "2px 8px", borderRadius: 4, fontWeight: 600,
             }}>{counts.all}</span>
@@ -1447,7 +1447,7 @@ export default function UsersClient() {
           border: `1px solid ${toast.ok ? C.tealBdr : C.redBdr}`,
           borderRadius: 10,
           display: "flex", alignItems: "center", gap: 10,
-          boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+          boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
           color: C.text, fontSize: 13,
         }}>
           <span style={{
@@ -1534,7 +1534,7 @@ export default function UsersClient() {
         {deleteTarget && "bulk" in deleteTarget && (
           <>
             <div style={{
-              padding: "12px 14px", background: "rgba(0,0,0,0.25)",
+              padding: "12px 14px", background: "rgba(0,0,0,0.04)",
               border: `1px solid ${C.border}`, borderRadius: 8,
               marginBottom: 14, maxHeight: 180, overflowY: "auto",
             }}>
@@ -1589,7 +1589,7 @@ export default function UsersClient() {
         {roleTarget && (
           <>
             <div style={{
-              padding: "10px 12px", background: "rgba(0,0,0,0.25)",
+              padding: "10px 12px", background: "rgba(0,0,0,0.04)",
               border: `1px solid ${C.border}`, borderRadius: 8,
               marginBottom: 16,
               display: "flex", alignItems: "center", gap: 14, fontSize: 12,

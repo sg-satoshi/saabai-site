@@ -7,16 +7,16 @@ import type { OrderRecord } from "../../api/admin/orders/route";
 // ── Colour palette ────────────────────────────────────────────────────────────
 
 const C = {
-  bg:       "#07091a",
-  card:     "#0e1128",
-  surface:  "#131729",
-  border:   "rgba(255,255,255,0.07)",
-  borderHi: "rgba(255,255,255,0.13)",
-  text:     "#e2e4f0",
-  muted:    "#525873",
-  gold:     "#C9A84C",
-  goldBg:   "rgba(201,168,76,0.08)",
-  goldBdr:  "rgba(201,168,76,0.20)",
+  bg:       "#f5f5f7",
+  card:     "#ffffff",
+  surface:  "#f3f4f6",
+  border:   "rgba(0,0,0,0.08)",
+  borderHi: "rgba(0,0,0,0.12)",
+  text:     "#111827",
+  muted:    "#9ca3af",
+  gold:     "#b45309",
+  goldBg:   "rgba(180,83,9,0.08)",
+  goldBdr:  "rgba(180,83,9,0.25)",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function StatusBadge({ status }: { status: string }) {
     trialing: { label: "Trial",    color: "#818cf8", bg: "rgba(129,140,248,0.10)" },
     unpaid:   { label: "Unpaid",   color: "#f87171", bg: "rgba(248,113,113,0.10)" },
   };
-  const s = map[status] ?? { label: status, color: C.muted, bg: "rgba(255,255,255,0.04)" };
+  const s = map[status] ?? { label: status, color: C.muted, bg: "rgba(0,0,0,0.04)" };
   return (
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
@@ -60,8 +60,8 @@ function PlanBadge({ plan }: { plan: string }) {
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
       color: isGrowth ? C.gold : "#9aa0b8",
-      background: isGrowth ? C.goldBg : "rgba(255,255,255,0.05)",
-      border: `1px solid ${isGrowth ? C.goldBdr : "rgba(255,255,255,0.08)"}`,
+      background: isGrowth ? C.goldBg : "rgba(0,0,0,0.04)",
+      border: `1px solid ${isGrowth ? C.goldBdr : "rgba(0,0,0,0.08)"}`,
       letterSpacing: 0.4,
     }}>
       {isGrowth ? "Growth" : "Starter"}
@@ -78,7 +78,7 @@ function InvoiceDrawer({ order, onClose }: { order: OrderRecord; onClose: () => 
       onClick={onClose}
     >
       <div
-        style={{ background: C.card, border: `1px solid ${C.borderHi}`, borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.4)" }}
+        style={{ background: C.card, border: `1px solid ${C.borderHi}`, borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,0.12)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -105,7 +105,7 @@ function InvoiceDrawer({ order, onClose }: { order: OrderRecord; onClose: () => 
               </thead>
               <tbody>
                 {order.invoices.map((inv, i) => (
-                  <tr key={inv.id} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)" }}>
+                  <tr key={inv.id} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)" }}>
                     <td style={{ padding: "10px 8px", fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>{fmtDate(inv.date)}</td>
                     <td style={{ padding: "10px 8px", fontSize: 12, color: C.text, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {inv.description}
@@ -191,7 +191,7 @@ export default function OrdersPage() {
         </div>
         <button
           onClick={load}
-          style={{ fontSize: 12, fontWeight: 600, color: C.muted, background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 14px", cursor: "pointer" }}
+          style={{ fontSize: 12, fontWeight: 600, color: C.muted, background: "rgba(0,0,0,0.04)", border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 14px", cursor: "pointer" }}
         >
           ↻ Refresh
         </button>
@@ -296,7 +296,7 @@ export default function OrdersPage() {
                           onClick={() => setViewing(order)}
                           style={{
                             fontSize: 11, fontWeight: 600, padding: "5px 12px", borderRadius: 7, cursor: "pointer",
-                            border: `1px solid ${C.border}`, background: "rgba(255,255,255,0.04)", color: C.muted,
+                            border: `1px solid ${C.border}`, background: "rgba(0,0,0,0.04)", color: C.muted,
                           }}
                         >
                           Invoices ({order.invoices.length})
