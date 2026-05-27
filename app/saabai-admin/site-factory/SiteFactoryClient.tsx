@@ -706,10 +706,13 @@ export default function SiteFactoryClient() {
         .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
         .trim();
 
-      // If the AI included a <CHANGES> block but nothing was applied, tell the user
       const hadChanges = /<CHANGES>/.test(fullText);
       if (hadChanges && opsApplied === 0) {
-        displayText += "\n\nThe change didn't apply — the text I targeted wasn't found exactly in the HTML. Please describe the text to change more precisely, or paste the exact words, and I'll try again.";
+        displayText += "\n\nThe change didn't apply — the text I targeted wasn't found exactly in the HTML. Try describing what you want changed in your own words and I'll have another go.";
+      }
+      // Fallback: if AI made changes but wrote no visible text, add a confirmation
+      if (opsApplied > 0 && !displayText.trim()) {
+        displayText = `Done. ${opsApplied} change${opsApplied > 1 ? "s" : ""} applied to the site. Check the preview on the right.`;
       }
 
       const finalMsgs = withAssistant.map((m, i) =>
