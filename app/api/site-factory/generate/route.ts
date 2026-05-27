@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { streamText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
 import { createSite } from "../../../../lib/site-registry";
-import { put } from "@vercel/blob";
+import { put, list } from "@vercel/blob";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
 import { THEMES, NICHE_THEME_DEFAULTS } from "../../../../lib/site-themes";
 import { snapshotVersion } from "../../../../lib/site-versions";
@@ -36,6 +36,14 @@ export async function POST(req: NextRequest) {
 
     const slug = slugify(businessName);
     const siteUrl = `https://www.saabai.ai/sites/${slug}/`;
+
+    const { blobs: existing } = await list({ prefix: `sites/${slug}/index.html` });
+    if (existing.length > 0) {
+      return Response.json(
+        { error: `A site already exists for "${businessName}". Delete it first before generating a new one.` },
+        { status: 409 }
+      );
+    }
 
     // Resolve theme — explicit choice wins, then niche default
     const themeKey = (style && THEMES[style]) ? style : (NICHE_THEME_DEFAULTS[niche] ?? "slate");
