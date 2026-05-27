@@ -3,7 +3,11 @@ import { list } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
-const HTML_PAGES = ["privacy-policy", "terms-of-use"];
+const HTML_PAGES = [
+  "privacy-policy", "terms-of-use",
+  "about", "services", "practice-areas", "contact",
+  "menu", "team", "gallery", "faq", "blog",
+];
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },
   "robots.txt": { ext: "txt", contentType: "text/plain; charset=utf-8" },

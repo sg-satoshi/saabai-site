@@ -92,6 +92,17 @@ const NICHE_THEME_DEFAULT: Record<string, string> = {
   "automotive": "apex", "technology": "edge", "other": "slate",
 };
 
+type MultiPageStatus = { slug: string; label: string; status: "pending" | "building" | "done" | "error" };
+
+const NICHE_PAGES: Record<string, Array<{ slug: string; label: string }>> = {
+  "legal":                  [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"practice-areas",label:"Practice Areas" },{ slug:"contact",label:"Contact" }],
+  "allied-health":          [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"services",label:"Services" },{ slug:"contact",label:"Contact" }],
+  "professional-services":  [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"services",label:"Services" },{ slug:"contact",label:"Contact" }],
+  "hospitality":            [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"menu",label:"Menu" },{ slug:"contact",label:"Contact" }],
+  "finance":                [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"services",label:"Services" },{ slug:"contact",label:"Contact" }],
+};
+const DEFAULT_PAGES = [{ slug:"home",label:"Home" },{ slug:"about",label:"About" },{ slug:"services",label:"Services" },{ slug:"contact",label:"Contact" }];
+
 function storeMsgs(slug: string, msgs: Message[]) {
   try {
     // Store without htmlSnapshot (too large) — restore buttons only work within session
@@ -301,6 +312,8 @@ export default function SiteFactoryClient() {
   const [description, setDescription] = useState("");
   const [genCharCount, setGenCharCount] = useState(0);
   const [streamedHtml, setStreamedHtml] = useState("");
+  const [siteType, setSiteType] = useState<"single" | "multi">("single");
+  const [multiPageProgress, setMultiPageProgress] = useState<MultiPageStatus[]>([]);
 
   // Chatbot config state (for new site form)
   const [chatbotEnabled, setChatbotEnabled] = useState(true);
@@ -1071,9 +1084,69 @@ export default function SiteFactoryClient() {
     setGenCharCount(0);
     setStreamedHtml("");
     liveHtmlRef.current = "";
-    startPreviewUpdater();
     const slug = slugify(businessName.trim());
+    const chatbotPayload = chatbotEnabled ? {
+      name: chatbotName || undefined,
+      greeting: chatbotGreeting || undefined,
+      personality: chatbotPersonality || undefined,
+    } : { enabled: false };
 
+    if (siteType === "multi") {
+      const pages = NICHE_PAGES[niche] ?? DEFAULT_PAGES;
+      setMultiPageProgress(pages.map(p => ({ ...p, status: "pending" as const })));
+
+      try {
+        const res = await fetch("/api/site-factory/generate-multi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            businessName: businessName.trim(), niche, location,
+            services: services.split(",").map(s => s.trim()).filter(Boolean),
+            phone, email, address, style, description: description.trim(),
+            pages, chatbot: chatbotPayload,
+          }),
+        });
+
+        if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const ev = JSON.parse(line.slice(6));
+              if (ev.type === "page_start") {
+                setMultiPageProgress(prev => prev.map(p => p.slug === ev.page ? { ...p, status: "building" } : p));
+              } else if (ev.type === "page_done") {
+                setMultiPageProgress(prev => prev.map(p => p.slug === ev.page ? { ...p, status: "done" } : p));
+              } else if (ev.type === "page_error") {
+                setMultiPageProgress(prev => prev.map(p => p.slug === ev.page ? { ...p, status: "error" } : p));
+              } else if (ev.type === "done") {
+                await fetchSites();
+                const fakeSite: Site = { id: `site_${Date.now()}`, slug, name: businessName.trim(), niche, status: "live", url: `https://www.saabai.ai/sites/${slug}/`, createdAt: Date.now() };
+                setTimeout(() => { setMultiPageProgress([]); openEditor(fakeSite); }, 1200);
+              }
+            } catch { /* skip malformed event */ }
+          }
+        }
+      } catch (e) {
+        setMultiPageProgress([]);
+        alert("Error: " + String(e));
+        setPhase("list");
+      }
+      return;
+    }
+
+    // Single-page generation
+    startPreviewUpdater();
     try {
       const res = await fetch("/api/site-factory/generate", {
         method: "POST",
@@ -1082,11 +1155,7 @@ export default function SiteFactoryClient() {
           businessName: businessName.trim(), niche, location,
           services: services.split(",").map(s => s.trim()).filter(Boolean),
           phone, email, address, style, description: description.trim(),
-          chatbot: chatbotEnabled ? {
-            name: chatbotName || undefined,
-            greeting: chatbotGreeting || undefined,
-            personality: chatbotPersonality || undefined,
-          } : { enabled: false },
+          chatbot: chatbotPayload,
         }),
       });
 
@@ -1210,15 +1279,54 @@ export default function SiteFactoryClient() {
 
   // ─── GENERATING ──────────────────────────────────────────────────────
   if (phase === "generating") {
+    const isMulti = multiPageProgress.length > 0;
+    const doneCount = multiPageProgress.filter(p => p.status === "done").length;
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
         <div style={{ padding: "14px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.gold, animation: "pulse 1.4s ease-in-out infinite" }} />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Generating {businessName}...</span>
-          <span style={{ fontSize: 12, color: C.textDim, fontVariantNumeric: "tabular-nums" }}>{(genCharCount / 1000).toFixed(1)}k chars</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>
+            {isMulti ? `Building ${businessName} (${doneCount}/${multiPageProgress.length} pages)` : `Generating ${businessName}...`}
+          </span>
+          {!isMulti && <span style={{ fontSize: 12, color: C.textDim, fontVariantNumeric: "tabular-nums" }}>{(genCharCount / 1000).toFixed(1)}k chars</span>}
         </div>
         <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-          {streamedHtml ? (
+          {isMulti ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 32, padding: "40px 24px" }}>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700 }}>Building {multiPageProgress.length}-page site</p>
+                <p style={{ margin: 0, fontSize: 13, color: C.textDim }}>Each page is generated and saved independently. This takes 3-5 minutes.</p>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", maxWidth: 600 }}>
+                {multiPageProgress.map((page, i) => {
+                  const st = page.status;
+                  const isBuilding = st === "building";
+                  const isDone = st === "done";
+                  const isError = st === "error";
+                  const borderCol = isBuilding ? C.gold : isDone ? "#22c55e" : isError ? "#ef4444" : C.border2;
+                  const bgCol = isBuilding ? C.goldBg : isDone ? "rgba(34,197,94,0.1)" : isError ? "rgba(239,68,68,0.1)" : C.surface;
+                  const icon = isDone ? "✓" : isError ? "✗" : isBuilding ? null : String(i + 1);
+                  return (
+                    <div key={page.slug} style={{ width: 120, padding: "18px 12px", borderRadius: 10, border: `1.5px solid ${borderCol}`, background: bgCol, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transition: "all .3s" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", border: `2px solid ${borderCol}`, background: isBuilding ? "transparent" : bgCol, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: isBuilding ? C.gold : isDone ? "#22c55e" : isError ? "#ef4444" : C.textDim, animation: isBuilding ? "spin 1s linear infinite" : "none" }}>
+                        {isBuilding ? null : icon}
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: isBuilding ? C.gold : isDone ? "#22c55e" : isError ? "#ef4444" : C.text }}>{page.label}</div>
+                        <div style={{ fontSize: 10, color: C.textDim, marginTop: 2, textTransform: "uppercase", letterSpacing: "0.06em" }}>{st === "pending" ? "waiting" : st}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ width: "100%", maxWidth: 400 }}>
+                <div style={{ height: 4, borderRadius: 4, background: C.border, overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: 4, background: C.gold, transition: "width .5s ease", width: `${Math.max(5, (doneCount / Math.max(multiPageProgress.length, 1)) * 100)}%` }} />
+                </div>
+                <p style={{ margin: "8px 0 0", textAlign: "center", fontSize: 12, color: C.textDim }}>{doneCount} of {multiPageProgress.length} pages complete</p>
+              </div>
+            </div>
+          ) : streamedHtml ? (
             <iframe srcDoc={streamedHtml} style={{ width: "100%", height: "100%", border: "none" }} title="Preview" sandbox="allow-scripts allow-same-origin" />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 20, color: C.textDim }}>
@@ -2559,6 +2667,29 @@ export default function SiteFactoryClient() {
                 {lbl("Brief / Notes")}
                 <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Target audience, tone, inspiration sites, anything specific..." rows={3} style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 })} />
               </div>
+              {/* ─── Site Type ─── */}
+              <div>
+                {lbl("Site Structure")}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {(["single", "multi"] as const).map(t => {
+                    const sel = siteType === t;
+                    const pages = NICHE_PAGES[niche] ?? DEFAULT_PAGES;
+                    return (
+                      <button key={t} onClick={() => setSiteType(t)} style={{ padding: "12px 10px", borderRadius: 9, border: `1.5px solid ${sel ? C.gold : C.border2}`, background: sel ? C.goldBg : C.bg, cursor: "pointer", textAlign: "left", transition: "all .15s" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                          <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${sel ? C.gold : C.textDim}`, background: sel ? C.gold : "transparent", flexShrink: 0 }} />
+                          <span style={{ fontSize: 12, fontWeight: 700, color: sel ? C.gold : C.text }}>{t === "single" ? "Single Page" : "Multi-Page"}</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.4 }}>
+                          {t === "single"
+                            ? "All sections in one scrollable page. Generates in ~90s."
+                            : `${pages.length} separate pages: ${pages.map(p => p.label).join(" · ")}. Takes ~3-5 min.`}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                 <div>{lbl("Phone")}<input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412 345 678" style={inp()} /></div>
                 <div>{lbl("Email")}<input value={email} onChange={e => setEmail(e.target.value)} placeholder="info@..." style={inp()} /></div>
@@ -2610,7 +2741,7 @@ export default function SiteFactoryClient() {
               </div>
 
               <button onClick={generateSite} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
-                Generate Site
+                {siteType === "multi" ? `Generate ${(NICHE_PAGES[niche] ?? DEFAULT_PAGES).length} Pages` : "Generate Site"}
               </button>
             </div>
           </div>
