@@ -1153,16 +1153,29 @@ export default function SiteFactoryClient() {
       setMultiPageProgress(pages.map(p => ({ ...p, status: "pending" as const })));
 
       try {
-        const res = await fetch("/api/site-factory/generate-multi", {
+        const buildMultiPayload = (confirmDuplicate = false) => JSON.stringify({
+          businessName: businessName.trim(), niche, location,
+          services: services.split(",").map(s => s.trim()).filter(Boolean),
+          phone, email, address, style, description: description.trim(),
+          pages, chatbot: chatbotPayload, confirmDuplicate,
+        });
+
+        let res = await fetch("/api/site-factory/generate-multi", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            businessName: businessName.trim(), niche, location,
-            services: services.split(",").map(s => s.trim()).filter(Boolean),
-            phone, email, address, style, description: description.trim(),
-            pages, chatbot: chatbotPayload,
-          }),
+          body: buildMultiPayload(),
         });
+
+        if (res.status === 409) {
+          const { error } = await res.json();
+          const confirmed = window.confirm(`${error}\n\nCreate another site for this business?`);
+          if (!confirmed) { setMultiPageProgress([]); setPhase("new"); return; }
+          res = await fetch("/api/site-factory/generate-multi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: buildMultiPayload(true),
+          });
+        }
 
         if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -1205,16 +1218,29 @@ export default function SiteFactoryClient() {
     // Single-page generation
     startPreviewUpdater();
     try {
-      const res = await fetch("/api/site-factory/generate", {
+      const buildPayload = (confirmDuplicate = false) => JSON.stringify({
+        businessName: businessName.trim(), niche, location,
+        services: services.split(",").map(s => s.trim()).filter(Boolean),
+        phone, email, address, style, description: description.trim(),
+        chatbot: chatbotPayload, confirmDuplicate,
+      });
+
+      let res = await fetch("/api/site-factory/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          businessName: businessName.trim(), niche, location,
-          services: services.split(",").map(s => s.trim()).filter(Boolean),
-          phone, email, address, style, description: description.trim(),
-          chatbot: chatbotPayload,
-        }),
+        body: buildPayload(),
       });
+
+      if (res.status === 409) {
+        const { error } = await res.json();
+        const confirmed = window.confirm(`${error}\n\nCreate another site for this business?`);
+        if (!confirmed) { stopPreviewUpdater(); setPhase("new"); return; }
+        res = await fetch("/api/site-factory/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: buildPayload(true),
+        });
+      }
 
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 

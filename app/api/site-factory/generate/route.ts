@@ -28,22 +28,33 @@ export async function POST(req: NextRequest) {
       style = "",
       description = "",
       chatbot: chatbotInput = {},
+      confirmDuplicate = false,
     } = body;
 
     if (!businessName) {
       return Response.json({ error: "Business name is required" }, { status: 400 });
     }
 
-    const slug = slugify(businessName);
-    const siteUrl = `https://www.saabai.ai/sites/${slug}/`;
+    let slug = slugify(businessName);
 
     const { blobs: existing } = await list({ prefix: `sites/${slug}/index.html` });
     if (existing.length > 0) {
-      return Response.json(
-        { error: `A site already exists for "${businessName}". Delete it first before generating a new one.` },
-        { status: 409 }
-      );
+      if (!confirmDuplicate) {
+        return Response.json(
+          { error: `A site already exists for "${businessName}". Please confirm you want to create another site for this business.`, code: "DUPLICATE_SITE" },
+          { status: 409 }
+        );
+      }
+      let counter = 2;
+      while (counter <= 20) {
+        const candidate = `${slug}-${counter}`;
+        const { blobs: check } = await list({ prefix: `sites/${candidate}/index.html` });
+        if (check.length === 0) { slug = candidate; break; }
+        counter++;
+      }
     }
+
+    const siteUrl = `https://www.saabai.ai/sites/${slug}/`;
 
     // Resolve theme — explicit choice wins, then niche default
     const themeKey = (style && THEMES[style]) ? style : (NICHE_THEME_DEFAULTS[niche] ?? "slate");
