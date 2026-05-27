@@ -41,100 +41,45 @@ export async function POST(req: NextRequest) {
     const themeKey = (style && THEMES[style]) ? style : (NICHE_THEME_DEFAULTS[niche] ?? "slate");
     const theme = THEMES[themeKey];
 
-    const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised Australian small business websites. Each site you produce is structurally and visually unique — you have been given an explicit named design theme with exact rules you must follow precisely.
+    const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised websites for Australian small businesses. Your output rivals Lovable, Webflow, and Framer — not generic templates. Every site feels custom-designed and worth $5,000+.
 
-ABSOLUTE RULES:
-- Output ONLY raw HTML. No markdown, no explanations, no code fences, no preamble.
-- Begin immediately with <!DOCTYPE html> and end with </html>.
-- NEVER use em dashes (—). Use commas, colons, or rewrite the sentence.
-- ALL CSS in one <style> tag in <head>. Use CSS custom properties for the full design system.
-- ALL JavaScript in one <script> tag immediately before </body>.
-- Zero external CSS frameworks. Pure handcrafted CSS using Grid and Flexbox.
-- Fully responsive: mobile-first. Breakpoints: 768px tablet, 1024px desktop.
-- The THEME RULES below are hard constraints, not suggestions. Every structural, layout, and styling rule must be followed exactly. Do not fall back to a generic template.`;
+HARD RULES:
+- Output ONLY raw HTML starting with <!DOCTYPE html>. No markdown, no code fences.
+- ALL CSS in one <style> tag. ALL JS in one <script> tag before </body>.
+- No external CSS frameworks. Pure CSS Grid and Flexbox.
+- Mobile-first. Breakpoints: 768px tablet, 1024px desktop.
+- All images: loading="lazy", explicit width/height, real Unsplash photo IDs that genuinely match the business niche and theme aesthetic — not generic placeholder IDs.
+- No em dashes (—). Use commas, colons, or rewrite.
+- Sticky nav: transparent to opaque on scroll. Hamburger menu on mobile with working JS toggle.
+- IntersectionObserver reveals (.reveal class). Count-up stats when in view using data-target attribute.
+- Full SEO: JSON-LD LocalBusiness (most specific @type), Open Graph, Twitter Card, semantic HTML5.`;
 
     const servicesList = services.length
       ? services.join(", ")
       : "choose 6 highly relevant services for this specific business niche";
 
     const userPrompt = [
-      `Build a complete production website for this Australian business. Write real, compelling copy -- not Lorem Ipsum.`,
+      `Build a complete production website. Write real, compelling copy — not Lorem Ipsum.`,
       ``,
-      `BUSINESS: ${businessName}`,
-      `NICHE: ${niche}`,
-      `LOCATION: ${location}`,
-      `PHONE: ${phone || "Contact us for a free quote"}`,
-      `EMAIL: ${email || ""}`,
-      `ADDRESS: ${address || location}`,
+      `BUSINESS: ${businessName} | NICHE: ${niche} | LOCATION: ${location}`,
+      `PHONE: ${phone || "Contact us for a free quote"} | EMAIL: ${email || ""} | ADDRESS: ${address || location}`,
       `SERVICES: ${servicesList}`,
-      description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : "",
+      description ? `\nCLIENT BRIEF:\n${description}` : "",
       ``,
-      `━━━ DESIGN THEME: ${themeKey.toUpperCase()} ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `COLOUR PALETTE -- define exactly at :root:`,
-      theme.palette,
-      `Also define: --shadow:0 4px 24px rgba(0,0,0,.08); --shadow-lg:0 16px 48px rgba(0,0,0,.16); --transition:0.2s ease;`,
-      `Spacing: --s1=4px; --s2=8px; --s3=12px; --s4=16px; --s6=24px; --s8=32px; --s10=40px; --s12=48px; --s16=64px;`,
-      ``,
-      `TYPOGRAPHY:`,
-      theme.fontImport,
-      `Headings (h1-h4): ${theme.headingCss}`,
-      `Body: ${theme.bodyCss} font-size:16px; line-height:1.75;`,
-      `Type scale: 12px caption, 14px small, 16px body, 20px lead, 24px h4, 32px h3, 44px h2, 60px h1, 80px hero.`,
-      theme.dark ? "DARK THEME: all text must use --text or --text-muted. Zero dark text on dark backgrounds." : "",
-      ``,
-      `━━━ HERO SECTION (implement exactly as described) ━━━━━━━━━━━━━━━`,
-      ``,
-      theme.hero,
-      ``,
-      `Address the customer's #1 pain point for ${niche}. Add .reveal CSS class to all main text elements.`,
-      ``,
-      `━━━ SECTION ORDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `Build sections in this exact order:`,
-      theme.sections,
-      ``,
-      `━━━ THEME STRUCTURAL RULES (all mandatory) ━━━━━━━━━━━━━━━━`,
-      ``,
+      `THEME: ${themeKey}`,
+      theme.aesthetic,
+      `Palette: ${theme.palette}`,
+      `Fonts: ${theme.fonts}`,
+      `Hero: ${theme.hero}`,
+      `Visual rules:`,
       ...theme.rules.map((r: string, i: number) => `${i + 1}. ${r}`),
+      theme.dark ? `\nDARK SITE: all text must use --text or --text-muted. Zero dark text on dark backgrounds.` : "",
       ``,
-      `━━━ INTERACTION & ANIMATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `SECTIONS (in this order):`,
+      `Nav → Hero → Trust bar (4 signals with inline SVG icons) → Services (6 cards, CSS Grid 3/2/1 col) → Process (3 numbered steps) → Stats (4 count-up metrics, data-target attribute) → Testimonials (3 cards, Australian suburbs, 5 stars, specific quotes) → About (photo left + story right) → FAQ (6 questions, accordion with JS toggle) → CTA band → Contact (details left + form right, form POSTs to https://www.saabai.ai/api/site-factory/lead with {name,email,phone,message,siteSlug:"${slug}"}, show success/error state) → Footer`,
       ``,
-      `- Sticky nav: becomes opaque with box-shadow when scrollY > 60.`,
-      `- IntersectionObserver: .reveal elements animate from opacity:0 + translateY(24px) to visible.`,
-      `- Stats: count-up from 0 over 1.8s when in view using data-target attribute on the number element.`,
-      `- Buttons: hover scale(1.02) + shadow-lg + colour shift, 0.2s ease. Focus-visible ring.`,
-      `- Card hover: translateY(-4px) or per theme rules above.`,
-      `- Inputs: border-colour transition on focus, focus ring in --secondary.`,
-      ``,
-      `━━━ IMAGES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `- Use real Unsplash URLs: https://images.unsplash.com/photo-XXXXXXXX?w=1200&q=80`,
-      `- Pick photo IDs that genuinely match the business niche and the visual feel of this theme.`,
-      `- All images: loading="lazy", explicit width/height.`,
-      ``,
-      `━━━ SEO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `- JSON-LD -- most specific @type (LegalService, MedicalBusiness, HomeAndConstructionBusiness, etc.).`,
-      `- Schema: name, description, url, telephone, email, address (full AU), geo, openingHoursSpecification, priceRange, areaServed, image, sameAs:[].`,
-      `- FAQPage schema if FAQ section present.`,
-      `- <meta name="robots" content="index, follow">.`,
-      `- Full Open Graph + Twitter Card. og:image = hero photo URL.`,
-      `- Semantic HTML5: header, main, section, article, footer, nav, address.`,
-      ``,
-      `━━━ SECTION CONTENT SPECS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      ``,
-      `NAV: Logo text left (${businessName}). Nav links centre (hamburger on mobile). CTA button right. Transparent to opaque on scroll.`,
-      `TRUST BAR: 4 trust signals with inline SVG icons. Adapt to ${niche}.`,
-      `SERVICES: 6 cards, CSS Grid 3-col/2-col/1-col. SVG icon + name + 2-line benefit. .reveal.`,
-      `PROCESS: 3 numbered steps. Horizontal desktop, vertical mobile.`,
-      `STATS: 4 count-up metrics. data-target="NUMBER" on each stat.`,
-      `TESTIMONIALS: 3 cards -- 5 stars, 3-4 sentence quote, first name + last initial, Australian suburb.`,
-      `ABOUT: Photo + story (2 paragraphs + 4 bullets). .reveal.`,
-      `FAQ: 6 questions in <details><summary>. JS toggles +/- icon.`,
-      `CTA BAND: Full-width, themed background, bold headline, one button.`,
-      `CONTACT: Two columns -- contact details left, form right. POSTs to https://www.saabai.ai/api/site-factory/lead with {name,email,phone,message,siteSlug:"${slug}"}.`,
-      `FOOTER: 3 columns -- brand+social, links, contact. Copyright ${new Date().getFullYear()} ${businessName}. Privacy + Terms links (href="#").`,
+      `Nav must include a working hamburger menu on mobile.`,
+      `Pick Unsplash photo IDs that genuinely look like this business in this location.`,
     ].filter(Boolean).join("\n");
 
     const stream = streamText({
