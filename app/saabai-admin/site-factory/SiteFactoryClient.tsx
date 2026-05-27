@@ -315,6 +315,12 @@ export default function SiteFactoryClient() {
   const [siteType, setSiteType] = useState<"single" | "multi">("single");
   const [multiPageProgress, setMultiPageProgress] = useState<MultiPageStatus[]>([]);
 
+  // Smart brief state
+  const [briefText, setBriefText] = useState("");
+  const [briefUrl, setBriefUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [extracted, setExtracted] = useState(false);
+
   // Chatbot config state (for new site form)
   const [chatbotEnabled, setChatbotEnabled] = useState(true);
   const [chatbotName, setChatbotName] = useState("");
@@ -1076,6 +1082,38 @@ export default function SiteFactoryClient() {
         alert("Upload failed: " + (data.error || "unknown"));
       }
     } catch (e) { alert("Upload error: " + String(e)); }
+  }
+
+  async function extractBrief() {
+    if (!briefText.trim() && !briefUrl.trim()) return;
+    setExtracting(true);
+    try {
+      const res = await fetch("/api/site-factory/extract-brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief: briefText.trim(), url: briefUrl.trim() || undefined }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+
+      if (d.businessName) setBusinessName(d.businessName);
+      if (d.niche) { setNiche(d.niche); if (!themeOverridden) setStyle(NICHE_THEME_DEFAULT[d.niche] ?? "slate"); }
+      if (d.location) setLocation(d.location);
+      if (d.phone) setPhone(d.phone);
+      if (d.email) setEmail(d.email);
+      if (d.address) setAddress(d.address);
+      if (d.services) setServices(d.services);
+      if (d.description) setDescription(d.description);
+
+      setExtracted(true);
+      const count = Object.keys(d).filter(k => d[k]).length;
+      showToast(`Extracted ${count} detail${count !== 1 ? "s" : ""} from brief`);
+    } catch (e) {
+      showToast("Extraction failed — " + String(e), "error");
+    } finally {
+      setExtracting(false);
+    }
   }
 
   async function generateSite() {
@@ -2652,11 +2690,64 @@ export default function SiteFactoryClient() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>New Client Site</h2>
-                <p style={{ margin: "3px 0 0", fontSize: 12, color: C.textDim }}>AI generates a full website in ~90 seconds</p>
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: C.textDim }}>Paste a brief, or fill in the details below</p>
               </div>
               <button onClick={() => setPhase("list")} style={{ background: "none", border: "none", color: C.textDim, fontSize: 20, cursor: "pointer" }}>×</button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* ─── Smart Brief ─── */}
+              <div style={{ background: C.bg, border: `1.5px solid ${extracted ? "rgba(34,197,94,0.4)" : C.border2}`, borderRadius: 10, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10, transition: "border-color .2s" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>AI Brief</span>
+                    <span style={{ marginLeft: 8, fontSize: 11, color: C.textDim }}>Paste a brief and we will fill in the details</span>
+                  </div>
+                  <span style={{ fontSize: 10, color: C.textDim, background: C.surface, padding: "2px 7px", borderRadius: 20, border: `1px solid ${C.border}`, letterSpacing: "0.04em", textTransform: "uppercase" }}>Optional</span>
+                </div>
+                <input
+                  value={briefUrl}
+                  onChange={e => setBriefUrl(e.target.value)}
+                  placeholder="Reference URL — existing site or competitor (optional)"
+                  style={inp({ fontSize: 12 })}
+                />
+                <textarea
+                  value={briefText}
+                  onChange={e => { setBriefText(e.target.value); if (extracted) setExtracted(false); }}
+                  placeholder={"Describe the business or paste a client email, notes, or brief...\n\ne.g. \"Building a site for Tributum Law, a commercial litigation firm in Sydney focusing on corporate disputes and M&A. Target audience: ASX-listed companies and private equity. Professional but approachable tone.\""}
+                  rows={5}
+                  style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5, fontSize: 13 })}
+                />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <button
+                    onClick={extractBrief}
+                    disabled={(!briefText.trim() && !briefUrl.trim()) || extracting}
+                    style={{
+                      padding: "7px 14px", borderRadius: 7, border: "none",
+                      background: (!briefText.trim() && !briefUrl.trim()) || extracting ? C.border : C.gold,
+                      color: (!briefText.trim() && !briefUrl.trim()) || extracting ? C.textDim : "#000",
+                      fontSize: 12, fontWeight: 700,
+                      cursor: (!briefText.trim() && !briefUrl.trim()) || extracting ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", gap: 6, transition: "all .15s",
+                    }}
+                  >
+                    {extracting
+                      ? <><div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(0,0,0,.15)", borderTopColor: "#000", animation: "spin 0.8s linear infinite" }} />Extracting...</>
+                      : extracted
+                        ? <><span style={{ color: "#16a34a" }}>✓</span>Re-extract</>
+                        : "Extract Details →"}
+                  </button>
+                  {extracted && <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 600 }}>Fields updated below</span>}
+                </div>
+              </div>
+
+              {/* ─── Divider ─── */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+                <span style={{ fontSize: 10, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.07em" }}>Details</span>
+                <div style={{ flex: 1, height: 1, background: C.border }} />
+              </div>
+
               <div>{lbl("Business Name *")}<input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Smith Plumbing" style={inp()} autoFocus /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>{lbl("Industry")}<select value={niche} onChange={e => { const n = e.target.value; setNiche(n); if (!themeOverridden) setStyle(NICHE_THEME_DEFAULT[n] ?? "slate"); }} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
