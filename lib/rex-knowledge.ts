@@ -37,7 +37,6 @@ const COMPANY = `
 
 - Minimum order: AUD $50 Ex GST. Orders under $50 incur a $30 cutting fee.
 - Up to 10 cuts included with every order — no setup fees.
-- 5% bulk discount on 5+ sheets of the same product.
 - Freight calculator on site; ships nationwide. Typical lead time: a few business days.
 - Payment online via standard methods. Pick-up available at both locations.
 
