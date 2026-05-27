@@ -14,8 +14,7 @@ import { getProductUrl } from "./url-generator";
 
 const MIN_ORDER    = 50;   // $50 Ex GST minimum; below this a $30 fee applies
 const CUTTING_FEE  = 30;   // added when CTS price > sheet price cap, or order < $50
-const BULK_QTY     = 5;    // 5+ sheets of same product = 5% off
-const BULK_RATE    = 0.05;
+
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1031,12 +1030,7 @@ function notFound(url = ""): PriceResult {
 
 function buildResult(unitPrice: number, qty: number, note: string, url: string): PriceResult {
   let total = unitPrice * qty;
-  let bulkDiscount = false;
-  if (qty >= BULK_QTY) {
-    total *= (1 - BULK_RATE);
-    bulkDiscount = true;
-    note += ", 5% bulk discount applied";
-  }
+  const bulkDiscount = false;
   const minFee = false;
   total = r2(total);
   const each = r2(total / qty);
