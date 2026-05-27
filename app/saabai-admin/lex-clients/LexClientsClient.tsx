@@ -5,27 +5,31 @@ import AdminShell from "../AdminSidebar";
 import type { LexClientRow } from "../../api/admin/lex-clients/route";
 
 const C = {
-  bg:           "#07091a",
-  card:         "#0e1128",
-  surface:      "#131729",
-  surfaceHi:    "#181c32",
+  bg:           "#0b092e",
+  surface:      "#14123a",
+  surface2:     "#1a1748",
+  rowHover:     "rgba(255,255,255,0.025)",
   border:       "rgba(255,255,255,0.07)",
-  borderBright: "rgba(255,255,255,0.14)",
-  text:         "#e2e4f0",
-  muted:        "#525873",
-  dim:          "#2a2d47",
+  border2:      "rgba(255,255,255,0.10)",
+  divider:      "rgba(255,255,255,0.05)",
   gold:         "#C9A84C",
   goldB:        "#E0BC6A",
-  goldBg:       "rgba(201,168,76,0.08)",
-  goldBdr:      "rgba(201,168,76,0.20)",
-  green:        "#22c55e",
-  greenBg:      "rgba(34,197,94,0.10)",
-  greenBdr:     "rgba(34,197,94,0.25)",
+  goldBg:       "rgba(201,168,76,0.10)",
+  goldBdr:      "rgba(201,168,76,0.30)",
+  green:        "#4ade80",
+  greenBg:      "rgba(74,222,128,0.10)",
+  greenBdr:     "rgba(74,222,128,0.30)",
   amber:        "#f5a623",
   amberBg:      "rgba(245,166,35,0.10)",
-  red:          "#ef4444",
-  blue:         "#4d8ef6",
-  blueBg:       "rgba(77,142,246,0.10)",
+  red:          "#f87171",
+  redBg:        "rgba(248,113,113,0.10)",
+  redBdr:       "rgba(248,113,113,0.30)",
+  blue:         "#60a5fa",
+  blueBg:       "rgba(96,165,250,0.10)",
+  blueBdr:      "rgba(96,165,250,0.30)",
+  text:         "#e2e4f0",
+  textDim:      "#8a90b0",
+  muted:        "#505570",
 };
 
 type Stats = { total: number; configured: number; withLlmKey: number };
@@ -33,14 +37,18 @@ type Stats = { total: number; configured: number; withLlmKey: number };
 function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: 0.4,
-      padding: "3px 8px", borderRadius: 20,
-      color: ok ? C.green : C.amber,
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "2px 8px",
       background: ok ? C.greenBg : C.amberBg,
-      border: `1px solid ${ok ? C.greenBdr : "rgba(245,166,35,0.25)"}`,
+      color: ok ? C.green : C.amber,
+      border: `1px solid ${ok ? C.greenBdr : "rgba(245,166,35,0.30)"}`,
+      borderRadius: 4,
+      fontSize: 10, fontWeight: 700,
+      letterSpacing: "0.06em", textTransform: "uppercase" as const,
       whiteSpace: "nowrap" as const,
     }}>
-      {ok ? "✓" : "○"} {label}
+      <span style={{ width: 4, height: 4, borderRadius: "50%", background: ok ? C.green : C.amber }} />
+      {label}
     </span>
   );
 }
@@ -49,27 +57,24 @@ function ModeBadge({ mode }: { mode: "internal" | "external" }) {
   const isInt = mode === "internal";
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: 0.4,
-      padding: "2px 8px", borderRadius: 20,
-      color: isInt ? C.blue : C.gold,
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: "2px 8px",
       background: isInt ? C.blueBg : C.goldBg,
-      border: `1px solid ${isInt ? "rgba(77,142,246,0.25)" : C.goldBdr}`,
+      color: isInt ? C.blue : C.gold,
+      border: `1px solid ${isInt ? C.blueBdr : C.goldBdr}`,
+      borderRadius: 4,
+      fontSize: 10, fontWeight: 700,
+      letterSpacing: "0.06em", textTransform: "uppercase" as const,
       whiteSpace: "nowrap" as const,
     }}>
+      <span style={{ width: 4, height: 4, borderRadius: "50%", background: isInt ? C.blue : C.gold }} />
       {isInt ? "Internal" : "External"}
     </span>
   );
 }
 
-function ClientDetailPanel({
-  client,
-  onClose,
-}: {
-  client: LexClientRow;
-  onClose: () => void;
-}) {
+function ClientDetailPanel({ client, onClose }: { client: LexClientRow; onClose: () => void }) {
   const s = client.settingsSummary;
-  const portalUrl = `/client-portal`;
 
   return (
     <div
@@ -84,14 +89,13 @@ function ClientDetailPanel({
       <div
         style={{
           width: 460, height: "100vh",
-          background: C.card,
-          borderLeft: `1px solid ${C.borderBright}`,
+          background: C.surface,
+          borderLeft: `1px solid ${C.border2}`,
           display: "flex", flexDirection: "column",
           overflowY: "auto",
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div style={{
           padding: "20px 24px",
           borderBottom: `1px solid ${C.border}`,
@@ -101,12 +105,17 @@ function ClientDetailPanel({
             <p style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 800, color: C.text }}>{client.firmName}</p>
             <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{client.email}</p>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 18, padding: "2px 4px", lineHeight: 1 }}>✕</button>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              color: C.muted, fontSize: 18, padding: "2px 4px", lineHeight: 1,
+            }}
+          >✕</button>
         </div>
 
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Identity */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
             <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>Identity</p>
             <Row label="Client ID" value={client.id} mono />
             <Row label="Agent Name" value={client.agentName} />
@@ -115,22 +124,21 @@ function ClientDetailPanel({
             <Row label="Custom LLM" value={<StatusBadge ok={client.hasLlmConfig} label={client.hasLlmConfig ? `${client.llmProvider} / ${client.llmModel}` : "Using default"} />} />
           </div>
 
-          {/* Practice areas */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
+          <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
             <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>Practice Areas</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {client.practiceAreas.map(a => (
                 <span key={a} style={{
-                  fontSize: 11, padding: "3px 9px", borderRadius: 20,
+                  fontSize: 11, padding: "3px 9px", borderRadius: 4,
                   background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.goldB,
+                  fontWeight: 600,
                 }}>{a}</span>
               ))}
             </div>
           </div>
 
-          {/* Settings summary */}
           {s && (
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
+            <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
               <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>Agent Config</p>
               {s.primaryGoal && <Row label="Primary Goal" value={s.primaryGoal} />}
               {s.practiceFocus && <Row label="Practice Focus" value={s.practiceFocus} />}
@@ -158,10 +166,9 @@ function ClientDetailPanel({
             </div>
           )}
 
-          {/* Actions */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <a
-              href={portalUrl}
+              href="/client-portal"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -184,8 +191,8 @@ function ClientDetailPanel({
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 padding: "10px 0", borderRadius: 8,
-                background: "transparent", border: `1px solid ${C.border}`,
-                color: C.muted, fontSize: 13, fontWeight: 600, textDecoration: "none",
+                background: "transparent", border: `1px solid ${C.border2}`,
+                color: C.textDim, fontSize: 13, fontWeight: 600, textDecoration: "none",
               }}
             >
               Test Agent Widget ↗
@@ -215,6 +222,7 @@ export default function LexClientsClient() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<LexClientRow | null>(null);
   const [filterMode, setFilterMode] = useState<"all" | "internal" | "external">("all");
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/lex-clients")
@@ -245,16 +253,16 @@ export default function LexClientsClient() {
 
         {/* Stats row */}
         {stats && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 32 }}>
             {[
               { label: "Total Firms",    value: stats.total,      color: C.gold,  bg: C.goldBg,  bdr: C.goldBdr },
               { label: "Configured",     value: stats.configured, color: C.green, bg: C.greenBg, bdr: C.greenBdr },
-              { label: "Custom LLM Key", value: stats.withLlmKey, color: C.blue,  bg: C.blueBg,  bdr: "rgba(77,142,246,0.25)" },
+              { label: "Custom LLM Key", value: stats.withLlmKey, color: C.blue,  bg: C.blueBg,  bdr: C.blueBdr },
             ].map(s => (
               <div key={s.label} style={{
-                background: C.card, border: `1px solid ${C.border}`,
+                background: C.surface, border: `1px solid ${C.border}`,
                 borderTop: `3px solid ${s.color}`,
-                borderRadius: 12, padding: "20px 22px",
+                borderRadius: 12, padding: "18px 20px",
               }}>
                 <p style={{ margin: "0 0 4px", fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</p>
                 <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{s.label}</p>
@@ -264,35 +272,40 @@ export default function LexClientsClient() {
         )}
 
         {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           {(["all", "internal", "external"] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilterMode(f)}
               style={{
-                padding: "6px 14px", borderRadius: 20, fontSize: 12,
+                padding: "5px 12px", borderRadius: 6, fontSize: 12,
                 fontWeight: filterMode === f ? 700 : 500,
                 border: `1px solid ${filterMode === f ? C.goldBdr : C.border}`,
                 background: filterMode === f ? C.goldBg : "transparent",
                 color: filterMode === f ? C.gold : C.muted,
                 cursor: "pointer",
                 textTransform: "capitalize" as const,
+                transition: "all 0.15s",
               }}
             >
-              {f === "all" ? `All (${clients.length})` : f === "internal" ? `Internal (${clients.filter(c => c.mode === "internal").length})` : `External (${clients.filter(c => c.mode === "external").length})`}
+              {f === "all"
+                ? `All (${clients.length})`
+                : f === "internal"
+                  ? `Internal (${clients.filter(c => c.mode === "internal").length})`
+                  : `External (${clients.filter(c => c.mode === "external").length})`}
             </button>
           ))}
         </div>
 
-        {/* Clients table */}
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
-          {/* Table header */}
+        {/* Table */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+          {/* Header */}
           <div style={{
             display: "grid",
             gridTemplateColumns: "2fr 1.8fr 1fr 1fr 1fr 80px",
             gap: 12, padding: "10px 20px",
             borderBottom: `1px solid ${C.border}`,
-            background: C.surface,
+            background: C.surface2,
           }}>
             {["Firm", "Email", "Mode", "Portal Config", "LLM Key", ""].map(h => (
               <p key={h} style={{ margin: 0, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>{h}</p>
@@ -300,12 +313,12 @@ export default function LexClientsClient() {
           </div>
 
           {loading && (
-            <div style={{ padding: "40px 20px", textAlign: "center" }}>
+            <div style={{ padding: "40px 20px", textAlign: "center" as const }}>
               <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Loading clients…</p>
             </div>
           )}
           {error && (
-            <div style={{ padding: "40px 20px", textAlign: "center" }}>
+            <div style={{ padding: "40px 20px", textAlign: "center" as const }}>
               <p style={{ margin: 0, fontSize: 13, color: C.red }}>{error}</p>
             </div>
           )}
@@ -313,13 +326,16 @@ export default function LexClientsClient() {
           {!loading && !error && filtered.map((client, i) => (
             <div
               key={client.id}
+              onMouseEnter={() => setHoveredRow(client.id)}
+              onMouseLeave={() => setHoveredRow(null)}
               style={{
                 display: "grid",
                 gridTemplateColumns: "2fr 1.8fr 1fr 1fr 1fr 80px",
                 gap: 12, padding: "14px 20px",
-                borderBottom: i < filtered.length - 1 ? `1px solid ${C.border}` : "none",
-                background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)",
+                borderBottom: i < filtered.length - 1 ? `1px solid ${C.divider}` : "none",
+                background: hoveredRow === client.id ? C.rowHover : "transparent",
                 alignItems: "center",
+                transition: "background 0.1s",
               }}
             >
               <div style={{ minWidth: 0 }}>
@@ -330,7 +346,7 @@ export default function LexClientsClient() {
                   {client.id}
                 </p>
               </div>
-              <p style={{ margin: 0, fontSize: 12, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+              <p style={{ margin: 0, fontSize: 12, color: C.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                 {client.email}
               </p>
               <div><ModeBadge mode={client.mode} /></div>
@@ -339,9 +355,10 @@ export default function LexClientsClient() {
               <button
                 onClick={() => setSelected(client)}
                 style={{
-                  padding: "6px 14px", borderRadius: 7, fontSize: 11, fontWeight: 700,
+                  padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
                   background: C.goldBg, border: `1px solid ${C.goldBdr}`,
                   color: C.gold, cursor: "pointer",
+                  transition: "all 0.1s",
                 }}
               >
                 View →
@@ -350,15 +367,15 @@ export default function LexClientsClient() {
           ))}
 
           {!loading && !error && filtered.length === 0 && (
-            <div style={{ padding: "48px 20px", textAlign: "center" }}>
+            <div style={{ padding: "48px 20px", textAlign: "center" as const }}>
               <p style={{ margin: 0, fontSize: 13, color: C.muted }}>No clients found.</p>
             </div>
           )}
         </div>
 
-        {/* Note about adding clients */}
+        {/* Footer note */}
         <div style={{
-          marginTop: 20, padding: "14px 18px", borderRadius: 10,
+          marginTop: 16, padding: "14px 18px", borderRadius: 10,
           background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}`,
         }}>
           <p style={{ margin: 0, fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
@@ -369,7 +386,6 @@ export default function LexClientsClient() {
         </div>
       </div>
 
-      {/* Detail panel */}
       {selected && (
         <ClientDetailPanel client={selected} onClose={() => setSelected(null)} />
       )}
