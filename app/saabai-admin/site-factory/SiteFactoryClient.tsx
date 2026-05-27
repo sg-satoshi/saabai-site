@@ -66,24 +66,28 @@ const NICHES = [
   { value: "trades", label: "Trades" },
   { value: "allied-health", label: "Allied Health" },
   { value: "professional-services", label: "Professional Services" },
+  { value: "legal", label: "Legal" },
+  { value: "finance", label: "Finance" },
   { value: "retail", label: "Retail" },
   { value: "hospitality", label: "Hospitality" },
   { value: "other", label: "Other" },
 ];
 
 const THEMES = [
-  { id: "onyx",  label: "Onyx",  tagline: "Dark luxury",      colors: ["#0d0d0d","#c9a227","#181818"], niches: ["professional-services","automotive"] },
-  { id: "coast", label: "Coast", tagline: "Clean & airy",     colors: ["#f0f9ff","#0d9488","#0c4a6e"], niches: ["allied-health","beauty"] },
-  { id: "edge",  label: "Edge",  tagline: "Bold geometric",   colors: ["#ffffff","#4f46e5","#111827"], niches: ["technology"] },
-  { id: "grove", label: "Grove", tagline: "Warm organic",     colors: ["#fdf8f2","#1b4332","#b45309"], niches: ["hospitality"] },
-  { id: "slate", label: "Slate", tagline: "Corporate trust",  colors: ["#f8fafc","#0f172a","#2563eb"], niches: ["other"] },
-  { id: "spark", label: "Spark", tagline: "Vibrant gradient", colors: ["#ffffff","#7c3aed","#ec4899"], niches: ["retail"] },
-  { id: "craft", label: "Craft", tagline: "Artisan boutique", colors: ["#faf7f2","#c2410c","#1c1410"], niches: ["hospitality"] },
-  { id: "apex",  label: "Apex",  tagline: "Industrial bold",  colors: ["#0c1a30","#f97316","#162035"], niches: ["trades","automotive"] },
+  { id: "onyx",     label: "Onyx",     tagline: "Dark luxury",      colors: ["#0d0d0d","#c9a227","#181818"], niches: ["professional-services","automotive"] },
+  { id: "coast",    label: "Coast",    tagline: "Clean & airy",     colors: ["#f0f9ff","#0d9488","#0c4a6e"], niches: ["allied-health","beauty"] },
+  { id: "edge",     label: "Edge",     tagline: "Bold geometric",   colors: ["#ffffff","#4f46e5","#111827"], niches: ["technology"] },
+  { id: "grove",    label: "Grove",    tagline: "Warm organic",     colors: ["#fdf8f2","#1b4332","#b45309"], niches: ["hospitality"] },
+  { id: "slate",    label: "Slate",    tagline: "Corporate trust",  colors: ["#f8fafc","#0f172a","#2563eb"], niches: ["other","finance"] },
+  { id: "spark",    label: "Spark",    tagline: "Vibrant gradient", colors: ["#ffffff","#7c3aed","#ec4899"], niches: ["retail"] },
+  { id: "craft",    label: "Craft",    tagline: "Artisan boutique", colors: ["#faf7f2","#c2410c","#1c1410"], niches: ["hospitality"] },
+  { id: "apex",     label: "Apex",     tagline: "Industrial bold",  colors: ["#0c1a30","#f97316","#162035"], niches: ["trades","automotive"] },
+  { id: "prestige", label: "Prestige", tagline: "Navy + teal legal", colors: ["#F7FAFC","#006B5E","#0D1D2B"], niches: ["legal"] },
 ];
 
 const NICHE_THEME_DEFAULT: Record<string, string> = {
   "trades": "apex", "allied-health": "coast", "professional-services": "onyx",
+  "legal": "prestige", "finance": "slate",
   "retail": "spark", "hospitality": "craft", "beauty": "coast",
   "automotive": "apex", "technology": "edge", "other": "slate",
 };
@@ -174,7 +178,7 @@ const NICHE_META: Record<string, { label: string; color: string; bg: string }> =
   retail:                { label: "Retail",               color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
   hospitality:           { label: "Hospitality",          color: "#f97316", bg: "rgba(249,115,22,0.12)" },
   other:                 { label: "Other",                color: "#6b7e94", bg: "rgba(107,126,148,0.12)" },
-  legal:                 { label: "Legal",                color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  legal:                 { label: "Legal",                color: "#006B5E", bg: "rgba(0,107,94,0.12)"  },
   finance:               { label: "Finance",              color: "#22c55e", bg: "rgba(34,197,94,0.12)"  },
 };
 

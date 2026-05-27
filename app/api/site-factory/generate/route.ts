@@ -174,6 +174,27 @@ const THEMES: Record<string, ThemeDef> = {
     ],
   },
 
+  // ── 9. PRESTIGE — Cinematic legal, deep navy + forest teal ──────────────
+  prestige: {
+    dark: false,
+    palette: "--primary:#0D1D2B;--secondary:#006B5E;--accent:#2AA896;--bg:#F7FAFC;--surface:#FFFFFF;--text:#0D1D2B;--text-muted:#3D4946;--mint:#84F6E2;--aqua:#66D9C6;--frost:#F1F4F6",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');`,
+    headingCss: "font-family:'Inter',sans-serif; font-weight:700; letter-spacing:-0.02em;",
+    bodyCss: "font-family:'Inter',sans-serif; font-weight:400;",
+    hero: "CINEMATIC PHOTO HERO. Full-width, min-height:90vh. Background: a high-quality Unsplash photo of a professional law office or legal environment, with a Deep Navy color overlay (background:linear-gradient(rgba(13,29,43,0.62),rgba(13,29,43,0.62)) over the image). Top-left aligned content block (padding-left:10%, padding-top:14%, max-width:700px). Eyebrow pill: 1px solid #66D9C6 border, #66D9C6 text, Inter 700, 12px, 0.05em letter-spacing, uppercase, pill shape (99px border-radius), padding:4px 14px. Large bold white headline: Inter 800, 64px desktop / 36px mobile, -0.02em letter-spacing, line-height:1.15. Key phrase or second line in #66D9C6 (Mid Aqua). Below headline: three horizontal inline items — each: a teal filled circle check icon (SVG, 18px, background:#006B5E fill) + white text in Inter 400 16px — trust signals like 'Specialist legal expertise', 'Fixed-fee engagements', 'Same-day response'. Two CTA buttons side by side (gap:16px): primary Forest Teal (#006B5E) filled, white text, Inter 700, 8px radius; secondary ghost (1px solid white border, white text, 8px radius).",
+    sections: "NAV (white bg, 1px border-bottom, subtle shadow, Forest Teal pill CTA) → HERO (full-bleed photo, navy overlay) → TRUST BAR (white bg, 4-col, teal icon circles, Frost Gray dividers) → SERVICES (Frost Gray #F1F4F6 bg) → PROCESS (white bg, 3 numbered steps) → STATS (Deep Navy band, Mid Aqua numerals) → TESTIMONIALS (white bg) → ABOUT (Frost Gray bg, 2-col) → CTA BAND (Forest Teal #006B5E bg) → CONTACT (Frost Gray bg) → FAQ (white bg, accordion) → FOOTER (Deep Navy #0D1D2B)",
+    rules: [
+      "MANDATORY: every section heading must be immediately preceded by a pill eyebrow label — pill shape (border-radius:99px), 1px solid #006B5E border, #006B5E uppercase text, Inter 700, 12px, 0.05em letter-spacing, padding:4px 14px. On dark bands use #66D9C6 (Mid Aqua) instead. NO section heading appears alone without its eyebrow pill.",
+      "Icon containers: 48px circle (width:48px;height:48px;border-radius:50%), background:#84F6E2 (Soft Mint), #006B5E (Forest Teal) SVG icon. Used on all light-background sections. On dark bands: use Soft Mint icon on transparent circle.",
+      "Cards: white background, 12px radius, shadow:0 2px 12px rgba(0,0,0,0.06). Hover: translateY(-4px) transition. NO hard borders on light backgrounds — shadow provides elevation only.",
+      "Section colour alternation (strict): white → Frost Gray (#F1F4F6) → white → Frost Gray. Never two identical section backgrounds in a row. Trust bar = white, Services = Frost Gray, Process = white, Testimonials = white, About = Frost Gray, Contact = Frost Gray, FAQ = white.",
+      "Stats band: Deep Navy (#0D1D2B) full-width background. Mid Aqua (#66D9C6) count-up numerals in Inter 800, 56px. White uppercase labels in Inter 500, 13px letter-spacing:0.08em beneath each number.",
+      "CTA band: Forest Teal (#006B5E) full-width background. White headline Inter 700, 36px. Soft Mint (#84F6E2) subtext. CTA band buttons use pill shape (border-radius:99px), not 8px radius.",
+      "Button radius by context: content-section buttons use border-radius:8px. CTA band and nav CTA button use border-radius:99px (pill). Hover: Forest Teal → Bright Teal (#2AA896) transition.",
+      "Footer: Deep Navy (#0D1D2B) background, 4-column grid. Soft Mint (#84F6E2) contact icons. Mist Gray (#BCC9C5) body text and links. Teal logo accent.",
+    ],
+  },
+
   // ── 8. APEX — Industrial bold, dark navy + vivid orange ──────────────────
   apex: {
     dark: true,
@@ -199,9 +220,11 @@ const NICHE_THEME_DEFAULTS: Record<string, string> = {
   "trades": "apex",
   "allied-health": "coast",
   "professional-services": "onyx",
+  "legal": "prestige",
   "retail": "spark",
   "hospitality": "craft",
   "beauty": "coast",
+  "finance": "slate",
   "automotive": "apex",
   "technology": "edge",
   "other": "slate",
