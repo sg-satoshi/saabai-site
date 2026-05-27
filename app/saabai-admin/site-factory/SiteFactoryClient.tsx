@@ -226,6 +226,7 @@ export default function SiteFactoryClient() {
   const [instruction, setInstruction] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [queued, setQueued] = useState<{ instruction: string; imageUrl?: string } | null>(null);
+  const seoEditPendingRef = useRef(false);
   const [previewHtml, setPreviewHtml] = useState("");
   const [device, setDevice] = useState<Device>("desktop");
   const [iframeKey, setIframeKey] = useState(0);
@@ -692,6 +693,10 @@ export default function SiteFactoryClient() {
         setIframeKey(k => k + 1);
         setHasDraft(true);
         setUnpublishedCount(c => c + 1);
+        if (seoEditPendingRef.current) {
+          seoEditPendingRef.current = false;
+          loadSeoScore(activeSite.slug);
+        }
       }
 
       // Finalise the assistant message
@@ -2109,7 +2114,7 @@ export default function SiteFactoryClient() {
                         </p>
                         {activeSite && (
                           <button
-                            onClick={() => sendEdit("Audit my site SEO and improve the meta title, description, and heading structure to rank better for my target keywords. Make sure the H1 is keyword-rich and the meta description is compelling and 120-160 characters.")}
+                            onClick={() => { seoEditPendingRef.current = true; sendEdit("Audit my site SEO and improve the meta title, description, and heading structure to rank better for my target keywords. Make sure the H1 is keyword-rich and the meta description is compelling and 120-160 characters."); switchPanel("chat"); }}
                             style={{ marginTop: 6, padding: "3px 8px", fontSize: 10, borderRadius: 4, border: "none", background: "rgba(34,197,94,0.15)", color: "#22c55e", cursor: "pointer", fontWeight: 600 }}
                           >✦ AI fix all →</button>
                         )}
@@ -2145,7 +2150,7 @@ export default function SiteFactoryClient() {
                             </div>
                             {fixPrompt ? (
                               <button
-                                onClick={() => { sendEdit(fixPrompt); switchPanel("chat"); }}
+                                onClick={() => { seoEditPendingRef.current = true; sendEdit(fixPrompt); switchPanel("chat"); }}
                                 style={{ fontSize: 9, padding: "2px 6px", borderRadius: 3, border: "none", background: "rgba(239,68,68,0.15)", color: "#ef4444", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}
                               >Fix</button>
                             ) : (
