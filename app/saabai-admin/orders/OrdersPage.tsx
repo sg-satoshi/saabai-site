@@ -37,11 +37,11 @@ function daysUntil(unix: number) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; color: string; bg: string }> = {
-    active:   { label: "Active",   color: "#34d399", bg: "rgba(52,211,153,0.10)" },
-    past_due: { label: "Past due", color: "#fbbf24", bg: "rgba(251,191,36,0.10)" },
-    canceled: { label: "Cancelled",color: "#f87171", bg: "rgba(248,113,113,0.10)" },
-    trialing: { label: "Trial",    color: "#818cf8", bg: "rgba(129,140,248,0.10)" },
-    unpaid:   { label: "Unpaid",   color: "#f87171", bg: "rgba(248,113,113,0.10)" },
+    active:   { label: "Active",   color: "#16a34a", bg: "rgba(22,163,74,0.10)" },
+    past_due: { label: "Past due", color: "#d97706", bg: "rgba(217,119,6,0.10)" },
+    canceled: { label: "Cancelled",color: "#dc2626", bg: "rgba(220,38,38,0.10)" },
+    trialing: { label: "Trial",    color: "#6366f1", bg: "rgba(99,102,241,0.10)" },
+    unpaid:   { label: "Unpaid",   color: "#dc2626", bg: "rgba(220,38,38,0.10)" },
   };
   const s = map[status] ?? { label: status, color: C.muted, bg: "rgba(0,0,0,0.04)" };
   return (
@@ -59,7 +59,7 @@ function PlanBadge({ plan }: { plan: string }) {
   return (
     <span style={{
       fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20,
-      color: isGrowth ? C.gold : "#9aa0b8",
+      color: isGrowth ? C.gold : C.muted,
       background: isGrowth ? C.goldBg : "rgba(0,0,0,0.04)",
       border: `1px solid ${isGrowth ? C.goldBdr : "rgba(0,0,0,0.08)"}`,
       letterSpacing: 0.4,
@@ -110,9 +110,9 @@ function InvoiceDrawer({ order, onClose }: { order: OrderRecord; onClose: () => 
                     <td style={{ padding: "10px 8px", fontSize: 12, color: C.text, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {inv.description}
                     </td>
-                    <td style={{ padding: "10px 8px", fontSize: 12, fontWeight: 700, color: "#34d399", whiteSpace: "nowrap" }}>{fmtAud(inv.amount)}</td>
+                    <td style={{ padding: "10px 8px", fontSize: 12, fontWeight: 700, color: "#16a34a", whiteSpace: "nowrap" }}>{fmtAud(inv.amount)}</td>
                     <td style={{ padding: "10px 8px" }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "#34d399", background: "rgba(52,211,153,0.10)", padding: "2px 7px", borderRadius: 20 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#16a34a", background: "rgba(22,163,74,0.10)", padding: "2px 7px", borderRadius: 20 }}>
                         Paid
                       </span>
                     </td>
@@ -224,7 +224,7 @@ export default function OrdersPage() {
               style={{
                 fontSize: 12, fontWeight: 600, padding: "6px 14px", borderRadius: 20, cursor: "pointer",
                 border: `1px solid ${filter === v ? C.goldBdr : C.border}`,
-                background: filter === v ? C.goldBg : "rgba(255,255,255,0.03)",
+                background: filter === v ? C.goldBg : C.card,
                 color: filter === v ? C.gold : C.muted,
               }}
             >

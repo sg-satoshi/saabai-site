@@ -316,7 +316,7 @@ function AtlasBar({ rexStats }: { rexStats: RexStats }) {
       </div>
       <div>
         <p style={{ margin: "0 0 2px", fontSize: 11, fontWeight: 700, color: C.teal, letterSpacing: 0.4 }}>Atlas</p>
-        <p style={{ margin: 0, fontSize: 12, color: "#9aa0b8", lineHeight: 1.5 }}>{msg}</p>
+        <p style={{ margin: 0, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>{msg}</p>
       </div>
     </div>
   );
@@ -340,7 +340,7 @@ function ProductCard({
 }) {
   return (
     <div style={{
-      background: disabled ? "rgba(14,17,40,0.5)" : C.card,
+      background: disabled ? C.surface : C.card,
       border: `1px solid ${C.border}`,
       borderTop: `3px solid ${disabled ? C.dim : accent}`,
       borderRadius: 14,
@@ -591,7 +591,7 @@ function DigestTrigger() {
           padding: "8px 18px", borderRadius: 7, border: "none",
           cursor: state === "sending" ? "not-allowed" : "pointer",
           background: state === "sending" ? C.surface : C.teal,
-          color: state === "sending" ? C.muted : "#000",
+          color: state === "sending" ? C.muted : "#fff",
           fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const,
         }}
       >
@@ -769,7 +769,7 @@ function LinkedInQueue() {
               const isDue = post.scheduledFor <= today;
               const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
               return (
-                <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)" }}>
                   <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: isDue ? C.amber : C.blue, background: isDue ? `${C.amber}18` : `${C.blue}18`, padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
                     {isDue ? "TODAY" : fmtDate(post.scheduledFor)}
                   </span>
@@ -812,7 +812,7 @@ function LinkedInQueue() {
                   ? new Date(post.sentAt).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                   : fmtDate(post.scheduledFor);
                 return (
-                  <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                  <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)" }}>
                     <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: C.green, background: `${C.green}18`, padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" as const, flexShrink: 0 }}>
                       {sentDate}
                     </span>
@@ -887,8 +887,8 @@ function SubscriberPanel() {
             <p style={{ margin: 0, padding: "24px", fontSize: 12, color: C.muted, textAlign: "center" }}>No subscribers yet.</p>
           ) : (
             subs.map((s, i) => (
-              <div key={s.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#00bfa5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+              <div key={s.email} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)" }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: C.teal, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
                   {s.firstName?.[0]?.toUpperCase() ?? "?"}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -1146,7 +1146,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
                 <button
                   onClick={() => setApproving(a => a === req.email ? null : req.email)}
                   disabled={busy === req.email}
-                  style={{ padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#000", fontSize: 11, fontWeight: 700 }}
+                  style={{ padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#fff", fontSize: 11, fontWeight: 700 }}
                 >
                   Approve
                 </button>
@@ -1187,7 +1187,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
                   <button
                     onClick={() => approve(req)}
                     disabled={!passwords[req.email]?.trim() || busy === req.email}
-                    style={{ padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#000", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const, opacity: !passwords[req.email]?.trim() ? 0.5 : 1 }}
+                    style={{ padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const, opacity: !passwords[req.email]?.trim() ? 0.5 : 1 }}
                   >
                     {busy === req.email ? "Saving..." : "Confirm"}
                   </button>
@@ -1240,7 +1240,7 @@ export default function AdminClient({
         {/* Top bar */}
         <div style={{
           position: "sticky", top: 0, zIndex: 50,
-          background: "rgba(7,9,26,0.85)",
+          background: "rgba(245,245,247,0.92)",
           backdropFilter: "blur(12px)",
           borderBottom: `1px solid ${C.border}`,
           padding: "0 40px",
@@ -1269,10 +1269,10 @@ export default function AdminClient({
 
           {/* Greeting */}
           <div style={{ marginBottom: 24 }}>
-            <h1 style={{ margin: "0 0 6px", fontSize: 36, fontWeight: 800, color: "#eef0ff", letterSpacing: -1 }}>
+            <h1 style={{ margin: "0 0 6px", fontSize: 36, fontWeight: 800, color: C.text, letterSpacing: -1 }}>
               {getGreeting()}, Shane.
             </h1>
-            <p style={{ margin: 0, fontSize: 14, color: "#9aa0b8" }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
+            <p style={{ margin: 0, fontSize: 14, color: C.muted }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
           </div>
 
           {/* Access requests */}
@@ -1474,7 +1474,7 @@ export default function AdminClient({
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#e86080" }}>Open Hub &rarr;</p>
               </a>
 
-              <div style={{ background: "rgba(14,17,40,0.5)", border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px", opacity: 0.5 }}>
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px", opacity: 0.5 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                   <div style={{ width: 34, height: 34, borderRadius: 8, background: "#1877f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#fff", fontFamily: "Georgia, serif" }}>f</div>
                   <span style={{ fontSize: 9, fontWeight: 800, color: C.muted, background: C.surface, padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>SOON</span>
@@ -1492,7 +1492,7 @@ export default function AdminClient({
             <a
               href="/saabai-admin/subscribers"
               style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid transparent`, borderRadius: 14, padding: "20px 24px", textDecoration: "none", display: "block", transition: "border-left-color 0.2s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#00bfa5"; }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#0891b2"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "transparent"; }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1503,7 +1503,7 @@ export default function AdminClient({
                     <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Growth charts, industry breakdown, IP geolocation, CSV export</p>
                   </div>
                 </div>
-                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#00bfa5", whiteSpace: "nowrap" as const }}>Open Dashboard &rarr;</p>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: C.teal, whiteSpace: "nowrap" as const }}>Open Dashboard &rarr;</p>
               </div>
             </a>
             <div style={{ marginTop: 14 }}>

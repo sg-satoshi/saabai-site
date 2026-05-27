@@ -134,7 +134,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
   anthropic: {
     rating: "recommended",
     ratingLabel: "Best for Lex",
-    ratingColor: "#00bfa5",
+    ratingColor: "#0891b2",
     scores: { toolCalling: 5, accuracy: 5, instructions: 5 },
     summary:
       "The strongest choice for a legal AI. Claude is built for careful, verifiable reasoning and follows complex instruction sets with higher consistency than any other provider tested in this context.",
@@ -150,7 +150,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
   openai: {
     rating: "good",
     ratingLabel: "Good for Lex",
-    ratingColor: "#4ade80",
+    ratingColor: "#16a34a",
     scores: { toolCalling: 4, accuracy: 4, instructions: 4 },
     summary:
       "A proven, enterprise-grade option. GPT-4o is reliable for legal research workflows and handles tool calling well — though it can occasionally be more confident than its accuracy warrants on Australian-specific law and ATO rulings.",
@@ -207,15 +207,15 @@ const KNOWN_CLIENTS = [
 // ── Colours ────────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:      "#07091a",
-  card:    "#0e1128",
-  surface: "#131729",
-  border:  "rgba(255,255,255,0.07)",
-  borderHi:"rgba(255,255,255,0.13)",
-  text:    "#eef0ff",
-  sub:     "#9aa0b8",
-  muted:   "#525873",
-  teal:    "#00bfa5",
+  bg:      "#f5f5f7",
+  card:    "#ffffff",
+  surface: "#f3f4f6",
+  border:  "rgba(0,0,0,0.08)",
+  borderHi:"rgba(0,0,0,0.12)",
+  text:    "#111827",
+  sub:     "#6b7280",
+  muted:   "#9ca3af",
+  teal:    "#0891b2",
 };
 
 // ── Score dots ─────────────────────────────────────────────────────────────────
@@ -228,7 +228,7 @@ function ScoreDots({ score, color }: { score: number; color: string }) {
           key={i}
           style={{
             width: 9, height: 9, borderRadius: "50%",
-            background: i <= score ? color : "rgba(255,255,255,0.1)",
+            background: i <= score ? color : "rgba(0,0,0,0.1)",
             display: "inline-block",
           }}
         />
@@ -244,8 +244,8 @@ function LegalFitPanel({ providerId }: { providerId: string }) {
   if (!fit) return null;
 
   const isWarning   = fit.rating === "caution";
-  const panelBorder = isWarning ? "rgba(245,158,11,0.28)" : fit.rating === "good" ? "rgba(74,222,128,0.2)" : "rgba(0,191,165,0.22)";
-  const panelBg     = isWarning ? "rgba(245,158,11,0.04)" : "rgba(0,191,165,0.03)";
+  const panelBorder = isWarning ? "rgba(245,158,11,0.28)" : fit.rating === "good" ? "rgba(22,163,74,0.20)" : "rgba(8,145,178,0.22)";
+  const panelBg     = isWarning ? "rgba(245,158,11,0.04)" : "rgba(8,145,178,0.04)";
 
   return (
     <div style={{ background: panelBg, border: `1px solid ${panelBorder}`, borderRadius: 16, padding: "24px", marginBottom: 20 }}>
@@ -269,7 +269,7 @@ function LegalFitPanel({ providerId }: { providerId: string }) {
       </div>
 
       {/* Summary */}
-      <p style={{ fontSize: 13, color: "#c4c8e0", lineHeight: 1.65, margin: "0 0 20px" }}>
+      <p style={{ fontSize: 13, color: C.text, lineHeight: 1.65, margin: "0 0 20px" }}>
         {fit.summary}
       </p>
 
@@ -285,10 +285,10 @@ function LegalFitPanel({ providerId }: { providerId: string }) {
             { label: "Instruction following",    score: fit.scores.instructions,   help: "Adherence to citation rules and the 'never fabricate' constraint" },
           ] as const
         ).map(row => {
-          const scoreColor = row.score >= 4 ? "#00bfa5" : row.score >= 3 ? "#f59e0b" : "#f87171";
+          const scoreColor = row.score >= 4 ? "#0891b2" : row.score >= 3 ? "#d97706" : "#dc2626";
           const scoreLabel = row.score === 5 ? "Excellent" : row.score === 4 ? "Good" : row.score === 3 ? "Moderate" : "Poor";
           return (
-            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "9px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
               <div style={{ width: 190, fontSize: 12, color: C.sub, flexShrink: 0 }}>{row.label}</div>
               <ScoreDots score={row.score} color={scoreColor} />
               <span style={{ fontSize: 11, color: scoreColor, fontWeight: 600, width: 68, flexShrink: 0 }}>{scoreLabel}</span>
@@ -313,14 +313,14 @@ function LegalFitPanel({ providerId }: { providerId: string }) {
 
       {/* Watch out */}
       <div style={{
-        background: isWarning ? "rgba(245,158,11,0.07)" : "rgba(255,255,255,0.03)",
-        border: `1px solid ${isWarning ? "rgba(245,158,11,0.22)" : "rgba(255,255,255,0.07)"}`,
+        background: isWarning ? "rgba(245,158,11,0.07)" : "rgba(0,0,0,0.03)",
+        border: `1px solid ${isWarning ? "rgba(245,158,11,0.22)" : "rgba(0,0,0,0.08)"}`,
         borderRadius: 10, padding: "14px 16px",
       }}>
         <p style={{ fontSize: 10, fontWeight: 800, color: isWarning ? "#f59e0b" : C.muted, letterSpacing: "0.8px", textTransform: "uppercase" as const, margin: "0 0 7px" }}>
           {isWarning ? "⚠  Watch out" : "Note"}
         </p>
-        <p style={{ fontSize: 12, color: isWarning ? "#fcd34d" : C.sub, lineHeight: 1.65, margin: 0 }}>
+        <p style={{ fontSize: 12, color: isWarning ? "#92400e" : C.sub, lineHeight: 1.65, margin: 0 }}>
           {fit.watchOut}
         </p>
         {fit.restriction && (
@@ -455,7 +455,7 @@ export default function LexSettingsClient() {
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <div style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚡</div>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#c4c8e0", margin: "0 0 6px" }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: "0 0 6px" }}>
                 Why model choice matters for Lex
               </p>
               <p style={{ fontSize: 12, color: C.sub, lineHeight: 1.65, margin: 0 }}>
@@ -487,7 +487,7 @@ export default function LexSettingsClient() {
               ))}
             </select>
             {currentConfig && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(0,191,165,0.08)", border: "1px solid rgba(0,191,165,0.2)", borderRadius: 8, padding: "7px 14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: 8, padding: "7px 14px" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.teal }} />
                 <span style={{ fontSize: 12, color: C.teal, fontWeight: 600 }}>
                   Configured — {currentConfig.provider}/{currentConfig.model} — key {currentConfig.keyHint}
@@ -530,7 +530,7 @@ export default function LexSettingsClient() {
                   )}
                   {/* Free tier badge */}
                   {"hasFree" in p && p.hasFree && !("comingSoon" in p && p.comingSoon) && (
-                    <div style={{ position: "absolute" as const, top: 12, right: 12, fontSize: 9, fontWeight: 700, color: "#4ade80", letterSpacing: "0.8px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 4, padding: "2px 7px" }}>
+                    <div style={{ position: "absolute" as const, top: 12, right: 12, fontSize: 9, fontWeight: 700, color: "#16a34a", letterSpacing: "0.8px", background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 4, padding: "2px 7px" }}>
                       Free tier
                     </div>
                   )}
@@ -648,13 +648,13 @@ export default function LexSettingsClient() {
           </div>
 
           <p style={{ fontSize: 11, color: C.muted, margin: "10px 0 0", lineHeight: 1.5 }}>
-            Encrypted with AES-256-GCM before storage. Never returned in plaintext. Starts with: <code style={{ color: provider.color, background: "rgba(255,255,255,0.05)", padding: "1px 5px", borderRadius: 3 }}>{provider.keyPrefix}…</code>
+            Encrypted with AES-256-GCM before storage. Never returned in plaintext. Starts with: <code style={{ color: provider.color, background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: 3 }}>{provider.keyPrefix}…</code>
           </p>
         </div>
 
         {/* Test status */}
         {testStatus !== "idle" && (
-          <div style={{ background: C.surface, border: `1px solid ${testStatus === "ok" ? "rgba(0,191,165,0.25)" : "rgba(248,113,113,0.25)"}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: C.surface, border: `1px solid ${testStatus === "ok" ? "rgba(8,145,178,0.25)" : "rgba(220,38,38,0.25)"}`, borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 14 }}>{testStatus === "testing" ? "⏳" : testStatus === "ok" ? "✓" : "✗"}</span>
             <span style={{ fontSize: 13, color: testColor }}>{testStatus === "testing" ? "Testing connection…" : testMsg}</span>
           </div>
@@ -662,7 +662,7 @@ export default function LexSettingsClient() {
 
         {/* Save status */}
         {saveMsg && (
-          <div style={{ background: C.surface, border: "1px solid rgba(0,191,165,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+          <div style={{ background: C.surface, border: "1px solid rgba(8,145,178,0.2)", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
             <span style={{ fontSize: 13, color: C.teal }}>{saveMsg}</span>
           </div>
         )}
