@@ -5,6 +5,7 @@ import { createSite } from "../../../../lib/site-registry";
 import { put } from "@vercel/blob";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
 import { THEMES, NICHE_THEME_DEFAULTS, ThemeDef, NichePage, DEFAULT_PAGES } from "../../../../lib/site-themes";
+import { snapshotVersion } from "../../../../lib/site-versions";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -266,6 +267,10 @@ export async function POST(req: NextRequest) {
             addRandomSuffix: false,
             allowOverwrite: true,
           });
+
+          if (page.slug === "home") {
+            snapshotVersion(slug, html, "Generated (multi-page)").catch(() => {});
+          }
 
           send({ type: "page_done", page: page.slug, index: i + 1 });
         } catch (e) {

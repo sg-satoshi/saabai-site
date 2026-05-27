@@ -321,6 +321,9 @@ export default function SiteFactoryClient() {
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState(false);
 
+  // Overwrite protection
+  const [overwriteConfirm, setOverwriteConfirm] = useState<{ slug: string; name: string; existingSite: Site } | null>(null);
+
   // Chatbot config state (for new site form)
   const [chatbotEnabled, setChatbotEnabled] = useState(true);
   const [chatbotName, setChatbotName] = useState("");
@@ -328,15 +331,22 @@ export default function SiteFactoryClient() {
   const [chatbotPersonality, setChatbotPersonality] = useState("");
 
   // Sidebar active panel (tabs)
-  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo">("chat");
-  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo") {
+  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history">("chat");
+  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history") {
     setActivePanel(panel);
     if (panel === "image" && activeSite) {
       loadGallery(activeSite.slug);
       loadFavicon(activeSite.slug);
     }
     if (panel === "seo" && activeSite) loadSeoScore(activeSite.slug);
+    if (panel === "history" && activeSite) loadVersionHistory(activeSite.slug);
   }
+
+  // Version history state
+  interface VersionEntry { v: number; ts: number; label: string; url: string; sizeKb: number; }
+  const [versionHistory, setVersionHistory] = useState<VersionEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
 
   // SEO panel state
   const [seoScore, setSeoScore] = useState<number | null>(null);
@@ -742,7 +752,7 @@ export default function SiteFactoryClient() {
     setIsEditing(false);
   }
 
-  function restoreVersion(html: string, idx: number) {
+  function restoreLocalVersion(html: string, idx: number) {
     setPreviewHtml(html);
     setVersionIdx(idx);
     setIframeKey(k => k + 1);
@@ -751,7 +761,7 @@ export default function SiteFactoryClient() {
   function undoLast() {
     const v = versions.current;
     const target = versionIdx === -1 ? v.length - 2 : versionIdx - 1;
-    if (target >= 0) restoreVersion(v[target], target);
+    if (target >= 0) restoreLocalVersion(v[target], target);
   }
 
   const startPreviewUpdater = useCallback(() => {
@@ -1116,13 +1126,22 @@ export default function SiteFactoryClient() {
     }
   }
 
-  async function generateSite() {
+  async function generateSite(force = false) {
     if (!businessName.trim()) return;
+    const slug = slugify(businessName.trim());
+
+    if (!force) {
+      const existing = sites.find(s => s.slug === slug);
+      if (existing) {
+        setOverwriteConfirm({ slug, name: businessName.trim(), existingSite: existing });
+        return;
+      }
+    }
+
     setPhase("generating");
     setGenCharCount(0);
     setStreamedHtml("");
     liveHtmlRef.current = "";
-    const slug = slugify(businessName.trim());
     const chatbotPayload = chatbotEnabled ? {
       name: chatbotName || undefined,
       greeting: chatbotGreeting || undefined,
@@ -1260,6 +1279,45 @@ export default function SiteFactoryClient() {
 
   function copyText(text: string, label: string) {
     navigator.clipboard.writeText(text).then(() => showToast(`Copied ${label}`));
+  }
+
+  async function loadVersionHistory(slug: string) {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/site-factory/versions?slug=${encodeURIComponent(slug)}`);
+      const data = await res.json();
+      if (data.versions) setVersionHistory(data.versions);
+    } catch { /* non-fatal */ }
+    setHistoryLoading(false);
+  }
+
+  async function restoreVersion(v: number) {
+    if (!activeSite || restoringVersion !== null) return;
+    if (!confirm(`Restore v${v}? The current live site will be saved as a snapshot first.`)) return;
+    setRestoringVersion(v);
+    try {
+      const res = await fetch("/api/site-factory/restore-version", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: activeSite.slug, v }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`Restored to v${v}`);
+        // Reload preview
+        const htmlRes = await fetch(`/sites/${activeSite.slug}?t=${Date.now()}`);
+        const newHtml = await htmlRes.text();
+        versions.current = [...versions.current, newHtml];
+        setVersionIdx(-1);
+        setPreviewHtml(newHtml);
+        setIframeKey(k => k + 1);
+        // Refresh history list
+        loadVersionHistory(activeSite.slug);
+      } else {
+        showToast(data.error || "Restore failed", "error");
+      }
+    } catch (e) { showToast(String(e), "error"); }
+    setRestoringVersion(null);
   }
 
   async function publishDraft() {
@@ -1458,6 +1516,7 @@ export default function SiteFactoryClient() {
           {!isMobile && <button onClick={() => { setActivePanel("dns"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "dns" && sidebarOpen ? C.teal : C.border2}`, background: activePanel === "dns" && sidebarOpen ? C.tealBg : "none", color: activePanel === "dns" && sidebarOpen ? C.teal : C.textDim, fontSize: 12, cursor: "pointer" }}>DNS</button>}
           {!isMobile && <button onClick={() => { setActivePanel("reviews"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "reviews" && sidebarOpen ? "#f97316" : C.border2}`, background: activePanel === "reviews" && sidebarOpen ? "rgba(249,115,22,0.1)" : "none", color: activePanel === "reviews" && sidebarOpen ? "#f97316" : C.textDim, fontSize: 12, cursor: "pointer" }}>★ Reviews</button>}
           {!isMobile && <button onClick={() => { switchPanel("seo"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "seo" && sidebarOpen ? "#22c55e" : C.border2}`, background: activePanel === "seo" && sidebarOpen ? "rgba(34,197,94,0.1)" : "none", color: activePanel === "seo" && sidebarOpen ? "#22c55e" : C.textDim, fontSize: 12, cursor: "pointer" }}>📈 SEO</button>}
+          {!isMobile && <button onClick={() => { switchPanel("history"); setSidebarOpen(true); }} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${activePanel === "history" && sidebarOpen ? "#a78bfa" : C.border2}`, background: activePanel === "history" && sidebarOpen ? "rgba(167,139,250,0.1)" : "none", color: activePanel === "history" && sidebarOpen ? "#a78bfa" : C.textDim, fontSize: 12, cursor: "pointer" }}>⏱ History</button>}
           <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ padding: isMobile ? "6px 10px" : "5px 14px", borderRadius: 6, background: C.teal, color: "#fff", textDecoration: "none", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>↗</a>
         </div>
 
@@ -1501,6 +1560,7 @@ export default function SiteFactoryClient() {
                   { id: "bot",   label: "Bot",   accent: C.gold },
                   { id: "dns",     label: "DNS",     accent: "#64748b" },
                   { id: "reviews", label: "Reviews", accent: "#f97316" },
+                  { id: "history", label: "History", accent: "#a78bfa" },
                 ] as const).map(tab => (
                   <button
                     key={tab.id}
@@ -2150,6 +2210,56 @@ export default function SiteFactoryClient() {
                 </div>
               )}
 
+              {/* ── Panel: History ───────────────────────────────── */}
+              {activePanel === "history" && (
+                <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: C.textDim, textTransform: "uppercase", letterSpacing: "0.06em" }}>Version History</p>
+                    <button onClick={() => activeSite && loadVersionHistory(activeSite.slug)} style={{ background: "none", border: "none", color: C.textMuted, cursor: "pointer", fontSize: 11, padding: "2px 6px" }}>Refresh</button>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>Each publish and generation is saved automatically. Click Restore to roll back to any version.</p>
+                  {historyLoading && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 0", color: C.textDim }}>
+                      <div style={{ width: 12, height: 12, borderRadius: "50%", border: `1.5px solid #a78bfa`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12 }}>Loading versions…</span>
+                    </div>
+                  )}
+                  {!historyLoading && versionHistory.length === 0 && (
+                    <div style={{ padding: "20px 0", textAlign: "center", color: C.textMuted, fontSize: 12 }}>
+                      No versions yet — versions are saved automatically on each publish.
+                    </div>
+                  )}
+                  {versionHistory.map(ver => {
+                    const date = new Date(ver.ts);
+                    const dateStr = date.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+                    const timeStr = date.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+                    const isRestoring = restoringVersion === ver.v;
+                    return (
+                      <div key={ver.v} style={{ background: C.bg, border: `1px solid ${C.border2}`, borderRadius: 8, padding: "12px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 4, padding: "2px 6px", flexShrink: 0 }}>v{ver.v}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{ver.label}</span>
+                          </div>
+                          <span style={{ fontSize: 10, color: C.textMuted, flexShrink: 0 }}>{ver.sizeKb}kb</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: 11, color: C.textMuted }}>{dateStr} at {timeStr}</span>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <a href={ver.url} target="_blank" rel="noopener noreferrer" style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer", textDecoration: "none" }}>Preview</a>
+                            <button
+                              onClick={() => restoreVersion(ver.v)}
+                              disabled={isRestoring}
+                              style={{ padding: "4px 9px", borderRadius: 5, border: `1px solid rgba(167,139,250,0.4)`, background: "rgba(167,139,250,0.08)", color: isRestoring ? C.textMuted : "#a78bfa", fontSize: 11, cursor: isRestoring ? "not-allowed" : "pointer", fontWeight: 600 }}
+                            >{isRestoring ? "…" : "Restore"}</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* ── Panel: Chat ──────────────────────────────────── */}
               {activePanel === "chat" && (
                 <>
@@ -2183,7 +2293,7 @@ export default function SiteFactoryClient() {
                           {msg.content}
                         </div>
                         {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
-                          <button onClick={() => restoreVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))} style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>
+                          <button onClick={() => restoreLocalVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))} style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>
                             Restore this version
                           </button>
                         )}
@@ -2831,8 +2941,49 @@ export default function SiteFactoryClient() {
                 )}
               </div>
 
-              <button onClick={generateSite} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
+              <button onClick={() => generateSite()} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
                 {siteType === "multi" ? `Generate ${(NICHE_PAGES[niche] ?? DEFAULT_PAGES).length} Pages` : "Generate Site"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Overwrite confirmation modal ───────────────────────────────── */}
+      {overwriteConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border2}`, borderRadius: 12, padding: 28, maxWidth: 440, width: "100%", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(239,68,68,0.12)", border: "1.5px solid rgba(239,68,68,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>⚠</div>
+              <div>
+                <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.text }}>Site already exists</p>
+                <p style={{ margin: 0, fontSize: 13, color: C.textDim, lineHeight: 1.5 }}>
+                  <strong style={{ color: C.text }}>{overwriteConfirm.name}</strong> already has a live site at{" "}
+                  <code style={{ fontSize: 11, color: C.teal, background: C.bg, padding: "1px 5px", borderRadius: 3 }}>/sites/{overwriteConfirm.slug}/</code>.
+                  Generating a new version will permanently replace it.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button
+                onClick={() => { setOverwriteConfirm(null); openEditor(overwriteConfirm.existingSite); setPhase("editing"); }}
+                style={{ padding: "11px 16px", borderRadius: 7, border: `1.5px solid ${C.teal}`, background: C.tealBg, color: C.teal, fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
+              >
+                Edit existing site
+                <span style={{ display: "block", fontSize: 11, fontWeight: 400, color: C.textDim, marginTop: 2 }}>Open the editor to refine the current version</span>
+              </button>
+              <button
+                onClick={() => { const c = overwriteConfirm; setOverwriteConfirm(null); generateSite(true); void c; }}
+                style={{ padding: "11px 16px", borderRadius: 7, border: `1.5px solid rgba(239,68,68,0.4)`, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
+              >
+                Replace with new version
+                <span style={{ display: "block", fontSize: 11, fontWeight: 400, color: C.textDim, marginTop: 2 }}>Overwrite the existing site — this cannot be undone</span>
+              </button>
+              <button
+                onClick={() => setOverwriteConfirm(null)}
+                style={{ padding: "9px 16px", borderRadius: 7, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 12, cursor: "pointer" }}
+              >
+                Cancel
               </button>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { createSite } from "../../../../lib/site-registry";
 import { put } from "@vercel/blob";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
 import { THEMES, NICHE_THEME_DEFAULTS } from "../../../../lib/site-themes";
+import { snapshotVersion } from "../../../../lib/site-versions";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -201,6 +202,7 @@ ABSOLUTE RULES:
             addRandomSuffix: false,
             allowOverwrite: true,
           });
+          snapshotVersion(slug, html, "Generated").catch(() => {});
 
           await createSite({
             slug,

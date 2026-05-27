@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { list, put, del } from "@vercel/blob";
 import { Redis } from "@upstash/redis";
+import { snapshotVersion } from "../../../../lib/site-versions";
 
 export const runtime = "nodejs";
 
@@ -97,6 +98,8 @@ export async function POST(req: NextRequest) {
         `$1\n<meta name="robots" content="index, follow">`
       );
     }
+
+    snapshotVersion(slug, html, "Published").catch(() => {});
 
     await Promise.all([
       put(`sites/${slug}/index.html`, html, {
