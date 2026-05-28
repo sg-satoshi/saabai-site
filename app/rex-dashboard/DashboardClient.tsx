@@ -941,6 +941,152 @@ function FeedbackTab({ recentLeads }: { recentLeads: LeadEvent[] }) {
   );
 }
 
+// ── SVG line chart ────────────────────────────────────────────────────────────
+
+function SvgLineChart({
+  series,
+  days,
+}: {
+  series: { name: string; color: string; data: number[]; fill?: boolean }[];
+  days: { label: string }[];
+}) {
+  const VW = 900;
+  const VH = 190;
+  const padL = 46;
+  const padR = 14;
+  const padT = 12;
+  const padB = 34;
+  const cW = VW - padL - padR;
+  const cH = VH - padT - padB;
+
+  const allVals = series.flatMap(s => s.data);
+  const rawMax = Math.max(...allVals, 1);
+  const niceMax = Math.ceil(rawMax / 5) * 5;
+
+  const n = days.length;
+  const toX = (i: number) => padL + (n > 1 ? (i / (n - 1)) * cW : cW / 2);
+  const toY = (v: number) => padT + cH - (v / niceMax) * cH;
+  const botY = toY(0);
+
+  function catmullPath(pts: [number, number][]): string {
+    if (!pts.length) return "";
+    if (pts.length === 1) return `M ${pts[0][0]} ${pts[0][1]}`;
+    let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const p0 = pts[Math.max(i - 2, 0)];
+      const p1 = pts[i - 1];
+      const p2 = pts[i];
+      const p3 = pts[Math.min(i + 1, pts.length - 1)];
+      const cp1x = (p1[0] + (p2[0] - p0[0]) / 6).toFixed(1);
+      const cp1y = (p1[1] + (p2[1] - p0[1]) / 6).toFixed(1);
+      const cp2x = (p2[0] - (p3[0] - p1[0]) / 6).toFixed(1);
+      const cp2y = (p2[1] - (p3[1] - p1[1]) / 6).toFixed(1);
+      d += ` C ${cp1x} ${cp1y},${cp2x} ${cp2y},${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d;
+  }
+
+  const yLevels = [0, 0.25, 0.5, 0.75, 1].map(f => ({
+    v: Math.round(niceMax * f),
+    y: toY(niceMax * f),
+  }));
+
+  const xStep = Math.max(1, Math.ceil(n / 7));
+
+  return (
+    <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: "100%", display: "block" }} aria-hidden="true">
+      <defs>
+        {series.filter(s => s.fill).map((s, i) => (
+          <linearGradient key={i} id={`lg-${i}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={s.color} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={s.color} stopOpacity="0.01" />
+          </linearGradient>
+        ))}
+      </defs>
+
+      {yLevels.map(({ v, y }) => (
+        <g key={v}>
+          <line x1={padL} y1={y} x2={VW - padR} y2={y} stroke="#f3f4f6" strokeWidth={1} />
+          <text x={padL - 7} y={y + 4} textAnchor="end" fill="#9ca3af" fontSize={10} fontFamily="system-ui,sans-serif">
+            {v}
+          </text>
+        </g>
+      ))}
+
+      {days.map((d, i) => {
+        if (i % xStep !== 0 && i !== n - 1) return null;
+        return (
+          <text key={i} x={toX(i)} y={VH - 4} textAnchor="middle" fill="#9ca3af" fontSize={10} fontFamily="system-ui,sans-serif">
+            {d.label}
+          </text>
+        );
+      })}
+
+      {series.map((s, si) => {
+        const pts: [number, number][] = s.data.map((v, i) => [toX(i), toY(v)]);
+        const linePath = catmullPath(pts);
+        const fillPath =
+          linePath +
+          ` L ${pts[pts.length - 1][0].toFixed(1)} ${botY.toFixed(1)}` +
+          ` L ${pts[0][0].toFixed(1)} ${botY.toFixed(1)} Z`;
+        return (
+          <g key={si}>
+            {s.fill && <path d={fillPath} fill={`url(#lg-${si})`} />}
+            <path d={linePath} stroke={s.color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Funnel ────────────────────────────────────────────────────────────────────
+
+function FunnelSection({ steps }: {
+  steps: { label: string; value: number; color: string }[];
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      {steps.flatMap((step, i) => {
+        const els = [
+          <div key={`s${i}`} style={{
+            background: step.color, borderRadius: 10,
+            padding: "16px 20px", textAlign: "center", minWidth: 120, flexShrink: 0,
+          }}>
+            <p style={{ margin: "0 0 4px", fontSize: 30, fontWeight: 800, color: "#111827", letterSpacing: -1, lineHeight: 1 }}>
+              {step.value > 0 ? step.value.toLocaleString() : "—"}
+            </p>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#6b7280", textTransform: "uppercase" as const, letterSpacing: 0.8 }}>
+              {step.label}
+            </p>
+          </div>,
+        ];
+        if (i < steps.length - 1) {
+          const next = steps[i + 1];
+          const rate = step.value > 0 ? ((next.value / step.value) * 100).toFixed(1) : null;
+          els.push(
+            <div key={`a${i}`} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "0 10px" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>
+                {rate !== null ? `${rate}%` : "—"}
+              </span>
+              <div style={{ width: "100%", height: 2, background: "#e5e7eb", position: "relative" }}>
+                <div style={{
+                  position: "absolute", right: -5, top: -5,
+                  width: 0, height: 0,
+                  borderTop: "6px solid transparent",
+                  borderBottom: "6px solid transparent",
+                  borderLeft: "9px solid #e5e7eb",
+                }} />
+              </div>
+            </div>
+          );
+        }
+        return els;
+      })}
+    </div>
+  );
+}
+
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
 type Tab = "overview" | "leads" | "revenue" | "feedback";
@@ -1006,74 +1152,185 @@ export default function DashboardClient({ stats, attribution }: { stats: RexStat
         )}
 
         {/* ── Overview tab ── */}
-        {tab === "overview" && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-              <StatCard label="Total Leads"      value={stats.total}           sub={`${todayCount} today · ${weekCount} this week`} accent />
-              <StatCard label="Email Captured"   value={pct(stats.withEmail, stats.total)} sub={`${stats.withEmail} of ${stats.total}`} />
-              <StatCard label="Quotes with Price" value={stats.withPrice}       sub={pct(stats.withPrice, stats.total) + " of leads"} />
-              <StatCard label="Avg Quote Value"  value={fmtPrice(stats.avgPrice)} sub="Ex GST" />
-            </div>
+        {tab === "overview" && (() => {
+          const conv30d    = stats.dailyConvCounts.reduce((s, d) => s + d.count, 0);
+          const engaged30d = stats.dailyEngagedCounts.reduce((s, d) => s + d.count, 0);
+          const leads30d   = stats.dailyCounts.reduce((s, d) => s + d.count, 0);
+          const hasConvData = conv30d > 0 || stats.convTotal > 0;
+          const engRate = conv30d > 0 ? (engaged30d / conv30d * 100) : null;
+          const leadRate = conv30d > 0 ? (leads30d / conv30d * 100) : null;
 
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-              <Section title="Daily Leads — Last 14 Days">
-                {stats.dailyCounts.some(d => d.count > 0)
-                  ? <BarChart days={stats.dailyCounts} />
-                  : <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ ...T.muted, margin: 0 }}>No data yet</p></div>
-                }
-              </Section>
-              <Section title="Lead Sources">
-                {topSources.length > 0
-                  ? topSources.map(([source, count]) => <HBar key={source} label={SOURCE_LABELS[source] ?? source} count={count} max={topSources[0][1]} />)
-                  : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
-              </Section>
-            </div>
+          const chartSeries = [
+            { name: "Conversations", color: "#6366f1", data: stats.dailyConvCounts.map(d => d.count), fill: true },
+            { name: "Engaged",       color: "#f59e0b", data: stats.dailyEngagedCounts.map(d => d.count), fill: false },
+            { name: "Leads",         color: "#e13f00", data: stats.dailyCounts.map(d => d.count), fill: false },
+          ];
 
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-              <Section title="Material Mix">
-                {topMaterials.length > 0
-                  ? topMaterials.map(([mat, count]) => <HBar key={mat} label={mat} count={count} max={maxMaterial} />)
-                  : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
-              </Section>
+          const funnelSteps = [
+            { label: "Started", value: conv30d,    color: "#eff6ff" },
+            { label: "Engaged",  value: engaged30d, color: "#fffbeb" },
+            { label: "Leads",    value: leads30d,   color: "#fff5f2" },
+          ];
 
-              <Section title="Fulfilment Preference">
-                {totalDespatch > 0 ? (
-                  <>
-                    <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 20 }}>
-                      <div style={{ textAlign: "center" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 28, fontWeight: 800, color: "#111827" }}>
-                          {Math.round((pickupCount / totalDespatch) * 100)}%
-                        </p>
-                        <p style={{ ...T.muted, margin: 0, fontWeight: 600 }}>Pick Up</p>
+          return (
+            <>
+              {/* Page header */}
+              <div style={{ marginBottom: 20 }}>
+                <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: -0.5 }}>
+                  Rex — Plastics Online
+                </h1>
+                <p style={{ ...T.muted, margin: 0 }}>
+                  Last 30 days
+                  {stats.trackingSince && ` · Tracking from ${new Date(stats.trackingSince).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`}
+                </p>
+              </div>
+
+              {/* KPI cards row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
+                {[
+                  {
+                    label: "Conversations Started",
+                    value: hasConvData ? stats.convTotal.toLocaleString() : "—",
+                    sub: hasConvData ? `${conv30d} this period` : "Tracking just started",
+                  },
+                  {
+                    label: "Engaged (Multi-turn)",
+                    value: hasConvData ? engaged30d.toLocaleString() : "—",
+                    sub: "3+ messages · last 30 days",
+                  },
+                  {
+                    label: "Leads Captured",
+                    value: stats.total.toLocaleString(),
+                    sub: `${leads30d} this period`,
+                    accent: true,
+                  },
+                  {
+                    label: "Quoted",
+                    value: stats.withPrice.toLocaleString(),
+                    sub: `${pct(stats.withPrice, stats.total)} of leads`,
+                  },
+                ].map(({ label, value, sub, accent }) => (
+                  <div key={label} style={{
+                    ...T.card, padding: "20px 22px",
+                    borderTop: `3px solid ${accent ? "#e13f00" : "#e5e7eb"}`,
+                  }}>
+                    <p style={{ ...T.label, margin: "0 0 10px" }}>{label}</p>
+                    <p style={{ margin: "0 0 4px", fontSize: 36, fontWeight: 800, color: accent ? "#e13f00" : "#111827", letterSpacing: -1.5, lineHeight: 1 }}>
+                      {value}
+                    </p>
+                    <p style={{ ...T.muted, margin: 0, fontSize: 12 }}>{sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Rate cards + pipeline */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 14, marginBottom: 14 }}>
+                <div style={{ ...T.card, padding: "20px 22px" }}>
+                  <p style={{ ...T.label, margin: "0 0 10px" }}>Engagement Rate</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 36, fontWeight: 800, color: "#111827", letterSpacing: -1.5, lineHeight: 1 }}>
+                    {engRate !== null ? `${engRate.toFixed(1)}%` : "—"}
+                  </p>
+                  <p style={{ ...T.muted, margin: 0, fontSize: 12 }}>Engaged ÷ started</p>
+                </div>
+                <div style={{ ...T.card, padding: "20px 22px" }}>
+                  <p style={{ ...T.label, margin: "0 0 10px" }}>Lead Rate</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 36, fontWeight: 800, color: "#111827", letterSpacing: -1.5, lineHeight: 1 }}>
+                    {leadRate !== null ? `${leadRate.toFixed(1)}%` : "—"}
+                  </p>
+                  <p style={{ ...T.muted, margin: 0, fontSize: 12 }}>Leads ÷ started</p>
+                </div>
+                <div style={{ ...T.card, padding: "20px 22px" }}>
+                  <p style={{ ...T.label, margin: "0 0 10px" }}>Quoted Revenue Pipeline</p>
+                  <p style={{ margin: "0 0 4px", fontSize: 36, fontWeight: 800, color: stats.totalQuotedRevenue > 0 ? "#e13f00" : "#111827", letterSpacing: -1.5, lineHeight: 1 }}>
+                    {stats.totalQuotedRevenue > 0 ? fmtPrice(stats.totalQuotedRevenue) : "—"}
+                  </p>
+                  <p style={{ ...T.muted, margin: 0, fontSize: 12 }}>
+                    All-time sum of Rex quotes · avg {fmtPrice(stats.avgPrice)} per quote
+                  </p>
+                </div>
+              </div>
+
+              {/* Daily activity chart */}
+              <div style={{ ...T.card, padding: "20px 24px", marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <p style={{ ...T.label, margin: 0 }}>Daily activity</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    {chartSeries.map(s => (
+                      <span key={s.name} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.color, display: "inline-block" }} />
+                        <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 600 }}>{s.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {stats.dailyCounts.some(d => d.count > 0) || hasConvData ? (
+                  <SvgLineChart series={chartSeries} days={stats.dailyCounts} />
+                ) : (
+                  <div style={{ height: 190, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <p style={{ ...T.muted, margin: 0 }}>Data will appear here as Rex has conversations</p>
+                  </div>
+                )}
+                {!hasConvData && (
+                  <p style={{ ...T.muted, fontSize: 11, margin: "8px 0 0" }}>
+                    Conversation tracking just started — Conversations and Engaged lines will fill in from today.
+                  </p>
+                )}
+              </div>
+
+              {/* Funnel */}
+              <div style={{ ...T.card, padding: "20px 24px", marginBottom: 14 }}>
+                <p style={{ ...T.label, margin: "0 0 16px" }}>Funnel — Last 30 Days</p>
+                <FunnelSection steps={funnelSteps} />
+              </div>
+
+              {/* Secondary grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 14, marginBottom: 14 }}>
+                <Section title="Material Mix">
+                  {topMaterials.length > 0
+                    ? topMaterials.map(([mat, count]) => <HBar key={mat} label={mat} count={count} max={maxMaterial} />)
+                    : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
+                </Section>
+                <Section title="Lead Sources">
+                  {topSources.length > 0
+                    ? topSources.map(([src, count]) => <HBar key={src} label={SOURCE_LABELS[src] ?? src} count={count} max={topSources[0][1]} />)
+                    : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
+                </Section>
+                <Section title="Fulfilment">
+                  {totalDespatch > 0 ? (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 16 }}>
+                        <div style={{ textAlign: "center" }}>
+                          <p style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#111827" }}>
+                            {Math.round((pickupCount / totalDespatch) * 100)}%
+                          </p>
+                          <p style={{ ...T.muted, margin: 0, fontSize: 11, fontWeight: 600 }}>Pick Up</p>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                          <p style={{ margin: "0 0 2px", fontSize: 24, fontWeight: 800, color: "#e13f00" }}>
+                            {Math.round((deliveryCount / totalDespatch) * 100)}%
+                          </p>
+                          <p style={{ ...T.muted, margin: 0, fontSize: 11, fontWeight: 600 }}>Delivery</p>
+                        </div>
                       </div>
-                      <div style={{ textAlign: "center" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 28, fontWeight: 800, color: "#e13f00" }}>
-                          {Math.round((deliveryCount / totalDespatch) * 100)}%
-                        </p>
-                        <p style={{ ...T.muted, margin: 0, fontWeight: 600 }}>Delivery</p>
+                      <div style={{ height: 6, background: "#f3f4f6", borderRadius: 99, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(pickupCount / totalDespatch) * 100}%`, background: "linear-gradient(90deg, #d1d5db 0%, #e13f00 100%)" }} />
                       </div>
-                    </div>
-                    <div style={{ height: 8, background: "#f3f4f6", borderRadius: 99, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(pickupCount / totalDespatch) * 100}%`, background: "linear-gradient(90deg, #d1d5db 0%, #e13f00 100%)" }} />
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-                      <span style={{ ...T.muted, fontSize: 11 }}>Pick Up ({pickupCount})</span>
-                      <span style={{ ...T.muted, fontSize: 11 }}>Delivery ({deliveryCount})</span>
-                    </div>
-                  </>
-                ) : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
-              </Section>
-            </div>
+                    </>
+                  ) : <p style={{ ...T.muted, margin: 0 }}>No data yet</p>}
+                </Section>
+              </div>
 
-            <Section title="Recent Leads" action={
-              <button onClick={() => setTab("leads")} style={{ ...T.muted, background: "none", border: "none", cursor: "pointer", fontWeight: 700, fontSize: 12 }}>
-                View all →
-              </button>
-            }>
-              <LeadsTable leads={stats.recentLeads.slice(0, 5)} onSelect={setSelectedLead} />
-            </Section>
-          </>
-        )}
+              {/* Recent leads */}
+              <Section title="Recent Leads" action={
+                <button onClick={() => setTab("leads")} style={{ ...T.muted, background: "none", border: "none", cursor: "pointer", fontWeight: 700, fontSize: 12 }}>
+                  View all →
+                </button>
+              }>
+                <LeadsTable leads={stats.recentLeads.slice(0, 5)} onSelect={setSelectedLead} />
+              </Section>
+            </>
+          );
+        })()}
 
         {/* ── Leads tab ── */}
         {tab === "leads" && (

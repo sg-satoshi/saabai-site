@@ -34,6 +34,9 @@ const K = {
   wooCustomerTs: "rex:hash:woo_customer_ts", // WooCommerce customer_id → ISO timestamp (account match)
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
+  convTotal:    "rex:stats:conv_total",
+  dayConv:      (d: string) => `rex:day:conv:${d}`,
+  dayEngaged:   (d: string) => `rex:day:engaged:${d}`,
   day:          (d: string) => `rex:day:${d}`,
   transcript:   (ts: string) => `rex:transcript:${ts}`,
 };
@@ -90,13 +93,16 @@ export interface RexStats {
   withEmail: number;
   withPrice: number;
   avgPrice: number;
-  totalQuotedRevenue: number; // all-time sum of every Rex quote value
-  emailHashes: string[];      // all-time set of email hashes for WooCommerce attribution
-  leadNames: string[];        // all-time set of normalized lead names for name-based attribution fallback
+  totalQuotedRevenue: number;
+  emailHashes: string[];
+  leadNames: string[];
   materials: Record<string, number>;
   despatch: Record<string, number>;
   sources: Record<string, number>;
   dailyCounts: { date: string; label: string; count: number }[];
+  dailyConvCounts: { date: string; label: string; count: number }[];
+  dailyEngagedCounts: { date: string; label: string; count: number }[];
+  convTotal: number;
   recentLeads: LeadEvent[];
   trackingSince: string | null;
 }
@@ -148,6 +154,33 @@ export function extractMaterial(text: string | undefined | null): string | null 
     if (re.test(text)) return name;
   }
   return null;
+}
+
+// ── Track conversation events ────────────────────────────────────────────────
+
+export async function trackConversationStart(): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const today = brisbaneDateString();
+    const pipeline = redis.pipeline();
+    pipeline.incr(K.convTotal);
+    pipeline.incr(K.dayConv(today));
+    pipeline.expire(K.dayConv(today), 90 * 24 * 60 * 60);
+    await pipeline.exec();
+  } catch { /* never throw */ }
+}
+
+export async function trackEngaged(): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    const today = brisbaneDateString();
+    const pipeline = redis.pipeline();
+    pipeline.incr(K.dayEngaged(today));
+    pipeline.expire(K.dayEngaged(today), 90 * 24 * 60 * 60);
+    await pipeline.exec();
+  } catch { /* never throw */ }
 }
 
 // ── Track a lead event ────────────────────────────────────────────────────────
@@ -223,6 +256,9 @@ export async function fetchRexStats(): Promise<RexStats> {
     leadNames: [],
     materials: {}, despatch: {}, sources: {},
     dailyCounts: buildEmptyDays(),
+    dailyConvCounts: buildEmptyDays(),
+    dailyEngagedCounts: buildEmptyDays(),
+    convTotal: 0,
     recentLeads: [],
     trackingSince: null,
   };
@@ -236,7 +272,8 @@ export async function fetchRexStats(): Promise<RexStats> {
     const [
       total, withEmail, withPrice, priceSum, priceCount,
       materials, despatch, sources, recentRaw, allEmailHashes, allLeadNames,
-      ...dailyRaw
+      convTotalRaw,
+      ...multiRaw
     ] = await Promise.all([
       redis.get<number>(K.total),
       redis.get<number>(K.withEmail),
@@ -246,11 +283,19 @@ export async function fetchRexStats(): Promise<RexStats> {
       redis.hgetall<Record<string, number>>(K.materials),
       redis.hgetall<Record<string, number>>(K.despatch),
       redis.hgetall<Record<string, number>>(K.sources),
-      redis.lrange<string>(K.recent, 0, 499), // all 500 stored leads
-      redis.smembers(K.emailHashes),           // all-time email hashes
-      redis.smembers(K.leadNames),             // all-time normalized lead names
+      redis.lrange<string>(K.recent, 0, 499),
+      redis.smembers(K.emailHashes),
+      redis.smembers(K.leadNames),
+      redis.get<number>(K.convTotal),
       ...days.map(d => redis.get<number>(K.day(d))),
+      ...days.map(d => redis.get<number>(K.dayConv(d))),
+      ...days.map(d => redis.get<number>(K.dayEngaged(d))),
     ]);
+
+    const N = days.length;
+    const leadDailyRaw    = multiRaw.slice(0, N);
+    const convDailyRaw    = multiRaw.slice(N, N * 2);
+    const engagedDailyRaw = multiRaw.slice(N * 2, N * 3);
 
     const totalVal    = total    ?? 0;
     const emailVal    = withEmail ?? 0;
@@ -262,8 +307,20 @@ export async function fetchRexStats(): Promise<RexStats> {
     const dailyCounts = days.map((date, i) => ({
       date,
       label: formatDayLabel(date),
-      count: (dailyRaw[i] as number | null) ?? 0,
-    })).reverse(); // oldest first for chart
+      count: (leadDailyRaw[i] as number | null) ?? 0,
+    })).reverse();
+
+    const dailyConvCounts = days.map((date, i) => ({
+      date,
+      label: formatDayLabel(date),
+      count: (convDailyRaw[i] as number | null) ?? 0,
+    })).reverse();
+
+    const dailyEngagedCounts = days.map((date, i) => ({
+      date,
+      label: formatDayLabel(date),
+      count: (engagedDailyRaw[i] as number | null) ?? 0,
+    })).reverse();
 
     const recentLeads: LeadEvent[] = (recentRaw ?? []).map(r => {
       try { return typeof r === "string" ? JSON.parse(r) : r; } catch { return null; }
@@ -307,6 +364,9 @@ export async function fetchRexStats(): Promise<RexStats> {
       despatch:  despatch  ?? {},
       sources:   sources   ?? {},
       dailyCounts,
+      dailyConvCounts,
+      dailyEngagedCounts,
+      convTotal: (convTotalRaw ?? 0),
       recentLeads,
       trackingSince: oldest,
     };

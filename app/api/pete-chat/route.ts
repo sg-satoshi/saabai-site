@@ -1,6 +1,7 @@
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getRexModel } from "../../../lib/chat-config";
 import { getClientConfig } from "../../../lib/rex-config";
+import { trackConversationStart, trackEngaged } from "../../../lib/rex-stats";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
 import { getPricing, type PricingInput, type PriceResult } from "../../../lib/rex-pricing-engine";
@@ -81,6 +82,11 @@ export async function POST(req: Request) {
     const coreMessages = (messages as Array<{ role: string; content: string }>)
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+    // Fire-and-forget conversation telemetry
+    const userMsgCount = coreMessages.filter(m => m.role === "user").length;
+    if (userMsgCount === 1) trackConversationStart().catch(() => {});
+    if (userMsgCount === 3) trackEngaged().catch(() => {});
 
     const tier: "default" | "premium" = "premium";
 
