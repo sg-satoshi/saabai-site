@@ -57,6 +57,18 @@ const NAV: {
         ),
       },
       {
+        label: "Customers",
+        href: "/saabai-admin/customers",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
         label: "Users",
         href: "/saabai-admin/users",
         icon: (
@@ -106,18 +118,6 @@ const NAV: {
             <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
             <path d="M4.5 7h5M4.5 9.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
             <path d="M4.5 3V2.5a1 1 0 011-1h3a1 1 0 011 1V3" stroke="currentColor" strokeWidth="1.3"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Customers",
-        href: "/saabai-admin/customers",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
-            <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
         ),
       },

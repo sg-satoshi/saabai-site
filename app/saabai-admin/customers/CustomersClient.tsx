@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminShell from "../AdminSidebar";
 
 const C = {
@@ -370,12 +371,22 @@ function ExportButton({ customers }: { customers: Customer[] }) {
   );
 }
 
-export default function CustomersClient() {
+const TYPE_LABEL: Record<string, string> = {
+  lex: "Lex",
+  "site-factory": "Site Factory",
+  stripe: "Stripe",
+  portal: "Portal",
+};
+
+function CustomersInner() {
+  const searchParams = useSearchParams();
+  const urlType = searchParams.get("type") ?? "all";
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Customer | null>(null);
-  const [filterType, setFilterType] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>(urlType);
   const [filterProject, setFilterProject] = useState<string>("all");
   const [search, setSearch] = useState("");
 
@@ -417,8 +428,17 @@ export default function CustomersClient() {
     <AdminShell activePath="/saabai-admin/customers">
       <div style={{ borderBottom: `1px solid ${C.border}`, padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>Customers</h1>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: C.muted }}>Unified directory \u2014 all clients across Lex, Site Factory, Rex, and Stripe</p>
+          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>
+            {filterType !== "all" ? `${TYPE_LABEL[filterType] ?? filterType} Customers` : "Customers"}
+          </h1>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: C.muted }}>
+            {filterType !== "all"
+              ? `Showing ${TYPE_LABEL[filterType] ?? filterType} customers only \u00b7 `
+              : "Unified directory \u2014 all clients across Lex, Site Factory, Rex, and Stripe"}
+            {filterType !== "all" && (
+              <a href="/saabai-admin/customers" style={{ color: C.teal, textDecoration: "none", fontWeight: 600 }}>View all</a>
+            )}
+          </p>
         </div>
         <ExportButton customers={filtered} />
       </div>
@@ -546,5 +566,13 @@ export default function CustomersClient() {
 
       {selected && <DetailPanel customer={selected} onClose={() => setSelected(null)} />}
     </AdminShell>
+  );
+}
+
+export default function CustomersClient() {
+  return (
+    <Suspense fallback={null}>
+      <CustomersInner />
+    </Suspense>
   );
 }
