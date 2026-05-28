@@ -27,8 +27,10 @@ const K = {
   despatch:     "rex:hash:despatch",
   sources:      "rex:hash:sources",
   recent:       "rex:list:recent",
-  emailHashes:  "rex:set:email_hashes", // persistent all-time set of email hashes for attribution
-  leadNames:    "rex:set:lead_names",   // persistent all-time set of normalized lead names for fallback attribution
+  emailHashes:  "rex:set:email_hashes", // persistent set (legacy — kept for backfill only)
+  leadNames:    "rex:set:lead_names",   // persistent set (legacy — kept for backfill only)
+  leadEmailTs:  "rex:hash:lead_email_ts", // emailHash → ISO conversation timestamp (authoritative)
+  leadNameTs:   "rex:hash:lead_name_ts",  // normalizedName → ISO conversation timestamp (fallback)
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
   day:          (d: string) => `rex:day:${d}`,
@@ -177,9 +179,14 @@ export async function trackLead(event: LeadEvent): Promise<void> {
     if (event.despatch) pipeline.hincrby(K.despatch, event.despatch, 1);
     if (event.source)   pipeline.hincrby(K.sources, event.source, 1);
 
-    // Persistent email hash set for all-time attribution (never trimmed)
+    // Persistent attribution timestamp maps — emailHash/name → conversation ISO timestamp
+    if (event.emailHash) pipeline.hset(K.leadEmailTs, { [event.emailHash]: event.timestamp });
+    if (event.name) {
+      const n = normalizeName(event.name);
+      if (n.includes(" ")) pipeline.hset(K.leadNameTs, { [n]: event.timestamp });
+    }
+    // Legacy sets (kept so old dashboards don't break, but not used for attribution logic)
     if (event.emailHash) pipeline.sadd(K.emailHashes, event.emailHash);
-    // Persistent name set for name-based attribution fallback (never trimmed)
     if (event.name) pipeline.sadd(K.leadNames, normalizeName(event.name));
 
     // Recent leads list — store full email for dashboard display
@@ -317,6 +324,28 @@ function buildEmptyDays() {
 function formatDayLabel(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00+10:00");
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+}
+
+// ── Lead timestamp maps for attribution ──────────────────────────────────────
+
+export interface LeadTimestamps {
+  byEmailHash: Record<string, string>; // SHA-256(email) → ISO conversation timestamp
+  byName:      Record<string, string>; // normalizedName → ISO conversation timestamp
+}
+
+export async function fetchLeadTimestamps(): Promise<LeadTimestamps> {
+  const redis = getRedis();
+  const empty: LeadTimestamps = { byEmailHash: {}, byName: {} };
+  if (!redis) return empty;
+  try {
+    const [byEmailHash, byName] = await Promise.all([
+      redis.hgetall<Record<string, string>>(K.leadEmailTs),
+      redis.hgetall<Record<string, string>>(K.leadNameTs),
+    ]);
+    return { byEmailHash: byEmailHash ?? {}, byName: byName ?? {} };
+  } catch {
+    return empty;
+  }
 }
 
 // ── Feedback CRUD ─────────────────────────────────────────────────────────────

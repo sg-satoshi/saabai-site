@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { fetchRexStats } from "../../lib/rex-stats";
+import { fetchRexStats, fetchLeadTimestamps } from "../../lib/rex-stats";
 import { fetchRecentOrders } from "../../lib/woo-client";
 import type { WooOrder } from "../../lib/woo-client";
 import DashboardClient from "./DashboardClient";
@@ -53,25 +53,26 @@ function toAttributedOrder(o: WooOrder, leadTimestamp?: string, matchMethod?: "e
 
 // Auth is handled by proxy.ts — if we reach this page, the user is authenticated.
 export default async function RexDashboardPage() {
-  const [stats, orders] = await Promise.all([
+  const [stats, orders, leadTs] = await Promise.all([
     fetchRexStats(),
     fetchRecentOrders(365),
+    fetchLeadTimestamps(),
   ]);
 
   // Attribution rules:
-  // 1. Only match against verified Rex conversations from recentLeads (these have proven timestamps)
-  // 2. Order must have been placed AFTER the Rex conversation — no retroactive credit
-  // 3. Email hash match preferred; full-name match is fallback for different-email cases
+  // 1. Match against the timestamp maps (populated from actual Rex conversations via trackLead + Pipedrive sync)
+  // 2. Overlay with recentLeads for the freshest data (Redis hashes are the source of truth)
+  // 3. Order must be placed AFTER the Rex conversation — no retroactive credit
+  // 4. Email hash first; full-name fallback for customers who used a different email at checkout
 
-  // Build lookups keyed by email hash and normalized full name → conversation timestamp
-  const hashToTs = new Map<string, string>(); // emailHash → ISO timestamp
-  const nameToTs = new Map<string, string>(); // normalizedName → ISO timestamp
+  // Overlay recentLeads data (fresher, more accurate) on top of the persisted timestamp maps
+  const emailTsMap = { ...leadTs.byEmailHash };
+  const nameTsMap  = { ...leadTs.byName };
   for (const lead of stats.recentLeads) {
-    if (lead.emailHash) hashToTs.set(lead.emailHash, lead.timestamp);
+    if (lead.emailHash) emailTsMap[lead.emailHash] = lead.timestamp;
     if (lead.name) {
       const n = normName(lead.name);
-      // Only store full names (first + last) to avoid single-name false positives
-      if (n.includes(" ")) nameToTs.set(n, lead.timestamp);
+      if (n.includes(" ")) nameTsMap[n] = lead.timestamp;
     }
   }
 
@@ -84,26 +85,29 @@ export default async function RexDashboardPage() {
     // Email hash match (high confidence)
     if (o.billing.email) {
       const hash = hashEmail(o.billing.email);
-      const leadTs = hashToTs.get(hash);
-      if (leadTs && orderDate >= new Date(leadTs)) {
-        attributed.push(toAttributedOrder(o, leadTs, "email"));
+      const ts = emailTsMap[hash];
+      if (ts && orderDate >= new Date(ts)) {
+        attributed.push(toAttributedOrder(o, ts, "email"));
         continue;
       }
     }
 
-    // Full-name match fallback — catches customers who used a different email at checkout
+    // Full-name fallback — catches customers who used a different email at checkout
     const billing = [o.billing.first_name, o.billing.last_name].filter(Boolean).join(" ");
     const billingNorm = normName(billing);
     if (billingNorm.includes(" ")) {
-      const leadTs = nameToTs.get(billingNorm);
-      if (leadTs && orderDate >= new Date(leadTs)) {
-        attributed.push(toAttributedOrder(o, leadTs, "name"));
+      const ts = nameTsMap[billingNorm];
+      if (ts && orderDate >= new Date(ts)) {
+        attributed.push(toAttributedOrder(o, ts, "name"));
       }
     }
   }
 
-  // Tracking starts from the oldest recent lead with an email hash
-  const trackingFrom = [...stats.recentLeads].reverse().find(l => l.emailHash)?.timestamp ?? null;
+  // Tracking starts from the oldest entry in the timestamp maps
+  const allTimestamps = Object.values(emailTsMap);
+  const trackingFrom = allTimestamps.length > 0
+    ? allTimestamps.reduce((oldest, ts) => ts < oldest ? ts : oldest)
+    : null;
 
   const attribution: AttributionStats = {
     totalOrders:       allOrders.length,
