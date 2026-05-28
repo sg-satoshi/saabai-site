@@ -436,7 +436,7 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr>
-                  {["Order", "Date", "Customer", "Items", "Value", "Lead"].map(h => (
+                  {["Order", "Date", "Customer", "Items", "Value", "Match"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "0 12px 10px 0", ...T.label, borderBottom: "2px solid #e5e7eb" }}>{h}</th>
                   ))}
                 </tr>
@@ -453,8 +453,20 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
                       {order.items.slice(0, 2).join(", ")}{order.items.length > 2 ? ` +${order.items.length - 2}` : ""}
                     </td>
                     <td style={{ padding: "11px 12px 11px 0", color: "#e13f00", fontWeight: 700 }}>{fmt(order.total)}</td>
-                    <td style={{ padding: "11px 12px 11px 0", color: "#6b7280", fontSize: 12 }}>
-                      {order.leadTimestamp ? timeAgo(order.leadTimestamp) : "—"}
+                    <td style={{ padding: "11px 0 11px 0" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span style={{
+                          display: "inline-block",
+                          background: order.matchMethod === "name" ? "#fffbeb" : "#f0fdf4",
+                          color: order.matchMethod === "name" ? "#d97706" : "#059669",
+                          fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, whiteSpace: "nowrap",
+                        }}>
+                          {order.matchMethod === "name" ? "Name match" : "Email match"}
+                        </span>
+                        {order.leadTimestamp && (
+                          <span style={{ fontSize: 11, color: "#9ca3af" }}>{timeAgo(order.leadTimestamp)}</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -479,7 +491,8 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
                 </thead>
                 <tbody>
                   {attribution.orders.slice(0, 30).map(order => {
-                    const isAttributed = attribution.attributed.some(a => a.id === order.id);
+                    const match = attribution.attributed.find(a => a.id === order.id);
+                    const isAttributed = !!match;
                     return (
                       <tr key={order.id} style={{ borderBottom: "1px solid #f3f4f6", background: isAttributed ? "#fff5f2" : "transparent" }}>
                         <td style={{ padding: "11px 12px 11px 0", color: "#374151", fontWeight: 700 }}>{order.number}</td>
@@ -493,7 +506,13 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
                         <td style={{ padding: "11px 12px 11px 0", fontWeight: 700, color: isAttributed ? "#e13f00" : "#111827" }}>{fmt(order.total)}</td>
                         <td style={{ padding: "11px 12px 11px 0" }}>
                           {isAttributed
-                            ? <span style={{ background: "#fff5f2", color: "#e13f00", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>Rex</span>
+                            ? <span style={{
+                                background: match?.matchMethod === "name" ? "#fffbeb" : "#fff5f2",
+                                color: match?.matchMethod === "name" ? "#d97706" : "#e13f00",
+                                fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
+                              }}>
+                                {match?.matchMethod === "name" ? "Rex (name)" : "Rex"}
+                              </span>
                             : <span style={{ color: "#d1d5db", fontSize: 11 }}>—</span>
                           }
                         </td>

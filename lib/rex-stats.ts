@@ -28,6 +28,7 @@ const K = {
   sources:      "rex:hash:sources",
   recent:       "rex:list:recent",
   emailHashes:  "rex:set:email_hashes", // persistent all-time set of email hashes for attribution
+  leadNames:    "rex:set:lead_names",   // persistent all-time set of normalized lead names for fallback attribution
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
   day:          (d: string) => `rex:day:${d}`,
@@ -88,6 +89,7 @@ export interface RexStats {
   avgPrice: number;
   totalQuotedRevenue: number; // all-time sum of every Rex quote value
   emailHashes: string[];      // all-time set of email hashes for WooCommerce attribution
+  leadNames: string[];        // all-time set of normalized lead names for name-based attribution fallback
   materials: Record<string, number>;
   despatch: Record<string, number>;
   sources: Record<string, number>;
@@ -104,6 +106,10 @@ function brisbaneDateString(offset = 0): string {
   return new Date(d.getTime() + 10 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10);
+}
+
+export function normalizeName(name: string): string {
+  return name.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
 export function parsePriceValue(raw: string | undefined | null): number {
@@ -173,6 +179,8 @@ export async function trackLead(event: LeadEvent): Promise<void> {
 
     // Persistent email hash set for all-time attribution (never trimmed)
     if (event.emailHash) pipeline.sadd(K.emailHashes, event.emailHash);
+    // Persistent name set for name-based attribution fallback (never trimmed)
+    if (event.name) pipeline.sadd(K.leadNames, normalizeName(event.name));
 
     // Recent leads list — store full email for dashboard display
     const record: LeadEvent = {
@@ -204,6 +212,7 @@ export async function fetchRexStats(): Promise<RexStats> {
   const empty: RexStats = {
     total: 0, withEmail: 0, withPrice: 0, avgPrice: 0, totalQuotedRevenue: 0,
     emailHashes: [],
+    leadNames: [],
     materials: {}, despatch: {}, sources: {},
     dailyCounts: buildEmptyDays(),
     recentLeads: [],
@@ -218,7 +227,7 @@ export async function fetchRexStats(): Promise<RexStats> {
 
     const [
       total, withEmail, withPrice, priceSum, priceCount,
-      materials, despatch, sources, recentRaw, allEmailHashes,
+      materials, despatch, sources, recentRaw, allEmailHashes, allLeadNames,
       ...dailyRaw
     ] = await Promise.all([
       redis.get<number>(K.total),
@@ -231,6 +240,7 @@ export async function fetchRexStats(): Promise<RexStats> {
       redis.hgetall<Record<string, number>>(K.sources),
       redis.lrange<string>(K.recent, 0, 99),  // all 100 stored leads
       redis.smembers(K.emailHashes),           // all-time email hashes
+      redis.smembers(K.leadNames),             // all-time normalized lead names
       ...days.map(d => redis.get<number>(K.day(d))),
     ]);
 
@@ -265,6 +275,18 @@ export async function fetchRexStats(): Promise<RexStats> {
       redis.sadd(K.emailHashes, newHashes[0], ...newHashes.slice(1)).catch(() => {});
     }
 
+    // Combine persistent name set with names from recent list (backfills the set over time)
+    const existingNames = new Set<string>(Array.isArray(allLeadNames) ? allLeadNames as string[] : []);
+    const nameSet = new Set<string>(existingNames);
+    for (const lead of recentLeads) {
+      if (lead.name) nameSet.add(normalizeName(lead.name));
+    }
+    // Backfill any recent names not yet in the persistent set
+    const newNames = recentLeads.map(l => l.name ? normalizeName(l.name) : null).filter((n): n is string => !!n && !existingNames.has(n));
+    if (newNames.length > 0) {
+      redis.sadd(K.leadNames, newNames[0], ...newNames.slice(1)).catch(() => {});
+    }
+
     return {
       total: totalVal,
       withEmail: emailVal,
@@ -272,6 +294,7 @@ export async function fetchRexStats(): Promise<RexStats> {
       avgPrice,
       totalQuotedRevenue: Math.round(priceSumVal),
       emailHashes: Array.from(hashSet),
+      leadNames: Array.from(nameSet),
       materials: materials ?? {},
       despatch:  despatch  ?? {},
       sources:   sources   ?? {},
