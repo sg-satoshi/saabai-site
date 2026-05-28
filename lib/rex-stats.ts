@@ -27,6 +27,7 @@ const K = {
   despatch:     "rex:hash:despatch",
   sources:      "rex:hash:sources",
   recent:       "rex:list:recent",
+  emailHashes:  "rex:set:email_hashes", // persistent all-time set of email hashes for attribution
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
   day:          (d: string) => `rex:day:${d}`,
@@ -86,6 +87,7 @@ export interface RexStats {
   withPrice: number;
   avgPrice: number;
   totalQuotedRevenue: number; // all-time sum of every Rex quote value
+  emailHashes: string[];      // all-time set of email hashes for WooCommerce attribution
   materials: Record<string, number>;
   despatch: Record<string, number>;
   sources: Record<string, number>;
@@ -169,6 +171,9 @@ export async function trackLead(event: LeadEvent): Promise<void> {
     if (event.despatch) pipeline.hincrby(K.despatch, event.despatch, 1);
     if (event.source)   pipeline.hincrby(K.sources, event.source, 1);
 
+    // Persistent email hash set for all-time attribution (never trimmed)
+    if (event.emailHash) pipeline.sadd(K.emailHashes, event.emailHash);
+
     // Recent leads list — store full email for dashboard display
     const record: LeadEvent = {
       timestamp:  event.timestamp,
@@ -198,6 +203,7 @@ export async function fetchRexStats(): Promise<RexStats> {
 
   const empty: RexStats = {
     total: 0, withEmail: 0, withPrice: 0, avgPrice: 0, totalQuotedRevenue: 0,
+    emailHashes: [],
     materials: {}, despatch: {}, sources: {},
     dailyCounts: buildEmptyDays(),
     recentLeads: [],
@@ -212,7 +218,7 @@ export async function fetchRexStats(): Promise<RexStats> {
 
     const [
       total, withEmail, withPrice, priceSum, priceCount,
-      materials, despatch, sources, recentRaw,
+      materials, despatch, sources, recentRaw, allEmailHashes,
       ...dailyRaw
     ] = await Promise.all([
       redis.get<number>(K.total),
@@ -223,7 +229,8 @@ export async function fetchRexStats(): Promise<RexStats> {
       redis.hgetall<Record<string, number>>(K.materials),
       redis.hgetall<Record<string, number>>(K.despatch),
       redis.hgetall<Record<string, number>>(K.sources),
-      redis.lrange<string>(K.recent, 0, 19),
+      redis.lrange<string>(K.recent, 0, 99),  // all 100 stored leads
+      redis.smembers(K.emailHashes),           // all-time email hashes
       ...days.map(d => redis.get<number>(K.day(d))),
     ]);
 
@@ -247,12 +254,24 @@ export async function fetchRexStats(): Promise<RexStats> {
     // First lead date from recentLeads (rough proxy for tracking start)
     const oldest = recentLeads[recentLeads.length - 1]?.timestamp ?? null;
 
+    // Combine persistent hash set with hashes from recent list (backfills the set over time)
+    const hashSet = new Set<string>(Array.isArray(allEmailHashes) ? allEmailHashes as string[] : []);
+    for (const lead of recentLeads) {
+      if (lead.emailHash) hashSet.add(lead.emailHash);
+    }
+    // Backfill any recent hashes not yet in the persistent set
+    const newHashes = recentLeads.map(l => l.emailHash).filter((h): h is string => !!h && !((allEmailHashes as string[] ?? []).includes(h)));
+    if (newHashes.length > 0) {
+      redis.sadd(K.emailHashes, newHashes[0], ...newHashes.slice(1)).catch(() => {});
+    }
+
     return {
       total: totalVal,
       withEmail: emailVal,
       withPrice: priceVal,
       avgPrice,
       totalQuotedRevenue: Math.round(priceSumVal),
+      emailHashes: Array.from(hashSet),
       materials: materials ?? {},
       despatch:  despatch  ?? {},
       sources:   sources   ?? {},

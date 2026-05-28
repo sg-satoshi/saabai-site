@@ -52,10 +52,14 @@ export default async function RexDashboardPage() {
     fetchRecentOrders(365),
   ]);
 
-  // Build a map: emailHash → lead timestamp (for leads that have a hash)
+  // Build a map: emailHash → lead timestamp
+  // Start with all-time hash set (no timestamp for old leads), then overlay recent leads (with timestamps)
   const hashToLead = new Map<string, string>();
+  for (const hash of stats.emailHashes) {
+    hashToLead.set(hash, ""); // known Rex lead, timestamp unknown for older leads
+  }
   for (const lead of stats.recentLeads) {
-    if (lead.emailHash) hashToLead.set(lead.emailHash, lead.timestamp);
+    if (lead.emailHash) hashToLead.set(lead.emailHash, lead.timestamp); // overlay with timestamp where available
   }
 
   // Match WooCommerce orders against Rex lead email hashes
@@ -66,7 +70,7 @@ export default async function RexDashboardPage() {
     if (!o.billing.email) continue;
     const hash = hashEmail(o.billing.email);
     const leadTs = hashToLead.get(hash);
-    if (leadTs) attributed.push(toAttributedOrder(o, leadTs));
+    if (leadTs !== undefined) attributed.push(toAttributedOrder(o, leadTs || undefined));
   }
 
   // Find earliest lead with a hash (attribution tracking start date)

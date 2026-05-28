@@ -89,13 +89,20 @@ export async function fetchRecentOrders(days = 60): Promise<WooOrder[]> {
   try {
     if (!WOO_URL || !WOO_KEY || !WOO_SECRET) return [];
     const after = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    const url = `${WOO_URL}/wp-json/wc/v3/orders?per_page=100&after=${encodeURIComponent(after)}&status=processing,completed&orderby=date&order=desc`;
-    const res = await fetch(url, {
-      headers: { Authorization: auth() },
-      next: { revalidate: 300 }, // cache 5 min
-    });
-    if (!res.ok) return [];
-    return res.json() as Promise<WooOrder[]>;
+    const allOrders: WooOrder[] = [];
+    const pageSize = 100;
+    let page = 1;
+    while (true) {
+      const url = `${WOO_URL}/wp-json/wc/v3/orders?per_page=${pageSize}&page=${page}&after=${encodeURIComponent(after)}&status=processing,completed&orderby=date&order=desc`;
+      const res = await fetch(url, { headers: { Authorization: auth() } });
+      if (!res.ok) break;
+      const orders = await res.json() as WooOrder[];
+      if (!orders.length) break;
+      allOrders.push(...orders);
+      if (orders.length < pageSize) break;
+      page++;
+    }
+    return allOrders;
   } catch {
     return [];
   }
