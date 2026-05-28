@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "28 May 2026",
     entries: [
+      { time: "23:05", tag: "NEW", title: "Site Factory chat overhaul — markdown rendering + real AI persona" },
       { time: "22:58", tag: "NEW", title: "Site Factory self-correcting edit AI" },
       { time: "20:44", tag: "UPDATE", title: "Backfill 28 May 2026 Rex entries; reinstall post-commit hook" },
       { time: "17:30", tag: "NEW", title: "Rex dashboard redesigned — Kelly-style layout with SVG multi-series line chart (Conversations, Engaged, Leads), funnel section showing 30-day conversion rates, and rate cards for Engagement Rate and Lead Rate" },

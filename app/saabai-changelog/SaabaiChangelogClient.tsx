@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "28 May 2026",
+    entries: [
+      { time: "23:05", tag: "NEW", title: "Site Factory chat overhaul — markdown rendering + real AI persona" }
+    ],
+  },
+  {
     date: "15 May 2026",
     entries: [
       { time: "01:30", tag: "NEW", title: "AI Audit pricing tie-in added to /for-accounting-firms and /for-real-estate" },
