@@ -14,29 +14,52 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised websites for Australian small businesses. Your output rivals Lovable, Webflow, and Framer — not generic templates. Every site feels custom-designed and worth $5,000+.
+const SYSTEM_PROMPT = `You are an elite web designer building production websites for Australian small businesses. Your designs rival Webflow and Framer — visually stunning, conversion-ready, worth $5,000+.
 
-HARD RULES:
-- Output ONLY raw HTML starting with <!DOCTYPE html>. No markdown, no code fences.
-- ALL CSS in one <style> tag. ALL JS in one <script> tag before </body>.
-- No external CSS frameworks. Pure CSS Grid and Flexbox.
-- Mobile-first. Breakpoints: 768px tablet, 1024px desktop.
-- All images: loading="lazy", explicit width/height, real Unsplash photo IDs that genuinely match the business niche and theme aesthetic — not generic placeholder IDs.
-- No em dashes (—). Use commas, colons, or rewrite.
-- Sticky nav: transparent to opaque on scroll. Hamburger menu on mobile with working JS toggle.
-- IntersectionObserver reveals (.reveal class). Count-up stats when in view using data-target attribute.
-- Full SEO: JSON-LD LocalBusiness (most specific @type), Open Graph, Twitter Card, semantic HTML5.`;
+OUTPUT: Raw HTML only. Start with <!DOCTYPE html>. Never use markdown or code fences.
+
+CSS: One <style> tag in <head>. First line must be the @import font line provided. Second block must be the :root { } with provided CSS variables — copy them exactly. Use var(--name) for every color.
+
+CRITICAL CSS RESET at top of <style> (after @import and :root):
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+img { display: block; max-width: 100%; }
+
+JS: One <script> before </body>. Must include: sticky nav (transparent to solid on scroll), hamburger menu toggle, FAQ accordion, count-up stats (IntersectionObserver + data-target).
+
+IMAGES: Unsplash URL: https://images.unsplash.com/photo-{ID}?w=1200&q=80&auto=format&fit=crop
+Every <img>: loading="lazy" width height alt onerror="this.onerror=null;this.style.display='none'"
+Every image container: overflow:hidden and a background-color fallback.
+
+MOBILE-FIRST: Base styles for 375px, then @media(min-width:768px) and @media(min-width:1024px).
+NAV: overflow:hidden. CTA button: white-space:nowrap. No horizontal overflow.
+
+COPY: Specific, persuasive Australian copy. Real suburbs. Concrete benefits. No Lorem Ipsum. No em dashes.
+SEO: JSON-LD LocalBusiness (most specific @type). Open Graph. Twitter Card. Semantic HTML5.`;
+
+function formatCssVars(palette: string): string {
+  return palette.split(";").filter(Boolean).map(v => {
+    const colon = v.indexOf(":");
+    return `  ${v.slice(0, colon).trim()}: ${v.slice(colon + 1).trim()};`;
+  }).join("\n");
+}
 
 function sharedTokenLines(theme: ThemeDef, themeKey: string): string[] {
   return [
-    `THEME: ${themeKey}`,
-    theme.aesthetic,
-    `Palette: ${theme.palette}`,
-    `Fonts: ${theme.fonts}`,
-    `Hero style (home page only): ${theme.hero}`,
-    `Visual rules:`,
+    `━━━ THEME: ${themeKey} ━━━`,
+    `Aesthetic: ${theme.aesthetic}`,
+    theme.dark ? `DARK SITE: all section backgrounds var(--bg) or var(--surface) only. All text: var(--text) or var(--text-muted).` : ``,
+    ``,
+    `GOOGLE FONTS — first line of <style>:`,
+    `@import url('${theme.googleFonts}');`,
+    ``,
+    `CSS VARIABLES — paste into :root { } exactly:`,
+    formatCssVars(theme.palette),
+    ``,
+    `TYPOGRAPHY: ${theme.fonts}`,
+    ``,
+    `VISUAL RULES:`,
     ...theme.rules.map((r, i) => `${i + 1}. ${r}`),
-    theme.dark ? `DARK SITE: all text must use --text or --text-muted. Zero dark text on dark backgrounds.` : "",
   ].filter(Boolean);
 }
 

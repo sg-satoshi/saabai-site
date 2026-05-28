@@ -60,45 +60,93 @@ export async function POST(req: NextRequest) {
     const themeKey = (style && THEMES[style]) ? style : (NICHE_THEME_DEFAULTS[niche] ?? "slate");
     const theme = THEMES[themeKey];
 
-    const SYSTEM_PROMPT = `You are an elite web designer who creates stunning, conversion-optimised websites for Australian small businesses. Your output rivals Lovable, Webflow, and Framer — not generic templates. Every site feels custom-designed and worth $5,000+.
+    const SYSTEM_PROMPT = `You are an elite web designer building production websites for Australian small businesses. Your designs rival Webflow and Framer — visually stunning, conversion-ready, worth $5,000+.
 
-HARD RULES:
-- Output ONLY raw HTML starting with <!DOCTYPE html>. No markdown, no code fences.
-- ALL CSS in one <style> tag. ALL JS in one <script> tag before </body>.
-- No external CSS frameworks. Pure CSS Grid and Flexbox.
-- Mobile-first. Breakpoints: 768px tablet, 1024px desktop.
-- All images: loading="lazy", explicit width/height, real Unsplash photo IDs that genuinely match the business niche and theme aesthetic — not generic placeholder IDs.
-- No em dashes (—). Use commas, colons, or rewrite.
-- Sticky nav: transparent to opaque on scroll. Hamburger menu on mobile with working JS toggle.
-- IntersectionObserver reveals (.reveal class). Count-up stats when in view using data-target attribute.
-- Full SEO: JSON-LD LocalBusiness (most specific @type), Open Graph, Twitter Card, semantic HTML5.`;
+OUTPUT: Raw HTML only. Start with <!DOCTYPE html>. Never use markdown or code fences.
+
+CSS: One <style> tag in <head>. First line must be the @import font line provided. Second block must be the :root { } with provided CSS variables — copy them exactly. Use var(--name) for every color — never hardcode hex values that duplicate a CSS variable.
+
+CRITICAL CSS RESET at top of <style> (after the @import and :root):
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+img { display: block; max-width: 100%; }
+
+JS: One <script> before </body>. Must include: smooth scroll, sticky nav (transparent → solid on scroll with background-color transition), hamburger menu toggle, FAQ accordion (click to open/close), count-up stats triggered by IntersectionObserver (data-target attribute on the number element).
+
+IMAGES: Unsplash URL format: https://images.unsplash.com/photo-{ID}?w=1200&q=80&auto=format&fit=crop
+Every <img> must have: loading="lazy" width height alt onerror="this.onerror=null;this.style.display='none'"
+Every image container must have: overflow:hidden and a background-color fallback (use a CSS variable color).
+Image containers for hero/about: position:relative so the fallback background shows if image fails.
+
+MOBILE-FIRST: Write base styles for mobile (375px), then @media(min-width:768px) and @media(min-width:1024px).
+NAV: overflow:hidden on the nav container. Logo text must not overflow. CTA button: white-space:nowrap.
+
+COPY: Write specific, persuasive Australian business copy. Real suburb names. Concrete benefits. No Lorem Ipsum. No em dashes (—).
+
+SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. Semantic HTML5 landmarks.`;
 
     const servicesList = services.length
       ? services.join(", ")
       : "choose 6 highly relevant services for this specific business niche";
 
+    // Format palette as CSS-ready lines
+    const cssVars = theme.palette.split(";").filter(Boolean).map(v => {
+      const colon = v.indexOf(":");
+      return `  ${v.slice(0, colon).trim()}: ${v.slice(colon + 1).trim()};`;
+    }).join("\n");
+
     const userPrompt = [
-      `Build a complete production website. Write real, compelling copy — not Lorem Ipsum.`,
+      `Build a complete, production-ready single-page website. Write real, compelling copy specific to this business.`,
       ``,
-      `BUSINESS: ${businessName} | NICHE: ${niche} | LOCATION: ${location}`,
-      `PHONE: ${phone || "Contact us for a free quote"} | EMAIL: ${email || ""} | ADDRESS: ${address || location}`,
+      `BUSINESS: ${businessName}`,
+      `NICHE: ${niche}`,
+      `LOCATION: ${location}`,
+      `PHONE: ${phone || "Contact us for a free quote"}`,
+      email ? `EMAIL: ${email}` : ``,
+      `ADDRESS: ${address || location}`,
       `SERVICES: ${servicesList}`,
-      description ? `\nCLIENT BRIEF:\n${description}` : "",
+      description ? `\nCLIENT BRIEF (follow carefully):\n${description}\n` : "",
       ``,
-      `THEME: ${themeKey}`,
-      theme.aesthetic,
-      `Palette: ${theme.palette}`,
-      `Fonts: ${theme.fonts}`,
-      `Hero: ${theme.hero}`,
-      `Visual rules:`,
+      `━━━ THEME: ${themeKey} ━━━`,
+      `Aesthetic: ${theme.aesthetic}`,
+      theme.dark ? `DARK SITE: all section backgrounds must be var(--bg) or var(--surface) — zero light-coloured sections. All body text: var(--text). All secondary text: var(--text-muted).` : ``,
+      ``,
+      `GOOGLE FONTS — first line of <style>, copy exactly:`,
+      `@import url('${theme.googleFonts}');`,
+      ``,
+      `CSS VARIABLES — paste into :root { } exactly:`,
+      cssVars,
+      ``,
+      `TYPOGRAPHY: ${theme.fonts}`,
+      ``,
+      `VISUAL RULES:`,
       ...theme.rules.map((r: string, i: number) => `${i + 1}. ${r}`),
-      theme.dark ? `\nDARK SITE: all text must use --text or --text-muted. Zero dark text on dark backgrounds.` : "",
       ``,
-      `SECTIONS (in this order):`,
-      `Nav → Hero → Trust bar (4 signals with inline SVG icons) → Services (6 cards, CSS Grid 3/2/1 col) → Process (3 numbered steps) → Stats (4 count-up metrics, data-target attribute) → Testimonials (3 cards, Australian suburbs, 5 stars, specific quotes) → About (photo left + story right) → FAQ (6 questions, accordion with JS toggle) → CTA band → Contact (details left + form right, form POSTs to https://www.saabai.ai/api/site-factory/lead with {name,email,phone,message,siteSlug:"${slug}"}, show success/error state) → Footer`,
+      `━━━ SECTIONS (build in this order) ━━━`,
       ``,
-      `Nav must include a working hamburger menu on mobile.`,
-      `Pick Unsplash photo IDs that genuinely look like this business in this location.`,
+      `NAV: Sticky (position:sticky, top:0, z-index:100). Logo text left. Links center. Theme-accent CTA button right (white-space:nowrap). Transparent on page-top, solid var(--surface) on scroll. Hamburger menu on mobile (display:none on desktop, flex on mobile). Nav must not overflow horizontally.`,
+      ``,
+      `HERO (id="hero"): ${theme.hero}`,
+      ``,
+      `TRUST BAR (id="trust"): 4 trust signals. Each: inline SVG icon (24px) + bold label + short descriptor. Subtle horizontal padding, alternating background.`,
+      ``,
+      `SERVICES (id="services"): Section heading. 6 cards in CSS Grid. grid-template-columns: repeat(3,1fr) on desktop, repeat(2,1fr) on tablet, 1fr on mobile. Each card: inline SVG icon in a 56px circle, service name (h3), 2-sentence benefit-led description.`,
+      ``,
+      `PROCESS (id="process"): 3 numbered steps showing how the business works. Large step number, step name, description.`,
+      ``,
+      `STATS (id="stats"): 4 metrics. Each: large number (span with data-target and class="count-up"), label below. IntersectionObserver triggers count animation.`,
+      ``,
+      `TESTIMONIALS (id="testimonials"): 3 cards. Each: 5-star SVG, 2-sentence quote (specific outcome, not vague), client name, Australian suburb. Cards in a CSS Grid 3-col desktop, 1-col mobile.`,
+      ``,
+      `ABOUT (id="about"): 2-column (50/50) on desktop, stacked on mobile. Left: Unsplash photo (object-fit:cover, width:100%, height:400px, overflow:hidden). Right: 3 paragraphs of real business narrative. Not generic. Mention the team, the location, the philosophy.`,
+      ``,
+      `FAQ (id="faq"): 6 industry-relevant questions. JS accordion: clicking a question toggles answer visibility with smooth max-height transition.`,
+      ``,
+      `CTA BAND: Bold headline. Single CTA button. Use theme's accent/secondary colors.`,
+      ``,
+      `CONTACT (id="contact"): 2-column desktop. Left: business phone, email, address, opening hours. Right: contact form — name, email, phone, message textarea, submit button. Form posts via JS fetch to https://www.saabai.ai/api/site-factory/lead with JSON body {name,email,phone,message,siteSlug:"${slug}"}. Show success message on submit, error message on failure.`,
+      ``,
+      `FOOTER: 4-column grid (logo+tagline, navigation links, services list, contact info). Bottom strip: copyright. All links functional (anchor scroll on this page).`,
     ].filter(Boolean).join("\n");
 
     const stream = streamText({
