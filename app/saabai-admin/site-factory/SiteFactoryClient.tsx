@@ -36,6 +36,61 @@ function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function renderInline(text: string): string {
+  return text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.08);padding:1px 5px;border-radius:3px;font-size:11px;font-family:monospace">$1</code>');
+}
+
+function renderMarkdown(text: string): string {
+  if (!text) return "";
+  const lines = text.split("\n");
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) {
+      if (out.length > 0) out.push('<div style="height:6px"></div>');
+      i++; continue;
+    }
+    // Bullet list
+    if (/^[-*] /.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*] /.test(lines[i])) {
+        items.push(`<li style="margin:0 0 3px 0">${renderInline(lines[i].slice(2))}</li>`);
+        i++;
+      }
+      out.push(`<ul style="margin:4px 0;padding-left:18px">${items.join("")}</ul>`);
+      continue;
+    }
+    // Numbered list
+    if (/^\d+\. /.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        items.push(`<li style="margin:0 0 3px 0">${renderInline(lines[i].replace(/^\d+\. /, ""))}</li>`);
+        i++;
+      }
+      out.push(`<ol style="margin:4px 0;padding-left:18px">${items.join("")}</ol>`);
+      continue;
+    }
+    // Heading — render as bold paragraph
+    if (/^#{1,3} /.test(line)) {
+      out.push(`<p style="margin:6px 0 2px;font-weight:600">${renderInline(line.replace(/^#{1,3} /, ""))}</p>`);
+      i++; continue;
+    }
+    // Regular paragraph — accumulate until blank line or list
+    const paraLines: string[] = [];
+    while (i < lines.length && lines[i].trim() && !/^[-*\d#]/.test(lines[i])) {
+      paraLines.push(renderInline(lines[i]));
+      i++;
+    }
+    if (paraLines.length) out.push(`<span>${paraLines.join("<br>")}</span>`);
+  }
+  return out.join("");
+}
+
 const C = {
   bg: "#f5f5f7",
   surface: "#ffffff",
@@ -629,6 +684,8 @@ export default function SiteFactoryClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slug: activeSite.slug,
+          siteName: activeSite.name,
+          niche: NICHES.find(n => n.value === activeSite.niche)?.label ?? activeSite.niche,
           instruction: text || "Apply the uploaded image to the site",
           imageUrl,
           history: historyForApi.map(m => ({ role: m.role, content: m.content })),
@@ -2323,8 +2380,11 @@ export default function SiteFactoryClient() {
                         {msg.imageUrl && (
                           <img src={msg.imageUrl} alt="upload" style={{ maxWidth: 160, maxHeight: 100, borderRadius: 6, marginBottom: 4, objectFit: "cover", border: `1px solid ${C.border2}` }} />
                         )}
-                        <div style={{ maxWidth: "88%", padding: "8px 12px", borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px", background: msg.role === "user" ? C.gold : C.surface2, color: msg.role === "user" ? "#000" : C.text, fontSize: 13, lineHeight: 1.5, fontWeight: msg.role === "user" ? 500 : 400 }}>
-                          {msg.content}
+                        <div style={{ maxWidth: "88%", padding: "8px 12px", borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px", background: msg.role === "user" ? C.gold : C.surface2, color: msg.role === "user" ? "#000" : C.text, fontSize: 13, lineHeight: 1.55, fontWeight: msg.role === "user" ? 500 : 400 }}>
+                          {msg.role === "user"
+                            ? msg.content
+                            : <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} style={{ minWidth: 0 }} />
+                          }
                         </div>
                         {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
                           <button onClick={() => restoreLocalVersion(msg.htmlSnapshot!, versions.current.indexOf(msg.htmlSnapshot!))} style={{ marginTop: 4, fontSize: 10, color: C.textDim, background: "none", border: `1px solid ${C.border2}`, borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>
