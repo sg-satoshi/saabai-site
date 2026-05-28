@@ -58,53 +58,52 @@ export default async function RexDashboardPage() {
     fetchRecentOrders(365),
   ]);
 
-  // Build a map: emailHash → lead timestamp
-  // Start with all-time hash set (no timestamp for old leads), then overlay recent leads (with timestamps)
-  const hashToLead = new Map<string, string>();
-  for (const hash of stats.emailHashes) {
-    hashToLead.set(hash, ""); // known Rex lead, timestamp unknown for older leads
-  }
+  // Attribution rules:
+  // 1. Only match against verified Rex conversations from recentLeads (these have proven timestamps)
+  // 2. Order must have been placed AFTER the Rex conversation — no retroactive credit
+  // 3. Email hash match preferred; full-name match is fallback for different-email cases
+
+  // Build lookups keyed by email hash and normalized full name → conversation timestamp
+  const hashToTs = new Map<string, string>(); // emailHash → ISO timestamp
+  const nameToTs = new Map<string, string>(); // normalizedName → ISO timestamp
   for (const lead of stats.recentLeads) {
-    if (lead.emailHash) hashToLead.set(lead.emailHash, lead.timestamp); // overlay with timestamp where available
+    if (lead.emailHash) hashToTs.set(lead.emailHash, lead.timestamp);
+    if (lead.name) {
+      const n = normName(lead.name);
+      // Only store full names (first + last) to avoid single-name false positives
+      if (n.includes(" ")) nameToTs.set(n, lead.timestamp);
+    }
   }
 
-  // Build name-based lookup: normalizedName → lead timestamp (from recent leads with full data)
-  const nameToLead = new Map<string, string>();
-  for (const lead of stats.recentLeads) {
-    if (lead.name) nameToLead.set(normName(lead.name), lead.timestamp);
-  }
-  // All-time name set for leads that have aged out of the recent list
-  const allLeadNames = new Set<string>(stats.leadNames);
-
-  // Match WooCommerce orders against Rex leads — email hash first, name fallback
   const allOrders = orders.map(o => toAttributedOrder(o));
   const attributed: AttributedOrder[] = [];
 
   for (const o of orders) {
+    const orderDate = new Date(o.date_created);
+
     // Email hash match (high confidence)
     if (o.billing.email) {
       const hash = hashEmail(o.billing.email);
-      const leadTs = hashToLead.get(hash);
-      if (leadTs !== undefined) {
-        attributed.push(toAttributedOrder(o, leadTs || undefined, "email"));
+      const leadTs = hashToTs.get(hash);
+      if (leadTs && orderDate >= new Date(leadTs)) {
+        attributed.push(toAttributedOrder(o, leadTs, "email"));
         continue;
       }
     }
 
-    // Name match fallback (lower confidence — catches customers who used a different email)
-    // Require both first + last name to avoid false positives on single-name entries
+    // Full-name match fallback — catches customers who used a different email at checkout
     const billing = [o.billing.first_name, o.billing.last_name].filter(Boolean).join(" ");
     const billingNorm = normName(billing);
     if (billingNorm.includes(" ")) {
-      const leadTs = nameToLead.get(billingNorm);
-      if (leadTs !== undefined || allLeadNames.has(billingNorm)) {
-        attributed.push(toAttributedOrder(o, leadTs || undefined, "name"));
+      const leadTs = nameToTs.get(billingNorm);
+      if (leadTs && orderDate >= new Date(leadTs)) {
+        attributed.push(toAttributedOrder(o, leadTs, "name"));
       }
     }
   }
 
-  // Find earliest lead with a hash (attribution tracking start date)
-  const trackingFrom = stats.recentLeads.find(l => l.emailHash)?.timestamp ?? null;
+  // Tracking starts from the oldest recent lead with an email hash
+  const trackingFrom = [...stats.recentLeads].reverse().find(l => l.emailHash)?.timestamp ?? null;
 
   const attribution: AttributionStats = {
     totalOrders:       allOrders.length,
