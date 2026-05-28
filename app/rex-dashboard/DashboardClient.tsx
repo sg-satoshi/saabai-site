@@ -415,19 +415,18 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
         ))}
       </div>
 
-      {/* Attribution tracking notice */}
-      {!attribution.trackingFrom && (
-        <div style={{ ...T.card, padding: "20px 24px", marginBottom: 20, borderLeft: "3px solid #f59e0b", borderRadius: "0 16px 16px 0" }}>
-          <p style={{ ...T.heading, margin: "0 0 4px" }}>Attribution tracking just activated</p>
-          <p style={{ ...T.muted, margin: 0 }}>Email hashes are now stored with every new Rex lead. Matched orders will appear here as leads convert over the next 12 months. Historical leads before tracking was enabled can&apos;t be matched retroactively.</p>
-        </div>
-      )}
-      {attribution.trackingFrom && !hasAttribution && (
-        <div style={{ ...T.card, padding: "20px 24px", marginBottom: 20 }}>
-          <p style={{ ...T.heading, margin: "0 0 4px" }}>No attributed orders yet</p>
-          <p style={{ ...T.muted, margin: 0 }}>Tracking from {new Date(attribution.trackingFrom).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}. Orders placed by Rex leads will appear here automatically.</p>
-        </div>
-      )}
+      {/* Attribution coverage notice */}
+      <div style={{ ...T.card, padding: "16px 20px", marginBottom: 20, borderLeft: "3px solid #f59e0b", borderRadius: "0 16px 16px 0" }}>
+        <p style={{ ...T.heading, margin: "0 0 4px" }}>
+          {attribution.trackingFrom
+            ? `Coverage from ${new Date(attribution.trackingFrom).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`
+            : "Building coverage"}
+        </p>
+        <p style={{ ...T.muted, margin: 0 }}>
+          Only orders where the customer had a Rex conversation <strong>before</strong> ordering are attributed.
+          {" "}Attribution tracks the last 500 conversations — older leads pre-dating this window can&apos;t be matched retroactively. Coverage grows automatically as Rex has more conversations.
+        </p>
+      </div>
 
       {/* Attributed orders list */}
       {hasAttribution && (

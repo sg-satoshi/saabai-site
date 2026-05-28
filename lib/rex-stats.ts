@@ -203,7 +203,7 @@ export async function trackLead(event: LeadEvent): Promise<void> {
       summary:    event.summary,
     };
     pipeline.lpush(K.recent, JSON.stringify(record));
-    pipeline.ltrim(K.recent, 0, 99); // keep last 100
+    pipeline.ltrim(K.recent, 0, 499); // keep last 500
 
     await pipeline.exec();
   } catch {
@@ -245,7 +245,7 @@ export async function fetchRexStats(): Promise<RexStats> {
       redis.hgetall<Record<string, number>>(K.materials),
       redis.hgetall<Record<string, number>>(K.despatch),
       redis.hgetall<Record<string, number>>(K.sources),
-      redis.lrange<string>(K.recent, 0, 99),  // all 100 stored leads
+      redis.lrange<string>(K.recent, 0, 499), // all 500 stored leads
       redis.smembers(K.emailHashes),           // all-time email hashes
       redis.smembers(K.leadNames),             // all-time normalized lead names
       ...days.map(d => redis.get<number>(K.day(d))),
@@ -435,7 +435,7 @@ export async function fetchWeeklyDigestData(): Promise<WeeklyDigestData> {
     redis!.get<number>(K.withPrice),
     redis!.get<string>(K.priceSum),
     redis!.get<number>(K.priceCount),
-    redis!.lrange<string>(K.recent, 0, 99),
+    redis!.lrange<string>(K.recent, 0, 499),
     ...days14.map(d => redis!.get<number>(K.day(d))),
   ]);
 
