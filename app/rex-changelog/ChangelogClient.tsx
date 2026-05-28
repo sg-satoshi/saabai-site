@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "28 May 2026",
     entries: [
+      { time: "20:44", tag: "UPDATE", title: "Backfill 28 May 2026 Rex entries; reinstall post-commit hook" },
       { time: "17:30", tag: "NEW", title: "Rex dashboard redesigned — Kelly-style layout with SVG multi-series line chart (Conversations, Engaged, Leads), funnel section showing 30-day conversion rates, and rate cards for Engagement Rate and Lead Rate" },
       { time: "17:25", tag: "NEW", title: "Conversation and engagement tracking — Rex now counts every chat session started and every conversation that reaches 3+ messages; data feeds the daily activity chart" },
       { time: "15:10", tag: "NEW", title: "Backfill WooCommerce customer tags for all 500 stored Rex leads — 2 accounts found and tagged with _rex_lead_date metadata" },

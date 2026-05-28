@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { streamText } from "ai";
+import { streamText, generateText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
 import { put, list } from "@vercel/blob";
 
@@ -29,6 +29,69 @@ function applyDiff(html: string, diff: Array<{ f: string; r: string }>): { resul
   return { result, applied };
 }
 
+// Find snippets in html that contain key words from failedF, to help AI self-correct
+function findNearestSnippets(html: string, failedF: string, maxResults = 3): string[] {
+  const words = failedF
+    .replace(/[{}()"';:]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length > 5 && !/^(https?|class|style|href|data)$/.test(w));
+
+  const found: string[] = [];
+  const window = Math.max(failedF.length + 30, 80);
+
+  for (const word of words.slice(0, 4)) {
+    let idx = html.indexOf(word);
+    while (idx !== -1 && found.length < maxResults) {
+      const start = Math.max(0, idx - 15);
+      const snippet = html.slice(start, start + window);
+      if (!found.some(f => f.includes(word))) found.push(snippet);
+      idx = html.indexOf(word, idx + 1);
+    }
+    if (found.length >= maxResults) break;
+  }
+  return found;
+}
+
+async function selfCorrect(
+  failedOps: Array<{ f: string; r: string }>,
+  html: string
+): Promise<Array<{ f: string; r: string }>> {
+  const context = failedOps
+    .map(op => {
+      const snippets = findNearestSnippets(html, op.f);
+      const hint = snippets.length > 0
+        ? `Nearest HTML snippets:\n${snippets.map(s => `  "${s}"`).join("\n")}`
+        : "No similar text found — this change may not apply.";
+      return `Wanted to find: "${op.f}"\nWanted to replace with: "${op.r}"\n${hint}`;
+    })
+    .join("\n\n");
+
+  const { text } = await generateText({
+    model: getPremiumModel(),
+    messages: [
+      {
+        role: "user",
+        content: `These diff ops failed because the "f" strings weren't found verbatim in the HTML. Correct them using the nearest snippets shown.
+
+${context}
+
+Rules:
+- Copy "f" character-for-character from one of the "Nearest HTML snippets" shown
+- Keep the same intent for "r" (the replacement) — adjust only "f" to match what's actually there
+- If no snippet is close enough, omit that op
+- Respond with ONLY a valid JSON array: [{"f":"...","r":"..."}]`,
+      },
+    ],
+  });
+
+  try {
+    const clean = text.trim().replace(/^```json?\n?/i, "").replace(/```\s*$/i, "").trim();
+    return JSON.parse(clean) as Array<{ f: string; r: string }>;
+  } catch {
+    return [];
+  }
+}
+
 const SYSTEM_PROMPT = `You are a web design assistant that edits client websites. Direct personality. No filler phrases.
 
 CRITICAL RULE: When the user asks you to make ANY change, you MUST output a <CHANGES> block. Do NOT describe what you plan to do. Do NOT say "I need to..." or "I can see...". Just do it.
@@ -47,14 +110,15 @@ Done. FAQPage JSON-LD is now in the <head>, which tells Google to show expandabl
 
 2. CONVERSATION ONLY (genuine clarification needed, nothing to change): Respond naturally — no <CHANGES> block. Only use this when you truly cannot make the change without more info.
 
-DIFF RULES — HTML is MINIFIED (whitespace stripped, tags joined with "><"):
+DIFF RULES — HTML is MINIFIED (whitespace collapsed, tags joined with "><"):
 - "f" must be EXACT verbatim — copy character-for-character from the HTML shown
 - Tags are joined: "</section><footer" not "</section> <footer"
-- CSS values have no spaces: "color:#fff" not "color: #fff"
+- CSS in <style> blocks: whitespace is collapsed to single spaces/newlines, colons KEEP their space — e.g. "color: #fff;" not "color:#fff;" and " margin-left: auto;" not "margin-left:auto;"
+- Inline style attributes also keep spaces: style="color: #fff; padding: 20px;"
 - Make each "f" 40-100 chars — unique enough to match exactly once
 - Minimum ops — one op per logical change
 - To add before footer: f="</section><footer", r="[new html]</section><footer"
-- To change a colour: f="background-color:#abc123", r="background-color:#newval"
+- To change a CSS value: copy the EXACT text including spaces — f=" color: #abc123;" r=" color: #newval;"
 - NEVER wrap <CHANGES> in backticks or markdown
 - Never use em dashes (—) in any copy you write. Use a comma, colon, or rewrite instead.
 
@@ -181,7 +245,7 @@ export async function POST(req: NextRequest) {
     const priorMessages = (history as Array<{ role: string; content: string }>)
       .filter(m => (m.role === "user" || m.role === "assistant") && m.content)
       .slice(-8)
-      .map(m => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 400) }));
+      .map(m => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 2000) }));
 
     // Current turn: instruction + fetched URL content + fresh HTML
     const currentText = `Instruction: ${instruction?.trim() || "Apply the uploaded image to the site (use as logo or hero background)"}
@@ -225,9 +289,27 @@ ${minHtml}`;
             const clean = changesMatch[1].trim().replace(/^```json?\n?/i, "").replace(/```\s*$/i, "").trim();
             const diff = JSON.parse(clean) as Array<{ f: string; r: string }>;
             if (Array.isArray(diff) && diff.length > 0) {
-              const { result, applied } = applyDiff(minHtml, diff);
+              let { result, applied } = applyDiff(minHtml, diff);
               opsApplied = applied;
-              if (applied > 0) {
+
+              // Self-correction: if some ops failed, let the AI try to fix their "f" strings
+              const failedOps = diff.filter(op => op.f && !minHtml.includes(op.f));
+              if (failedOps.length > 0) {
+                try {
+                  const correctedOps = await selfCorrect(failedOps, minHtml);
+                  if (correctedOps.length > 0) {
+                    const { result: result2, applied: applied2 } = applyDiff(result, correctedOps);
+                    if (applied2 > 0) {
+                      result = result2;
+                      opsApplied += applied2;
+                    }
+                  }
+                } catch (e) {
+                  console.error("[edit-self-correct]", e);
+                }
+              }
+
+              if (opsApplied > 0) {
                 let newHtml = result;
                 if (!newHtml.toLowerCase().includes("<!doctype")) {
                   newHtml = `<!DOCTYPE html>\n${newHtml}`;
