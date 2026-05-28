@@ -37,7 +37,7 @@ function normName(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-function toAttributedOrder(o: WooOrder, leadTimestamp?: string, matchMethod?: "email" | "name"): AttributedOrder {
+function toAttributedOrder(o: WooOrder, leadTimestamp?: string, matchMethod?: "email" | "name" | "account"): AttributedOrder {
   return {
     id:           o.id,
     number:       o.number || `#${o.id}`,
