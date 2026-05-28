@@ -30,6 +30,21 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "28 May 2026",
+    entries: [
+      { time: "17:30", tag: "NEW", title: "Rex dashboard redesigned — Kelly-style layout with SVG multi-series line chart (Conversations, Engaged, Leads), funnel section showing 30-day conversion rates, and rate cards for Engagement Rate and Lead Rate" },
+      { time: "17:25", tag: "NEW", title: "Conversation and engagement tracking — Rex now counts every chat session started and every conversation that reaches 3+ messages; data feeds the daily activity chart" },
+      { time: "15:10", tag: "NEW", title: "Backfill WooCommerce customer tags for all 500 stored Rex leads — 2 accounts found and tagged with _rex_lead_date metadata" },
+      { time: "14:50", tag: "NEW", title: "WooCommerce customer tagging at lead capture — Rex now writes _rex_lead_date to the customer's WooCommerce account and caches their customer_id in Redis for durable revenue attribution that survives Redis flushes" },
+      { time: "14:20", tag: "FIX", title: "Expand Rex lead retention from 100 to 500 stored leads; replace misleading attribution coverage text with honest explanation of the 500-lead window" },
+      { time: "13:45", tag: "NEW", title: "Rex dashboard Revenue tab — lifetime stats strip showing all-time quoted pipeline, average quote value, and 12-month WooCommerce attribution window" },
+      { time: "13:10", tag: "FIX", title: "Strict attribution rules — Rex only gets credit for orders placed after a conversation happened; orders pre-dating Rex's existence cannot be attributed" },
+      { time: "12:30", tag: "NEW", title: "Three-signal revenue attribution — email hash match (high confidence), full-name fallback (catches different checkout emails), and WooCommerce account match (most reliable for repeat B2B buyers)" },
+      { time: "11:50", tag: "FIX", title: "Fix false attribution spike — cleared polluted Redis sets from an overly broad Pipedrive sync that pulled 10,362 non-Rex contacts; scoped sync to Rex pipeline and conversation records only" },
+      { time: "11:00", tag: "NEW", title: "Persistent lead timestamp maps in Redis — email hash and name mapped to conversation ISO timestamp for accurate post-date attribution checks across dashboard reloads" },
+    ],
+  },
+  {
     date: "19 May 2026",
     entries: [
       { time: "09:25", tag: "FIX", title: "Rex can now quote 3mm coloured acrylic — basic colour names (blue, red, green, yellow, orange, purple, pink) now route to the generic standard-coloured acrylic row ($111.46/m² CTS, $158 full sheet) instead of returning 'not found'; premium tints (sky blue, night blue, marine green, fluoro) still match their specific rows" },
