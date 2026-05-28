@@ -36,6 +36,17 @@ function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+// Routes questions/opinions to the conversation endpoint, edit commands to the edit endpoint.
+// Defaults to conversation (chat) when intent is ambiguous — safer than accidentally editing.
+function isEditIntent(msg: string): boolean {
+  const t = msg.trim();
+  // Explicit questions → always chat
+  if (/^(what|how|why|which|can you|could you|do you|does|is |are |should|would|tell me|explain|describe|help me|what if|what about|what do you think|what would)/i.test(t)) return false;
+  if (t.endsWith("?")) return false;
+  // Action verbs → edit
+  return /\b(change|update|add|remove|delete|make|fix|move|replace|set|edit|create|insert|inject|adjust|resize|recolor|rewrite|redesign|switch|swap|rename|hide|show|align|darken|lighten|bigger|smaller|bolder|bold|italic|center|left-align|right-align|increase|decrease|restructure|rebuild|redo)\b/i.test(t);
+}
+
 function renderInline(text: string): string {
   return text
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -280,6 +291,7 @@ export default function SiteFactoryClient() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [instruction, setInstruction] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [editPhase, setEditPhase] = useState<"idle" | "looking" | "streaming" | "applying" | "done">("idle");
   const [queued, setQueued] = useState<{ instruction: string; imageUrl?: string } | null>(null);
   const seoEditPendingRef = useRef(false);
   const [previewHtml, setPreviewHtml] = useState("");
@@ -645,7 +657,12 @@ export default function SiteFactoryClient() {
     setUploading(false);
   }
 
-  function handleSendOrQueue() {
+  // Kept as an alias so existing onKeyDown and button onClick refs still work
+  function handleSendOrQueue() { handleSend(); }
+
+  // Dispatches the main chat input to the right endpoint based on intent.
+  // Callers that always want edit mode (SEO fixes, suggestion chips, image ops) call sendEdit() directly.
+  function handleSend() {
     const text = instruction.trim();
     const imageUrl = pendingImage?.url;
     if (!text && !imageUrl) return;
@@ -653,8 +670,107 @@ export default function SiteFactoryClient() {
       setQueued({ instruction: text, imageUrl });
       setInstruction("");
       setPendingImage(null);
-    } else {
+      return;
+    }
+    // Images always go to edit route; text is routed by intent
+    if (imageUrl || isEditIntent(text)) {
       sendEdit();
+    } else {
+      sendConverse();
+    }
+  }
+
+  // Pure conversation — no HTML changes, no diff format. Fast, unconstrained Claude.
+  async function sendConverse() {
+    const text = instruction.trim();
+    if (!text || !activeSite || isEditing) return;
+
+    const userMsg: Message = { role: "user", content: text, ts: Date.now() };
+    const historyForApi = [...messages];
+    setMessages([...messages, userMsg]);
+    setInstruction("");
+    setIsEditing(true);
+    setEditPhase("looking");
+
+    const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
+    const withAssistant = [...messages, userMsg, assistantMsg];
+    setMessages(withAssistant);
+
+    try {
+      const res = await fetch("/api/site-factory/converse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: activeSite.slug,
+          siteName: activeSite.name,
+          niche: NICHES.find(n => n.value === activeSite.niche)?.label ?? activeSite.niche,
+          message: text,
+          history: historyForApi.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+      let firstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        fullText += decoder.decode(value, { stream: true });
+        if (firstChunk && fullText.trim()) { firstChunk = false; setEditPhase("streaming"); }
+
+        const displayText = fullText
+          .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
+          .replace(/<RESULT>[\s\S]*$/g, "")
+          .trim();
+
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: displayText };
+          return updated;
+        });
+      }
+
+      const finalText = fullText
+        .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
+        .trim();
+
+      const finalMsgs = withAssistant.map((m, i) =>
+        i === withAssistant.length - 1 ? { ...m, content: finalText } : m
+      );
+      setMessages(finalMsgs);
+      storeMsgs(activeSite.slug, finalMsgs);
+
+      // Suggestions after conversation turns too
+      const slugForSugg = activeSite.slug;
+      fetch("/api/site-factory/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lastInstruction: text, siteName: activeSite.name, niche: activeSite.niche, history: finalMsgs }),
+      }).then(r => r.json()).then(({ suggestions }) => {
+        if (!Array.isArray(suggestions) || suggestions.length === 0) return;
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (updated[lastIdx]?.role === "assistant" && activeSite?.slug === slugForSugg) {
+            updated[lastIdx] = { ...updated[lastIdx], suggestions };
+          }
+          return updated;
+        });
+      }).catch(() => {});
+
+    } catch (err) {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { ...updated[updated.length - 1], content: "Something went wrong. Try again." };
+        return updated;
+      });
+    } finally {
+      setIsEditing(false);
+      setEditPhase("idle");
     }
   }
 
@@ -672,6 +788,7 @@ export default function SiteFactoryClient() {
     if (overrideText === undefined) setInstruction("");
     if (overrideImageUrl === undefined) setPendingImage(null);
     setIsEditing(true);
+    setEditPhase("looking");
 
     // Start with empty streaming message
     const assistantMsg: Message = { role: "assistant", content: "", ts: Date.now() };
@@ -700,6 +817,7 @@ export default function SiteFactoryClient() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
+      let firstChunk = true;
 
       // Stream chunks — update message in real-time (strip internal markers from display)
       while (true) {
@@ -707,9 +825,21 @@ export default function SiteFactoryClient() {
         if (done) break;
         fullText += decoder.decode(value, { stream: true });
 
+        // Transition from "looking" to "streaming" on first real text
+        if (firstChunk) {
+          const visibleSoFar = fullText
+            .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
+            .replace(/<SECTION_REWRITE>[\s\S]*?<\/SECTION_REWRITE>/g, "")
+            .replace(/<[A-Z_]+>[\s\S]*$/g, "")
+            .trim();
+          if (visibleSoFar.length > 0) { firstChunk = false; setEditPhase("streaming"); }
+        }
+
         const displayText = fullText
           .replace(/<CHANGES>[\s\S]*?<\/CHANGES>/g, "")
           .replace(/<CHANGES>[\s\S]*$/g, "")
+          .replace(/<SECTION_REWRITE>[\s\S]*?<\/SECTION_REWRITE>/g, "")
+          .replace(/<SECTION_REWRITE>[\s\S]*$/g, "")
           .replace(/<HTML>[A-Za-z0-9+/=]*<\/HTML>/g, "")
           .replace(/<HTML>[A-Za-z0-9+/=]*$/g, "")
           .replace(/<RESULT>[\s\S]*?<\/RESULT>/g, "")
@@ -722,6 +852,8 @@ export default function SiteFactoryClient() {
           return updated;
         });
       }
+
+      setEditPhase("applying");
 
       // Parse result marker
       const resultMatch = fullText.match(/<RESULT>(.*?)<\/RESULT>/);
@@ -813,8 +945,10 @@ export default function SiteFactoryClient() {
         updated[updated.length - 1] = { ...updated[updated.length - 1], content: String(e) };
         return updated;
       });
+    } finally {
+      setIsEditing(false);
+      setEditPhase("idle");
     }
-    setIsEditing(false);
   }
 
   function restoreLocalVersion(html: string, idx: number) {
@@ -1522,7 +1656,7 @@ export default function SiteFactoryClient() {
             </div>
           )}
         </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}`}</style>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}@keyframes sf-pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}`}</style>
       </div>
     );
   }
@@ -2383,7 +2517,16 @@ export default function SiteFactoryClient() {
                         <div style={{ maxWidth: "88%", padding: "8px 12px", borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px", background: msg.role === "user" ? C.gold : C.surface2, color: msg.role === "user" ? "#000" : C.text, fontSize: 13, lineHeight: 1.55, fontWeight: msg.role === "user" ? 500 : 400 }}>
                           {msg.role === "user"
                             ? msg.content
-                            : <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} style={{ minWidth: 0 }} />
+                            : msg.content
+                              ? <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} style={{ minWidth: 0 }} />
+                              : editPhase === "looking"
+                                ? <span style={{ display: "flex", alignItems: "center", gap: 6, color: C.textDim }}>
+                                    <span style={{ display: "inline-flex", gap: 3 }}>
+                                      {[0,1,2].map(d => <span key={d} style={{ width: 5, height: 5, borderRadius: "50%", background: C.textMuted, display: "inline-block", animation: `sf-pulse 1.2s ease-in-out ${d * 0.2}s infinite` }} />)}
+                                    </span>
+                                    <span style={{ fontSize: 12 }}>Looking at your site...</span>
+                                  </span>
+                                : <span style={{ color: C.textMuted, fontSize: 12 }}>...</span>
                           }
                         </div>
                         {msg.htmlSnapshot && versions.current.includes(msg.htmlSnapshot) && (
@@ -2411,6 +2554,12 @@ export default function SiteFactoryClient() {
 
                   {/* Input area */}
                   <div style={{ padding: "10px 12px", borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+                    {editPhase === "applying" && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "5px 10px", background: "rgba(8,145,178,0.08)", borderRadius: 6, border: `1px solid rgba(8,145,178,0.3)` }}>
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.teal, display: "inline-block", animation: "pulse 1s ease-in-out infinite" }} />
+                        <span style={{ fontSize: 11, color: C.teal }}>Applying changes...</span>
+                      </div>
+                    )}
                     {queued && (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", background: C.goldBg, borderRadius: 6, border: `1px solid ${C.gold}` }}>
                         <span style={{ fontSize: 13 }}>⏳</span>
@@ -2592,7 +2741,7 @@ export default function SiteFactoryClient() {
             )}
           </div>
         </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}`}</style>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}@keyframes toastIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}@keyframes sf-pulse{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}`}</style>
       </div>
     );
   }

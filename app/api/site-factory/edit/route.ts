@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { streamText, generateText } from "ai";
 import { getPremiumModel } from "../../../../lib/chat-config";
+import { buildDesignerPersona } from "../../../../lib/site-factory-prompt";
 import { put, list } from "@vercel/blob";
 
 export const runtime = "nodejs";
@@ -27,6 +28,28 @@ function applyDiff(html: string, diff: Array<{ f: string; r: string }>): { resul
     }
   }
   return { result, applied };
+}
+
+// Replace an entire <section> identified by id or first class with new HTML
+function applySection(html: string, sectionHtml: string): { result: string; applied: boolean } {
+  const idMatch = sectionHtml.match(/<section[^>]+\bid="([^"]+)"/i);
+  if (idMatch) {
+    const id = idMatch[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`<section[^>]+\\bid="${id}"[\\s\\S]*?<\\/section>`, "i");
+    if (regex.test(html)) {
+      return { result: html.replace(regex, sectionHtml.trim()), applied: true };
+    }
+  }
+  // Fallback: match by first class token
+  const classMatch = sectionHtml.match(/<section[^>]+\bclass="([^"]+)"/i);
+  if (classMatch) {
+    const firstClass = classMatch[1].split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`<section[^>]+\\bclass="${firstClass}[\\s"'][\\s\\S]*?<\\/section>`, "i");
+    if (regex.test(html)) {
+      return { result: html.replace(regex, sectionHtml.trim()), applied: true };
+    }
+  }
+  return { result: html, applied: false };
 }
 
 // Find snippets in html that contain key words from failedF, to help AI self-correct
@@ -93,51 +116,24 @@ Rules:
 }
 
 function buildSystemPrompt(siteName?: string, niche?: string): string {
-  const siteContext = siteName
-    ? `You are working on ${siteName}${niche ? `, a ${niche} business` : ""}.`
-    : "You are working on this website.";
-
-  return `You are a world-class web designer and digital marketer. You have 15+ years turning ordinary websites into businesses that grow. Your work sits at the intersection of design, conversion optimisation, and brand storytelling. You have worked with everyone from local trades to global brands.
-
-${siteContext} Treat this as a real client engagement — you care about their results, not just their approval.
-
-Your character:
-- Confident and direct. You don't hedge everything with "it depends" — you have a point of view and you give it
-- Outcome-obsessed: every design decision connects to a business result (trust, conversions, clarity, retention)
-- Genuinely curious about the client's goals. You ask about their customers, not just their colour palette
-- Noticeably smart about copy. You know that "Book a Free Consultation" outperforms "Contact Us" by miles
-- Willing to push back. If something will hurt performance, you say so and explain why
-- You spot problems the client hasn't noticed yet, and you mention them even when not asked
-
-What you know at expert level:
-- **Conversion:** above-the-fold clarity, CTA hierarchy, reducing friction, landing page structure, trust signals
-- **Copywriting:** value-proposition headlines, benefit-led body copy, CTAs that actually get clicked, social proof placement
-- **Visual design:** typography as voice, whitespace as tool, colour contrast, visual hierarchy, negative space
-- **Marketing psychology:** what builds trust fast, scarcity and urgency when authentic, the role of specificity in credibility
-- **Local and service businesses:** what clients in ${niche ?? "this industry"} actually need to convert — it is not the same as e-commerce
-- **SEO:** heading structure, meta copy, structured data, page speed fundamentals
-- **Mobile-first:** most traffic is on phones — you call out anything that breaks or weakens on small screens
-
-How you communicate:
-- Lead with the business impact, then the fix: "Your hero headline is generic — nobody knows what you do. Change it to something specific and you will cut your bounce rate."
-- When asked what to improve: give your three highest-impact recommendations, ranked by ROI not effort
-- Use markdown naturally: **bold** key terms, use bullets for options, keep paragraphs short
-- Be conversational and real — like a brilliant colleague, not a corporate tool
-- Never open with filler ("Certainly!", "Great question!", "Of course!") — just say the thing
-- No em dashes in your writing. Use a comma, colon, or rewrite the sentence
+  return buildDesignerPersona(siteName, niche) + `
 
 ---
 
-MAKING CHANGES:
-When the client asks you to change, update, add, fix, or remove anything — act immediately. No preamble. Use this format:
+EXECUTION MODE — you are here to make changes. When the client asks you to change, update, add, fix, remove, or restructure anything — act immediately.
 
-[One sentence: what you are doing, present tense, specific]
-<CHANGES>[{"f":"...","r":"..."}]</CHANGES>
-[Confirm it is done. Say why it is better for the business in one or two sentences.]
+Before every change block, write **one sentence** stating exactly what you are changing and why it will improve the site. Then the change block. Then one or two sentences confirming it is done and the specific benefit.
 
 If you notice a related issue worth flagging, mention it after the confirmation — but do not make uninstructed changes.
 
 ---
+
+FOR SMALL CHANGES — text, colours, single CSS values, attribute swaps:
+Use <CHANGES> with exact string matching.
+
+[One sentence: what you are doing and why]
+<CHANGES>[{"f":"...","r":"..."}]</CHANGES>
+[Confirmation + business benefit]
 
 DIFF RULES — the HTML you receive is MINIFIED (whitespace collapsed, tags joined with "><"):
 - "f" must be EXACT verbatim — copy character-for-character from the HTML shown
@@ -147,10 +143,31 @@ DIFF RULES — the HTML you receive is MINIFIED (whitespace collapsed, tags join
 - Each "f" should be 40-100 chars — unique enough to match exactly once
 - One op per logical change
 - NEVER wrap <CHANGES> in backticks or markdown fences
+- CRITICAL: Before writing any "f", verify it exists verbatim in the HTML. If you cannot find it, ask — do not guess. A wrong "f" silently fails.
 
-ANIMATED COUNTERS: Count-up numbers use data-target="200" — edit the attribute, not the visible text.
+---
 
-CRITICAL: Before writing any "f", verify it exists verbatim in the HTML. If you cannot find it, ask rather than guess. A wrong "f" silently fails.`;
+FOR STRUCTURAL CHANGES — layout restructures, adding/removing elements, significant redesign of a section:
+Use <SECTION_REWRITE> instead of <CHANGES>. Write clean, well-formatted (not minified) HTML for the entire section.
+
+[One sentence: what you are restructuring and why]
+<SECTION_REWRITE>
+<section id="hero" class="...">
+  ...complete new HTML for the section...
+</section>
+</SECTION_REWRITE>
+[Confirmation + benefit]
+
+SECTION_REWRITE rules:
+- The section must have the same id attribute as the one in the current site (used to locate it)
+- Preserve ALL existing class names referenced by the CSS — the stylesheet stays unchanged
+- Preserve all data-* attributes used by JavaScript (counters, animations, etc.)
+- Write clean, readable HTML — not minified
+- Use SECTION_REWRITE for big changes; use CHANGES for small ones. Don't use both in the same response.
+
+---
+
+ANIMATED COUNTERS: Count-up numbers use data-target="200" — edit the attribute, not the visible text.`;
 }
 
 // Fetch a URL and return its visible text content (strips tags, collapses whitespace)
@@ -304,9 +321,11 @@ ${minHtml}`;
           try { controller.enqueue(encoder.encode(value)); } catch { /* client disconnected */ }
         }
 
-        // Extract and apply diff after stream completes
+        // Extract and apply changes after stream completes
         let opsApplied = 0;
         let updatedHtml: string | null = null;
+
+        // Path A: <CHANGES> diff ops (small changes — exact string replacement on minified HTML)
         const changesMatch = fullText.match(/<CHANGES>([\s\S]*?)<\/CHANGES>/);
         if (changesMatch) {
           try {
@@ -316,39 +335,46 @@ ${minHtml}`;
               let { result, applied } = applyDiff(minHtml, diff);
               opsApplied = applied;
 
-              // Self-correction: if some ops failed, let the AI try to fix their "f" strings
+              // Self-correction: retry failed ops with nearest-match hints
               const failedOps = diff.filter(op => op.f && !minHtml.includes(op.f));
               if (failedOps.length > 0) {
                 try {
                   const correctedOps = await selfCorrect(failedOps, minHtml);
                   if (correctedOps.length > 0) {
                     const { result: result2, applied: applied2 } = applyDiff(result, correctedOps);
-                    if (applied2 > 0) {
-                      result = result2;
-                      opsApplied += applied2;
-                    }
+                    if (applied2 > 0) { result = result2; opsApplied += applied2; }
                   }
-                } catch (e) {
-                  console.error("[edit-self-correct]", e);
-                }
+                } catch (e) { console.error("[edit-self-correct]", e); }
               }
 
               if (opsApplied > 0) {
                 let newHtml = result;
-                if (!newHtml.toLowerCase().includes("<!doctype")) {
-                  newHtml = `<!DOCTYPE html>\n${newHtml}`;
-                }
-                await put(`sites/${slug}/draft.html`, newHtml, {
-                  access: "public",
-                  contentType: "text/html",
-                  addRandomSuffix: false,
-                  allowOverwrite: true,
-                });
+                if (!newHtml.toLowerCase().includes("<!doctype")) newHtml = `<!DOCTYPE html>\n${newHtml}`;
+                await put(`sites/${slug}/draft.html`, newHtml, { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
                 updatedHtml = newHtml;
               }
             }
           } catch (e) {
             console.error("[edit-diff] parse error:", e, "\nraw:", changesMatch[1].slice(0, 300));
+          }
+        }
+
+        // Path B: <SECTION_REWRITE> (structural changes — replaces whole section by id/class on original HTML)
+        if (opsApplied === 0) {
+          const sectionMatch = fullText.match(/<SECTION_REWRITE>([\s\S]*?)<\/SECTION_REWRITE>/);
+          if (sectionMatch) {
+            try {
+              const { result, applied } = applySection(originalHtml, sectionMatch[1].trim());
+              if (applied) {
+                opsApplied = 1;
+                let newHtml = result;
+                if (!newHtml.toLowerCase().includes("<!doctype")) newHtml = `<!DOCTYPE html>\n${newHtml}`;
+                await put(`sites/${slug}/draft.html`, newHtml, { access: "public", contentType: "text/html", addRandomSuffix: false, allowOverwrite: true });
+                updatedHtml = newHtml;
+              }
+            } catch (e) {
+              console.error("[edit-section-rewrite]", e);
+            }
           }
         }
 

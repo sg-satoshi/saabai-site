@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "28 May 2026",
     entries: [
+      { time: "23:11", tag: "NEW", title: "Site Factory designer persona — world-class web designer + marketer" },
       { time: "23:05", tag: "NEW", title: "Site Factory chat overhaul — markdown rendering + real AI persona" }
     ],
   },
