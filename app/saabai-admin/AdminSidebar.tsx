@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 
 const C = {
-  bg:      "#07091a",
+  bg:      "#f5f5f7",
   sidebar: "#06081a",
   border:  "rgba(255,255,255,0.07)",
   gold:    "#C9A84C",
