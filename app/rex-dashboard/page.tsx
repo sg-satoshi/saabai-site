@@ -49,7 +49,7 @@ function toAttributedOrder(o: WooOrder, leadTimestamp?: string): AttributedOrder
 export default async function RexDashboardPage() {
   const [stats, orders] = await Promise.all([
     fetchRexStats(),
-    fetchRecentOrders(60),
+    fetchRecentOrders(365),
   ]);
 
   // Build a map: emailHash → lead timestamp (for leads that have a hash)
@@ -71,6 +71,7 @@ export default async function RexDashboardPage() {
 
   // Find earliest lead with a hash (attribution tracking start date)
   const trackingFrom = stats.recentLeads.find(l => l.emailHash)?.timestamp ?? null;
+  // Note: email hash matching is limited to last 100 leads in Redis
 
   const attribution: AttributionStats = {
     totalOrders:       allOrders.length,

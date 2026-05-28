@@ -364,7 +364,7 @@ function LeadsTable({ leads, onSelect }: { leads: LeadEvent[]; onSelect: (lead: 
 
 // ── Revenue Tab ───────────────────────────────────────────────────────────────
 
-function RevenueTab({ attribution }: { attribution: AttributionStats }) {
+function RevenueTab({ attribution, stats }: { attribution: AttributionStats; stats: RexStats }) {
   const fmt = (n: number) =>
     `$${n.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
@@ -377,13 +377,35 @@ function RevenueTab({ attribution }: { attribution: AttributionStats }) {
 
   return (
     <div>
+      {/* Lifetime stats strip */}
+      <div style={{ marginBottom: 8 }}>
+        <p style={{ ...T.label, margin: "0 0 12px" }}>Lifetime — All Time</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+        {[
+          { label: "Total Leads",          value: String(stats.total),                                         sub: "all Rex conversations with a quote",  accent: false },
+          { label: "Total Quoted Pipeline", value: stats.totalQuotedRevenue > 0 ? fmt(stats.totalQuotedRevenue) : "—", sub: "sum of all Rex quote values, ex GST",   accent: true  },
+          { label: "Avg Quote Value",       value: stats.avgPrice > 0 ? fmt(stats.avgPrice) : "—",             sub: "across all priced leads",            accent: false },
+          { label: "Deals Converted (12m)", value: hasAttribution ? String(attribution.attributedOrders) : "—", sub: hasAttribution ? `${fmt(attribution.attributedRevenue)} matched revenue` : "No matches yet — tracking recent leads", accent: hasAttribution },
+        ].map(({ label, value, sub, accent }) => (
+          <div key={label} style={{ ...T.card, padding: "20px 24px", borderTop: `3px solid ${accent ? "#e13f00" : "#e5e7eb"}` }}>
+            <p style={{ ...T.label, margin: "0 0 8px" }}>{label}</p>
+            <p style={{ margin: "0 0 4px", fontSize: 30, fontWeight: 800, color: accent ? "#e13f00" : "#111827", letterSpacing: -1, lineHeight: 1 }}>{value}</p>
+            <p style={{ ...T.muted, margin: 0 }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ borderTop: "1px solid #e5e7eb", marginBottom: 24 }} />
+      <p style={{ ...T.label, margin: "0 0 12px" }}>12-Month Attribution Window</p>
+
       {/* Stats strip */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
         {[
-          { label: "WooCommerce Orders (60d)", value: String(attribution.totalOrders),       sub: `${fmt(attribution.totalRevenue)} revenue` },
+          { label: "WooCommerce Orders (12m)", value: String(attribution.totalOrders),       sub: `${fmt(attribution.totalRevenue)} revenue` },
           { label: "Rex-Attributed Orders",    value: String(attribution.attributedOrders),  sub: hasAttribution ? `${fmt(attribution.attributedRevenue)} revenue` : "No matches yet", accent: hasAttribution },
           { label: "Attribution Rate",          value: hasOrders ? `${conversionRate}%` : "—", sub: "of orders matched to a Rex lead" },
-          { label: "Rex Revenue Impact",        value: hasAttribution ? fmt(attribution.attributedRevenue) : "—", sub: "ex GST, last 60 days", accent: hasAttribution },
+          { label: "Rex Revenue Impact",        value: hasAttribution ? fmt(attribution.attributedRevenue) : "—", sub: "ex GST, last 12 months", accent: hasAttribution },
         ].map(({ label, value, sub, accent }) => (
           <div key={label} style={{ ...T.card, padding: "20px 24px", borderTop: `3px solid ${accent ? "#e13f00" : "#e5e7eb"}` }}>
             <p style={{ ...T.label, margin: "0 0 8px" }}>{label}</p>
@@ -397,7 +419,7 @@ function RevenueTab({ attribution }: { attribution: AttributionStats }) {
       {!attribution.trackingFrom && (
         <div style={{ ...T.card, padding: "20px 24px", marginBottom: 20, borderLeft: "3px solid #f59e0b", borderRadius: "0 16px 16px 0" }}>
           <p style={{ ...T.heading, margin: "0 0 4px" }}>Attribution tracking just activated</p>
-          <p style={{ ...T.muted, margin: 0 }}>Email hashes are now stored with every new Rex lead. Matched orders will appear here as leads convert. Historical leads can&apos;t be matched retroactively.</p>
+          <p style={{ ...T.muted, margin: 0 }}>Email hashes are now stored with every new Rex lead. Matched orders will appear here as leads convert over the next 12 months. Historical leads before tracking was enabled can&apos;t be matched retroactively.</p>
         </div>
       )}
       {attribution.trackingFrom && !hasAttribution && (
@@ -445,7 +467,7 @@ function RevenueTab({ attribution }: { attribution: AttributionStats }) {
       {/* All WooCommerce orders */}
       {hasOrders && (
         <div style={{ marginTop: 20 }}>
-          <Section title={`All WooCommerce Orders — Last 60 Days (${attribution.totalOrders})`}>
+          <Section title={`All WooCommerce Orders — Last 12 Months (${attribution.totalOrders})`}>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
@@ -1044,7 +1066,7 @@ export default function DashboardClient({ stats, attribution }: { stats: RexStat
 
         {/* ── Revenue tab ── */}
         {tab === "revenue" && (
-          <RevenueTab attribution={attribution} />
+          <RevenueTab attribution={attribution} stats={stats} />
         )}
 
         {/* ── Feedback tab ── */}

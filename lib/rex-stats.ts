@@ -85,6 +85,7 @@ export interface RexStats {
   withEmail: number;
   withPrice: number;
   avgPrice: number;
+  totalQuotedRevenue: number; // all-time sum of every Rex quote value
   materials: Record<string, number>;
   despatch: Record<string, number>;
   sources: Record<string, number>;
@@ -196,7 +197,7 @@ export async function fetchRexStats(): Promise<RexStats> {
   const redis = getRedis();
 
   const empty: RexStats = {
-    total: 0, withEmail: 0, withPrice: 0, avgPrice: 0,
+    total: 0, withEmail: 0, withPrice: 0, avgPrice: 0, totalQuotedRevenue: 0,
     materials: {}, despatch: {}, sources: {},
     dailyCounts: buildEmptyDays(),
     recentLeads: [],
@@ -251,6 +252,7 @@ export async function fetchRexStats(): Promise<RexStats> {
       withEmail: emailVal,
       withPrice: priceVal,
       avgPrice,
+      totalQuotedRevenue: Math.round(priceSumVal),
       materials: materials ?? {},
       despatch:  despatch  ?? {},
       sources:   sources   ?? {},
