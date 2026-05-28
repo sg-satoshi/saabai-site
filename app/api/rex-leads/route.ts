@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
 import { getRexAnthropic } from "../../../lib/chat-config";
-import { trackLead, storeTranscript, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+import { trackLead, storeTranscript, storeWooCustomer, extractMaterial, parsePriceValue } from "../../../lib/rex-stats";
+import { tagRexLead } from "../../../lib/woo-client";
 
 const rexAnthropic = getRexAnthropic("leads");
 import { trackResponseTime } from "../rex-analytics/realtime/route";
@@ -917,6 +918,15 @@ export async function POST(req: Request) {
       storeTranscript(leadTs, messages.filter((m: { role: string; content: string }) =>
         m.role === "user" || m.role === "assistant"
       )).catch(() => {});
+    }
+
+    // Tag the WooCommerce customer account (if one exists for this email) with the Rex lead date.
+    // Stores customer_id → timestamp in Redis so attribution survives Redis flushes.
+    // Fire-and-forget — never blocks the lead capture response.
+    if (email) {
+      tagRexLead(email, leadTs).then(customerId => {
+        if (customerId) storeWooCustomer(customerId, leadTs).catch(() => {});
+      }).catch(() => {});
     }
 
     // Auto-create Pipedrive deal for priority leads (>= $200) — fire and forget

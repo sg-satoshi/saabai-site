@@ -16,7 +16,7 @@ export interface AttributedOrder {
   currency: string;
   items: string[];
   leadTimestamp?: string; // matched Rex lead timestamp
-  matchMethod?: "email" | "name"; // how the attribution was established
+  matchMethod?: "email" | "name" | "account"; // how the attribution was established
 }
 
 export interface AttributionStats {
@@ -99,6 +99,15 @@ export default async function RexDashboardPage() {
       const ts = nameTsMap[billingNorm];
       if (ts && orderDate >= new Date(ts)) {
         attributed.push(toAttributedOrder(o, ts, "name"));
+        continue;
+      }
+    }
+
+    // WooCommerce account match — links via customer_id (survives email changes, most reliable for repeat B2B buyers)
+    if (o.customer_id > 0) {
+      const ts = leadTs.byWooCustomerId[String(o.customer_id)];
+      if (ts && orderDate >= new Date(ts)) {
+        attributed.push(toAttributedOrder(o, ts, "account"));
       }
     }
   }

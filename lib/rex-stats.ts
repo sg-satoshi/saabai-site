@@ -29,8 +29,9 @@ const K = {
   recent:       "rex:list:recent",
   emailHashes:  "rex:set:email_hashes", // persistent set (legacy — kept for backfill only)
   leadNames:    "rex:set:lead_names",   // persistent set (legacy — kept for backfill only)
-  leadEmailTs:  "rex:hash:lead_email_ts", // emailHash → ISO conversation timestamp (authoritative)
-  leadNameTs:   "rex:hash:lead_name_ts",  // normalizedName → ISO conversation timestamp (fallback)
+  leadEmailTs:  "rex:hash:lead_email_ts",    // emailHash → ISO conversation timestamp (authoritative)
+  leadNameTs:   "rex:hash:lead_name_ts",     // normalizedName → ISO conversation timestamp (fallback)
+  wooCustomerTs: "rex:hash:woo_customer_ts", // WooCommerce customer_id → ISO timestamp (account match)
   feedbackHash: "rex:hash:feedback_items",
   feedbackIds:  "rex:list:feedback_ids",
   day:          (d: string) => `rex:day:${d}`,
@@ -329,23 +330,39 @@ function formatDayLabel(dateStr: string): string {
 // ── Lead timestamp maps for attribution ──────────────────────────────────────
 
 export interface LeadTimestamps {
-  byEmailHash: Record<string, string>; // SHA-256(email) → ISO conversation timestamp
-  byName:      Record<string, string>; // normalizedName → ISO conversation timestamp
+  byEmailHash:     Record<string, string>; // SHA-256(email) → ISO conversation timestamp
+  byName:          Record<string, string>; // normalizedName → ISO conversation timestamp
+  byWooCustomerId: Record<string, string>; // WooCommerce customer_id (string) → ISO timestamp
 }
 
 export async function fetchLeadTimestamps(): Promise<LeadTimestamps> {
   const redis = getRedis();
-  const empty: LeadTimestamps = { byEmailHash: {}, byName: {} };
+  const empty: LeadTimestamps = { byEmailHash: {}, byName: {}, byWooCustomerId: {} };
   if (!redis) return empty;
   try {
-    const [byEmailHash, byName] = await Promise.all([
+    const [byEmailHash, byName, byWooCustomerId] = await Promise.all([
       redis.hgetall<Record<string, string>>(K.leadEmailTs),
       redis.hgetall<Record<string, string>>(K.leadNameTs),
+      redis.hgetall<Record<string, string>>(K.wooCustomerTs),
     ]);
-    return { byEmailHash: byEmailHash ?? {}, byName: byName ?? {} };
+    return {
+      byEmailHash:     byEmailHash     ?? {},
+      byName:          byName          ?? {},
+      byWooCustomerId: byWooCustomerId ?? {},
+    };
   } catch {
     return empty;
   }
+}
+
+// Called after tagRexLead returns a WooCommerce customer_id —
+// caches the account → conversation timestamp for dashboard attribution lookups.
+export async function storeWooCustomer(customerId: number, timestamp: string): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    await redis.hset(K.wooCustomerTs, { [String(customerId)]: timestamp });
+  } catch { /* never throw */ }
 }
 
 // ── Feedback CRUD ─────────────────────────────────────────────────────────────

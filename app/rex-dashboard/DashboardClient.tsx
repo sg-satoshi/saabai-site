@@ -456,11 +456,11 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
                       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                         <span style={{
                           display: "inline-block",
-                          background: order.matchMethod === "name" ? "#fffbeb" : "#f0fdf4",
-                          color: order.matchMethod === "name" ? "#d97706" : "#059669",
+                          background: order.matchMethod === "name" ? "#fffbeb" : order.matchMethod === "account" ? "#eff6ff" : "#f0fdf4",
+                          color: order.matchMethod === "name" ? "#d97706" : order.matchMethod === "account" ? "#2563eb" : "#059669",
                           fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, whiteSpace: "nowrap",
                         }}>
-                          {order.matchMethod === "name" ? "Name match" : "Email match"}
+                          {order.matchMethod === "name" ? "Name match" : order.matchMethod === "account" ? "Account match" : "Email match"}
                         </span>
                         {order.leadTimestamp && (
                           <span style={{ fontSize: 11, color: "#9ca3af" }}>{timeAgo(order.leadTimestamp)}</span>
@@ -506,11 +506,11 @@ function RevenueTab({ attribution, stats }: { attribution: AttributionStats; sta
                         <td style={{ padding: "11px 12px 11px 0" }}>
                           {isAttributed
                             ? <span style={{
-                                background: match?.matchMethod === "name" ? "#fffbeb" : "#fff5f2",
-                                color: match?.matchMethod === "name" ? "#d97706" : "#e13f00",
+                                background: match?.matchMethod === "name" ? "#fffbeb" : match?.matchMethod === "account" ? "#eff6ff" : "#fff5f2",
+                                color: match?.matchMethod === "name" ? "#d97706" : match?.matchMethod === "account" ? "#2563eb" : "#e13f00",
                                 fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
                               }}>
-                                {match?.matchMethod === "name" ? "Rex (name)" : "Rex"}
+                                {match?.matchMethod === "name" ? "Rex (name)" : match?.matchMethod === "account" ? "Rex (acct)" : "Rex"}
                               </span>
                             : <span style={{ color: "#d1d5db", fontSize: 11 }}>—</span>
                           }

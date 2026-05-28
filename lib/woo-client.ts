@@ -76,6 +76,7 @@ export interface WooOrder {
   status: string;
   total: string;
   currency: string;
+  customer_id: number;  // 0 for guest checkout
   billing: {
     first_name: string;
     last_name: string;
@@ -83,6 +84,36 @@ export interface WooOrder {
   };
   line_items: Array<{ name: string; quantity: number; total: string }>;
   meta_data: Array<{ key: string; value: unknown }>;
+}
+
+// Tags a WooCommerce customer with their Rex conversation date.
+// Called fire-and-forget at lead capture time so attribution survives Redis flushes.
+// Returns the WooCommerce customer_id if found and tagged, null otherwise.
+// Safe to call multiple times — first Rex contact wins (existing tag is not overwritten).
+export async function tagRexLead(email: string, leadTimestamp: string): Promise<number | null> {
+  try {
+    if (!WOO_URL || !WOO_KEY || !WOO_SECRET) return null;
+    const searchRes = await fetch(
+      `${WOO_URL}/wp-json/wc/v3/customers?email=${encodeURIComponent(email)}&role=all`,
+      { headers: { Authorization: auth() } }
+    );
+    if (!searchRes.ok) return null;
+    const customers = await searchRes.json() as any[];
+    const customer = customers[0];
+    if (!customer?.id) return null; // no WooCommerce account for this email yet
+    // Don't overwrite an existing tag — first Rex contact wins
+    const alreadyTagged = (customer.meta_data ?? []).some((m: any) => m.key === "_rex_lead_date");
+    if (alreadyTagged) return customer.id as number;
+    // Write the tag
+    const updateRes = await fetch(`${WOO_URL}/wp-json/wc/v3/customers/${customer.id}`, {
+      method: "PUT",
+      headers: { Authorization: auth(), "Content-Type": "application/json" },
+      body: JSON.stringify({ meta_data: [{ key: "_rex_lead_date", value: leadTimestamp }] }),
+    });
+    return updateRes.ok ? customer.id as number : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchRecentOrders(days = 60): Promise<WooOrder[]> {
