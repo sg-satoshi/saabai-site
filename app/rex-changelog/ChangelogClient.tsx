@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 May 2026",
     entries: [
+      { time: "06:38", tag: "FIX", title: "Strip back site generation — inject exact CSS vars, fonts, image fallbacks" },
       { time: "06:11", tag: "NEW", title: "Site Factory — Lovable-grade AI chat architecture" }
     ],
   },
