@@ -1039,7 +1039,10 @@ function buildResult(unitPrice: number, qty: number, note: string, url: string):
 
 // ── Sheet Pricing ──────────────────────────────────────────────────────────────
 
-function calcStandardSheet(row: SheetRow, width: number, height: number): { unitPrice: number; note: string } | null {
+// capAtFullSheet: true only for materials where the knowledge base explicitly requires it
+// (mirror acrylic, prismatic). Standard acrylic, PC, and HDPE do NOT cap — PLON's CTS
+// calculator charges ctsRate × area regardless of whether it exceeds the full-sheet price.
+function calcStandardSheet(row: SheetRow, width: number, height: number, capAtFullSheet = false): { unitPrice: number; note: string } | null {
   if (!fits(width, height, row.sheetW, row.sheetH)) return null; // doesn't fit
   if (!row.ctsRate) return { unitPrice: row.fullSheetPrice, note: "full sheet only" };
   // If dimensions exactly match the full sheet (either orientation) — no cutting, no fee
@@ -1047,7 +1050,7 @@ function calcStandardSheet(row: SheetRow, width: number, height: number): { unit
   if (isFullSheet) return { unitPrice: row.fullSheetPrice, note: "full sheet" };
   const area = (width / 1000) * (height / 1000);
   const ctsPrice = r2(row.ctsRate * area);
-  if (ctsPrice >= row.fullSheetPrice) {
+  if (capAtFullSheet && ctsPrice >= row.fullSheetPrice) {
     return { unitPrice: r2(row.fullSheetPrice + CUTTING_FEE), note: "full sheet + $30 cutting fee" };
   }
   return { unitPrice: ctsPrice, note: "cut to size" };
@@ -1080,12 +1083,12 @@ function priceWithOversized(
   return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece too large for all available sheets — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
 }
 
-function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, width: number, height: number, qty: number, url: string): PriceResult {
+function priceGenericSheet(sheets: SheetRow[], col: string, thickness: number, width: number, height: number, qty: number, url: string, capAtFullSheet = false): PriceResult {
   // Exact colour match first, then fallback to "any"
   const row = sheets.find(r => r.thicknessMm === thickness && r.colour === col)
            ?? sheets.find(r => r.thicknessMm === thickness && r.colour === "any");
   if (!row) return notFound(url);
-  const result = calcStandardSheet(row, width, height);
+  const result = calcStandardSheet(row, width, height, capAtFullSheet);
   if (!result) return { found: true, price: 0, priceFormatted: "", priceEach: 0, priceEachFormatted: "", note: "piece too large for this sheet — contact us", productUrl: url, bulkDiscountApplied: false, minimumFeeApplied: false };
   return buildResult(result.unitPrice, qty, result.note, url);
 }
@@ -1280,10 +1283,10 @@ export function getPricing(input: PricingInput): PriceResult {
       case "seaboard":        return priceGenericSheet(SEABOARD, (col === "natural" || col === "") ? "white" : col, thick, w, h, qty, getProductUrl("seaboard"));
       case "petg":            return priceGenericSheet(PETG, "clear", thick, w, h, qty, getProductUrl("petg"));
       case "hips":            return priceGenericSheet(HIPS, col, thick, w, h, qty, getProductUrl("hips"));
-      case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, getProductUrl("acrylic mirror"));
+      case "mirror_acrylic":  return priceGenericSheet(MIRROR_ACRYLIC, col, thick, w, h, qty, getProductUrl("acrylic mirror"), true);
       case "euomir":          return priceGenericSheet(EUOMIR, col, thick, w, h, qty, getProductUrl("euromir"));
       case "acp":             return priceGenericSheet(ACP, col, thick, w, h, qty, getProductUrl("acp"));
-      case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, getProductUrl("acrylic"));
+      case "prismatic":       return priceGenericSheet(PRISMATIC, "clear", thick, w, h, qty, getProductUrl("acrylic"), true);
       case "peek":            return priceGenericSheet(PEEK_SHEETS, "natural", thick, w, h, qty, getProductUrl("peek"));
       case "pvc":             return priceGenericSheet(RIGID_PVC, col, thick, w, h, qty, getProductUrl("rigid pvc"));
       case "nylon":           return priceGenericSheet(NYLON_SHEETS, col, thick, w, h, qty, getProductUrl("nylon sheet"));

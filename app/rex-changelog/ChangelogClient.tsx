@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "2 Jun 2026",
+    entries: [
+      { time: "07:31", tag: "NEW", title: "Rex EOFY sale promo awareness — June 2026" }
+    ],
+  },
+  {
     date: "29 May 2026",
     entries: [
       { time: "06:38", tag: "FIX", title: "Strip back site generation — inject exact CSS vars, fonts, image fallbacks" },
