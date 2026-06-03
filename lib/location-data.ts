@@ -1,5 +1,5 @@
 /**
- * Location data — single source of truth for the 9 Australian city SEO pages.
+ * Location data: single source of truth for the 9 Australian city SEO pages.
  *
  * Each LocationConfig drives the entire content of one /[city] landing page,
  * rendered by the shared LocationPage component. Content is written to be
@@ -66,14 +66,14 @@ export interface LocationConfig {
 // ---------------------------------------------------------------------------
 // BRISBANE
 // ---------------------------------------------------------------------------
-const BRISBANE: LocationConfig = {
+export const BRISBANE: LocationConfig = {
   city: "Brisbane",
   slug: "brisbane",
   state: "Queensland",
   stateCode: "QLD",
   heroHeadline: "AI Automation Consulting for Brisbane Businesses",
   heroSubheading:
-    "We help Brisbane firms turn repetitive admin into automated workflows — so your team spends time on the work that actually grows the business, not on the busywork around it.",
+    "We help Brisbane firms turn repetitive admin into automated workflows, so your team spends time on the work that actually grows the business, not on the busywork around it.",
   industries: [
     "Professional Services",
     "Construction & Trades",
@@ -84,9 +84,9 @@ const BRISBANE: LocationConfig = {
   ],
   marketContext: [
     "Brisbane is in the middle of a once-in-a-generation build-up. With the 2032 Olympics anchoring more than a decade of infrastructure and venue investment, the city's construction, professional services and property sectors are expanding faster than most local teams can hire. That growth is good news, but it also means more quoting, more compliance paperwork and more client correspondence landing on the same number of people.",
-    "The southeast growth corridor — Ipswich, Logan, Moreton Bay and the western suburbs — is where a lot of this expansion is happening. Trades businesses, building suppliers and sub-contractors here are taking on more work than ever, often while still running quotes, invoices and supplier orders through spreadsheets and email. The admin load grows in lockstep with the job book, and it tends to land on the owner after hours.",
-    "Brisbane's professional services sector is maturing alongside the boom. Law firms, accounting practices and advisory businesses that once competed mostly on relationships are now competing on responsiveness too. Clients expect same-day replies, clear documentation and a smooth onboarding experience — expectations set by larger Sydney and Melbourne firms but now applied to every practice, regardless of size.",
-    "What ties these sectors together is a familiar bottleneck: skilled people doing low-value administrative work because there was never time to build a better system. That is exactly where targeted AI automation pays off. The goal is not to replace anyone — it is to take the repetitive, rules-based parts of the day and hand them to software, so the experienced staff you fought to hire can focus on judgement, relationships and delivery.",
+    "The southeast growth corridor (Ipswich, Logan, Moreton Bay and the western suburbs) is where a lot of this expansion is happening. Trades businesses, building suppliers and sub-contractors here are taking on more work than ever, often while still running quotes, invoices and supplier orders through spreadsheets and email. The admin load grows in lockstep with the job book, and it tends to land on the owner after hours.",
+    "Brisbane's professional services sector is maturing alongside the boom. Law firms, accounting practices and advisory businesses that once competed mostly on relationships are now competing on responsiveness too. Clients expect same-day replies, clear documentation and a smooth onboarding experience: expectations set by larger Sydney and Melbourne firms but now applied to every practice, regardless of size.",
+    "What ties these sectors together is a familiar bottleneck: skilled people doing low-value administrative work because there was never time to build a better system. That is exactly where targeted AI automation pays off. The goal is not to replace anyone. It is to take the repetitive, rules-based parts of the day and hand them to software, so the experienced staff you fought to hire can focus on judgement, relationships and delivery.",
   ],
   challengesIntro:
     "Brisbane businesses tend to share a recognisable set of operational pressures as they scale through the current growth cycle. These are the ones we see most often.",
@@ -99,7 +99,7 @@ const BRISBANE: LocationConfig = {
     {
       title: "Admin lands on senior people",
       detail:
-        "When hiring is tight, owners and senior staff end up doing data entry, chasing invoices and copying details between systems — the highest-paid people doing the lowest-value work.",
+        "When hiring is tight, owners and senior staff end up doing data entry, chasing invoices and copying details between systems: the highest-paid people doing the lowest-value work.",
     },
     {
       title: "Client response times set the standard",
@@ -109,7 +109,7 @@ const BRISBANE: LocationConfig = {
     {
       title: "Disconnected systems create double handling",
       detail:
-        "Most growing firms run a patchwork of tools — accounting, CRM, job management, email — that don't talk to each other. Staff bridge the gaps manually, and details get re-keyed three or four times.",
+        "Most growing firms run a patchwork of tools (accounting, CRM, job management, email) that don't talk to each other. Staff bridge the gaps manually, and details get re-keyed three or four times.",
     },
     {
       title: "Growth outpaces process",
@@ -128,7 +128,7 @@ const BRISBANE: LocationConfig = {
     {
       title: "Automated quoting & estimating",
       detail:
-        "Custom AI agents that price jobs from your own rules and rate cards — particularly valuable for Brisbane's busy trades, suppliers and project businesses fighting to turn quotes around faster.",
+        "Custom AI agents that price jobs from your own rules and rate cards, particularly valuable for Brisbane's busy trades, suppliers and project businesses fighting to turn quotes around faster.",
     },
     {
       title: "Customer enquiry & intake automation",
@@ -138,7 +138,7 @@ const BRISBANE: LocationConfig = {
     {
       title: "Document & compliance automation",
       detail:
-        "Drafting, populating and checking the repetitive documents your business produces — contracts, reports, certificates and onboarding packs — with a human reviewing before anything goes out.",
+        "Drafting, populating and checking the repetitive documents your business produces (contracts, reports, certificates and onboarding packs), with a human reviewing before anything goes out.",
     },
     {
       title: "Systems integration",
@@ -186,7 +186,7 @@ const BRISBANE: LocationConfig = {
     },
     {
       q: "Is AI automation worth it for a small Brisbane trades or supply business?",
-      a: "Often yes — small businesses tend to see the fastest payback because the owner is usually the one absorbing the admin. Automating quoting, enquiry handling and invoicing frees up the most expensive person in the business. We always start with an audit so you know the return before committing to a build.",
+      a: "Often yes. Small businesses tend to see the fastest payback because the owner is usually the one absorbing the admin. Automating quoting, enquiry handling and invoicing frees up the most expensive person in the business. We always start with an audit so you know the return before committing to a build.",
     },
     {
       q: "How does the 2032 Olympics build-up affect the case for automating now?",
@@ -198,11 +198,11 @@ const BRISBANE: LocationConfig = {
     },
     {
       q: "Will automation replace our staff?",
-      a: "No — the goal is to remove repetitive work, not people. In a tight Brisbane labour market, the bigger problem is usually that skilled staff are stuck doing low-value admin. Automation hands that work to software so your team can focus on judgement, delivery and client relationships.",
+      a: "No. The goal is to remove repetitive work, not people. In a tight Brisbane labour market, the bigger problem is usually that skilled staff are stuck doing low-value admin. Automation hands that work to software so your team can focus on judgement, delivery and client relationships.",
     },
     {
       q: "How long before we see results?",
-      a: "The audit delivers a prioritised roadmap within a couple of weeks. First automations — typically quoting or enquiry handling — are often live within a few weeks after that. We sequence the highest-impact, lowest-risk wins first so you see returns early.",
+      a: "The audit delivers a prioritised roadmap within a couple of weeks. First automations (typically quoting or enquiry handling) are often live within a few weeks after that. We sequence the highest-impact, lowest-risk wins first so you see returns early.",
     },
     {
       q: "What does an engagement with Saabai.ai cost?",
@@ -215,7 +215,7 @@ const BRISBANE: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Brisbane | Saabai.ai",
     description:
-      "AI automation consulting for Brisbane businesses. We help professional services, trades and manufacturers automate quoting, intake and admin. Book an AI efficiency audit.",
+      "AI automation for Brisbane: quoting, intake and admin for professional services, trades and manufacturers. Book a free AI efficiency audit.",
     ogTitle: "AI Automation Consulting for Brisbane Businesses | Saabai.ai",
     ogDescription:
       "Turn repetitive admin into automated workflows. Saabai.ai helps Brisbane firms automate quoting, client intake and document handling. Book an AI efficiency audit.",
@@ -226,14 +226,14 @@ const BRISBANE: LocationConfig = {
 // ---------------------------------------------------------------------------
 // GOLD COAST
 // ---------------------------------------------------------------------------
-const GOLD_COAST: LocationConfig = {
+export const GOLD_COAST: LocationConfig = {
   city: "Gold Coast",
   slug: "gold-coast",
   state: "Queensland",
   stateCode: "QLD",
   heroHeadline: "AI Automation Consulting for Gold Coast Businesses",
   heroSubheading:
-    "From trades and property to tourism and retail, we help lean Gold Coast teams automate the admin that eats their evenings — so a small crew can run like a much bigger one.",
+    "From trades and property to tourism and retail, we help lean Gold Coast teams automate the admin that eats their evenings, so a small crew can run like a much bigger one.",
   industries: [
     "Trades & Construction",
     "Property Development",
@@ -243,13 +243,13 @@ const GOLD_COAST: LocationConfig = {
     "Health & Wellness",
   ],
   marketContext: [
-    "The Gold Coast runs on small, agile businesses. Far more than in the capital cities, the local economy is built around owner-operators and lean teams — the builder who also does the quoting, the practice owner who also handles reception, the cafe group running on a skeleton back office. That structure keeps the city entrepreneurial, but it also means admin has nowhere to go but onto people who are already stretched.",
+    "The Gold Coast runs on small, agile businesses. Far more than in the capital cities, the local economy is built around owner-operators and lean teams: the builder who also does the quoting, the practice owner who also handles reception, the cafe group running on a skeleton back office. That structure keeps the city entrepreneurial, but it also means admin has nowhere to go but onto people who are already stretched.",
     "Trades and construction are a huge part of the local story, riding strong population growth and a steady pipeline of residential and commercial development. These businesses live and die on how fast they can quote and how reliably they invoice. Yet most still build quotes manually and chase payments by hand, capping how much work a busy crew can realistically take on without the owner working nights.",
     "Tourism and hospitality bring a different challenge: seasonality. Enquiries, bookings and staffing swing hard between peak and off-peak, and the businesses that cope best are the ones whose systems handle the surge automatically. When a venue or operator is fielding triple the enquiries in school holidays, manual handling is where bookings get dropped and reviews suffer.",
-    "Property development and professional services round out the picture, both defined by coordination — keeping trades, clients, contracts and approvals moving in sync. The common thread across every sector here is the same: small teams doing the work of larger ones, held back by manual admin. Well-targeted AI automation lets a lean Gold Coast business punch well above its headcount.",
+    "Property development and professional services round out the picture, both defined by coordination: keeping trades, clients, contracts and approvals moving in sync. The common thread across every sector here is the same: small teams doing the work of larger ones, held back by manual admin. Well-targeted AI automation lets a lean Gold Coast business punch well above its headcount.",
   ],
   challengesIntro:
-    "Gold Coast businesses share a distinct profile — small, fast-moving and admin-heavy. These are the pressures we hear about most.",
+    "Gold Coast businesses share a distinct profile: small, fast-moving and admin-heavy. These are the pressures we hear about most.",
   challenges: [
     {
       title: "The owner is the bottleneck",
@@ -274,7 +274,7 @@ const GOLD_COAST: LocationConfig = {
     {
       title: "Coordination eats time",
       detail:
-        "Property developers and project businesses spend hours chasing trades, clients and approvals across email and phone — coordination work that is repetitive but rarely systematised.",
+        "Property developers and project businesses spend hours chasing trades, clients and approvals across email and phone. This coordination work is repetitive but rarely systematised.",
     },
   ],
   howWeHelpIntro:
@@ -293,7 +293,7 @@ const GOLD_COAST: LocationConfig = {
     {
       title: "Booking & enquiry automation",
       detail:
-        "Round-the-clock AI intake that handles enquiries and bookings through seasonal surges, so peak-period demand is captured instead of dropped — built for tourism, hospitality and wellness operators.",
+        "Round-the-clock AI intake that handles enquiries and bookings through seasonal surges, so peak-period demand is captured instead of dropped. Built for tourism, hospitality and wellness operators.",
     },
     {
       title: "Invoicing & payment follow-up",
@@ -341,7 +341,7 @@ const GOLD_COAST: LocationConfig = {
   ],
   faqs: [
     {
-      q: "I run a small Gold Coast business — is AI automation overkill for me?",
+      q: "I run a small Gold Coast business. Is AI automation overkill for me?",
       a: "Quite the opposite. Smaller businesses usually get the biggest benefit because the owner is the one absorbing the admin. Automating quoting, bookings and invoicing frees up the most valuable person in the business. We scope to fit small budgets and start with the highest-impact task first.",
     },
     {
@@ -350,7 +350,7 @@ const GOLD_COAST: LocationConfig = {
     },
     {
       q: "Can you help us capture leads that come in after hours and on weekends?",
-      a: "Yes — this is one of the most common Gold Coast wins. A lot of enquiries arrive evenings and weekends when nobody's at the desk. Automated AI intake answers, qualifies and captures those leads instantly, so they don't go cold or book with a competitor before Monday.",
+      a: "Yes, this is one of the most common Gold Coast wins. A lot of enquiries arrive evenings and weekends when nobody's at the desk. Automated AI intake answers, qualifies and captures those leads instantly, so they don't go cold or book with a competitor before Monday.",
     },
     {
       q: "Do you work on-site on the Gold Coast or only remotely?",
@@ -375,7 +375,7 @@ const GOLD_COAST: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Gold Coast | Saabai.ai",
     description:
-      "AI automation consulting for Gold Coast businesses. We help trades, tourism, property and professional services automate quoting, bookings and admin. Book an AI audit.",
+      "AI automation for Gold Coast businesses. Automate quoting, bookings and admin for trades, tourism and professional services. Book a free AI audit.",
     ogTitle: "AI Automation Consulting for Gold Coast Businesses | Saabai.ai",
     ogDescription:
       "Help your lean Gold Coast team run like a bigger one. Saabai.ai automates quoting, bookings and admin for trades, tourism and professional services. Book an AI audit.",
@@ -386,7 +386,7 @@ const GOLD_COAST: LocationConfig = {
 // ---------------------------------------------------------------------------
 // SYDNEY
 // ---------------------------------------------------------------------------
-const SYDNEY: LocationConfig = {
+export const SYDNEY: LocationConfig = {
   city: "Sydney",
   slug: "sydney",
   state: "New South Wales",
@@ -405,7 +405,7 @@ const SYDNEY: LocationConfig = {
   marketContext: [
     "Sydney is Australia's most expensive place to employ people, and that single fact changes the economics of everything. When salaries and office space cost more than anywhere else in the country, every hour a skilled professional spends on manual admin carries a higher price tag. The firms that thrive in Sydney are increasingly the ones that get more output from the same expensive headcount, and automation is the most direct lever they have.",
     "The professional services market here is also the most competitive in the country. Law firms, accounting practices and advisory businesses cluster densely, which means clients have choices and they exercise them. Responsiveness, polish and turnaround speed have become competitive battlegrounds in their own right. A firm that takes a day to respond to an enquiry is now visibly slower than the one down the road that responds in minutes.",
-    "Compliance and documentation load is heavier in Sydney's regulated sectors than almost anywhere. Financial services, fintech, insurance and legal work all generate volumes of repeatable, rules-bound paperwork — exactly the kind of work that is expensive to do by hand and well suited to careful automation with a human in the loop for sign-off.",
+    "Compliance and documentation load is heavier in Sydney's regulated sectors than almost anywhere. Financial services, fintech, insurance and legal work all generate volumes of repeatable, rules-bound paperwork: exactly the kind of work that is expensive to do by hand and well suited to careful automation with a human in the loop for sign-off.",
     "Then there is the talent crunch. Sydney firms compete hard for skilled staff, and once hired, those people are too valuable to spend on data entry and copy-paste work. Targeted AI automation lets a Sydney business deploy its expensive talent where it actually creates value, while routine work runs in the background. In a market defined by cost and competition, that is a structural advantage rather than a nice-to-have.",
   ],
   challengesIntro:
@@ -438,7 +438,7 @@ const SYDNEY: LocationConfig = {
     },
   ],
   howWeHelpIntro:
-    "Our approach is built around return on the most expensive resource you have — your people's time. We automate the highest-cost manual work first, integrating with the systems you already run.",
+    "Our approach is built around return on the most expensive resource you have: your people's time. We automate the highest-cost manual work first, integrating with the systems you already run.",
   services: [
     {
       title: "AI Operational Efficiency Audit",
@@ -505,7 +505,7 @@ const SYDNEY: LocationConfig = {
       a: "Because Sydney has the highest labour costs in the country, the value of every hour you free from manual admin is greater here than almost anywhere. Automation that returns time to expensive professionals delivers a stronger financial case in Sydney than in lower-cost markets.",
     },
     {
-      q: "We're in a heavily regulated sector — is automation safe for compliance-sensitive work?",
+      q: "We're in a heavily regulated sector. Is automation safe for compliance-sensitive work?",
       a: "Yes, when designed correctly. We build automation with a human in the loop for anything that requires sign-off, so AI handles the repetitive drafting and checking while a qualified person approves the output. This is standard practice for our legal, financial services and insurance clients.",
     },
     {
@@ -514,7 +514,7 @@ const SYDNEY: LocationConfig = {
     },
     {
       q: "How does this help us scale without adding expensive headcount?",
-      a: "By increasing what your current team can handle. Automating routine work lets each person cover more volume, so you grow capacity without the proportional rise in salaries and office cost that simply hiring more people would bring — a meaningful saving at Sydney rates.",
+      a: "By increasing what your current team can handle. Automating routine work lets each person cover more volume, so you grow capacity without the proportional rise in salaries and office cost that simply hiring more people would bring. That is a meaningful saving at Sydney rates.",
     },
     {
       q: "Do we need to replace our existing systems?",
@@ -529,13 +529,13 @@ const SYDNEY: LocationConfig = {
       a: "We start with a fixed-scope AI audit that quantifies the opportunities and expected return against your actual labour costs. You get a clear, ROI-led picture before any build commitment, so the decision rests on numbers rather than a guess.",
     },
   ],
-  ctaHeadline: "Get more from Sydney's most expensive resource — your team's time",
+  ctaHeadline: "Get more from Sydney's most expensive resource: your team's time",
   ctaSubtext:
     "Book an AI Operational Efficiency Audit and get a prioritised, ROI-led roadmap for where automation pays off fastest at Sydney labour rates.",
   seo: {
     title: "AI Automation Consulting Sydney | Saabai.ai",
     description:
-      "AI automation consulting for Sydney businesses. We help law, accounting, financial services and property firms automate admin in Australia's highest-cost market. Book an AI audit.",
+      "AI automation for Sydney firms. Automate intake, documents and admin for law, accounting, financial services and property. Free AI efficiency audit.",
     ogTitle: "AI Automation Consulting for Sydney Businesses | Saabai.ai",
     ogDescription:
       "In Australia's highest-cost labour market, automation pays off fastest. Saabai.ai helps Sydney firms automate intake, documents and admin. Book an AI efficiency audit.",
@@ -546,7 +546,7 @@ const SYDNEY: LocationConfig = {
 // ---------------------------------------------------------------------------
 // MELBOURNE
 // ---------------------------------------------------------------------------
-const MELBOURNE: LocationConfig = {
+export const MELBOURNE: LocationConfig = {
   city: "Melbourne",
   slug: "melbourne",
   state: "Victoria",
@@ -563,10 +563,10 @@ const MELBOURNE: LocationConfig = {
     "Legal & Compliance",
   ],
   marketContext: [
-    "Melbourne carries one of the largest concentrations of professional services firms in the country. Law, accounting, advisory, consulting and corporate services are densely represented across the CBD and the inner suburbs, and that depth makes the market both rich in opportunity and intensely competitive. Firms here are under constant pressure to deliver more, faster, without letting quality or compliance slip — and much of what slows them down is repetitive administrative work rather than the actual professional judgement clients pay for.",
+    "Melbourne carries one of the largest concentrations of professional services firms in the country. Law, accounting, advisory, consulting and corporate services are densely represented across the CBD and the inner suburbs, and that depth makes the market both rich in opportunity and intensely competitive. Firms here are under constant pressure to deliver more, faster, without letting quality or compliance slip. Much of what slows them down is repetitive administrative work rather than the actual professional judgement clients pay for.",
     "Healthcare and allied health are a defining part of Melbourne's economy, from major hospital networks to the thousands of clinics and allied health practices across the metro area. These businesses run on paperwork: bookings, referrals, intake forms, billing and follow-ups. Administrative load is one of the biggest drains on clinical time, and reducing it directly improves both practice economics and the patient experience.",
     "Manufacturing remains a significant Melbourne sector, increasingly focused on advanced and specialised production. As these businesses modernise, the gap between sophisticated production floors and dated back-office processes becomes obvious. Quoting, order processing and production documentation often still run on manual systems that haven't kept pace with the rest of the operation.",
-    "Across professional services, healthcare, education and manufacturing, the common pattern in Melbourne is skilled people spending too much of their day on repeatable administrative tasks. Targeted AI automation addresses this directly — taking the rules-based, repetitive work off the plates of clinicians, professionals and operators so they can focus on the work that genuinely needs them.",
+    "Across professional services, healthcare, education and manufacturing, the common pattern in Melbourne is skilled people spending too much of their day on repeatable administrative tasks. Targeted AI automation addresses this directly by taking the rules-based, repetitive work off the plates of clinicians, professionals and operators so they can focus on the work that genuinely needs them.",
   ],
   challengesIntro:
     "Melbourne's mix of professional services, healthcare and manufacturing produces a recognisable set of operational drags. These are the ones we most often help resolve.",
@@ -608,12 +608,12 @@ const MELBOURNE: LocationConfig = {
     {
       title: "Patient & client intake automation",
       detail:
-        "AI-powered intake, booking and follow-up that reduces front-desk and clinical admin load — particularly valuable for Melbourne's large healthcare and allied health sector.",
+        "AI-powered intake, booking and follow-up that reduces front-desk and clinical admin load, particularly valuable for Melbourne's large healthcare and allied health sector.",
     },
     {
       title: "Document & compliance automation",
       detail:
-        "Drafting, populating and checking the repetitive documents your business produces — legal, educational and regulatory — with a qualified human reviewing before sign-off.",
+        "Drafting, populating and checking the repetitive documents your business produces (legal, educational and regulatory), with a qualified human reviewing before sign-off.",
     },
     {
       title: "Quoting & order processing automation",
@@ -662,7 +662,7 @@ const MELBOURNE: LocationConfig = {
   faqs: [
     {
       q: "Can AI automation realistically help a healthcare or allied health practice?",
-      a: "Yes — it's one of the highest-value applications we see in Melbourne. Automating bookings, intake forms, referrals and follow-ups removes a large share of front-desk and clinical admin, which improves both practice economics and patient experience. We always design with appropriate care around sensitive information.",
+      a: "Yes, it's one of the highest-value applications we see in Melbourne. Automating bookings, intake forms, referrals and follow-ups removes a large share of front-desk and clinical admin, which improves both practice economics and patient experience. We always design with appropriate care around sensitive information.",
     },
     {
       q: "How do you handle privacy and sensitive data in healthcare or legal work?",
@@ -670,7 +670,7 @@ const MELBOURNE: LocationConfig = {
     },
     {
       q: "We're a manufacturer with a modern factory but a dated back office. Can you close that gap?",
-      a: "That's a common Melbourne scenario. We automate the back-office side — quoting, order processing and production documentation — so it runs at the same speed as your modernised production floor, removing the bottleneck that sits between a job won and a job started.",
+      a: "That's a common Melbourne scenario. We automate the back-office side (quoting, order processing and production documentation) so it runs at the same speed as your modernised production floor, removing the bottleneck that sits between a job won and a job started.",
     },
     {
       q: "There are a lot of firms like ours in Melbourne. How does automation help us stand out?",
@@ -695,7 +695,7 @@ const MELBOURNE: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Melbourne | Saabai.ai",
     description:
-      "AI automation consulting for Melbourne businesses. We help professional services, healthcare, manufacturing and legal firms automate admin and intake. Book an AI audit.",
+      "AI automation for Melbourne: professional services, healthcare, manufacturing and legal firms. Automate admin and intake. Book a free AI audit.",
     ogTitle: "AI Automation Consulting for Melbourne Businesses | Saabai.ai",
     ogDescription:
       "Reclaim your team's capacity from admin. Saabai.ai helps Melbourne professional services, healthcare and manufacturing firms automate routine work. Book an AI audit.",
@@ -706,7 +706,7 @@ const MELBOURNE: LocationConfig = {
 // ---------------------------------------------------------------------------
 // PERTH
 // ---------------------------------------------------------------------------
-const PERTH: LocationConfig = {
+export const PERTH: LocationConfig = {
   city: "Perth",
   slug: "perth",
   state: "Western Australia",
@@ -778,7 +778,7 @@ const PERTH: LocationConfig = {
     {
       title: "Workforce & coordination automation",
       detail:
-        "Automating the repetitive parts of FIFO coordination — inductions, certifications tracking and mobilisation admin — to cut error-prone manual tracking.",
+        "Automating the repetitive parts of FIFO coordination (inductions, certifications tracking and mobilisation admin) to cut error-prone manual tracking.",
     },
     {
       title: "Systems integration",
@@ -795,9 +795,9 @@ const PERTH: LocationConfig = {
     client: "PlasticOnline (Holland Plastics)",
     industry: "Industrial Supply to Resources Sector",
     context:
-      "Holland Plastics supplies cut-to-size plastics to industrial and resource-sector customers, including WA operations. Every order is individually priced on material, dimensions and finishing, and manual quoting limited how quickly the team could respond to enquiries.",
+      "PlasticOnline is a Queensland-based industrial materials supplier that counts resource sector businesses among its customers. Their product range includes industrial-grade plastics sold to buyers in WA's mining and engineering sectors. Every order is individually priced on material, dimensions and finishing, and manual quoting was the bottleneck limiting response speed to industrial buyers.",
     outcome:
-      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. Industrial customers get fast, accurate quotes without waiting on a person, and the team is freed from routine pricing to focus on complex orders and key accounts.",
+      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. This reference engagement is directly relevant to Perth's resource services businesses: Rex handles exactly the kind of pricing and product enquiries that industrial buyers in WA need answered quickly, without waiting for a salesperson to be available.",
   },
   industryLinks: [
     {
@@ -822,7 +822,7 @@ const PERTH: LocationConfig = {
   faqs: [
     {
       q: "Can automation help us manage FIFO workforce coordination?",
-      a: "Yes — it's one of the more impactful WA-specific applications. We automate the repetitive parts of FIFO coordination, such as tracking certifications and inductions and handling mobilisation admin, which cuts the manual spreadsheet-and-email tracking that's both time-consuming and prone to costly errors.",
+      a: "Yes, it's one of the more impactful WA-specific applications. We automate the repetitive parts of FIFO coordination, such as tracking certifications and inductions and handling mobilisation admin, which cuts the manual spreadsheet-and-email tracking that's both time-consuming and prone to costly errors.",
     },
     {
       q: "We produce a lot of compliance and safety documentation. Can AI handle that reliably?",
@@ -855,7 +855,7 @@ const PERTH: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Perth | Saabai.ai",
     description:
-      "AI automation consulting for Perth and WA businesses. We help mining, METS, engineering and industrial firms automate compliance docs, tenders and coordination. Book an AI audit.",
+      "AI automation for Perth and WA. Mining, METS, engineering and industrial firms: automate compliance docs, tenders and coordination. Book an AI audit.",
     ogTitle: "AI Automation Consulting for Perth Businesses | Saabai.ai",
     ogDescription:
       "Automate the documentation and coordination that defines WA's resource economy. Saabai.ai helps Perth mining, METS and engineering firms scale. Book an AI audit.",
@@ -866,7 +866,7 @@ const PERTH: LocationConfig = {
 // ---------------------------------------------------------------------------
 // ADELAIDE
 // ---------------------------------------------------------------------------
-const ADELAIDE: LocationConfig = {
+export const ADELAIDE: LocationConfig = {
   city: "Adelaide",
   slug: "adelaide",
   state: "South Australia",
@@ -883,10 +883,10 @@ const ADELAIDE: LocationConfig = {
     "Health & Life Sciences",
   ],
   marketContext: [
-    "Adelaide has reinvented itself around defence and advanced manufacturing. With major naval shipbuilding and defence programs anchored in the state, a deep ecosystem of engineering firms, specialist manufacturers and suppliers has grown up to support them. These businesses operate to exacting standards, and that means documentation, traceability and compliance are not optional extras — they are core to winning and keeping work in the defence supply chain.",
+    "Adelaide has reinvented itself around defence and advanced manufacturing. With major naval shipbuilding and defence programs anchored in the state, a deep ecosystem of engineering firms, specialist manufacturers and suppliers has grown up to support them. These businesses operate to exacting standards, and that means documentation, traceability and compliance are not optional extras; they are core to winning and keeping work in the defence supply chain.",
     "The defence sector's documentation and compliance requirements are among the most demanding of any industry. Tender responses, quality records, certifications and reporting must be precise, complete and produced to tight deadlines. For SA firms in the supply chain, the ability to produce this paperwork accurately and quickly is often the difference between being able to bid for a contract and having to let it pass.",
     "Advanced manufacturing in Adelaide is moving steadily toward Industry 4.0, with smarter production and tighter integration on the factory floor. But as on shop floors everywhere, the back office often lags behind. Quoting, order processing and production documentation frequently still run on manual systems that don't match the sophistication of the production itself, leaving an obvious efficiency gap.",
-    "Many Adelaide businesses share a particular inflection point: they are growing into larger contracts and opportunities but hitting capacity constraints in their back office before their production or delivery capacity runs out. Targeted AI automation addresses exactly this — taking the documentation, tender and coordination load off skilled people so SA firms can push through that constraint and scale into defence and advanced manufacturing opportunities without simply hiring more administrators.",
+    "Many Adelaide businesses share a particular inflection point: they are growing into larger contracts and opportunities but hitting capacity constraints in their back office before their production or delivery capacity runs out. Targeted AI automation addresses exactly this by taking the documentation, tender and coordination load off skilled people so SA firms can push through that constraint and scale into defence and advanced manufacturing opportunities without simply hiring more administrators.",
   ],
   challengesIntro:
     "Adelaide's defence and advanced manufacturing focus produces a specific set of operational pressures, especially for firms scaling toward larger contracts. These are the ones we see most.",
@@ -894,7 +894,7 @@ const ADELAIDE: LocationConfig = {
     {
       title: "Defence-grade compliance documentation",
       detail:
-        "Defence supply-chain work demands precise, complete documentation — quality records, certifications and traceability — that is slow, costly and risky to produce and check entirely by hand.",
+        "Defence supply-chain work demands precise, complete documentation (quality records, certifications and traceability) that is slow, costly and risky to produce and check entirely by hand.",
     },
     {
       title: "Tender preparation eats capacity",
@@ -955,7 +955,7 @@ const ADELAIDE: LocationConfig = {
     client: "Tributum Law",
     industry: "Tax Law",
     context:
-      "Tributum Law is an Adelaide tax law firm where client intake and matter setup involved significant manual handling — gathering details, qualifying enquiries and preparing the information lawyers needed before they could begin advising.",
+      "Tributum Law is an Adelaide tax law firm where client intake and matter setup involved significant manual handling: gathering details, qualifying enquiries and preparing the information lawyers needed before they could begin advising.",
     outcome:
       "We built Lex, an AI intake agent that handles initial client interaction, gathers and structures the right information and prepares matters for the lawyers. The firm now captures and qualifies enquiries consistently while freeing its specialists from repetitive intake admin to focus on advisory work.",
   },
@@ -990,7 +990,7 @@ const ADELAIDE: LocationConfig = {
     },
     {
       q: "We're a manufacturer modernising production but our back office is dated. Can you help?",
-      a: "That's a very common Adelaide situation. We automate the back-office side — quoting, order processing and production documentation — so it runs at the speed and sophistication of your modernised floor, closing the gap between a job won and a job underway.",
+      a: "That's a very common Adelaide situation. We automate the back-office side (quoting, order processing and production documentation) so it runs at the speed and sophistication of your modernised floor, closing the gap between a job won and a job underway.",
     },
     {
       q: "We're hitting back-office limits as we grow. Is that something automation solves?",
@@ -1015,7 +1015,7 @@ const ADELAIDE: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Adelaide | Saabai.ai",
     description:
-      "AI automation consulting for Adelaide and SA businesses. We help defence, advanced manufacturing and engineering firms automate compliance docs, tenders and admin. Book an AI audit.",
+      "AI automation for Adelaide and SA. Defence, advanced manufacturing and engineering: automate compliance docs, tenders and admin. Book an AI audit.",
     ogTitle: "AI Automation Consulting for Adelaide Businesses | Saabai.ai",
     ogDescription:
       "Automate the documentation and tender work that defines SA's defence and manufacturing economy. Saabai.ai helps Adelaide firms scale. Book an AI audit.",
@@ -1026,7 +1026,7 @@ const ADELAIDE: LocationConfig = {
 // ---------------------------------------------------------------------------
 // CANBERRA
 // ---------------------------------------------------------------------------
-const CANBERRA: LocationConfig = {
+export const CANBERRA: LocationConfig = {
   city: "Canberra",
   slug: "canberra",
   state: "Australian Capital Territory",
@@ -1046,7 +1046,7 @@ const CANBERRA: LocationConfig = {
     "Canberra's economy is unlike any other in Australia because so much of it orbits the Commonwealth Government. Consulting firms, ICT service providers, defence contractors, legal practices and professional services businesses here largely sell to government, and that shapes how they operate. Government as a client means rigour, documentation and compliance at a level few other markets demand, and the firms that succeed are those that can meet that bar efficiently rather than by throwing people at it.",
     "Government tender and proposal work is a defining feature of doing business in Canberra. Responding to RFTs and approaches to market means producing detailed, compliant, precisely structured documents to firm deadlines. For many ACT firms, the volume and intensity of tender work is the single biggest constraint on how much government business they can pursue, because each response demands significant skilled effort to assemble.",
     "Panel arrangements add another layer. Being on a government panel comes with ongoing compliance, reporting and administrative obligations that recur predictably and consume time. Managing panel paperwork, capability statements and recurring submissions is exactly the kind of repeatable, rules-bound work that suits careful automation.",
-    "Knowledge management is the quieter challenge. Canberra firms accumulate enormous institutional knowledge — past proposals, capability content, project records and APS-grade procedural documentation — that is hard to find and reuse when it's scattered across drives and inboxes. Targeted AI automation helps on every front: assembling tenders, managing panel compliance and making institutional knowledge instantly retrievable, all while keeping humans in control of anything that must meet APS-grade standards.",
+    "Knowledge management is the quieter challenge. Canberra firms accumulate enormous institutional knowledge (past proposals, capability content, project records and APS-grade procedural documentation) that is hard to find and reuse when it's scattered across drives and inboxes. Targeted AI automation helps on every front: assembling tenders, managing panel compliance and making institutional knowledge instantly retrievable, all while keeping humans in control of anything that must meet APS-grade standards.",
   ],
   challengesIntro:
     "Canberra's government-adjacent market produces operational pressures you won't find in the same form elsewhere. These are the ones we're most often asked to address.",
@@ -1059,7 +1059,7 @@ const CANBERRA: LocationConfig = {
     {
       title: "Panel arrangement compliance overhead",
       detail:
-        "Sitting on government panels brings recurring reporting, capability statements and administrative obligations — predictable, repeatable work that quietly consumes time month after month.",
+        "Sitting on government panels brings recurring reporting, capability statements and administrative obligations. This predictable, repeatable work quietly consumes time month after month.",
     },
     {
       title: "Institutional knowledge is hard to reuse",
@@ -1142,7 +1142,7 @@ const CANBERRA: LocationConfig = {
   faqs: [
     {
       q: "Can automation help us produce government tenders faster?",
-      a: "Yes — it's one of the most valuable Canberra applications. AI agents assemble and tailor compliant responses from your own approved content library, so each tender consumes far less skilled effort. That lets you pursue more government opportunities without your bid team being overwhelmed by document assembly.",
+      a: "Yes, it's one of the most valuable Canberra applications. AI agents assemble and tailor compliant responses from your own approved content library, so each tender consumes far less skilled effort. That lets you pursue more government opportunities without your bid team being overwhelmed by document assembly.",
     },
     {
       q: "Will automated documents still meet APS-grade rigour and compliance standards?",
@@ -1154,7 +1154,7 @@ const CANBERRA: LocationConfig = {
     },
     {
       q: "We're on several government panels with ongoing obligations. Can automation reduce that load?",
-      a: "Yes. Panel arrangements bring recurring reporting, capability statements and submissions — predictable, repeatable work well suited to automation. We automate the assembly and preparation while a qualified person reviews before submission, cutting the time this quietly consumes.",
+      a: "Yes. Panel arrangements bring recurring reporting, capability statements and submissions. This predictable, repeatable work is well suited to automation. We automate the assembly and preparation while a qualified person reviews before submission, cutting the time this quietly consumes.",
     },
     {
       q: "How do you handle security and sensitive government-related information?",
@@ -1166,7 +1166,7 @@ const CANBERRA: LocationConfig = {
     },
     {
       q: "How do we know it'll be worth it before committing to a build?",
-      a: "We start with a fixed-scope AI audit — much like the readiness assessments we run for complex businesses — that identifies the highest-value opportunities and expected return. You get a clear, prioritised roadmap before any build commitment, in keeping with the rigour government-adjacent firms expect.",
+      a: "We start with a fixed-scope AI audit, much like the readiness assessments we run for complex businesses, that identifies the highest-value opportunities and expected return. You get a clear, prioritised roadmap before any build commitment, in keeping with the rigour government-adjacent firms expect.",
     },
   ],
   ctaHeadline: "Meet government-grade rigour with less manual effort",
@@ -1175,7 +1175,7 @@ const CANBERRA: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Canberra | Saabai.ai",
     description:
-      "AI automation consulting for Canberra and ACT businesses. We help government consultants, ICT, defence and legal firms automate tenders, panel compliance and knowledge work. Book an AI audit.",
+      "AI automation for Canberra and ACT. Government, ICT, defence and legal firms: automate tenders, panel compliance and knowledge work. Free AI audit.",
     ogTitle: "AI Automation Consulting for Canberra Businesses | Saabai.ai",
     ogDescription:
       "Meet government-grade rigour with less manual effort. Saabai.ai helps Canberra firms automate tenders, panel compliance and knowledge management. Book an AI audit.",
@@ -1186,7 +1186,7 @@ const CANBERRA: LocationConfig = {
 // ---------------------------------------------------------------------------
 // DARWIN
 // ---------------------------------------------------------------------------
-const DARWIN: LocationConfig = {
+export const DARWIN: LocationConfig = {
   city: "Darwin",
   slug: "darwin",
   state: "Northern Territory",
@@ -1275,9 +1275,9 @@ const DARWIN: LocationConfig = {
     client: "PlasticOnline (Holland Plastics)",
     industry: "Industrial Supply to Remote Operations",
     context:
-      "Holland Plastics supplies cut-to-size plastics to industrial and resource customers, including remote operations of the kind common across the NT. Every order is individually priced, and manual quoting meant customers in remote operations waited on a person to respond.",
+      "PlasticOnline is a Queensland-based industrial supplier whose customers include operations at remote sites. This reference engagement highlights a challenge familiar to NT businesses: industrial clients at remote locations need pricing information quickly, at any hour, without depending on a salesperson being available to respond.",
     outcome:
-      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. Remote-operation customers get fast, accurate quotes without waiting, and the team is freed from routine pricing to focus on complex orders and key accounts.",
+      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. The NT-relevant insight is that remote-site customers get accurate quotes immediately, around the clock, regardless of time zone or business hours. That kind of always-on responsiveness is exactly what resource and infrastructure businesses operating across the Territory need.",
   },
   industryLinks: [
     {
@@ -1302,7 +1302,7 @@ const DARWIN: LocationConfig = {
   faqs: [
     {
       q: "Can you help us coordinate work across remote NT sites?",
-      a: "Yes — it's one of the most valuable Territory applications. We automate and integrate the communication, documentation and data flow between your Darwin base and remote sites, reducing the manual handling that makes coordinating across distance both error-prone and expensive when something slips.",
+      a: "Yes, it's one of the most valuable Territory applications. We automate and integrate the communication, documentation and data flow between your Darwin base and remote sites, reducing the manual handling that makes coordinating across distance both error-prone and expensive when something slips.",
     },
     {
       q: "How does automation cope with the Wet and Dry seasonal swings?",
@@ -1314,7 +1314,7 @@ const DARWIN: LocationConfig = {
     },
     {
       q: "Our local team is small but covers a big operation. Is automation realistic for us?",
-      a: "Very much so — lean teams covering large operations get the most from automation. Taking repetitive coordination and documentation off a few people lets them manage far more without burning out, which is exactly the leverage NT businesses need given the distances involved.",
+      a: "Very much so. Lean teams covering large operations get the most from automation. Taking repetitive coordination and documentation off a few people lets them manage far more without burning out, which is exactly the leverage NT businesses need given the distances involved.",
     },
     {
       q: "Do you work with Darwin businesses given the distance and time difference?",
@@ -1335,7 +1335,7 @@ const DARWIN: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Darwin | Saabai.ai",
     description:
-      "AI automation consulting for Darwin and NT businesses. We help mining, construction, logistics and government services automate remote coordination, freight docs and admin. Book an AI audit.",
+      "AI automation for Darwin and NT. Mining, construction and logistics: automate remote coordination, freight docs and admin. Book a free AI audit.",
     ogTitle: "AI Automation Consulting for Darwin Businesses | Saabai.ai",
     ogDescription:
       "Run leaner across distance and the seasons. Saabai.ai helps Darwin and NT businesses automate remote coordination, logistics docs and admin. Book an AI audit.",
@@ -1346,7 +1346,7 @@ const DARWIN: LocationConfig = {
 // ---------------------------------------------------------------------------
 // HOBART
 // ---------------------------------------------------------------------------
-const HOBART: LocationConfig = {
+export const HOBART: LocationConfig = {
   city: "Hobart",
   slug: "hobart",
   state: "Tasmania",
@@ -1364,9 +1364,9 @@ const HOBART: LocationConfig = {
   ],
   marketContext: [
     "Hobart has been transformed by tourism. MONA reshaped the city's profile and helped drive a sustained visitor boom, and around it a dense ecosystem of hospitality, accommodation, food, wine and experience businesses has grown. Much of this economy is built on small, owner-operated businesses, which gives Hobart its distinctive character but also means the admin behind a busy season has nowhere to go but onto owners and small teams who are already fully committed to running the operation.",
-    "The labour market is tight. Tasmania's smaller population and the seasonal nature of much of the work make it genuinely hard for Hobart businesses to hire and keep staff, particularly through peak periods. When you can't simply add people to cope with demand, the alternative is to make the team you have more productive — which is exactly what well-targeted automation does by removing the repetitive admin that consumes their time.",
-    "Food, wine and beverage is a standout Tasmanian sector with a growing export dimension. Selling Tasmanian produce and wine beyond the state introduces complexity — orders, logistics, compliance and documentation — that small producers often handle manually on top of actually making the product. The paperwork around growth can quietly become a brake on it.",
-    "Across tourism, hospitality, professional services, food and beverage and the trades, the common Hobart story is a small business trying to keep up with rising demand without a back office to match. Targeted AI automation gives these businesses leverage — handling bookings, enquiries, invoicing and documentation automatically so a small Hobart team can meet growing demand without the owner working every evening to keep the admin under control.",
+    "The labour market is tight. Tasmania's smaller population and the seasonal nature of much of the work make it genuinely hard for Hobart businesses to hire and keep staff, particularly through peak periods. When you can't simply add people to cope with demand, the alternative is to make the team you have more productive, which is exactly what well-targeted automation does by removing the repetitive admin that consumes their time.",
+    "Food, wine and beverage is a standout Tasmanian sector with a growing export dimension. Selling Tasmanian produce and wine beyond the state introduces complexity (orders, logistics, compliance and documentation) that small producers often handle manually on top of actually making the product. The paperwork around growth can quietly become a brake on it.",
+    "Across tourism, hospitality, professional services, food and beverage and the trades, the common Hobart story is a small business trying to keep up with rising demand without a back office to match. Targeted AI automation gives these businesses leverage by handling bookings, enquiries, invoicing and documentation automatically, so a small Hobart team can meet growing demand without the owner working every evening to keep the admin under control.",
   ],
   challengesIntro:
     "Hobart's small-business, tourism-driven economy produces a recognisable set of pressures, sharpened by a tight labour market. These are the ones we hear about most.",
@@ -1408,12 +1408,12 @@ const HOBART: LocationConfig = {
     {
       title: "Booking & enquiry automation",
       detail:
-        "Round-the-clock AI intake that handles enquiries and bookings through seasonal surges, so peak tourism demand is captured instead of dropped — built for Hobart's hospitality and experience operators.",
+        "Round-the-clock AI intake that handles enquiries and bookings through seasonal surges, so peak tourism demand is captured instead of dropped. Built for Hobart's hospitality and experience operators.",
     },
     {
-      title: "Client & customer intake automation",
+      title: "Food and Beverage Export Automation",
       detail:
-        "AI-powered intake that responds, qualifies and routes enquiries instantly, so after-hours and peak-period leads are captured rather than left to go cold overnight.",
+        "Automating wholesale order management, certification tracking, export documentation and distributor communications for Hobart's food producers, wineries and distilleries selling beyond Tasmania.",
     },
     {
       title: "Invoicing & payment follow-up",
@@ -1435,9 +1435,9 @@ const HOBART: LocationConfig = {
     client: "Tributum Law",
     industry: "Tax Law (Small Professional Services)",
     context:
-      "Tributum Law is a small professional services firm where client intake involved significant manual handling — gathering details, qualifying enquiries and preparing information before work could begin. It's a profile familiar to many small Hobart practices stretched between client work and admin.",
+      "Tributum Law is a small professional services firm where client intake involved significant manual handling: gathering details, qualifying enquiries and preparing information before work could begin. It's a profile familiar to many small Hobart practices stretched between client work and admin.",
     outcome:
-      "We built Lex, an AI intake agent that handles initial client interaction, gathers and structures the right information and prepares matters for the team. The firm now captures and qualifies enquiries consistently while freeing people from repetitive intake admin — the same leverage a small Hobart business needs to keep up with demand.",
+      "We built Lex, an AI intake agent that handles initial client interaction, gathers and structures the right information and prepares matters for the team. The firm now captures and qualifies enquiries consistently while freeing people from repetitive intake admin. That is the same leverage a small Hobart business needs to keep up with demand.",
   },
   industryLinks: [
     {
@@ -1461,7 +1461,7 @@ const HOBART: LocationConfig = {
   ],
   faqs: [
     {
-      q: "I run a small Hobart business and do everything myself — can automation actually help?",
+      q: "I run a small Hobart business and do everything myself. Can automation actually help?",
       a: "Yes, and small owner-operated businesses usually benefit most. When you're the one handling bookings, enquiries and invoicing, automating those tasks frees up the most valuable person in the business. We scope to fit small budgets and start with whatever's eating the most of your day.",
     },
     {
@@ -1495,7 +1495,7 @@ const HOBART: LocationConfig = {
   seo: {
     title: "AI Automation Consulting Hobart | Saabai.ai",
     description:
-      "AI automation consulting for Hobart and Tasmanian businesses. We help tourism, hospitality, food and wine and professional services automate bookings, intake and admin. Book an AI audit.",
+      "AI automation for Hobart and Tasmania. Tourism, hospitality, food and wine: automate bookings, intake and admin. Book a free AI audit.",
     ogTitle: "AI Automation Consulting for Hobart Businesses | Saabai.ai",
     ogDescription:
       "Keep up with a tourism boom in a tight labour market. Saabai.ai helps Hobart small businesses automate bookings, intake and admin. Book an AI efficiency audit.",

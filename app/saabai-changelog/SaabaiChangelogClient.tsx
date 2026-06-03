@@ -28,6 +28,13 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "4 Jun 2026",
+    entries: [
+      { time: "06:17", tag: "NEW", title: "Add location data — 9 Australian city configs with unique content and industryLinks" },
+      { time: "00:07", tag: "NEW", title: "Add Australian location pages SEO implementation plan with topic cluster addendum" }
+    ],
+  },
+  {
     date: "3 Jun 2026",
     entries: [
       { time: "23:24", tag: "NEW", title: "Add phone number and duration fields to Nico Moretti inquiry form" },
