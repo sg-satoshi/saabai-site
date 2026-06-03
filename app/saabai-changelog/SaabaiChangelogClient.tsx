@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "3 Jun 2026",
     entries: [
+      { time: "23:17", tag: "NEW", title: "Register Nico Moretti in site factory listings with proper name and metadata" },
       { time: "23:15", tag: "FIX", title: "Update footer copyright year to 2026" },
       { time: "23:14", tag: "NEW", title: "Replace Stitch placeholder images with real Nico Moretti photography" },
       { time: "23:10", tag: "NEW", title: "Add Nico Moretti client site to Site Factory (/sites/nico-moretti)" },
