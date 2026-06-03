@@ -30,8 +30,21 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "3 Jun 2026",
+    entries: [
+      { time: "12:45", tag: "DEPLOYMENT", title: "Rex standalone repo published to GitHub (sg-satoshi/rex) — private, Cloudflare Pages ready" },
+      { time: "12:30", tag: "NEW", title: "Rex extracted into fully independent Next.js repo — PLON can self-host on Cloudflare without Saabai infrastructure" },
+      { time: "12:15", tag: "DEPLOYMENT", title: "Cloudflare adapter configured — @opennextjs/cloudflare, wrangler.jsonc with nodejs_compat, Next.js 16.2.7" },
+      { time: "12:00", tag: "FIX", title: "Dashboard auth migrated from Node.js crypto to Web Crypto API — Edge runtime compatible" },
+      { time: "11:50", tag: "FIX", title: "middleware.ts renamed to proxy.ts — Next.js 16 convention; portal-session removed from Edge runtime" },
+      { time: "11:40", tag: "UPDATE", title: "Tributum client removed from standalone build — PLON-only config with clean registry for future clients" },
+      { time: "11:30", tag: "UPDATE", title: "NEXT_PUBLIC_BASE_URL env var replaces hardcoded saabai.ai URL in feedback notifications and internal API calls" },
+    ],
+  },
+  {
     date: "2 Jun 2026",
     entries: [
+      { time: "14:22", tag: "FIX", title: "Remove incorrect full-sheet price cap from standard acrylic CTS pricing" },
       { time: "07:31", tag: "NEW", title: "Rex EOFY sale promo awareness — June 2026" }
     ],
   },

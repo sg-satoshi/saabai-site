@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "2 Jun 2026",
     entries: [
+      { time: "14:22", tag: "FIX", title: "Remove incorrect full-sheet price cap from standard acrylic CTS pricing" },
       { time: "07:31", tag: "NEW", title: "Rex EOFY sale promo awareness — June 2026" }
     ],
   },
