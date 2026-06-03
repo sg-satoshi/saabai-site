@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "4 Jun 2026",
     entries: [
+      { time: "06:31", tag: "FIX", title: "Location-data cleanup - remove em dashes, fix Hobart services, update case study framing, trim SEO descriptions, export city consts" },
       { time: "06:17", tag: "NEW", title: "Add location data — 9 Australian city configs with unique content and industryLinks" },
       { time: "00:07", tag: "NEW", title: "Add Australian location pages SEO implementation plan with topic cluster addendum" }
     ],
