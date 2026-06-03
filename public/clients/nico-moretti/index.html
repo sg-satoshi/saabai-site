@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<!--
+  Nico Moretti — Bespoke Companionship
+  Site Factory: /sites/nico-moretti
+  Design source: Stitch by Google (exported 2026-06-03)
+
+  NOTE: Hero and gallery images use Stitch AI-generated URLs (lh3.googleusercontent.com/aida-public/...).
+  These are placeholder images and may expire. Replace with real photography before final launch.
+-->
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nico Moretti - Bespoke Companionship</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&amp;family=Playfair+Display:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#3f465c",
+                        "surface-variant": "#323537",
+                        "error": "#ffb4ab",
+                        "tertiary": "#c3cee6",
+                        "primary-fixed-dim": "#e9c349",
+                        "outline-variant": "#4d4635",
+                        "inverse-surface": "#e0e3e5",
+                        "on-secondary": "#283044",
+                        "on-tertiary": "#263143",
+                        "on-surface": "#e0e3e5",
+                        "on-tertiary-fixed": "#111c2d",
+                        "on-primary-container": "#554300",
+                        "on-error": "#690005",
+                        "surface-container-high": "#272a2c",
+                        "on-secondary-container": "#adb4ce",
+                        "on-primary-fixed": "#241a00",
+                        "surface": "#101415",
+                        "primary-fixed": "#ffe088",
+                        "tertiary-container": "#a8b3ca",
+                        "on-primary": "#3c2f00",
+                        "primary-container": "#d4af37",
+                        "surface-container-highest": "#323537",
+                        "on-tertiary-container": "#3a4559",
+                        "secondary": "#bec6e0",
+                        "on-secondary-fixed": "#131b2e",
+                        "on-primary-fixed-variant": "#574500",
+                        "surface-bright": "#363a3b",
+                        "inverse-on-surface": "#2d3133",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "tertiary-fixed": "#d8e3fb",
+                        "surface-dim": "#101415",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "on-surface-variant": "#d0c5af",
+                        "primary": "#f2ca50",
+                        "outline": "#99907c",
+                        "on-background": "#e0e3e5",
+                        "surface-container-lowest": "#0b0f10",
+                        "secondary-fixed": "#dae2fd",
+                        "inverse-primary": "#735c00",
+                        "tertiary-fixed-dim": "#bcc7de",
+                        "surface-tint": "#e9c349",
+                        "surface-container": "#1d2022",
+                        "surface-container-low": "#191c1e",
+                        "background": "#101415",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#3f465c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "80px",
+                        "section-gap": "120px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Manrope"],
+                        "headline-md": ["Playfair Display"],
+                        "label-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "display-lg": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Subtle fade-in animation for scroll */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-outline/10 transition-all duration-300" id="navbar">
+<div class="flex justify-between items-center w-full px-8 py-6 max-w-[1200px] mx-auto">
+<a class="text-headline-md font-headline-md tracking-widest text-primary uppercase" href="#">NICO MORETTI</a>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#about">About</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#services">Services</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#lifestyle">Lifestyle</a>
+<a class="px-8 py-3 bg-primary text-on-primary font-label-md uppercase tracking-widest hover:bg-primary-fixed transition-colors duration-300" href="#contact">Inquire</a>
+</div>
+<!-- Mobile Menu Button -->
+<button class="md:hidden text-primary" id="mobile-menu-btn">
+<span class="material-symbols-outlined text-[32px]">menu</span>
+</button>
+</div>
+<!-- Mobile Menu -->
+<div class="md:hidden hidden bg-surface-container-high absolute top-full left-0 w-full border-b border-outline/10" id="mobile-menu">
+<div class="flex flex-col p-6 space-y-6">
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#about">About</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#services">Services</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary transition-colors duration-300 uppercase tracking-widest text-label-md" href="#lifestyle">Lifestyle</a>
+<a class="px-8 py-3 bg-primary text-on-primary font-label-md uppercase tracking-widest text-center hover:bg-primary-fixed transition-colors duration-300" href="#contact">Inquire</a>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<img alt="Nico Moretti in a full-body tailored suit, standing poised in a sophisticated room, embodying the 'Executive Noir' aesthetic with midnight blues and deep shadows." class="w-full h-full object-cover opacity-60 object-top" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhs0zvtxTDX2b5Xx8beVSRLQsLwjMI7sGlDmN47geAwwcw5XdW5wxeR0_3w09au0YkHNlKL12sDBkhFs9-PcZk__ZzRtxxWP2dMzBgZGPA77FzHg6JVJlpufTsy22soJ-o1jd3gI-HnIVYBmd98U7qd4yNX02c8ZVfwE5FwUyY-tKONOdWBFMRLloNHi6KprywOtXlqY7kK3rSfF00oJOgQRO2xAFsI4KR7gv9LMwiHI1-o9iwGV2JiSa3nSOMZoD8BWcdQtqFc-Gb"/>
+<div class="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-[1200px] w-full mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<div class="md:col-span-7 lg:col-span-6 flex flex-col justify-center space-y-8 fade-up">
+<div class="inline-block border-b border-primary pb-2 w-max">
+<span class="text-label-md font-label-md text-primary tracking-widest uppercase">The Bespoke Experience</span>
+</div>
+<h1 class="text-headline-lg-mobile md:text-display-lg font-display-lg text-on-surface text-balance leading-tight">
+                    The Perfect Accompaniment for Your Most Important Occasions.
+                </h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant text-pretty max-w-lg">
+                    Discretion, elegance, and worldly conversation. Tailored companionship for the discerning executive woman who demands perfection in every detail.
+                </p>
+<div class="pt-4">
+<a class="inline-block px-10 py-4 bg-primary text-on-primary font-label-md uppercase tracking-widest hover:bg-primary-fixed transition-colors duration-300 shadow-[0_0_20px_rgba(242,202,80,0.1)]" href="#contact">
+                        Request a Consultation
+                    </a>
+</div>
+</div>
+</div>
+</section>
+<!-- About Section -->
+<section class="py-section-gap bg-background" id="about">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+<!-- Image Side -->
+<div class="lg:col-span-5 relative fade-up">
+<div class="aspect-[4/5] relative">
+<img alt="A polished headshot of Nico Moretti, wearing a sophisticated tuxedo, looking directly at the camera with a calm, intelligent expression against a dark background." class="w-full h-full object-cover rounded-sm grayscale-[20%] contrast-125" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArtTpKCtsmn_JA-diNWtA9hnu2EeLbZbz_rSfmgVl8ZTf27hyUK240sUFVRgwM_Jz7Ow4munXmM1e-j1T7VoK6q4NQMi8bCVfUyZJdVyUXpTjaqba-zpwO7NWtj2nwbW-NZryQxH8GAHiT5wS79dJM2zLtUirS5C_HCYiNEbujdK8ujt5RoeQjhJXC4sYSeNtaeutH4WrgEu81TCVSwcD7vzOFyWH6F92ZLcUQPQ9HqTKiEhtjIC-1AS0jzoOY-wXvIo5rjPwbdtN0"/>
+<!-- Decorative Frame -->
+<div class="absolute -inset-4 border border-outline/20 z-[-1] translate-x-4 translate-y-4"></div>
+</div>
+</div>
+<!-- Content Side -->
+<div class="lg:col-span-6 lg:col-start-7 space-y-8 mt-12 lg:mt-0 fade-up">
+<h2 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg text-on-surface">
+                        Refined Companionship for High-Stakes Environments.
+                    </h2>
+<div class="h-px w-24 bg-primary/50"></div>
+<div class="space-y-6 text-body-md font-body-md text-on-surface-variant">
+<p>
+                            Nico Moretti is a sophisticated, well-traveled companion designed to blend seamlessly into high-stakes executive events, galas, and private dinners. He represents the pinnacle of discreet, professional accompaniment.
+                        </p>
+<p>
+                            Fluent in the subtle languages of power and poise, Nico offers more than just a presence. He engages in intelligent discourse on business, culture, and the arts, ensuring you are supported by an individual who enhances your stature and allows you to focus entirely on your objectives.
+                        </p>
+</div>
+<div class="flex flex-wrap gap-4 pt-4">
+<span class="px-4 py-2 bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Art &amp; Culture</span>
+<span class="px-4 py-2 bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Global Finance</span>
+<span class="px-4 py-2 bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">Philanthropy</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Services Section -->
+<section class="py-section-gap bg-surface-container-low" id="services">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="text-center mb-16 fade-up">
+<span class="text-label-md font-label-md text-primary tracking-widest uppercase block mb-4">Engagements</span>
+<h2 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg text-on-surface">
+                    Tailored for Every Occasion
+                </h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Service Card 1 -->
+<div class="bg-surface-container-highest p-10 border border-outline/10 hover:border-primary/30 transition-colors duration-500 group flex flex-col h-full fade-up">
+<div class="mb-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[40px]">work</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface mb-4">Executive Functions</h3>
+<p class="text-body-md font-body-md text-on-surface-variant flex-grow">
+                        Command the room with confidence. Nico provides a polished, articulate presence at corporate retreats, board dinners, and industry conferences, reflecting your professional caliber.
+                    </p>
+</div>
+<!-- Service Card 2 -->
+<div class="bg-surface-container-highest p-10 border border-outline/10 hover:border-primary/30 transition-colors duration-500 group flex flex-col h-full fade-up" style="transition-delay: 100ms;">
+<div class="mb-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[40px]">local_bar</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface mb-4">Social Galas</h3>
+<p class="text-body-md font-body-md text-on-surface-variant flex-grow">
+                        Navigate high society with effortless grace. A charming and attentive escort for charity balls, red carpet events, and exclusive cultural openings.
+                    </p>
+</div>
+<!-- Service Card 3 -->
+<div class="bg-surface-container-highest p-10 border border-outline/10 hover:border-primary/30 transition-colors duration-500 group flex flex-col h-full fade-up" style="transition-delay: 200ms;">
+<div class="mb-8 text-primary opacity-80 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[40px]">restaurant</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-on-surface mb-4">Private Dinners</h3>
+<p class="text-body-md font-body-md text-on-surface-variant flex-grow">
+                        Intimate and engaging companionship for exclusive culinary experiences. Enjoy worldly conversation and impeccable manners in the most private of settings.
+                    </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Lifestyle Gallery -->
+<section class="py-section-gap bg-background" id="lifestyle">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="flex justify-between items-end mb-16 fade-up">
+<div>
+<span class="text-label-md font-label-md text-primary tracking-widest uppercase block mb-4">Aesthetic</span>
+<h2 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg text-on-surface">
+                        The Environment of Success
+                    </h2>
+</div>
+</div>
+<!-- Bento Grid Gallery -->
+<div class="grid grid-cols-1 md:grid-cols-4 grid-rows-[auto] md:grid-rows-[400px_300px] gap-4 fade-up">
+<!-- Large Feature -->
+<div class="md:col-span-2 md:row-span-2 relative group overflow-hidden">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse z-0"></div>
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 relative z-10" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCg3F9FQCfF5vMyAU1IewSbX6JBA_va3soINrVhd1ZIDOR8guCp5pYJ5w4zjcDUr-vLvJepdSKHsGMfF_M_-ZCF_S0XHjQt6rYf2s4Uv-x94LHXldFgkDR2BpElLlxacGmMRis1G394RgeULmRGL81klCftgfry5hPG9-D4PTaHJbXdaybMGGXJMgqZ_axhyHdcUDjlqFO9lss_XB1jdryFYJqSATDEnW5GCqJwwJLE5P2TxSlQysMjBPM7Nwj_003cqbSqAqcbDb2');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent z-20"></div>
+<div class="absolute bottom-6 left-6 z-30">
+<span class="text-label-sm font-label-sm text-primary tracking-widest uppercase">Atmosphere</span>
+</div>
+</div>
+<!-- Top Right -->
+<div class="md:col-span-2 relative group overflow-hidden h-[300px] md:h-auto">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse z-0"></div>
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 relative z-10 grayscale-[30%]" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDrb4iHC-ZmRgYJoCX_W-m7LzVKT5rU6qIkOfDaT1uXkBLY_HimHp-VgIEtbmMm_ICAcMi19hLQgRNFl8VHI4CFF8gKrkevQKTCYsxt7TCCtc-cYCsGo7YN_pZNh02c1X9XDESpA2K7BvsQ8iDmLDVWpsRb87pKdk_Miq5yJRXpswLXp2EYFsR9sxNpJ8zHUDngo_-vk1zOe7GoClNCc20cdPrev_czyNb4yAzwszbiOEQOcKWWu7rRzez_STe-EHc1bDGFXcc9V7sQ');">
+</div>
+</div>
+<!-- Bottom Middle -->
+<div class="md:col-span-1 relative group overflow-hidden h-[250px] md:h-auto">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse z-0"></div>
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 relative z-10" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDPX9HW9fDl9N9d-b4Cm013WirXev80l732iHNvABbPlmpeHsXaoOQodNoKBr7sHkA_n4A7p7gxbBFTCTlrIcpPCtNsdBbcxNAfYM5GA3AEnV0Qyngk_DJLYCWhpCp6v2ZGAcdjqrxCLDLrpegVaZtriDOazrKEN8hV5RGdlNVSCD2PHUWX3CgYlWsfB81zISZgeEJ8Q7Z1uYC1Fub2Fpe2LWNjo15SdKgXRA6tgwf5JgrvA9r-DS_0MkEaf2o6mcsGm8N-1Y5Faacm');">
+</div>
+</div>
+<!-- Bottom Right -->
+<div class="md:col-span-1 relative group overflow-hidden h-[250px] md:h-auto">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse z-0"></div>
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 relative z-10" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCBH4pj9lfGDSsxA4XP1aZGcQYIlfBPf5HbYakmZ9IXF6A1mP2jRp8v6wFVZ-guiZ1GxrEt8vpbln7whh5lmwtSkR5UiOCgNHhxwVUBEVI-NUMoHIiumxhwIttXbW5VR36Yt1r1KfP4YDJhonOTHypnKtEvZcTtwEUn8DJW5lotfAYwrLT6oDHCep7iRGjJRMHf1tDxuYhCUvq2PkkCeUf-vcjblrNwyFjJ7cz7MUb0SVfS2TCyhYKZEJR0AtPKcb2bZZ2Tfs5ixAgh');">
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Contact Form Section -->
+<section class="py-section-gap bg-surface-container-low border-t border-outline/5" id="contact">
+<div class="max-w-[800px] mx-auto px-margin-mobile md:px-margin-desktop fade-up">
+<div class="text-center mb-12">
+<h2 class="text-headline-lg-mobile md:text-display-lg font-display-lg text-on-surface mb-6">
+                    Begin the Conversation
+                </h2>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-lg mx-auto">
+                    All inquiries are handled with the utmost discretion. Please provide your details below, and Mr. Moretti's office will be in touch to arrange a private consultation.
+                </p>
+</div>
+<form class="space-y-8 bg-surface-container-highest p-8 md:p-12 border border-outline/10">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="relative">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="name">Full Name</label>
+<input class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors placeholder:text-surface-variant" id="name" name="name" placeholder="Jane Doe" type="text"/>
+</div>
+<div class="relative">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="email">Email Address</label>
+<input class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors placeholder:text-surface-variant" id="email" name="email" placeholder="jane@example.com" type="email"/>
+</div>
+</div>
+<div class="relative">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="event_type">Nature of Event</label>
+<select class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors appearance-none cursor-pointer" id="event_type" name="event_type">
+<option class="bg-surface-container-highest text-surface-variant" disabled="" selected="" value="">Select an occasion...</option>
+<option class="bg-surface-container-highest text-on-surface" value="executive">Executive Function</option>
+<option class="bg-surface-container-highest text-on-surface" value="gala">Social Gala</option>
+<option class="bg-surface-container-highest text-on-surface" value="dinner">Private Dinner</option>
+<option class="bg-surface-container-highest text-on-surface" value="other">Other (Specify below)</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant top-8">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+<div class="relative">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="message">Additional Details (Optional)</label>
+<textarea class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors placeholder:text-surface-variant resize-none" id="message" name="message" placeholder="Dates, specific requirements, or venue details..." rows="4"></textarea>
+</div>
+<div class="pt-4 text-center">
+<button class="inline-block w-full md:w-auto px-12 py-4 bg-transparent border border-primary text-primary font-label-md uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all duration-300" type="submit">
+                        Submit Inquiry
+                    </button>
+</div>
+</form>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest w-full py-12 px-8 border-t border-outline/5">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-[1200px] mx-auto space-y-4 md:space-y-0">
+<div class="text-label-md font-label-md text-primary uppercase tracking-widest">
+                NICO MORETTI
+            </div>
+<div class="flex space-x-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-sm font-label-sm" href="#">FAQ</a>
+</div>
+<div class="text-on-surface-variant text-body-md font-body-md">
+                © 2024 Nico Moretti. All rights reserved. Discretion Guaranteed.
+            </div>
+</div>
+</footer>
+<script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if(mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                const icon = mobileMenuBtn.querySelector('.material-symbols-outlined');
+                if (mobileMenu.classList.contains('hidden')) {
+                    icon.textContent = 'menu';
+                } else {
+                    icon.textContent = 'close';
+                }
+            });
+        }
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-lg', 'bg-background/95');
+                navbar.classList.remove('bg-background/80');
+            } else {
+                navbar.classList.remove('shadow-lg', 'bg-background/95');
+                navbar.classList.add('bg-background/80');
+            }
+        });
+
+        // Intersection Observer for fade-up animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach((element) => {
+            observer.observe(element);
+        });
+    </script>
+</body></html>

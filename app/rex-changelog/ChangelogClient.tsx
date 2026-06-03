@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "3 Jun 2026",
     entries: [
+      { time: "22:11", tag: "NEW", title: "Rex changelog — 3 Jun 2026 standalone repo extraction entries" },
       { time: "12:45", tag: "DEPLOYMENT", title: "Rex standalone repo published to GitHub (sg-satoshi/rex) — private, Cloudflare Pages ready" },
       { time: "12:30", tag: "NEW", title: "Rex extracted into fully independent Next.js repo — PLON can self-host on Cloudflare without Saabai infrastructure" },
       { time: "12:15", tag: "DEPLOYMENT", title: "Cloudflare adapter configured — @opennextjs/cloudflare, wrangler.jsonc with nodejs_compat, Next.js 16.2.7" },

@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "3 Jun 2026",
+    entries: [
+      { time: "22:11", tag: "NEW", title: "Rex changelog — 3 Jun 2026 standalone repo extraction entries" }
+    ],
+  },
+  {
     date: "2 Jun 2026",
     entries: [
       { time: "14:22", tag: "FIX", title: "Remove incorrect full-sheet price cap from standard acrylic CTS pricing" },
