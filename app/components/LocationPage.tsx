@@ -356,7 +356,7 @@ export default function LocationPage({ config }: Props) {
             Common Questions
           </p>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-10">
-            FAQ &mdash; {city} Businesses
+            FAQ: {city} Businesses
           </h2>
           <div className="space-y-4 max-w-3xl">
             {faqs.map((faq) => (
