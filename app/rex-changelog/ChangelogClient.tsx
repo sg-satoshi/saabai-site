@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "4 Jun 2026",
     entries: [
+      { time: "06:39", tag: "FIX", title: "Remove mdash entity from FAQ heading in LocationPage" },
       { time: "06:34", tag: "NEW", title: "Add LocationPage template component with all 9 sections and JSON-LD schema" },
       { time: "06:34", tag: "NEW", title: "Add Service Areas section to footer with 9 city links" },
       { time: "06:31", tag: "FIX", title: "Location-data cleanup - remove em dashes, fix Hobart services, update case study framing, trim SEO descriptions, export city consts" },
