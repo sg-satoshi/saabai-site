@@ -4,6 +4,18 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+interface LegacyMeta {
+  name: string;
+  niche: string;
+  description?: string;
+}
+
+const LEGACY_META: Record<string, LegacyMeta> = {
+  nextinvestment: { name: "Next Investment", niche: "finance" },
+  "lmm-site":     { name: "Lifestyle Money Management", niche: "finance" },
+  "nico-moretti": { name: "Nico Moretti", niche: "professional-services", description: "Bespoke companionship for discerning executive women." },
+};
+
 function scanLegacySites() {
   const clientsDir = path.join(process.cwd(), "public", "clients");
   if (!existsSync(clientsDir)) return [];
@@ -12,18 +24,16 @@ function scanLegacySites() {
     .filter((d) => d.isDirectory())
     .map((d) => {
       const slug = d.name;
-      const nameMap: Record<string, string> = {
-        nextinvestment: "Next Investment",
-        "lmm-site": "Lifestyle Money Management",
-      };
+      const meta = LEGACY_META[slug] ?? { name: slug, niche: "professional-services" };
       return {
         id: `legacy_${slug}`,
         slug,
-        name: nameMap[slug] || slug,
-        niche: "professional-services",
+        name: meta.name,
+        niche: meta.niche,
+        description: meta.description,
         status: "live",
         url: `https://www.saabai.ai/sites/${slug}/`,
-        business: { name: nameMap[slug] || slug },
+        business: { name: meta.name },
         chatbot: { enabled: true, name: "Assistant", greeting: "", systemPrompt: "" },
         createdAt: 0,
         updatedAt: 0,
