@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "3 Jun 2026",
     entries: [
+      { time: "23:10", tag: "NEW", title: "Add Nico Moretti client site to Site Factory (/sites/nico-moretti)" },
       { time: "22:11", tag: "NEW", title: "Rex changelog — 3 Jun 2026 standalone repo extraction entries" }
     ],
   },
