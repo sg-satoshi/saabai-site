@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "3 Jun 2026",
     entries: [
+      { time: "23:24", tag: "NEW", title: "Add phone number and duration fields to Nico Moretti inquiry form" },
       { time: "23:21", tag: "NEW", title: "Add FAQ nav link (desktop + mobile) and fix footer FAQ anchor" },
       { time: "23:19", tag: "NEW", title: "Add FAQ section to Nico Moretti site — 7 questions in dark-gold accordion style" },
       { time: "23:17", tag: "NEW", title: "Register Nico Moretti in site factory listings with proper name and metadata" },
