@@ -81,7 +81,7 @@ export default function TributumLawPage() {
             Tributum Law
           </div>
           <div className="hidden md:flex gap-8 text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {["Services", "About", "Process", "Contact"].map((item) => (
+            {["Services", "About", "Team", "Process", "Contact"].map((item) => (
               <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors">
                 {item}
               </a>
@@ -224,6 +224,80 @@ export default function TributumLawPage() {
             we focus exclusively on taxation and trust law. That singular focus means every client engages with a team that
             lives and breathes this area of law, every day.
           </p>
+        </div>
+      </section>
+
+      {/* ── Team ── */}
+      <section id="team" className="py-24 md:py-32 px-8 md:px-16" style={{ background: COLORS.navy, color: "#fff" }}>
+        <div className="max-w-5xl mx-auto">
+          <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: COLORS.gold }}>
+            Our People
+          </p>
+          <h2 style={{ fontFamily: "Georgia, serif" }} className="text-4xl md:text-5xl font-normal mb-6">
+            Meet the team.
+          </h2>
+          <p className="text-base max-w-xl mb-16 leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Our principals bring deep specialist expertise across tax law, trust structures and estate planning, with careers built exclusively in this field.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Mathew Brittingham */}
+            <div className="p-8 md:p-10 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-start gap-6 mb-6">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light shrink-0"
+                  style={{ background: COLORS.gold, color: COLORS.navy, fontFamily: "Georgia, serif" }}
+                >
+                  MB
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "Georgia, serif" }} className="text-2xl font-normal mb-1">
+                    Mathew Brittingham
+                  </h3>
+                  <p className="text-xs tracking-[0.2em] uppercase" style={{ color: COLORS.gold }}>
+                    Managing Director
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+                Mathew is a tax and trust law specialist with a Master of Laws in Taxation from Sydney University.
+                He was a partner in a leading corporate law firm and acts for clients across all of Australia and the globe.
+                This expertise allows him to advise clients on complex areas of tax law such as tax avoidance, international tax,
+                mergers and acquisitions, restructuring and sophisticated trust arrangements.
+                Mathew is also regularly called on to act for taxpayers in disputes with the ATO and State Revenue Offices,
+                and routinely assists to resolve audits with those authorities.
+              </p>
+            </div>
+
+            {/* Teresa Ta */}
+            <div className="p-8 md:p-10 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-start gap-6 mb-6">
+                <div
+                  className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light shrink-0"
+                  style={{ background: COLORS.gold, color: COLORS.navy, fontFamily: "Georgia, serif" }}
+                >
+                  TT
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "Georgia, serif" }} className="text-2xl font-normal mb-1">
+                    Teresa Ta
+                  </h3>
+                  <p className="text-xs tracking-[0.2em] uppercase" style={{ color: COLORS.gold }}>
+                    Associate
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+                Teresa graduated from the University of South Australia with a Bachelor of Laws (Honours) and a Bachelor of Business (Management).
+                She is currently on the path to becoming a Chartered Tax Adviser.
+                Prior to joining Tributum Law, Teresa worked at both leading and boutique commercial law firms,
+                gaining experience solving complex tax and legal challenges for a broad range of clients.
+                Her clients have included growing sole traders, incorporated associations and established private and public companies.
+                At Tributum Law, Teresa works closely with the Managing Director across all facets of tax and trust law,
+                ensuring clients receive coordinated, practical advice.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
