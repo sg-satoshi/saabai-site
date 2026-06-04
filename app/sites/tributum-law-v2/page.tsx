@@ -74,7 +74,7 @@ export default function TributumLawPage() {
   return (
     <main className="font-sans">
       {/* ── Hero ── */}
-      <section className="min-h-screen flex flex-col relative" style={{ background: COLORS.navy, color: "#fff" }}>
+      <section className="relative min-h-screen" style={{ background: COLORS.navy, color: "#fff" }}>
         {/* Nav */}
         <nav className="relative z-10 flex items-center justify-between px-8 py-6 md:px-16">
           <div style={{ fontFamily: "Georgia, serif" }} className="text-xl font-semibold tracking-wide">
@@ -90,9 +90,9 @@ export default function TributumLawPage() {
         </nav>
 
         {/* Hero Content — Split Layout */}
-        <div className="relative z-10 flex-1 grid lg:grid-cols-2 gap-0 items-center">
+        <div className="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
           {/* Left: Text */}
-          <div className="px-8 md:px-16 py-12 lg:py-0">
+          <div className="flex-1 flex flex-col justify-center px-8 md:px-16 py-12 lg:py-0">
             <p className="text-xs tracking-[0.3em] uppercase mb-8" style={{ color: COLORS.gold }}>
               Tax & Trust Law Advisory
             </p>
@@ -134,7 +134,7 @@ export default function TributumLawPage() {
           </div>
 
           {/* Right: Image */}
-          <div className="hidden lg:block relative h-full min-h-[600px]">
+          <div className="hidden lg:block lg:w-[45%] relative">
             <div
               className="absolute inset-0"
               style={{
@@ -143,7 +143,7 @@ export default function TributumLawPage() {
                 backgroundPosition: "center",
               }}
             />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0F1B2E 0%, transparent 40%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0F1B2E 0%, transparent 50%)" }} />
           </div>
         </div>
       </section>
