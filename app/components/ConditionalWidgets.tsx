@@ -12,6 +12,8 @@ const SUPPRESS_PATHS = [
   "/lex", "/client-portal", "/legal",
   // Admin pages have their own nav
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
+  // Client demo sites — their own experience
+  "/sites/tributum-law-v2",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
