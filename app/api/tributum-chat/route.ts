@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
@@ -67,13 +67,18 @@ export async function POST(req: Request) {
     });
     const model = openrouter("anthropic/claude-3-5-haiku");
 
-    const result = streamText({
+    const result = await generateText({
       model,
       system: SYSTEM_PROMPT,
       messages: chatMessages,
     });
 
-    return result.toUIMessageStreamResponse();
+    return new Response(JSON.stringify({ content: result.text }), {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
   } catch (error) {
     console.error("Tributum chat error:", error);
     return new Response(

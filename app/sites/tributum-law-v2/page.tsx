@@ -373,28 +373,31 @@ export default function TributumLawPage() {
       </section>
 
       {/* ── Process ── */}
-      <section className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.navy, color: "#fff" }}>
-        {/* Geometric Accent */}
-        <div
-          className="absolute top-0 right-0 w-96 h-96 opacity-20"
-          style={{
-            backgroundImage: "url('/sites/tributum-law-v2/geometric-accent.png')",
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "top right",
-          }}
-        />
+      <section id="process" className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.navy, color: "#fff" }}>
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: COLORS.gold }}>
             Our Process
           </p>
-          <h2 style={{ fontFamily: "Georgia, serif" }} className="text-4xl md:text-5xl font-normal mb-16">
+          <h2 style={{ fontFamily: "Georgia, serif" }} className="text-4xl md:text-5xl font-normal mb-6">
             Three steps to resolution.
           </h2>
+          <p className="text-base max-w-2xl mb-16 leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+            A clear, structured path to resolving your tax or trust matter — from initial assessment through to resolution.
+          </p>
+
+          {/* Process Image */}
+          <div className="mb-16 rounded-2xl overflow-hidden">
+            <img
+              src="/sites/tributum-law-v2/process-timeline.png"
+              alt="Tributum Law process timeline — Assess, Advise, Resolve"
+              className="w-full h-auto"
+            />
+          </div>
+
           <div className="grid md:grid-cols-3 gap-12">
             {PROCESS.map((step, i) => (
               <div key={i} className="relative">
-                <div className="text-6xl font-light mb-6" style={{ color: "rgba(184,134,11,0.3)" }}>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-light mb-6" style={{ background: "rgba(184,134,11,0.15)", border: `1px solid rgba(184,134,11,0.3)`, color: COLORS.gold }}>
                   {step.num}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
@@ -402,7 +405,7 @@ export default function TributumLawPage() {
                   {step.desc}
                 </p>
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-8 right-0 w-px h-24" style={{ background: "rgba(255,255,255,0.1)" }} />
+                  <div className="hidden md:block absolute top-8 right-0 w-px h-32" style={{ background: "rgba(184,134,11,0.2)" }} />
                 )}
               </div>
             ))}
