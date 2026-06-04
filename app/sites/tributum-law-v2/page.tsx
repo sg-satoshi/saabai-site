@@ -490,7 +490,7 @@ function ChatWidgetLoader() {
     if (document.getElementById('trib-chat-script')) return;
     const script = document.createElement('script');
     script.id = 'trib-chat-script';
-    script.src = '/sites/tributum-law-v2/chat-widget.js';
+    script.src = '/sites/tributum-law-v2/chat-widget.js?v=2';
     script.async = true;
     document.body.appendChild(script);
   }, []);
