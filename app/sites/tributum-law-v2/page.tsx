@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import TributumChatWidget from "@/app/components/TributumChatWidget";
 
 const COLORS = {
   navy: "#0F1B2E",
@@ -81,7 +82,7 @@ export default function TributumLawPage() {
             Tributum Law
           </div>
           <div className="hidden md:flex gap-8 text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {["Services", "About", "Team", "Process", "Contact"].map((item) => (
+            {["Services", "About", "Reviews", "Team", "Process", "Contact"].map((item) => (
               <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-white transition-colors">
                 {item}
               </a>
@@ -135,15 +136,13 @@ export default function TributumLawPage() {
 
           {/* Right: Image */}
           <div className="hidden lg:block lg:w-[45%] relative">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: "url('/sites/tributum-law-v2/hero-bg.png')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
+            <img
+              src="/sites/tributum-law-v2/consultation.png"
+              alt="Tributum Law consultation"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0F1B2E 0%, transparent 50%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0F1B2E 0%, transparent 40%)" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 60%, #0F1B2E 100%)" }} />
           </div>
         </div>
       </section>
@@ -224,6 +223,78 @@ export default function TributumLawPage() {
             we focus exclusively on taxation and trust law. That singular focus means every client engages with a team that
             lives and breathes this area of law, every day.
           </p>
+        </div>
+      </section>
+
+      {/* ── Reviews ── */}
+      <section id="reviews" className="py-24 md:py-32 px-8 md:px-16" style={{ background: COLORS.ivory }}>
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: COLORS.gold }}>Client Reviews</p>
+          <h2 style={{ fontFamily: "Georgia, serif", color: COLORS.navy }} className="text-4xl md:text-5xl font-normal mb-4">
+            What our clients say.
+          </h2>
+          <p className="text-base max-w-2xl mb-16 leading-relaxed" style={{ color: COLORS.grey }}>
+            Real results for real clients. Here is what high net worth individuals and referring professionals have to say about working with Tributum Law.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                stars: "★★★★★",
+                text: "\"We referred a complicated discretionary trust restructure to Tributum Law after hitting the limits of our own expertise. They turned it around quickly, communicated clearly throughout, and our client was thrilled with the outcome. Absolutely the best specialist firm we have worked with.\"",
+                name: "Michael B.",
+                title: "Senior Partner, Accounting Firm, Adelaide SA",
+                initials: "MB",
+              },
+              {
+                stars: "★★★★★",
+                text: "\"I was facing an ATO audit and significant potential tax liability on a series of trust distributions going back three years. The team reviewed the documentation, identified a clear legal basis for our position, and handled the entire objection process. The outcome saved me well into six figures. Exceptional expertise.\"",
+                name: "Sandra K.",
+                title: "Business Owner, Prospect SA",
+                initials: "SK",
+              },
+              {
+                stars: "★★★★★",
+                text: "\"Our firm regularly briefs Tributum Law on behalf of our clients. The quality of their advice is consistently outstanding, their turnaround is fast, and they are genuinely easy to work with. They have a rare ability to translate complex tax law into practical, actionable guidance.\"",
+                name: "Thomas L.",
+                title: "Principal Solicitor, General Practice, Adelaide SA",
+                initials: "TL",
+              },
+            ].map((review, i) => (
+              <div
+                key={i}
+                className="p-8 rounded-2xl transition-all hover:-translate-y-1"
+                style={{ background: "#ffffff", border: `1px solid ${COLORS.border}`, boxShadow: "0 4px 20px rgba(15,27,46,0.06)" }}
+              >
+                <div className="text-lg mb-4 tracking-wider" style={{ color: COLORS.gold }}>{review.stars}</div>
+                <p className="text-sm leading-relaxed mb-6" style={{ color: COLORS.charcoal, fontStyle: "italic" }}>{review.text}</p>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                    style={{ background: COLORS.navy }}
+                  >
+                    {review.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: COLORS.navy }}>{review.name}</p>
+                    <p className="text-xs" style={{ color: COLORS.grey }}>{review.title}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Google badge */}
+          <div className="mt-12 flex items-center justify-center gap-3 text-sm" style={{ color: COLORS.grey }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span style={{ color: COLORS.charcoal, fontWeight: 600 }}>5.0</span>
+            <span>on Google Reviews</span>
+          </div>
         </div>
       </section>
 
@@ -480,19 +551,7 @@ export default function TributumLawPage() {
           </div>
         </div>
       </footer>
-      <ChatWidgetLoader />
+      <TributumChatWidget />
     </main>
   );
-}
-
-function ChatWidgetLoader() {
-  useEffect(() => {
-    if (document.getElementById('trib-chat-script')) return;
-    const script = document.createElement('script');
-    script.id = 'trib-chat-script';
-    script.src = '/sites/tributum-law-v2/chat-widget.js?v=2';
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-  return null;
 }
