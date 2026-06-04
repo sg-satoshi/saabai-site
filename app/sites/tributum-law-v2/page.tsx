@@ -74,20 +74,7 @@ export default function TributumLawPage() {
   return (
     <main className="font-sans">
       {/* ── Hero ── */}
-      <section
-        className="min-h-screen flex flex-col relative overflow-hidden"
-        style={{ background: COLORS.navy, color: "#fff" }}
-      >
-        {/* Hero Background Image */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: "url('/sites/tributum-law-v2/hero-bg.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,27,46,0.85) 0%, rgba(15,27,46,0.6) 100%)" }} />
+      <section className="min-h-screen flex flex-col relative" style={{ background: COLORS.navy, color: "#fff" }}>
         {/* Nav */}
         <nav className="relative z-10 flex items-center justify-between px-8 py-6 md:px-16">
           <div style={{ fontFamily: "Georgia, serif" }} className="text-xl font-semibold tracking-wide">
@@ -102,45 +89,61 @@ export default function TributumLawPage() {
           </div>
         </nav>
 
-        {/* Hero Content */}
-        <div className="relative z-10 flex-1 flex flex-col justify-center px-8 md:px-16 pb-20 pt-12 max-w-6xl">
-          <p className="text-xs tracking-[0.3em] uppercase mb-8" style={{ color: COLORS.gold }}>
-            Tax & Trust Law Advisory
-          </p>
-          <h1 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }} className="text-5xl md:text-7xl lg:text-8xl font-normal leading-[1.1] mb-8">
-            Tax & Trust Law.
-            <br />
-            <span style={{ color: COLORS.gold }}>Resolved.</span>
-          </h1>
-          <p className="text-lg md:text-xl max-w-xl mb-12 leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
-            Specialist tax and trust advisory for complex matters.
-            <br className="hidden md:block" />
-            Adelaide-based. Australia-wide.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <a
-              href="#contact"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-full text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: COLORS.gold, color: COLORS.navy }}
-            >
-              Book a Consultation
-            </a>
-            <a
-              href="#services"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-full text-sm font-semibold border transition-all hover:bg-white/5"
-              style={{ borderColor: "rgba(255,255,255,0.25)", color: "#fff" }}
-            >
-              Explore Our Services
-            </a>
+        {/* Hero Content — Split Layout */}
+        <div className="relative z-10 flex-1 grid lg:grid-cols-2 gap-0 items-center">
+          {/* Left: Text */}
+          <div className="px-8 md:px-16 py-12 lg:py-0">
+            <p className="text-xs tracking-[0.3em] uppercase mb-8" style={{ color: COLORS.gold }}>
+              Tax & Trust Law Advisory
+            </p>
+            <h1 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }} className="text-5xl md:text-6xl lg:text-7xl font-normal leading-[1.1] mb-8">
+              Tax & Trust Law.
+              <br />
+              <span style={{ color: COLORS.gold }}>Resolved.</span>
+            </h1>
+            <p className="text-lg md:text-xl max-w-lg mb-12 leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
+              Specialist tax and trust advisory for complex matters.
+              <br className="hidden md:block" />
+              Adelaide-based. Australia-wide.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href="#contact"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: COLORS.gold, color: COLORS.navy }}
+              >
+                Book a Consultation
+              </a>
+              <a
+                href="#services"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-full text-sm font-semibold border transition-all hover:bg-white/5"
+                style={{ borderColor: "rgba(255,255,255,0.25)", color: "#fff" }}
+              >
+                Explore Our Services
+              </a>
+            </div>
+
+            {/* Trust Bar */}
+            <div className="mt-16 pt-8 border-t flex flex-wrap gap-8 text-xs tracking-wide" style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>
+              <span>50+ years combined experience</span>
+              <span>•</span>
+              <span>ATO disputes resolved</span>
+              <span>•</span>
+              <span>ASX-listed clients</span>
+            </div>
           </div>
 
-          {/* Trust Bar */}
-          <div className="mt-20 pt-8 border-t flex flex-wrap gap-8 text-xs tracking-wide" style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}>
-            <span>50+ years combined experience</span>
-            <span>•</span>
-            <span>ATO disputes resolved</span>
-            <span>•</span>
-            <span>ASX-listed clients</span>
+          {/* Right: Image */}
+          <div className="hidden lg:block relative h-full min-h-[600px]">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: "url('/sites/tributum-law-v2/hero-bg.png')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #0F1B2E 0%, transparent 40%)" }} />
           </div>
         </div>
       </section>
@@ -180,7 +183,7 @@ export default function TributumLawPage() {
       <section id="about" className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.ivory }}>
         {/* Texture Background */}
         <div
-          className="absolute inset-0 opacity-10"
+          className="absolute inset-0 opacity-25"
           style={{
             backgroundImage: "url('/sites/tributum-law-v2/about-texture.png')",
             backgroundSize: "cover",
@@ -228,7 +231,7 @@ export default function TributumLawPage() {
       <section className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.navy, color: "#fff" }}>
         {/* Geometric Accent */}
         <div
-          className="absolute top-0 right-0 w-96 h-96 opacity-10"
+          className="absolute top-0 right-0 w-96 h-96 opacity-20"
           style={{
             backgroundImage: "url('/sites/tributum-law-v2/geometric-accent.png')",
             backgroundSize: "contain",
