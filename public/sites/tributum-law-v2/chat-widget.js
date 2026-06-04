@@ -2,13 +2,15 @@
   'use strict';
 
   const CONFIG = {
-    name: 'Tributum',
+    name: 'Mike',
+    subtitle: 'Tributum AI Assistant',
+    avatar: '/sites/tributum-law-v2/mathew-brittingham.jpg',
     brandColor: '#0F1B2E',
     accentColor: '#B8860B',
     bgColor: '#FAF8F5',
     textColor: '#1A1A1A',
     apiEndpoint: '/api/tributum-chat',
-    greeting: "Hello. I'm Tributum's AI assistant. How can I help with your tax or trust matter today?",
+    greeting: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning — or get you connected with the team. How can I help?",
     placeholder: "Ask about tax law, trusts, ATO disputes..."
   };
 
@@ -86,8 +88,8 @@
       padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5;
       word-break: break-word; font-family: 'Inter', -apple-system, sans-serif;
     }
-    .trib-chat-message.bot .trib-chat-message-content { background: white; color: ${CONFIG.textColor}; border: 1px solid rgba(15, 27, 46, 0.08); }
-    .trib-chat-message.user .trib-chat-message-content { background: ${CONFIG.brandColor}; color: white; }
+    .trib-chat-message.bot .trib-chat-message-content { background: #ffffff; color: #1A1A1A; border: 1px solid rgba(15, 27, 46, 0.15); }
+    .trib-chat-message.user .trib-chat-message-content { background: ${CONFIG.brandColor}; color: #ffffff; }
     .trib-chat-typing { display: flex; gap: 4px; padding: 12px 14px; }
     .trib-chat-typing span { width: 8px; height: 8px; background: ${CONFIG.accentColor}; border-radius: 50%; animation: tribTyping 1.4s infinite; }
     .trib-chat-typing span:nth-child(2) { animation-delay: 0.2s; }
@@ -119,7 +121,7 @@
 
   const button = document.createElement('button');
   button.className = 'trib-chat-button';
-  button.innerHTML = 'T';
+  button.innerHTML = `<img src="${CONFIG.avatar}" alt="Mike" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid white;" />`;
   button.setAttribute('aria-label', 'Open chat');
 
   const panel = document.createElement('div');
@@ -127,10 +129,10 @@
 
   panel.innerHTML = `
     <div class="trib-chat-header">
-      <div class="trib-chat-header-avatar">T</div>
+      <div class="trib-chat-header-avatar"><img src="${CONFIG.avatar}" alt="Mike" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" /></div>
       <div class="trib-chat-header-info">
         <div class="trib-chat-header-name">${CONFIG.name}</div>
-        <div class="trib-chat-header-status">Online now</div>
+        <div class="trib-chat-header-status">${CONFIG.subtitle}</div>
       </div>
       <button class="trib-chat-close" aria-label="Close">&times;</button>
     </div>
@@ -156,8 +158,13 @@
       const div = document.createElement('div');
       div.className = `trib-chat-message ${msg.role}`;
       const avatar = document.createElement('div');
-      avatar.className = msg.role === 'user' ? 'trib-chat-message-user-avatar' : 'trib-chat-message-avatar';
-      avatar.textContent = msg.role === 'user' ? 'You' : 'T';
+      if (msg.role === 'user') {
+        avatar.className = 'trib-chat-message-user-avatar';
+        avatar.textContent = 'You';
+      } else {
+        avatar.className = 'trib-chat-message-avatar';
+        avatar.innerHTML = `<img src="${CONFIG.avatar}" alt="Mike" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />`;
+      }
       const content = document.createElement('div');
       content.className = 'trib-chat-message-content';
       content.textContent = msg.content;
@@ -179,7 +186,7 @@
     div.className = 'trib-chat-message bot';
     div.id = 'trib-typing';
     div.innerHTML = `
-      <div class="trib-chat-message-avatar">T</div>
+      <div class="trib-chat-message-avatar"><img src="${CONFIG.avatar}" alt="Mike" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" /></div>
       <div class="trib-chat-message-content trib-chat-typing">
         <span></span><span></span><span></span>
       </div>
