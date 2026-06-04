@@ -74,9 +74,22 @@ export default function TributumLawPage() {
   return (
     <main className="font-sans">
       {/* ── Hero ── */}
-      <section style={{ background: COLORS.navy, color: "#fff" }} className="min-h-screen flex flex-col">
+      <section
+        className="min-h-screen flex flex-col relative overflow-hidden"
+        style={{ background: COLORS.navy, color: "#fff" }}
+      >
+        {/* Hero Background Image */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: "url('/sites/tributum-law-v2/hero-bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,27,46,0.85) 0%, rgba(15,27,46,0.6) 100%)" }} />
         {/* Nav */}
-        <nav className="flex items-center justify-between px-8 py-6 md:px-16">
+        <nav className="relative z-10 flex items-center justify-between px-8 py-6 md:px-16">
           <div style={{ fontFamily: "Georgia, serif" }} className="text-xl font-semibold tracking-wide">
             Tributum Law
           </div>
@@ -90,7 +103,7 @@ export default function TributumLawPage() {
         </nav>
 
         {/* Hero Content */}
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-16 pb-20 pt-12 max-w-6xl">
+        <div className="relative z-10 flex-1 flex flex-col justify-center px-8 md:px-16 pb-20 pt-12 max-w-6xl">
           <p className="text-xs tracking-[0.3em] uppercase mb-8" style={{ color: COLORS.gold }}>
             Tax & Trust Law Advisory
           </p>
@@ -164,8 +177,17 @@ export default function TributumLawPage() {
       </section>
 
       {/* ── About / Differentiator ── */}
-      <section id="about" style={{ background: COLORS.ivory }} className="py-24 md:py-32 px-8 md:px-16">
-        <div className="max-w-4xl mx-auto text-center">
+      <section id="about" className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.ivory }}>
+        {/* Texture Background */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "url('/sites/tributum-law-v2/about-texture.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: COLORS.gold }}>
             Why Tributum
           </p>
@@ -203,8 +225,18 @@ export default function TributumLawPage() {
       </section>
 
       {/* ── Process ── */}
-      <section style={{ background: COLORS.navy, color: "#fff" }} className="py-24 md:py-32 px-8 md:px-16">
-        <div className="max-w-6xl mx-auto">
+      <section className="relative py-24 md:py-32 px-8 md:px-16 overflow-hidden" style={{ background: COLORS.navy, color: "#fff" }}>
+        {/* Geometric Accent */}
+        <div
+          className="absolute top-0 right-0 w-96 h-96 opacity-10"
+          style={{
+            backgroundImage: "url('/sites/tributum-law-v2/geometric-accent.png')",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "top right",
+          }}
+        />
+        <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: COLORS.gold }}>
             Our Process
           </p>
