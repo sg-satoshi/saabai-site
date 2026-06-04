@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Script from "next/script";
+import { useState, useEffect } from "react";
 
 const COLORS = {
   navy: "#0F1B2E",
@@ -481,7 +480,19 @@ export default function TributumLawPage() {
           </div>
         </div>
       </footer>
-      <Script src="/sites/tributum-law-v2/chat-widget.js" strategy="lazyOnload" />
+      <ChatWidgetLoader />
     </main>
   );
+}
+
+function ChatWidgetLoader() {
+  useEffect(() => {
+    if (document.getElementById('trib-chat-script')) return;
+    const script = document.createElement('script');
+    script.id = 'trib-chat-script';
+    script.src = '/sites/tributum-law-v2/chat-widget.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+  return null;
 }
