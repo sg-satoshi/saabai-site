@@ -244,12 +244,12 @@ export default function TributumLawPage() {
             {/* Mathew Brittingham */}
             <div className="p-8 md:p-10 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="flex items-start gap-6 mb-6">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light shrink-0"
-                  style={{ background: COLORS.gold, color: COLORS.navy, fontFamily: "Georgia, serif" }}
-                >
-                  MB
-                </div>
+                <img
+                  src="/sites/tributum-law-v2/mathew-brittingham.jpg"
+                  alt="Mathew Brittingham"
+                  className="w-20 h-20 rounded-full object-cover shrink-0"
+                  style={{ border: `2px solid ${COLORS.gold}` }}
+                />
                 <div>
                   <h3 style={{ fontFamily: "Georgia, serif" }} className="text-2xl font-normal mb-1">
                     Mathew Brittingham
@@ -272,12 +272,12 @@ export default function TributumLawPage() {
             {/* Teresa Ta */}
             <div className="p-8 md:p-10 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="flex items-start gap-6 mb-6">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light shrink-0"
-                  style={{ background: COLORS.gold, color: COLORS.navy, fontFamily: "Georgia, serif" }}
-                >
-                  TT
-                </div>
+                <img
+                  src="/sites/tributum-law-v2/teresa-ta.png"
+                  alt="Teresa Ta"
+                  className="w-20 h-20 rounded-full object-cover shrink-0"
+                  style={{ border: `2px solid ${COLORS.gold}` }}
+                />
                 <div>
                   <h3 style={{ fontFamily: "Georgia, serif" }} className="text-2xl font-normal mb-1">
                     Teresa Ta
