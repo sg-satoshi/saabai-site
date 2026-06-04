@@ -38,6 +38,34 @@ export interface SiteConfig {
   updatedAt: number;
 }
 
+// App Router sites (hardcoded in code, not in Redis/Blob)
+const APP_ROUTER_SITES: SiteConfig[] = [
+  {
+    id: "tributum-law-v2",
+    slug: "tributum-law-v2",
+    name: "Tributum Law v2",
+    niche: "legal",
+    description: "Premium tax & trust law specialist site (Next.js App Router)",
+    status: "live" as const,
+    url: "https://www.saabai.ai/sites/tributum-law-v2",
+    business: {
+      name: "Tributum Law",
+      tagline: "Tax & Trust Law. Resolved.",
+      phone: "+61 405 014 888",
+      email: "contact@tributumlaw.com",
+      address: "Level 1, 195 Victoria Square, Adelaide SA 5000",
+    },
+    chatbot: {
+      enabled: true,
+      name: "Tributum Assistant",
+      greeting: "Hello! How can we help with your tax or trust matter?",
+      systemPrompt: "You are the Tributum Law assistant. Help visitors with tax and trust law inquiries.",
+    },
+    createdAt: 1749000000000,
+    updatedAt: 1749000000000,
+  },
+];
+
 export async function createSite(config: Omit<SiteConfig, "id" | "createdAt" | "updatedAt">): Promise<SiteConfig> {
   const id = `site_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const site: SiteConfig = { ...config, id, createdAt: Date.now(), updatedAt: Date.now() };
@@ -56,9 +84,21 @@ export async function getSiteBySlug(slug: string): Promise<SiteConfig | null> {
 }
 
 export async function listSites(): Promise<SiteConfig[]> {
-  const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
-  if (!data) return [];
-  return Object.values(data).map(v => (typeof v === "string" ? JSON.parse(v) : v));
+  try {
+    const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
+    const redisSites: SiteConfig[] = data
+      ? Object.values(data).map(v => (typeof v === "string" ? JSON.parse(v) : v))
+      : [];
+
+    // Merge App Router sites, preferring Redis data if same slug exists
+    const seen = new Set(redisSites.map((s) => s.slug));
+    const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug))];
+
+    return merged;
+  } catch {
+    // Fallback to hardcoded sites if Redis fails
+    return APP_ROUTER_SITES;
+  }
 }
 
 export async function updateSite(id: string, updates: Partial<SiteConfig>): Promise<void> {
