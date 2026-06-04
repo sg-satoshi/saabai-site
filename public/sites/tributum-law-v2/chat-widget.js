@@ -156,7 +156,8 @@
     messagesEl.innerHTML = '';
     messages.forEach((msg, i) => {
       const div = document.createElement('div');
-      div.className = `trib-chat-message ${msg.role}`;
+      const roleClass = msg.role === 'user' ? 'user' : 'bot';
+      div.className = `trib-chat-message ${roleClass}`;
       const avatar = document.createElement('div');
       if (msg.role === 'user') {
         avatar.className = 'trib-chat-message-user-avatar';
