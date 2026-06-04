@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Script from "next/script";
 
 const COLORS = {
   navy: "#0F1B2E",
@@ -480,6 +481,7 @@ export default function TributumLawPage() {
           </div>
         </div>
       </footer>
+      <Script src="/sites/tributum-law-v2/chat-widget.js" strategy="lazyOnload" />
     </main>
   );
 }
