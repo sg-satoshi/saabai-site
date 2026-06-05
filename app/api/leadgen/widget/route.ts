@@ -10,17 +10,6 @@
 
 import { NextRequest } from "next/server";
 
-const TRADIE_SVG = `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;border-radius:50%">
-  <circle cx="30" cy="30" r="30" fill="%23c9a227"/>
-  <circle cx="30" cy="22" r="9" fill="%230b092e"/>
-  <rect x="19" y="30" width="22" height="14" rx="4" fill="%230b092e"/>
-  <rect x="15" y="31" width="30" height="6" rx="2" fill="%23e2c053"/>
-  <rect x="24" y="37" width="4" height="8" rx="1" fill="%230b092e"/>
-  <rect x="32" y="37" width="4" height="8" rx="1" fill="%230b092e"/>
-  <circle cx="18" cy="38" r="3" fill="%2362c5d1"/>
-  <circle cx="42" cy="38" r="3" fill="%2362c5d1"/>
-</svg>`;
-
 export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
@@ -43,8 +32,8 @@ var SURFACE = "#14123a";
 var TEXT_DIM = "#7c8db5";
 var WHITE = "#ffffff";
 
-// Tradie avatar SVG (inline so no external images)
-var TRADIE_AVATAR = ${JSON.stringify(TRADIE_SVG)};
+// Tradie avatar URL (hosted image)
+var AVATAR_URL = ${JSON.stringify(apiBase + "/brand/tradie-avatar.png")};
 
 // Create widget container
 var d = document;
@@ -99,7 +88,7 @@ container.innerHTML = [
   '</style>',
   // ── Desktop pill button ──
   '<button id="lg-btn" class="lg-desktop" aria-label="Chat with us">',
-  '<div class="lg-btn-av">' + TRADIE_AVATAR + '</div>',
+  '<div class="lg-btn-av"><img src="' + AVATAR_URL + '" alt="Tradie" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>',
   '<span class="lg-btn-label">Need Help 24/7?</span>',
   '</button>',
   // ── Mobile circle button ──
@@ -109,7 +98,7 @@ container.innerHTML = [
   // ── Panel ──
   '<div id="lg-panel">',
   '<div id="lg-header">',
-  '<div class="av">' + TRADIE_AVATAR + '</div>',
+  '<div class="av"><img src="' + AVATAR_URL + '" alt="Tradie" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>',
   '<div class="info"><h4>Need Help 24/7?</h4><p><span class="dot"></span> Online. Typically responds in seconds</p></div>',
   '</div>',
   '<div id="lg-msgs"></div>',
