@@ -76,8 +76,10 @@ export async function createClient(
 }
 
 export async function getClient(id: string): Promise<LeadGenClient | null> {
-  const raw = await redis.hget<string>(CLIENTS_KEY, id);
-  return raw ? JSON.parse(raw) : null;
+  const raw = await redis.hget<LeadGenClient | string>(CLIENTS_KEY, id);
+  if (!raw) return null;
+  if (typeof raw === 'string') return JSON.parse(raw);
+  return raw;
 }
 
 export async function getClientBySlug(slug: string): Promise<LeadGenClient | null> {
@@ -88,7 +90,10 @@ export async function getClientBySlug(slug: string): Promise<LeadGenClient | nul
 export async function listClients(): Promise<LeadGenClient[]> {
   const raw = await redis.hgetall<Record<string, string>>(CLIENTS_KEY);
   if (!raw) return [];
-  return Object.values(raw).map((s) => JSON.parse(s));
+  return Object.values(raw).map((s) => {
+    if (typeof s === 'string') return JSON.parse(s);
+    return s as LeadGenClient;
+  });
 }
 
 export async function updateClient(
@@ -127,7 +132,10 @@ export async function getLeads(
   limit = 50
 ): Promise<LeadCapture[]> {
   const raw = await redis.lrange(LEADS_KEY(clientSlug), 0, limit - 1);
-  return raw.map((s: string) => JSON.parse(s));
+  return raw.map((s: string | LeadCapture) => {
+    if (typeof s === 'string') return JSON.parse(s);
+    return s as LeadCapture;
+  });
 }
 
 export async function markNotified(leadId: string, clientSlug: string): Promise<void> {
