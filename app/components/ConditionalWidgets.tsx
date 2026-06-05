@@ -14,6 +14,8 @@ const SUPPRESS_PATHS = [
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
   // Client demo sites — their own experience
   "/sites/tributum-law-v2",
+  // LeadGen — has its own dedicated widget
+  "/leadgen",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden

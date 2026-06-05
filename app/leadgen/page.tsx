@@ -94,13 +94,13 @@ export default function LeadGenPage() {
         <div className="relative flex flex-wrap items-center justify-center gap-4">
           <a
             href="#demo"
-            className="px-8 py-4 rounded-xl bg-saabai-gold text-saabai-bg font-semibold text-sm tracking-wide hover:brightness-110 transition-all"
+            className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
             See It In Action ↓
           </a>
           <a
             href="#pricing"
-            className="px-8 py-4 rounded-xl border border-saabai-border text-saabai-text-dim font-semibold text-sm tracking-wide hover:border-saabai-text-dim transition-all"
+            className="px-8 py-4 rounded-xl border-2 border-saabai-gold/50 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all"
           >
             Pricing
           </a>
@@ -237,14 +237,14 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup & configuration</li>
             </ul>
-            <a href="#demo" className="block text-center py-3 rounded-xl border border-saabai-border text-sm font-semibold hover:border-saabai-text-dim transition-all">
+            <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Try Free Demo
             </a>
           </div>
 
           {/* Pro */}
           <div className="bg-saabai-card rounded-2xl border-2 border-saabai-gold/30 p-8 flex flex-col relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-saabai-gold text-saabai-bg text-xs font-semibold rounded-full">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-saabai-gold text-black text-xs font-bold rounded-full">
               Most Popular
             </div>
             <h3 className="text-lg font-semibold mb-1">Pro</h3>
@@ -258,7 +258,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
-            <a href="#demo" className="block text-center py-3 rounded-xl bg-saabai-gold text-saabai-bg text-sm font-semibold hover:brightness-110 transition-all">
+            <a href="#demo" className="block text-center py-3 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25">
               Try Free Demo
             </a>
           </div>
@@ -276,7 +276,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS lead alerts</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
-            <a href="#demo" className="block text-center py-3 rounded-xl border border-saabai-border text-sm font-semibold hover:border-saabai-text-dim transition-all">
+            <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Try Free Demo
             </a>
           </div>
@@ -298,13 +298,13 @@ export default function LeadGenPage() {
         <div className="relative flex flex-wrap justify-center gap-4">
           <a
             href="mailto:hello@saabai.ai?subject=LeadGen%20Trial"
-            className="px-8 py-4 rounded-xl bg-saabai-gold text-saabai-bg font-semibold text-sm tracking-wide hover:brightness-110 transition-all"
+            className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
             Start Free Trial
           </a>
           <a
             href="mailto:hello@saabai.ai?subject=LeadGen%20Question"
-            className="px-8 py-4 rounded-xl border border-saabai-border text-saabai-text-dim font-semibold text-sm tracking-wide hover:border-saabai-text-dim transition-all"
+            className="px-8 py-4 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all"
           >
             Questions? Email Us
           </a>

@@ -83,8 +83,9 @@ export async function POST(req: NextRequest) {
       url: leadCaptured ? `/api/leadgen/leads?slug=${slug}` : undefined,
     }, { headers: CORS });
   } catch (e) {
-    console.error("leadgen-chat error:", e);
-    return Response.json({ error: "Failed to respond" }, { status: 500, headers: CORS });
+    const errMsg = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack?.slice(0, 200)}` : String(e);
+    console.error("leadgen-chat error:", errMsg);
+    return Response.json({ error: "Failed to respond", detail: errMsg.slice(0, 500) }, { status: 500, headers: CORS });
   }
 }
 

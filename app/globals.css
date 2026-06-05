@@ -66,6 +66,10 @@
   --color-saabai-border:          var(--saabai-border);
   --color-saabai-border-accent:   var(--saabai-border-accent);
 
+  --color-saabai-gold:            #c9a227;
+  --color-saabai-gold-bright:     #e2c053;
+  --color-saabai-card:            #0f0d35;
+
   --color-saabai-text:            var(--saabai-text);
   --color-saabai-text-muted:      var(--saabai-text-muted);
   --color-saabai-text-dim:        var(--saabai-text-dim);
