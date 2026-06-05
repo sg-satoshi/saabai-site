@@ -53,10 +53,19 @@ container.id = "lg-widget";
 container.innerHTML = [
   '<style>',
   '#lg-widget{position:fixed;bottom:20px;right:20px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.4}',
-  // ── Button (closed state) ──
-  '#lg-btn{width:60px;height:60px;border-radius:50%;border:3px solid ' + GOLD + ';cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(201,162,39,0.35);transition:all .25s ease;position:relative;background:' + DARK + ';padding:0}',
-  '#lg-btn:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(201,162,39,0.5)}',
-  '#lg-btn svg{width:28px;height:28px;color:' + GOLD + '}',
+  // ── Button (closed state) - PILL style like Mia ──
+  '#lg-btn{display:none;align-items:center;gap:10px;padding:4px 20px 4px 4px;border-radius:9999px;border:1px solid rgba(201,162,39,0.35);cursor:pointer;box-shadow:0 0 28px rgba(201,162,39,0.28),0 4px 16px rgba(0,0,0,0.3);transition:all .3s ease;background:' + SURFACE + ';white-space:nowrap}',
+  '#lg-btn:hover{transform:scale(1.03) translateY(-1px);box-shadow:0 0 32px rgba(201,162,39,0.4)}',
+  '#lg-btn.lg-desktop{display:flex}',
+  '#lg-btn .lg-btn-av{width:38px;height:38px;border-radius:50%;overflow:hidden;border:2px solid ' + GOLD + ';flex-shrink:0;background:' + DARK + '}',
+  '#lg-btn .lg-btn-label{font-size:14px;font-weight:600;color:' + WHITE + ';letter-spacing:-0.01em}',
+  // ── Mobile button ──
+  '#lg-btn-mobile{display:flex;width:56px;height:56px;border-radius:50%;border:2px solid ' + GOLD + ';cursor:pointer;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(201,162,39,0.35);transition:all .25s ease;background:' + DARK + ';padding:0}',
+  '#lg-btn-mobile:hover{transform:scale(1.08);box-shadow:0 6px 32px rgba(201,162,39,0.5)}',
+  '#lg-btn-mobile svg{width:26px;height:26px;color:' + GOLD + '}',
+  // ── Hide mobile on desktop, hide desktop on mobile ──
+  '@media(min-width:768px){#lg-btn-mobile{display:none}}',
+  '@media(max-width:767px){#lg-btn.lg-desktop{display:none}}',
   // ── Panel (open state) ──
   '#lg-panel{position:absolute;bottom:74px;right:0;width:380px;max-height:600px;background:' + SURFACE + ';border-radius:16px;overflow:hidden;display:none;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.5);border:1px solid rgba(201,162,39,0.2)}',
   '#lg-panel.open{display:flex}',
@@ -88,15 +97,20 @@ container.innerHTML = [
   '.lg-typing span:nth-child(2){animation-delay:-.16s}',
   '@keyframes lg-bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}',
   '</style>',
-  // ── Button ──
-  '<button id="lg-btn" aria-label="Chat with us">',
+  // ── Desktop pill button ──
+  '<button id="lg-btn" class="lg-desktop" aria-label="Chat with us">',
+  '<div class="lg-btn-av">' + TRADIE_AVATAR + '</div>',
+  '<span class="lg-btn-label">Need Help 24/7?</span>',
+  '</button>',
+  // ── Mobile circle button ──
+  '<button id="lg-btn-mobile" aria-label="Chat with us">',
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>',
   '</button>',
   // ── Panel ──
   '<div id="lg-panel">',
   '<div id="lg-header">',
   '<div class="av">' + TRADIE_AVATAR + '</div>',
-  '<div class="info"><h4>Need Help 24/7?</h4><p><span class="dot"></span> Online — Typically responds in seconds</p></div>',
+  '<div class="info"><h4>Need Help 24/7?</h4><p><span class="dot"></span> Online. Typically responds in seconds</p></div>',
   '</div>',
   '<div id="lg-msgs"></div>',
   '<div id="lg-input-area">',
@@ -108,6 +122,7 @@ d.body.appendChild(container);
 
 // ── Elements ───────────────────────────────────────────
 var btn = d.getElementById("lg-btn");
+var btnMobile = d.getElementById("lg-btn-mobile");
 var panel = d.getElementById("lg-panel");
 var msgs = d.getElementById("lg-msgs");
 var input = d.getElementById("lg-input");
@@ -154,7 +169,7 @@ function sendMessage() {
   .catch(function(){hideTyping();addMsg("Sorry, we couldn\\'t connect. Please call us directly.",false);isLoading=false;sendBtn.disabled=false;});
 }
 
-btn.addEventListener("click", function(){
+function toggleChat() {
   isOpen = !isOpen;
   panel.className = isOpen ? "open" : "";
   if (isOpen && conv.length === 0) {
@@ -162,9 +177,12 @@ btn.addEventListener("click", function(){
     fetch(API, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slug:SLUG,messages:[{role:"user",content:"Hi"}]})})
     .then(function(r){return r.json()})
     .then(function(data){hideTyping();if(data.content)addMsg(data.content,false);isLoading=false;})
-    .catch(function(){hideTyping();addMsg("Hi! Need help? Tell us what\\'s happened and we\\'ll get someone out.",false);isLoading=false;});
+    .catch(function(){hideTyping();addMsg("Hi! Need help? Tell us what happened and we will get someone out.",false);isLoading=false;});
   }
-});
+}
+
+btn.addEventListener("click", toggleChat);
+if (btnMobile) btnMobile.addEventListener("click", toggleChat);
 
 input.addEventListener("keydown", function(e){if(e.key==="Enter")sendMessage();});
 sendBtn.addEventListener("click", sendMessage);
