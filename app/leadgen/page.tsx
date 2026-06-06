@@ -130,7 +130,7 @@ export default function LeadGenPage() {
       {/* ── Demo / Test Drive ─────────────────────────────────────────── */}
       <section id="demo" className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Test Drive the Widget</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
             Click the chat button in the bottom-right corner. This is exactly what your customers would see.
           </p>
