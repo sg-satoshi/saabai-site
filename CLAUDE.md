@@ -14,13 +14,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run build     # ALWAYS run this before committing — catches TypeScript errors
+npm run predeploy  # Run this before every commit/push — catches TypeScript, Stripe version, and build errors
 npm run dev       # local dev server
 npm run lint      # ESLint
 git push          # triggers Vercel auto-deploy
 ```
 
-**Always run `npm run build` before committing. Never commit code that fails to build.**
+**Always run `npm run predeploy` before committing. Never commit code that fails to build.**
 
 ## Key Files
 

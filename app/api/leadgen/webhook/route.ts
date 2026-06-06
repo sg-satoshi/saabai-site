@@ -5,10 +5,10 @@
 
 import { NextRequest } from "next/server";
 import Stripe from "stripe";
-import { updateClient, getClientBySlug } from "../../../../../lib/leadgen-config";
+import { updateClient, getClientBySlug } from "../../../../lib/leadgen-config";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2026-04-22.dahlia",
 });
 
 export async function POST(req: NextRequest) {
