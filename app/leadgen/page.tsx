@@ -132,7 +132,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            Click the chat button in the bottom-right corner. This is exactly what your customers would see.
+            This is exactly what your customers will see. Jack answers 24/7, captures their details, and sends you the lead instantly.
           </p>
         </div>
 
