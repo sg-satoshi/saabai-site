@@ -238,7 +238,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup & configuration</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
-              Try Free Demo
+              Subscribe
             </a>
           </div>
 
@@ -259,7 +259,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25">
-              Try Free Demo
+              Subscribe
             </a>
           </div>
 
@@ -277,7 +277,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
-              Try Free Demo
+              Subscribe
             </a>
           </div>
         </div>
