@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import { getAllLeadGenClients, generateSlug, saveLeadGenClient, type LeadGenClient } from "../../lib/leadgen-clients";
+import CustomizeForm from "./CustomizeForm";
 
 export default async function LeadGenDashboard() {
   const cookieStore = await cookies();
@@ -16,13 +17,11 @@ export default async function LeadGenDashboard() {
     redirect("/login?redirect=/leadgen-dashboard");
   }
 
-  // For now, use session email as the user identifier
   const email = (session as any).email || "demo@saabai.ai";
   
   let clients = await getAllLeadGenClients();
   let client = clients.find(c => c.email === email);
 
-  // Auto-create demo client if none exists
   if (!client) {
     client = {
       id: crypto.randomUUID(),
@@ -70,6 +69,20 @@ export default async function LeadGenDashboard() {
           <p className="text-xs text-white/50 mt-4">
             This script is unique to your account. Do not share it.
           </p>
+        </div>
+
+        {/* Customize Section */}
+        <div className="bg-[#0b092e] border border-white/10 rounded-3xl p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6">Customize</h2>
+          <CustomizeForm 
+            initialBusinessName={client.businessName} 
+            onUpdate={async (newName) => {
+              'use server';
+              client.businessName = newName;
+              client.slug = generateSlug(newName);
+              await saveLeadGenClient(client);
+            }} 
+          />
         </div>
 
         {/* Account Info */}
