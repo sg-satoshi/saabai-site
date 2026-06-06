@@ -89,7 +89,7 @@ container.innerHTML = [
   // ── Desktop pill button ──
   '<button id="lg-btn" class="lg-desktop" aria-label="Chat with us">',
   '<div class="lg-btn-av"><img src="' + AVATAR_URL + '" alt="Tradie" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>',
-  '<span class="lg-btn-label">Jack. Need a plumber?</span>',
+  '<span class="lg-btn-label">24/7 Emergency Help</span>',
   '</button>',
   // ── Mobile circle button ──
   '<button id="lg-btn-mobile" aria-label="Chat with us">',
