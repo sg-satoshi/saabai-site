@@ -75,10 +75,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Clean the lead markers from the response sent to the user
-    const cleanResponse = text
+    let cleanResponse = text
       .replace(/\[LEAD_CAPTURED\][\s\S]*?\[\/LEAD_CAPTURED\]/g, "")
       .trim()
       || "Got it! Someone will call you back shortly.";
+
+    // Hard formatting enforcement - remove ** and em dashes
+    cleanResponse = cleanResponse
+      .replace(/\*\*/g, "")
+      .replace(/—/g, "-")
+      .replace(/\s+/g, " ")
+      .trim();
 
     return Response.json({
       content: cleanResponse,
