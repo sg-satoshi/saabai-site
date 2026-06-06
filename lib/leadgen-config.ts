@@ -34,6 +34,8 @@ export interface LeadGenClient {
     accentColor: string;
     widgetTitle: string;
     greeting: string;
+    /** Optional custom avatar URL. Defaults to Jack the plumber */
+    avatarUrl?: string;
   };
   /** Active or paused */
   status: "active" | "paused";
