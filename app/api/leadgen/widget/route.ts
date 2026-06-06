@@ -33,7 +33,7 @@ var TEXT_DIM = "#7c8db5";
 var WHITE = "#ffffff";
 
 // Tradie avatar URL (hosted image)
-var AVATAR_URL = ${JSON.stringify(apiBase + "/brand/tradie-avatar.png")};
+var AVATAR_URL = ${JSON.stringify(apiBase + "/leadgen/jack-avatar.png")};
 
 // Create widget container
 var d = document;
