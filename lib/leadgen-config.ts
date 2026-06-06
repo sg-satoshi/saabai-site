@@ -39,6 +39,14 @@ export interface LeadGenClient {
   };
   /** Active or paused */
   status: "active" | "paused";
+  /** Stripe subscription info */
+  subscription?: {
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
+    tier: "starter" | "pro" | "enterprise";
+    status: "active" | "past_due" | "canceled";
+    currentPeriodEnd?: number;
+  };
   createdAt: number;
   updatedAt: number;
 }
