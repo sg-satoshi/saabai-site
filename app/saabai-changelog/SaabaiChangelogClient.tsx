@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "13:14", tag: "NEW", title: "Integrate LeadGen clients into unified customers directory" },
       { time: "13:06", tag: "FIX", title: "Replace function prop with API call in CustomizeForm" },
       { time: "13:04", tag: "FIX", title: "Rename onUpdate prop to avoid React 19 event handler restriction" },
       { time: "13:01", tag: "FIX", title: "Extract CopyButton into client component to fix server component event handler error" },

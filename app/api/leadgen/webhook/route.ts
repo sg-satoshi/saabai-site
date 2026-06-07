@@ -3,7 +3,8 @@
  * Creates client records on successful checkout.
  */
 import { NextRequest } from "next/server";
-import { createClient, getClientBySlug } from "../../../../lib/leadgen-config";
+import { createClient, getClientBySlug, listClients } from "../../../../lib/leadgen-config";
+import { saveDirectoryUser } from "../../../../lib/user-directory";
 
 function getStripe() {
   const Stripe = require("stripe");
@@ -77,6 +78,29 @@ export async function POST(req: NextRequest) {
         });
 
         console.log(`[LeadGen Webhook] Client created: ${slug} (${email}) — ${tier}`);
+
+        // Create a login user so the client can access their portal
+        try {
+          const allClients = await listClients();
+          const existingUser = allClients.find((c) => c.email === email);
+          if (existingUser) {
+            const genPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+            await saveDirectoryUser({
+              id: `leadgen_${existingUser.id}`,
+              name: existingUser.businessName,
+              email: email.toLowerCase(),
+              password: genPassword,
+              role: "user",
+              dashboardUrl: "/leadgen/portal",
+              approvedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+            });
+            console.log(`[LeadGen Webhook] Login user created for ${email} — initial password: ${genPassword}`);
+          }
+        } catch (userErr) {
+          console.error("[LeadGen Webhook] Failed to create user:", userErr);
+        }
+
         break;
       }
 

@@ -53,3 +53,31 @@ export async function GET() {
     return Response.json({ error: String(e) }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, businessName, phone, serviceArea, businessHours, description, branding } = body;
+
+    if (!id) {
+      return Response.json({ error: "id required" }, { status: 400 });
+    }
+
+    const { updateClient } = await import("../../../../lib/leadgen-config");
+
+    const patch: Record<string, unknown> = {};
+    if (businessName !== undefined) patch.businessName = businessName;
+    if (phone !== undefined) patch.phone = phone;
+    if (serviceArea !== undefined) patch.serviceArea = serviceArea;
+    if (businessHours !== undefined) patch.businessHours = businessHours;
+    if (description !== undefined) patch.description = description;
+    if (branding !== undefined) patch.branding = branding;
+
+    await updateClient(id, patch);
+
+    return Response.json({ success: true });
+  } catch (e) {
+    console.error("leadgen-config PATCH error:", e);
+    return Response.json({ error: String(e) }, { status: 500 });
+  }
+}
