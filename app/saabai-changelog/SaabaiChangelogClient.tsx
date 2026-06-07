@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "16:33", tag: "FIX", title: "Convert dark theme to admin-matched light styling" },
       { time: "16:06", tag: "FIX", title: "Default redirect to /dashboard instead of /rex-dashboard" },
       { time: "15:56", tag: "FIX", title: "Point product link to /lex (was 404 on /lex-dashboard)" },
       { time: "15:49", tag: "FIX", title: "Add visible text color to input fields" },

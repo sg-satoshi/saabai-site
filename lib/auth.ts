@@ -41,7 +41,9 @@ async function getKey(usage: "sign" | "verify"): Promise<CryptoKey> {
 
 export async function createSessionToken(clientId: string): Promise<string> {
   const expiry = Math.floor(Date.now() / 1000) + SESSION_DAYS * 24 * 3600;
-  const payload = `${clientId}.${expiry}`;
+  // Base64url-encode clientId to prevent delimiter collisions (dots in emails)
+  const encodedId = b64url(new TextEncoder().encode(clientId).buffer);
+  const payload = `${encodedId}.${expiry}`;
   const key = await getKey("sign");
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return `${payload}.${b64url(sig)}`;
@@ -60,8 +62,16 @@ export async function verifySessionToken(
     const secondDot = payload.lastIndexOf(".");
     if (secondDot === -1) return null;
 
-    const clientId = payload.slice(0, secondDot);
+    const clientIdB64 = payload.slice(0, secondDot);
     const expiry = parseInt(payload.slice(secondDot + 1), 10);
+
+    // Decode base64url clientId
+    let clientId = "";
+    try {
+      clientId = new TextDecoder().decode(b64urlToBytes(clientIdB64));
+    } catch {
+      return null;
+    }
 
     if (!clientId || isNaN(expiry) || Date.now() / 1000 > expiry) return null;
 
