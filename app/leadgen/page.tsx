@@ -5,13 +5,13 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
   description:
-    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
+    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you via email, SMS, or WhatsApp the moment a lead comes in — 24/7, automatically.",
   alternates: { canonical: "https://www.saabai.ai/leadgen" },
   openGraph: {
     url: "https://www.saabai.ai/leadgen",
     title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
     description:
-      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
+      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you via email, SMS, or WhatsApp the moment a lead comes in — 24/7, automatically.",
   },
 };
 
@@ -24,9 +24,9 @@ const FEATURES = [
     icon: "🎯",
   },
   {
-    title: "Instant Alerts",
-    desc: "Email notification the second a lead comes in. Name, phone, service, and urgency — everything you need to call back fast.",
-    icon: "⚡",
+    title: "Instant Multi-Channel Alerts",
+    desc: "Get notified the second a lead comes in via email, SMS, or WhatsApp. Name, phone, service, address, and urgency — everything you need to respond fast.",
+    icon: "📲",
   },
   {
     title: "Zero Effort Setup",
@@ -35,7 +35,7 @@ const FEATURES = [
   },
   {
     title: "Works 24/7",
-    desc: "While you're on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
+    desc: "While you are on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
     icon: "🕐",
   },
   {
@@ -45,24 +45,27 @@ const FEATURES = [
   },
   {
     title: "Grows Your Business",
-    desc: "More leads captured = more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
+    desc: "More leads captured means more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
     icon: "📈",
   },
 ];
 
 const HOW_IT_WORKS = [
-  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That's it." },
+  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
   { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes every visitor, asks what they need, and captures their details." },
   { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency — collected in a natural conversation." },
-  { step: "04", title: "You Get Notified", desc: "Instant email alert with every detail. Call the lead back and book the job." },
+  { step: "04", title: "You Get Notified Instantly", desc: "Email, SMS, and WhatsApp alerts with every detail. Call the lead back and book the job." },
 ];
+
+const TIER_SMS = { starter: 10, pro: 50, enterprise: 500 } as const;
+const TIER_WA = { starter: 10, pro: 50, enterprise: 500 } as const;
 
 export default function LeadGenPage() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <Nav />
 
-      {/* "" Hero """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── Hero ─────────────────────────────────────────── */}
       <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 90% 60% at 50% 30%, var(--saabai-glow-mid) 0%, transparent 65%)"
@@ -86,8 +89,8 @@ export default function LeadGenPage() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
           Saabai LeadGen is a 24/7 AI lead conversion agent for service businesses.
-          It captures, qualifies, and alerts you the moment a lead comes in.
-          No forms to fill. No missed calls. No lost revenue.
+          It captures, qualifies, and alerts you via email, SMS, and WhatsApp
+          the instant a lead comes in. No forms. No missed calls. No lost revenue.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -106,7 +109,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* "" How It Works """"""""""""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── How It Works ────────────────────────────────── */}
       <section className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
@@ -126,7 +129,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* "" Demo / Test Drive """""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── Demo / Test Drive ───────────────────────────── */}
       <section id="demo" className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
@@ -165,10 +168,10 @@ export default function LeadGenPage() {
               <h3 className="text-lg font-semibold mb-4">What happens after Jack captures a lead</h3>
               <div className="space-y-4">
                 {[
-                  "Your team gets an instant email with the full conversation",
-                  "A structured brief is generated automatically",
-                  "A follow-up email goes to the client within seconds",
-                  "The lead appears in your Saabai dashboard",
+                  "Your team gets an instant email with the full conversation and lead details",
+                  "Emergency leads trigger an SMS notification to your phone directly",
+                  "A WhatsApp message is sent for high-priority leads with full contact info",
+                  "The lead appears in your Saabai dashboard with all channels logged",
                 ].map((step, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm text-saabai-text-dim">
                     <span className="w-5 h-5 rounded-full bg-saabai-gold/10 border border-saabai-gold/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -199,7 +202,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* "" Features """"""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── Features ────────────────────────────────────── */}
       <section className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need</h2>
@@ -222,7 +225,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* "" Pricing """""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── Pricing ─────────────────────────────────────── */}
       <section id="pricing" className="relative px-6 py-32 max-w-5xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
@@ -232,6 +235,7 @@ export default function LeadGenPage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
+
           {/* Starter */}
           <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 flex flex-col">
             <h3 className="text-lg font-semibold mb-1">Starter</h3>
@@ -241,9 +245,11 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Instant email notifications</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Email notifications (unlimited)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.starter}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.starter}/month)</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup &amp; configuration</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup and configuration</li>
             </ul>
             <form action="/api/leadgen/checkout" method="POST" target="_blank">
               <input type="hidden" name="tier" value="starter" />
@@ -265,6 +271,8 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.pro}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.pro}/month)</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
@@ -286,8 +294,9 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.enterprise}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.enterprise}/month)</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS lead alerts</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
             <form action="/api/leadgen/checkout" method="POST" target="_blank">
@@ -300,7 +309,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* "" CTA """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
+      {/* ── CTA ─────────────────────────────────────────── */}
       <section className="relative px-6 py-32 max-w-4xl mx-auto text-center">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 60% 40% at 50% 50%, var(--saabai-glow) 0%, transparent 70%)"

@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "17:30", tag: "NEW", title: "Notification usage widget + channel toggles on portal" },
       { time: "17:23", tag: "NEW", title: "3-channel notification framework (email, SMS, WhatsApp) with tier limits" },
       { time: "16:54", tag: "FIX", title: "Add 10s timeout on server data fetch to prevent page hanging" },
       { time: "16:41", tag: "FIX", title: "Base64url-encode clientId in session token to handle dots in email IDs" },
