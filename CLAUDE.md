@@ -125,6 +125,14 @@ export async function GET(req: Request) {
 }
 ```
 
+### 8. Git Hygiene — Avoid messy rebases and divergence
+
+- **Always sync first**: Run `git pull --rebase origin main` at the start of every session.
+- **Never let divergence grow**: If you see "Your branch and 'origin/main' have diverged", fix it immediately with `git pull --rebase`.
+- **Do NOT manually edit changelog files**: The post-commit hook handles them. Manual edits are the #1 cause of rebase conflicts.
+- **When things go wrong**: `git rebase --abort && git reset --hard origin/main` is the clean reset.
+- **Push only after clean state**: Your branch must be "up to date with origin/main" before pushing.
+
 ---
 
 ## Current Model Configuration (via Vercel env vars)
