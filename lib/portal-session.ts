@@ -7,17 +7,22 @@
  * Format: base64url(JSON payload) + "." + base64url(HMAC-SHA256 signature)
  */
 
+// Module-level throw at build time is too aggressive.
+// Secret is validated lazily so builds don't fail from static analysis.
 import { createHmac, timingSafeEqual } from "crypto";
 
-const SECRET: string = process.env.PORTAL_SESSION_SECRET ?? "";
-if (!SECRET) throw new Error("PORTAL_SESSION_SECRET is not set");
+function getSecret(): string {
+  const secret = process.env.PORTAL_SESSION_SECRET;
+  if (!secret) throw new Error("PORTAL_SESSION_SECRET is not set");
+  return secret;
+}
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function signSession(email: string): string {
   const payload = Buffer.from(
     JSON.stringify({ email, exp: Date.now() + SESSION_TTL_MS })
   ).toString("base64url");
-  const sig = createHmac("sha256", SECRET).update(payload).digest("base64url");
+  const sig = createHmac("sha256", getSecret()).update(payload).digest("base64url");
   return `${payload}.${sig}`;
 }
 
@@ -28,7 +33,7 @@ export function verifySession(token: string): { email: string } | null {
   const payload = token.slice(0, dot);
   const sig = token.slice(dot + 1);
 
-  const expected = createHmac("sha256", SECRET).update(payload).digest("base64url");
+  const expected = createHmac("sha256", getSecret()).update(payload).digest("base64url");
 
   try {
     const a = Buffer.from(sig, "base64url");
