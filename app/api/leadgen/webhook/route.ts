@@ -3,8 +3,9 @@
  * Creates client records on successful checkout.
  */
 import { NextRequest } from "next/server";
-import { createClient, getClientBySlug, listClients } from "../../../../lib/leadgen-config";
+import { createClient, getClientBySlug, getClient, listClients } from "../../../../lib/leadgen-config";
 import { saveDirectoryUser } from "../../../../lib/user-directory";
+import { applyTopup } from "../../../../lib/leadgen-notify";
 
 function getStripe() {
   const Stripe = require("stripe");
@@ -36,7 +37,23 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        const tier = (session.metadata?.tier || "starter") as "starter" | "pro" | "enterprise";
+        const metadata = session.metadata || {};
+
+        // Handle top-up purchases
+        if (metadata.type === "leadgen_topup") {
+          const clientId = metadata.clientId;
+          const channel = metadata.channel;
+          const blocks = parseInt(metadata.blocks, 10);
+
+          if (clientId && channel && blocks > 0) {
+            console.log(`[LeadGen Webhook] Top-up: ${clientId} + ${blocks} blocks of ${channel}`);
+            await applyTopup(clientId, channel, blocks);
+          }
+          break;
+        }
+
+        // Handle subscription purchases
+        const tier = (metadata.tier || "starter") as "starter" | "pro" | "enterprise";
         const email = session.customer_details?.email || session.customer_email || "";
 
         if (!email) {
