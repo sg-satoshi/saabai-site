@@ -89,3 +89,23 @@ export function clearSessionCookieHeader(): string {
 }
 
 export { COOKIE_NAME };
+
+/**
+ * Check if the current session belongs to an admin-level user.
+ * Supports both env-var admins (SAABAI_ADMIN_ID) and Redis directory admins.
+ */
+export async function isAdminSession(clientId: string): Promise<boolean> {
+  // Check env-var admin first
+  const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
+  if (clientId === ADMIN_ID) return true;
+
+  // Check Redis directory for admin role
+  try {
+    const { listDirectoryUsers } = await import("../lib/user-directory");
+    const allUsers = await listDirectoryUsers();
+    const user = allUsers.find((u) => u.id === clientId);
+    return user?.role === "admin";
+  } catch {
+    return false;
+  }
+}
