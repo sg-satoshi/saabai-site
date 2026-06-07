@@ -6,7 +6,14 @@
 
 import { Redis } from "@upstash/redis";
 
-const redis = Redis.fromEnv();
+let redis: Redis | null = null;
+
+function getRedis(): Redis {
+  if (!redis) {
+    redis = Redis.fromEnv();
+  }
+  return redis;
+}
 
 export interface LeadGenClient {
   id: string;
@@ -81,12 +88,12 @@ export async function createClient(
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  await redis.hset(CLIENTS_KEY, { [id]: JSON.stringify(client) });
+  await getRedis().hset(CLIENTS_KEY, { [id]: JSON.stringify(client) });
   return client;
 }
 
 export async function getClient(id: string): Promise<LeadGenClient | null> {
-  const raw = await redis.hget<LeadGenClient | string>(CLIENTS_KEY, id);
+  const raw = await getRedis().hget<LeadGenClient | string>(CLIENTS_KEY, id);
   if (!raw) return null;
   if (typeof raw === 'string') return JSON.parse(raw);
   return raw;
@@ -98,7 +105,7 @@ export async function getClientBySlug(slug: string): Promise<LeadGenClient | nul
 }
 
 export async function listClients(): Promise<LeadGenClient[]> {
-  const raw = await redis.hgetall<Record<string, string>>(CLIENTS_KEY);
+  const raw = await getRedis().hgetall<Record<string, string>>(CLIENTS_KEY);
   if (!raw) return [];
   return Object.values(raw).map((s) => {
     if (typeof s === 'string') return JSON.parse(s);
@@ -113,11 +120,11 @@ export async function updateClient(
   const client = await getClient(id);
   if (!client) throw new Error(`Client ${id} not found`);
   const updated: LeadGenClient = { ...client, ...patch, updatedAt: Date.now() };
-  await redis.hset(CLIENTS_KEY, { [id]: JSON.stringify(updated) });
+  await getRedis().hset(CLIENTS_KEY, { [id]: JSON.stringify(updated) });
 }
 
 export async function deleteClient(id: string): Promise<void> {
-  await redis.hdel(CLIENTS_KEY, id);
+  await getRedis().hdel(CLIENTS_KEY, id);
 }
 
 // ── Lead Operations ────────────────────────────────────────
@@ -133,7 +140,7 @@ export async function saveLead(
     notified: false,
     createdAt: Date.now(),
   };
-  await redis.lpush(LEADS_KEY(clientSlug), JSON.stringify(full));
+  await getRedis().lpush(LEADS_KEY(clientSlug), JSON.stringify(full));
   return full;
 }
 
@@ -141,7 +148,7 @@ export async function getLeads(
   clientSlug: string,
   limit = 50
 ): Promise<LeadCapture[]> {
-  const raw = await redis.lrange(LEADS_KEY(clientSlug), 0, limit - 1);
+  const raw = await getRedis().lrange(LEADS_KEY(clientSlug), 0, limit - 1);
   return raw.map((s: string | LeadCapture) => {
     if (typeof s === 'string') return JSON.parse(s);
     return s as LeadCapture;
@@ -154,7 +161,7 @@ export async function markNotified(leadId: string, clientSlug: string): Promise<
   if (idx === -1) return;
   leads[idx].notified = true;
   // Rewrite the list — lset is atomic
-  await redis.lset(LEADS_KEY(clientSlug), idx, JSON.stringify(leads[idx]));
+  await getRedis().lset(LEADS_KEY(clientSlug), idx, JSON.stringify(leads[idx]));
 }
 
 // ── Default System Prompt Builder ─────────────────────────

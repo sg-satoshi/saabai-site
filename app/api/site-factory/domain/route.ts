@@ -7,11 +7,13 @@ export const runtime = "nodejs";
 const redis = Redis.fromEnv();
 
 const VERCEL_TOKEN = process.env.VERCEL_ACCESS_TOKEN;
-const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || "prj_1p5i2LakOMkQJaSDAYd8Y1N3k3Ci";
-const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID || "team_wJsriYxqNXFGvqb3vyolvWJT";
+const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
 
 async function vercelAddDomain(domain: string): Promise<{ ok: boolean; error?: string }> {
   if (!VERCEL_TOKEN) return { ok: false, error: "VERCEL_ACCESS_TOKEN not set" };
+  if (!VERCEL_PROJECT_ID) return { ok: false, error: "VERCEL_PROJECT_ID not set" };
+  if (!VERCEL_TEAM_ID) return { ok: false, error: "VERCEL_TEAM_ID not set" };
   const res = await fetch(
     `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains?teamId=${VERCEL_TEAM_ID}`,
     {

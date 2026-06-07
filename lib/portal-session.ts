@@ -9,7 +9,8 @@
 
 import { createHmac, timingSafeEqual } from "crypto";
 
-const SECRET = process.env.PORTAL_SESSION_SECRET ?? "saabai-portal-dev-secret-change-in-prod";
+const SECRET: string = process.env.PORTAL_SESSION_SECRET ?? "";
+if (!SECRET) throw new Error("PORTAL_SESSION_SECRET is not set");
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function signSession(email: string): string {

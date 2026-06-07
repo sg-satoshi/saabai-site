@@ -28,7 +28,8 @@ function b64urlToBytes(s: string): ArrayBuffer {
 }
 
 async function getKey(usage: "sign" | "verify"): Promise<CryptoKey> {
-  const secret = process.env.SAABAI_SESSION_SECRET ?? "change-this-in-production";
+  const secret = process.env.SAABAI_SESSION_SECRET;
+  if (!secret) throw new Error("SAABAI_SESSION_SECRET is not set");
   return crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
