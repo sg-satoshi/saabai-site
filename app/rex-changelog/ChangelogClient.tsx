@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "17:35", tag: "NEW", title: "Update sales page with SMS/WhatsApp notification tiers" },
       { time: "17:30", tag: "NEW", title: "Notification usage widget + channel toggles on portal" },
       { time: "17:23", tag: "NEW", title: "3-channel notification framework (email, SMS, WhatsApp) with tier limits" },
       { time: "16:54", tag: "FIX", title: "Add 10s timeout on server data fetch to prevent page hanging" },

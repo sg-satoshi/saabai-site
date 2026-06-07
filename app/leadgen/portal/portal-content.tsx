@@ -127,9 +127,10 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
   client: LeadGenClient; 
   userName: string; 
   notificationUsage: {
-    sms: { used: number; limit: number };
-    whatsapp: { used: number; limit: number };
     email: "unlimited";
+    sms: { used: number; limit: number; overage: number; topup: number; effectiveLimit: number; };
+    whatsapp: { used: number; limit: number; overage: number; topup: number; effectiveLimit: number; };
+    overage: { blockSize: number; pricePerBlock: number; blockLabel: string; };
   };
 }) {
   const [tab, setTab] = useState<Tab>("overview");
@@ -349,36 +350,61 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
 
             {/* ── Notification Usage ──────────────────────── */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px" }}>
-              <h2 style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 700, color: C.gold }}>Notification Usage</h2>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <h2 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.gold }}>Notification Usage</h2>
+                <span style={{ fontSize: 10, color: C.dim }}>Resets monthly</span>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
                     📧 Email
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>Unlimited</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>Unlimited</div>
                   <div style={{ fontSize: 11, color: C.green }}>Active</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
                     📱 SMS
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>
                     {notifUsage.sms.used}<span style={{ fontSize: 13, color: C.muted }}>/{notifUsage.sms.limit}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: notifUsage.sms.used >= notifUsage.sms.limit ? C.red : C.green }}>
-                    {notifUsage.sms.used >= notifUsage.sms.limit ? "Limit reached" : `${notifUsage.sms.limit - notifUsage.sms.used} remaining`}
+                  <div style={{ fontSize: 11, color: notifUsage.sms.used >= notifUsage.sms.limit ? C.orange : C.green }}>
+                    {notifUsage.sms.used >= notifUsage.sms.limit
+                      ? `${notifUsage.sms.overage} over (${notifUsage.sms.effectiveLimit - notifUsage.sms.used} remaining with top-ups)`
+                      : `${notifUsage.sms.limit - notifUsage.sms.used} remaining`}
                   </div>
+                  {notifUsage.sms.used >= notifUsage.sms.limit && (
+                    <button onClick={() => setTab("settings")} style={{
+                      marginTop: 6, padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+                      background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold,
+                      fontSize: 10, fontWeight: 700, fontFamily: "inherit",
+                    }}>
+                      Buy Top-Up (${notifUsage.overage.pricePerBlock}/{notifUsage.overage.blockLabel}) →
+                    </button>
+                  )}
                 </div>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
                     💬 WhatsApp
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>
                     {notifUsage.whatsapp.used}<span style={{ fontSize: 13, color: C.muted }}>/{notifUsage.whatsapp.limit}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: notifUsage.whatsapp.used >= notifUsage.whatsapp.limit ? C.red : C.green }}>
-                    {notifUsage.whatsapp.used >= notifUsage.whatsapp.limit ? "Limit reached" : `${notifUsage.whatsapp.limit - notifUsage.whatsapp.used} remaining`}
+                  <div style={{ fontSize: 11, color: notifUsage.whatsapp.used >= notifUsage.whatsapp.limit ? C.orange : C.green }}>
+                    {notifUsage.whatsapp.used >= notifUsage.whatsapp.limit
+                      ? `${notifUsage.whatsapp.overage} over (${notifUsage.whatsapp.effectiveLimit - notifUsage.whatsapp.used} remaining with top-ups)`
+                      : `${notifUsage.whatsapp.limit - notifUsage.whatsapp.used} remaining`}
                   </div>
+                  {notifUsage.whatsapp.used >= notifUsage.whatsapp.limit && (
+                    <button onClick={() => setTab("settings")} style={{
+                      marginTop: 6, padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+                      background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold,
+                      fontSize: 10, fontWeight: 700, fontFamily: "inherit",
+                    }}>
+                      Buy Top-Up (${notifUsage.overage.pricePerBlock}/{notifUsage.overage.blockLabel}) →
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

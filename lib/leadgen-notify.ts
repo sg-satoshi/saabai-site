@@ -2,18 +2,19 @@
  * LeadGen Notification Service
  *
  * Three-channel notification system: email, SMS, WhatsApp.
- * Tracks usage against tier limits and enforces monthly caps.
+ * Tracks usage against tier limits. NEVER blocks — overage is tracked separately.
  * Works without external API keys — logs instead of sending when keys missing.
  *
  * Wire in real API keys when ready:
- *   RESEND_API_KEY       → email    (Resend)
- *   MESSAGEMEDIA_KEY     → SMS      (MessageMedia)
- *   MESSAGEMEDIA_SECRET  → SMS      (MessageMedia)
- *   WHATSAPP_API_KEY     → WhatsApp (MessageMedia Conversation API)
+ *   RESEND_API_KEY          → email    (Resend)
+ *   MESSAGEMEDIA_KEY        → SMS      (MessageMedia)
+ *   MESSAGEMEDIA_SECRET     → SMS      (MessageMedia)
+ *   WHATSAPP_API_KEY        → WhatsApp (MessageMedia Conversation API)
+ *   STRIPE_TOPUP_PRICE_ID   → overage  (Stripe product for top-up purchases)
  */
 
 import type { LeadGenClient, LeadCapture } from "./leadgen-config";
-import { TIER_LIMITS, getUsageKey } from "./leadgen-tiers";
+import { TIER_LIMITS, getUsageKey, OVERAGE } from "./leadgen-tiers";
 import { Redis } from "@upstash/redis";
 
 function getRedis(): Redis | null {
@@ -52,39 +53,58 @@ function urgencyLabel(u: string): string {
 
 // ── Usage Tracking ───────────────────────────────────────────────────────────
 
-async function getUsage(clientId: string): Promise<{ sms: number; whatsapp: number }> {
+export interface UsageData {
+  sms: number;
+  whatsapp: number;
+  smsOverage: number;
+  whatsappOverage: number;
+  smsTopup: number;
+  whatsappTopup: number;
+}
+
+async function getUsage(clientId: string): Promise<UsageData> {
   const redis = getRedis();
-  if (!redis) return { sms: 0, whatsapp: 0 };
+  if (!redis) return { sms: 0, whatsapp: 0, smsOverage: 0, whatsappOverage: 0, smsTopup: 0, whatsappTopup: 0 };
   const key = getUsageKey(clientId);
   try {
     const raw = await redis.hgetall<Record<string, string>>(key);
-    if (!raw) return { sms: 0, whatsapp: 0 };
+    if (!raw) return { sms: 0, whatsapp: 0, smsOverage: 0, whatsappOverage: 0, smsTopup: 0, whatsappTopup: 0 };
     return {
-      sms:      parseInt(raw.sms ?? "0", 10),
-      whatsapp: parseInt(raw.whatsapp ?? "0", 10),
+      sms:             parseInt(raw.sms ?? "0", 10),
+      whatsapp:        parseInt(raw.whatsapp ?? "0", 10),
+      smsOverage:      parseInt(raw.smsOverage ?? "0", 10),
+      whatsappOverage: parseInt(raw.whatsappOverage ?? "0", 10),
+      smsTopup:        parseInt(raw.smsTopup ?? "0", 10),
+      whatsappTopup:   parseInt(raw.whatsappTopup ?? "0", 10),
     };
   } catch {
-    return { sms: 0, whatsapp: 0 };
+    return { sms: 0, whatsapp: 0, smsOverage: 0, whatsappOverage: 0, smsTopup: 0, whatsappTopup: 0 };
   }
 }
 
-async function incrementUsage(clientId: string, channel: "sms" | "whatsapp"): Promise<void> {
+async function incrementUsage(clientId: string, channel: "sms" | "whatsapp", isOverage: boolean): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
   const key = getUsageKey(clientId);
   try {
-    await redis.hincrby(key, channel, 1);
-    // Expire after 60 days so old months clean up automatically
+    if (isOverage) {
+      await redis.hincrby(key, `${channel}Overage`, 1);
+    } else {
+      await redis.hincrby(key, channel, 1);
+    }
     await redis.expire(key, 60 * 24 * 60 * 60);
   } catch { /* non-critical */ }
 }
 
-async function checkQuota(clientId: string, tier: "starter" | "pro" | "enterprise", channel: "sms" | "whatsapp"): Promise<boolean> {
-  const limits = TIER_LIMITS[tier];
-  const limit = limits[channel];
-  if (typeof limit === "string" && limit === "unlimited") return true;
+/**
+ * Determine if the next message would be overage (exceeds plan + topup).
+ */
+async function isOverage(clientId: string, tier: "starter" | "pro" | "enterprise", channel: "sms" | "whatsapp"): Promise<boolean> {
   const usage = await getUsage(clientId);
-  return usage[channel] < (limit as number);
+  const limit = TIER_LIMITS[tier][channel] as number;
+  const effective = limit + usage[`${channel}Topup` as keyof UsageData] as number;
+  const used = usage[channel];
+  return used >= effective;
 }
 
 // ── Resend Email ─────────────────────────────────────────────────────────────
@@ -92,7 +112,7 @@ async function checkQuota(clientId: string, tier: "starter" | "pro" | "enterpris
 async function sendEmail(client: LeadGenClient, lead: LeadCapture): Promise<boolean> {
   if (!channelReady("email")) {
     console.log("[notify] Email not configured — would send to", client.email);
-    return true; // Pretend success so the flow doesn't block
+    return true;
   }
 
   try {
@@ -162,11 +182,7 @@ function escapeHtml(s: string): string {
 
 async function sendSms(client: LeadGenClient, lead: LeadCapture): Promise<boolean> {
   const tier = client.subscription?.tier ?? "starter";
-  const hasQuota = await checkQuota(client.id, tier, "sms");
-  if (!hasQuota) {
-    console.log(`[notify] SMS quota exceeded for ${client.id} (${tier})`);
-    return false;
-  }
+  const overage = await isOverage(client.id, tier, "sms");
 
   const target = client.notifications?.notificationPhone || client.phone;
   if (!target) {
@@ -176,7 +192,7 @@ async function sendSms(client: LeadGenClient, lead: LeadCapture): Promise<boolea
 
   if (!channelReady("sms")) {
     console.log(`[notify] SMS not configured — would send to ${target}: ${buildSmsText(lead)}`);
-    await incrementUsage(client.id, "sms");
+    await incrementUsage(client.id, "sms", overage);
     return true;
   }
 
@@ -203,8 +219,8 @@ async function sendSms(client: LeadGenClient, lead: LeadCapture): Promise<boolea
       return false;
     }
 
-    await incrementUsage(client.id, "sms");
-    console.log(`[notify] SMS sent to ${target} for lead ${lead.id}`);
+    await incrementUsage(client.id, "sms", overage);
+    console.log(`[notify] SMS sent to ${target} for lead ${lead.id}${overage ? " (overage)" : ""}`);
     return true;
   } catch (e) {
     console.error("[notify] SMS failed:", e);
@@ -225,11 +241,7 @@ function buildSmsText(lead: LeadCapture): string {
 
 async function sendWhatsApp(client: LeadGenClient, lead: LeadCapture): Promise<boolean> {
   const tier = client.subscription?.tier ?? "starter";
-  const hasQuota = await checkQuota(client.id, tier, "whatsapp");
-  if (!hasQuota) {
-    console.log(`[notify] WhatsApp quota exceeded for ${client.id} (${tier})`);
-    return false;
-  }
+  const overage = await isOverage(client.id, tier, "whatsapp");
 
   const target = client.notifications?.notificationPhone || client.phone;
   if (!target) {
@@ -239,7 +251,7 @@ async function sendWhatsApp(client: LeadGenClient, lead: LeadCapture): Promise<b
 
   if (!channelReady("whatsapp")) {
     console.log(`[notify] WhatsApp not configured — would send to ${target}: ${buildWaText(lead)}`);
-    await incrementUsage(client.id, "whatsapp");
+    await incrementUsage(client.id, "whatsapp", overage);
     return true;
   }
 
@@ -266,8 +278,8 @@ async function sendWhatsApp(client: LeadGenClient, lead: LeadCapture): Promise<b
       return false;
     }
 
-    await incrementUsage(client.id, "whatsapp");
-    console.log(`[notify] WhatsApp sent to ${target} for lead ${lead.id}`);
+    await incrementUsage(client.id, "whatsapp", overage);
+    console.log(`[notify] WhatsApp sent to ${target} for lead ${lead.id}${overage ? " (overage)" : ""}`);
     return true;
   } catch (e) {
     console.error("[notify] WhatsApp failed:", e);
@@ -292,12 +304,12 @@ export interface NotificationResult {
   email: boolean;
   sms: boolean;
   whatsapp: boolean;
-  usage: { sms: number; whatsapp: number };
+  usage: UsageData;
 }
 
 /**
  * Send notifications across all enabled channels for a captured lead.
- * Respects per-client channel preferences and tier limits.
+ * Supports per-client channel preferences. Never blocks — overage is tracked.
  */
 export async function sendLeadNotification(
   client: LeadGenClient,
@@ -321,20 +333,84 @@ export async function sendLeadNotification(
   };
 }
 
+export interface NotificationUsageSummary {
+  email: "unlimited";
+  sms: {
+    used: number;
+    limit: number;
+    overage: number;
+    topup: number;
+    effectiveLimit: number;
+  };
+  whatsapp: {
+    used: number;
+    limit: number;
+    overage: number;
+    topup: number;
+    effectiveLimit: number;
+  };
+  overage: {
+    blockSize: number;
+    pricePerBlock: number;
+    blockLabel: string;
+  };
+}
+
 /**
  * Get notification usage summary for a client (for portal display).
+ * Includes overage tracking and top-up info.
  */
-export async function getNotificationUsage(client: LeadGenClient): Promise<{
-  sms: { used: number; limit: number };
-  whatsapp: { used: number; limit: number };
-  email: "unlimited";
-}> {
+export async function getNotificationUsage(client: LeadGenClient): Promise<NotificationUsageSummary> {
   const usage = await getUsage(client.id);
   const limits = TIER_LIMITS[client.subscription?.tier ?? "starter"];
 
+  const smsLimit = limits.sms as number;
+  const waLimit = limits.whatsapp as number;
+
   return {
     email: "unlimited",
-    sms: { used: usage.sms, limit: limits.sms },
-    whatsapp: { used: usage.whatsapp, limit: limits.whatsapp },
+    sms: {
+      used: usage.sms + usage.smsOverage,
+      limit: smsLimit,
+      overage: usage.smsOverage,
+      topup: usage.smsTopup,
+      effectiveLimit: smsLimit + usage.smsTopup,
+    },
+    whatsapp: {
+      used: usage.whatsapp + usage.whatsappOverage,
+      limit: waLimit,
+      overage: usage.whatsappOverage,
+      topup: usage.whatsappTopup,
+      effectiveLimit: waLimit + usage.whatsappTopup,
+    },
+    overage: {
+      blockSize: OVERAGE.blockSize,
+      pricePerBlock: OVERAGE.pricePerBlock,
+      blockLabel: OVERAGE.blockLabel,
+    },
   };
+}
+
+/**
+ * Apply a top-up purchase to a client's account.
+ * Called by the Stripe webhook when a top-up is purchased.
+ * Returns the updated usage data.
+ */
+export async function applyTopup(
+  clientId: string,
+  channel: "sms" | "whatsapp",
+  blocks: number
+): Promise<void> {
+  const redis = getRedis();
+  if (!redis) throw new Error("Redis not available");
+  const key = getUsageKey(clientId);
+  const messages = blocks * OVERAGE.blockSize;
+  try {
+    await redis.hincrby(key, `${channel}Topup`, messages);
+    await redis.expire(key, 60 * 24 * 60 * 60);
+    console.log(`[notify] Topup applied: ${clientId} +${messages} ${channel} (${blocks} blocks)`);
+  } catch (e) {
+    console.error("[notify] Topup failed:", e);
+    throw new Error("Failed to apply top-up");
+  }
 }
