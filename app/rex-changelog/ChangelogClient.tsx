@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "17:23", tag: "NEW", title: "3-channel notification framework (email, SMS, WhatsApp) with tier limits" },
       { time: "16:54", tag: "FIX", title: "Add 10s timeout on server data fetch to prevent page hanging" },
       { time: "15:35", tag: "NEW", title: "Show all products on client dashboard for full customer view" },
       { time: "15:31", tag: "FIX", title: "Add allowOverwrite to Vercel Blob put to fix 500 error" },

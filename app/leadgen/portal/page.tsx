@@ -13,6 +13,7 @@ import { loadClients } from "../../../lib/clients";
 import { getClient, listClients } from "../../../lib/leadgen-config";
 import { listDirectoryUsers } from "../../../lib/user-directory";
 import { productsFromDashboardUrl, ALL_PRODUCTS } from "../../../lib/user-products";
+import { getNotificationUsage } from "../../../lib/leadgen-notify";
 import SaabaiAppShell from "../../components/SaabaiAppShell";
 import LeadGenPortalContent from "./portal-content";
 
@@ -92,13 +93,16 @@ export default async function LeadGenPortalPage() {
     );
   }
 
+  // Fetch notification usage data for the portal
+  const notificationUsage = await getNotificationUsage(leadGenClient);
+
   return (
     <SaabaiAppShell
       userName={userName || leadGenClient.businessName || "User"}
       userEmail={userEmail}
       products={productInfos}
     >
-      <LeadGenPortalContent client={leadGenClient} userName={userName || leadGenClient.businessName} />
+      <LeadGenPortalContent client={leadGenClient} userName={userName || leadGenClient.businessName} notificationUsage={notificationUsage} />
     </SaabaiAppShell>
   );
 }

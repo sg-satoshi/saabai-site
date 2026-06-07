@@ -123,7 +123,15 @@ function StatusBadge({ status }: { status: string }) {
 // ════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════
-export default function LeadGenPortalContent({ client, userName }: { client: LeadGenClient; userName: string }) {
+export default function LeadGenPortalContent({ client, userName, notificationUsage: initialUsage }: { 
+  client: LeadGenClient; 
+  userName: string; 
+  notificationUsage: {
+    sms: { used: number; limit: number };
+    whatsapp: { used: number; limit: number };
+    email: "unlimited";
+  };
+}) {
   const [tab, setTab] = useState<Tab>("overview");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(true);
@@ -131,6 +139,12 @@ export default function LeadGenPortalContent({ client, userName }: { client: Lea
 
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // ── Notification state ──────────────────────────────────
+  const [notifEmail, setNotifEmail] = useState(client.notifications?.email ?? true);
+  const [notifSms, setNotifSms] = useState(client.notifications?.sms ?? true);
+  const [notifWhatsApp, setNotifWhatsApp] = useState(client.notifications?.whatsapp ?? true);
+  const [notifUsage, setNotifUsage] = useState(initialUsage);
 
   // ── Editable fields ──────────────────────────────────────
   const [businessName, setBusinessName] = useState(client.businessName);
@@ -195,6 +209,30 @@ export default function LeadGenPortalContent({ client, userName }: { client: Lea
       setSaveMsg({ type: "success", text: "Embed code copied!" });
       setTimeout(() => setSaveMsg(null), 2500);
     });
+  }
+
+  // ── Save notification preferences ────────────────────────
+  async function saveNotificationPrefs() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/leadgen/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: client.id,
+          notifications: {
+            email: notifEmail,
+            sms: notifSms,
+            whatsapp: notifWhatsApp,
+          },
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setSaveMsg({ type: "success", text: "Notification preferences saved." });
+    } catch {
+      setSaveMsg({ type: "error", text: "Failed to save notification preferences." });
+    }
+    setSaving(false);
   }
 
   // ── Stats ────────────────────────────────────────────────
@@ -307,6 +345,42 @@ export default function LeadGenPortalContent({ client, userName }: { client: Lea
               <StatCard label="This Month" value={thisMonth.toString()} sub={new Date().toLocaleDateString("en-AU", { month: "long", year: "numeric" })} />
               <StatCard label="Emergency" value={emergencyLeads.toString()} sub="flagged urgent" highlight={emergencyLeads > 0} />
               <StatCard label="Widget Status" value={client.status === "active" ? "Live" : "Paused"} sub={client.status === "active" ? "Capturing leads 24/7" : "Not active"} />
+            </div>
+
+            {/* ── Notification Usage ──────────────────────── */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "22px 24px" }}>
+              <h2 style={{ margin: "0 0 16px", fontSize: 13, fontWeight: 700, color: C.gold }}>Notification Usage</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
+                    📧 Email
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>Unlimited</div>
+                  <div style={{ fontSize: 11, color: C.green }}>Active</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
+                    📱 SMS
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>
+                    {notifUsage.sms.used}<span style={{ fontSize: 13, color: C.muted }}>/{notifUsage.sms.limit}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: notifUsage.sms.used >= notifUsage.sms.limit ? C.red : C.green }}>
+                    {notifUsage.sms.used >= notifUsage.sms.limit ? "Limit reached" : `${notifUsage.sms.limit - notifUsage.sms.used} remaining`}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
+                    💬 WhatsApp
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>
+                    {notifUsage.whatsapp.used}<span style={{ fontSize: 13, color: C.muted }}>/{notifUsage.whatsapp.limit}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: notifUsage.whatsapp.used >= notifUsage.whatsapp.limit ? C.red : C.green }}>
+                    {notifUsage.whatsapp.used >= notifUsage.whatsapp.limit ? "Limit reached" : `${notifUsage.whatsapp.limit - notifUsage.whatsapp.used} remaining`}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -647,6 +721,52 @@ export default function LeadGenPortalContent({ client, userName }: { client: Lea
               )}
             </div>
 
+            {/* ── Notification Preferences ────────────────── */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px" }}>
+              <h2 style={{ margin: "0 0 16px", fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" }}>Notifications</h2>
+              <p style={{ margin: "0 0 16px", fontSize: 12, color: C.muted }}>
+                Choose which channels receive lead alerts. Usage resets monthly.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <ToggleRow
+                  icon="📧"
+                  label="Email"
+                  description={`Send to ${client.email}`}
+                  checked={notifEmail}
+                  onChange={setNotifEmail}
+                  limit="Unlimited"
+                />
+                <ToggleRow
+                  icon="📱"
+                  label="SMS"
+                  description={`Send to ${client.notifications?.notificationPhone || client.phone || "not set"}`}
+                  checked={notifSms}
+                  onChange={setNotifSms}
+                  limit={`${notifUsage.sms.used}/${notifUsage.sms.limit}`}
+                />
+                <ToggleRow
+                  icon="💬"
+                  label="WhatsApp"
+                  description={`Send to ${client.notifications?.notificationPhone || client.phone || "not set"}`}
+                  checked={notifWhatsApp}
+                  onChange={setNotifWhatsApp}
+                  limit={`${notifUsage.whatsapp.used}/${notifUsage.whatsapp.limit}`}
+                />
+              </div>
+              <button
+                onClick={saveNotificationPrefs}
+                disabled={saving}
+                style={{
+                  marginTop: 16, padding: "9px 20px", borderRadius: 8,
+                  background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+                  color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  fontFamily: "inherit", opacity: saving ? 0.6 : 1,
+                }}
+              >
+                {saving ? "Saving..." : "Save Preferences"}
+              </button>
+            </div>
+
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px" }}>
               <h2 style={{ margin: "0 0 16px", fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" }}>Support</h2>
               <p style={{ margin: "0 0 6px", fontSize: 13, color: C.text }}>Need help with your LeadGen widget?</p>
@@ -731,6 +851,50 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
       <span style={{ fontSize: 13, color: C.text, textAlign: "right", fontFamily: mono ? "monospace" : "inherit", wordBreak: "break-all" }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+// ── Toggle Row ─────────────────────────────────────────────
+function ToggleRow({
+  icon, label, description, checked, onChange, limit,
+}: {
+  icon: string;
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  limit: string;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "12px 14px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{label}</div>
+          <div style={{ fontSize: 11, color: C.muted }}>{description}</div>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 10, color: C.dim, fontWeight: 700 }}>{limit}</span>
+        <button
+          onClick={() => onChange(!checked)}
+          style={{
+            width: 42, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+            position: "relative", transition: "background 0.15s",
+            background: checked ? C.green : C.dim,
+          }}
+        >
+          <span style={{
+            position: "absolute", top: 3, left: checked ? 21 : 3,
+            width: 18, height: 18, borderRadius: "50%", background: "#fff",
+            transition: "left 0.15s",
+          }} />
+        </button>
+      </div>
     </div>
   );
 }
