@@ -15,11 +15,11 @@ const SUPPRESS_PATHS = [
   // Client demo sites — their own experience
   "/sites/tributum-law-v2",
   // LeadGen — has its own dedicated widget
-  "/leadgen",
+  "/leadgen", "/leadgen-widget",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms"];
+const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();
