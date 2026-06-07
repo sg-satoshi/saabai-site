@@ -11,6 +11,30 @@ export interface DirectoryUser {
   products?: ProductId[];
   approvedAt: string;
   createdAt: string;
+  profile?: UserProfile;
+}
+
+export interface UserProfile {
+  phone?: string;
+  mobile?: string;
+  address?: {
+    street?: string;
+    suburb?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+  gender?: "male" | "female" | "other" | "prefer-not-to-say";
+  dateOfBirth?: string; // ISO date string
+  businessName?: string;
+  businessType?: string;
+  interests?: string;       // comma-separated
+  favouriteBrands?: string; // comma-separated
+  favouriteProducts?: string;
+  referralSource?: string;
+  marketingConsent?: boolean;
+  notes?: string;
 }
 
 const USERS_KEY = "saabai:users";

@@ -22,6 +22,7 @@ export default async function SettingsPage() {
   let userName = "User";
   let userEmail = "";
   let isAdmin = false;
+  let userProfile = null as Record<string, unknown> | null;
   let userRecord: { products?: string[]; dashboardUrl?: string } | null = null;
 
   const envClient = loadClients().find((c) => c.id === clientId);
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
       userName = dirUser.name;
       userEmail = dirUser.email;
       isAdmin = dirUser.role === "admin";
+      userProfile = (dirUser as any).profile || null;
       userRecord = dirUser;
     }
   }
@@ -49,7 +51,7 @@ export default async function SettingsPage() {
       userEmail={userEmail}
       products={productInfos}
     >
-      <SettingsContent userName={userName} userEmail={userEmail} isAdmin={isAdmin} />
+      <SettingsContent userName={userName} userEmail={userEmail} isAdmin={isAdmin} userProfile={userProfile as any} />
     </SaabaiAppShell>
   );
 }
