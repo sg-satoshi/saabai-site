@@ -135,49 +135,67 @@ export default function LeadGenPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-start max-w-4xl mx-auto">
-          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
-            <h3 className="text-lg font-semibold mb-4">Try it right now →</h3>
-            <p className="text-sm text-saabai-text-dim mb-6 leading-relaxed">
-              Click the chat button and say something like:
-            </p>
-            <ul className="space-y-3 text-sm text-saabai-text-dim">
-              <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">&bull;</span>
-                <span>&ldquo;Hey I need a plumber, my pipe burst&rdquo;</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">&bull;</span>
-                <span>&ldquo;How much to fix a hot water system?&rdquo;</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">&bull;</span>
-                <span>&ldquo;Can you come to Woolloongabba?&rdquo;</span>
-              </li>
-            </ul>
+        <div className="grid md:grid-cols-2 gap-12 items-start max-w-5xl mx-auto">
+
+          {/* Left: Copy */}
+          <div>
+            <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Try it right now →</h3>
+              <p className="text-sm text-saabai-text-dim mb-6 leading-relaxed">
+                Click the chat button and say something like:
+              </p>
+              <ul className="space-y-3 text-sm text-saabai-text-dim">
+                <li className="flex items-start gap-2">
+                  <span className="text-saabai-gold mt-0.5">•</span>
+                  <span>&ldquo;Hey I need a plumber, my pipe burst&rdquo;</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-saabai-gold mt-0.5">•</span>
+                  <span>&ldquo;How much to fix a hot water system?&rdquo;</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-saabai-gold mt-0.5">•</span>
+                  <span>&ldquo;Can you come to Woolloongabba?&rdquo;</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* What happens after */}
+            <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
+              <h3 className="text-lg font-semibold mb-4">What happens after Jack captures a lead</h3>
+              <div className="space-y-4">
+                {[
+                  "Your team gets an instant email with the full conversation",
+                  "A structured brief is generated automatically",
+                  "A follow-up email goes to the client within seconds",
+                  "The lead appears in your Saabai dashboard",
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm text-saabai-text-dim">
+                    <span className="w-5 h-5 rounded-full bg-saabai-gold/10 border border-saabai-gold/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                        <path d="M1 5l3 3 5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-saabai-gold" />
+                      </svg>
+                    </span>
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
-            <h3 className="text-lg font-semibold mb-4">What happens next:</h3>
-            <ol className="space-y-4 text-sm text-saabai-text-dim">
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-saabai-teal/20 text-saabai-teal flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
-                <span>AI greets the visitor and asks what they need</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-saabai-teal/20 text-saabai-teal flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
-                <span>Collects their name and phone number naturally</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-saabai-teal/20 text-saabai-teal flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
-                <span>Lead saved + email notification sent to you instantly</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-saabai-teal/20 text-saabai-teal flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
-                <span>You call the lead back and book the job</span>
-              </li>
-            </ol>
+          {/* Right: Phone mockup */}
+          <div className="flex flex-col items-center">
+            <div className="w-[340px] h-[620px] bg-[#0a0c10] border-2 border-[#222530] rounded-[32px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.04)] relative">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[100px] h-[26px] bg-[#080a0f] rounded-b-[16px] z-10" />
+              <iframe
+                src={`/leadgen-widget?slug=${DEMO_SLUG}`}
+                style={{ width: "100%", height: "100%", border: "none" }}
+                title="Jack AI Agent — Live Demo"
+              />
+            </div>
+            <p className="text-xs text-saabai-text-dim mt-4">Live · Powered by Saabai</p>
           </div>
+
         </div>
       </section>
 
@@ -302,12 +320,6 @@ export default function LeadGenPage() {
       </section>
 
       <Footer />
-
-      {/* Inline LeadGen widget for demo - only renders the chatbot */}
-      <script
-        src={`https://www.saabai.ai/api/leadgen/widget?slug=${DEMO_SLUG}`}
-        async
-      />
     </div>
   );
 }
