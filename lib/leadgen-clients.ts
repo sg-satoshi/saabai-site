@@ -38,6 +38,7 @@ export async function saveLeadGenClient(client: LeadGenClient): Promise<void> {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
+    allowOverwrite: true,
   });
 }
 

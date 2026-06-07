@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "15:20", tag: "NEW", title: "Add inline edit for profile name in account settings" },
       { time: "14:31", tag: "FIX", title: "Use same logo as admin sidebar for visual consistency" },
       { time: "14:28", tag: "NEW", title: "Restyle client dashboard to match saabai-admin design language" },
       { time: "14:22", tag: "FIX", title: "Replace text logo with actual Saabai.ai logo image in sidebar" },
