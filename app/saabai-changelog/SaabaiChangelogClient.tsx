@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "10:36", tag: "NEW", title: "End-to-end Stripe flow — session with metadata, webhook creates client, success page with confirmation" },
       { time: "10:35", tag: "FIX", title: "Subscribe buttons POST to Stripe checkout API (env vars configured)" },
       { time: "10:33", tag: "UPDATE", title: "Strip remaining non-Rex entries (4 Jun LocationPage, 3 Jun Nico Moretti)" },
       { time: "10:32", tag: "FIX", title: "Remove LeadGen/site entries from Rex changelog; route leadgen paths to Saabai changelog" },

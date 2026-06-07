@@ -3,12 +3,14 @@
  * Creates client records on successful checkout.
  */
 import { NextRequest } from "next/server";
-import Stripe from "stripe";
 import { createClient, getClientBySlug } from "../../../../lib/leadgen-config";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
-});
+function getStripe() {
+  const Stripe = require("stripe");
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2026-04-22.dahlia",
+  });
+}
 
 function generateSlug(email: string): string {
   const name = email.split("@")[0].replace(/[^a-z0-9]/gi, "-").toLowerCase();
@@ -20,10 +22,10 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature")!;
   const body = await req.text();
 
-  let event: Stripe.Event;
+  let event: any;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err: any) {
     console.error("[LeadGen Webhook] Signature verification failed:", err.message);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         const tier = (session.metadata?.tier || "starter") as "starter" | "pro" | "enterprise";
         const email = session.customer_details?.email || session.customer_email || "";
 

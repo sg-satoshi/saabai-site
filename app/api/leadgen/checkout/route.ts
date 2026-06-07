@@ -2,17 +2,21 @@
  * LeadGen Stripe Checkout
  */
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
-});
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
+
+function getStripe() {
+  const Stripe = require("stripe");
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2026-04-22.dahlia",
+  });
+}
+
+const BASE = () => process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai";
 
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS });
@@ -26,6 +30,7 @@ export async function POST(req: NextRequest) {
       : await req.json();
 
     const { tier } = body as { tier: string };
+    const stripe = getStripe();
 
     const priceMap: Record<string, string> = {
       starter: process.env.STRIPE_PRICE_STARTER!,
@@ -44,8 +49,8 @@ export async function POST(req: NextRequest) {
       customer_creation: "always",
       line_items: [{ price: priceId, quantity: 1 }],
       metadata: { tier, source: "leadgen" },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai"}/leadgen/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai"}/leadgen`,
+      success_url: `${BASE()}/leadgen/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASE()}/leadgen`,
     });
 
     if (isForm) {
