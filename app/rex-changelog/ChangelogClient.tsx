@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "14:22", tag: "FIX", title: "Replace text logo with actual Saabai.ai logo image in sidebar" },
       { time: "14:21", tag: "FIX", title: "Token verification — lastIndexOf dot for email-based clientIds" },
       { time: "14:03", tag: "NEW", title: "Unified SaabaiAppShell dashboard, forgot password flow, settings page" },
       { time: "10:39", tag: "FIX", title: "Lazy-load Stripe client to fix build — checkout + webhook now pass without env var" },

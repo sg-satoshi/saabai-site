@@ -8,50 +8,84 @@ interface DashboardContentProps {
   products: ProductInfo[];
 }
 
+// ── Admin-matched card style ──────────────────────────────────────────────────
+
+const C = {
+  card:   "#ffffff",
+  border: "rgba(0,0,0,0.08)",
+  text:   "#111827",
+  muted:  "#9ca3af",
+  gold:   "#C9A84C",
+  goldBg: "rgba(201,168,76,0.10)",
+  goldBdr: "rgba(201,168,76,0.22)",
+};
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+      <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" }}>{children}</p>
+      <span style={{ flex: 1, height: 1, background: C.border }} />
+    </div>
+  );
+}
+
 export default function DashboardContent({
   userName,
   products,
 }: DashboardContentProps) {
   return (
-    <div className="p-6 md:p-8 max-w-4xl">
+    <div style={{ padding: "32px 36px", maxWidth: 900 }}>
       {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white/90">
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>
           Welcome back, {userName.split(" ")[0]}
         </h1>
-        <p className="text-white/40 text-sm mt-1">
+        <p style={{ margin: 0, fontSize: 13, color: C.muted }}>
           Here is an overview of your account and products.
         </p>
       </div>
 
-      {/* Product cards */}
+      {/* Products */}
       {products.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-4">
-            Your Products
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div style={{ marginBottom: 32 }}>
+          <SectionLabel>Your Products</SectionLabel>
+          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
             {products.map((product) => (
               <Link
                 key={product.id}
                 href={product.href}
-                className="block bg-[#0e1117] border border-white/[0.06] rounded-2xl p-6
-                  hover:border-[#62C5D1]/30 hover:bg-[#0e1117]/80 transition-all duration-150 no-underline group"
+                style={{
+                  display: "block",
+                  background: C.card,
+                  border: `1px solid ${C.border}`,
+                  borderTop: `3px solid ${C.gold}`,
+                  borderRadius: 14,
+                  padding: "22px 22px 20px",
+                  textDecoration: "none",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.goldBdr; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#62C5D1]/10 flex items-center justify-center text-2xl flex-shrink-0">
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, flexShrink: 0,
+                  }}>
                     {product.icon}
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-white/90 font-semibold text-base group-hover:text-[#62C5D1] transition-colors">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 700, color: C.text }}>
                       {product.label}
                     </h3>
-                    <p className="text-white/40 text-sm mt-0.5">
+                    <p style={{ margin: "0 0 10px", fontSize: 11, color: C.muted }}>
                       {product.description}
                     </p>
-                    <div className="mt-3 text-xs text-[#62C5D1] font-medium">
-                      Open {product.label} →
-                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: C.gold }}>
+                      Open {product.label} &rarr;
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -60,32 +94,50 @@ export default function DashboardContent({
         </div>
       )}
 
-      {/* Quick links */}
+      {/* Quick Links */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-white/30 mb-4">
-          Quick Links
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <SectionLabel>Quick Links</SectionLabel>
+        <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
           <a
             href="/dashboard/settings"
-            className="block bg-[#0e1117] border border-white/[0.06] rounded-2xl p-5
-              hover:border-white/20 transition-all duration-150 no-underline"
+            style={{
+              display: "block",
+              background: C.card,
+              border: `1px solid ${C.border}`,
+              borderRadius: 14,
+              padding: "18px 20px",
+              textDecoration: "none",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.goldBdr; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
           >
-            <div className="text-white/70 text-sm font-medium">⚙ Account Settings</div>
-            <p className="text-white/30 text-xs mt-1">
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>
+              ⚙ Account Settings
+            </div>
+            <p style={{ margin: 0, fontSize: 11, color: C.muted }}>
               Update your profile, password, and preferences
             </p>
           </a>
           {products.length > 0 && (
             <a
               href={products[0].href}
-              className="block bg-[#0e1117] border border-white/[0.06] rounded-2xl p-5
-                hover:border-white/20 transition-all duration-150 no-underline"
+              style={{
+                display: "block",
+                background: C.card,
+                border: `1px solid ${C.border}`,
+                borderRadius: 14,
+                padding: "18px 20px",
+                textDecoration: "none",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.goldBdr; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             >
-              <div className="text-white/70 text-sm font-medium">
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>
                 {products[0].icon} {products[0].label} Dashboard
               </div>
-              <p className="text-white/30 text-xs mt-1">
+              <p style={{ margin: 0, fontSize: 11, color: C.muted }}>
                 View analytics, manage settings, and track performance
               </p>
             </a>

@@ -2,6 +2,19 @@
 
 import { useState } from "react";
 
+// ── Admin-matched card style ──────────────────────────────────────────────────
+
+const C = {
+  card:   "#ffffff",
+  border: "rgba(0,0,0,0.08)",
+  text:   "#111827",
+  muted:  "#9ca3af",
+  teal:   "#0891b2",
+  gold:   "#C9A84C",
+  goldBg: "rgba(201,168,76,0.10)",
+  goldBdr: "rgba(201,168,76,0.22)",
+};
+
 interface SettingsContentProps {
   userName: string;
   userEmail: string;
@@ -61,99 +74,164 @@ export default function SettingsContent({
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl">
-      <h1 className="text-2xl font-bold text-white/90 mb-1">Account Settings</h1>
-      <p className="text-white/40 text-sm mb-8">Manage your account details and preferences.</p>
+    <div style={{ padding: "32px 36px", maxWidth: 700 }}>
+      <h1 style={{ margin: "0 0 2px", fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>
+        Account Settings
+      </h1>
+      <p style={{ margin: "0 0 32px", fontSize: 13, color: C.muted }}>
+        Manage your account details and preferences.
+      </p>
 
       {/* Profile section */}
-      <section className="bg-[#0e1117] border border-white/[0.06] rounded-2xl p-6 mb-6">
-        <h2 className="text-white/70 font-semibold text-sm mb-4">Profile</h2>
-        <div className="space-y-3">
+      <div style={{
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 14,
+        padding: "22px 24px 20px",
+        marginBottom: 16,
+      }}>
+        <h2 style={{ margin: "0 0 16px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+          Profile
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <div className="text-xs text-white/30 uppercase tracking-wider mb-1">Name</div>
-            <div className="text-white/80">{userName}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 }}>Name</div>
+            <div style={{ fontSize: 14, color: C.text }}>{userName}</div>
           </div>
           <div>
-            <div className="text-xs text-white/30 uppercase tracking-wider mb-1">Email</div>
-            <div className="text-white/80">{userEmail}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 }}>Email</div>
+            <div style={{ fontSize: 14, color: C.text }}>{userEmail}</div>
           </div>
           {isAdmin && (
             <div>
-              <div className="text-xs text-white/30 uppercase tracking-wider mb-1">Role</div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-[#62C5D1]/10 text-[#62C5D1] border border-[#62C5D1]/30">
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+                color: C.gold, background: C.goldBg,
+                border: `1px solid ${C.goldBdr}`,
+                padding: "2px 8px", borderRadius: 20,
+              }}>
                 Admin
               </span>
             </div>
           )}
         </div>
-      </section>
+      </div>
 
       {/* Password section */}
-      <section className="bg-[#0e1117] border border-white/[0.06] rounded-2xl p-6 mb-6">
-        <h2 className="text-white/70 font-semibold text-sm mb-4">Password</h2>
+      <div style={{
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 14,
+        padding: "22px 24px 20px",
+        marginBottom: 16,
+      }}>
+        <h2 style={{ margin: "0 0 16px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+          Password
+        </h2>
 
         {passMsg && (
-          <div
-            className={`mb-4 px-4 py-3 rounded-xl text-sm ${
-              passMsg.ok
-                ? "bg-green-500/10 border border-green-500/20 text-green-400"
-                : "bg-red-500/10 border border-red-500/20 text-red-400"
-            }`}
-          >
+          <div style={{
+            marginBottom: 16, padding: "10px 14px", borderRadius: 10,
+            background: passMsg.ok ? "rgba(22,163,74,0.08)" : "rgba(220,38,38,0.08)",
+            border: passMsg.ok ? "1px solid rgba(22,163,74,0.2)" : "1px solid rgba(220,38,38,0.2)",
+            fontSize: 13,
+            color: passMsg.ok ? "#16a34a" : "#dc2626",
+          }}>
             {passMsg.text}
           </div>
         )}
 
         {changePasswordView ? (
-          <form onSubmit={handleChangePassword} className="space-y-4">
+          <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              <label className="block text-xs text-white/40 mb-1">Current password</label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>
+                Current password
+              </label>
               <input
                 name="currentPassword"
                 type="password"
                 required
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm
-                  focus:outline-none focus:border-[#62C5D1]/40 transition-colors"
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "10px 12px", fontSize: 13,
+                  border: `1px solid ${C.border}`, borderRadius: 10,
+                  background: "rgba(0,0,0,0.02)",
+                  outline: "none",
+                  fontFamily: "inherit",
+                  transition: "border-color 0.12s",
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = C.goldBdr; }}
+                onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
               />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">New password</label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>
+                New password
+              </label>
               <input
                 name="newPassword"
                 type="password"
                 required
                 minLength={8}
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm
-                  focus:outline-none focus:border-[#62C5D1]/40 transition-colors"
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "10px 12px", fontSize: 13,
+                  border: `1px solid ${C.border}`, borderRadius: 10,
+                  background: "rgba(0,0,0,0.02)",
+                  outline: "none",
+                  fontFamily: "inherit",
+                  transition: "border-color 0.12s",
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = C.goldBdr; }}
+                onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
               />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">Confirm new password</label>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>
+                Confirm new password
+              </label>
               <input
                 name="confirmPassword"
                 type="password"
                 required
                 minLength={8}
-                className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm
-                  focus:outline-none focus:border-[#62C5D1]/40 transition-colors"
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "10px 12px", fontSize: 13,
+                  border: `1px solid ${C.border}`, borderRadius: 10,
+                  background: "rgba(0,0,0,0.02)",
+                  outline: "none",
+                  fontFamily: "inherit",
+                  transition: "border-color 0.12s",
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = C.goldBdr; }}
+                onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
               />
             </div>
-            <div className="flex gap-3">
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 type="submit"
                 disabled={submittingPass}
-                className="px-5 py-2.5 rounded-xl bg-[#62C5D1]/15 text-[#62C5D1] text-sm font-medium
-                  border border-[#62C5D1]/30 hover:bg-[#62C5D1]/25 transition-all disabled:opacity-50 cursor-pointer"
+                style={{
+                  padding: "9px 18px", borderRadius: 10,
+                  background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+                  color: C.gold, fontSize: 12, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                  transition: "all 0.12s",
+                  opacity: submittingPass ? 0.6 : 1,
+                }}
               >
                 {submittingPass ? "Saving..." : "Change password"}
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setChangePasswordView(false);
-                  setPassMsg(null);
+                onClick={() => { setChangePasswordView(false); setPassMsg(null); }}
+                style={{
+                  padding: "9px 18px", borderRadius: 10,
+                  border: `1px solid ${C.border}`, background: "transparent",
+                  color: C.muted, fontSize: 12, fontWeight: 500,
+                  cursor: "pointer", fontFamily: "inherit",
                 }}
-                className="px-5 py-2.5 rounded-xl text-white/40 text-sm hover:text-white/60 transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -162,26 +240,50 @@ export default function SettingsContent({
         ) : (
           <button
             onClick={() => setChangePasswordView(true)}
-            className="px-5 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm hover:bg-white/10 transition-all cursor-pointer"
+            style={{
+              padding: "9px 18px", borderRadius: 10,
+              border: `1px solid ${C.border}`, background: "transparent",
+              color: C.text, fontSize: 12, fontWeight: 500,
+              cursor: "pointer", fontFamily: "inherit",
+              transition: "all 0.12s",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.goldBdr; (e.currentTarget as HTMLElement).style.background = C.goldBg; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = C.text; }}
           >
             Change password
           </button>
         )}
-      </section>
+      </div>
 
       {/* Support section */}
-      <section className="bg-[#0e1117] border border-white/[0.06] rounded-2xl p-6">
-        <h2 className="text-white/70 font-semibold text-sm mb-2">Support</h2>
-        <p className="text-white/40 text-sm mb-3">
+      <div style={{
+        background: C.card,
+        border: `1px solid ${C.border}`,
+        borderRadius: 14,
+        padding: "22px 24px 20px",
+      }}>
+        <h2 style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: "uppercase" }}>
+          Support
+        </h2>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: C.muted }}>
           Need help or have a question? Contact us and we will get back to you.
         </p>
         <a
           href="mailto:hello@saabai.ai"
-          className="inline-block px-5 py-2.5 rounded-xl bg-white/5 text-white/60 text-sm hover:bg-white/10 transition-all no-underline"
+          style={{
+            display: "inline-block",
+            padding: "9px 18px", borderRadius: 10,
+            border: `1px solid ${C.border}`,
+            color: C.text, fontSize: 12, fontWeight: 500,
+            textDecoration: "none",
+            transition: "all 0.12s",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = C.goldBdr; (e.currentTarget as HTMLElement).style.background = C.goldBg; (e.currentTarget as HTMLElement).style.color = C.gold; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = C.text; }}
         >
           hello@saabai.ai
         </a>
-      </section>
+      </div>
     </div>
   );
 }
