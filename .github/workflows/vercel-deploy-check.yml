@@ -2,12 +2,14 @@
 # Runs after every push to main and polls the Vercel API until the deployment
 # reaches "Ready" or "Error" state. Fails the check if the build errors.
 #
-# Required GitHub repository secrets:
+# Required GitHub repository secret:
 #   VERCEL_ACCESS_TOKEN — Vercel API token (create at vercel.com/account/tokens)
+#
+# Optional GitHub repository secrets (only needed if different from defaults):
 #   VERCEL_PROJECT_ID  — project ID from Vercel project settings
 #   VERCEL_TEAM_ID     — team ID from Vercel team settings
 #
-# To set these: https://github.com/shanegoldbergs-projects/saabai-site/settings/secrets/actions
+# To set these: https://github.com/sg-satoshi/saabai-site/settings/secrets/actions
 
 name: Vercel Deploy Check
 
@@ -21,28 +23,31 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Wait and poll Vercel deployment status
+      - name: Poll Vercel for deployment status
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_ACCESS_TOKEN }}
-          PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_1p5i2LakOMkQJaSDAYd8Y1N3k3Ci' }}
-          TEAM_ID: ${{ secrets.VERCEL_TEAM_ID || 'team_wJsriYxqNXFGvqb3vyolvWJT' }}
         run: |
+          # Project and team IDs — use repo secrets if set, otherwise defaults
+          PROJECT_ID="${VERCEL_PROJECT_ID:-prj_1p5i2LakOMkQJaSDAYd8Y1N3k3Ci}"
+          TEAM_ID="${VERCEL_TEAM_ID:-team_wJsriYxqNXFGvqb3vyolvWJT}"
+
           echo "Polling Vercel for latest deployment..."
           echo "Project: ${PROJECT_ID}"
           echo "Team: ${TEAM_ID}"
 
           if [ -z "$VERCEL_TOKEN" ]; then
             echo "::error::VERCEL_ACCESS_TOKEN secret is not set."
-            echo "Create one at https://vercel.com/account/tokens and add it to"
-            echo "https://github.com/shanegoldbergs-projects/saabai-site/settings/secrets/actions"
+            echo "Create one at https://vercel.com/account/tokens"
+            echo "Then add it at: https://github.com/sg-satoshi/saabai-site/settings/secrets/actions"
             exit 1
           fi
 
-          DEPLOY_STATUS=""
           for i in $(seq 1 24); do
-            RESPONSE=$(curl -s "https://api.vercel.com/v6/deployments?projectId=${PROJECT_ID}&teamId=${TEAM_ID}&limit=1&target=production" \
+            RESPONSE=$(curl -s \
+              "https://api.vercel.com/v6/deployments?projectId=${PROJECT_ID}&teamId=${TEAM_ID}&limit=1&target=production" \
               -H "Authorization: Bearer ${VERCEL_TOKEN}")
 
+            # Parse deployment status: state|url|sha
             DEPLOY_STATUS=$(echo "$RESPONSE" | python3 -c "
 import sys, json
 try:
@@ -52,7 +57,6 @@ try:
         dep = deploys[0]
         state = dep.get('state', 'UNKNOWN')
         url = dep.get('url', 'n/a')
-        # Get the first 8 chars of the commit SHA for matching
         sha = dep.get('meta', {}).get('githubCommitSha', '')[:8]
         print(f'{state}|{url}|{sha}')
     else:
@@ -69,32 +73,18 @@ except Exception as e:
             echo "Attempt $i: State=$STATE URL=$URL Commit=$SHA"
 
             if [ "$STATE" = "READY" ]; then
-              # If we can match the commit SHA, we know it's our deploy
               if [ -n "$SHA" ] && [ "$SHA" != "$GIT_SHA" ]; then
-                echo "⏳ Deployment exists but commit $SHA doesn't match current $GIT_SHA yet"
+                echo "Deployment exists but commit $SHA does not match current $GIT_SHA yet"
                 sleep 15
                 continue
               fi
-              echo "✅ DEPLOYMENT READY: https://$URL"
-              echo "deployment_url=$URL" >> $GITHUB_OUTPUT
+              echo "DEPLOYMENT READY: https://$URL"
               exit 0
             fi
 
             if [ "$STATE" = "ERROR" ]; then
-              echo "::error::❌ DEPLOYMENT FAILED: https://$URL"
+              echo "::error::DEPLOYMENT FAILED: https://$URL"
               echo "Check build logs: vercel logs $URL"
-              # Get the error message
-              ERROR_MSG=$(echo "$RESPONSE" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    dep = d.get('deployments', [{}])[0]
-    err = dep.get('error', {}) or {}
-    print(err.get('message', 'Check Vercel dashboard for details'))
-except:
-    print('Check Vercel dashboard')
-" 2>/dev/null)
-              echo "Error: $ERROR_MSG"
               exit 1
             fi
 
@@ -103,7 +93,6 @@ except:
               exit 0
             fi
 
-            # Still in queue/building — keep polling
             sleep 15
           done
 
