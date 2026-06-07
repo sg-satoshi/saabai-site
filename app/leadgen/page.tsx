@@ -245,7 +245,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup &amp; configuration</li>
             </ul>
-            <form action="/leadgen/success" method="GET" target="_blank">
+            <form action="/api/leadgen/checkout" method="POST" target="_blank">
               <input type="hidden" name="tier" value="starter" />
               <button type="submit" className="block w-full text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
                 Subscribe
@@ -269,7 +269,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
-            <form action="/leadgen/success" method="GET" target="_blank">
+            <form action="/api/leadgen/checkout" method="POST" target="_blank">
               <input type="hidden" name="tier" value="pro" />
               <button type="submit" className="block w-full text-center py-3 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25">
                 Subscribe
@@ -290,7 +290,7 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS lead alerts</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
-            <form action="/leadgen/success" method="GET" target="_blank">
+            <form action="/api/leadgen/checkout" method="POST" target="_blank">
               <input type="hidden" name="tier" value="enterprise" />
               <button type="submit" className="block w-full text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
                 Subscribe

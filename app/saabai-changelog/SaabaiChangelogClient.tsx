@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "10:33", tag: "UPDATE", title: "Strip remaining non-Rex entries (4 Jun LocationPage, 3 Jun Nico Moretti)" },
       { time: "10:32", tag: "FIX", title: "Remove LeadGen/site entries from Rex changelog; route leadgen paths to Saabai changelog" },
       { time: "10:32", tag: "NEW", title: "Show selected tier and personal contact message" },
       { time: "10:31", tag: "FIX", title: "Subscribe buttons now go to /leadgen/success flow (no Stripe dependency)" },
