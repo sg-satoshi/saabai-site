@@ -11,7 +11,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   try {
-    const { tier } = await req.json();
+    const body = req.headers.get("content-type")?.includes("json")
+      ? await req.json()
+      : await req.formData().then(fd => Object.fromEntries(fd as any));
+
+    const { tier } = body as { tier: string };
 
     const priceMap: Record<string, string> = {
       starter: process.env.STRIPE_PRICE_STARTER!,
