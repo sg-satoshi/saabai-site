@@ -30,26 +30,14 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "4 Jun 2026",
+    date: "7 Jun 2026",
     entries: [
-      { time: "06:39", tag: "FIX", title: "Remove mdash entity from FAQ heading in LocationPage" },
-      { time: "06:34", tag: "NEW", title: "Add LocationPage template component with all 9 sections and JSON-LD schema" },
-      { time: "06:34", tag: "NEW", title: "Add Service Areas section to footer with 9 city links" },
-      { time: "06:31", tag: "FIX", title: "Location-data cleanup - remove em dashes, fix Hobart services, update case study framing, trim SEO descriptions, export city consts" },
-      { time: "06:17", tag: "NEW", title: "Add location data — 9 Australian city configs with unique content and industryLinks" },
-      { time: "00:07", tag: "NEW", title: "Add Australian location pages SEO implementation plan with topic cluster addendum" }
+      { time: "10:32", tag: "FIX", title: "Remove LeadGen/site entries from Rex changelog; route leadgen paths to Saabai changelog" }
     ],
   },
   {
     date: "3 Jun 2026",
     entries: [
-      { time: "23:24", tag: "NEW", title: "Add phone number and duration fields to Nico Moretti inquiry form" },
-      { time: "23:21", tag: "NEW", title: "Add FAQ nav link (desktop + mobile) and fix footer FAQ anchor" },
-      { time: "23:19", tag: "NEW", title: "Add FAQ section to Nico Moretti site — 7 questions in dark-gold accordion style" },
-      { time: "23:17", tag: "NEW", title: "Register Nico Moretti in site factory listings with proper name and metadata" },
-      { time: "23:15", tag: "FIX", title: "Update footer copyright year to 2026" },
-      { time: "23:14", tag: "NEW", title: "Replace Stitch placeholder images with real Nico Moretti photography" },
-      { time: "23:10", tag: "NEW", title: "Add Nico Moretti client site to Site Factory (/sites/nico-moretti)" },
       { time: "22:11", tag: "NEW", title: "Rex changelog — 3 Jun 2026 standalone repo extraction entries" },
       { time: "12:45", tag: "DEPLOYMENT", title: "Rex standalone repo published to GitHub (sg-satoshi/rex) — private, Cloudflare Pages ready" },
       { time: "12:30", tag: "NEW", title: "Rex extracted into fully independent Next.js repo — PLON can self-host on Cloudflare without Saabai infrastructure" },
