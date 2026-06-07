@@ -9,6 +9,7 @@ import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
 import { getLexClients } from "../../../../lib/lex-config";
 import { listSites } from "../../../../lib/site-registry";
 import { loadClients } from "../../../../lib/clients";
+import { listClients as listLeadGenClients } from "../../../../lib/leadgen-config";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -20,7 +21,7 @@ export interface UnifiedCustomer {
   id: string;
   name: string;
   email: string;
-  type: "lex" | "site-factory" | "stripe" | "portal";
+  type: "lex" | "site-factory" | "stripe" | "portal" | "leadgen";
   project: string;
   status: string;
   revenue: number; // cents
@@ -177,6 +178,32 @@ export async function GET() {
         metadata: {
           clientId: c.id,
           dashboardUrl: c.dashboardUrl,
+        },
+      });
+    }
+  } catch { /* skip */ }
+
+  // 5. LeadGen clients (Jack widget subscriptions)
+  try {
+    const leadGenClients = await listLeadGenClients();
+    for (const c of leadGenClients) {
+      customers.push({
+        id: `leadgen_${c.id}`,
+        name: c.businessName,
+        email: c.email,
+        type: "leadgen",
+        project: "LeadGen",
+        status: c.status === "active" ? "live" : c.status,
+        revenue: 0,
+        mrr: 0,
+        createdAt: c.createdAt,
+        detailUrl: `/saabai-admin/leadgen-clients?id=${c.id}`,
+        metadata: {
+          slug: c.slug,
+          niche: c.niche,
+          phone: c.phone,
+          tier: c.subscription?.tier ?? "",
+          description: c.description,
         },
       });
     }

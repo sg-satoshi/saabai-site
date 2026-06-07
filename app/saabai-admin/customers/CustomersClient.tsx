@@ -35,6 +35,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
   "site-factory": { label: "Site Factory", color: C.gold,   bg: C.goldBg },
   stripe:         { label: "Stripe",       color: C.green,  bg: C.greenBg },
   portal:         { label: "Portal",       color: C.orange, bg: C.orangeBg },
+  leadgen:        { label: "LeadGen",      color: C.teal,   bg: C.tealBg },
 };
 
 const PROJECT_META: Record<string, { color: string; bg: string }> = {
@@ -42,6 +43,7 @@ const PROJECT_META: Record<string, { color: string; bg: string }> = {
   "Site Factory": { color: C.gold,   bg: C.goldBg },
   "Rex":          { color: C.orange, bg: C.orangeBg },
   "Portal":       { color: C.teal,   bg: C.tealBg },
+  "LeadGen":      { color: C.green,  bg: C.greenBg },
 };
 
 interface Customer {
@@ -238,6 +240,22 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
             </div>
           )}
 
+          {customer.type === "leadgen" && m && (
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 18px" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" as const }}>LeadGen Config</p>
+              {!!m.slug && <Row label="Slug" value={String(m.slug)} mono />}
+              {!!m.niche && <Row label="Niche" value={String(m.niche)} />}
+              {!!m.phone && <Row label="Phone" value={String(m.phone)} />}
+              {!!m.tier && <Row label="Tier" value={String(m.tier)} />}
+              {!!m.description && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ margin: "0 0 6px", fontSize: 11, color: C.muted }}>Description</p>
+                  <p style={{ margin: 0, fontSize: 12, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{String(m.description)}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {customer.detailUrl && (
               <a
@@ -251,7 +269,7 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
                   color: C.gold, fontSize: 13, fontWeight: 700, textDecoration: "none",
                 }}
               >
-                {customer.type === "site-factory" ? "Open Site \u2197" : customer.type === "lex" ? "Open Lex Clients" : customer.type === "stripe" ? "View Orders" : "Open Dashboard \u2197"}
+                {customer.type === "site-factory" ? "Open Site \u2197" : customer.type === "lex" ? "Open Lex Clients" : customer.type === "stripe" ? "View Orders" : customer.type === "leadgen" ? "Open LeadGen \u2197" : "Open Dashboard \u2197"}
               </a>
             )}
           </div>
@@ -376,6 +394,7 @@ const TYPE_LABEL: Record<string, string> = {
   "site-factory": "Site Factory",
   stripe: "Stripe",
   portal: "Portal",
+  leadgen: "LeadGen",
 };
 
 function CustomersInner() {
@@ -434,7 +453,7 @@ function CustomersInner() {
           <p style={{ margin: "2px 0 0", fontSize: 12, color: C.muted }}>
             {filterType !== "all"
               ? `Showing ${TYPE_LABEL[filterType] ?? filterType} customers only \u00b7 `
-              : "Unified directory \u2014 all clients across Lex, Site Factory, Rex, and Stripe"}
+              : "Unified directory \u2014 all clients across Lex, Site Factory, LeadGen, Rex, and Stripe"}
             {filterType !== "all" && (
               <a href="/saabai-admin/customers" style={{ color: C.teal, textDecoration: "none", fontWeight: 600 }}>View all</a>
             )}
