@@ -1,15 +1,20 @@
 /**
  * LeadGen Stripe Webhook Handler
- * Handles subscription lifecycle events
+ * Creates client records on successful checkout.
  */
-
 import { NextRequest } from "next/server";
 import Stripe from "stripe";
-import { updateClient, getClientBySlug } from "../../../../lib/leadgen-config";
+import { createClient, getClientBySlug } from "../../../../lib/leadgen-config";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-04-22.dahlia",
 });
+
+function generateSlug(email: string): string {
+  const name = email.split("@")[0].replace(/[^a-z0-9]/gi, "-").toLowerCase();
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${name}-${suffix}`;
+}
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature")!;
@@ -18,13 +23,9 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message);
+    console.error("[LeadGen Webhook] Signature verification failed:", err.message);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -32,41 +33,61 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const slug = session.metadata?.clientSlug;
-        const tier = session.metadata?.tier as "starter" | "pro" | "enterprise";
+        const tier = (session.metadata?.tier || "starter") as "starter" | "pro" | "enterprise";
+        const email = session.customer_details?.email || session.customer_email || "";
 
-        if (slug && tier && session.customer && session.subscription) {
-          await updateClient(slug, {
-            subscription: {
-              stripeCustomerId: session.customer as string,
-              stripeSubscriptionId: session.subscription as string,
-              tier,
-              status: "active",
-            },
-          });
-          console.log(`[LeadGen] Subscription activated for ${slug}`);
+        if (!email) {
+          console.error("[LeadGen Webhook] No customer email in session");
+          break;
         }
+
+        const slug = generateSlug(email);
+
+        // Check if client already exists for this email
+        const existing = await getClientBySlug(slug);
+        if (existing) {
+          console.log(`[LeadGen Webhook] Client already exists for ${email}`);
+          break;
+        }
+
+        const client = await createClient({
+          slug,
+          businessName: email.split("@")[0],
+          niche: "plumbing",
+          description: "Emergency and scheduled plumbing services",
+          phone: "",
+          email,
+          serviceArea: "Brisbane",
+          businessHours: "24/7",
+          branding: {
+            primaryColor: "#C9A84C",
+            accentColor: "#62C5D1",
+            widgetTitle: "Jack",
+            greeting: "Hi, I'm Jack! Need a hand with your plumbing?",
+          },
+          status: "active",
+          subscription: {
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: session.subscription as string,
+            tier,
+            status: "active",
+          },
+        });
+
+        console.log(`[LeadGen Webhook] Client created: ${slug} (${email}) — ${tier}`);
         break;
       }
 
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-        // Find client by subscription ID and update status
-        // (You can expand this later with a reverse lookup)
-        console.log(`[LeadGen] Subscription updated: ${subscription.id}`);
-        break;
-      }
-
+      case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        console.log(`[LeadGen] Subscription canceled: ${subscription.id}`);
+        console.log(`[LeadGen Webhook] Subscription event: ${event.type}`);
         break;
       }
     }
 
     return Response.json({ received: true });
   } catch (error) {
-    console.error("Webhook handler error:", error);
+    console.error("[LeadGen Webhook] Handler error:", error);
     return new Response("Webhook handler failed", { status: 500 });
   }
 }

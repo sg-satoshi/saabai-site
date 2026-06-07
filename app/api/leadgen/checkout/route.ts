@@ -1,19 +1,29 @@
 /**
- * LeadGen Stripe Checkout (Simplified)
+ * LeadGen Stripe Checkout
  */
-
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-04-22.dahlia",
 });
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = req.headers.get("content-type")?.includes("json")
-      ? await req.json()
-      : await req.formData().then(fd => Object.fromEntries(fd as any));
+    const isForm = !req.headers.get("content-type")?.includes("json");
+    const body = isForm
+      ? await req.formData().then((fd) => Object.fromEntries(fd as any))
+      : await req.json();
 
     const { tier } = body as { tier: string };
 
@@ -25,24 +35,26 @@ export async function POST(req: NextRequest) {
 
     const priceId = priceMap[tier];
     if (!priceId) {
-      return Response.json({ error: "Invalid tier" }, { status: 400 });
+      return Response.json({ error: "Invalid tier" }, { status: 400, headers: CORS });
     }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
+      customer_creation: "always",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/leadgen/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/leadgen`,
+      metadata: { tier, source: "leadgen" },
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai"}/leadgen/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai"}/leadgen`,
     });
 
-    // If form POST (browser submit), redirect to Stripe checkout
-    if (!req.headers.get("content-type")?.includes("json")) {
-      return Response.redirect(session.url!, 303);
+    if (isForm) {
+      return NextResponse.redirect(session.url!, 303);
     }
 
-    return Response.json({ url: session.url });
+    return Response.json({ url: session.url }, { headers: CORS });
   } catch (error: any) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("[LeadGen Checkout]", error);
+    return Response.json({ error: error.message }, { status: 500, headers: CORS });
   }
 }
