@@ -57,7 +57,7 @@ export async function verifySessionToken(
     const payload = token.slice(0, lastDot);
     const sigB64 = token.slice(lastDot + 1);
 
-    const secondDot = payload.indexOf(".");
+    const secondDot = payload.lastIndexOf(".");
     if (secondDot === -1) return null;
 
     const clientId = payload.slice(0, secondDot);

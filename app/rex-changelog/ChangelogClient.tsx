@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "14:03", tag: "NEW", title: "Unified SaabaiAppShell dashboard, forgot password flow, settings page" },
       { time: "10:39", tag: "FIX", title: "Lazy-load Stripe client to fix build — checkout + webhook now pass without env var" },
       { time: "10:36", tag: "NEW", title: "End-to-end Stripe flow — session with metadata, webhook creates client, success page with confirmation" },
       { time: "10:35", tag: "FIX", title: "Subscribe buttons POST to Stripe checkout API (env vars configured)" },
