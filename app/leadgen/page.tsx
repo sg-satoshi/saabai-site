@@ -5,13 +5,13 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
   description:
-    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in \" 24/7, automatically.",
+    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
   alternates: { canonical: "https://www.saabai.ai/leadgen" },
   openGraph: {
     url: "https://www.saabai.ai/leadgen",
     title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
     description:
-      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in \" 24/7, automatically.",
+      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
   },
 };
 
@@ -20,40 +20,40 @@ const DEMO_SLUG = "bne-emergency-plumbing";
 const FEATURES = [
   {
     title: "Captures Every Lead",
-    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed \" even after hours.",
-    icon: "\U0001f3af",
+    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed — even after hours.",
+    icon: "🎯",
   },
   {
     title: "Instant Alerts",
-    desc: "Email notification the second a lead comes in. Name, phone, service, and urgency \" everything you need to call back fast.",
-    icon: "\u26a1",
+    desc: "Email notification the second a lead comes in. Name, phone, service, and urgency — everything you need to call back fast.",
+    icon: "⚡",
   },
   {
     title: "Zero Effort Setup",
     desc: "One line of code on your website. We configure the AI with your services, pricing, and service area. Done in under an hour.",
-    icon: "\U0001f50c",
+    icon: "🔌",
   },
   {
     title: "Works 24/7",
-    desc: "While you are on a job, asleep, or on the weekend \" your AI lead agent is qualifying and capturing every visitor.",
-    icon: "\U0001f550",
+    desc: "While you're on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
+    icon: "🕐",
   },
   {
     title: "Emergency Ready",
     desc: "Emergency callouts flagged immediately. The AI knows to prioritise urgent leads so you can respond when it matters most.",
-    icon: "\U0001f6a8",
+    icon: "🚨",
   },
   {
     title: "Grows Your Business",
     desc: "More leads captured = more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
-    icon: "\U0001f4c8",
+    icon: "📈",
   },
 ];
 
 const HOW_IT_WORKS = [
-  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
+  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That's it." },
   { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes every visitor, asks what they need, and captures their details." },
-  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency \" collected in a natural conversation." },
+  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency — collected in a natural conversation." },
   { step: "04", title: "You Get Notified", desc: "Instant email alert with every detail. Call the lead back and book the job." },
 ];
 
