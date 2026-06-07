@@ -206,7 +206,23 @@ export default function LoginForm({
         Sign in →
       </button>
 
-      <p style={{ marginTop: 18, textAlign: "center", fontSize: 12, color: "rgba(131,153,192,0.5)" }}>
+      <div style={{ marginTop: 14, textAlign: "center" }}>
+        <a
+          href="/forgot-password"
+          style={{
+            fontSize: 12,
+            color: "rgba(98,197,209,0.5)",
+            textDecoration: "none",
+            transition: "color 0.15s",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(98,197,209,0.7)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(98,197,209,0.5)"; }}
+        >
+          Forgot password?
+        </a>
+      </div>
+
+      <p style={{ marginTop: 14, textAlign: "center", fontSize: 12, color: "rgba(131,153,192,0.5)" }}>
         Need access?{" "}
         <button
           type="button"

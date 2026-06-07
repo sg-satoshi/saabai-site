@@ -3,13 +3,17 @@
  *
  * Auth-protected. LeadGen clients log in via /login and get redirected here.
  * Matches the logged-in user to their LeadGen Redis client record.
+ * Renders inside the unified SaabaiAppShell.
  */
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { loadClients } from "../../../lib/clients";
 import { getClient, listClients } from "../../../lib/leadgen-config";
 import { listDirectoryUsers } from "../../../lib/user-directory";
+import { productsFromDashboardUrl, ALL_PRODUCTS } from "../../../lib/user-products";
+import SaabaiAppShell from "../../components/SaabaiAppShell";
 import LeadGenPortalContent from "./portal-content";
 
 export const dynamic = "force-dynamic";
@@ -26,31 +30,43 @@ export default async function LeadGenPortalPage() {
 
   const { clientId } = session;
 
+  // Resolve user info for the shell
+  let userName = "User";
+  let userEmail = "";
+  let userProducts: ReturnType<typeof productsFromDashboardUrl> = [];
+
+  const envClient = loadClients().find((c) => c.id === clientId);
+  if (envClient) {
+    userName = envClient.name;
+    userEmail = envClient.email;
+    userProducts = productsFromDashboardUrl(envClient.dashboardUrl);
+  } else {
+    const allUsers = await listDirectoryUsers();
+    const dirUser = allUsers.find((u) => u.id === clientId);
+    if (dirUser) {
+      userName = dirUser.name;
+      userEmail = dirUser.email;
+      userProducts = productsFromDashboardUrl(dirUser.dashboardUrl);
+    }
+  }
+
+  const productInfos = userProducts.map((id) => ALL_PRODUCTS[id]);
+
   // Resolve LeadGen client data from the logged-in user
   let leadGenClient = null;
-  let userName = "";
 
   try {
-    // If clientId has leadgen_ prefix, derive the LeadGen client ID
     if (clientId.startsWith(LEADGEN_PREFIX)) {
       const rawId = clientId.slice(LEADGEN_PREFIX.length);
       leadGenClient = await getClient(rawId);
     } else {
-      // Fallback: list directory users and find by clientId, then match by email
       const dirUsers = await listDirectoryUsers();
       const dirUser = dirUsers.find((u) => u.id === clientId);
       if (dirUser) {
         const all = await listClients();
         leadGenClient = all.find((c) => c.email.toLowerCase() === dirUser.email.toLowerCase()) ?? null;
-        userName = dirUser.name;
+        if (!userName) userName = dirUser.name;
       }
-    }
-
-    // Also get the name from directory user for the greeting
-    if (!userName) {
-      const dirUsers = await listDirectoryUsers();
-      const dirUser = dirUsers.find((u) => u.id === clientId);
-      if (dirUser) userName = dirUser.name;
     }
   } catch (e) {
     console.error("[LeadGen Portal] Failed to load client data:", e);
@@ -76,5 +92,13 @@ export default async function LeadGenPortalPage() {
     );
   }
 
-  return <LeadGenPortalContent client={leadGenClient} userName={userName || leadGenClient.businessName} />;
+  return (
+    <SaabaiAppShell
+      userName={userName || leadGenClient.businessName || "User"}
+      userEmail={userEmail}
+      products={productInfos}
+    >
+      <LeadGenPortalContent client={leadGenClient} userName={userName || leadGenClient.businessName} />
+    </SaabaiAppShell>
+  );
 }

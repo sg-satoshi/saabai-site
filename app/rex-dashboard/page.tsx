@@ -1,7 +1,14 @@
 import { createHash } from "crypto";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { fetchRexStats, fetchLeadTimestamps } from "../../lib/rex-stats";
 import { fetchRecentOrders } from "../../lib/woo-client";
 import type { WooOrder } from "../../lib/woo-client";
+import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
+import { loadClients } from "../../lib/clients";
+import { listDirectoryUsers } from "../../lib/user-directory";
+import { productsFromDashboardUrl, ALL_PRODUCTS } from "../../lib/user-products";
+import SaabaiAppShell from "../components/SaabaiAppShell";
 import DashboardClient from "./DashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -9,14 +16,14 @@ export const revalidate = 0;
 
 export interface AttributedOrder {
   id: number;
-  number: string;        // formatted e.g. "PLON-48376"
+  number: string;
   date: string;
   customerName: string;
   total: number;
   currency: string;
   items: string[];
-  leadTimestamp?: string; // matched Rex lead timestamp
-  matchMethod?: "email" | "name" | "account"; // how the attribution was established
+  leadTimestamp?: string;
+  matchMethod?: "email" | "name" | "account";
 }
 
 export interface AttributionStats {
@@ -24,9 +31,9 @@ export interface AttributionStats {
   totalRevenue: number;
   attributedOrders: number;
   attributedRevenue: number;
-  orders: AttributedOrder[];        // all recent WooCommerce orders
-  attributed: AttributedOrder[];    // Rex-attributed subset
-  trackingFrom: string | null;      // ISO — first lead with emailHash
+  orders: AttributedOrder[];
+  attributed: AttributedOrder[];
+  trackingFrom: string | null;
 }
 
 function hashEmail(email: string): string {
@@ -51,21 +58,45 @@ function toAttributedOrder(o: WooOrder, leadTimestamp?: string, matchMethod?: "e
   };
 }
 
-// Auth is handled by proxy.ts — if we reach this page, the user is authenticated.
 export default async function RexDashboardPage() {
+  // Auth check + user info for the shell
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) redirect("/login?redirect=/rex-dashboard");
+
+  const session = await verifySessionToken(token);
+  if (!session) redirect("/login?redirect=/rex-dashboard");
+
+  const { clientId } = session;
+
+  let userName = "User";
+  let userEmail = "";
+  let userProducts: ReturnType<typeof productsFromDashboardUrl> = [];
+
+  const envClient = loadClients().find((c) => c.id === clientId);
+  if (envClient) {
+    userName = envClient.name;
+    userEmail = envClient.email;
+    userProducts = productsFromDashboardUrl(envClient.dashboardUrl);
+  } else {
+    const allUsers = await listDirectoryUsers();
+    const dirUser = allUsers.find((u) => u.id === clientId);
+    if (dirUser) {
+      userName = dirUser.name;
+      userEmail = dirUser.email;
+      userProducts = productsFromDashboardUrl(dirUser.dashboardUrl);
+    }
+  }
+
+  const productInfos = userProducts.map((id) => ALL_PRODUCTS[id]);
+
+  // Fetch Rex dashboard data
   const [stats, orders, leadTs] = await Promise.all([
     fetchRexStats(),
     fetchRecentOrders(365),
     fetchLeadTimestamps(),
   ]);
 
-  // Attribution rules:
-  // 1. Match against the timestamp maps (populated from actual Rex conversations via trackLead + Pipedrive sync)
-  // 2. Overlay with recentLeads for the freshest data (Redis hashes are the source of truth)
-  // 3. Order must be placed AFTER the Rex conversation — no retroactive credit
-  // 4. Email hash first; full-name fallback for customers who used a different email at checkout
-
-  // Overlay recentLeads data (fresher, more accurate) on top of the persisted timestamp maps
   const emailTsMap = { ...leadTs.byEmailHash };
   const nameTsMap  = { ...leadTs.byName };
   for (const lead of stats.recentLeads) {
@@ -82,7 +113,6 @@ export default async function RexDashboardPage() {
   for (const o of orders) {
     const orderDate = new Date(o.date_created);
 
-    // Email hash match (high confidence)
     if (o.billing.email) {
       const hash = hashEmail(o.billing.email);
       const ts = emailTsMap[hash];
@@ -92,7 +122,6 @@ export default async function RexDashboardPage() {
       }
     }
 
-    // Full-name fallback — catches customers who used a different email at checkout
     const billing = [o.billing.first_name, o.billing.last_name].filter(Boolean).join(" ");
     const billingNorm = normName(billing);
     if (billingNorm.includes(" ")) {
@@ -103,7 +132,6 @@ export default async function RexDashboardPage() {
       }
     }
 
-    // WooCommerce account match — links via customer_id (survives email changes, most reliable for repeat B2B buyers)
     if (o.customer_id > 0) {
       const ts = leadTs.byWooCustomerId[String(o.customer_id)];
       if (ts && orderDate >= new Date(ts)) {
@@ -112,7 +140,6 @@ export default async function RexDashboardPage() {
     }
   }
 
-  // Tracking starts from the oldest entry in the timestamp maps
   const allTimestamps = Object.values(emailTsMap);
   const trackingFrom = allTimestamps.length > 0
     ? allTimestamps.reduce((oldest, ts) => ts < oldest ? ts : oldest)
@@ -128,5 +155,13 @@ export default async function RexDashboardPage() {
     trackingFrom,
   };
 
-  return <DashboardClient stats={stats} attribution={attribution} />;
+  return (
+    <SaabaiAppShell
+      userName={userName}
+      userEmail={userEmail}
+      products={productInfos}
+    >
+      <DashboardClient stats={stats} attribution={attribution} />
+    </SaabaiAppShell>
+  );
 }

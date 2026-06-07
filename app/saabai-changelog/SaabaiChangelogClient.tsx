@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "13:42", tag: "FIX", title: "Force fresh deploy to clear login page cache" },
       { time: "13:35", tag: "NEW", title: "Add Client Login link to main site navigation" },
       { time: "13:34", tag: "NEW", title: "LeadGen client portal with auth, tabs, widget test, and embed code" },
       { time: "13:14", tag: "NEW", title: "Integrate LeadGen clients into unified customers directory" },

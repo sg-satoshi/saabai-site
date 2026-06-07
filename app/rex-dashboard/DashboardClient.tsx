@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import type { RexStats, LeadEvent, FeedbackItem, FeedbackCategory } from "../../lib/rex-stats";
 import type { AttributionStats, AttributedOrder } from "./page";
-import RexNav from "../components/RexNav";
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -1122,8 +1122,6 @@ export default function DashboardClient({ stats, attribution }: { stats: RexStat
       fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
       color: "#111827",
     }}>
-      <RexNav />
-
       {/* Sub-nav */}
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "0 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 2, height: 44, alignItems: "center" }}>

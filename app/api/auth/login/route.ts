@@ -24,11 +24,14 @@ export async function POST(req: NextRequest) {
     return Response.redirect(loginUrl.toString(), 303);
   }
 
-  const clientId    = envClient ? envClient.id : dirUser!.id;
+  const clientId     = envClient ? envClient.id : dirUser!.id;
   const dashboardUrl = envClient ? envClient.dashboardUrl : (dirUser!.dashboardUrl || "/rex-dashboard");
 
-  const token       = await createSessionToken(clientId);
-  const destination = redirect && redirect.startsWith("/") ? redirect : dashboardUrl;
+  const token = await createSessionToken(clientId);
+
+  // If there's an explicit redirect (user came from a protected page), honour it.
+  // Otherwise send to the unified /dashboard hub.
+  const destination = redirect && redirect.startsWith("/") ? redirect : "/dashboard";
   const destUrl     = new URL(destination, req.url).toString();
 
   return new Response(null, {
