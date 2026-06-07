@@ -78,8 +78,16 @@ export default function Nav({ activePage }: { activePage?: string }) {
         />
       </a>
 
-      {/* Right side: hamburger + CTA */}
+      {/* Right side: hamburger + links + CTA */}
       <div className="flex items-center gap-4">
+
+        {/* Client Login link (desktop only) */}
+        <a
+          href="/login"
+          className="hidden md:inline-block text-sm font-semibold text-saabai-text-muted hover:text-saabai-text transition-colors tracking-wide"
+        >
+          Client Login
+        </a>
 
         {/* Click-toggle menu (tap on mobile, hover on desktop) */}
         <div
@@ -143,6 +151,21 @@ export default function Nav({ activePage }: { activePage?: string }) {
                     ))}
                   </div>
                 ))}
+                {/* Client Login in menu (visible on all devices) */}
+                <div className="border-t border-saabai-border">
+                  <a
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-5 py-3 text-sm font-medium tracking-wide text-saabai-text-muted hover:text-saabai-text hover:bg-saabai-surface-raised transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Client Login
+                  </a>
+                </div>
               </div>
             </div>
           )}
