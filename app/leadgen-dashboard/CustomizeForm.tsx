@@ -4,10 +4,10 @@ import { useState } from "react";
 
 export default function CustomizeForm({ 
   initialBusinessName, 
-  onUpdate 
+  updateBusinessName 
 }: { 
   initialBusinessName: string; 
-  onUpdate: (newName: string) => void;
+  updateBusinessName: (newName: string) => void;
 }) {
   const [name, setName] = useState(initialBusinessName);
   const [saving, setSaving] = useState(false);
@@ -17,7 +17,7 @@ export default function CustomizeForm({
     setSaving(true);
     
     // For now just update locally - real save would hit an API
-    onUpdate(name.trim());
+    updateBusinessName(name.trim());
     setSaving(false);
     alert("Customisation saved. (Full save coming in next step)");
   }
