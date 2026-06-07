@@ -95,7 +95,7 @@ export default function LeadGenPage() {
             href="#demo"
             className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
-            See It In Action
+            See It In Action ↓
           </a>
           <a
             href="#pricing"
@@ -222,10 +222,10 @@ export default function LeadGenPage() {
               $197<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> AI lead capture widget</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Instant email notifications</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Monthly lead report</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Setup &amp; configuration</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Instant email notifications</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup &amp; configuration</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Subscribe
@@ -243,10 +243,10 @@ export default function LeadGenPage() {
               $397<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Everything in Starter</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Google Maps listing management</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Automated review responses</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Weekly performance reports</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25">
               Subscribe
@@ -261,10 +261,10 @@ export default function LeadGenPage() {
               $997<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Everything in Pro</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Multi-location support</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> SMS lead alerts</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Dedicated account management</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS lead alerts</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Subscribe
