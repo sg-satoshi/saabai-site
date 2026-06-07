@@ -143,7 +143,7 @@ function Sidebar({
         ) : (
           <a href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 26, width: "auto", opacity: 0.92 }} />
+            <img src="/brand/saabai-logo-full.png" alt="Saabai" style={{ height: 26, width: "auto", opacity: 0.92 }} />
           </a>
         )}
       </div>
