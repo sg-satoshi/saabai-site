@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "15:49", tag: "FIX", title: "Add visible text color to input fields" },
       { time: "15:46", tag: "NEW", title: "Support Redis admin users in admin panel + full-access super-user" },
       { time: "15:42", tag: "NEW", title: "Real-time product assignment per user via Redis" },
       { time: "15:35", tag: "NEW", title: "Show all products on client dashboard for full customer view" },

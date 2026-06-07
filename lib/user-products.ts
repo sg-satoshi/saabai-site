@@ -34,7 +34,7 @@ export const ALL_PRODUCTS: Record<ProductId, ProductInfo> = {
     id: "lex",
     label: "Lex",
     icon: "⚖️",
-    href: "/lex-dashboard",
+    href: "/lex",
     description: "Legal AI assistant",
   },
 };
