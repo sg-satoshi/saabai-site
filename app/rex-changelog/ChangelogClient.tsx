@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "10:30", tag: "FIX", title: "Subscribe buttons now POST to checkout API instead of scrolling to #demo" },
       { time: "10:01", tag: "NEW", title: "Add git hygiene rules to CLAUDE.md" },
       { time: "10:01", tag: "FIX", title: "Remove public embed code, restructure demo section, fix changelog merge conflicts" }
     ],

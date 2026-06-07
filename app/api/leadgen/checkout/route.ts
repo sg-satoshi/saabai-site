@@ -36,6 +36,11 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/leadgen`,
     });
 
+    // If form POST (browser submit), redirect to Stripe checkout
+    if (!req.headers.get("content-type")?.includes("json")) {
+      return Response.redirect(session.url!, 303);
+    }
+
     return Response.json({ url: session.url });
   } catch (error: any) {
     return Response.json({ error: error.message }, { status: 500 });
