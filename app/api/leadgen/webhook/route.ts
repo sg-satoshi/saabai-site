@@ -8,7 +8,7 @@ import { createClient, getClientBySlug } from "../../../../lib/leadgen-config";
 function getStripe() {
   const Stripe = require("stripe");
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2026-04-22.dahlia",
+    apiVersion: "2024-11-20.acacia",
   });
 }
 
