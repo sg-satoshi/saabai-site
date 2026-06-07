@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "14:21", tag: "FIX", title: "Token verification — lastIndexOf dot for email-based clientIds" },
       { time: "14:03", tag: "NEW", title: "Unified SaabaiAppShell dashboard, forgot password flow, settings page" },
       { time: "13:42", tag: "FIX", title: "Force fresh deploy to clear login page cache" },
       { time: "13:35", tag: "NEW", title: "Add Client Login link to main site navigation" },

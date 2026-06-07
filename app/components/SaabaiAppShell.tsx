@@ -83,10 +83,9 @@ export default function SaabaiAppShell({
       >
         {/* Logo */}
         <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
-          <a href="/dashboard" className="flex items-center gap-2 no-underline">
-            <span className="text-xl font-black text-white/90 tracking-tight">
-              Saabai<span className="text-[#62C5D1]">.ai</span>
-            </span>
+          <a href="/dashboard" className="flex items-center no-underline">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 26, width: "auto", opacity: 0.92 }} />
           </a>
         </div>
 
