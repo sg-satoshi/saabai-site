@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import { getAllLeadGenClients, generateSlug, saveLeadGenClient, type LeadGenClient } from "../../lib/leadgen-clients";
 import CustomizeForm from "./CustomizeForm";
+import CopyButton from "./CopyButton";
 
 export default async function LeadGenDashboard() {
   const cookieStore = await cookies();
@@ -59,12 +60,7 @@ export default async function LeadGenDashboard() {
             {embedScript}
           </div>
 
-          <button 
-            onClick={() => navigator.clipboard.writeText(embedScript)}
-            className="px-6 py-3 bg-[#62C5D1] text-[#0b092e] font-semibold rounded-2xl hover:bg-white transition"
-          >
-            Copy Embed Code
-          </button>
+          <CopyButton text={embedScript} />
 
           <p className="text-xs text-white/50 mt-4">
             This script is unique to your account. Do not share it.
