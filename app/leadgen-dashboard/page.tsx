@@ -72,11 +72,6 @@ export default async function LeadGenDashboard() {
           <h2 className="text-2xl font-semibold mb-6">Customize</h2>
           <CustomizeForm 
             initialBusinessName={client.businessName} 
-            updateBusinessName={async (newName: string) => {
-              client.businessName = newName;
-              client.slug = generateSlug(newName);
-              await saveLeadGenClient(client);
-            }} 
           />
         </div>
 

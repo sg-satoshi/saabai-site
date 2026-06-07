@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "13:04", tag: "FIX", title: "Rename onUpdate prop to avoid React 19 event handler restriction" },
       { time: "13:01", tag: "FIX", title: "Extract CopyButton into client component to fix server component event handler error" },
       { time: "10:39", tag: "FIX", title: "Lazy-load Stripe client to fix build — checkout + webhook now pass without env var" },
       { time: "10:36", tag: "NEW", title: "End-to-end Stripe flow — session with metadata, webhook creates client, success page with confirmation" },

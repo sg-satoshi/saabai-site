@@ -4,10 +4,8 @@ import { useState } from "react";
 
 export default function CustomizeForm({ 
   initialBusinessName, 
-  updateBusinessName 
 }: { 
   initialBusinessName: string; 
-  updateBusinessName: (newName: string) => void;
 }) {
   const [name, setName] = useState(initialBusinessName);
   const [saving, setSaving] = useState(false);
@@ -16,10 +14,24 @@ export default function CustomizeForm({
     if (!name.trim()) return;
     setSaving(true);
     
-    // For now just update locally - real save would hit an API
-    updateBusinessName(name.trim());
-    setSaving(false);
-    alert("Customisation saved. (Full save coming in next step)");
+    try {
+      const res = await fetch("/api/leadgen/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessName: name.trim() }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+      
+      alert("Business name updated! Widget will use your new name.");
+    } catch (err: any) {
+      alert("Error saving: " + err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
