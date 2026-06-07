@@ -30,10 +30,9 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-<<<<<<< Updated upstream
-=======
     date: "6 Jun 2026",
     entries: [
+      { time: "21:28", tag: "UPDATE", title: "Update changelogs" },
       { time: "21:22", tag: "UPDATE", title: "Update changelogs" },
       { time: "21:22", tag: "UPDATE", title: "Update changelogs (final)" },
       { time: "21:15", tag: "UPDATE", title: "Update changelogs" },
@@ -42,7 +41,6 @@ const CHANGELOG: Day[] = [
     ],
   },
   {
->>>>>>> Stashed changes
     date: "4 Jun 2026",
     entries: [
       { time: "06:39", tag: "FIX", title: "Remove mdash entity from FAQ heading in LocationPage" },

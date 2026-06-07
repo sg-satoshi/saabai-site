@@ -5,56 +5,55 @@ import Footer from "../components/Footer";
 export const metadata: Metadata = {
   title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
   description:
-    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
+    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in \" 24/7, automatically.",
   alternates: { canonical: "https://www.saabai.ai/leadgen" },
   openGraph: {
     url: "https://www.saabai.ai/leadgen",
     title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
     description:
-      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in — 24/7, automatically.",
+      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you the moment a lead comes in \" 24/7, automatically.",
   },
 };
 
 const DEMO_SLUG = "bne-emergency-plumbing";
-const WIDGET_SCRIPT = `<script src="https://www.saabai.ai/api/leadgen/widget?slug=${DEMO_SLUG}"></script>`;
 
 const FEATURES = [
   {
     title: "Captures Every Lead",
-    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed — even after hours.",
-    icon: "🎯",
+    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed \" even after hours.",
+    icon: "\U0001f3af",
   },
   {
     title: "Instant Alerts",
-    desc: "Email notification the second a lead comes in. Name, phone, service, and urgency — everything you need to call back fast.",
-    icon: "⚡",
+    desc: "Email notification the second a lead comes in. Name, phone, service, and urgency \" everything you need to call back fast.",
+    icon: "\u26a1",
   },
   {
     title: "Zero Effort Setup",
     desc: "One line of code on your website. We configure the AI with your services, pricing, and service area. Done in under an hour.",
-    icon: "🔌",
+    icon: "\U0001f50c",
   },
   {
     title: "Works 24/7",
-    desc: "While you're on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
-    icon: "🕐",
+    desc: "While you are on a job, asleep, or on the weekend \" your AI lead agent is qualifying and capturing every visitor.",
+    icon: "\U0001f550",
   },
   {
     title: "Emergency Ready",
     desc: "Emergency callouts flagged immediately. The AI knows to prioritise urgent leads so you can respond when it matters most.",
-    icon: "🚨",
+    icon: "\U0001f6a8",
   },
   {
     title: "Grows Your Business",
     desc: "More leads captured = more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
-    icon: "📈",
+    icon: "\U0001f4c8",
   },
 ];
 
 const HOW_IT_WORKS = [
-  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That's it." },
+  { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
   { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes every visitor, asks what they need, and captures their details." },
-  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency — collected in a natural conversation." },
+  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency \" collected in a natural conversation." },
   { step: "04", title: "You Get Notified", desc: "Instant email alert with every detail. Call the lead back and book the job." },
 ];
 
@@ -63,7 +62,7 @@ export default function LeadGenPage() {
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <Nav />
 
-      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      {/* "" Hero """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
       <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 90% 60% at 50% 30%, var(--saabai-glow-mid) 0%, transparent 65%)"
@@ -87,8 +86,8 @@ export default function LeadGenPage() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
           Saabai LeadGen is a 24/7 AI lead conversion agent for service businesses.
-          It captures, qualifies, and alerts you the moment a lead comes in —
-          automatically. No forms to fill. No missed calls. No lost revenue.
+          It captures, qualifies, and alerts you the moment a lead comes in.
+          No forms to fill. No missed calls. No lost revenue.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -96,7 +95,7 @@ export default function LeadGenPage() {
             href="#demo"
             className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
-            See It In Action ↓
+            See It In Action
           </a>
           <a
             href="#pricing"
@@ -107,7 +106,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* ── How It Works ──────────────────────────────────────────────── */}
+      {/* "" How It Works """"""""""""""""""""""""""""""""""""""""""""""""""""" */}
       <section className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
@@ -127,7 +126,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* ── Demo / Test Drive ─────────────────────────────────────────── */}
+      {/* "" Demo / Test Drive """""""""""""""""""""""""""""""""""""""""""""" */}
       <section id="demo" className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
@@ -138,30 +137,24 @@ export default function LeadGenPage() {
 
         <div className="grid md:grid-cols-2 gap-12 items-start max-w-4xl mx-auto">
           <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
-            <h3 className="text-lg font-semibold mb-4">Try it right now →</h3>
+            <h3 className="text-lg font-semibold mb-4">Try it right now</h3>
             <p className="text-sm text-saabai-text-dim mb-6 leading-relaxed">
               Click the chat button and say something like:
             </p>
             <ul className="space-y-3 text-sm text-saabai-text-dim">
               <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">•</span>
+                <span className="text-saabai-gold mt-0.5">&bull;</span>
                 <span>&ldquo;Hey I need a plumber, my pipe burst&rdquo;</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">•</span>
+                <span className="text-saabai-gold mt-0.5">&bull;</span>
                 <span>&ldquo;How much to fix a hot water system?&rdquo;</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-saabai-gold mt-0.5">•</span>
+                <span className="text-saabai-gold mt-0.5">&bull;</span>
                 <span>&ldquo;Can you come to Woolloongabba?&rdquo;</span>
               </li>
             </ul>
-            <div className="mt-8 p-4 bg-saabai-bg rounded-xl border border-saabai-border">
-              <p className="text-xs text-saabai-text-dim mb-2 font-mono">Embed code (one line):</p>
-              <code className="text-xs text-saabai-gold break-all font-mono">
-                {WIDGET_SCRIPT}
-              </code>
-            </div>
           </div>
 
           <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
@@ -186,12 +179,9 @@ export default function LeadGenPage() {
             </ol>
           </div>
         </div>
-
-        {/* Inline embed for the widget */}
-        <div dangerouslySetInnerHTML={{ __html: WIDGET_SCRIPT }} />
       </section>
 
-      {/* ── Features ──────────────────────────────────────────────────── */}
+      {/* "" Features """"""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
       <section className="relative px-6 py-32 max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need</h2>
@@ -214,7 +204,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* ── Pricing ───────────────────────────────────────────────────── */}
+      {/* "" Pricing """""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
       <section id="pricing" className="relative px-6 py-32 max-w-5xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
@@ -232,10 +222,10 @@ export default function LeadGenPage() {
               $197<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Instant email notifications</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup & configuration</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> AI lead capture widget</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Instant email notifications</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Monthly lead report</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Setup &amp; configuration</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Subscribe
@@ -253,10 +243,10 @@ export default function LeadGenPage() {
               $397<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Everything in Starter</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Google Maps listing management</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Automated review responses</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Weekly performance reports</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25">
               Subscribe
@@ -271,10 +261,10 @@ export default function LeadGenPage() {
               $997<span className="text-sm font-normal text-saabai-text-dim">/mo</span>
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS lead alerts</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Everything in Pro</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Multi-location support</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> SMS lead alerts</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">&check;</span> Dedicated account management</li>
             </ul>
             <a href="#demo" className="block text-center py-3 rounded-xl border-2 border-saabai-gold/40 text-saabai-gold font-bold text-sm tracking-wide hover:bg-saabai-gold/10 transition-all">
               Subscribe
@@ -283,7 +273,7 @@ export default function LeadGenPage() {
         </div>
       </section>
 
-      {/* ── CTA ───────────────────────────────────────────────────────── */}
+      {/* "" CTA """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""" */}
       <section className="relative px-6 py-32 max-w-4xl mx-auto text-center">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 60% 40% at 50% 50%, var(--saabai-glow) 0%, transparent 70%)"
@@ -312,6 +302,12 @@ export default function LeadGenPage() {
       </section>
 
       <Footer />
+
+      {/* Inline LeadGen widget for demo - only renders the chatbot */}
+      <script
+        src={`https://www.saabai.ai/api/leadgen/widget?slug=${DEMO_SLUG}`}
+        async
+      />
     </div>
   );
 }
