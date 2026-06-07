@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "10:31", tag: "FIX", title: "Subscribe buttons now go to /leadgen/success flow (no Stripe dependency)" },
       { time: "10:31", tag: "FIX", title: "Form POST now redirects to Stripe session instead of returning JSON" },
       { time: "10:30", tag: "FIX", title: "Subscribe buttons now POST to checkout API instead of scrolling to #demo" },
       { time: "10:01", tag: "NEW", title: "Add git hygiene rules to CLAUDE.md" },

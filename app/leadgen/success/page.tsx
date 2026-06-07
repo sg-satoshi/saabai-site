@@ -1,13 +1,27 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-export default function LeadGenSuccessPage() {
+const TIER_LABELS: Record<string, string> = {
+  starter: "Starter",
+  pro: "Pro",
+  enterprise: "Enterprise",
+};
+
+function SuccessContent() {
+  const searchParams = useSearchParams();
+  const tier = searchParams.get("tier") || "Starter";
+  const label = TIER_LABELS[tier] || tier;
+
   return (
     <div className="min-h-screen bg-saabai-bg text-saabai-text flex items-center justify-center px-6">
       <div className="max-w-md text-center">
         <div className="text-6xl mb-6">🎉</div>
-        <h1 className="text-3xl font-bold mb-4">Welcome aboard!</h1>
+        <h1 className="text-3xl font-bold mb-2">Thanks for your interest!</h1>
+        <p className="text-saabai-gold text-sm font-semibold mb-6">{label} plan selected</p>
         <p className="text-saabai-text-dim mb-8">
-          Your subscription is being set up. You’ll receive a confirmation email shortly with your widget embed code.
+          We&apos;ll reach out within 24 hours to get you set up. In the meantime, check out the live demo above.
         </p>
         <a
           href="/leadgen"
@@ -17,5 +31,17 @@ export default function LeadGenSuccessPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function LeadGenSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-saabai-bg flex items-center justify-center">
+        <div className="text-saabai-text-dim">Loading...</div>
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
