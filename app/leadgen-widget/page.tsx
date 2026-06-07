@@ -23,15 +23,14 @@ type Message = { role: "user" | "assistant"; content: string };
 // ── Jack avatar mark ─────────────────────────────────────────────────────────
 function JackMark({ size = 24 }: { size?: number }) {
   return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%", flexShrink: 0,
-      background: `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.45, fontWeight: 900, color: C.bg,
-      lineHeight: 1,
-    }}>
-      J
-    </div>
+    <img
+      src="/leadgen/jack-avatar.png"
+      alt="Jack"
+      style={{
+        width: size, height: size, borderRadius: "50%", flexShrink: 0,
+        objectFit: "cover",
+      }}
+    />
   );
 }
 
