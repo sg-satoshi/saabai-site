@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import { loadClients } from "../../lib/clients";
 import { listDirectoryUsers } from "../../lib/user-directory";
-import { productsFromDashboardUrl, ALL_PRODUCTS } from "../../lib/user-products";
+import { ALL_PRODUCTS } from "../../lib/user-products";
 import SaabaiAppShell from "../components/SaabaiAppShell";
 import type { ProductInfo } from "../../lib/user-products";
 import DashboardContent from "./DashboardContent";
@@ -23,14 +23,12 @@ export default async function DashboardPage() {
   // Resolve user info and products
   let userName = "User";
   let userEmail = "";
-  let userProducts: ReturnType<typeof productsFromDashboardUrl> = [];
 
   // Check env-var clients first
   const envClient = loadClients().find((c) => c.id === clientId);
   if (envClient) {
     userName = envClient.name;
     userEmail = envClient.email;
-    userProducts = productsFromDashboardUrl(envClient.dashboardUrl);
   } else {
     // Check Redis user directory
     const allUsers = await listDirectoryUsers();
@@ -38,11 +36,10 @@ export default async function DashboardPage() {
     if (dirUser) {
       userName = dirUser.name;
       userEmail = dirUser.email;
-      userProducts = productsFromDashboardUrl(dirUser.dashboardUrl);
     }
   }
 
-  const productInfos = userProducts.map((id) => ALL_PRODUCTS[id]);
+  const productInfos = Object.values(ALL_PRODUCTS);
 
   return (
     <SaabaiAppShell
