@@ -35,6 +35,54 @@ export interface LeadGenClient {
   businessHours: string;
   /** AI system prompt — optional, auto-generated if omitted */
   systemPrompt?: string;
+
+  // ── Bot Identity ─────────────────────────────────────────
+  /** The bot's name (default: "Jack") */
+  botName: string;
+  /** Bot personality / tone */
+  personality: "professional" | "friendly" | "aussie-tradie" | "custom";
+  /** Custom personality description (used when personality="custom") */
+  personalityDescription?: string;
+  /** Avatar preset key */
+  avatarPreset?: "plumber" | "sparky" | "logo" | "custom";
+
+  // ── Services Menu ────────────────────────────────────────
+  /** List of services the business offers, shown to the bot */
+  services: Array<{
+    name: string;
+    type: "standard" | "emergency" | "quote-only";
+    description?: string;
+  }>;
+
+  // ── Lead Capture Configuration ────────────────────────────
+  leadCaptureFields: {
+    name: "required" | "optional" | "hidden";
+    phone: "required" | "optional" | "hidden";
+    email: "required" | "optional" | "hidden";
+    address: "required" | "optional" | "hidden";
+    service: "required" | "optional" | "hidden";
+    urgency: "required" | "optional" | "hidden";
+    message: "required" | "optional" | "hidden";
+  };
+
+  // ── Availability ──────────────────────────────────────────
+  /** Message shown after hours */
+  afterHoursMessage: string;
+  /** Whether they offer same-day service */
+  sameDayService: boolean;
+  /** Expected response time displayed to visitors */
+  expectedResponseTime: string;
+
+  // ── Advanced Widget Settings ──────────────────────────────
+  widgetPosition: "bottom-right" | "bottom-left";
+  widgetSize: "compact" | "standard" | "large";
+  /** Auto-popup delay in seconds. 0 = never auto-popup */
+  autoPopupDelay: number;
+  /** Hide the widget on mobile devices */
+  hideOnMobile: boolean;
+  /** Custom CSS injected into widget iframe */
+  customCss?: string;
+
   /** Widget branding */
   branding: {
     primaryColor: string;
@@ -174,26 +222,46 @@ export async function markNotified(leadId: string, clientSlug: string): Promise<
 
 // ── Default System Prompt Builder ─────────────────────────
 
+const PERSONALITY_MAP: Record<string, string> = {
+  professional: "Professional, courteous, and efficient. Clear and direct communication. Maintain a helpful but business-appropriate tone at all times.",
+  friendly: "Friendly, warm, and approachable. Use casual but polite language. Make the visitor feel comfortable and welcome. Show genuine interest in helping.",
+  "aussie-tradie": "Friendly, calm, and reassuring — especially when people are stressed. A little bit of Aussie humour (light, never sarcastic or inappropriate). Speak like a real tradie: warm, direct, and practical. Use light Australian slang naturally (mate, legend, no worries, bloody oath, etc.) when it fits. Never be overly corporate or robotic.",
+};
+
 export function buildSystemPrompt(client: LeadGenClient): string {
+  const botName = client.botName || "Jack";
+  const personalityText = client.personality === "custom"
+    ? (client.personalityDescription || PERSONALITY_MAP["aussie-tradie"])
+    : PERSONALITY_MAP[client.personality] || PERSONALITY_MAP["aussie-tradie"];
+
+  const servicesList = client.services?.length
+    ? client.services.map(s => `  - ${s.name}${s.description ? ` — ${s.description}` : ""} (${s.type})`).join("\n")
+    : client.description;
+
+  const fieldsToCollect = Object.entries(client.leadCaptureFields || {})
+    .filter(([_, v]) => v !== "hidden")
+    .map(([k, v]) => `    ${k}: ${v === "required" ? "REQUIRED" : "optional (ask but don't insist)"}`)
+    .join("\n");
+
   return [
-    `You are Jack, a friendly and down-to-earth Australian plumber working for ${client.businessName}.`,
+    `You are ${botName}, a friendly and down-to-earth Australian plumber working for ${client.businessName}.`,
     `Industry: ${client.niche}`,
-    `Services: ${client.description}`,
     `Service area: ${client.serviceArea}`,
     `Business hours: ${client.businessHours}`,
     ``,
     `PERSONALITY:`,
-    `- Friendly, calm, and reassuring — especially when people are stressed.`,
-    `- A little bit of Aussie humour (light, never sarcastic or inappropriate).`,
-    `- Speak like a real tradie: warm, direct, and practical.`,
-    `- Use light Australian slang naturally (mate, legend, no worries, bloody oath, etc.) when it fits.`,
-    `- Never be overly corporate or robotic.`,
+    `- ${personalityText}`,
+    ``,
+    `SERVICES:`,
+    typeof servicesList === "string"
+      ? servicesList
+      : `- ${client.description}`,
     ``,
     `KNOWLEDGE:`,
     `- You have strong knowledge of Australian plumbing standards (AS/NZS 3500).`,
     `- You understand common issues in Australian homes (old galvanised pipes, blocked drains from tree roots, hot water systems, gas fitting, burst pipes, etc.).`,
     `- You know the difference between emergency callouts vs routine jobs.`,
-    `- You understand local Brisbane/Queensland conditions and building practices.`,
+    `- You understand local conditions and building practices.`,
     ``,
     `CRITICAL FORMATTING RULES (NON-NEGOTIABLE):`,
     `1. NEVER use double asterisks (**).`,
@@ -204,17 +272,28 @@ export function buildSystemPrompt(client: LeadGenClient): string {
     ``,
     `YOUR JOB:`,
     `1. Greet the visitor warmly and ask how you can help.`,
-    `2. Collect their NAME and PHONE NUMBER at minimum.`,
-    `3. Ask what service they need and if it's an emergency.`,
-    `4. If they want a quote, get their address.`,
-    `5. Keep responses under 100 words. Be warm and efficient.`,
-    `6. Do NOT make up pricing or availability.`,
-    `7. At the end, confirm the details you've collected.`,
+    `2. Collect their details based on these requirements:`,
+    fieldsToCollect,
+    `3. If they want a quote, get their address.`,
+    `4. Keep responses under 100 words. Be warm and efficient.`,
+    `5. Do NOT make up pricing or availability.`,
+    `6. At the end, confirm the details you've collected.`,
     ``,
-    `FORMAT FOR LEAD CAPTURE — when you have name AND phone, output:`,
+    client.afterHoursMessage
+      ? `AFTER HOURS — when outside business hours:\n${client.afterHoursMessage}`
+      : "",
+    client.sameDayService
+      ? `\nSAME-DAY SERVICE: You offer same-day service. Let them know when it fits naturally.`
+      : "",
+    client.expectedResponseTime
+      ? `\nEXPECTED RESPONSE TIME: ${client.expectedResponseTime}`
+      : "",
+    ``,
+    `FORMAT FOR LEAD CAPTURE — when you have all required fields, output:`,
     `[LEAD_CAPTURED]`,
     `Name: {name}`,
     `Phone: {phone}`,
+    `Email: {email if collected}`,
     `Service: {service}`,
     `Address: {address if collected}`,
     `Urgency: emergency|soon|quote`,
@@ -222,5 +301,5 @@ export function buildSystemPrompt(client: LeadGenClient): string {
     `[/LEAD_CAPTURED]`,
     ``,
     `Then tell them someone will call them back shortly.`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }

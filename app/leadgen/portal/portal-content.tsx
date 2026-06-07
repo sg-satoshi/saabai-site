@@ -158,6 +158,42 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
   const [widgetTitle, setWidgetTitle] = useState(client.branding.widgetTitle);
   const [greeting, setGreeting] = useState(client.branding.greeting);
 
+  // ── Bot Identity ─────────────────────────────────────────
+  const [botName, setBotName] = useState(client.botName || "Jack");
+  const [personality, setPersonality] = useState(client.personality || "aussie-tradie");
+  const [personalityDescription, setPersonalityDescription] = useState(client.personalityDescription || "");
+  const [avatarPreset, setAvatarPreset] = useState(client.avatarPreset || "plumber");
+
+  // ── Services Menu ────────────────────────────────────────
+  const [services, setServices] = useState<Array<{ name: string; type: "standard" | "emergency" | "quote-only"; description?: string }>>(
+    client.services?.length ? client.services : [
+      { name: "Blocked Drains", type: "emergency" },
+      { name: "Hot Water Systems", type: "standard" },
+      { name: "Burst Pipes", type: "emergency" },
+      { name: "Gas Fitting", type: "standard" },
+      { name: "General Plumbing", type: "standard" },
+    ]
+  );
+
+  // ── Lead Capture Fields ──────────────────────────────────
+  const defaultFields = { name: "required" as const, phone: "required" as const, email: "optional" as const, address: "optional" as const, service: "required" as const, urgency: "required" as const, message: "optional" as const };
+  const [leadCaptureFields, setLeadCaptureFields] = useState(client.leadCaptureFields || defaultFields);
+
+  // ── Availability ─────────────────────────────────────────
+  const [afterHoursMessage, setAfterHoursMessage] = useState(client.afterHoursMessage || "We'll get back to you first thing in the morning.");
+  const [sameDayService, setSameDayService] = useState(client.sameDayService ?? true);
+  const [expectedResponseTime, setExpectedResponseTime] = useState(client.expectedResponseTime || "Within 30 minutes");
+
+  // ── Widget Settings ──────────────────────────────────────
+  const [widgetPosition, setWidgetPosition] = useState(client.widgetPosition || "bottom-right");
+  const [widgetSize, setWidgetSize] = useState(client.widgetSize || "standard");
+  const [autoPopupDelay, setAutoPopupDelay] = useState(client.autoPopupDelay ?? 0);
+  const [hideOnMobile, setHideOnMobile] = useState(client.hideOnMobile ?? false);
+  const [customCss, setCustomCss] = useState(client.customCss || "");
+
+  // ── New service input ────────────────────────────────────
+  const [newService, setNewService] = useState({ name: "", type: "standard" as "standard" | "emergency" | "quote-only", description: "" });
+
   // ── Embed code ───────────────────────────────────────────
   const embedCode = `<script src="https://www.saabai.ai/api/leadgen/widget?slug=${client.slug}"></script>`;
 
@@ -194,10 +230,24 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
           businessHours,
           description,
           branding: { primaryColor, accentColor, widgetTitle, greeting },
+          botName,
+          personality,
+          personalityDescription,
+          avatarPreset,
+          services,
+          leadCaptureFields,
+          afterHoursMessage,
+          sameDayService,
+          expectedResponseTime,
+          widgetPosition,
+          widgetSize,
+          autoPopupDelay,
+          hideOnMobile,
+          customCss,
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
-      setSaveMsg({ type: "success", text: "Settings saved successfully." });
+      setSaveMsg({ type: "success", text: "All settings saved successfully." });
     } catch {
       setSaveMsg({ type: "error", text: "Failed to save settings. Try again." });
     }
@@ -569,26 +619,310 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
 
         {/* ── Tab: Customise ──────────────────────────────── */}
         {tab === "customise" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 720 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 800 }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>Customise Widget</h1>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>Customise Your Chatbot</h1>
               <p style={{ margin: "4px 0 0", fontSize: 13, color: C.muted }}>
-                Changes apply here after you hit Save Configuration. Live widget updates may take a few minutes.
+                Configure how your bot looks, talks, and captures leads. Changes apply here once you hit Save at the bottom.
               </p>
             </div>
 
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px" }}>
-              <h2 style={{ margin: "0 0 16px", fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" }}>Branding</h2>
+            {/* ═══════════════ Section 1: Bot Identity ═══════════════ */}
+            <Section title="Bot Identity" desc="Who your chatbot is and how it sounds">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <Field label="Bot Name" value={botName} onChange={setBotName} />
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Personality</label>
+                  <select
+                    value={personality}
+                    onChange={(e) => setPersonality(e.target.value as typeof personality)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  >
+                    <option value="aussie-tradie">🇦🇺 Aussie Tradie</option>
+                    <option value="friendly">😊 Friendly</option>
+                    <option value="professional">💼 Professional</option>
+                    <option value="custom">✏️ Custom</option>
+                  </select>
+                </div>
+              </div>
+              {personality === "custom" && (
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Custom Personality Description</label>
+                  <textarea
+                    value={personalityDescription}
+                    onChange={(e) => setPersonalityDescription(e.target.value)}
+                    rows={3}
+                    placeholder="Describe exactly how you want the bot to sound and behave..."
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }}
+                  />
+                </div>
+              )}
+              <div style={{ marginTop: 16 }}>
+                <label style={{ display: "block", marginBottom: 10, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Bot Avatar</label>
+                <div style={{ display: "flex", gap: 10 }}>
+                  {([
+                    { key: "plumber" as const, label: "Plumber", emoji: "🔧" },
+                    { key: "sparky" as const, label: "Sparky", emoji: "⚡" },
+                    { key: "logo" as const, label: "Your Logo", emoji: "🏢" },
+                    { key: "custom" as const, label: "Custom URL", emoji: "🔗" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setAvatarPreset(opt.key)}
+                      style={{
+                        flex: 1, padding: "12px 8px", borderRadius: 10, cursor: "pointer",
+                        background: avatarPreset === opt.key ? C.goldBg : C.surface,
+                        border: `1px solid ${avatarPreset === opt.key ? C.goldBdr : C.border}`,
+                        color: avatarPreset === opt.key ? C.gold : C.muted, fontSize: 11, fontWeight: 600,
+                        fontFamily: "inherit",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <div style={{ fontSize: 24, marginBottom: 4 }}>{opt.emoji}</div>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Section>
+
+            {/* ═══════════════ Section 2: Services Menu ═══════════════ */}
+            <Section title="Services Menu" desc="What services your business offers — the bot uses this to answer accurately">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {services.map((svc, i) => (
+                  <div key={i} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "8px 12px", borderRadius: 8, background: C.surface,
+                    border: `1px solid ${C.border}`,
+                  }}>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12,
+                      color: svc.type === "emergency" ? C.red : svc.type === "quote-only" ? C.blue : C.green,
+                      background: svc.type === "emergency" ? C.redBg : svc.type === "quote-only" ? C.blueBg : C.greenBg,
+                      whiteSpace: "nowrap",
+                    }}>
+                      {svc.type === "emergency" ? "🚨" : svc.type === "quote-only" ? "💰" : "🔧"} {svc.type}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.text }}>{svc.name}</span>
+                    {svc.description && <span style={{ fontSize: 11, color: C.muted }}>{svc.description}</span>}
+                    <button
+                      onClick={() => setServices(services.filter((_, j) => j !== i))}
+                      style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16, padding: "0 4px" }}
+                      title="Remove service"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add new service */}
+              <div style={{ marginTop: 12, padding: "14px", borderRadius: 10, background: C.surfaceHi, border: `1px dashed ${C.borderHi}` }}>
+                <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Add Service</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input
+                    value={newService.name}
+                    onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                    placeholder="Service name"
+                    style={{ flex: "1 1 200px", padding: "8px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }}
+                  />
+                  <select
+                    value={newService.type}
+                    onChange={(e) => setNewService({ ...newService, type: e.target.value as typeof newService.type })}
+                    style={{ padding: "8px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", fontFamily: "inherit" }}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="quote-only">Quote Only</option>
+                  </select>
+                  <input
+                    value={newService.description}
+                    onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                    placeholder="Brief description (optional)"
+                    style={{ flex: "1 1 200px", padding: "8px 10px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none" }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!newService.name.trim()) return;
+                      setServices([...services, { ...newService, name: newService.name.trim() }]);
+                      setNewService({ name: "", type: "standard", description: "" });
+                    }}
+                    style={{
+                      padding: "8px 16px", borderRadius: 6, cursor: "pointer",
+                      background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold,
+                      fontSize: 12, fontWeight: 700, fontFamily: "inherit", whiteSpace: "nowrap",
+                    }}
+                  >
+                    Add →
+                  </button>
+                </div>
+              </div>
+            </Section>
+
+            {/* ═══════════════ Section 3: Lead Capture Flow ═══════════════ */}
+            <Section title="Lead Capture Flow" desc="Which details the bot asks visitors for, and whether each is required">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {(Object.keys(leadCaptureFields) as Array<keyof typeof leadCaptureFields>).map((field) => {
+                  const labels: Record<string, string> = { name: "Full Name", phone: "Phone Number", email: "Email", address: "Address", service: "Service Needed", urgency: "Urgency Level", message: "Message" };
+                  const icons: Record<string, string> = { name: "👤", phone: "📱", email: "📧", address: "📍", service: "🔧", urgency: "🚨", message: "💬" };
+                  return (
+                    <div key={field} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "10px 14px", borderRadius: 8, background: C.surface, border: `1px solid ${C.border}`,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 16 }}>{icons[field]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{labels[field]}</span>
+                      </div>
+                      <select
+                        value={leadCaptureFields[field]}
+                        onChange={(e) => setLeadCaptureFields({ ...leadCaptureFields, [field]: e.target.value as "required" | "optional" | "hidden" })}
+                        style={{
+                          padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`,
+                          background: leadCaptureFields[field] === "required" ? C.greenBg : leadCaptureFields[field] === "hidden" ? "rgba(255,255,255,0.03)" : C.blueBg,
+                          color: leadCaptureFields[field] === "required" ? C.green : leadCaptureFields[field] === "hidden" ? C.dim : C.blue,
+                          fontSize: 10, fontWeight: 700, outline: "none", fontFamily: "inherit",
+                        }}
+                      >
+                        <option value="required">Required</option>
+                        <option value="optional">Optional</option>
+                        <option value="hidden">Hidden</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+
+            {/* ═══════════════ Section 4: Availability & Response ═══════════════ */}
+            <Section title="Availability & Response" desc="When you're available, how fast you respond, and what happens after hours">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <Field label="Business Hours" value={businessHours} onChange={setBusinessHours} />
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Expected Response Time</label>
+                  <select
+                    value={expectedResponseTime}
+                    onChange={(e) => setExpectedResponseTime(e.target.value)}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  >
+                    <option value="Within 30 minutes">Within 30 minutes</option>
+                    <option value="Within 1 hour">Within 1 hour</option>
+                    <option value="Within 2 hours">Within 2 hours</option>
+                    <option value="Next business day">Next business day</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>Same-Day Service Available</span>
+                  <Toggle checked={sameDayService} onChange={setSameDayService} />
+                </div>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>After-Hours Message</label>
+                <textarea
+                  value={afterHoursMessage}
+                  onChange={(e) => setAfterHoursMessage(e.target.value)}
+                  rows={2}
+                  placeholder="Message shown when someone contacts you outside business hours..."
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }}
+                />
+              </div>
+            </Section>
+
+            {/* ═══════════════ Section 5: Widget Settings ═══════════════ */}
+            <Section title="Widget Settings" desc="How the chat widget looks and behaves on your website">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Widget Position</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { key: "bottom-right", label: "Bottom Right", icon: "↘" },
+                      { key: "bottom-left", label: "Bottom Left", icon: "↙" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setWidgetPosition(opt.key as typeof widgetPosition)}
+                        style={{
+                          flex: 1, padding: "10px", borderRadius: 8, cursor: "pointer",
+                          background: widgetPosition === opt.key ? C.goldBg : C.surface,
+                          border: `1px solid ${widgetPosition === opt.key ? C.goldBdr : C.border}`,
+                          color: widgetPosition === opt.key ? C.gold : C.muted,
+                          fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                        }}
+                      >
+                        {opt.icon} {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Widget Size</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[
+                      { key: "compact", label: "Compact", icon: "⊞" },
+                      { key: "standard", label: "Standard", icon: "⊟" },
+                      { key: "large", label: "Large", icon: "⊡" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setWidgetSize(opt.key as typeof widgetSize)}
+                        style={{
+                          flex: 1, padding: "10px", borderRadius: 8, cursor: "pointer",
+                          background: widgetSize === opt.key ? C.goldBg : C.surface,
+                          border: `1px solid ${widgetSize === opt.key ? C.goldBdr : C.border}`,
+                          color: widgetSize === opt.key ? C.gold : C.muted,
+                          fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                        }}
+                      >
+                        {opt.icon} {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Auto-Popup Delay</label>
+                  <select
+                    value={autoPopupDelay}
+                    onChange={(e) => setAutoPopupDelay(Number(e.target.value))}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                  >
+                    <option value={0}>Never (visitor initiates)</option>
+                    <option value={5}>After 5 seconds</option>
+                    <option value={10}>After 10 seconds</option>
+                    <option value={30}>After 30 seconds</option>
+                    <option value={60}>After 60 seconds</option>
+                  </select>
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>Hide on Mobile</span>
+                    <Toggle checked={hideOnMobile} onChange={setHideOnMobile} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 0.5, textTransform: "uppercase" }}>Custom CSS (optional)</label>
+                <textarea
+                  value={customCss}
+                  onChange={(e) => setCustomCss(e.target.value)}
+                  rows={4}
+                  placeholder=".widget-header { background: #123; }"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 12, outline: "none", resize: "vertical", fontFamily: "monospace" }}
+                />
+              </div>
+            </Section>
+
+            {/* ═══════════════ Section 6: Branding (existing) ═══════════════ */}
+            <Section title="Branding & Colours" desc="Match the widget look and feel to your business">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <Field label="Widget Title" value={widgetTitle} onChange={setWidgetTitle} />
                 <Field label="Greeting Message" value={greeting} onChange={setGreeting} />
                 <ColorField label="Primary Color" value={primaryColor} onChange={setPrimaryColor} />
                 <ColorField label="Accent Color" value={accentColor} onChange={setAccentColor} />
               </div>
-            </div>
+            </Section>
 
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px" }}>
-              <h2 style={{ margin: "0 0 16px", fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" }}>Business Info</h2>
+            {/* ═══════════════ Section 7: Business Info (existing) ═══════════════ */}
+            <Section title="Business Info" desc="Used in lead notifications and bot knowledge">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <Field label="Business Name" value={businessName} onChange={setBusinessName} />
                 <Field label="Phone" value={phone} onChange={setPhone} />
@@ -601,23 +935,22 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  style={{
-                    width: "100%", padding: "10px 12px", borderRadius: 8,
-                    border: `1px solid ${C.border}`, background: C.surface, color: C.text,
-                    fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit",
-                  }}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }}
                 />
               </div>
-            </div>
+            </Section>
 
-            <button onClick={saveSettings} disabled={saving} style={{
-              alignSelf: "flex-start", padding: "10px 24px", borderRadius: 8,
-              background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold,
-              fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.6 : 1,
-            }}>
-              {saving ? "Saving..." : "Save Configuration"}
-            </button>
+            {/* ═══════════════ Save Button ═══════════════ */}
+            <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8, borderTop: `1px solid ${C.border}` }}>
+              <button onClick={saveSettings} disabled={saving} style={{
+                padding: "12px 32px", borderRadius: 10,
+                background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold,
+                fontSize: 14, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer",
+                opacity: saving ? 0.6 : 1, fontFamily: "inherit",
+              }}>
+                {saving ? "Saving All Settings..." : "Save All Configuration"}
+              </button>
+            </div>
           </div>
         )}
 
@@ -804,6 +1137,39 @@ export default function LeadGenPortalContent({ client, userName, notificationUsa
         )}
       </main>
     </div>
+  );
+}
+
+// ── Section wrapper ────────────────────────────────────────
+function Section({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "24px" }}>
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: "0.1em", textTransform: "uppercase" }}>{title}</h2>
+        {desc && <p style={{ margin: "4px 0 0", fontSize: 12, color: C.muted }}>{desc}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Simple Toggle ───────────────────────────────────────────
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      style={{
+        width: 42, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+        position: "relative", transition: "background 0.15s",
+        background: checked ? C.green : C.dim, flexShrink: 0,
+      }}
+    >
+      <span style={{
+        position: "absolute", top: 3, left: checked ? 21 : 3,
+        width: 18, height: 18, borderRadius: "50%", background: "#fff",
+        transition: "left 0.15s",
+      }} />
+    </button>
   );
 }
 
