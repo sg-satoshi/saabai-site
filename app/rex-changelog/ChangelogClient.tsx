@@ -30,27 +30,6 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "7 Jun 2026",
-    entries: [
-      { time: "10:31", tag: "FIX", title: "Subscribe buttons now go to /leadgen/success flow (no Stripe dependency)" },
-      { time: "10:31", tag: "FIX", title: "Form POST now redirects to Stripe session instead of returning JSON" },
-      { time: "10:30", tag: "FIX", title: "Subscribe buttons now POST to checkout API instead of scrolling to #demo" },
-      { time: "10:01", tag: "NEW", title: "Add git hygiene rules to CLAUDE.md" },
-      { time: "10:01", tag: "FIX", title: "Remove public embed code, restructure demo section, fix changelog merge conflicts" }
-    ],
-  },
-  {
-    date: "6 Jun 2026",
-    entries: [
-      { time: "21:28", tag: "UPDATE", title: "Update changelogs" },
-      { time: "21:22", tag: "UPDATE", title: "Update changelogs" },
-      { time: "21:22", tag: "UPDATE", title: "Update changelogs (final)" },
-      { time: "21:15", tag: "UPDATE", title: "Update changelogs" },
-      { time: "21:15", tag: "UPDATE", title: "Update changelogs" },
-      { time: "21:14", tag: "NEW", title: "Add locationPageSpec for 9-city local SEO pages + changelog updates" }
-    ],
-  },
-  {
     date: "4 Jun 2026",
     entries: [
       { time: "06:39", tag: "FIX", title: "Remove mdash entity from FAQ heading in LocationPage" },

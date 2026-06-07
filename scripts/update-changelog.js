@@ -33,7 +33,7 @@ try {
   // Fallback: determine scope from files changed
   if (!scope) {
     const rexPaths = ['lib/rex-', 'app/api/pete-chat', 'app/api/rex-', 'app/components/PeterAvatarWidget', 'app/rex-', 'app/rex-widget'];
-    const saabaiPaths = ['app/counsel-backup', 'app/saabai-', 'app/components/ChatWidget', 'app/api/saabai-', 'app/tributum', 'app/use-cases', 'app/process', 'app/services'];
+    const saabaiPaths = ['app/counsel-backup', 'app/saabai-', 'app/components/ChatWidget', 'app/api/saabai-', 'app/tributum', 'app/use-cases', 'app/process', 'app/services', 'app/leadgen', 'app/leadgen-widget', 'app/leadgen-dashboard'];
 
     let hasRex = filesChanged.some(f => rexPaths.some(p => f.startsWith(p)));
     let hasSaabai = filesChanged.some(f => saabaiPaths.some(p => f.startsWith(p)));
