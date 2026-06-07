@@ -34,26 +34,52 @@ export default function CustomizeForm({
     }
   }
 
+  const C = {
+    gold:   "#C9A84C",
+    goldBg: "rgba(201,168,76,0.10)",
+    goldBdr: "rgba(201,168,76,0.22)",
+    border: "rgba(0,0,0,0.08)",
+    text:   "#111827",
+    muted:  "#9ca3af",
+  };
+
   return (
     <div>
-      <label className="block text-sm text-white/60 mb-2">Business Name</label>
-      <div className="flex gap-3">
+      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 6 }}>
+        Business Name
+      </label>
+      <div style={{ display: "flex", gap: 10 }}>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 bg-black/40 border border-white/20 rounded-2xl px-5 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-[#62C5D1]"
+          style={{
+            flex: 1, padding: "10px 12px", fontSize: 13,
+            border: `1px solid ${C.border}`, borderRadius: 10,
+            background: "rgba(0,0,0,0.02)", color: C.text,
+            outline: "none", fontFamily: "inherit",
+          }}
+          onFocus={e => { e.currentTarget.style.borderColor = C.goldBdr; }}
+          onBlur={e => { e.currentTarget.style.borderColor = C.border; }}
           placeholder="Your business name"
         />
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-8 py-3 bg-white text-[#0b092e] font-semibold rounded-2xl hover:bg-[#62C5D1] transition disabled:opacity-50"
+          style={{
+            padding: "10px 20px", borderRadius: 10,
+            background: C.goldBg, border: `1px solid ${C.goldBdr}`,
+            color: C.gold, fontSize: 12, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit",
+            opacity: saving ? 0.6 : 1,
+          }}
         >
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
-      <p className="text-xs text-white/40 mt-2">This updates what Jack says when greeting customers.</p>
+      <p style={{ margin: "8px 0 0", fontSize: 11, color: C.muted }}>
+        This updates what Jack says when greeting customers.
+      </p>
     </div>
   );
 }

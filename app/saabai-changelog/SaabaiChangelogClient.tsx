@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "16:06", tag: "FIX", title: "Default redirect to /dashboard instead of /rex-dashboard" },
       { time: "15:56", tag: "FIX", title: "Point product link to /lex (was 404 on /lex-dashboard)" },
       { time: "15:49", tag: "FIX", title: "Add visible text color to input fields" },
       { time: "15:46", tag: "NEW", title: "Support Redis admin users in admin panel + full-access super-user" },
