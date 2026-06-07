@@ -54,6 +54,14 @@ export interface LeadGenClient {
     status: "active" | "past_due" | "canceled";
     currentPeriodEnd?: number;
   };
+  /** Notification channel preferences (all on by default) */
+  notifications?: {
+    email: boolean;
+    sms: boolean;
+    whatsapp: boolean;
+    /** Phone number for SMS/WhatsApp. Falls back to .phone if not set. */
+    notificationPhone?: string;
+  };
   createdAt: number;
   updatedAt: number;
 }
