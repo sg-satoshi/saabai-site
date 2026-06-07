@@ -1,8 +1,8 @@
 /**
  * User Products — determines what products a logged-in user has access to.
  *
- * Product is derived from the user's dashboardUrl plus any additional signals.
- * This is the single source of truth for the SaabaiAppShell sidebar.
+ * Products are stored per-user in the Redis directory (products[] field).
+ * This is the single source of truth — no env vars, no code-level derivation.
  */
 
 export type ProductId = "rex" | "leadgen" | "lex";
@@ -39,23 +39,13 @@ export const ALL_PRODUCTS: Record<ProductId, ProductInfo> = {
   },
 };
 
-/**
- * Derive product(s) from a dashboardUrl.
- * Supports both env-var clients and Redis directory users.
- */
-export function productsFromDashboardUrl(dashboardUrl: string): ProductId[] {
-  const url = dashboardUrl.toLowerCase();
+export const PRODUCT_IDS: ProductId[] = ["rex", "leadgen", "lex"];
 
-  if (url.includes("/rex")) return ["rex"];
-
-  // LeadGen has two possible dashboard URLs
-  if (url.includes("/leadgen")) return ["leadgen"];
-
-  if (url.includes("/lex")) return ["lex"];
-
-  // Fallback — no specific product detected
-  return [];
-}
+export const PRODUCT_LABELS: Record<ProductId, string> = {
+  rex: "Rex",
+  leadgen: "LeadGen",
+  lex: "Lex",
+};
 
 /**
  * Get display info for a list of product IDs.
@@ -66,4 +56,38 @@ export function getProductInfos(productIds: ProductId[]): ProductInfo[] {
   return order
     .filter((id) => productIds.includes(id))
     .map((id) => ALL_PRODUCTS[id]);
+}
+
+/**
+ * Derive product(s) from a DirectoryUser.
+ * Checks the user's explicit `products` array first, then falls back
+ * to deriving from dashboardUrl for backward compatibility.
+ */
+export function userProducts(user: {
+  products?: string[];
+  dashboardUrl?: string;
+}): ProductId[] {
+  // Explicit product assignments take priority
+  if (user.products && user.products.length > 0) {
+    return user.products.filter((p): p is ProductId =>
+      PRODUCT_IDS.includes(p as ProductId)
+    );
+  }
+
+  // Fallback: derive from dashboardUrl
+  return productsFromDashboardUrl(user.dashboardUrl || "");
+}
+
+/**
+ * Derive product(s) from a dashboardUrl string.
+ * Used as fallback for users without explicit product assignments.
+ */
+export function productsFromDashboardUrl(dashboardUrl: string): ProductId[] {
+  const url = dashboardUrl.toLowerCase();
+
+  if (url.includes("/rex")) return ["rex"];
+  if (url.includes("/leadgen")) return ["leadgen"];
+  if (url.includes("/lex")) return ["lex"];
+
+  return [];
 }

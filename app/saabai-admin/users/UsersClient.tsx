@@ -20,6 +20,7 @@ interface User {
   role: string;
   source?: string;
   dashboardUrl?: string;
+  products?: string[];
   createdAt?: string | number;
   lastActive?: string | number;
   status?: string;
@@ -457,7 +458,7 @@ function Modal({ open, onClose, title, subtitle, width = 480, children, danger }
 // ── User form (Add / Edit) ───────────────────────────────────────────────
 function UserForm({ initial, mode, onSubmit, onCancel }: {
   initial?: User; mode: "add" | "edit";
-  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; sendInvite: boolean }) => void | Promise<void>;
+  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; sendInvite: boolean }) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initial?.name || "");
@@ -465,6 +466,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(initial?.role || "user");
   const [dashboardUrl, setDashboardUrl] = useState(initial?.dashboardUrl || "/rex-dashboard");
+  const [selectedProducts, setSelectedProducts] = useState<string[]>(initial?.products || []);
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -476,7 +478,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
     if (!valid || submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit({ name, email, password, role, dashboardUrl, sendInvite });
+      await onSubmit({ name, email, password, role, dashboardUrl, products: selectedProducts, sendInvite });
     } finally {
       setSubmitting(false);
     }
@@ -512,6 +514,55 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
 
       <Field label="Dashboard route" hint="Which surface this user lands on after signing in.">
         <DashboardPicker value={dashboardUrl} onChange={setDashboardUrl} />
+      </Field>
+
+      <Field label="Product access" hint="Toggle which products this user can access. Changes take effect immediately.">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {(["rex", "leadgen", "lex"] as const).map((pid) => {
+            const active = selectedProducts.includes(pid);
+            const productLabels: Record<string, { label: string; icon: string; description: string }> = {
+              rex:     { label: "Rex",     icon: "🤖", description: "AI chat agent for trade & e-commerce" },
+              leadgen: { label: "LeadGen", icon: "📋", description: "Lead generation widget" },
+              lex:     { label: "Lex",     icon: "⚖️", description: "Legal AI assistant" },
+            };
+            const p = productLabels[pid];
+            return (
+              <button
+                key={pid}
+                type="button"
+                onClick={() => {
+                  setSelectedProducts(prev =>
+                    prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid]
+                  );
+                }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 12px", borderRadius: 8,
+                  border: `1px solid ${active ? C.tealBdr : C.border}`,
+                  background: active ? C.tealBg : "rgba(0,0,0,0.03)",
+                  color: C.text, textAlign: "left",
+                  cursor: "pointer", transition: "all 0.12s",
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{p.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{p.label}</div>
+                  <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>{p.description}</div>
+                </div>
+                <span style={{
+                  width: 18, height: 18, borderRadius: 4,
+                  border: `1px solid ${active ? C.teal : "rgba(0,0,0,0.15)"}`,
+                  background: active ? C.teal : "transparent",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  color: "#fff", fontSize: 11, fontWeight: 700,
+                }}>
+                  {active ? "✓" : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </Field>
 
       {!isEdit && (
@@ -1179,7 +1230,7 @@ export default function UsersClient() {
     setLoading(false);
   }
 
-  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; sendInvite: boolean }) {
+  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; sendInvite: boolean }) {
     try {
       const res = await fetch("/api/user-directory", {
         method: "POST",
@@ -1187,6 +1238,7 @@ export default function UsersClient() {
         body: JSON.stringify({
           name: data.name, email: data.email, password: data.password,
           role: data.role, dashboardUrl: data.dashboardUrl,
+          products: data.products,
         }),
       });
       const out = await res.json();
@@ -1211,6 +1263,7 @@ export default function UsersClient() {
         email: updated.email,
         role: updated.role,
         dashboardUrl: updated.dashboardUrl,
+        products: updated.products || [],
       };
       if (updated.password && updated.password.trim()) body.password = updated.password;
       const res = await fetch("/api/user-directory", {

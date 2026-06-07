@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "15:35", tag: "NEW", title: "Show all products on client dashboard for full customer view" },
       { time: "15:31", tag: "FIX", title: "Add allowOverwrite to Vercel Blob put to fix 500 error" },
       { time: "15:20", tag: "NEW", title: "Add inline edit for profile name in account settings" },
       { time: "14:31", tag: "FIX", title: "Use same logo as admin sidebar for visual consistency" },

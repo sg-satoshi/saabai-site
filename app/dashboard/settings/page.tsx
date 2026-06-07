@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
 import { loadClients } from "../../../lib/clients";
 import { listDirectoryUsers } from "../../../lib/user-directory";
-import { ALL_PRODUCTS } from "../../../lib/user-products";
+import { ALL_PRODUCTS, userProducts } from "../../../lib/user-products";
 import SaabaiAppShell from "../../components/SaabaiAppShell";
 import SettingsContent from "./SettingsContent";
 
@@ -22,11 +22,13 @@ export default async function SettingsPage() {
   let userName = "User";
   let userEmail = "";
   let isAdmin = false;
+  let userRecord: { products?: string[]; dashboardUrl?: string } | null = null;
 
   const envClient = loadClients().find((c) => c.id === clientId);
   if (envClient) {
     userName = envClient.name;
     userEmail = envClient.email;
+    userRecord = { dashboardUrl: envClient.dashboardUrl };
   } else {
     const allUsers = await listDirectoryUsers();
     const dirUser = allUsers.find((u) => u.id === clientId);
@@ -34,10 +36,12 @@ export default async function SettingsPage() {
       userName = dirUser.name;
       userEmail = dirUser.email;
       isAdmin = dirUser.role === "admin";
+      userRecord = dirUser;
     }
   }
 
-  const productInfos = Object.values(ALL_PRODUCTS);
+  const productIds = userRecord ? userProducts(userRecord) : [];
+  const productInfos = productIds.map((id) => ALL_PRODUCTS[id]);
 
   return (
     <SaabaiAppShell

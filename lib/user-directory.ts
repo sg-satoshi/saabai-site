@@ -1,4 +1,5 @@
 import { getRedis } from "./redis";
+import type { ProductId } from "./user-products";
 
 export interface DirectoryUser {
   id: string;
@@ -7,6 +8,7 @@ export interface DirectoryUser {
   password: string;
   role: "admin" | "user";
   dashboardUrl: string;
+  products?: ProductId[];
   approvedAt: string;
   createdAt: string;
 }

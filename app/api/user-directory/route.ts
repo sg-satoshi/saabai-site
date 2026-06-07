@@ -27,7 +27,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard" } = body;
+    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products } = body;
 
     if (!name || !email || !password) {
       return Response.json({ error: "Name, email, and password required" }, { status: 400 });
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       password,
       role,
       dashboardUrl,
+      ...(Array.isArray(products) ? { products } : {}),
       approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { originalEmail, name, email, password, role, dashboardUrl } = body;
+    const { originalEmail, name, email, password, role, dashboardUrl, products } = body;
     if (!originalEmail) return Response.json({ error: "originalEmail required" }, { status: 400 });
 
     const existing = await getDirectoryUser(originalEmail);
@@ -73,6 +74,7 @@ export async function PATCH(req: NextRequest) {
       email: newEmail,
       role: role ?? existing.role,
       dashboardUrl: dashboardUrl ?? existing.dashboardUrl,
+      ...(Array.isArray(products) ? { products } : {}),
       ...(password ? { password } : {}),
     };
 
