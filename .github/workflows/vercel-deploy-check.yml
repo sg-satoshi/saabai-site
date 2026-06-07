@@ -10,4 +10,44 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - run: echo "hello world"
+      - name: Poll Vercel deployment status
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_ACCESS_TOKEN }}
+        run: |
+          PROJECT_ID="${VERCEL_PROJECT_ID:-prj_1p5i2LakOMkQJaSDAYd8Y1N3k3Ci}"
+          TEAM_ID="${VERCEL_TEAM_ID:-team_wJsriYxqNXFGvqb3vyolvWJT}"
+
+          echo "Project: ${PROJECT_ID}"
+
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_ACCESS_TOKEN secret not set"
+            exit 1
+          fi
+
+          POLL_URL="https://api.vercel.com/v6/deployments?projectId=${PROJECT_ID}&teamId=${TEAM_ID}&limit=1&target=production"
+          AUTH="Authorization: Bearer ${VERCEL_TOKEN}"
+
+          for i in $(seq 1 24); do
+            RESPONSE=$(curl -s "$POLL_URL" -H "$AUTH")
+            STATE=$(echo "$RESPONSE" | jq -r '.deployments[0].state // "NO_DEPLOYMENT"')
+            URL=$(echo "$RESPONSE" | jq -r '.deployments[0].url // "n/a"')
+            SHA=$(echo "$RESPONSE" | jq -r '.deployments[0].meta.githubCommitSha // ""' | cut -c1-8)
+
+            echo "Attempt $i: State=$STATE URL=$URL Commit=$SHA"
+
+            if [ "$STATE" = "READY" ]; then
+              exit 0
+            fi
+            if [ "$STATE" = "ERROR" ]; then
+              echo "::error::DEPLOYMENT FAILED: https://$URL"
+              exit 1
+            fi
+            if [ "$STATE" = "CANCELED" ]; then
+              echo "::warning::Deployment cancelled"
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "::error::Timed out waiting (last state: $STATE)"
+          exit 1
