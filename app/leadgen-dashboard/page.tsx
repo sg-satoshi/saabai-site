@@ -77,7 +77,7 @@ export default async function LeadGenDashboard() {
           <CustomizeForm 
             initialBusinessName={client.businessName} 
             onUpdate={async (newName) => {
-              'use server';
+              // Server-side update — will migrate to API route
               client.businessName = newName;
               client.slug = generateSlug(newName);
               await saveLeadGenClient(client);
