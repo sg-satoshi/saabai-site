@@ -90,12 +90,36 @@ export default async function RexDashboardPage() {
 
   const productInfos = userProducts.map((id) => ALL_PRODUCTS[id]);
 
-  // Fetch Rex dashboard data
-  const [stats, orders, leadTs] = await Promise.all([
-    fetchRexStats(),
-    fetchRecentOrders(365),
-    fetchLeadTimestamps(),
-  ]);
+  // Fetch Rex dashboard data with a timeout to prevent hanging
+  const TIMEOUT_MS = 10_000; // 10 seconds max
+
+  async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+      p,
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
+    ]);
+  }
+
+  let stats: Awaited<ReturnType<typeof fetchRexStats>>;
+  let orders: Awaited<ReturnType<typeof fetchRecentOrders>>;
+  let leadTs: Awaited<ReturnType<typeof fetchLeadTimestamps>>;
+
+  try {
+    [stats, orders, leadTs] = await withTimeout(
+      Promise.all([
+        fetchRexStats(),
+        fetchRecentOrders(365),
+        fetchLeadTimestamps(),
+      ]),
+      TIMEOUT_MS
+    );
+  } catch {
+    // If data fetch times out, render with empty data
+    const { buildEmptyRexStats } = await import("./empty-fallback");
+    stats = buildEmptyRexStats();
+    orders = [];
+    leadTs = { byEmailHash: {}, byName: {}, byWooCustomerId: {} };
+  }
 
   const emailTsMap = { ...leadTs.byEmailHash };
   const nameTsMap  = { ...leadTs.byName };
