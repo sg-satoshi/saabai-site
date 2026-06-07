@@ -17,7 +17,7 @@ export default async function LoginPage({
   // Skip login if already authenticated
   if (token) {
     const session = await verifySessionToken(token);
-    if (session) redirect(params.redirect ?? "/rex-dashboard");
+    if (session) redirect(params.redirect ?? "/dashboard");
   }
 
   const isInvalid  = params.error === "invalid";
