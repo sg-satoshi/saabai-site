@@ -137,7 +137,7 @@ export default function LeadGenPage() {
 
         <div className="grid md:grid-cols-2 gap-12 items-start max-w-4xl mx-auto">
           <div className="bg-saabai-card rounded-2xl border border-saabai-border p-8">
-            <h3 className="text-lg font-semibold mb-4">Try it right now</h3>
+            <h3 className="text-lg font-semibold mb-4">Try it right now →</h3>
             <p className="text-sm text-saabai-text-dim mb-6 leading-relaxed">
               Click the chat button and say something like:
             </p>
