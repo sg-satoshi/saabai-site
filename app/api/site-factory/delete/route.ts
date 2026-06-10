@@ -1,10 +1,21 @@
 import { NextRequest } from "next/server";
 import { list, del } from "@vercel/blob";
 import { deleteSite, listSites } from "../../../../lib/site-registry";
+import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
+const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
+
 export async function DELETE(req: NextRequest) {
+  // Defense-in-depth: middleware gates this, but it permanently deletes a
+  // client's site, so verify the admin session here too.
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  const session = token ? await verifySessionToken(token) : null;
+  if (session?.clientId !== ADMIN_ID) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const slug = new URL(req.url).searchParams.get("slug");
   if (!slug) return Response.json({ error: "slug required" }, { status: 400 });
 
