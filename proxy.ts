@@ -35,6 +35,8 @@ const PUBLIC_API = [
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
   "/api/portal/login",
+  "/api/portal/auth",        // magic-link handler — sets the session cookie
+  "/api/rex-dashboard-auth", // dashboard password login — issues the cookie
   // Public chat widgets (embedded on client + marketing sites)
   "/api/chat",
   "/api/pete-chat",
@@ -43,6 +45,10 @@ const PUBLIC_API = [
   "/api/nextinvestment-chat",
   "/api/tributum-chat",
   "/api/leadgen/chat",
+  // Public Lex tools on the /lex page (no session check in handlers today)
+  "/api/lex-extract",
+  "/api/lex-send",
+  "/api/lex-compare",
   // Public lead / contact capture
   "/api/rex-leads",
   "/api/lex-leads",
@@ -60,8 +66,11 @@ const PUBLIC_API = [
   "/api/rex-cart",
   "/api/rex-pay",
   "/api/leadgen/checkout",
+  "/api/leadgen/webhook",    // Stripe webhook (verifies its own signature)
   "/api/stripe",
   "/api/webhooks",
+  // Write-only telemetry beacon fired from public pages
+  "/api/analytics",
   // Widget media / embeds
   "/api/tts",
   "/api/heygen-token",
@@ -100,6 +109,7 @@ const ADMIN_API = [
   "/api/rex-woo-backfill",
   "/api/rex-price-test",
   "/api/rex-pipedrive-sync",
+  "/api/rex-analytics",
   "/api/deploy",
   "/api/imagine",
   "/api/subscribers",
@@ -110,10 +120,19 @@ function matches(pathname: string, prefixes: string[]): boolean {
 }
 
 async function getSession(req: NextRequest): Promise<{ clientId: string } | null> {
+  // Primary: Saabai admin/client session (clientId can equal SAABAI_ADMIN_ID).
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (token) {
     const session = await verifySessionToken(token);
     if (session) return session;
+  }
+  // Portal session (law-firm clients via magic link). Never admin — the
+  // clientId is namespaced so it can't match SAABAI_ADMIN_ID. Portal/Lex
+  // routes still do their own per-user checks on top of this.
+  const portal = req.cookies.get("portal_session")?.value;
+  if (portal) {
+    const s = verifySession(portal);
+    if (s?.email) return { clientId: `portal:${s.email}` };
   }
   // Legacy rex-dashboard cookie maps to a non-admin session.
   const legacy = req.cookies.get("rex_dash_auth")?.value;
