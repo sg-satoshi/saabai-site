@@ -10,6 +10,8 @@ import { getLexClients } from "../../../../lib/lex-config";
 import { listSites } from "../../../../lib/site-registry";
 import { loadClients } from "../../../../lib/clients";
 import { listClients as listLeadGenClients } from "../../../../lib/leadgen-config";
+import { listEngagements } from "../../../../lib/audit-store";
+import { AUDIT_STATUS_LABELS } from "../../../../lib/audit-types";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -21,7 +23,7 @@ export interface UnifiedCustomer {
   id: string;
   name: string;
   email: string;
-  type: "lex" | "site-factory" | "stripe" | "portal" | "leadgen";
+  type: "lex" | "site-factory" | "stripe" | "portal" | "leadgen" | "audit";
   project: string;
   status: string;
   revenue: number; // cents
@@ -204,6 +206,37 @@ export async function GET() {
           phone: c.phone,
           tier: c.subscription?.tier ?? "",
           description: c.description,
+        },
+      });
+    }
+  } catch { /* skip */ }
+
+  // 6. AI Audit engagements
+  try {
+    const AUDIT_PRICE_CENTS: Record<string, number> = {
+      essential: 350000,
+      professional: 750000,
+      enterprise: 1500000,
+    };
+    const engagements = await listEngagements();
+    for (const e of engagements) {
+      customers.push({
+        id: `audit_${e.id}`,
+        name: e.firmName,
+        email: e.contactEmail,
+        type: "audit",
+        project: "AI Audit",
+        status: AUDIT_STATUS_LABELS[e.status] ?? e.status,
+        revenue: e.status === "closed" ? 0 : AUDIT_PRICE_CENTS[e.tier] ?? 0,
+        mrr: 0,
+        createdAt: new Date(e.createdAt).getTime(),
+        detailUrl: `/saabai-admin/audits/${e.id}`,
+        metadata: {
+          tier: e.tier,
+          firmType: e.firmType,
+          contactName: e.contactName,
+          factFindComplete: Boolean(e.factFindCompletedAt),
+          reportVersions: e.reports?.length ?? 0,
         },
       });
     }

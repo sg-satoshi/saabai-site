@@ -115,6 +115,15 @@ export interface AuditNote {
   createdAt: string;
 }
 
+export interface AuditReport {
+  id: string;
+  version: number;
+  filename: string;
+  url: string; // Vercel Blob URL (unguessable)
+  generatedAt: string;
+  deliveredAt?: string;
+}
+
 export interface AuditEngagement {
   id: string;
   createdAt: string;
@@ -147,6 +156,7 @@ export interface AuditEngagement {
   responses: Record<string, FactFindResponse>;
 
   assessment?: AuditAssessment;
+  reports?: AuditReport[];
   notes: AuditNote[];
 
   stripeRef?: string;

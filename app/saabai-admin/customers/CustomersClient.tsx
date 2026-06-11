@@ -36,6 +36,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
   stripe:         { label: "Stripe",       color: C.green,  bg: C.greenBg },
   portal:         { label: "Portal",       color: C.orange, bg: C.orangeBg },
   leadgen:        { label: "LeadGen",      color: C.teal,   bg: C.tealBg },
+  audit:          { label: "AI Audit",     color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
 };
 
 const PROJECT_META: Record<string, { color: string; bg: string }> = {
@@ -44,6 +45,7 @@ const PROJECT_META: Record<string, { color: string; bg: string }> = {
   "Rex":          { color: C.orange, bg: C.orangeBg },
   "Portal":       { color: C.teal,   bg: C.tealBg },
   "LeadGen":      { color: C.green,  bg: C.greenBg },
+  "AI Audit":     { color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
 };
 
 interface Customer {

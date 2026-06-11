@@ -56,7 +56,7 @@ const STATUS_LABELS: Record<string, string> = {
   closed: "Closed",
 };
 
-type Tab = "overview" | "factfind" | "assessment" | "notes";
+type Tab = "overview" | "factfind" | "assessment" | "reports" | "notes";
 
 export default function EngagementClient({ id }: { id: string }) {
   const [eng, setEng] = useState<AuditEngagement | null>(null);
@@ -138,6 +138,44 @@ export default function EngagementClient({ id }: { id: string }) {
         showFlash("Assessment generated — review and edit before delivery.");
       } else {
         showFlash(data.error ?? "Generation failed.");
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function generateReport() {
+    setBusy("report");
+    try {
+      const res = await fetch(`/api/audit/engagements/${id}/report`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEng(data.engagement);
+        showFlash(`Report v${data.report.version} generated.`);
+      } else {
+        showFlash(data.error ?? "Report generation failed.");
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function markDelivered(reportId: string) {
+    setBusy("deliver");
+    try {
+      const res = await fetch(`/api/audit/engagements/${id}/report`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEng(data.engagement);
+        showFlash("Marked delivered — engagement status updated.");
+      } else {
+        showFlash(data.error ?? "Failed.");
       }
     } finally {
       setBusy(null);
@@ -267,6 +305,7 @@ export default function EngagementClient({ id }: { id: string }) {
               ["overview", "Overview"],
               ["factfind", `Fact-Find (${answeredCount})`],
               ["assessment", "Assessment"],
+              ["reports", `Reports (${eng.reports?.length ?? 0})`],
               ["notes", `Notes (${eng.notes?.length ?? 0})`],
             ] as [Tab, string][]
           ).map(([t, label]) => (
@@ -464,6 +503,65 @@ export default function EngagementClient({ id }: { id: string }) {
               <div style={{ ...card, textAlign: "center", color: C.muted, fontSize: 13.5 }}>
                 No assessment yet. Complete the fact-find (or interview), then generate.
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Reports ── */}
+        {tab === "reports" && (
+          <div style={{ display: "grid", gap: 16 }}>
+            <div style={card}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 14.5, color: C.text }}>Audit Report</h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 12.5, color: C.muted }}>
+                    Generates a branded .docx draft from the profile + assessment. Polish in Word, then deliver.
+                  </p>
+                </div>
+                <button onClick={generateReport} disabled={busy === "report"} style={btn}>
+                  {busy === "report" ? "Generating…" : "Generate report draft"}
+                </button>
+              </div>
+              {!eng.assessment && (
+                <p style={{ margin: "12px 0 0", fontSize: 12.5, color: C.gold }}>
+                  Tip: generate the assessment first — the report pulls its summary, opportunities and roadmap from it.
+                </p>
+              )}
+            </div>
+
+            {(eng.reports ?? []).length === 0 ? (
+              <div style={{ ...card, textAlign: "center", color: C.muted, fontSize: 13.5 }}>
+                No report versions yet.
+              </div>
+            ) : (
+              (eng.reports ?? []).map((r) => (
+                <div key={r.id} style={{ ...card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text }}>
+                      v{r.version} — {r.filename}
+                      {r.deliveredAt && (
+                        <span style={{ marginLeft: 8, background: C.greenBg, color: C.green, padding: "2px 9px", borderRadius: 99, fontSize: 11.5, fontWeight: 600 }}>
+                          Delivered
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
+                      Generated {new Date(r.generatedAt).toLocaleString("en-AU")}
+                      {r.deliveredAt && ` · delivered ${new Date(r.deliveredAt).toLocaleString("en-AU")}`}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <a href={r.url} download={r.filename} style={{ ...btnGhost, textDecoration: "none", display: "inline-block" }}>
+                      Download .docx
+                    </a>
+                    {!r.deliveredAt && (
+                      <button onClick={() => markDelivered(r.id)} disabled={busy === "deliver"} style={btn}>
+                        Mark delivered
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}

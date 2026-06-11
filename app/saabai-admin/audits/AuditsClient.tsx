@@ -40,6 +40,29 @@ const TIER_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
+const TIER_PRICE: Record<string, number> = {
+  essential: 3500,
+  professional: 7500,
+  enterprise: 15000,
+};
+
+const TIER_BADGE: Record<string, { color: string; bg: string }> = {
+  essential: { color: C.teal, bg: C.tealBg },
+  professional: { color: C.gold, bg: C.goldBg },
+  enterprise: { color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
+};
+
+// Pipeline order for the stage progress indicator
+const STAGE_ORDER = [
+  "purchased",
+  "questionnaire_sent",
+  "factfind_complete",
+  "discovery",
+  "assessment",
+  "report",
+  "delivered",
+];
+
 interface Engagement {
   id: string;
   createdAt: string;
@@ -50,6 +73,8 @@ interface Engagement {
   contactName: string;
   contactEmail: string;
   factFindCompletedAt?: string;
+  responses?: Record<string, unknown>;
+  reports?: { deliveredAt?: string }[];
 }
 
 export default function AuditsClient() {
@@ -143,6 +168,34 @@ export default function AuditsClient() {
           </button>
         </div>
 
+        {/* Pipeline stats */}
+        {!loading && engagements.length > 0 && (() => {
+          const active = engagements.filter((e) => !["delivered", "closed"].includes(e.status));
+          const awaiting = engagements.filter((e) => ["purchased", "questionnaire_sent"].includes(e.status));
+          const inDelivery = engagements.filter((e) => ["factfind_complete", "discovery", "assessment", "report"].includes(e.status));
+          const delivered = engagements.filter((e) => e.status === "delivered");
+          const pipelineValue = active.reduce((sum, e) => sum + (TIER_PRICE[e.tier] ?? 0), 0);
+          const stats = [
+            { label: "Active engagements", value: String(active.length), accent: C.text },
+            { label: "Awaiting fact-find", value: String(awaiting.length), accent: C.blue },
+            { label: "In delivery", value: String(inDelivery.length), accent: C.gold },
+            { label: "Delivered", value: String(delivered.length), accent: C.green },
+            { label: "Active pipeline", value: `$${pipelineValue.toLocaleString()}`, accent: C.text },
+          ];
+          return (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 20 }}>
+              {stats.map((s) => (
+                <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: s.accent }}>{s.value}</div>
+                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {showCreate && (
           <div
             style={{
@@ -232,7 +285,7 @@ export default function AuditsClient() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  {["Firm", "Tier", "Contact", "Status", "Created"].map((h) => (
+                  {["Firm", "Tier", "Contact", "Status", "Progress", "Created"].map((h) => (
                     <th
                       key={h}
                       style={{ textAlign: "left", padding: "12px 16px", color: C.muted, fontWeight: 600, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.4 }}
@@ -245,17 +298,33 @@ export default function AuditsClient() {
               <tbody>
                 {engagements.map((e) => {
                   const meta = STATUS_META[e.status] ?? STATUS_META.purchased;
+                  const tierBadge = TIER_BADGE[e.tier] ?? TIER_BADGE.essential;
+                  const stageIdx = STAGE_ORDER.indexOf(e.status);
+                  const answerCount = Object.keys(e.responses ?? {}).length;
                   return (
                     <tr
                       key={e.id}
                       onClick={() => (window.location.href = `/saabai-admin/audits/${e.id}`)}
                       style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
                     >
-                      <td style={{ padding: "13px 16px", fontWeight: 600, color: C.text }}>{e.firmName}</td>
-                      <td style={{ padding: "13px 16px", color: C.text }}>{TIER_LABELS[e.tier] ?? e.tier}</td>
+                      <td style={{ padding: "13px 16px" }}>
+                        <div style={{ fontWeight: 600, color: C.text }}>{e.firmName}</div>
+                        <div style={{ fontSize: 11.5, color: C.muted, textTransform: "capitalize" }}>
+                          {e.firmType.replace("-", " ")}
+                          {answerCount > 0 && ` · ${answerCount} fact-find answers`}
+                        </div>
+                      </td>
+                      <td style={{ padding: "13px 16px" }}>
+                        <span style={{ background: tierBadge.bg, color: tierBadge.color, padding: "3px 10px", borderRadius: 99, fontSize: 12, fontWeight: 600 }}>
+                          {TIER_LABELS[e.tier] ?? e.tier}
+                        </span>
+                        <div style={{ fontSize: 11.5, color: C.muted, marginTop: 4 }}>
+                          ${(TIER_PRICE[e.tier] ?? 0).toLocaleString()}
+                        </div>
+                      </td>
                       <td style={{ padding: "13px 16px", color: C.text }}>
                         {e.contactName}
-                        <span style={{ color: C.muted }}> · {e.contactEmail}</span>
+                        <div style={{ fontSize: 11.5, color: C.muted }}>{e.contactEmail}</div>
                       </td>
                       <td style={{ padding: "13px 16px" }}>
                         <span
@@ -266,12 +335,39 @@ export default function AuditsClient() {
                             borderRadius: 99,
                             fontSize: 12,
                             fontWeight: 600,
+                            whiteSpace: "nowrap",
                           }}
                         >
                           {meta.label}
                         </span>
                       </td>
-                      <td style={{ padding: "13px 16px", color: C.muted }}>
+                      <td style={{ padding: "13px 16px" }}>
+                        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                          {STAGE_ORDER.map((s, i) => (
+                            <div
+                              key={s}
+                              title={STATUS_META[s]?.label ?? s}
+                              style={{
+                                width: 14,
+                                height: 5,
+                                borderRadius: 3,
+                                background:
+                                  e.status === "closed"
+                                    ? "rgba(0,0,0,0.10)"
+                                    : i <= stageIdx
+                                      ? i === STAGE_ORDER.length - 1 && e.status === "delivered"
+                                        ? C.green
+                                        : "#0e0c2e"
+                                      : "rgba(0,0,0,0.08)",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: C.muted, marginTop: 4 }}>
+                          {e.status === "closed" ? "closed" : `stage ${Math.max(stageIdx + 1, 1)} of ${STAGE_ORDER.length}`}
+                        </div>
+                      </td>
+                      <td style={{ padding: "13px 16px", color: C.muted, whiteSpace: "nowrap" }}>
                         {new Date(e.createdAt).toLocaleDateString("en-AU")}
                       </td>
                     </tr>
