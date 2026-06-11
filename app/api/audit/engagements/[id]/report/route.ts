@@ -9,7 +9,7 @@
 
 import { put } from "@vercel/blob";
 import { requireAdmin } from "../../../../../../lib/audit-admin";
-import { getEngagement, updateEngagement } from "../../../../../../lib/audit-store";
+import { getEngagement, logEvent, updateEngagement } from "../../../../../../lib/audit-store";
 import { buildAuditReportDocx } from "../../../../../../lib/audit-report";
 import { AuditReport, newId } from "../../../../../../lib/audit-types";
 
@@ -49,13 +49,19 @@ export async function POST(_req: Request, { params }: Params) {
     generatedAt: new Date().toISOString(),
   };
 
-  const updated = await updateEngagement(id, {
+  await updateEngagement(id, {
     reports: [report, ...(engagement.reports ?? [])],
     status:
       engagement.status === "assessment" || engagement.status === "discovery"
         ? "report"
         : engagement.status,
   });
+  const updated = await logEvent(
+    id,
+    "report_generated",
+    `Report v${version} generated`,
+    filename
+  );
 
   return Response.json({ engagement: updated, report });
 }
@@ -84,10 +90,17 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!reports.some((r) => r.id === body.reportId))
     return Response.json({ error: "Report not found" }, { status: 404 });
 
-  const updated = await updateEngagement(id, {
+  const deliveredReport = reports.find((r) => r.id === body.reportId);
+  await updateEngagement(id, {
     reports,
     status: "delivered",
   });
+  const updated = await logEvent(
+    id,
+    "report_delivered",
+    `Report v${deliveredReport?.version ?? "?"} delivered to client`,
+    deliveredReport?.filename
+  );
 
   return Response.json({ engagement: updated });
 }

@@ -8,7 +8,7 @@
 import { generateText } from "ai";
 import { getPremiumModel } from "../../../../../../lib/chat-config";
 import { requireAdmin } from "../../../../../../lib/audit-admin";
-import { getEngagement, updateEngagement } from "../../../../../../lib/audit-store";
+import { getEngagement, logEvent, updateEngagement } from "../../../../../../lib/audit-store";
 import { questionsForTier } from "../../../../../../lib/audit-factfind";
 import { matrixAsPromptContext } from "../../../../../../lib/audit-capability-matrix";
 import {
@@ -156,13 +156,19 @@ Respond with ONLY valid JSON (no markdown fences) in this exact shape:
     modelNotes: "AI-generated draft — review and edit before client delivery.",
   };
 
-  const updated = await updateEngagement(id, {
+  await updateEngagement(id, {
     assessment,
     status:
       engagement.status === "factfind_complete" || engagement.status === "discovery"
         ? "assessment"
         : engagement.status,
   });
+  const updated = await logEvent(
+    id,
+    "assessment_generated",
+    "AI assessment generated",
+    `${opportunities.length} opportunities`
+  );
 
   return Response.json({ engagement: updated });
 }

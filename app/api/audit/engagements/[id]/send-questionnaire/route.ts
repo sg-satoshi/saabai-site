@@ -5,7 +5,7 @@
 
 import { Resend } from "resend";
 import { requireAdmin } from "../../../../../../lib/audit-admin";
-import { getEngagement, updateEngagement } from "../../../../../../lib/audit-store";
+import { getEngagement, logEvent, updateEngagement } from "../../../../../../lib/audit-store";
 import { AUDIT_TIER_LABELS } from "../../../../../../lib/audit-types";
 
 export const runtime = "nodejs";
@@ -62,10 +62,16 @@ export async function POST(_req: Request, { params }: Params) {
   if (error)
     return Response.json({ error: `Email failed: ${error.message}` }, { status: 502 });
 
-  const updated = await updateEngagement(id, {
+  await updateEngagement(id, {
     factFindSentAt: new Date().toISOString(),
     status: engagement.status === "purchased" ? "questionnaire_sent" : engagement.status,
   });
+  const updated = await logEvent(
+    id,
+    "questionnaire_sent",
+    "Questionnaire emailed to client",
+    engagement.contactEmail
+  );
 
   return Response.json({ engagement: updated, link });
 }

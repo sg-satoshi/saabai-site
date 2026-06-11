@@ -9,6 +9,8 @@
 import { getRedis } from "./redis";
 import {
   AuditEngagement,
+  AuditEvent,
+  AuditEventType,
   AuditNote,
   FactFindResponse,
   newId,
@@ -58,6 +60,15 @@ export async function createEngagement(
     goals: [],
     responses: {},
     notes: [],
+    timeline: [
+      {
+        id: newId("evt"),
+        type: "created",
+        label: "Engagement created",
+        detail: `${input.tier} tier`,
+        at: now,
+      },
+    ],
     factFindToken: generateFactFindToken(),
     ...input,
   };
@@ -132,7 +143,28 @@ export async function deleteEngagement(id: string): Promise<boolean> {
   return true;
 }
 
-/** Merge fact-find responses (partial saves supported). */
+/** Append a timeline event to an engagement (most recent first). */
+export async function logEvent(
+  id: string,
+  type: AuditEventType,
+  label: string,
+  detail?: string
+): Promise<AuditEngagement | null> {
+  const existing = await getEngagement(id);
+  if (!existing) return null;
+  const event: AuditEvent = {
+    id: newId("evt"),
+    type,
+    label,
+    detail,
+    at: new Date().toISOString(),
+  };
+  return updateEngagement(id, {
+    timeline: [event, ...(existing.timeline ?? [])],
+  });
+}
+
+/** Merge fact-find responses (partial saves supported). Auto-logs timeline. */
 export async function saveResponses(
   id: string,
   responses: FactFindResponse[],
@@ -145,15 +177,53 @@ export async function saveResponses(
   for (const r of responses) merged[r.questionId] = r;
 
   const patch: Partial<AuditEngagement> = { responses: merged };
+
+  // Timeline auto-events
+  const events: AuditEvent[] = [];
+  const now = new Date().toISOString();
+  const hadClientResponses = Object.values(existing.responses).some(
+    (r) => r.mode === "client"
+  );
+  const savingClient = responses.some((r) => r.mode === "client");
+  const savingInterview = responses.some((r) => r.mode === "interview");
+
+  if (savingClient && !hadClientResponses && responses.length > 0) {
+    events.push({
+      id: newId("evt"),
+      type: "factfind_started",
+      label: "Client started the questionnaire",
+      at: now,
+    });
+  }
+  if (savingInterview && responses.length > 0) {
+    events.push({
+      id: newId("evt"),
+      type: "interview_updated",
+      label: "Discovery interview answers updated",
+      detail: `${responses.length} answer${responses.length === 1 ? "" : "s"}`,
+      at: now,
+    });
+  }
   if (options?.markComplete) {
-    patch.factFindCompletedAt = new Date().toISOString();
+    patch.factFindCompletedAt = now;
     if (
       existing.status === "purchased" ||
       existing.status === "questionnaire_sent"
     ) {
       patch.status = "factfind_complete";
     }
+    events.push({
+      id: newId("evt"),
+      type: "factfind_completed",
+      label: "Client completed the questionnaire",
+      detail: `${Object.keys(merged).length} answers`,
+      at: now,
+    });
   }
+  if (events.length > 0) {
+    patch.timeline = [...events, ...(existing.timeline ?? [])];
+  }
+
   return updateEngagement(id, patch);
 }
 

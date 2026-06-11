@@ -115,6 +115,25 @@ export interface AuditNote {
   createdAt: string;
 }
 
+export type AuditEventType =
+  | "created"
+  | "questionnaire_sent"
+  | "factfind_started"
+  | "factfind_completed"
+  | "interview_updated"
+  | "status_changed"
+  | "assessment_generated"
+  | "report_generated"
+  | "report_delivered";
+
+export interface AuditEvent {
+  id: string;
+  type: AuditEventType;
+  label: string;
+  detail?: string;
+  at: string; // ISO
+}
+
 export interface AuditReport {
   id: string;
   version: number;
@@ -157,6 +176,7 @@ export interface AuditEngagement {
 
   assessment?: AuditAssessment;
   reports?: AuditReport[];
+  timeline?: AuditEvent[];
   notes: AuditNote[];
 
   stripeRef?: string;

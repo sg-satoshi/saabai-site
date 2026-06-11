@@ -360,6 +360,61 @@ export default function EngagementClient({ id }: { id: string }) {
               <h3 style={{ margin: "0 0 12px", fontSize: 14.5, color: C.text }}>Firm Profile</h3>
               <ProfileEditor eng={eng} onSave={(p) => patch(p, "profile")} inputStyle={inputStyle} btn={btn} busy={busy === "profile"} />
             </div>
+
+            <div style={card}>
+              <h3 style={{ margin: "0 0 14px", fontSize: 14.5, color: C.text }}>Client Timeline</h3>
+              {(eng.timeline ?? []).length === 0 ? (
+                <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>
+                  No events yet — touchpoints are logged automatically (questionnaire sent, fact-find progress, sessions, assessment, report delivery).
+                </p>
+              ) : (
+                <div style={{ position: "relative", paddingLeft: 22 }}>
+                  <div style={{ position: "absolute", left: 6, top: 6, bottom: 6, width: 2, background: "rgba(0,0,0,0.07)", borderRadius: 2 }} />
+                  {(eng.timeline ?? []).map((ev) => {
+                    const dotColor =
+                      ev.type === "report_delivered" || ev.type === "factfind_completed"
+                        ? C.green
+                        : ev.type === "assessment_generated" || ev.type === "report_generated"
+                          ? C.gold
+                          : ev.type === "status_changed"
+                            ? C.blue
+                            : "#0e0c2e";
+                    return (
+                      <div key={ev.id} style={{ position: "relative", marginBottom: 16 }}>
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: -22,
+                            top: 4,
+                            width: 11,
+                            height: 11,
+                            borderRadius: "50%",
+                            background: dotColor,
+                            border: "2px solid #fff",
+                            boxShadow: "0 0 0 1px rgba(0,0,0,0.08)",
+                          }}
+                        />
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text }}>
+                          {ev.label}
+                          {ev.detail && (
+                            <span style={{ fontWeight: 400, color: C.dim }}> — {ev.detail}</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>
+                          {new Date(ev.at).toLocaleString("en-AU", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -9,10 +9,16 @@ import {
   addEngagementNote,
   deleteEngagement,
   getEngagement,
+  logEvent,
   saveResponses,
   updateEngagement,
 } from "../../../../../lib/audit-store";
-import { AuditEngagement, FactFindResponse } from "../../../../../lib/audit-types";
+import {
+  AUDIT_STATUS_LABELS,
+  AuditEngagement,
+  AuditStatus,
+  FactFindResponse,
+} from "../../../../../lib/audit-types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,9 +101,25 @@ export async function PATCH(req: Request, { params }: Params) {
   if (Object.keys(patch).length === 0)
     return Response.json({ error: "Nothing to update" }, { status: 400 });
 
-  const engagement = await updateEngagement(id, patch);
+  // Log manual status changes to the timeline
+  const before = await getEngagement(id);
+  let engagement = await updateEngagement(id, patch);
   if (!engagement)
     return Response.json({ error: "Not found" }, { status: 404 });
+
+  if (
+    before &&
+    typeof patch.status === "string" &&
+    patch.status !== before.status
+  ) {
+    engagement =
+      (await logEvent(
+        id,
+        "status_changed",
+        `Status changed to ${AUDIT_STATUS_LABELS[patch.status as AuditStatus] ?? patch.status}`,
+        `was ${AUDIT_STATUS_LABELS[before.status] ?? before.status}`
+      )) ?? engagement;
+  }
   return Response.json({ engagement });
 }
 

@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "11 Jun 2026",
     entries: [
+      { time: "00:23", tag: "NEW", title: "Audit report engine (.docx drafts in Blob), pipeline stats UI, audits in unified Customers CRM" },
       { time: "00:12", tag: "FIX", title: "Allow public access to audit fact-find API (token-gated, clients have no login)" },
       { time: "00:05", tag: "NEW", title: "AI Audit delivery system — tier-aware fact-find form, client engagement profiles, capability matrix, AI assessment generator" },
       { time: "23:55", tag: "UPDATE", title: "Changelog auto-entry Jun 11 23:32" },
