@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "11 Jun 2026",
     entries: [
+      { time: "23:32", tag: "NEW", title: "Add Jun 11 changelog entry" },
       { time: "22:03", tag: "FIX", title: "Queue/history panels showing blank posts — content was in Redis payload but frontend Post interface expected it at top level" }
     ],
   },
