@@ -60,6 +60,8 @@ const PUBLIC_API = [
   "/api/onboarding",
   // Public lead-gen tool (top of funnel)
   "/api/analyze-document",
+  // AI Audit fact-find — token-gated public questionnaire (clients have no login)
+  "/api/audit/factfind",
   // Payments (Stripe verifies its own webhook signatures)
   "/api/checkout",
   "/api/rex-checkout",
