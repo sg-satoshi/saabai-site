@@ -69,6 +69,17 @@ const NAV: {
         ),
       },
       {
+        label: "AI Audits",
+        href: "/saabai-admin/audits",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M4.5 6h3M6 4.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
         label: "Users",
         href: "/saabai-admin/users",
         icon: (
