@@ -11,6 +11,7 @@ interface Post {
   scheduledFor: string;
   sentAt?: string;
   createdAt: string;
+  imageUrl?: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -565,9 +566,19 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
   function handleUrlInput(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value;
     setUrlInput(v);
-    const trimmed = v.trim();
-    setImageUrl(trimmed || null);
     if (imageError) setImageError("");
+  }
+
+  function confirmUrlImage() {
+    const trimmed = urlInput.trim();
+    setImageUrl(trimmed || null);
+  }
+
+  function handleUrlKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      confirmUrlImage();
+    }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -946,17 +957,33 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
               )}
 
               {imageMode === "url" && (
-                <input
-                  type="url"
-                  placeholder="https://www.saabai.ai/social/ai-audit-launch.png"
-                  value={urlInput}
-                  onChange={handleUrlInput}
-                  style={{
-                    width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb",
-                    background: "#fff", color: "#111827",
-                    fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" as const,
-                  }}
-                />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    type="url"
+                    placeholder="https://www.saabai.ai/social/ai-audit-launch.png"
+                    value={urlInput}
+                    onChange={handleUrlInput}
+                    onKeyDown={handleUrlKeyDown}
+                    style={{
+                      flex: 1, padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb",
+                      background: "#fff", color: "#111827",
+                      fontSize: 13, fontFamily: "inherit", boxSizing: "border-box" as const,
+                    }}
+                  />
+                  <button
+                    onClick={confirmUrlImage}
+                    disabled={!urlInput.trim()}
+                    style={{
+                      padding: "10px 16px", borderRadius: 8, border: "none",
+                      background: urlInput.trim() ? "#0077b5" : "#e5e7eb",
+                      color: urlInput.trim() ? "#fff" : "#9ca3af",
+                      fontSize: 12, fontWeight: 700, cursor: urlInput.trim() ? "pointer" : "not-allowed",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Set URL
+                  </button>
+                </div>
               )}
 
               {imageMode === "upload" && !imageUrl && (
@@ -1090,7 +1117,14 @@ function QueuePanel({ refresh }: { refresh: number }) {
   async function load() {
     const res = await fetch("/api/linkedin/queue");
     const data = await res.json();
-    const sorted = (data.posts ?? []).sort((a: Post, b: Post) => a.scheduledFor.localeCompare(b.scheduledFor));
+    const sorted = ((data.posts ?? []) as Array<Record<string, unknown>>).map(p => ({
+      id: String(p.id ?? ""),
+      content: String((p.payload as Record<string, unknown>)?.content ?? ""),
+      scheduledFor: String(p.scheduledFor ?? ""),
+      sentAt: p.sentAt ? String(p.sentAt) : undefined,
+      createdAt: String(p.createdAt ?? ""),
+      imageUrl: String((p.payload as Record<string, unknown>)?.imageUrl ?? "") || undefined,
+    })).sort((a: Post, b: Post) => a.scheduledFor.localeCompare(b.scheduledFor));
     setPosts(sorted);
   }
 
@@ -1099,10 +1133,12 @@ function QueuePanel({ refresh }: { refresh: number }) {
   async function postNow(post: Post) {
     if (!confirm("Post to LinkedIn right now?")) return;
     try {
+      const body: Record<string, string> = { content: post.content };
+      if (post.imageUrl) body.imageUrl = post.imageUrl;
       const postRes = await fetch("/api/linkedin/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: post.content }),
+        body: JSON.stringify(body),
       });
       if (!postRes.ok) {
         const error = await postRes.json().catch(() => ({ error: postRes.statusText }));
@@ -1213,7 +1249,15 @@ function HistoryPanel({ refresh }: { refresh: number }) {
   async function load() {
     const res = await fetch("/api/linkedin/queue?sent=true");
     const data = await res.json();
-    setPosts(data.posts ?? []);
+    const mapped = ((data.posts ?? []) as Array<Record<string, unknown>>).map(p => ({
+      id: String(p.id ?? ""),
+      content: String((p.payload as Record<string, unknown>)?.content ?? ""),
+      scheduledFor: String(p.scheduledFor ?? ""),
+      sentAt: p.sentAt ? String(p.sentAt) : undefined,
+      createdAt: String(p.createdAt ?? ""),
+      imageUrl: String((p.payload as Record<string, unknown>)?.imageUrl ?? "") || undefined,
+    }));
+    setPosts(mapped);
   }
 
   useEffect(() => { load(); }, [refresh]);
