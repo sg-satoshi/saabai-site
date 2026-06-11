@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "11 Jun 2026",
+    entries: [
+      { time: "22:03", tag: "FIX", title: "Queue/history panels showing blank posts — content was in Redis payload but frontend Post interface expected it at top level" }
+    ],
+  },
+  {
     date: "7 Jun 2026",
     entries: [
       { time: "18:16", tag: "NEW", title: "Rich profile page with 20+ data fields stored in Redis" },
