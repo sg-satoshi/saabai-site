@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "12 Jun 2026",
+    entries: [
+      { time: "18:26", tag: "NEW", title: "Add 3 sales pages — offers (three-tier pricing), audit (efficiency audit with guarantee), rex-plastics-online case study" }
+    ],
+  },
+  {
     date: "11 Jun 2026",
     entries: [
       { time: "00:28", tag: "NEW", title: "Client timeline — auto-logged touchpoints (questionnaire, fact-find, interview, status, assessment, report delivery) on every audit engagement" },
