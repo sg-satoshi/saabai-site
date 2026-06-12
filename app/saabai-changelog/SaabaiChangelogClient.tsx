@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "11 Jun 2026",
     entries: [
+      { time: "00:28", tag: "NEW", title: "Client timeline — auto-logged touchpoints (questionnaire, fact-find, interview, status, assessment, report delivery) on every audit engagement" },
       { time: "00:23", tag: "NEW", title: "Audit report engine (.docx drafts in Blob), pipeline stats UI, audits in unified Customers CRM" },
       { time: "00:12", tag: "FIX", title: "Allow public access to audit fact-find API (token-gated, clients have no login)" },
       { time: "00:05", tag: "NEW", title: "AI Audit delivery system — tier-aware fact-find form, client engagement profiles, capability matrix, AI assessment generator" },
