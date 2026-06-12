@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "13 Jun 2026",
+    entries: [
+      { time: "07:30", tag: "NEW", title: "Add Saabai CRM backend - Redis CRUD for leads + API routes" }
+    ],
+  },
+  {
     date: "12 Jun 2026",
     entries: [
       { time: "18:26", tag: "NEW", title: "Add 3 sales pages — offers (three-tier pricing), audit (efficiency audit with guarantee), rex-plastics-online case study" }

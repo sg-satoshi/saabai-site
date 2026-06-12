@@ -80,6 +80,15 @@ const NAV: {
         ),
       },
       {
+        label: "CRM",
+        href: "/saabai-admin/crm",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/>
+          </svg>
+        ),
+      },
+      {
         label: "Users",
         href: "/saabai-admin/users",
         icon: (
