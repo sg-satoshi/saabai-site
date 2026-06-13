@@ -361,11 +361,12 @@ function Sidebar({ activePath, collapsed, onToggle }: {
 
       {/* Profile footer */}
       <div style={{
-        padding: collapsed ? "12px 8px" : "12px 14px",
+        padding: collapsed ? "10px 8px" : "12px 14px",
         borderTop: `1px solid ${C.border}`,
         display: "flex",
+        flexDirection: collapsed ? "column" : "row",
         alignItems: "center",
-        gap: collapsed ? 0 : 10,
+        gap: collapsed ? 6 : 10,
         justifyContent: collapsed ? "center" : "flex-start",
         flexShrink: 0,
       }}>
@@ -383,11 +384,24 @@ function Sidebar({ activePath, collapsed, onToggle }: {
               <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Saabai Admin</p>
               <p style={{ margin: 0, fontSize: 10, color: C.muted }}>hello@saabai.ai</p>
             </div>
-            <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
-              <button type="submit" title="Sign out" style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 16, padding: "4px", lineHeight: 1, borderRadius: 4 }}>↩</button>
-            </form>
           </>
         )}
+        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
+          <button
+            type="submit"
+            title="Sign out"
+            style={{
+              background: "none", border: collapsed ? `1px solid ${C.border}` : "none",
+              cursor: "pointer", color: C.muted,
+              fontSize: collapsed ? 11 : 16,
+              padding: collapsed ? "6px 4px" : "4px",
+              lineHeight: 1, borderRadius: 6,
+              display: "flex", alignItems: "center", gap: 4,
+            }}
+          >
+            {collapsed ? "Logout" : "↩"}
+          </button>
+        </form>
       </div>
     </div>
   );

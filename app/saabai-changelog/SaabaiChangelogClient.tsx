@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "13 Jun 2026",
     entries: [
+      { time: "07:36", tag: "NEW", title: "Add CRM frontend UI with kanban pipeline, lead detail panel, new lead form, interaction logging" },
       { time: "07:30", tag: "NEW", title: "Add Saabai CRM backend - Redis CRUD for leads + API routes" }
     ],
   },
