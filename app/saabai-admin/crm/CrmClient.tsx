@@ -984,7 +984,7 @@ export default function CrmClient() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: "24px 28px", minHeight: "100vh", background: C.bg }}>
+    <div style={{ padding: "24px 28px" }}>
       {/* Top bar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>

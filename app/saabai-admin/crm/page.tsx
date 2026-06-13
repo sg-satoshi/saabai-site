@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
 import CrmClient from "./CrmClient";
+import AdminShell from "../AdminSidebar";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "CRM — Saabai" };
@@ -17,5 +18,9 @@ export default async function CrmPage() {
   const isAdmin = await isAdminSession(session.clientId);
   if (!isAdmin) redirect("/saabai-admin");
 
-  return <CrmClient />;
+  return (
+    <AdminShell activePath="/saabai-admin/crm">
+      <CrmClient />
+    </AdminShell>
+  );
 }
