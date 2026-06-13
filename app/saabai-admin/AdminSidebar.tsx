@@ -399,7 +399,7 @@ function Sidebar({ activePath, collapsed, onToggle }: {
               display: "flex", alignItems: "center", gap: 4,
             }}
           >
-            {collapsed ? "Logout" : "↩"}
+            {collapsed ? "Logout" : "Sign out"}
           </button>
         </form>
       </div>
