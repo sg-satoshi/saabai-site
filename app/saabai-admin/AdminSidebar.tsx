@@ -393,8 +393,8 @@ function Sidebar({ activePath, collapsed, onToggle }: {
             style={{
               background: "none", border: collapsed ? `1px solid ${C.border}` : "none",
               cursor: "pointer", color: C.muted,
-              fontSize: collapsed ? 11 : 16,
-              padding: collapsed ? "6px 4px" : "4px",
+              fontSize: collapsed ? 11 : 10,
+              padding: collapsed ? "6px 4px" : "2px 4px",
               lineHeight: 1, borderRadius: 6,
               display: "flex", alignItems: "center", gap: 4,
             }}

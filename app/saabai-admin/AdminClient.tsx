@@ -276,7 +276,7 @@ function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: strin
           <button
             type="submit"
             title="Sign out"
-            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 14, padding: "2px 4px", lineHeight: 1 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 11, padding: "2px 4px", lineHeight: 1 }}
           >
             Sign out
           </button>
