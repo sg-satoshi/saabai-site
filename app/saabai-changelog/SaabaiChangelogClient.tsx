@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "15 Jun 2026",
+    entries: [
+      { time: "23:19", tag: "NEW", title: "Auto-migrate legacy sites to Blob+Redis on editor open" }
+    ],
+  },
+  {
     date: "13 Jun 2026",
     entries: [
       { time: "16:17", tag: "UI", title: "Reduce Sign out font size to match email/role text" },
