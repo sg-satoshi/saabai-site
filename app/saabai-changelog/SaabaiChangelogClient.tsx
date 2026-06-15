@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "01:42", tag: "NEW", title: "Comprehensive SEO overhaul for nicomoretti.au" },
       { time: "01:30", tag: "FIX", title: "Use absolute image URLs for Nico Moretti site" },
       { time: "00:59", tag: "NEW", title: "Per-slug lead notification email via env var" },
       { time: "00:41", tag: "NEW", title: "Wire Nico Moretti inquiry form + lead email notifications" },
