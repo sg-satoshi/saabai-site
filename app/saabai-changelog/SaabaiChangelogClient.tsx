@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "00:41", tag: "NEW", title: "Wire Nico Moretti inquiry form + lead email notifications" },
       { time: "00:19", tag: "NEW", title: "Add Testimonials nav link to Nico Moretti site" },
       { time: "00:13", tag: "NEW", title: "Add 5-star rotating reviews carousel to Nico Moretti site" },
       { time: "00:02", tag: "NEW", title: "Update Nico Moretti About section portrait with new studio shot" }

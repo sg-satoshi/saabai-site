@@ -100,8 +100,10 @@ export async function POST(req: Request) {
     // Resolve notification address — non-blocking
     (async () => {
       try {
+        const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
         const site = await getSiteBySlug(siteSlug);
         const toEmail =
+          process.env[`LEAD_NOTIFY_EMAIL_${slugKey}`] ??
           site?.business?.email ??
           process.env.LEAD_NOTIFY_EMAIL ??
           "shanegoldberg@pm.me";
