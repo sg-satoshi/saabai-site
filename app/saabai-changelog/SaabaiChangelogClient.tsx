@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "16 Jun 2026",
+    entries: [
+      { time: "00:02", tag: "NEW", title: "Update Nico Moretti About section portrait with new studio shot" }
+    ],
+  },
+  {
     date: "15 Jun 2026",
     entries: [
       { time: "23:46", tag: "NEW", title: "Update Nico Moretti hero image with new photo" },

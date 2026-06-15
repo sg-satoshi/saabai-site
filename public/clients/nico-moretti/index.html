@@ -307,6 +307,153 @@
 </div>
 </div>
 </section>
+
+<!-- Reviews Carousel -->
+<section id="reviews" style="padding:120px 0;background:#101415;border-top:1px solid rgba(242,202,80,0.08);overflow:hidden">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px">
+    <div style="text-align:center;margin-bottom:64px">
+      <p style="margin:0 0 16px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#f2ca50;font-family:'Manrope',sans-serif">Client Testimonials</p>
+      <h2 style="margin:0 0 12px;font-size:clamp(28px,4vw,40px);font-weight:600;color:#e0e3e5;letter-spacing:-.02em;font-family:'Playfair Display',serif">What They're Saying</h2>
+      <div style="display:flex;justify-content:center;gap:2px;margin-top:12px">
+        <span style="color:#f2ca50;font-size:22px;letter-spacing:2px">★★★★★</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:relative;max-width:860px;margin:0 auto;padding:0 24px">
+    <!-- Track -->
+    <div id="nm-track" style="position:relative;min-height:280px"></div>
+
+    <!-- Arrows -->
+    <button id="nm-prev" aria-label="Previous review" style="position:absolute;left:-8px;top:50%;transform:translateY(-60%);background:none;border:1px solid rgba(242,202,80,0.25);color:#f2ca50;width:42px;height:42px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s,background 0.2s;z-index:2;flex-shrink:0">←</button>
+    <button id="nm-next" aria-label="Next review" style="position:absolute;right:-8px;top:50%;transform:translateY(-60%);background:none;border:1px solid rgba(242,202,80,0.25);color:#f2ca50;width:42px;height:42px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s,background 0.2s;z-index:2;flex-shrink:0">→</button>
+  </div>
+
+  <!-- Dots -->
+  <div id="nm-dots" style="display:flex;justify-content:center;gap:8px;margin-top:40px"></div>
+
+  <script>
+    (function() {
+      var reviews = [
+        {
+          initials: "V.H.",
+          name: "Victoria H.",
+          location: "Sydney",
+          text: "I brought Nico to our firm's annual gala and spent the entire evening watching my colleagues try — and fail — to steal his attention. The man has a gravitational pull I haven't encountered since my last trip to Monaco. I've never felt more powerful walking into a room. Already inventing reasons to book him again."
+        },
+        {
+          initials: "C.R.",
+          name: "Camille R.",
+          location: "Melbourne",
+          text: "Came for the companionship, stayed for the conversation. Nico charmed my notoriously difficult CFO, held his own discussing Caravaggio over entrée, and somehow looked devastating doing both. My only real complaint is that the night had to end. I'm still thinking about the slow dance. Purely professionally, of course."
+        },
+        {
+          initials: "I.T.",
+          name: "Isabelle T.",
+          location: "London",
+          text: "I had a board dinner to survive and arrived with Nico on my arm. Left with three new partnerships, a room full of envious glances, and a story I'll be dining out on for years. Ten out of ten. Would absolutely recommend — to my friends. Not my competitors. They've had it easy long enough."
+        },
+        {
+          initials: "M.S.",
+          name: "Mara S.",
+          location: "Singapore",
+          text: "My charity ball needed a plus-one and Nico delivered something I didn't know I needed: a man who remembers every name in the room, refills your champagne before you notice it's empty, and slow-dances like he genuinely means it. The bar has been permanently, irreversibly raised."
+        },
+        {
+          initials: "D.W.",
+          name: "Diane W.",
+          location: "New York",
+          text: "Booked Nico for a long weekend in Milan. Fluent in four languages, on first-name terms with every maitre d', and somehow made me look like the most interesting woman at every table without once upstaging me. That's a rare and frankly magical skill. I've already started planning the next occasion."
+        },
+        {
+          initials: "P.L.",
+          name: "Petra L.",
+          location: "Dubai",
+          text: "The boardroom has never seen me so distracted — by how spectacularly the evening went, obviously. Nico handled the CEOs, the small talk, and the after-dinner cognac situation with equal and elegant finesse. Whatever his secret is, I want it bottled. Five stars feels like an understatement."
+        }
+      ];
+
+      var current = 0;
+      var timer = null;
+      var track = document.getElementById('nm-track');
+      var dotsEl = document.getElementById('nm-dots');
+      var prevBtn = document.getElementById('nm-prev');
+      var nextBtn = document.getElementById('nm-next');
+
+      // Build cards
+      reviews.forEach(function(r, i) {
+        var card = document.createElement('div');
+        card.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 48px;opacity:0;transition:opacity 0.6s ease;pointer-events:none';
+        card.innerHTML =
+          '<div style="width:56px;height:56px;border-radius:50%;background:rgba(242,202,80,0.12);border:1px solid rgba(242,202,80,0.3);display:flex;align-items:center;justify-content:center;margin-bottom:24px;flex-shrink:0">' +
+            '<span style="font-size:14px;font-weight:700;color:#f2ca50;font-family:Manrope,sans-serif;letter-spacing:.04em">' + r.initials + '</span>' +
+          '</div>' +
+          '<p style="font-size:clamp(15px,2vw,18px);line-height:1.75;color:#d0c5af;font-family:Manrope,sans-serif;font-style:italic;margin:0 0 28px;max-width:640px">&ldquo;' + r.text + '&rdquo;</p>' +
+          '<div style="display:flex;gap:2px;margin-bottom:16px"><span style="color:#f2ca50;font-size:16px">★★★★★</span></div>' +
+          '<p style="margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#e0e3e5;font-family:Manrope,sans-serif">' + r.name + '</p>' +
+          '<p style="margin:4px 0 0;font-size:12px;color:#99907c;font-family:Manrope,sans-serif;letter-spacing:.04em">' + r.location + '</p>';
+        card.id = 'nm-card-' + i;
+        track.appendChild(card);
+      });
+
+      // Build dots
+      reviews.forEach(function(_, i) {
+        var dot = document.createElement('button');
+        dot.style.cssText = 'width:6px;height:6px;border-radius:50%;border:none;background:rgba(242,202,80,0.25);cursor:pointer;padding:0;transition:background 0.3s,transform 0.3s';
+        dot.setAttribute('aria-label', 'Review ' + (i+1));
+        dot.addEventListener('click', function() { goTo(i); resetTimer(); });
+        dot.id = 'nm-dot-' + i;
+        dotsEl.appendChild(dot);
+      });
+
+      function goTo(idx) {
+        var prev = document.getElementById('nm-card-' + current);
+        var prevDot = document.getElementById('nm-dot-' + current);
+        if (prev) { prev.style.opacity = '0'; prev.style.pointerEvents = 'none'; }
+        if (prevDot) { prevDot.style.background = 'rgba(242,202,80,0.25)'; prevDot.style.transform = 'scale(1)'; }
+
+        current = (idx + reviews.length) % reviews.length;
+
+        var next = document.getElementById('nm-card-' + current);
+        var nextDot = document.getElementById('nm-dot-' + current);
+        if (next) { next.style.opacity = '1'; next.style.pointerEvents = 'auto'; }
+        if (nextDot) { nextDot.style.background = '#f2ca50'; nextDot.style.transform = 'scale(1.4)'; }
+
+        // Update min-height to match active card
+        if (next) track.style.minHeight = next.scrollHeight + 'px';
+      }
+
+      function resetTimer() {
+        clearInterval(timer);
+        timer = setInterval(function() { goTo(current + 1); }, 5000);
+      }
+
+      prevBtn.addEventListener('click', function() { goTo(current - 1); resetTimer(); });
+      nextBtn.addEventListener('click', function() { goTo(current + 1); resetTimer(); });
+
+      // Arrow hover styles
+      [prevBtn, nextBtn].forEach(function(btn) {
+        btn.addEventListener('mouseenter', function() { btn.style.borderColor = '#f2ca50'; btn.style.background = 'rgba(242,202,80,0.08)'; });
+        btn.addEventListener('mouseleave', function() { btn.style.borderColor = 'rgba(242,202,80,0.25)'; btn.style.background = 'none'; });
+      });
+
+      // Pause on hover
+      track.addEventListener('mouseenter', function() { clearInterval(timer); });
+      track.addEventListener('mouseleave', resetTimer);
+
+      // Kick off
+      goTo(0);
+      resetTimer();
+
+      // Re-measure on resize
+      window.addEventListener('resize', function() {
+        var active = document.getElementById('nm-card-' + current);
+        if (active) track.style.minHeight = active.scrollHeight + 'px';
+      });
+    })();
+  </script>
+</section>
+
 <!-- FAQ Section -->
 <section id="faq" style="padding:120px 24px;background:#191c1e;border-top:1px solid rgba(242,202,80,0.12)">
   <div style="max-width:800px;margin:0 auto">
