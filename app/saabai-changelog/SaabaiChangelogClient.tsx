@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "15 Jun 2026",
     entries: [
+      { time: "23:46", tag: "NEW", title: "Update Nico Moretti hero image with new photo" },
       { time: "23:19", tag: "NEW", title: "Auto-migrate legacy sites to Blob+Redis on editor open" }
     ],
   },
