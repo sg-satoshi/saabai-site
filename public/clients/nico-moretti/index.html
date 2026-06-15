@@ -537,7 +537,7 @@
                     All inquiries are handled with the utmost discretion. Please provide your details below, and Mr. Moretti's office will be in touch to arrange a private consultation.
                 </p>
 </div>
-<form class="space-y-8 bg-surface-container-highest p-8 md:p-12 border border-outline/10">
+<form id="nm-inquiry-form" class="space-y-8 bg-surface-container-highest p-8 md:p-12 border border-outline/10">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 <div class="relative">
 <label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="name">Full Name</label>
@@ -658,5 +658,83 @@
         document.querySelectorAll('.fade-up').forEach((element) => {
             observer.observe(element);
         });
+
+        // Inquiry form submission
+        (function() {
+            var form = document.getElementById('nm-inquiry-form');
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var btn = form.querySelector('button[type="submit"]');
+                var originalText = btn.textContent.trim();
+                btn.textContent = 'Sending…';
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.style.cursor = 'not-allowed';
+
+                // Remove any previous inline error
+                var prevErr = form.querySelector('#nm-form-error');
+                if (prevErr) prevErr.remove();
+
+                var payload = {
+                    siteSlug: 'nico-moretti',
+                    name:      (document.getElementById('name')       || {}).value || '',
+                    email:     (document.getElementById('email')      || {}).value || '',
+                    phone:     (document.getElementById('phone')      || {}).value || '',
+                    message:   (document.getElementById('message')    || {}).value || '',
+                    duration:  (document.getElementById('duration')   || {}).value || '',
+                    eventType: (document.getElementById('event_type') || {}).value || ''
+                };
+
+                fetch('/api/site-factory/lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function(res) {
+                    if (!res.ok) throw new Error('Server error ' + res.status);
+                    return res.json();
+                })
+                .then(function() {
+                    // Replace form with branded success state
+                    var wrapper = form.parentNode;
+                    var success = document.createElement('div');
+                    success.style.cssText = [
+                        'background:#1d2022',
+                        'border:1px solid rgba(242,202,80,0.3)',
+                        'padding:64px 48px',
+                        'text-align:center',
+                        'display:flex',
+                        'flex-direction:column',
+                        'align-items:center',
+                        'gap:24px'
+                    ].join(';');
+                    success.innerHTML =
+                        '<div style="width:56px;height:56px;border-radius:50%;background:rgba(242,202,80,0.12);border:1px solid rgba(242,202,80,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+                            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f2ca50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+                        '</div>' +
+                        '<h3 style="margin:0;font-family:\'Playfair Display\',serif;font-size:clamp(20px,3vw,26px);font-weight:400;color:#e0e3e5;letter-spacing:.02em">Inquiry Received</h3>' +
+                        '<p style="margin:0;font-family:Manrope,sans-serif;font-size:16px;line-height:1.8;color:#d0c5af;max-width:480px">Your inquiry has been received. Mr. Moretti\'s office will be in touch within 24 hours.</p>' +
+                        '<div style="width:40px;height:1px;background:rgba(242,202,80,0.4)"></div>' +
+                        '<p style="margin:0;font-family:Manrope,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:rgba(242,202,80,0.6)">Discretion Guaranteed</p>';
+                    wrapper.replaceChild(success, form);
+                })
+                .catch(function() {
+                    // Re-enable button and show inline error
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    btn.style.opacity = '';
+                    btn.style.cursor = '';
+
+                    var err = document.createElement('p');
+                    err.id = 'nm-form-error';
+                    err.style.cssText = 'margin:8px 0 0;font-family:Manrope,sans-serif;font-size:13px;color:#ff6b6b;text-align:center';
+                    err.textContent = 'Something went wrong. Please try again or email directly.';
+                    btn.parentNode.appendChild(err);
+                });
+            });
+        })();
     </script>
 </body></html>
