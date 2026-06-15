@@ -586,12 +586,28 @@ export default function SiteFactoryClient() {
     } catch { /* ignore */ }
   }
 
-  function openEditor(site: Site) {
-    setActiveSite(site);
-    const saved = loadMsgs(site.slug);
+  async function openEditor(site: Site) {
+    // Migrate legacy filesystem sites to Vercel Blob + Redis before opening
+    let resolvedSite = site;
+    if (site.id.startsWith("legacy_")) {
+      try {
+        const res = await fetch("/api/site-factory/migrate-legacy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug: site.slug }),
+        });
+        const data = await res.json();
+        if (data.success && data.site) resolvedSite = { ...site, ...data.site };
+      } catch {
+        // fall through — load-draft will show an empty preview but editor still opens
+      }
+    }
+
+    setActiveSite(resolvedSite);
+    const saved = loadMsgs(resolvedSite.slug);
     const initial: Message[] = saved.length > 0
       ? saved
-      : [{ role: "assistant", content: `Site loaded. What would you like to change on **${site.name}**?`, ts: Date.now() }];
+      : [{ role: "assistant", content: `Site loaded. What would you like to change on **${resolvedSite.name}**?`, ts: Date.now() }];
     setMessages(initial);
     setPreviewHtml("");
     versions.current = [];
@@ -601,13 +617,13 @@ export default function SiteFactoryClient() {
     setUnpublishedCount(0);
     setGalleryImgs([]);
     setGeneratedImgs([]);
-    fetchDomains(site.slug);
-    loadGallery(site.slug);
+    fetchDomains(resolvedSite.slug);
+    loadGallery(resolvedSite.slug);
     // Pre-populate Bot panel with existing chatbot config
-    if (site.chatbot) {
-      setBotSetupName(site.chatbot.name || "");
-      setBotSetupGreeting(site.chatbot.greeting || "");
-      setBotSetupAvatarUrl(site.chatbot.avatarUrl || "");
+    if (resolvedSite.chatbot) {
+      setBotSetupName(resolvedSite.chatbot.name || "");
+      setBotSetupGreeting(resolvedSite.chatbot.greeting || "");
+      setBotSetupAvatarUrl(resolvedSite.chatbot.avatarUrl || "");
     }
 
     // Restore reviews: show localStorage immediately, then hydrate from DB
@@ -620,13 +636,13 @@ export default function SiteFactoryClient() {
       setReviewsBusinessName(r?.businessName || "");
       setReviewsFetchTip(r?.fetchTip || "");
     };
-    applyReviews(loadReviews(site.slug));
-    fetch(`/api/site-factory/reviews?slug=${site.slug}`)
+    applyReviews(loadReviews(resolvedSite.slug));
+    fetch(`/api/site-factory/reviews?slug=${resolvedSite.slug}`)
       .then(r => r.json())
       .then(d => { if (d.ok && d.reviews) applyReviews(d.reviews); })
       .catch(() => { /* stay with localStorage data */ });
 
-    fetch(`/api/site-factory/load-draft?slug=${site.slug}`)
+    fetch(`/api/site-factory/load-draft?slug=${resolvedSite.slug}`)
       .then(r => r.json())
       .then(d => {
         if (d.html) { setPreviewHtml(d.html); versions.current = [d.html]; }

@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "13 Jun 2026",
     entries: [
+      { time: "16:17", tag: "UI", title: "Reduce Sign out font size to match email/role text" },
       { time: "15:37", tag: "FIX", title: "Wrap CRM page in AdminShell for consistent admin sidebar" },
       { time: "15:25", tag: "FIX", title: "Replace obscure ↩ icon with 'Sign out' text button" },
       { time: "15:22", tag: "FIX", title: "Always show logout button even when sidebar is collapsed" },
