@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "10:33", tag: "FIX", title: "Remove cutting fee from Rex — cutting is included in price, Rex must not quote or add cutting fees" },
       { time: "10:19", tag: "FIX", title: "Remove '10 cuts included' line from Rex knowledge base" },
       { time: "01:56", tag: "NEW", title: "Dynamic sitemap for site-factory custom domains" },
       { time: "01:42", tag: "NEW", title: "Comprehensive SEO overhaul for nicomoretti.au" },

@@ -6,11 +6,10 @@ export const runtime = "nodejs";
 const redis = Redis.fromEnv();
 
 export default async function sitemap({
-  params,
+  slug,
 }: {
-  params: Promise<{ slug: string }>;
+  slug: string;
 }): Promise<MetadataRoute.Sitemap> {
-  const { slug } = await params;
 
   // Resolve canonical base URL — prefer custom domain over saabai.ai path
   const domainMap = await redis.hgetall<Record<string, string>>("saabai:domain-map").catch(() => null);
