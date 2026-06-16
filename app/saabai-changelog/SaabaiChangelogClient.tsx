@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "10:19", tag: "FIX", title: "Remove '10 cuts included' line from Rex knowledge base" },
       { time: "01:56", tag: "NEW", title: "Dynamic sitemap for site-factory custom domains" },
       { time: "01:42", tag: "NEW", title: "Comprehensive SEO overhaul for nicomoretti.au" },
       { time: "01:30", tag: "FIX", title: "Use absolute image URLs for Nico Moretti site" },

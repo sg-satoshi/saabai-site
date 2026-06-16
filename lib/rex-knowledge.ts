@@ -35,7 +35,7 @@ const COMPANY = `
 
 ### Ordering & Service
 
-- Minimum order: AUD $50 Ex GST. Orders under $50 incur a $30 cutting fee.
+- Minimum order: AUD $50 Ex GST.
 - Freight calculator on site; ships nationwide. Typical lead time: a few business days.
 - Payment online via standard methods. Pick-up available at both locations.
 
@@ -108,7 +108,7 @@ Also known as: Perspex, Plexiglass, Oroglas
 
 **ACRYLIC MIRROR PRICING — April 2026 (ex GST)**
 
-All 3mm, sheet size 2440×1220mm. CTS = cut-to-size ($/m²). Orders under $50 charged a $35 cutting fee. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee instead.
+All 3mm, sheet size 2440×1220mm. CTS = cut-to-size ($/m²). Where CTS total exceeds full sheet price, charge full sheet price instead.
 
 | Colour | CTS ($/m²) | Full Sheet |
 |--------|-----------|------------|
@@ -201,7 +201,7 @@ Standard UV2 grade. CTS = cut-to-size rate per m².
 
 **PRISMATIC ACRYLIC PRICING — April 2026 (ex GST, supplier: AST)**
 
-Prismatic diffuser sheets for lighting applications. CTS = cut-to-size ($/m²). Orders under $50 charged a $35 cutting fee. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee.
+Prismatic diffuser sheets for lighting applications. CTS = cut-to-size ($/m²). Where CTS total exceeds full sheet price, charge full sheet price.
 
 | Thickness | Type | Size | CTS ($/m²) | Full Sheet |
 |-----------|------|------|-----------|------------|
@@ -216,7 +216,7 @@ Prismatic diffuser sheets for lighting applications. CTS = cut-to-size ($/m²). 
 | 8mm | Opal | 16×16mm | 1210×600 | $66.00 | $69 |
 | 16mm | Silver | 16×16mm | 1213×603 | $143.55 | $54 |
 
-Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price — charge full sheet price ($54) + cutting fee instead.
+Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price — charge full sheet price ($54) instead.
 
 ---
 
@@ -280,7 +280,7 @@ Also known as: Delrin, Ertacetal, Polyacetal
 
 **NYLON SHEET PRICING — March 2026 (ex GST)**
 
-All sheets 2000×1000mm unless noted. CTS rate = cut-to-size $/m² for pieces under the cutoff area threshold. Where CTS total exceeds full sheet price, charge full sheet price + cutting fee. Orders under $50 charged $35 cutting fee.
+All sheets 2000×1000mm unless noted. CTS rate = cut-to-size $/m² for pieces under the cutoff area threshold. Where CTS total exceeds full sheet price, charge full sheet price.
 
 **NATURAL (WHITE) — Ertalon 6SA / Cast Nylon 6SA:**
 | Thickness | Grade | CTS ($/m²) | Full Sheet |
@@ -306,7 +306,7 @@ All sheets 2000×1000mm unless noted. CTS rate = cut-to-size $/m² for pieces un
 | 90mm | Cast Nylon 6SA (Epol) | $5,111.09 | $4,819 |
 | 100mm | Cast Nylon 6SA (Epol) | $5,679.00 | $5,354 |
 
-Note: For 20mm+ Natural, CTS rate exceeds full sheet price — charge full sheet + cutting fee.
+Note: For 20mm+ Natural, CTS rate exceeds full sheet price — charge full sheet price.
 
 **BLACK — Cast Nylon 6SA:**
 | Thickness | CTS ($/m²) | Full Sheet |
@@ -328,7 +328,7 @@ Note: For 20mm+ Natural, CTS rate exceeds full sheet price — charge full sheet
 | 100mm | $6,026.69 | $5,682 |
 | 110mm | $7,292.29 | $6,876 |
 
-Note: For 25mm+ Black, CTS rate exceeds full sheet price — charge full sheet + cutting fee.
+Note: For 25mm+ Black, CTS rate exceeds full sheet price — charge full sheet price.
 
 **BLUE HEAT STABILISED, YELLOW OIL FILLED, GREY WAX FILLED — Full sheet only, no CTS (Epol, 2000×1000mm):**
 | Thickness | Blue Heat Stab | Yellow Oil Filled | Grey Wax Filled |
@@ -562,9 +562,8 @@ Polypropylene sheets are normally stocked and sold as full sheets. Cut-to-size I
 **PP SHEET PRICING — March 2026 (all prices ex GST)**
 
 Pricing rules:
-- Orders under $50 are charged a $35 cutting fee
 - CTS = cut-to-size. Pieces ≤1.25m² use the higher rate; pieces >1.25m² use the lower rate
-- Where the CTS total exceeds the full sheet price, charge full sheet price + cutting fee
+- Where the CTS total exceeds the full sheet price, charge full sheet price
 
 **PP GREY — 3000×1500mm sheet (4.5m²):**
 
@@ -620,7 +619,7 @@ const MATERIALS_SIGNAGE = `
 
 **ABS SHEET PRICING — March 2026 (ex GST)**
 
-All sheets 2540×1350mm (AST). CTS = cut-to-size $/m². Orders under $50 charged a $35 cutting fee.
+All sheets 2540×1350mm (AST). CTS = cut-to-size $/m².
 
 **ABS BLACK:**
 | Thickness | Finish | CTS ($/m²) | Full Sheet |
@@ -657,7 +656,7 @@ All sheets 2540×1350mm (AST). CTS = cut-to-size $/m². Orders under $50 charged
 
 **FOAM PVC PRICING — March 2026 (ex GST)**
 
-All sheets 2440×1220mm unless noted. CTS = cut-to-size $/m². Orders under $50 charged a $35 cutting fee.
+All sheets 2440×1220mm unless noted. CTS = cut-to-size $/m².
 
 **STANDARD FOAMED PVC (AST Digifoam / Maxi-T) — White:**
 | Thickness | CTS ($/m²) | Full Sheet |
@@ -760,7 +759,7 @@ CTS (cut-to-size) pricing uses two rates:
 - **Below cutoff:** higher $/m² rate (small pieces)
 - **Above cutoff:** lower $/m² rate (larger pieces)
 - Cutoff areas: 1–6mm = 2 m², 8–15mm = 1.75 m², 20mm+ = 1.5 m²
-- Rule: if CTS price exceeds full sheet price, charge full sheet price + cutting fee
+- Rule: if CTS price exceeds full sheet price, charge full sheet price
 
 **NANYA — CLEAR (2440 × 1220mm)**
 | Thickness | CTS <cutoff ($/m²) | CTS >cutoff ($/m²) | Full Sheet |
