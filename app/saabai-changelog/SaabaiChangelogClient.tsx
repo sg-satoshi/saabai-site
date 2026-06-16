@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "11:42", tag: "FIX", title: "Sitemap reads slug from headers instead of broken params" },
       { time: "11:19", tag: "NEW", title: "Add Gold Coast location page for nicomoretti.au SEO" },
       { time: "10:59", tag: "NEW", title: "Location pages for nicomoretti.au — Sydney, Melbourne, Brisbane, Perth, Canberra, Hobart with unique SEO copy and locations grid on main page" },
       { time: "10:43", tag: "FIX", title: "Sitemap function receives slug directly, not via params wrapper" },
