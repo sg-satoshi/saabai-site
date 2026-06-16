@@ -15,6 +15,7 @@ const files = [
   "canberra.html",
   "hobart.html",
   "gold-coast.html",
+  "faq.html",
 ];
 
 for (const file of files) {

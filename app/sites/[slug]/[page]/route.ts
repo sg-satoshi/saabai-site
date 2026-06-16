@@ -9,6 +9,8 @@ const HTML_PAGES = [
   "menu", "team", "gallery", "faq", "blog",
   // Location pages
   "sydney", "melbourne", "brisbane", "perth", "canberra", "hobart", "gold-coast",
+  // Content pages
+  "faq",
 ];
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },

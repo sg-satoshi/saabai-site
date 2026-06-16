@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "12:10", tag: "NEW", title: "Replace expired gallery placeholders with real Nico Moretti photography" },
       { time: "11:57", tag: "FIX", title: "Remove aggregateRating from Service schema on nicomoretti.au" },
       { time: "11:42", tag: "FIX", title: "Sitemap reads slug from headers instead of broken params" },
       { time: "11:19", tag: "NEW", title: "Add Gold Coast location page for nicomoretti.au SEO" },
