@@ -7,6 +7,8 @@ const HTML_PAGES = [
   "privacy-policy", "terms-of-use",
   "about", "services", "practice-areas", "contact",
   "menu", "team", "gallery", "faq", "blog",
+  // Location pages
+  "sydney", "melbourne", "brisbane", "perth", "canberra", "hobart",
 ];
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },
