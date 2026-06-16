@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "13:43", tag: "NEW", title: "Thicken all city pages with hyper-local content + fix schemas" },
       { time: "13:39", tag: "NEW", title: "Add dedicated FAQ page for nicomoretti.au" },
       { time: "12:10", tag: "NEW", title: "Replace expired gallery placeholders with real Nico Moretti photography" },
       { time: "11:57", tag: "FIX", title: "Remove aggregateRating from Service schema on nicomoretti.au" },
