@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "17 Jun 2026",
+    entries: [
+      { time: "22:07", tag: "NEW", title: "Add one-time/recurring toggle to Payments page with subscription support" }
+    ],
+  },
+  {
     date: "16 Jun 2026",
     entries: [
       { time: "17:21", tag: "FIX", title: "Remove all em dashes and AI phrases from nicomoretti.au" },

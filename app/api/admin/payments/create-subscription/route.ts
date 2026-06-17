@@ -23,6 +23,8 @@ const INTERVAL_MAP: Record<string, { interval: "day" | "week" | "month" | "year"
   yearly:    { interval: "year",  interval_count: 1 },
 };
 
+const MAX_DAYS = 365; // Stripe max interval_count for day
+
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, interval } = await req.json();
+    const { amount, description, customerName, customerEmail, interval, customDays } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -44,14 +46,25 @@ export async function POST(req: NextRequest) {
     if (!description || typeof description !== "string") {
       return NextResponse.json({ error: "Description is required" }, { status: 400 });
     }
-    if (!interval || !INTERVAL_MAP[interval]) {
-      return NextResponse.json({ error: "Invalid interval. Use: weekly, fortnightly, monthly, quarterly, yearly" }, { status: 400 });
+
+    let intervalConfig: { interval: "day" | "week" | "month" | "year"; interval_count: number };
+
+    if (interval === "custom") {
+      const days = typeof customDays === "number" ? customDays : parseInt(String(customDays), 10);
+      if (!days || days < 1 || days > MAX_DAYS) {
+        return NextResponse.json({ error: `Custom days must be between 1 and ${MAX_DAYS}` }, { status: 400 });
+      }
+      intervalConfig = { interval: "day", interval_count: days };
+    } else {
+      if (!INTERVAL_MAP[interval]) {
+        return NextResponse.json({ error: "Invalid interval. Use: weekly, fortnightly, monthly, quarterly, yearly, or custom" }, { status: 400 });
+      }
+      intervalConfig = INTERVAL_MAP[interval];
     }
+
     if (!customerEmail || typeof customerEmail !== "string") {
       return NextResponse.json({ error: "Customer email is required for subscriptions" }, { status: 400 });
     }
-
-    const intervalConfig = INTERVAL_MAP[interval];
 
     // Find or create customer
     const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });

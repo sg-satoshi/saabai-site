@@ -146,6 +146,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [interval, setInterval] = useState("monthly");
+  const [customDays, setCustomDays] = useState("30");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -220,6 +221,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             customerName: customerName.trim() || undefined,
             customerEmail: customerEmail.trim(),
             interval,
+            customDays: interval === "custom" ? parseInt(customDays) || 30 : undefined,
           }),
         });
 
@@ -336,7 +338,13 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             <option value="monthly">Monthly</option>
             <option value="quarterly">Quarterly</option>
             <option value="yearly">Yearly</option>
+            <option value="custom">Custom (days)</option>
           </select>
+          {interval === "custom" && (
+            <div style={{ marginTop: 8 }}>
+              <Input value={customDays} onChange={setCustomDays} placeholder="Number of days" type="number" />
+            </div>
+          )}
         </Field>
       )}
 
