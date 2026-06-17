@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "16 Jun 2026",
     entries: [
+      { time: "17:21", tag: "FIX", title: "Remove all em dashes and AI phrases from nicomoretti.au" },
       { time: "13:50", tag: "FIX", title: "Expand duration dropdown on all city pages to match homepage" },
       { time: "13:43", tag: "NEW", title: "Thicken all city pages with hyper-local content + fix schemas" },
       { time: "13:39", tag: "NEW", title: "Add dedicated FAQ page for nicomoretti.au" },

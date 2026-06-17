@@ -82,16 +82,20 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function TypeBadge({ type }: { type: "charge" | "invoice" }) {
-  const label = type === "charge" ? "Card" : "Invoice";
+function TypeBadge({ type }: { type: "charge" | "invoice" | "subscription" }) {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
+    charge:       { label: "Card",     color: C.blue,   bg: C.blueBg },
+    invoice:      { label: "Invoice",  color: C.purple, bg: C.purpleBg },
+    subscription: { label: "Sub",      color: C.green,  bg: C.greenBg },
+  };
+  const s = map[type] ?? { label: type, color: C.muted, bg: "rgba(0,0,0,0.04)" };
   return (
     <span style={{
       fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 4,
-      color: type === "charge" ? C.blue : C.purple,
-      background: type === "charge" ? C.blueBg : C.purpleBg,
+      color: s.color, background: s.bg,
       letterSpacing: 0.3,
     }}>
-      {label}
+      {s.label}
     </span>
   );
 }
@@ -136,10 +140,12 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
 
+  const [mode, setMode] = useState<"onetime" | "recurring">("onetime");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [interval, setInterval] = useState("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -162,43 +168,87 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       setError("Enter a description");
       return;
     }
+    if (mode === "recurring" && !customerEmail.trim()) {
+      setError("Customer email is required for subscriptions");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/payments/create-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: amtCents,
-          description: description.trim(),
-          customerName: customerName.trim() || undefined,
-          customerEmail: customerEmail.trim() || undefined,
-        }),
-      });
+      if (mode === "onetime") {
+        // ── One-time payment ────────────────────────────────────────────────
+        const res = await fetch("/api/admin/payments/create-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: amtCents,
+            description: description.trim(),
+            customerName: customerName.trim() || undefined,
+            customerEmail: customerEmail.trim() || undefined,
+          }),
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to create payment");
-        setLoading(false);
-        return;
-      }
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Failed to create payment");
+          setLoading(false);
+          return;
+        }
 
-      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
-        payment_method: { card: elements.getElement(CardElement)! },
-      });
+        const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: elements.getElement(CardElement)! },
+        });
 
-      if (confirmError) {
-        setError(confirmError.message || "Payment failed");
-      } else if (paymentIntent.status === "succeeded") {
-        setSuccess(`Payment succeeded — ${fmtDollar(paymentIntent.amount)}`);
-        setAmount("");
-        setDescription("");
-        setCustomerName("");
-        setCustomerEmail("");
-        onSuccess();
+        if (confirmError) {
+          setError(confirmError.message || "Payment failed");
+        } else if (paymentIntent.status === "succeeded") {
+          setSuccess(`Payment succeeded — ${fmtDollar(paymentIntent.amount)}`);
+          clearForm();
+          onSuccess();
+        } else {
+          setError(`Payment status: ${paymentIntent.status}`);
+        }
       } else {
-        setError(`Payment status: ${paymentIntent.status}`);
+        // ── Recurring subscription ──────────────────────────────────────────
+        const res = await fetch("/api/admin/payments/create-subscription", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: amtCents,
+            description: description.trim(),
+            customerName: customerName.trim() || undefined,
+            customerEmail: customerEmail.trim(),
+            interval,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Failed to create subscription");
+          setLoading(false);
+          return;
+        }
+
+        if (data.clientSecret) {
+          const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+            payment_method: { card: elements.getElement(CardElement)! },
+          });
+
+          if (confirmError) {
+            setError(confirmError.message || "Subscription payment failed");
+          } else if (paymentIntent.status === "succeeded") {
+            setSuccess(`Subscription started — ${fmtDollar(data.amount)} ${data.interval}`);
+            clearForm();
+            onSuccess();
+          } else {
+            setError(`Payment status: ${paymentIntent.status}`);
+          }
+        } else {
+          setSuccess(`Subscription created (status: ${data.status})`);
+          clearForm();
+          onSuccess();
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -207,11 +257,42 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
     }
   }
 
+  function clearForm() {
+    setAmount("");
+    setDescription("");
+    setCustomerName("");
+    setCustomerEmail("");
+  }
+
+  const fmtAmount = amount ? fmtDollar(Math.round(parseFloat(amount || "0") * 100)) : "";
+
   return (
     <div>
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 18 }}>
-        Charge a Card
+      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+        {mode === "onetime" ? "Charge a Card" : "Create a Subscription"}
       </p>
+
+      {/* Mode toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.surface, borderRadius: 8, padding: 3 }}>
+        {[
+          { id: "onetime" as const, label: "One-time" },
+          { id: "recurring" as const, label: "Recurring" },
+        ].map(m => (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id)}
+            style={{
+              flex: 1, padding: "6px 12px", borderRadius: 6, border: "none",
+              background: mode === m.id ? C.card : "transparent",
+              color: mode === m.id ? C.text : C.muted,
+              fontSize: 11, fontWeight: mode === m.id ? 700 : 500,
+              cursor: "pointer", boxShadow: mode === m.id ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+            }}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
 
       <Field label="Amount (AUD)">
         <div style={{ position: "relative" }}>
@@ -239,11 +320,31 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         <Input value={description} onChange={setDescription} placeholder="What's this for?" />
       </Field>
 
-      <Field label="Customer Name (optional)">
+      {mode === "recurring" && (
+        <Field label="Billing Interval">
+          <select
+            value={interval}
+            onChange={e => setInterval(e.target.value)}
+            style={{
+              width: "100%", padding: "9px 12px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.card,
+              fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit",
+            }}
+          >
+            <option value="weekly">Weekly</option>
+            <option value="fortnightly">Fortnightly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </Field>
+      )}
+
+      <Field label={mode === "recurring" ? "Customer Name" : "Customer Name (optional)"}>
         <Input value={customerName} onChange={setCustomerName} placeholder="e.g. John Smith" />
       </Field>
 
-      <Field label="Customer Email (optional)">
+      <Field label={mode === "recurring" ? "Customer Email" : "Customer Email (optional)"}>
         <Input value={customerEmail} onChange={setCustomerEmail} placeholder="e.g. john@example.com" type="email" />
       </Field>
 
@@ -264,12 +365,14 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         disabled={!stripe || loading}
         style={{
           marginTop: 16, width: "100%", padding: "10px 16px", borderRadius: 8,
-          border: "none", background: !stripe || loading ? "#ccc" : C.blue,
+          border: "none", background: !stripe || loading ? "#ccc" : mode === "recurring" ? C.purple : C.blue,
           color: "#fff", fontSize: 13, fontWeight: 700, cursor: !stripe || loading ? "not-allowed" : "pointer",
           letterSpacing: 0.2,
         }}
       >
-        {loading ? "Processing..." : amount ? `Charge ${fmtDollar(Math.round(parseFloat(amount || "0") * 100))}` : "Charge"}
+        {loading ? "Processing..." : mode === "onetime"
+          ? (fmtAmount ? `Charge ${fmtAmount}` : "Charge")
+          : (fmtAmount ? `Start Subscription (${fmtAmount}/${interval})` : "Start Subscription")}
       </button>
     </div>
   );
