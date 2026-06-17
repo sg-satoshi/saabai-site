@@ -21,6 +21,8 @@
     "@ai-sdk/react": "^3.0.166",
     "@ai-sdk/xai": "^3.0.83",
     "@heygen/streaming-avatar": "^2.1.0",
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@upstash/redis": "^1.37.0",
     "@vercel/blob": "^2.3.3",
     "ai": "^6.0.164",
