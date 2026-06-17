@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "17 Jun 2026",
     entries: [
+      { time: "21:51", tag: "UPDATE", title: "Redeploy for NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" },
       { time: "21:37", tag: "NEW", title: "Add Payments page with Stripe card processing + full bookkeeping invoice tracker" }
     ],
   },

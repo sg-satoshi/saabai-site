@@ -98,6 +98,18 @@ const NAV: {
           </svg>
         ),
       },
+      {
+        label: "Payments",
+        href: "/saabai-admin/payments",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M4.5 7h5M7 5.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            <circle cx="4" cy="10.5" r="0.5" fill="currentColor"/>
+            <circle cx="10" cy="10.5" r="0.5" fill="currentColor"/>
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -198,24 +210,8 @@ const NAV: {
       },
     ],
   },
-  {
-    section: "Finance",
-    items: [
-      {
-        label: "Payments",
-        href: "/saabai-admin/payments",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 7h5M7 5.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            <circle cx="4" cy="10.5" r="0.5" fill="currentColor"/>
-            <circle cx="10" cy="10.5" r="0.5" fill="currentColor"/>
-          </svg>
-        ),
-      },
-    ],
-  },
 ];
+
 
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {
   return (
