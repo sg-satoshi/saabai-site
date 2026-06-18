@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { fetchRexStats, fetchLeadTimestamps } from "../../lib/rex-stats";
+import { fetchRexStats, fetchLeadTimestamps, readCache, writeCache } from "../../lib/rex-stats";
 import { fetchRecentOrders } from "../../lib/woo-client";
 import type { WooOrder } from "../../lib/woo-client";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
@@ -97,11 +97,22 @@ export default async function RexDashboardPage() {
     ]);
   }
 
-  // Each source gets its own timeout. WooCommerce paginates many pages so
-  // it gets a longer window; Redis calls are fast so 10s is plenty.
+  // WooCommerce orders are cached in Redis for 2 hours to avoid slow
+  // pagination on every page load. On cache miss, fetch live and repopulate.
+  const WOO_CACHE_KEY = "rex:cache:woo_orders";
+  const WOO_CACHE_TTL = 2 * 60 * 60; // 2 hours
+
+  async function fetchOrdersCached(): Promise<WooOrder[]> {
+    const cached = await readCache<WooOrder[]>(WOO_CACHE_KEY);
+    if (cached) return cached;
+    const fresh = await withTimeout(fetchRecentOrders(365), 28_000);
+    if (fresh.length > 0) writeCache(WOO_CACHE_KEY, fresh, WOO_CACHE_TTL).catch(() => {});
+    return fresh;
+  }
+
   const [statsResult, ordersResult, leadTsResult] = await Promise.allSettled([
     withTimeout(fetchRexStats(), 10_000),
-    withTimeout(fetchRecentOrders(365), 28_000),
+    fetchOrdersCached(),
     withTimeout(fetchLeadTimestamps(), 10_000),
   ]);
 

@@ -616,3 +616,23 @@ export async function fetchTranscript(
     return JSON.parse(raw) as TranscriptMessage[];
   } catch { return null; }
 }
+
+// ── Generic Redis cache helpers ───────────────────────────────────────────────
+
+export async function readCache<T>(key: string): Promise<T | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  try {
+    const raw = await redis.get(key) as string | null;
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch { return null; }
+}
+
+export async function writeCache<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
+  const redis = getRedis();
+  if (!redis) return;
+  try {
+    await redis.set(key, JSON.stringify(value), { ex: ttlSeconds });
+  } catch { /* never throw */ }
+}
