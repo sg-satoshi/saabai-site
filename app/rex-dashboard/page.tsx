@@ -90,9 +90,6 @@ export default async function RexDashboardPage() {
 
   const productInfos = userProducts.map((id) => ALL_PRODUCTS[id]);
 
-  // Fetch Rex dashboard data with a timeout to prevent hanging
-  const TIMEOUT_MS = 10_000; // 10 seconds max
-
   async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
     return Promise.race([
       p,
@@ -100,12 +97,12 @@ export default async function RexDashboardPage() {
     ]);
   }
 
-  // Each data source gets its own timeout so a slow WooCommerce call
-  // doesn't blank the Rex stats.
+  // Each source gets its own timeout. WooCommerce paginates many pages so
+  // it gets a longer window; Redis calls are fast so 10s is plenty.
   const [statsResult, ordersResult, leadTsResult] = await Promise.allSettled([
-    withTimeout(fetchRexStats(), TIMEOUT_MS),
-    withTimeout(fetchRecentOrders(365), TIMEOUT_MS),
-    withTimeout(fetchLeadTimestamps(), TIMEOUT_MS),
+    withTimeout(fetchRexStats(), 10_000),
+    withTimeout(fetchRecentOrders(365), 28_000),
+    withTimeout(fetchLeadTimestamps(), 10_000),
   ]);
 
   const { buildEmptyRexStats } = await import("./empty-fallback");

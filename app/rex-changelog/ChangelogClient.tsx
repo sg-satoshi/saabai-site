@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "19 Jun 2026",
+    entries: [
+      { time: "08:51", tag: "FIX", title: "Isolate rex-dashboard fetch timeouts so WooCommerce slowness doesn't blank stats" }
+    ],
+  },
+  {
     date: "18 Jun 2026",
     entries: [
       { time: "22:38", tag: "UPDATE", title: "Changelog auto-update [skip ci]" }
