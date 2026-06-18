@@ -2857,7 +2857,7 @@ export default function SiteFactoryClient() {
 
   const COL = isMobile
     ? "36px 1fr auto"
-    : "36px minmax(160px,2fr) minmax(140px,2fr) 120px 90px 80px 72px 100px";
+    : "36px minmax(160px,2fr) minmax(140px,2fr) 100px 90px 80px 80px 72px 100px";
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -2959,6 +2959,7 @@ export default function SiteFactoryClient() {
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Name</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Domain</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Niche</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Billing</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Status</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Created</span>
                 <span />

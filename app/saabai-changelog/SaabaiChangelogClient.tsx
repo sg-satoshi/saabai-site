@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "18 Jun 2026",
     entries: [
+      { time: "19:50", tag: "NEW", title: "External sites auto-create recurring invoice on save" },
       { time: "19:10", tag: "NEW", title: "Enhance external site display + auto-create invoice on billing save" },
       { time: "15:25", tag: "NEW", title: "Add migrate-sites endpoint for one-shot legacy registration" },
       { time: "15:18", tag: "NEW", title: "Add external site option to Site Factory with source tracking" },

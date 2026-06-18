@@ -14,33 +14,48 @@ const LEGACY_META: Record<string, LegacyMeta> = {
   nextinvestment: { name: "Next Investment", niche: "finance" },
   "lmm-site":     { name: "Lifestyle Money Management", niche: "finance" },
   "nico-moretti": { name: "Nico Moretti", niche: "professional-services", description: "Bespoke companionship for discerning executive women." },
+  "heaven-thai-massage": { name: "Heaven Thai Massage", niche: "health-wellness", description: "Traditional Thai massage studio in Worongary." },
 };
 
 function scanLegacySites() {
   const clientsDir = path.join(process.cwd(), "public", "clients");
-  if (!existsSync(clientsDir)) return [];
+  const dirs: Array<ReturnType<typeof toSiteResult>> = [];
 
-  const dirs = readdirSync(clientsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => {
+  // Filesystem-based legacy sites
+  if (existsSync(clientsDir)) {
+    const entries = readdirSync(clientsDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory());
+    for (const d of entries) {
       const slug = d.name;
       const meta = LEGACY_META[slug] ?? { name: slug, niche: "professional-services" };
-      return {
-        id: `legacy_${slug}`,
-        slug,
-        name: meta.name,
-        niche: meta.niche,
-        description: meta.description,
-        status: "live",
-        url: `https://www.saabai.ai/sites/${slug}/`,
-        business: { name: meta.name },
-        chatbot: { enabled: true, name: "Assistant", greeting: "", systemPrompt: "" },
-        createdAt: 0,
-        updatedAt: 0,
-      };
-    });
+      dirs.push(toSiteResult(slug, meta));
+    }
+  }
+
+  // Blob-based legacy sites that have no public/clients/ directory
+  for (const [slug, meta] of Object.entries(LEGACY_META)) {
+    if (!dirs.find(s => s.slug === slug)) {
+      dirs.push(toSiteResult(slug, meta));
+    }
+  }
 
   return dirs;
+}
+
+function toSiteResult(slug: string, meta: LegacyMeta) {
+  return {
+    id: `legacy_${slug}`,
+    slug,
+    name: meta.name,
+    niche: meta.niche,
+    description: meta.description,
+    status: "live",
+    url: `https://www.saabai.ai/sites/${slug}/`,
+    business: { name: meta.name },
+    chatbot: { enabled: true, name: "Assistant", greeting: "", systemPrompt: "" },
+    createdAt: 0,
+    updatedAt: 0,
+  };
 }
 
 export async function GET() {
