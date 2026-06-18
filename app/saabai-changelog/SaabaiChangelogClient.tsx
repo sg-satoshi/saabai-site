@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "07:30", tag: "UPDATE", title: "Test shorter env var name TG_NICO_BOT" },
       { time: "07:28", tag: "UPDATE", title: "Test env var directly in Edge runtime" },
       { time: "07:01", tag: "FIX", title: "Read Telegram token from Redis (reliable in Edge runtime), remove all hardcoded secrets" },
       { time: "06:57", tag: "NEW", title: "Pick up new Telegram token" },
