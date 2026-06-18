@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "00:48", tag: "UPDATE", title: "Inline Telegram alert, remove separate function + debug code" },
       { time: "00:40", tag: "UPDATE", title: "Inline Telegram test in lead handler" },
       { time: "00:38", tag: "NEW", title: "Add test-telegram to public API" },
       { time: "00:36", tag: "UPDATE", title: "Test Telegram from Edge runtime" },

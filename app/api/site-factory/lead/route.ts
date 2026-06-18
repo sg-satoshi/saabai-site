@@ -137,9 +137,11 @@ export async function POST(req: Request) {
       if (siteSlug === "nico-moretti") {
         const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI || "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
         const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "5066504835";
-        const tgUrl = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(buildTelegramText(lead))}&parse_mode=Markdown`;
+        const simpleText = `New lead: ${name || "?"} - ${phone || "?"}`;
+        const tgUrl = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(simpleText)}`;
         const tgRes = await fetch(tgUrl);
-        if (!tgRes.ok) console.error("Telegram send error:", await tgRes.text());
+        const tgBody = await tgRes.text();
+        if (!tgRes.ok) console.error("Telegram error:", tgBody);
       }
     } catch (e) {
       console.error("Lead notification failed:", e);
