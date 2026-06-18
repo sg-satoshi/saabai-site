@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "00:36", tag: "UPDATE", title: "Test Telegram from Edge runtime" },
       { time: "00:34", tag: "FIX", title: "Use GET for Telegram API with error logging" },
       { time: "00:31", tag: "FIX", title: "Await Telegram alerts - remove fire-and-forget IIFE" },
       { time: "00:28", tag: "FIX", title: "Direct env var ref with fallback for Telegram alerts" },
