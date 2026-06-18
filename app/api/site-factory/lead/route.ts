@@ -97,7 +97,7 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
-    // Send notifications
+    // Send notifications — awaited inline (Edge kills IIFE on exit)
     try {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
       const site = await getSiteBySlug(siteSlug);

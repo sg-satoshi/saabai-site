@@ -60,6 +60,7 @@ const CHANGELOG: Day[] = [
     entries: [
       { time: "22:40", tag: "UPDATE", title: "Resolve changelog merge conflict" },
       { time: "22:39", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },
+      { time: "19:56", tag: "NEW", title: "Add Heaven Thai to site list, external site billing display, auto-invoice on billing" },
       { time: "19:50", tag: "NEW", title: "External sites auto-create recurring invoice on save" },
       { time: "19:10", tag: "NEW", title: "Enhance external site display + auto-create invoice on billing save" },
       { time: "15:25", tag: "NEW", title: "Add migrate-sites endpoint for one-shot legacy registration" },
