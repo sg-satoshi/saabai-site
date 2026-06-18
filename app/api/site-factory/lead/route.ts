@@ -114,20 +114,26 @@ export async function POST(req: Request) {
         html: buildLeadEmail(lead),
       });
 
-      // Telegram alert for Nico Moretti
+      // Telegram alert for Nico Moretti (token stored in Redis for Edge runtime)
       if (siteSlug === "nico-moretti") {
-        const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI;
-        const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI;
-        if (botToken && chatId) {
-          const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
-          let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
-          msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
-          if (duration) msg += `*Duration:* ${duration}\n`;
-          if (eventType) msg += `*Event:* ${eventType}\n`;
-          if (message) msg += `*Notes:* ${message}\n`;
-          msg += `\n_Received ${ts}_`;
-          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
-          if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
+        try {
+          const [botToken, chatId] = await Promise.all([
+            redis.get("saabai:secret:telegram:nico-moretti-token"),
+            redis.get("saabai:secret:telegram:nico-moretti-chat"),
+          ]);
+          if (botToken && chatId) {
+            const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
+            let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
+            msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
+            if (duration) msg += `*Duration:* ${duration}\n`;
+            if (eventType) msg += `*Event:* ${eventType}\n`;
+            if (message) msg += `*Notes:* ${message}\n`;
+            msg += `\n_Received ${ts}_`;
+            const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+            if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
+          }
+        } catch (tgErr) {
+          console.error("Telegram send failed:", tgErr);
         }
       }
     } catch (e) {

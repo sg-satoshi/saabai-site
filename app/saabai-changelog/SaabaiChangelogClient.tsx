@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "06:57", tag: "NEW", title: "Pick up new Telegram token" },
       { time: "06:54", tag: "FIX", title: "Remove hardcoded Telegram token, full formatted alerts, clean up test endpoint" },
       { time: "00:57", tag: "UPDATE", title: "Test POST handler same pattern as lead handler" },
       { time: "00:55", tag: "UPDATE", title: "Telegram call first in handler" },
