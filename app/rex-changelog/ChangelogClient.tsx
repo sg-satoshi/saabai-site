@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "18 Jun 2026",
     entries: [
+      { time: "22:40", tag: "UPDATE", title: "Resolve changelog merge conflict" },
       { time: "22:39", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },
       { time: "19:50", tag: "NEW", title: "External sites auto-create recurring invoice on save" },
       { time: "19:10", tag: "NEW", title: "Enhance external site display + auto-create invoice on billing save" },

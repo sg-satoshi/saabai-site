@@ -73,6 +73,50 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
+async function sendTelegramAlert(lead: {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  siteSlug: string;
+  metadata?: { duration?: string; eventType?: string };
+  createdAt: number;
+}) {
+  try {
+    const slugKey = lead.siteSlug.toUpperCase().replace(/-/g, "_");
+    const botToken = process.env[`TELEGRAM_BOT_TOKEN_${slugKey}`];
+    const chatId = process.env[`TELEGRAM_CHAT_ID_${slugKey}`];
+    if (!botToken || !chatId) return; // not configured for this site
+
+    const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
+      timeZone: "Australia/Brisbane",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+
+    let text = `🔔 *New inquiry — ${lead.siteSlug}*\n\n`;
+    text += `*Name:* ${lead.name || "—"}\n`;
+    text += `*Email:* ${lead.email || "—"}\n`;
+    text += `*Phone:* ${lead.phone || "—"}\n`;
+    if (lead.metadata?.duration) text += `*Duration:* ${lead.metadata.duration}\n`;
+    if (lead.metadata?.eventType) text += `*Event:* ${lead.metadata.eventType}\n`;
+    if (lead.message) text += `*Notes:* ${lead.message}\n`;
+    text += `\n_Received ${ts}_`;
+
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: parseInt(chatId, 10),
+        text,
+        parse_mode: "Markdown",
+      }),
+    });
+  } catch (e) {
+    console.error("Telegram alert failed:", e);
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { name, email, phone, message, siteSlug, duration, eventType } =
@@ -114,6 +158,9 @@ export async function POST(req: Request) {
           subject: `New inquiry — ${name || "Anonymous"} via ${siteSlug}`,
           html: buildLeadEmail(lead),
         });
+
+        // Send Telegram alert if configured for this site
+        await sendTelegramAlert(lead);
       } catch (e) {
         console.error("Lead notify email failed:", e);
       }
