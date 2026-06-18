@@ -30,7 +30,6 @@ const CHANGELOG: Day[] = [
   {
     date: "17 Jun 2026",
     entries: [
-      { time: "23:29", tag: "NEW", title: "Add custom days interval to recurring payments" },
       { time: "22:07", tag: "NEW", title: "Add one-time/recurring toggle to Payments page with subscription support" },
       { time: "21:56", tag: "FIX", title: "Move Payments nav item to Saabai section under Users" },
       { time: "21:51", tag: "UPDATE", title: "Redeploy for NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" },

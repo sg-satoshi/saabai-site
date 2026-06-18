@@ -147,7 +147,6 @@ export default function InvoiceTracker() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [isDuplicate, setIsDuplicate] = useState(false);
 
   // Modal form state
   const [invNumber, setInvNumber] = useState("");
@@ -200,7 +199,6 @@ export default function InvoiceTracker() {
 
   function openNewInvoice() {
     setEditId(null);
-    setIsDuplicate(false);
 
     // Auto-number
     const nums = invoices.map(inv => {
@@ -228,30 +226,11 @@ export default function InvoiceTracker() {
   }
 
   function openEditInvoice(inv: Invoice) {
-    setIsDuplicate(false);
     setEditId(inv.id);
     setInvNumber(inv.number);
     setInvDate(inv.date);
     setInvClientId(inv.clientId);
     setInvStatus(inv.status);
-    setInvNotes(inv.notes || "");
-    setLineItems(inv.lineItems.map(li => ({ ...li })));
-    setShowNewClient(false);
-    setShowModal(true);
-  }
-
-  function openDuplicateInvoice(inv: Invoice) {
-    setIsDuplicate(true);
-    setEditId(null);
-    const nums = invoices.map(i => {
-      const m = i.number.match(/SG-(\d+)/);
-      return m ? parseInt(m[1], 10) : 0;
-    });
-    const max = nums.length ? Math.max(...nums) : 14;
-    setInvNumber("SG-" + String(max + 1).padStart(3, "0"));
-    setInvDate(new Date().toISOString().split("T")[0]);
-    setInvClientId(inv.clientId);
-    setInvStatus("unpaid");
     setInvNotes(inv.notes || "");
     setLineItems(inv.lineItems.map(li => ({ ...li })));
     setShowNewClient(false);
@@ -473,12 +452,6 @@ export default function InvoiceTracker() {
                     onClick={e => e.stopPropagation()}>
                     <button onClick={() => printInv(inv)} style={btnSm} title="Print">🖨</button>
                     <button onClick={() => openEditInvoice(inv)} style={btnSm} title="Edit">✎</button>
-                    <button onClick={() => openDuplicateInvoice(inv)} style={btnSm} title="Duplicate as new invoice">
-                      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.25"/>
-                        <path d="M3 9H2C1.448 9 1 8.552 1 8V2C1 1.448 1.448 1 2 1H8C8.552 1 9 1.448 9 2V3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round"/>
-                      </svg>
-                    </button>
                     <button onClick={() => cycleStatus(inv.id)} style={btnSm} title="Toggle status">↻</button>
                     <button onClick={() => deleteInvoice(inv.id)} style={{ ...btnSm, color: C.red }} title="Delete">✕</button>
                   </td>
@@ -503,7 +476,7 @@ export default function InvoiceTracker() {
             {/* Header */}
             <div style={{ padding: "18px 22px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.text }}>
-                {editId ? `Edit ${invNumber}` : isDuplicate ? `Duplicate as ${invNumber}` : "New Invoice"}
+                {editId ? `Edit ${invNumber}` : "New Invoice"}
               </h3>
             </div>
 
