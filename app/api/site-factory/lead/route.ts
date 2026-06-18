@@ -102,15 +102,12 @@ async function sendTelegramAlert(lead: {
     if (lead.message) text += `*Notes:* ${lead.message}\n`;
     text += `\n_Received ${ts}_`;
 
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: parseInt(chatId, 10),
-        text,
-        parse_mode: "Markdown",
-      }),
-    });
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}&parse_mode=Markdown`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Telegram API error:", res.status, errText);
+    }
   } catch (e) {
     console.error("Telegram alert failed:", e);
   }
