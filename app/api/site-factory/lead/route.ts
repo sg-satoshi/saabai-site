@@ -73,25 +73,6 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
-/** Build Telegram message text from a lead */
-function buildTelegramText(lead: {
-  name: string; email: string; phone: string; message: string; siteSlug: string;
-  metadata?: { duration?: string; eventType?: string }; createdAt: number;
-}): string {
-  const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
-    timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short",
-  });
-  let text = `🔔 *New inquiry — ${lead.siteSlug}*\n\n`;
-  text += `*Name:* ${lead.name || "—"}\n`;
-  text += `*Email:* ${lead.email || "—"}\n`;
-  text += `*Phone:* ${lead.phone || "—"}\n`;
-  if (lead.metadata?.duration) text += `*Duration:* ${lead.metadata.duration}\n`;
-  if (lead.metadata?.eventType) text += `*Event:* ${lead.metadata.eventType}\n`;
-  if (lead.message) text += `*Notes:* ${lead.message}\n`;
-  text += `\n_Received ${ts}_`;
-  return text;
-}
-
 export async function POST(req: Request) {
   try {
     const { name, email, phone, message, siteSlug, duration, eventType } =
@@ -116,16 +97,6 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
-    // Telegram FIRST — simplest possible call, before anything else
-    if (siteSlug === "nico-moretti") {
-      try {
-        const t = "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
-        const c = "5066504835";
-        const msg = `New lead: ${name || "?"} - ${phone || "?"}`;
-        await fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}`);
-      } catch (_) {}
-    }
-
     // Send notifications
     try {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
@@ -145,13 +116,19 @@ export async function POST(req: Request) {
 
       // Telegram alert for Nico Moretti
       if (siteSlug === "nico-moretti") {
-        const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI || "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
-        const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "5066504835";
-        const simpleText = `New lead: ${name || "?"} - ${phone || "?"}`;
-        const tgUrl = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(simpleText)}`;
-        const tgRes = await fetch(tgUrl);
-        const tgBody = await tgRes.text();
-        if (!tgRes.ok) console.error("Telegram error:", tgBody);
+        const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI;
+        const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI;
+        if (botToken && chatId) {
+          const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
+          let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
+          msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
+          if (duration) msg += `*Duration:* ${duration}\n`;
+          if (eventType) msg += `*Event:* ${eventType}\n`;
+          if (message) msg += `*Notes:* ${message}\n`;
+          msg += `\n_Received ${ts}_`;
+          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+          if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
+        }
       }
     } catch (e) {
       console.error("Lead notification failed:", e);

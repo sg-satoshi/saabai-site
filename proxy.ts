@@ -55,7 +55,6 @@ const PUBLIC_API = [
   "/api/advisory-leads",
   "/api/leads",
   "/api/site-factory/lead",
-  "/api/test-telegram",
   "/api/leadgen/lead",
   "/api/subscribe",
   "/api/onboarding",
