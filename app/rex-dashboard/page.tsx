@@ -100,26 +100,18 @@ export default async function RexDashboardPage() {
     ]);
   }
 
-  let stats: Awaited<ReturnType<typeof fetchRexStats>>;
-  let orders: Awaited<ReturnType<typeof fetchRecentOrders>>;
-  let leadTs: Awaited<ReturnType<typeof fetchLeadTimestamps>>;
+  // Each data source gets its own timeout so a slow WooCommerce call
+  // doesn't blank the Rex stats.
+  const [statsResult, ordersResult, leadTsResult] = await Promise.allSettled([
+    withTimeout(fetchRexStats(), TIMEOUT_MS),
+    withTimeout(fetchRecentOrders(365), TIMEOUT_MS),
+    withTimeout(fetchLeadTimestamps(), TIMEOUT_MS),
+  ]);
 
-  try {
-    [stats, orders, leadTs] = await withTimeout(
-      Promise.all([
-        fetchRexStats(),
-        fetchRecentOrders(365),
-        fetchLeadTimestamps(),
-      ]),
-      TIMEOUT_MS
-    );
-  } catch {
-    // If data fetch times out, render with empty data
-    const { buildEmptyRexStats } = await import("./empty-fallback");
-    stats = buildEmptyRexStats();
-    orders = [];
-    leadTs = { byEmailHash: {}, byName: {}, byWooCustomerId: {} };
-  }
+  const { buildEmptyRexStats } = await import("./empty-fallback");
+  const stats = statsResult.status === "fulfilled" ? statsResult.value : buildEmptyRexStats();
+  const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
+  const leadTs = leadTsResult.status === "fulfilled" ? leadTsResult.value : { byEmailHash: {}, byName: {}, byWooCustomerId: {} };
 
   const emailTsMap = { ...leadTs.byEmailHash };
   const nameTsMap  = { ...leadTs.byName };
