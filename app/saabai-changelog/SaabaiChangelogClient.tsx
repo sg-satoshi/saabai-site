@@ -110,6 +110,7 @@ const CHANGELOG: Day[] = [
   {
     date: "7 Jun 2026",
     entries: [
+      { time: "18:29", tag: "NEW", title: "Massive LeadGen Customise tab — 7 sections for plumbing chatbot" },
       { time: "18:16", tag: "NEW", title: "Rich profile page with 20+ data fields stored in Redis" },
       { time: "17:43", tag: "NEW", title: "Live Stripe top-up (5/block) + webhook handler" },
       { time: "17:40", tag: "NEW", title: "Overage tracking + buy top-up (5/100 msg blocks)" },
