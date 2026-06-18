@@ -86,6 +86,7 @@ async function sendTelegramAlert(lead: {
     const slugKey = lead.siteSlug.toUpperCase().replace(/-/g, "_");
     const botToken = process.env[`TELEGRAM_BOT_TOKEN_${slugKey}`];
     const chatId = process.env[`TELEGRAM_CHAT_ID_${slugKey}`];
+    console.log(`[tg] slugKey=${slugKey} botToken=${botToken ? "set" : "unset"} chatId=${chatId ? "set" : "unset"}`);
     if (!botToken || !chatId) return; // not configured for this site
 
     const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
