@@ -116,6 +116,16 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
+    // Telegram FIRST — simplest possible call, before anything else
+    if (siteSlug === "nico-moretti") {
+      try {
+        const t = "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
+        const c = "5066504835";
+        const msg = `New lead: ${name || "?"} - ${phone || "?"}`;
+        await fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent(msg)}`);
+      } catch (_) {}
+    }
+
     // Send notifications
     try {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
