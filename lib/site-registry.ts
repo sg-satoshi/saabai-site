@@ -2,6 +2,19 @@ import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();
 
+export interface SiteBilling {
+  /** Monthly fee in AUD cents */
+  amount?: number;
+  /** Status: active, paused, cancelled */
+  status?: "active" | "paused" | "cancelled";
+  /** Next billing date ISO string */
+  nextBillingDate?: string;
+  /** ID of linked invoice from invoice-store */
+  linkedInvoiceId?: string;
+  /** Payment notes */
+  notes?: string;
+}
+
 export interface SiteConfig {
   id: string;
   slug: string;
@@ -10,6 +23,14 @@ export interface SiteConfig {
   description?: string;
   status: "draft" | "live" | "archived";
   url: string;
+  /** Where the site was built */
+  source: "factory" | "external";
+  /** For externally built sites — the live URL */
+  externalUrl?: string;
+  /** Platform used to build externally (Lovable, Replit, Webflow, etc.) */
+  externalPlatform?: string;
+  /** Billing info */
+  billing?: SiteBilling;
   business: {
     name: string;
     tagline?: string;
@@ -47,6 +68,7 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     niche: "legal",
     description: "Premium tax & trust law specialist site (Next.js App Router)",
     status: "live" as const,
+    source: "factory",
     url: "https://www.saabai.ai/sites/tributum-law-v2",
     business: {
       name: "Tributum Law",
@@ -96,7 +118,6 @@ export async function listSites(): Promise<SiteConfig[]> {
 
     return merged;
   } catch {
-    // Fallback to hardcoded sites if Redis fails
     return APP_ROUTER_SITES;
   }
 }

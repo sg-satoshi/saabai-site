@@ -222,6 +222,7 @@ SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. S
             niche,
             description,
             status: "live",
+            source: "factory",
             url: siteUrl,
             business: { name: businessName, tagline: "", phone, email, address },
             chatbot: {

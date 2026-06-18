@@ -11,6 +11,16 @@ interface Site {
   url: string;
   createdAt: number;
   domains?: string[];
+  source?: string;
+  externalUrl?: string;
+  externalPlatform?: string;
+  billing?: {
+    amount?: number;
+    status?: string;
+    nextBillingDate?: string;
+    linkedInvoiceId?: string;
+    notes?: string;
+  };
   chatbot?: {
     enabled?: boolean;
     name?: string;
@@ -381,6 +391,7 @@ export default function SiteFactoryClient() {
   const [genCharCount, setGenCharCount] = useState(0);
   const [streamedHtml, setStreamedHtml] = useState("");
   const [siteType, setSiteType] = useState<"single" | "multi">("single");
+  const [siteSource, setSiteSource] = useState<"factory" | "external">("factory");
   const [multiPageProgress, setMultiPageProgress] = useState<MultiPageStatus[]>([]);
 
   // Smart brief state
@@ -388,6 +399,10 @@ export default function SiteFactoryClient() {
   const [briefUrl, setBriefUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState(false);
+
+  // External site fields
+  const [externalUrl, setExternalUrl] = useState("");
+  const [externalPlatform, setExternalPlatform] = useState("");
 
   // Overwrite protection
   const [overwriteConfirm, setOverwriteConfirm] = useState<{ slug: string; name: string; existingSite: Site } | null>(null);
@@ -399,8 +414,8 @@ export default function SiteFactoryClient() {
   const [chatbotPersonality, setChatbotPersonality] = useState("");
 
   // Sidebar active panel (tabs)
-  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history">("chat");
-  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history") {
+  const [activePanel, setActivePanel] = useState<"chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history" | "billing">("chat");
+  function switchPanel(panel: "chat" | "image" | "bot" | "dns" | "reviews" | "seo" | "history" | "billing") {
     setActivePanel(panel);
     if (panel === "image" && activeSite) {
       loadGallery(activeSite.slug);
@@ -1338,6 +1353,45 @@ export default function SiteFactoryClient() {
       showToast("Extraction failed — " + String(e), "error");
     } finally {
       setExtracting(false);
+    }
+  }
+
+  async function saveExternalSite() {
+    if (!businessName.trim() || !externalUrl.trim()) return;
+    const slug = slugify(businessName.trim());
+
+    try {
+      const res = await fetch("/api/site-factory/save-external", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          name: businessName.trim(),
+          niche: niche || "other",
+          description: description.trim() || undefined,
+          externalUrl: externalUrl.trim(),
+          externalPlatform: externalPlatform || undefined,
+          chatbotEnabled,
+          chatbotName: chatbotName.trim() || undefined,
+          chatbotGreeting: chatbotGreeting.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        showToast(err.error || "Failed to save site", "error");
+        return;
+      }
+      showToast("External site saved!");
+      setPhase("list");
+      setBusinessName("");
+      setExternalUrl("");
+      setExternalPlatform("");
+      setDescription("");
+      setChatbotName("");
+      setChatbotGreeting("");
+      fetchSites();
+    } catch (e) {
+      showToast("Failed to save site — " + String(e), "error");
     }
   }
 
@@ -2907,7 +2961,7 @@ export default function SiteFactoryClient() {
               const color   = siteColor(site.name);
               const initials = site.name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
               const customDomain = site.domains?.[0];
-              const previewUrl = customDomain ? `https://${customDomain}` : `https://www.saabai.ai/sites/${site.slug}/`;
+              const previewUrl = site.externalUrl || (customDomain ? `https://${customDomain}` : `https://www.saabai.ai/sites/${site.slug}/`);
               const niche = NICHE_META[site.niche ?? "other"] ?? NICHE_META.other;
               const isLive = site.status === "live";
 
@@ -2928,7 +2982,12 @@ export default function SiteFactoryClient() {
 
                   {/* Name */}
                   <div style={{ minWidth: 0, paddingRight: 12 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{site.name}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.text, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{site.name}</span>
+                      {site.source === "external" && (
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.12)", color: "#8b5cf6", whiteSpace: "nowrap", letterSpacing: "0.03em", textTransform: "uppercase" }}>EXT</span>
+                      )}
+                    </div>
                     {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted }}>{customDomain || `/sites/${site.slug}/`}</span>}
                   </div>
 
@@ -3110,6 +3169,30 @@ export default function SiteFactoryClient() {
                 </div>
               </div>
 
+              {/* ─── Source toggle ─── */}
+              <div>
+                <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 600, color: C.text }}>Site Origin</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {(["factory", "external"] as const).map(s => (
+                    <button key={s} onClick={() => setSiteSource(s)} style={{
+                      padding: "12px 10px", borderRadius: 9,
+                      border: `1.5px solid ${siteSource === s ? C.gold : C.border2}`,
+                      background: siteSource === s ? C.goldBg : C.bg, cursor: "pointer", textAlign: "left",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${siteSource === s ? C.gold : C.textDim}`, background: siteSource === s ? C.gold : "transparent", flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: siteSource === s ? C.gold : C.text }}>
+                          {s === "factory" ? "AI Generated" : "Externally Built"}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.4 }}>
+                        {s === "factory" ? "Built inside the Site Factory with AI" : "Built via Lovable, Replit, Webflow, etc."}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* ─── Divider ─── */}
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ flex: 1, height: 1, background: C.border }} />
@@ -3117,92 +3200,145 @@ export default function SiteFactoryClient() {
                 <div style={{ flex: 1, height: 1, background: C.border }} />
               </div>
 
-              <div>{lbl("Business Name *")}<input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Smith Plumbing" style={inp()} autoFocus /></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>{lbl("Industry")}<select value={niche} onChange={e => { const n = e.target.value; setNiche(n); if (!themeOverridden) setStyle(NICHE_THEME_DEFAULT[n] ?? "slate"); }} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
-                <div>{lbl("Location")}<input value={location} onChange={e => setLocation(e.target.value)} placeholder="Sydney, NSW" style={inp()} /></div>
-              </div>
-              <div>{lbl("Services (comma separated)")}<input value={services} onChange={e => setServices(e.target.value)} placeholder="Emergency plumbing, Blocked drains..." style={inp()} /></div>
-              <div>
-                {lbl("Brief / Notes")}
-                <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Target audience, tone, inspiration sites, anything specific..." rows={3} style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 })} />
-              </div>
-              {/* ─── Site Type ─── */}
-              <div>
-                {lbl("Site Structure")}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {(["single", "multi"] as const).map(t => {
-                    const sel = siteType === t;
-                    const pages = NICHE_PAGES[niche] ?? DEFAULT_PAGES;
-                    return (
-                      <button key={t} onClick={() => setSiteType(t)} style={{ padding: "12px 10px", borderRadius: 9, border: `1.5px solid ${sel ? C.gold : C.border2}`, background: sel ? C.goldBg : C.bg, cursor: "pointer", textAlign: "left", transition: "all .15s" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
-                          <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${sel ? C.gold : C.textDim}`, background: sel ? C.gold : "transparent", flexShrink: 0 }} />
-                          <span style={{ fontSize: 12, fontWeight: 700, color: sel ? C.gold : C.text }}>{t === "single" ? "Single Page" : "Multi-Page"}</span>
-                        </div>
-                        <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.4 }}>
-                          {t === "single"
-                            ? "All sections in one scrollable page. Generates in ~90s."
-                            : `${pages.length} separate pages: ${pages.map(p => p.label).join(" · ")}. Takes ~3-5 min.`}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                <div>{lbl("Phone")}<input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412 345 678" style={inp()} /></div>
-                <div>{lbl("Email")}<input value={email} onChange={e => setEmail(e.target.value)} placeholder="info@..." style={inp()} /></div>
-                <div>{lbl("Address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" style={inp()} /></div>
-              </div>
-              <div>
-                {lbl("Design Theme")}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
-                  {THEMES.map(t => {
-                    const selected = style === t.id;
-                    return (
-                      <button key={t.id} onClick={() => { setStyle(t.id); setThemeOverridden(true); }} style={{ padding: "8px 6px", borderRadius: 7, border: `1.5px solid ${selected ? C.gold : C.border2}`, background: selected ? C.goldBg : C.bg, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s" }}>
-                        <div style={{ display: "flex", gap: 3 }}>
-                          {t.colors.map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, border: "1px solid rgba(0,0,0,0.10)" }} />)}
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: selected ? C.gold : C.text, letterSpacing: "0.03em" }}>{t.label}</span>
-                        <span style={{ fontSize: 9, color: selected ? C.gold : C.textMuted, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t.tagline}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              {/* Chatbot config */}
-              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: chatbotEnabled ? 12 : 0 }}>
+              {siteSource === "factory" ? (
+                <>
+                  <div>{lbl("Business Name *")}<input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Smith Plumbing" style={inp()} autoFocus /></div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div>{lbl("Industry")}<select value={niche} onChange={e => { const n = e.target.value; setNiche(n); if (!themeOverridden) setStyle(NICHE_THEME_DEFAULT[n] ?? "slate"); }} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
+                    <div>{lbl("Location")}<input value={location} onChange={e => setLocation(e.target.value)} placeholder="Sydney, NSW" style={inp()} /></div>
+                  </div>
+                  <div>{lbl("Services (comma separated)")}<input value={services} onChange={e => setServices(e.target.value)} placeholder="Emergency plumbing, Blocked drains..." style={inp()} /></div>
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>AI Chatbot</p>
-                    <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>Add a trained assistant for site visitors</p>
+                    {lbl("Brief / Notes")}
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Target audience, tone, inspiration sites, anything specific..." rows={3} style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 })} />
                   </div>
-                  <button
-                    onClick={() => setChatbotEnabled(e => !e)}
-                    style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${chatbotEnabled ? C.gold : C.border2}`, background: chatbotEnabled ? C.goldBg : "none", color: chatbotEnabled ? C.gold : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                  >
-                    {chatbotEnabled ? "On" : "Off"}
-                  </button>
-                </div>
-                {chatbotEnabled && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <div>{lbl("Bot name")}<input value={chatbotName} onChange={e => setChatbotName(e.target.value)} placeholder={businessName ? `${businessName} Assistant` : "e.g. Lily"} style={inp()} /></div>
-                      <div>{lbl("Greeting")}<input value={chatbotGreeting} onChange={e => setChatbotGreeting(e.target.value)} placeholder="Hi! How can I help?" style={inp()} /></div>
-                    </div>
-                    <div>
-                      {lbl("Personality & training notes")}
-                      <textarea value={chatbotPersonality} onChange={e => setChatbotPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, specialist in Thai massage. Knows services, pricing, and booking process. Encourages visitors to book online or call..." rows={2} style={inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                  {/* ─── Site Type ─── */}
+                  <div>
+                    {lbl("Site Structure")}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      {(["single", "multi"] as const).map(t => {
+                        const sel = siteType === t;
+                        const pages = NICHE_PAGES[niche] ?? DEFAULT_PAGES;
+                        return (
+                          <button key={t} onClick={() => setSiteType(t)} style={{ padding: "12px 10px", borderRadius: 9, border: `1.5px solid ${sel ? C.gold : C.border2}`, background: sel ? C.goldBg : C.bg, cursor: "pointer", textAlign: "left", transition: "all .15s" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                              <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${sel ? C.gold : C.textDim}`, background: sel ? C.gold : "transparent", flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, fontWeight: 700, color: sel ? C.gold : C.text }}>{t === "single" ? "Single Page" : "Multi-Page"}</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: 11, color: C.textDim, lineHeight: 1.4 }}>
+                              {t === "single"
+                                ? "All sections in one scrollable page. Generates in ~90s."
+                                : `${pages.length} separate pages: ${pages.map(p => p.label).join(" · ")}. Takes ~3-5 min.`}
+                            </p>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
-              </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                    <div>{lbl("Phone")}<input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0412 345 678" style={inp()} /></div>
+                    <div>{lbl("Email")}<input value={email} onChange={e => setEmail(e.target.value)} placeholder="info@..." style={inp()} /></div>
+                    <div>{lbl("Address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" style={inp()} /></div>
+                  </div>
+                  <div>
+                    {lbl("Design Theme")}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                      {THEMES.map(t => {
+                        const selected = style === t.id;
+                        return (
+                          <button key={t.id} onClick={() => { setStyle(t.id); setThemeOverridden(true); }} style={{ padding: "8px 6px", borderRadius: 7, border: `1.5px solid ${selected ? C.gold : C.border2}`, background: selected ? C.goldBg : C.bg, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s" }}>
+                            <div style={{ display: "flex", gap: 3 }}>
+                              {t.colors.map((c, i) => <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: c, border: "1px solid rgba(0,0,0,0.10)" }} />)}
+                            </div>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: selected ? C.gold : C.text, letterSpacing: "0.03em" }}>{t.label}</span>
+                            <span style={{ fontSize: 9, color: selected ? C.gold : C.textMuted, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t.tagline}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {/* Chatbot config */}
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: chatbotEnabled ? 12 : 0 }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>AI Chatbot</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>Add a trained assistant for site visitors</p>
+                      </div>
+                      <button onClick={() => setChatbotEnabled(e => !e)} style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${chatbotEnabled ? C.gold : C.border2}`, background: chatbotEnabled ? C.goldBg : "none", color: chatbotEnabled ? C.gold : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        {chatbotEnabled ? "On" : "Off"}
+                      </button>
+                    </div>
+                    {chatbotEnabled && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          <div>{lbl("Bot name")}<input value={chatbotName} onChange={e => setChatbotName(e.target.value)} placeholder={businessName ? `${businessName} Assistant` : "e.g. Lily"} style={inp()} /></div>
+                          <div>{lbl("Greeting")}<input value={chatbotGreeting} onChange={e => setChatbotGreeting(e.target.value)} placeholder="Hi! How can I help?" style={inp()} /></div>
+                        </div>
+                        <div>
+                          {lbl("Personality & training notes")}
+                          <textarea value={chatbotPersonality} onChange={e => setChatbotPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, specialist in Thai massage..." rows={2} style={inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-              <button onClick={() => generateSite()} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
-                {siteType === "multi" ? `Generate ${(NICHE_PAGES[niche] ?? DEFAULT_PAGES).length} Pages` : "Generate Site"}
-              </button>
+                  <button onClick={() => generateSite()} disabled={!businessName.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() ? C.border : C.gold, color: !businessName.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() ? "not-allowed" : "pointer" }}>
+                    {siteType === "multi" ? `Generate ${(NICHE_PAGES[niche] ?? DEFAULT_PAGES).length} Pages` : "Generate Site"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div>{lbl("Business Name *")}<input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Smith Plumbing" style={inp()} autoFocus /></div>
+                  <div>{lbl("Live URL *")}<input value={externalUrl} onChange={e => setExternalUrl(e.target.value)} placeholder="https://client-site.com" style={inp()} type="url" /></div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div>{lbl("Built With")}
+                      <select value={externalPlatform} onChange={e => setExternalPlatform(e.target.value)} style={inp()}>
+                        <option value="">Select platform...</option>
+                        <option value="Lovable">Lovable</option>
+                        <option value="Replit">Replit</option>
+                        <option value="Webflow">Webflow</option>
+                        <option value="WordPress">WordPress</option>
+                        <option value="Wix">Wix</option>
+                        <option value="Squarespace">Squarespace</option>
+                        <option value="Custom dev">Custom dev</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>{lbl("Industry")}<select value={niche} onChange={e => setNiche(e.target.value)} style={inp()}>{NICHES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}</select></div>
+                  </div>
+                  <div>
+                    {lbl("Notes")}
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Any details about this site..." rows={3} style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 })} />
+                  </div>
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: chatbotEnabled ? 12 : 0 }}>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>AI Chatbot</p>
+                        <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textDim }}>Add a trained assistant for site visitors</p>
+                      </div>
+                      <button onClick={() => setChatbotEnabled(e => !e)} style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${chatbotEnabled ? C.gold : C.border2}`, background: chatbotEnabled ? C.goldBg : "none", color: chatbotEnabled ? C.gold : C.textDim, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        {chatbotEnabled ? "On" : "Off"}
+                      </button>
+                    </div>
+                    {chatbotEnabled && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          <div>{lbl("Bot name")}<input value={chatbotName} onChange={e => setChatbotName(e.target.value)} placeholder={businessName ? `${businessName} Assistant` : "e.g. Lily"} style={inp()} /></div>
+                          <div>{lbl("Greeting")}<input value={chatbotGreeting} onChange={e => setChatbotGreeting(e.target.value)} placeholder="Hi! How can I help?" style={inp()} /></div>
+                        </div>
+                        <div>
+                          {lbl("Personality & training notes")}
+                          <textarea value={chatbotPersonality} onChange={e => setChatbotPersonality(e.target.value)} placeholder="e.g. Warm and calming tone, specialist in Thai massage..." rows={2} style={inp({ resize: "none", fontFamily: "inherit", lineHeight: 1.5 })} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <button onClick={() => saveExternalSite()} disabled={!businessName.trim() || !externalUrl.trim()} style={{ marginTop: 4, width: "100%", padding: "12px", borderRadius: 7, border: "none", background: !businessName.trim() || !externalUrl.trim() ? C.border : C.gold, color: !businessName.trim() || !externalUrl.trim() ? C.textDim : "#000", fontSize: 14, fontWeight: 700, cursor: !businessName.trim() || !externalUrl.trim() ? "not-allowed" : "pointer" }}>
+                    Save External Site
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

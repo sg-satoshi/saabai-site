@@ -7,6 +7,7 @@ async function seed() {
     name: "Next Investment",
     niche: "professional-services",
     status: "live",
+    source: "factory",
     url: "https://saabai-site.vercel.app/clients/nextinvestment/",
     business: {
       name: "Next Investment",
@@ -30,6 +31,7 @@ async function seed() {
     name: "Lifestyle Money Management",
     niche: "professional-services",
     status: "live",
+    source: "factory",
     url: "https://saabai-site.vercel.app/clients/lmm-site/",
     business: {
       name: "Lifestyle Money Management",

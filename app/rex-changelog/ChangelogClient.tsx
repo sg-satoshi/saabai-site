@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "18 Jun 2026",
+    entries: [
+      { time: "10:54", tag: "NEW", title: "Revert \"feat: add duplicate invoice button to InvoiceTracker\"" }
+    ],
+  },
+  {
     date: "17 Jun 2026",
     entries: [
       { time: "22:07", tag: "NEW", title: "Add one-time/recurring toggle to Payments page with subscription support" }

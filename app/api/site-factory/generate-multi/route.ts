@@ -334,6 +334,7 @@ export async function POST(req: NextRequest) {
           niche,
           description,
           status: "live",
+          source: "factory",
           url: siteUrl,
           business: { name: businessName, tagline: "", phone, email, address },
           chatbot: { enabled: true, name: botName, greeting: botGreeting, systemPrompt: botSystemPrompt },

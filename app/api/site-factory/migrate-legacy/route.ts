@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
     niche: meta.niche,
     description: meta.description,
     status: "live",
+    source: "factory",
     url: `https://www.saabai.ai/sites/${slug}/`,
     business: { name: meta.name },
     chatbot: {
