@@ -82,6 +82,15 @@ export async function POST(req: Request) {
       return Response.json({ error: "siteSlug is required" }, { status: 400 });
     }
 
+    // EARLY TEST: env var send (right after req.json, before anything else)
+    if (siteSlug === "nico-moretti") {
+      const t = process.env.TG_NICO_BOT;
+      const c = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI;
+      if (t && c) {
+        await fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent("EARLY: " + name)}`);
+      }
+    }
+
     const lead = {
       name: name || "",
       email: email || "",

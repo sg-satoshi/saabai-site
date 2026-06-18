@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "07:38", tag: "FIX", title: "Use short TG_NICO_BOT env var name (Edge runtime can't load long names)" },
       { time: "07:30", tag: "UPDATE", title: "Test shorter env var name TG_NICO_BOT" },
       { time: "07:28", tag: "UPDATE", title: "Test env var directly in Edge runtime" },
       { time: "07:01", tag: "FIX", title: "Read Telegram token from Redis (reliable in Edge runtime), remove all hardcoded secrets" },
