@@ -155,6 +155,16 @@ export async function POST(req: Request) {
       });
 
       await sendTelegramAlert(lead);
+
+      // Inline Telegram test to verify the path
+      try {
+        const tgToken = "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
+        const tgChatId = "5066504835";
+        const tgRes = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage?chat_id=${tgChatId}&text=${encodeURIComponent("Lead captured: " + (name || "?") + " - " + (phone || "?"))}&parse_mode=Markdown`);
+        console.error("TG inline result:", tgRes.status, await tgRes.text());
+      } catch(tgE) {
+        console.error("TG inline fail:", tgE);
+      }
     } catch (e) {
       console.error("Lead notification failed:", e);
     }
