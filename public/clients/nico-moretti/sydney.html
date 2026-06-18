@@ -275,7 +275,7 @@ document.getElementById('nm-inquiry-form').addEventListener('submit', async func
         siteSlug: 'nico-moretti', duration: fd.get('duration'), eventType: 'Sydney Engagement'
     };
     try {
-        const r = await fetch('/api/site-factory/lead', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const r = await fetch('https://www.saabai.ai/api/site-factory/lead', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         if(r.ok) { btn.textContent = 'Inquiry Sent'; this.reset(); }
         else throw new Error();
     } catch { btn.textContent = 'Error. Please try again'; btn.disabled = false; }

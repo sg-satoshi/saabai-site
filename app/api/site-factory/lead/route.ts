@@ -5,6 +5,17 @@ import { getSiteBySlug } from "../../../../lib/site-registry";
 const redis = Redis.fromEnv();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://nicomoretti.au",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
+
+function corsJson(data: unknown, status = 200): Response {
+  return Response.json(data, { status, headers: CORS_HEADERS });
+}
+
 export const runtime = "edge";
 
 function buildLeadEmail(lead: {
@@ -73,13 +84,17 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(req: Request) {
   try {
     const { name, email, phone, message, siteSlug, duration, eventType } =
       await req.json();
 
     if (!siteSlug) {
-      return Response.json({ error: "siteSlug is required" }, { status: 400 });
+      return corsJson({ error: "siteSlug is required" }, 400);
     }
 
     // EARLY TEST: env var send (right after req.json, before anything else)
@@ -143,12 +158,12 @@ export async function POST(req: Request) {
       console.error("Lead notification failed:", e);
     }
 
-    return Response.json({ success: true, message: "Lead captured" });
+    return corsJson({ success: true, message: "Lead captured" });
   } catch (error) {
     console.error("Lead capture error:", error);
-    return Response.json(
+    return corsJson(
       { error: "Failed to capture lead" },
-      { status: 500 }
+      500
     );
   }
 }

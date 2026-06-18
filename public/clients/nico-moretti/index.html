@@ -774,7 +774,7 @@
                     eventType: (document.getElementById('event_type') || {}).value || ''
                 };
 
-                fetch('/api/site-factory/lead', {
+                fetch('https://www.saabai.ai/api/site-factory/lead', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)

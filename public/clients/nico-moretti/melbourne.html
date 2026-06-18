@@ -251,7 +251,7 @@ document.getElementById('nm-inquiry-form').addEventListener('submit', async func
     const fd = new FormData(this);
     const payload = { name: fd.get('name'), email: fd.get('email'), phone: fd.get('phone'), message: (fd.get('message') || '') + ' [Melbourne inquiry]', siteSlug: 'nico-moretti', duration: fd.get('duration'), eventType: 'Melbourne Engagement' };
     try {
-        const r = await fetch('/api/site-factory/lead', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const r = await fetch('https://www.saabai.ai/api/site-factory/lead', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         if(r.ok) { btn.textContent = 'Inquiry Sent'; this.reset(); } else throw new Error();
     } catch { btn.textContent = 'Error. Please try again'; btn.disabled = false; }
 });
