@@ -73,44 +73,23 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
-async function sendTelegramAlert(lead: {
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  siteSlug: string;
-  metadata?: { duration?: string; eventType?: string };
-  createdAt: number;
-}) {
-  try {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI || "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
-    const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "5066504835";
-    if (!botToken || !chatId) return;
-
-    const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
-      timeZone: "Australia/Brisbane",
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-
-    let text = `🔔 *New inquiry — ${lead.siteSlug}*\n\n`;
-    text += `*Name:* ${lead.name || "—"}\n`;
-    text += `*Email:* ${lead.email || "—"}\n`;
-    text += `*Phone:* ${lead.phone || "—"}\n`;
-    if (lead.metadata?.duration) text += `*Duration:* ${lead.metadata.duration}\n`;
-    if (lead.metadata?.eventType) text += `*Event:* ${lead.metadata.eventType}\n`;
-    if (lead.message) text += `*Notes:* ${lead.message}\n`;
-    text += `\n_Received ${ts}_`;
-
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}&parse_mode=Markdown`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Telegram API error:", res.status, errText);
-    }
-  } catch (e) {
-    console.error("Telegram alert failed:", e);
-  }
+/** Build Telegram message text from a lead */
+function buildTelegramText(lead: {
+  name: string; email: string; phone: string; message: string; siteSlug: string;
+  metadata?: { duration?: string; eventType?: string }; createdAt: number;
+}): string {
+  const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
+    timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short",
+  });
+  let text = `🔔 *New inquiry — ${lead.siteSlug}*\n\n`;
+  text += `*Name:* ${lead.name || "—"}\n`;
+  text += `*Email:* ${lead.email || "—"}\n`;
+  text += `*Phone:* ${lead.phone || "—"}\n`;
+  if (lead.metadata?.duration) text += `*Duration:* ${lead.metadata.duration}\n`;
+  if (lead.metadata?.eventType) text += `*Event:* ${lead.metadata.eventType}\n`;
+  if (lead.message) text += `*Notes:* ${lead.message}\n`;
+  text += `\n_Received ${ts}_`;
+  return text;
 }
 
 export async function POST(req: Request) {
@@ -137,7 +116,7 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
-    // Send notifications (await to ensure they complete before returning)
+    // Send notifications
     try {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
       const site = await getSiteBySlug(siteSlug);
@@ -154,16 +133,13 @@ export async function POST(req: Request) {
         html: buildLeadEmail(lead),
       });
 
-      await sendTelegramAlert(lead);
-
-      // Inline Telegram test to verify the path
-      try {
-        const tgToken = "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
-        const tgChatId = "5066504835";
-        const tgRes = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage?chat_id=${tgChatId}&text=${encodeURIComponent("Lead captured: " + (name || "?") + " - " + (phone || "?"))}&parse_mode=Markdown`);
-        console.error("TG inline result:", tgRes.status, await tgRes.text());
-      } catch(tgE) {
-        console.error("TG inline fail:", tgE);
+      // Telegram alert for Nico Moretti
+      if (siteSlug === "nico-moretti") {
+        const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI || "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
+        const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "5066504835";
+        const tgUrl = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(buildTelegramText(lead))}&parse_mode=Markdown`;
+        const tgRes = await fetch(tgUrl);
+        if (!tgRes.ok) console.error("Telegram send error:", await tgRes.text());
       }
     } catch (e) {
       console.error("Lead notification failed:", e);
