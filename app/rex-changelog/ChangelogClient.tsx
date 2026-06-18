@@ -30,66 +30,9 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
-    date: "19 Jun 2026",
-    entries: [
-      { time: "07:38", tag: "FIX", title: "Use short TG_NICO_BOT env var name (Edge runtime can't load long names)" },
-      { time: "07:30", tag: "UPDATE", title: "Test shorter env var name TG_NICO_BOT" },
-      { time: "07:28", tag: "UPDATE", title: "Test env var directly in Edge runtime" },
-      { time: "07:01", tag: "FIX", title: "Read Telegram token from Redis (reliable in Edge runtime), remove all hardcoded secrets" },
-      { time: "06:57", tag: "NEW", title: "Pick up new Telegram token" },
-      { time: "06:54", tag: "FIX", title: "Remove hardcoded Telegram token, full formatted alerts, clean up test endpoint" },
-      { time: "00:57", tag: "UPDATE", title: "Test POST handler same pattern as lead handler" },
-      { time: "00:55", tag: "UPDATE", title: "Telegram call first in handler" },
-      { time: "00:53", tag: "UPDATE", title: "Comprehensive Telegram tests" },
-      { time: "00:50", tag: "UPDATE", title: "Simplest possible Telegram inline test" },
-      { time: "00:48", tag: "UPDATE", title: "Inline Telegram alert, remove separate function + debug code" },
-      { time: "00:40", tag: "UPDATE", title: "Inline Telegram test in lead handler" },
-      { time: "00:38", tag: "NEW", title: "Add test-telegram to public API" },
-      { time: "00:36", tag: "UPDATE", title: "Test Telegram from Edge runtime" },
-      { time: "00:34", tag: "FIX", title: "Use GET for Telegram API with error logging" },
-      { time: "00:31", tag: "FIX", title: "Await Telegram alerts - remove fire-and-forget IIFE" },
-      { time: "00:28", tag: "FIX", title: "Direct env var ref with fallback for Telegram alerts" },
-      { time: "00:24", tag: "UPDATE", title: "Swap back to env vars for Telegram bot config" },
-      { time: "00:18", tag: "UPDATE", title: "Log Telegram env var status" },
-      { time: "00:12", tag: "FIX", title: "Separate try-catch for Telegram alert" },
-      { time: "00:09", tag: "NEW", title: "Pick up new env vars" },
-      { time: "00:05", tag: "NEW", title: "Add Telegram lead alerts for site-factory (Nico Moretti)" }
-    ],
-  },
-  {
     date: "18 Jun 2026",
     entries: [
-      { time: "22:40", tag: "UPDATE", title: "Resolve changelog merge conflict" },
-      { time: "22:39", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },
-      { time: "19:56", tag: "NEW", title: "Add Heaven Thai to site list, external site billing display, auto-invoice on billing" },
-      { time: "19:50", tag: "NEW", title: "External sites auto-create recurring invoice on save" },
-      { time: "19:10", tag: "NEW", title: "Enhance external site display + auto-create invoice on billing save" },
-      { time: "15:25", tag: "NEW", title: "Add migrate-sites endpoint for one-shot legacy registration" },
-      { time: "15:18", tag: "NEW", title: "Add external site option to Site Factory with source tracking" },
-      { time: "10:54", tag: "NEW", title: "Revert \"feat: add duplicate invoice button to InvoiceTracker\"" }
-    ],
-  },
-  {
-    date: "17 Jun 2026",
-    entries: [
-      { time: "22:07", tag: "NEW", title: "Add one-time/recurring toggle to Payments page with subscription support" }
-    ],
-  },
-  {
-    date: "16 Jun 2026",
-    entries: [
-      { time: "17:21", tag: "FIX", title: "Remove all em dashes and AI phrases from nicomoretti.au" },
-      { time: "13:50", tag: "FIX", title: "Expand duration dropdown on all city pages to match homepage" },
-      { time: "13:43", tag: "NEW", title: "Thicken all city pages with hyper-local content + fix schemas" },
-      { time: "13:39", tag: "NEW", title: "Add dedicated FAQ page for nicomoretti.au" },
-      { time: "12:10", tag: "NEW", title: "Replace expired gallery placeholders with real Nico Moretti photography" },
-      { time: "11:57", tag: "FIX", title: "Remove aggregateRating from Service schema on nicomoretti.au" },
-      { time: "11:42", tag: "FIX", title: "Sitemap reads slug from headers instead of broken params" },
-      { time: "11:19", tag: "NEW", title: "Add Gold Coast location page for nicomoretti.au SEO" },
-      { time: "10:59", tag: "NEW", title: "Location pages for nicomoretti.au — Sydney, Melbourne, Brisbane, Perth, Canberra, Hobart with unique SEO copy and locations grid on main page" },
-      { time: "10:43", tag: "FIX", title: "Sitemap function receives slug directly, not via params wrapper" },
-      { time: "10:33", tag: "FIX", title: "Remove cutting fee from Rex — cutting is included in price, Rex must not quote or add cutting fees" },
-      { time: "10:19", tag: "FIX", title: "Remove '10 cuts included' line from Rex knowledge base" }
+      { time: "22:38", tag: "UPDATE", title: "Changelog auto-update [skip ci]" }
     ],
   },
   {
