@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "17 Jun 2026",
     entries: [
+      { time: "23:29", tag: "NEW", title: "Add custom days interval to recurring payments" },
       { time: "22:07", tag: "NEW", title: "Add one-time/recurring toggle to Payments page with subscription support" }
     ],
   },
