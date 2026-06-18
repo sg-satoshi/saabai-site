@@ -140,34 +140,27 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
-    // Resolve notification address — non-blocking
-    (async () => {
-      try {
-        const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
-        const site = await getSiteBySlug(siteSlug);
-        const toEmail =
-          process.env[`LEAD_NOTIFY_EMAIL_${slugKey}`] ??
-          site?.business?.email ??
-          process.env.LEAD_NOTIFY_EMAIL ??
-          "shanegoldberg@pm.me";
+    // Send notifications (await to ensure they complete before returning)
+    try {
+      const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
+      const site = await getSiteBySlug(siteSlug);
+      const toEmail =
+        process.env[`LEAD_NOTIFY_EMAIL_${slugKey}`] ??
+        site?.business?.email ??
+        process.env.LEAD_NOTIFY_EMAIL ??
+        "shanegoldberg@pm.me";
 
-        await resend.emails.send({
-          from: "noreply@saabai.ai",
-          to: toEmail,
-          subject: `New inquiry — ${name || "Anonymous"} via ${siteSlug}`,
-          html: buildLeadEmail(lead),
-        });
+      await resend.emails.send({
+        from: "noreply@saabai.ai",
+        to: toEmail,
+        subject: `New inquiry — ${name || "Anonymous"} via ${siteSlug}`,
+        html: buildLeadEmail(lead),
+      });
 
-        // Send Telegram alert if configured for this site
-        try {
-          await sendTelegramAlert(lead);
-        } catch (tgErr) {
-          console.error("Telegram alert failed:", tgErr);
-        }
-      } catch (e) {
-        console.error("Lead notify email failed:", e);
-      }
-    })();
+      await sendTelegramAlert(lead);
+    } catch (e) {
+      console.error("Lead notification failed:", e);
+    }
 
     return Response.json({ success: true, message: "Lead captured" });
   } catch (error) {

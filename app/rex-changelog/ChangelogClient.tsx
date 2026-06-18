@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "00:28", tag: "FIX", title: "Direct env var ref with fallback for Telegram alerts" },
       { time: "00:24", tag: "UPDATE", title: "Swap back to env vars for Telegram bot config" },
       { time: "00:18", tag: "UPDATE", title: "Log Telegram env var status" },
       { time: "00:12", tag: "FIX", title: "Separate try-catch for Telegram alert" },
