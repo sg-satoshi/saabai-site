@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "18 Jun 2026",
     entries: [
+      { time: "15:25", tag: "NEW", title: "Add migrate-sites endpoint for one-shot legacy registration" },
       { time: "15:18", tag: "NEW", title: "Add external site option to Site Factory with source tracking" },
       { time: "10:54", tag: "NEW", title: "Revert \"feat: add duplicate invoice button to InvoiceTracker\"" }
     ],

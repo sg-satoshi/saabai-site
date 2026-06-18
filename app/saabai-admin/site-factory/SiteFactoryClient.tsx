@@ -403,6 +403,9 @@ export default function SiteFactoryClient() {
   // External site fields
   const [externalUrl, setExternalUrl] = useState("");
   const [externalPlatform, setExternalPlatform] = useState("");
+  const [billingAmount, setBillingAmount] = useState("");
+  const [billingStatus, setBillingStatus] = useState("active");
+  const [billingNotes, setBillingNotes] = useState("");
 
   // Overwrite protection
   const [overwriteConfirm, setOverwriteConfirm] = useState<{ slug: string; name: string; existingSite: Site } | null>(null);
@@ -1374,6 +1377,9 @@ export default function SiteFactoryClient() {
           chatbotEnabled,
           chatbotName: chatbotName.trim() || undefined,
           chatbotGreeting: chatbotGreeting.trim() || undefined,
+          billingAmount: billingAmount || undefined,
+          billingStatus: billingStatus || undefined,
+          billingNotes: billingNotes.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -1386,6 +1392,9 @@ export default function SiteFactoryClient() {
       setBusinessName("");
       setExternalUrl("");
       setExternalPlatform("");
+      setBillingAmount("");
+      setBillingStatus("active");
+      setBillingNotes("");
       setDescription("");
       setChatbotName("");
       setChatbotGreeting("");
@@ -2848,7 +2857,7 @@ export default function SiteFactoryClient() {
 
   const COL = isMobile
     ? "36px 1fr auto"
-    : "36px minmax(160px,2fr) minmax(140px,2fr) 120px 80px 72px 100px";
+    : "36px minmax(160px,2fr) minmax(140px,2fr) 120px 90px 80px 72px 100px";
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -2985,7 +2994,9 @@ export default function SiteFactoryClient() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: C.text, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{site.name}</span>
                       {site.source === "external" && (
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.12)", color: "#8b5cf6", whiteSpace: "nowrap", letterSpacing: "0.03em", textTransform: "uppercase" }}>EXT</span>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: "rgba(139,92,246,0.12)", color: "#8b5cf6", whiteSpace: "nowrap", letterSpacing: "0.03em", textTransform: "uppercase" }}>
+                          {site.externalPlatform || "EXT"}
+                        </span>
                       )}
                     </div>
                     {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted }}>{customDomain || `/sites/${site.slug}/`}</span>}
@@ -3006,6 +3017,20 @@ export default function SiteFactoryClient() {
                   {!isMobile && (
                     <div style={{ paddingRight: 8 }}>
                       <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: niche.bg, color: niche.color, whiteSpace: "nowrap" }}>{niche.label}</span>
+                    </div>
+                  )}
+
+                  {/* Billing — desktop only */}
+                  {!isMobile && site.billing?.amount && (
+                    <div style={{ paddingRight: 8 }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4,
+                        background: site.billing.status === "active" ? "rgba(22,163,74,0.10)" : site.billing.status === "paused" ? "rgba(217,119,6,0.10)" : "rgba(0,0,0,0.04)",
+                        color: site.billing.status === "active" ? "#16a34a" : site.billing.status === "paused" ? "#d97706" : "#9ca3af",
+                        whiteSpace: "nowrap",
+                      }}>
+                        ${(site.billing.amount / 100).toLocaleString("en-AU")}/mo
+                      </span>
                     </div>
                   )}
 
@@ -3310,6 +3335,30 @@ export default function SiteFactoryClient() {
                     {lbl("Notes")}
                     <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Any details about this site..." rows={3} style={inp({ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 })} />
                   </div>
+
+                  {/* ─── Billing Section ─── */}
+                  <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: C.text }}>Billing</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div>
+                        {lbl("Monthly Amount (AUD)")}
+                        <input value={billingAmount} onChange={e => setBillingAmount(e.target.value)} placeholder="e.g. 499" type="number" min="0" step="1" style={inp()} />
+                      </div>
+                      <div>
+                        {lbl("Status")}
+                        <select value={billingStatus} onChange={e => setBillingStatus(e.target.value)} style={inp()}>
+                          <option value="active">Active</option>
+                          <option value="paused">Paused</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      {lbl("Billing Notes")}
+                      <input value={billingNotes} onChange={e => setBillingNotes(e.target.value)} placeholder="e.g. Paid via bank transfer on the 1st" style={inp()} />
+                    </div>
+                  </div>
+
                   <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: chatbotEnabled ? 12 : 0 }}>
                       <div>
