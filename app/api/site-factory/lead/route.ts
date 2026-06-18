@@ -83,10 +83,8 @@ async function sendTelegramAlert(lead: {
   createdAt: number;
 }) {
   try {
-    // Per-site Telegram bot config via env vars
-    const slugKey = lead.siteSlug.toUpperCase().replace(/-/g, "_");
-    const botToken = process.env[`TELEGRAM_BOT_TOKEN_${slugKey}`];
-    const chatId = process.env[`TELEGRAM_CHAT_ID_${slugKey}`];
+    const botToken = process.env.TELEGRAM_BOT_TOKEN_NICO_MORETTI || "8697337660:AAG7s4l3U4FZAykt91u8AKDEA11hpKTp1HY";
+    const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "5066504835";
     if (!botToken || !chatId) return;
 
     const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
