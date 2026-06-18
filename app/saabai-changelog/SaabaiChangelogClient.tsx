@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "19 Jun 2026",
+    entries: [
+      { time: "00:05", tag: "NEW", title: "Add Telegram lead alerts for site-factory (Nico Moretti)" }
+    ],
+  },
+  {
     date: "18 Jun 2026",
     entries: [
       { time: "22:40", tag: "UPDATE", title: "Resolve changelog merge conflict" },
