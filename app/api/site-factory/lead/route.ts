@@ -160,7 +160,11 @@ export async function POST(req: Request) {
         });
 
         // Send Telegram alert if configured for this site
-        await sendTelegramAlert(lead);
+        try {
+          await sendTelegramAlert(lead);
+        } catch (tgErr) {
+          console.error("Telegram alert failed:", tgErr);
+        }
       } catch (e) {
         console.error("Lead notify email failed:", e);
       }

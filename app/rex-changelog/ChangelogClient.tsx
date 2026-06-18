@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "00:09", tag: "NEW", title: "Pick up new env vars" },
       { time: "00:05", tag: "NEW", title: "Add Telegram lead alerts for site-factory (Nico Moretti)" }
     ],
   },
