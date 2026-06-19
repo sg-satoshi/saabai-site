@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "19 Jun 2026",
     entries: [
+      { time: "09:00", tag: "NEW", title: "Cache WooCommerce orders in Redis for rex-dashboard revenue tab" },
       { time: "08:57", tag: "FIX", title: "Increase WooCommerce fetch timeout to 28s on rex-dashboard revenue tab" },
       { time: "08:51", tag: "FIX", title: "Isolate rex-dashboard fetch timeouts so WooCommerce slowness doesn't blank stats" }
     ],

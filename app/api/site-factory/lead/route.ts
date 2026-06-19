@@ -5,6 +5,18 @@ import { getSiteBySlug } from "../../../../lib/site-registry";
 const redis = Redis.fromEnv();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Telegram config per site — add new sites here
+const TELEGRAM_SITES: Record<string, { token: string; chatId: string }> = {
+  "nico-moretti": {
+    token: process.env.TG_NICO_BOT || "",
+    chatId: process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "",
+  },
+  "heaven-thai-massage": {
+    token: process.env.TG_HTM_BOT || "",
+    chatId: process.env.TELEGRAM_CHAT_ID_HEAVEN_THAI_MASSAGE || "",
+  },
+};
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "https://nicomoretti.au",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -98,12 +110,9 @@ export async function POST(req: Request) {
     }
 
     // EARLY TEST: env var send (right after req.json, before anything else)
-    if (siteSlug === "nico-moretti") {
-      const t = process.env.TG_NICO_BOT;
-      const c = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI;
-      if (t && c) {
-        await fetch(`https://api.telegram.org/bot${t}/sendMessage?chat_id=${c}&text=${encodeURIComponent("EARLY: " + name)}`);
-      }
+    const tgConfigEarly = TELEGRAM_SITES[siteSlug];
+    if (tgConfigEarly && tgConfigEarly.token && tgConfigEarly.chatId) {
+      await fetch(`https://api.telegram.org/bot${tgConfigEarly.token}/sendMessage?chat_id=${tgConfigEarly.chatId}&text=${encodeURIComponent("📥 EARLY: " + name)}`);
     }
 
     const lead = {
@@ -138,21 +147,18 @@ export async function POST(req: Request) {
         html: buildLeadEmail(lead),
       });
 
-      // Telegram alert for Nico Moretti
-      if (siteSlug === "nico-moretti") {
-        const botToken = process.env.TG_NICO_BOT;
-        const chatId = process.env.TELEGRAM_CHAT_ID_NICO_MORETTI;
-        if (botToken && chatId) {
-          const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
-          let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
-          msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
-          if (duration) msg += `*Duration:* ${duration}\n`;
-          if (eventType) msg += `*Event:* ${eventType}\n`;
-          if (message) msg += `*Notes:* ${message}\n`;
-          msg += `\n_Received ${ts}_`;
-          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
-          if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
-        }
+      // Per-site Telegram alerts
+      const tgConfig = TELEGRAM_SITES[siteSlug];
+      if (tgConfig && tgConfig.token && tgConfig.chatId) {
+        const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
+        let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
+        msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
+        if (duration) msg += `*Duration:* ${duration}\n`;
+        if (eventType) msg += `*Event:* ${eventType}\n`;
+        if (message) msg += `*Notes:* ${message}\n`;
+        msg += `\n_Received ${ts}_`;
+        const tgRes = await fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
+        if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
       }
     } catch (e) {
       console.error("Lead notification failed:", e);
