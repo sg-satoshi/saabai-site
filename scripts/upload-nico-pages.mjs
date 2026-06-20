@@ -16,6 +16,7 @@ const files = [
   "hobart.html",
   "gold-coast.html",
   "faq.html",
+  "husband-experience.html",
 ];
 
 // Also upload the chat widget JS for Blob-based serving

@@ -11,6 +11,8 @@ const HTML_PAGES = [
   "sydney", "melbourne", "brisbane", "perth", "canberra", "hobart", "gold-coast",
   // Content pages
   "faq",
+  // Service pages
+  "husband-experience",
 ];
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },
