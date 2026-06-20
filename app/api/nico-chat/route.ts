@@ -60,15 +60,15 @@ export async function POST(req: Request) {
     const chatMessages = incomingMessages
       .filter((m: { role: string; content: string }) => m.role !== "system")
       .map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
+        role: m.role === "bot" ? "assistant" : m.role === "user" ? "user" : "assistant",
+        content: Array.isArray(m.content) ? m.content.map((c: any) => c.text || "").join("\n") : m.content,
       }));
 
     const openrouter = createOpenAI({
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: process.env.OPENROUTER_API_KEY,
     });
-    const model = openrouter("anthropic/claude-3.5-haiku");
+    const model = openrouter("anthropic/claude-haiku-4.5");
 
     const result = await generateText({
       model,
