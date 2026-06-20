@@ -1,6 +1,3 @@
-import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
@@ -57,27 +54,64 @@ export async function POST(req: Request) {
     const body = await req.json();
     const incomingMessages = body.messages || [];
 
+    // Map widget roles (bot -> assistant) and extract text from content
     const chatMessages = incomingMessages
-      .filter((m: { role: string; content: string }) => m.role !== "system")
-      .map((m: { role: string; content: string }) => ({
-        role: m.role === "bot" ? "assistant" : m.role === "user" ? "user" : "assistant",
-        content: Array.isArray(m.content) ? m.content.map((c: any) => c.text || "").join("\n") : m.content,
-      }));
+      .filter((m: { role: string }) => m.role !== "system")
+      .map((m: { role: string; content: any }) => {
+        let role = m.role;
+        if (role === "bot") role = "assistant";
 
-    const openrouter = createOpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
-    });
-    const model = openrouter("anthropic/claude-haiku-4.5");
+        let text = "";
+        if (typeof m.content === "string") {
+          text = m.content;
+        } else if (Array.isArray(m.content)) {
+          text = m.content.map((c: any) => c.text || "").join("\n");
+        }
 
-    const result = await generateText({
-      model,
-      system: SYSTEM_PROMPT,
-      messages: chatMessages,
-      maxOutputTokens: 500,
-    });
+        return { role, content: text };
+      });
 
-    return new Response(JSON.stringify({ content: result.text }), {
+    // Build OpenRouter chat completions payload
+    const openRouterMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...chatMessages.map((m: { role: string; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    ];
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "anthropic/claude-haiku-4.5",
+          messages: openRouterMessages,
+          max_tokens: 500,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenRouter error:", response.status, errorText);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate response", details: `HTTP ${response.status}` }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+
+    return new Response(JSON.stringify({ content }), {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -89,9 +123,7 @@ export async function POST(req: Request) {
       JSON.stringify({ error: "Failed to generate response", details: String(error) }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
