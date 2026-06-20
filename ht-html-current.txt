@@ -1,0 +1,1768 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Heaven Thai Massage | Authentic Thai Massage Worongary Gold Coast</title><meta name="description" content="Heaven Thai Massage in Worongary, Gold Coast. Authentic Thai Massage, Hot Stone & Relaxation Massage. Book your session today and experience true healing."><meta name="keywords" content="Thai massage Worongary, Thai massage Gold Coast, hot stone massage, relaxation massage, authentic Thai massage"><meta property="og:type" content="website"><meta property="og:title" content="Heaven Thai Massage | Worongary Gold Coast"><meta property="og:description" content="Experience authentic Thai massage therapy in Worongary. Hot Stone, Relaxation & Traditional Thai treatments. Book now."><meta property="og:url" content="https://heaventhai.com.au/"><meta property="og:image" content="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=1200&q=80"><meta property="og:locale" content="en_AU"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Heaven Thai Massage | Worongary Gold Coast"><meta name="twitter:description" content="Authentic Thai massage therapy on the Gold Coast. Book your session today."><meta name="twitter:image" content="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=1200&q=80"><script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "LocalBusiness",
+ "name": "Heaven Thai Massage",
+ "description": "Authentic Thai Massage, Hot Stone and Relaxation Massage in Worongary, Gold Coast.",
+ "url": "https://heaventhai.com.au/",
+ "telephone": "+61451826539",
+ "address": {
+ "@type": "PostalAddress",
+ "streetAddress": "Mudgeeraba Road",
+ "addressLocality": "Worongary",
+ "addressRegion": "QLD",
+ "addressCountry": "AU"
+ },
+ "geo": {
+ "@type": "GeoCoordinates",
+ "latitude": -28.0600,
+ "longitude": 153.3600
+ },
+ "openingHours": ["Mo-Su 09:00-19:00"],
+ "priceRange": "$$",
+ "image": "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800&q=80",
+ "aggregateRating": {
+ "@type": "AggregateRating",
+ "ratingValue": "5",
+ "reviewCount": "127"
+ }
+}
+</script><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap');
+:root {
+ --primary: #1a1a2e;
+ --secondary: #c9a84c;
+ --accent: #e8c97a;
+ --bg: #f8f6f1;
+ --surface: #ffffff;
+ --text: #0f0f1a;
+ --text-muted: #6b6b80;
+ --radius: 12px;
+ --radius-lg: 20px;
+ --shadow: 0 4px 24px rgba(0,0,0,.08);
+ --shadow-lg: 0 16px 48px rgba(0,0,0,.16);
+ --transition: 0.2s ease;
+ --s1: 4px;
+ --s2: 8px;
+ --s3: 12px;
+ --s4: 16px;
+ --s5: 20px;
+ --s6: 24px;
+ --s7: 28px;
+ --s8: 32px;
+ --s9: 36px;
+ --s10: 40px;
+ --s11: 44px;
+ --s12: 48px;
+ --s13: 52px;
+ --s14: 56px;
+ --s15: 60px;
+ --s16: 64px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+ font-family: 'Inter', sans-serif;
+ font-size: 16px;
+ line-height: 1.7;
+ color: var(--text);
+ background: var(--bg);
+ overflow-x: hidden;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; transition: color var(--transition); }
+h1, h2, h3, h4 {
+ font-weight: 700;
+ letter-spacing: -0.02em;
+ line-height: 1.2;
+}
+/* ========================
+ REVEAL ANIMATIONS
+======================== */
+.reveal {
+ opacity: 0;
+ transform: translateY(24px);
+ transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible {
+ opacity: 1;
+ transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+/* ========================
+ STICKY NAV
+======================== */
+.nav {
+ position: fixed;
+ top: 0;
+ left: 0;
+ right: 0;
+ z-index: 1000;
+ padding: var(--s4) var(--s6);
+ display: flex;
+ align-items: center;
+ justify-content: space-between; align-items: center;
+ transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+ background: transparent;
+}
+.nav.scrolled {
+ background: rgba(26, 26, 46, 0.97);
+ box-shadow: 0 2px 32px rgba(0,0,0,0.24);
+ backdrop-filter: blur(12px);
+}
+.nav-logo {
+ display: flex;
+ align-items: center;
+ gap: var(--s3);
+ line-height: 1.1;
+}
+.nav-logo-img {
+ height: 48px;
+ width: auto;
+ display: block;
+ object-fit: contain;
+}
+.nav-logo-text {
+ display: flex;
+ flex-direction: column;
+}
+.nav-logo-main {
+ font-family: 'Playfair Display', serif;
+ font-size: 20px;
+ font-weight: 700;
+ color: var(--secondary);
+ letter-spacing: 0.02em;
+}
+.nav-logo-sub {
+ font-size: 10px;
+ font-weight: 500;
+ color: rgba(255,255,255,0.6);
+ letter-spacing: 0.12em;
+ text-transform: uppercase;
+}
+.nav-links {
+ display: none;
+ list-style: none;
+ gap: var(--s6);
+ align-items: center;
+}
+.nav-links a {
+ font-size: 14px;
+ font-weight: 500;
+ color: rgba(255,255,255,0.85);
+ padding: var(--s1) 0;
+ position: relative;
+}
+.nav-links a::after {
+ content: '';
+ position: absolute;
+ bottom: -2px;
+ left: 0;
+ width: 0;
+ height: 2px;
+ background: var(--secondary);
+ transition: width var(--transition);
+}
+.nav-links a:hover { color: #fff; }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+ display: none;
+ background: var(--secondary);
+ color: var(--primary) !important;
+ font-size: 14px;
+ font-weight: 700;
+ padding: var(--s3) var(--s6);
+ border-radius: 100px;
+ transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+ white-space: nowrap;
+}
+.nav-cta:hover {
+ transform: scale(1.02);
+ box-shadow: var(--shadow-lg);
+ background: var(--accent);
+}
+.nav-hamburger {
+ display: flex;
+ flex-direction: column;
+ gap: 5px;
+ cursor: pointer;
+ padding: var(--s2);
+ background: none;
+ border: none;
+}
+.nav-hamburger span {
+ display: block;
+ width: 24px;
+ height: 2px;
+ background: #fff;
+ transition: all 0.3s ease;
+ border-radius: 2px;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.mobile-menu {
+ position: fixed;
+ top: 0;
+ right: -100%;
+ width: min(320px, 80vw);
+ height: 100vh;
+ background: var(--primary);
+ z-index: 999;
+ padding: 100px var(--s8) var(--s8);
+ display: flex;
+ flex-direction: column;
+ gap: var(--s6);
+ transition: right 0.35s ease;
+ box-shadow: -8px 0 40px rgba(0,0,0,0.3);
+}
+.mobile-menu.open { right: 0; }
+.mobile-menu a {
+ color: rgba(255,255,255,0.85);
+ font-size: 18px;
+ font-weight: 500;
+ padding: var(--s3) 0;
+ border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.mobile-menu a:hover { color: var(--secondary); }
+.mobile-menu-cta {
+ background: var(--secondary) !important;
+ color: var(--primary) !important;
+ text-align: center;
+ padding: var(--s4) var(--s6) !important;
+ border-radius: 100px !important;
+ font-weight: 700 !important;
+ border: none !important;
+ margin-top: var(--s4);
+}
+.overlay {
+ position: fixed;
+ inset: 0;
+ background: rgba(0,0,0,0.5);
+ z-index: 998;
+ opacity: 0;
+ pointer-events: none;
+ transition: opacity 0.3s ease;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+@media (min-width: 768px) {
+ .nav-cta { display: block; }
+}
+@media (min-width: 1024px) {
+ .nav-hamburger { display: none; }
+}
+@media (min-width: 1024px) {
+ .nav { padding: var(--s4) var(--s16); }
+ .nav-links { display: flex; }
+ .nav-logo-main { font-size: 22px; }
+ .nav-logo-img { height: 52px; }
+}
+/* ========================
+ HERO
+======================== */
+.hero {
+ position: relative;
+ min-height: 100svh;
+ display: flex;
+ align-items: center;
+ overflow: hidden;
+}
+.hero-bg {
+ position: absolute;
+ inset: 0;
+ background-image: url('https://o0pi3c7vnnup4bhd.public.blob.vercel-storage.com/sites/heaven-thai-massage/generated/1779369720996.png');
+ background-size: cover;
+ background-position: center 30%;
+ transform: scale(1.05);
+ transition: transform 0.1s ease-out;
+}
+.hero-overlay {
+ position: absolute;
+ inset: 0;
+ background: linear-gradient(135deg, rgba(10,10,26,0.88) 0%, rgba(26,26,46,0.72) 50%, rgba(10,10,20,0.80) 100%);
+}
+.hero-content {
+ position: relative;
+ z-index: 2;
+ padding: calc(var(--s16) + 10px) var(--s6) var(--s12);
+ max-width: 800px;
+}
+.hero-eyebrow {
+ display: inline-flex;
+ align-items: center;
+ gap: var(--s2);
+ background: rgba(201,168,76,0.15);
+ border: 1px solid rgba(201,168,76,0.35);
+ color: var(--secondary);
+ font-size: 12px;
+ font-weight: 600;
+ letter-spacing: 0.12em;
+ text-transform: uppercase;
+ padding: var(--s2) var(--s4);
+ border-radius: 100px;
+ margin-bottom: var(--s5);
+}
+.hero h1 {
+ font-size: clamp(36px, 6vw, 72px);
+ color: #ffffff;
+ margin-bottom: var(--s6);
+ line-height: 1.1;
+}
+.hero h1 span { color: var(--secondary); }
+.hero-sub {
+ font-size: clamp(16px, 2vw, 20px);
+ color: rgba(255,255,255,0.8);
+ margin-bottom: var(--s5);
+ max-width: 580px;
+}
+.hero-benefits {
+ display: flex;
+ flex-wrap: wrap;
+ gap: var(--s3) var(--s5);
+ margin-bottom: var(--s8);
+ list-style: none;
+}
+.hero-benefits li {
+ display: flex;
+ align-items: center;
+ gap: var(--s2);
+ color: rgba(255,255,255,0.75);
+ font-size: 14px;
+ font-weight: 500;
+}
+.hero-benefits li::before {
+ content: '';
+ display: block;
+ width: 6px;
+ height: 6px;
+ background: var(--secondary);
+ border-radius: 50%;
+ flex-shrink: 0;
+}
+.hero-actions {
+ display: flex;
+ flex-wrap: wrap;
+ gap: var(--s3);
+}
+.btn-primary {
+ display: inline-flex;
+ align-items: center;
+ gap: var(--s2);
+ background: var(--secondary);
+ color: var(--primary);
+ font-size: 15px;
+ font-weight: 700;
+ padding: var(--s4) var(--s8);
+ border-radius: 100px;
+ border: none;
+ cursor: pointer;
+ transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+.btn-primary:hover {
+ transform: scale(1.02);
+ box-shadow: var(--shadow-lg);
+ background: var(--accent);
+}
+.btn-primary:focus-visible {
+ outline: 3px solid var(--secondary);
+ outline-offset: 3px;
+}
+.btn-secondary {
+ display: inline-flex;
+ align-items: center;
+ gap: var(--s2);
+ background: transparent;
+ color: #fff;
+ font-size: 15px;
+ font-weight: 600;
+ padding: var(--s4) var(--s8);
+ border-radius: 100px;
+ border: 2px solid rgba(255,255,255,0.5);
+ cursor: pointer;
+ transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), background var(--transition);
+}
+.btn-secondary:hover {
+ transform: scale(1.02);
+ box-shadow: var(--shadow-lg);
+ border-color: #fff;
+ background: rgba(255,255,255,0.08);
+}
+.btn-secondary:focus-visible {
+ outline: 3px solid #fff;
+ outline-offset: 3px;
+}
+.hero-scroll {
+ position: absolute;
+ bottom: var(--s8);
+ left: 50%;
+ transform: translateX(-50%);
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ gap: var(--s2);
+ color: rgba(255,255,255,0.4);
+ font-size: 11px;
+ letter-spacing: 0.1em;
+ text-transform: uppercase;
+ animation: bounce 2s infinite;
+}
+.hero-scroll svg { opacity: 0.5; }
+@keyframes bounce {
+ 0%, 100% { transform: translateX(-50%) translateY(0); }
+ 50% { transform: translateX(-50%) translateY(6px); }
+}
+@media (min-width: 1024px) {
+ .hero-content { padding: calc(var(--s16) + 10px) var(--s16) var(--s12); }
+}
+/* ========================
+ TRUST BAR
+======================== */
+.trust-bar {
+ background: var(--surface);
+ border-bottom: 1px solid rgba(0,0,0,0.06);
+ padding: var(--s6) var(--s6);
+ box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+.trust-bar-inner {
+ max-width: 1200px;
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: var(--s4);
+}
+.trust-badge {
+ display: flex;
+ align-items: center;
+ gap: var(--s3);
+ padding: var(--s3) var(--s4);
+}
+.trust-badge-icon {
+ width: 40px;
+ height: 40px;
+ background: rgba(201,168,76,0.1);
+ border-radius: 10px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ flex-shrink: 0;
+}
+.trust-badge-text strong {
+ display: block;
+ font-size: 13px;
+ font-weight: 700;
+ color: var(--text);
+ line-height: 1.3;
+}
+.trust-badge-text span {
+ font-size: 11px;
+ color: var(--text-muted);
+ line-height: 1.3;
+}
+@media (min-width: 768px) {
+ .trust-bar-inner { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1024px) {
+ .trust-bar { padding: var(--s6) var(--s16); }
+}
+/* ========================
+ SECTION LAYOUT
+======================== */
+.section {
+ padding: clamp(60px, 8vw, 100px) var(--s6);
+}
+.section-inner {
+ max-width: 1200px;
+ margin: 0 auto;
+}
+.section-header {
+ text-align: center;
+ margin-bottom: var(--s12);
+}
+.section-tag {
+ display: inline-block;
+ font-size: 12px;
+ font-weight: 600;
+ letter-spacing: 0.12em;
+ text-transform: uppercase;
+ color: var(--secondary);
+ margin-bottom: var(--s3);
+}
+.section-header h2 {
+ font-size: clamp(28px, 4vw, 40px);
+ color: var(--text);
+ margin-bottom: var(--s4);
+}
+.section-header p {
+ font-size: 17px;
+ color: var(--text-muted);
+ max-width: 560px;
+ margin: 0 auto;
+ line-height: 1.7;
+}
+@media (min-width: 1024px) {
+ .section { padding: clamp(60px, 8vw, 100px) var(--s16); }
+}
+/* ========================
+ SERVICES
+======================== */
+.services { background: var(--bg); }
+.services-grid {
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s5);
+}
+.service-card {
+ background: var(--surface);
+ border-radius: var(--radius-lg);
+ padding: var(--s8) var(--s6);
+ border: 1px solid rgba(0,0,0,0.06);
+ box-shadow: var(--shadow);
+ transition: transform var(--transition), box-shadow var(--transition);
+ cursor: default;
+}
+.service-card:hover {
+ transform: translateY(-4px);
+ box-shadow: var(--shadow-lg);
+}
+.service-icon {
+ width: 56px;
+ height: 56px;
+ background: rgba(201,168,76,0.1);
+ border-radius: 14px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ margin-bottom: var(--s5);
+}
+.service-card h3 {
+ font-size: 19px;
+ color: var(--text);
+ margin-bottom: var(--s3);
+}
+.service-card p {
+ font-size: 14px;
+ color: var(--text-muted);
+ line-height: 1.65;
+}
+.service-duration {
+ display: inline-flex;
+ align-items: center;
+ gap: var(--s1);
+ margin-top: var(--s4);
+ font-size: 12px;
+ font-weight: 600;
+ color: var(--secondary);
+ letter-spacing: 0.05em;
+}
+@media (min-width: 768px) {
+ .services-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+ .services-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* ========================
+ PROCESS
+======================== */
+.process { background: var(--surface); }
+.process-steps {
+ display: flex;
+ flex-direction: column;
+ gap: var(--s8);
+ position: relative;
+}
+.process-step {
+ display: flex;
+ gap: var(--s6);
+ align-items: flex-start;
+}
+.step-num {
+ font-family: 'Playfair Display', serif;
+ font-size: 56px;
+ font-weight: 700;
+ color: var(--secondary);
+ opacity: 0.25;
+ line-height: 1;
+ flex-shrink: 0;
+ width: 70px;
+ text-align: center;
+ transition: opacity var(--transition);
+}
+.process-step:hover .step-num { opacity: 0.6; }
+.step-content h3 {
+ font-size: 22px;
+ color: var(--text);
+ margin-bottom: var(--s3);
+}
+.step-content p {
+ color: var(--text-muted);
+ font-size: 15px;
+ max-width: 420px;
+}
+@media (min-width: 1024px) {
+ .process-steps {
+ flex-direction: row;
+ gap: var(--s5);
+ align-items: flex-start;
+ }
+ .process-step {
+ flex: 1;
+ flex-direction: column;
+ align-items: flex-start;
+ gap: var(--s4);
+ }
+ .step-num { font-size: 72px; }
+}
+/* ========================
+ STATS
+======================== */
+.stats {
+ background: var(--primary);
+ padding: clamp(50px, 7vw, 80px) var(--s6);
+}
+.stats-inner {
+ max-width: 1100px;
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: repeat(2, 1fr);
+ gap: var(--s8) var(--s6);
+}
+.stat-item {
+ text-align: center;
+}
+.stat-number {
+ font-family: 'Playfair Display', serif;
+ font-size: clamp(36px, 5vw, 56px);
+ font-weight: 700;
+ color: var(--secondary);
+ line-height: 1;
+ margin-bottom: var(--s2);
+}
+.stat-suffix {
+ font-size: clamp(22px, 3vw, 36px);
+ color: var(--secondary);
+}
+.stat-label {
+ font-size: 14px;
+ color: rgba(255,255,255,0.55);
+ font-weight: 500;
+ letter-spacing: 0.05em;
+ text-transform: uppercase;
+}
+@media (min-width: 768px) {
+ .stats-inner { grid-template-columns: repeat(4, 1fr); }
+ .stats { padding: clamp(50px, 7vw, 80px) var(--s16); }
+}
+/* ========================
+ TESTIMONIALS
+======================== */
+.testimonials { background: var(--bg); }
+.testimonials-grid {
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s5);
+}
+.testimonial-card {
+ background: var(--surface);
+ border-radius: var(--radius-lg);
+ padding: var(--s8) var(--s6);
+ border: 1px solid rgba(0,0,0,0.06);
+ box-shadow: var(--shadow);
+ transition: transform var(--transition), box-shadow var(--transition);
+}
+.testimonial-card:hover {
+ transform: translateY(-4px);
+ box-shadow: var(--shadow-lg);
+}
+.stars {
+ display: flex;
+ gap: 2px;
+ margin-bottom: var(--s4);
+ color: #f59e0b;
+ font-size: 18px;
+}
+.testimonial-quote {
+ font-size: 15px;
+ color: var(--text);
+ line-height: 1.7;
+ margin-bottom: var(--s5);
+ font-style: italic;
+}
+.testimonial-quote::before { content: '\201C'; }
+.testimonial-quote::after { content: '\201D'; }
+.testimonial-author {
+ display: flex;
+ align-items: center;
+ gap: var(--s3);
+ border-top: 1px solid rgba(0,0,0,0.06);
+ padding-top: var(--s4);
+}
+.author-avatar {
+ width: 44px;
+ height: 44px;
+ border-radius: 50%;
+ background: var(--secondary);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: 700;
+ color: var(--primary);
+ font-size: 15px;
+ flex-shrink: 0;
+}
+.author-info strong {
+ display: block;
+ font-size: 14px;
+ font-weight: 700;
+ color: var(--text);
+}
+.author-info span {
+ font-size: 12px;
+ color: var(--text-muted);
+}
+@media (min-width: 768px) {
+ .testimonials-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* ========================
+ ABOUT
+======================== */
+.about { background: var(--surface); }
+.about-grid {
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s10);
+ align-items: center;
+}
+.about-image {
+ position: relative;
+ border-radius: var(--radius-lg);
+ overflow: hidden;
+ aspect-ratio: 4/3;
+}
+.about-image img {
+ width: 100%;
+ height: 100%;
+ object-fit: cover;
+ transition: transform 0.4s ease;
+}
+.about-image:hover img { transform: scale(1.03); }
+.about-image::before {
+ content: '';
+ position: absolute;
+ inset: 0;
+ border-radius: var(--radius-lg);
+ box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+ z-index: 1;
+}
+.about-badge {
+ position: absolute;
+ bottom: var(--s5);
+ left: var(--s5);
+ background: var(--primary);
+ color: #fff;
+ padding: var(--s3) var(--s5);
+ border-radius: var(--radius);
+ font-size: 13px;
+ font-weight: 600;
+ z-index: 2;
+ border-left: 3px solid var(--secondary);
+}
+.about-content .section-tag { text-align: left; display: block; }
+.about-content h2 {
+ font-size: clamp(26px, 3.5vw, 36px);
+ color: var(--text);
+ margin-bottom: var(--s5);
+}
+.about-content p {
+ color: var(--text-muted);
+ margin-bottom: var(--s5);
+ font-size: 15px;
+ line-height: 1.8;
+}
+.about-bullets {
+ list-style: none;
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s3);
+ margin-top: var(--s6);
+}
+.about-bullets li {
+ display: flex;
+ align-items: flex-start;
+ gap: var(--s3);
+ font-size: 14px;
+ font-weight: 500;
+ color: var(--text);
+}
+.bullet-icon {
+ width: 22px;
+ height: 22px;
+ background: rgba(201,168,76,0.15);
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ flex-shrink: 0;
+ margin-top: 1px;
+}
+@media (min-width: 768px) {
+ .about-bullets { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1024px) {
+ .about-grid { grid-template-columns: 1fr 1fr; }
+}
+/* ========================
+ CTA BAND
+======================== */
+.cta-band {
+ background: linear-gradient(135deg, var(--secondary) 0%, #b8891e 100%);
+ padding: clamp(50px, 7vw, 80px) var(--s6);
+ text-align: center;
+ position: relative;
+ overflow: hidden;
+}
+.cta-band::before {
+ content: '';
+ position: absolute;
+ inset: 0;
+ background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.cta-band-inner {
+ position: relative;
+ z-index: 1;
+ max-width: 700px;
+ margin: 0 auto;
+}
+.cta-band h2 {
+ font-size: clamp(28px, 4vw, 44px);
+ color: var(--primary);
+ margin-bottom: var(--s4);
+}
+.cta-band p {
+ color: rgba(26,26,46,0.75);
+ font-size: 17px;
+ margin-bottom: var(--s8);
+}
+.btn-white {
+ display: inline-flex;
+ align-items: center;
+ gap: var(--s2);
+ background: var(--primary);
+ color: #fff;
+ font-size: 16px;
+ font-weight: 700;
+ padding: var(--s5) var(--s10);
+ border-radius: 100px;
+ border: none;
+ cursor: pointer;
+ transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+.btn-white:hover {
+ transform: scale(1.02);
+ box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+ background: #0a0a1a;
+}
+@media (min-width: 1024px) {
+ .cta-band { padding: clamp(50px, 7vw, 80px) var(--s16); }
+}
+/* ========================
+ CONTACT
+======================== */
+.contact { background: var(--bg); }
+.contact-grid {
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s10);
+}
+.contact-info h3 {
+ font-size: 28px;
+ color: var(--text);
+ margin-bottom: var(--s6);
+}
+.contact-phone {
+ display: block;
+ font-size: 28px;
+ font-weight: 700;
+ color: var(--secondary);
+ margin-bottom: var(--s3);
+ transition: color var(--transition);
+}
+.contact-phone:hover { color: var(--primary); }
+.contact-email {
+ display: flex;
+ align-items: center;
+ gap: var(--s2);
+ color: var(--text-muted);
+ font-size: 15px;
+ margin-bottom: var(--s6);
+ text-decoration: underline;
+ text-decoration-color: transparent;
+ transition: color var(--transition), text-decoration-color var(--transition);
+}
+.contact-email:hover { color: var(--secondary); text-decoration-color: var(--secondary); }
+.contact-address {
+ font-style: normal;
+ color: var(--text-muted);
+ font-size: 15px;
+ margin-bottom: var(--s6);
+ line-height: 1.6;
+}
+.hours-grid {
+ display: grid;
+ grid-template-columns: auto 1fr;
+ gap: var(--s2) var(--s5);
+ font-size: 14px;
+}
+.hours-day { font-weight: 600; color: var(--text); }
+.hours-time { color: var(--text-muted); }
+/* FORM */
+.contact-form-wrap {
+ background: var(--surface);
+ border-radius: var(--radius-lg);
+ padding: var(--s8) var(--s6);
+ box-shadow: var(--shadow);
+ border: 1px solid rgba(0,0,0,0.06);
+}
+.form-group {
+ position: relative;
+ margin-bottom: var(--s5);
+}
+.form-group input,
+.form-group textarea {
+ width: 100%;
+ padding: 22px var(--s4) var(--s3);
+ border: 1.5px solid rgba(0,0,0,0.12);
+ border-radius: var(--radius);
+ font-family: 'Inter', sans-serif;
+ font-size: 15px;
+ color: var(--text);
+ background: var(--bg);
+ transition: border-color 0.2s ease, box-shadow 0.2s ease;
+ outline: none;
+ resize: vertical;
+}
+.form-group textarea { min-height: 120px; padding-top: 28px; }
+.form-group input:focus,
+.form-group textarea:focus {
+ border-color: var(--secondary);
+ box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+ background: #fff;
+}
+.form-group label {
+ position: absolute;
+ top: 50%;
+ left: var(--s4);
+ transform: translateY(-50%);
+ font-size: 14px;
+ color: var(--text-muted);
+ pointer-events: none;
+ transition: all 0.2s ease;
+ background: transparent;
+}
+.form-group textarea ~ label { top: 20px; transform: none; }
+.form-group input:focus ~ label,
+.form-group input:not(:placeholder-shown) ~ label,
+.form-group textarea:focus ~ label,
+.form-group textarea:not(:placeholder-shown) ~ label {
+ top: 8px;
+ transform: none;
+ font-size: 11px;
+ font-weight: 600;
+ color: var(--secondary);
+ letter-spacing: 0.05em;
+}
+.form-success, .form-error {
+ display: none;
+ padding: var(--s4) var(--s5);
+ border-radius: var(--radius);
+ font-size: 14px;
+ font-weight: 500;
+ margin-top: var(--s4);
+}
+.form-success { background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
+.form-error { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+@media (min-width: 1024px) {
+ .contact-grid { grid-template-columns: 1fr 1.3fr; }
+}
+/* ========================
+ FOOTER
+======================== */
+.footer {
+ background: var(--primary);
+ padding: clamp(50px, 6vw, 80px) var(--s6) 0;
+}
+.footer-grid {
+ max-width: 1200px;
+ margin: 0 auto;
+ display: grid;
+ grid-template-columns: 1fr;
+ gap: var(--s10);
+ padding-bottom: var(--s10);
+ border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.footer-brand .nav-logo-main { font-size: 22px; margin-bottom: var(--s2); display: block; }
+.footer-tagline {
+ color: rgba(255,255,255,0.5);
+ font-size: 14px;
+ margin-bottom: var(--s6);
+ line-height: 1.6;
+}
+.footer-logo-img {
+ height: 56px;
+ width: auto;
+ display: block;
+ margin-bottom: var(--s4);
+ object-fit: contain;
+}
+.social-links {
+ display: flex;
+ gap: var(--s3);
+}
+.social-link {
+ width: 40px;
+ height: 40px;
+ background: rgba(255,255,255,0.06);
+ border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 10px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ transition: background var(--transition), transform var(--transition);
+}
+.social-link:hover { background: var(--secondary); transform: translateY(-2px); }
+.social-link svg { fill: rgba(255,255,255,0.7); }
+.social-link:hover svg { fill: var(--primary); }
+.footer-col h4 {
+ color: rgba(255,255,255,0.9);
+ font-size: 14px;
+ font-weight: 700;
+ letter-spacing: 0.08em;
+ text-transform: uppercase;
+ margin-bottom: var(--s5);
+}
+.footer-links {
+ list-style: none;
+ display: flex;
+ flex-direction: column;
+ gap: var(--s3);
+}
+.footer-links a {
+ color: rgba(255,255,255,0.5);
+ font-size: 14px;
+ transition: color var(--transition);
+}
+.footer-links a:hover { color: var(--secondary); }
+.footer-contact-item {
+ display: flex;
+ align-items: flex-start;
+ gap: var(--s3);
+ color: rgba(255,255,255,0.5);
+ font-size: 14px;
+ margin-bottom: var(--s3);
+}
+.footer-contact-item svg { flex-shrink: 0; margin-top: 2px; }
+.footer-contact-item a:hover { color: var(--secondary); }
+.footer-bottom {
+ max-width: 1200px;
+ margin: 0 auto;
+ padding: var(--s5) 0;
+ display: flex;
+ flex-direction: column;
+ gap: var(--s3);
+ align-items: center;
+ text-align: center;
+}
+.footer-bottom p {
+ color: rgba(255,255,255,0.3);
+ font-size: 13px;
+}
+.footer-legal {
+ display: flex;
+ gap: var(--s5);
+}
+.footer-legal a {
+ color: rgba(255,255,255,0.3);
+ font-size: 13px;
+ text-decoration: underline;
+ text-decoration-color: transparent;
+ transition: color var(--transition), text-decoration-color var(--transition);
+}
+.footer-legal a:hover { color: var(--secondary); text-decoration-color: var(--secondary); }
+@media (min-width: 768px) {
+ .footer-grid { grid-template-columns: 1.5fr 1fr 1.3fr; }
+ .footer-bottom { flex-direction: row; justify-content: space-between; text-align: left; }
+ .footer { padding: clamp(50px, 6vw, 80px) var(--s16) 0; }
+}
+/* ========================
+ FLOATING BUTTON
+======================== */
+.floating-btn {
+ position: fixed;
+ bottom: 28px;
+ right: 24px;
+ z-index: 900;
+ width: 60px;
+ height: 60px;
+ background: var(--secondary);
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ box-shadow: 0 4px 20px rgba(201,168,76,0.5);
+ transition: transform var(--transition), box-shadow var(--transition);
+ text-decoration: none;
+}
+.floating-btn:hover {
+ transform: scale(1.08);
+ box-shadow: 0 8px 32px rgba(201,168,76,0.65);
+}
+.floating-btn svg { fill: var(--primary); }
+.floating-btn::before, .floating-btn::after {
+ content: '';
+ position: absolute;
+ width: 100%;
+ height: 100%;
+ border-radius: 50%;
+ background: var(--secondary);
+ opacity: 0.35;
+ animation: pulse-ring 2s infinite;
+}
+.floating-btn::after { animation-delay: 0.5s; }
+@keyframes pulse-ring {
+ 0% { transform: scale(1); opacity: 0.35; }
+ 80%, 100% { transform: scale(1.7); opacity: 0; }
+}
+/* ========================
+ UTILITY
+======================== */
+.divider {
+ width: 48px;
+ height: 3px;
+ background: var(--secondary);
+ border-radius: 2px;
+ margin: var(--s4) auto 0;
+}
+.divider-left { margin-left: 0; }
+</style>
+</head><body><header class="nav" id="navbar" role="banner"><a href="#home" class="nav-logo" aria-label="Heaven Thai Massage Home" style="display:flex;align-items:center;gap:10px;text-decoration:none"><img src="https://img1.wsimg.com/isteam/ip/61092a64-2d70-4a23-9f13-07f663221bae/ChatGPT%20Image%20Sep%2022%2C%202025%2C%2009_40_03%20PM.png" alt="Heaven Thai Massage" style="height:44px;width:auto;object-fit:contain" loading="eager"><span class="nav-logo-text"><span class="nav-logo-main">Heaven Thai Massage</span><span class="nav-logo-sub">Worongary & Southport</span></span></a><div style="display:flex;align-items:center;gap:var(--s4)"><nav role="navigation" aria-label="Main navigation"><ul class="nav-links"><li><a href="#process">Process</a></li><li><a href="#testimonials">Reviews</a></li><li><a href="#about">About</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#contact">Contact</a></li><li><a href="#faq">FAQ</a></li></ul></nav><a href="#contact" class="nav-cta" aria-label="Book your massage session">Book Now</a></div><button class="nav-hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button></header><div class="overlay" id="overlay" aria-hidden="true"></div><div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation"><a href="#services" class="mobile-nav-link">Services</a><a href="#process" class="mobile-nav-link">Process</a><a href="#testimonials" class="mobile-nav-link">Reviews</a><a href="#about" class="mobile-nav-link">About</a><a href="#pricing" class="mobile-nav-link">Pricing</a><a href="#contact" class="mobile-nav-link">Contact</a><a href="#faq" class="mobile-nav-link">FAQ</a><a href="#contact" class="mobile-nav-link mobile-menu-cta">Book Your Session</a></div><section class="hero" id="home" aria-label="Hero"><div class="hero-bg" id="heroBg"></div><div class="hero-overlay"></div><div class="hero-content"><div class="hero-eyebrow reveal"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+ The Gold Coast's Premier Massage Studios
+ </div><h1 class="reveal reveal-delay-1">
+ Finally Escape<br><span>Stress, Tension &amp;<br>Chronic Pain</span></h1><p class="hero-sub reveal reveal-delay-2">
+ Experience the ancient art of authentic Thai massage — deeply restorative bodywork that melts away muscle tension, restores your energy, and leaves you feeling genuinely renewed.
+ </p><ul class="hero-benefits reveal reveal-delay-3"><li>Certified authentic Thai techniques</li><li>Deep muscle tension relief</li><li>Rejuvenating mind-body balance</li></ul><div class="hero-actions reveal reveal-delay-4"><a href="#contact" class="btn-primary">
+ Book Your Session
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a><a href="tel:0451826539" class="btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+ Call 0451 826 539
+ </a></div></div><div class="hero-scroll" aria-hidden="true"><span>Scroll</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div></section><div class="trust-bar" role="complementary" aria-label="Trust indicators"><div class="trust-bar-inner"><div class="trust-badge"><div class="trust-badge-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="trust-badge-text"><strong>Fully Insured</strong><span>Professional coverage</span></div></div><div class="trust-badge"><div class="trust-badge-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#c9a84c"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><div class="trust-badge-text"><strong>5★ Google Rating</strong><span>127+ happy clients</span></div></div><div class="trust-badge"><div class="trust-badge-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="trust-badge-text"><strong>2,400+ Sessions</strong><span>Experienced therapists</span></div></div><div class="trust-badge"><div class="trust-badge-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82 19.79 19.79 0 012.18 2.18 2 2 0 014 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div><div class="trust-badge-text"><strong>Same-Day Booking</strong><span>Available most days</span></div></div></div></div><section class="sf-reviews-carousel" style="padding:60px 20px;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><div style="max-width:1100px;margin:0 auto;"><div class="section-header reveal" style="text-align:center;margin-bottom:36px;"><span class="section-tag">Client Stories</span><h2>Real Results, Real People</h2><div class="divider"></div><p style="margin:8px 0 0;color:#5f6368;text-align:center;max-width:600px;margin-left:auto;margin-right:auto;">Don't just take our word for it. Hear from the Gold Coast locals who've made Heaven Thai their sanctuary.</p></div><div style="position:relative;padding:0 20px;"><button onclick="document.getElementById('sfrcarousel').scrollBy({left:-296,behavior:'smooth'})" style="position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:10;width:36px;height:36px;border-radius:50%;border:1px solid #dadce0;background:#fff;cursor:pointer;font-size:18px;color:#5f6368;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;padding:0;">&#8249;</button><div id="sfrcarousel" style="overflow:hidden;padding:4px 2px 16px;"><div id="sfr-track" style="display:flex;gap:16px;width:max-content;animation:sfr-scroll 28s linear infinite;"><div class="sfrc" style="min-width:280px;max-width:280px;background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #f0f0f0;flex-shrink:0;scroll-snap-align:start;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#34A853;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">S</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Savoire67</div><div style="display:flex;align-items:center;gap:3px;margin-top:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span style="margin-left:2px;"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></span></div></div></div><p style="margin:0;font-size:13px;color:#3c4043;line-height:1.6;max-height:120px;overflow:hidden;">The ladies were able to fit me in at short notice. A welcoming and relaxed clinic with a professional therapeutic massage. My tension spots were quickly assessed and worked on with care and good pressure.</p></div><div class="sfrc" style="min-width:280px;max-width:280px;background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #f0f0f0;flex-shrink:0;scroll-snap-align:start;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#9c27b0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">M</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Monique</div><div style="display:flex;align-items:center;gap:3px;margin-top:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span style="margin-left:2px;"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></span></div></div></div><p style="margin:0;font-size:13px;color:#3c4043;line-height:1.6;max-height:120px;overflow:hidden;">Beautiful massage clinic, amazing customer service and the owner Gina is so welcoming and passionate about what she does. If you are after an amazing and authentic Thai massage, this is the place for you!</p></div><div class="sfrc" style="min-width:280px;max-width:280px;background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #f0f0f0;flex-shrink:0;scroll-snap-align:start;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#4285F4;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">A</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Andra Dragoi</div><div style="display:flex;align-items:center;gap:3px;margin-top:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span style="margin-left:2px;"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></span></div></div></div><p style="margin:0;font-size:13px;color:#3c4043;line-height:1.6;max-height:120px;overflow:hidden;">By far the best Thai massage I had in Australia. Gina and the team are incredible, so professional, friendly, made it a perfect and authentic experience in a very clean comfortable space. Highly recommend!</p></div><div class="sfrc" style="min-width:280px;max-width:280px;background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #f0f0f0;flex-shrink:0;scroll-snap-align:start;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><div style="width:40px;height:40px;border-radius:50%;background:#00bcd4;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">L</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13px;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lachlan Ffrench</div><div style="display:flex;align-items:center;gap:3px;margin-top:2px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbc04"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span style="margin-left:2px;"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></span></div></div></div><p style="margin:0;font-size:13px;color:#3c4043;line-height:1.6;max-height:120px;overflow:hidden;">Incredibly relaxing experience. The therapists really know their craft and the atmosphere is wonderfully peaceful. Best Thai massage on the Gold Coast, I will definitely be going back.</p></div></div></div><button onclick="document.getElementById('sfrcarousel').scrollBy({left:296,behavior:'smooth'})" style="position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:10;width:36px;height:36px;border-radius:50%;border:1px solid #dadce0;background:#fff;cursor:pointer;font-size:18px;color:#5f6368;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;padding:0;">&#8250;</button></div></div><style>#sfrcarousel::-webkit-scrollbar{display:none}#sfrcarousel{scroll-behavior:auto!important}@keyframes sfr-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}#sfr-track{display:flex;gap:16px;width:max-content;animation:sfr-scroll 28s linear infinite}#sfr-track:hover,#sfrcarousel:hover #sfr-track{animation-play-state:paused}</style><script>window.addEventListener('load',function(){var c=document.getElementById('sfrcarousel');var t=document.getElementById('sfr-track');if(!c||!t)return;var cards=t.querySelectorAll('.sfrc');cards.forEach(function(card){var cl=card.cloneNode(true);t.appendChild(cl);});c.style.overflow='hidden';});</script></section><section class="section services" id="services" aria-label="Services"><div class="section-inner"><div class="section-header reveal"><span class="section-tag">What We Offer</span><h2>Therapeutic Treatments Crafted for You</h2><div class="divider"></div><p>Each treatment at Heaven Thai is tailored to your body's unique needs. Our skilled therapists draw on centuries-old Thai healing traditions to deliver lasting relief and genuine restoration.</p></div><div class="services-grid"><article class="service-card reveal reveal-delay-1"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><h3>Authentic Thai Massage</h3><p>Our signature treatment uses traditional sen line techniques, rhythmic compressions and assisted stretching to release deep tension and restore your body's natural balance.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 60 / 90 / 120 min
+ </span></article><article class="service-card reveal reveal-delay-2"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div><h3>Hot Stone Massage</h3><p>Smooth volcanic basalt stones are heated to the perfect temperature and placed along key energy points, melting away muscle stiffness and inducing a deeply meditative state of calm.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 75 / 90 min
+ </span></article><article class="service-card reveal reveal-delay-3"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div><h3>Relaxation Massage</h3><p>Pure restorative bliss. Long, flowing Swedish-inspired strokes calm your nervous system, ease everyday stress, and leave your entire body feeling weightless and renewed.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 60 / 90 min
+ </span></article><article class="service-card reveal reveal-delay-1"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><h3>Couples Massage</h3><p>Share the Heaven Thai experience with someone you love. Side-by-side treatments in our serene studio, perfect for anniversaries, celebrations or simply reconnecting together.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 60 / 90 min
+ </span></article><article class="service-card reveal reveal-delay-2"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Deep Tissue Massage</h3><p>Targeted, firm pressure on chronic tension areas and deeper muscle layers. Ideal for those with ongoing back pain, sports-related tightness, or sedentary workplace discomfort.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 60 / 90 min
+ </span></article><article class="service-card reveal reveal-delay-3"><div class="service-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg></div><h3>Foot Reflexology</h3><p>Ancient pressure-point therapy applied to the soles, targeting reflex zones that correspond to every organ and system in your body. A 60-minute session that impacts your whole wellbeing.</p><span class="service-duration"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+ 45 / 60 min
+ </span></article></div></div></section><section class="section process" id="process" aria-label="How It Works"><div class="section-inner"><div class="section-header reveal"><span class="section-tag">How It Works</span><h2>Your Journey to Relief Starts Here</h2><div class="divider"></div><p>From first contact to your post-session glow — we make the entire experience seamless, welcoming and deeply restorative.</p></div><div class="process-steps"><div class="process-step reveal reveal-delay-1"><div class="step-num">01</div><div class="step-content"><h3>Book Your Session</h3><p>Call us on 0451 826 539 or send an SMS — we have two convenient Gold Coast locations in Worongary and Southport, and we'll confirm your preferred treatment, therapist and time — often the same day.</p></div></div><div class="process-step reveal reveal-delay-2"><div class="step-num">02</div><div class="step-content"><h3>We Tailor Your Treatment</h3><p>On arrival, your therapist takes a few minutes to understand your specific concerns — whether it's a sore lower back, stress-induced shoulder tension, or full-body fatigue — and customises every technique accordingly.</p></div></div><div class="process-step reveal reveal-delay-3"><div class="step-num">03</div><div class="step-content"><h3>Leave Feeling Transformed</h3><p>Walk out lighter, looser and genuinely refreshed. We'll share aftercare advice to extend your results, and make rebooking effortless so you can keep the feeling going.</p></div></div></div></div></section><section class="stats" id="stats" aria-label="Statistics" role="region"><div class="stats-inner"><div class="stat-item reveal"><div class="stat-number"><span class="count" data-target="10">0</span><span class="stat-suffix">+</span></div><div class="stat-label">Years Experience</div></div><div class="stat-item reveal reveal-delay-1"><div class="stat-number"><span class="count" data-target="2400">0</span><span class="stat-suffix">+</span></div><div class="stat-label">Sessions Delivered</div></div><div class="stat-item reveal reveal-delay-2"><div class="stat-number"><span class="count" data-target="98">0</span><span class="stat-suffix">%</span></div><div class="stat-label">Client Satisfaction</div></div><div class="stat-item reveal reveal-delay-3"><div class="stat-number"><span class="count" data-target="127">0</span><span class="stat-suffix">★</span></div><div class="stat-label">5-Star Reviews</div></div></div></section><section class="section about" id="about" aria-label="About"><div class="section-inner"><div class="about-grid"><div class="about-image reveal"><img
+ src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&q=80"
+ alt="Professional Thai massage therapist at Heaven Thai Massage studio in Worongary"
+ width="800"
+ height="600"
+ loading="lazy"
+ ><div class="about-badge">Est. Worongary, Gold Coast</div></div><div class="about-content reveal reveal-delay-2"><span class="section-tag">Our Story</span><h2>About Heaven Thai Massage</h2><div class="divider divider-left" style="margin-bottom: var(--s6);"></div><p>Heaven Thai Massage was born from a deep passion for authentic healing. Our founder brought decades of training in traditional Thai bodywork from Thailand to the Gold Coast, establishing a studio rooted in genuine technique — not the watered-down spa version you find in most salons. With two amazing locations — Mudgeeraba Road in Worongary and our Southport studio — we've quietly become the Gold Coast's go-to destination for locals who take their wellbeing seriously.</p><p>We believe every body tells a story and every session should be a conversation. That's why we never offer a one-size-fits-all treatment. Each client receives a personalised approach, whether you're recovering from injury, managing work stress, or simply prioritising regular self-care. Our therapists are passionate, highly trained, and genuinely invested in your results.</p><ul class="about-bullets"><li><span class="bullet-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+ Authentic Thai-trained therapists
+ </li><li><span class="bullet-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+ Personalised treatment every time
+ </li><li><span class="bullet-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+ Serene, welcoming studio environment
+ </li><li><span class="bullet-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+ Premium oils and therapeutic tools
+ </li></ul></div></div></div></section><section id="pricing" class="section" style="background:#f8f6f1" aria-label="Pricing"><style>#pricing .px-loc-tabs{display:flex;justify-content:center;margin-bottom:48px}#pricing .px-tab-wrap{background:#fff;border-radius:100px;padding:6px;display:inline-flex;gap:4px;box-shadow:0 2px 16px rgba(0,0,0,.1)}#pricing .px-tab{padding:12px 32px;border-radius:100px;border:none;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s ease;background:transparent;color:#6b6b80}#pricing .px-tab.active{background:#c9a84c;color:#1a1a2e;box-shadow:0 4px 16px rgba(201,168,76,.4)}#pricing .px-pane{display:none}#pricing .px-pane.active{display:block}#pricing .px-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}#pricing .px-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.09);border:1px solid rgba(201,168,76,.12)}#pricing .px-card-img{position:relative;height:220px;overflow:hidden}#pricing .px-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}#pricing .px-card:hover .px-card-img img{transform:scale(1.04)}#pricing .px-card-label{position:absolute;bottom:0;left:0;right:0;padding:20px 24px;background:linear-gradient(0deg,rgba(10,10,26,.75) 0%,transparent 100%)}#pricing .px-card-label h3{margin:0;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:-.01em}#pricing .px-card-body{padding:24px 28px}#pricing .px-card-desc{font-size:14px;color:#718096;line-height:1.65;margin:0 0 20px}#pricing .px-price-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.06)}#pricing .px-price-row:last-child{border-bottom:none}#pricing .px-price-info strong{display:block;font-size:14px;font-weight:600;color:#1a1a2e}#pricing .px-price-info span{font-size:12px;color:#a0aec0}#pricing .px-price-val{font-size:20px;font-weight:700;color:#c9a84c;font-family:'Playfair Display',serif}#pricing .px-note{margin-top:16px;padding:12px 16px;background:#fff8ed;border-radius:10px;border-left:3px solid #c9a84c;font-size:12px;color:#92714a;font-weight:500}#pricing .px-cta{text-align:center;margin-top:52px}</style><div style="max-width:1100px;margin:0 auto"><div style="text-align:center;margin-bottom:48px"><p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c">Our Treatments</p><h2 style="margin:0 0 12px;font-size:clamp(28px,4vw,42px);font-weight:700;color:#1a1a2e;letter-spacing:-.02em;font-family:'Playfair Display',serif">Pricing &amp; Services</h2><p style="margin:0 auto 0;max-width:520px;font-size:16px;color:#718096;line-height:1.7">Genuine Thai healing delivered by experienced therapists across our two Gold Coast locations.</p></div><div class="px-loc-tabs"><div class="px-tab-wrap"><button class="px-tab active" onclick="pxSwitch('worongary')">Worongary</button><button class="px-tab" onclick="pxSwitch('southport')">Southport</button></div></div><div id="px-worongary" class="px-pane active"><div class="px-cards"><div class="px-card"><div class="px-card-img"><img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800&q=80" alt="Relaxation Massage at Heaven Thai Worongary" loading="lazy"><div class="px-card-label"><h3>Relaxation Massage</h3></div></div><div class="px-card-body"><p class="px-card-desc">Flowing strokes with warm oils for full-body soothing — melts away stress and calms the nervous system.</p><div class="px-price-row"><div class="px-price-info"><strong>15 Minutes</strong><span>Trial — perfect first visit</span></div><span class="px-price-val">$20</span></div><div class="px-price-row"><div class="px-price-info"><strong>30 Minutes</strong><span>Relaxation</span></div><span class="px-price-val">$60</span></div><div class="px-price-row"><div class="px-price-info"><strong>60 Minutes</strong><span>Relaxation + Complimentary Hot Stone</span></div><span class="px-price-val">$100</span></div><div class="px-price-row"><div class="px-price-info"><strong>90 Minutes</strong><span>Relaxation + Complimentary Hot Stone</span></div><span class="px-price-val">$160</span></div></div></div><div class="px-card"><div class="px-card-img"><img src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&q=80" alt="Deep Tissue Massage at Heaven Thai Worongary" loading="lazy"><div class="px-card-label"><h3>Deep Tissue Massage</h3></div></div><div class="px-card-body"><p class="px-card-desc">Strong, focused pressure targeting deeper muscle layers to relieve chronic knots, tension, and stiffness.</p><div class="px-price-row"><div class="px-price-info"><strong>30 Minutes</strong><span>Deep Tissue</span></div><span class="px-price-val">$70</span></div><div class="px-price-row"><div class="px-price-info"><strong>60 Minutes</strong><span>Deep Tissue + Complimentary Hot Stone</span></div><span class="px-price-val">$110</span></div><div class="px-price-row"><div class="px-price-info"><strong>90 Minutes</strong><span>Deep Tissue + Complimentary Hot Stone</span></div><span class="px-price-val">$180</span></div></div></div><div class="px-card"><div class="px-card-img"><img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80" alt="Heaven Thai Signature at Worongary" loading="lazy"><div class="px-card-label"><h3>Heaven Thai Signature</h3></div></div><div class="px-card-body"><p class="px-card-desc">Our most popular treatment — a bespoke blend of Thai technique and therapeutic touch for full-body renewal.</p><div class="px-price-row"><div class="px-price-info"><strong>60 Minutes</strong><span>Signature blend · Most popular</span></div><span class="px-price-val">$120</span></div></div></div></div></div><div id="px-southport" class="px-pane"><div class="px-cards"><div class="px-card"><div class="px-card-img"><img src="https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800&q=80" alt="Relaxation Massage at Heaven Thai Southport" loading="lazy"><div class="px-card-label"><h3>Relaxation Massage</h3></div></div><div class="px-card-body"><p class="px-card-desc">Pure restorative bliss — long, flowing strokes calm your nervous system and leave your body feeling weightless.</p><div class="px-price-row"><div class="px-price-info"><strong>30 Minutes</strong><span>Relaxation</span></div><span class="px-price-val">$60</span></div><div class="px-price-row"><div class="px-price-info"><strong>60 Minutes</strong><span>Relaxation</span></div><span class="px-price-val">$100</span></div><div class="px-price-row"><div class="px-price-info"><strong>90 Minutes</strong><span>Relaxation</span></div><span class="px-price-val">$150</span></div></div></div><div class="px-card"><div class="px-card-img"><img src="https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&q=80" alt="Deep Tissue Massage at Heaven Thai Southport" loading="lazy"><div class="px-card-label"><h3>Deep Tissue Massage</h3></div></div><div class="px-card-body"><p class="px-card-desc">Targeted firm pressure on chronic tension areas — ideal for ongoing back pain, sports tightness, or desk fatigue.</p><div class="px-price-row"><div class="px-price-info"><strong>30 Minutes</strong><span>Deep Tissue</span></div><span class="px-price-val">$60</span></div><div class="px-price-row"><div class="px-price-info"><strong>60 Minutes</strong><span>Deep Tissue</span></div><span class="px-price-val">$100</span></div><div class="px-price-row"><div class="px-price-info"><strong>90 Minutes</strong><span>Deep Tissue</span></div><span class="px-price-val">$150</span></div><div class="px-note">⚠ No Private Health Fund available at this location</div></div></div></div></div><div class="px-cta"><a href="#contact" style="display:inline-flex;align-items:center;gap:8px;padding:16px 44px;background:#c9a84c;color:#1a1a2e;border-radius:100px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 8px 24px rgba(201,168,76,.35);transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(201,168,76,.45)'" onmouseout="this.style.transform='';this.style.boxShadow='0 8px 24px rgba(201,168,76,.35)'">Book Your Session <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a><p style="margin:12px 0 0;font-size:13px;color:#a0aec0">Walk-ins welcome · Gift vouchers available</p></div><script>function pxSwitch(loc){document.querySelectorAll('#pricing .px-pane').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('#pricing .px-tab').forEach(function(t){t.classList.remove('active');});document.getElementById('px-'+loc).classList.add('active');var tabs=document.querySelectorAll('#pricing .px-tab');if(loc==='worongary')tabs[0].classList.add('active');else tabs[1].classList.add('active');}</script></section><section class="cta-band" aria-label="Call to action"><div class="cta-band-inner reveal"><h2>Your Body Has Been Patient Long Enough</h2><p>Take the first step toward genuine relief. Flexible booking, expert care, and a studio that feels like an escape from everything.</p><a href="#contact" class="btn-white">
+ Book Your Session Today
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div></section>
+</section><!-- end CTA section -->
+
+<!-- ========================
+     INLINE BOOKING FORM SECTION
+======================== -->
+<section id="booking" style="padding:80px 24px;background:#fff" aria-label="Book Online">
+  <style>
+    #booking .bk-wrap{max-width:1100px;margin:0 auto}
+    #booking .bk-header{text-align:center;margin-bottom:48px}
+    #booking .bk-tag{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c;margin:0 0 8px}
+    #booking h2{margin:0 0 12px;font-size:clamp(28px,4vw,42px);font-weight:700;color:#1a1a2e;letter-spacing:-.02em;font-family:'Playfair Display',serif}
+    #booking .bk-sub{font-size:15px;color:#6b6b80;max-width:560px;margin:0 auto;line-height:1.6}
+    #booking .bk-grid{display:grid;grid-template-columns:1fr;gap:40px;max-width:800px;margin:0 auto}
+    @media(min-width:768px){#booking .bk-grid{grid-template-columns:1fr 1fr}}
+    #booking .bk-form-card{background:#f8f6f1;border-radius:20px;padding:32px;border:1px solid rgba(201,168,76,.12)}
+    #booking .bk-form-card h3{margin:0 0 20px;font-size:18px;font-weight:700;color:#1a1a2e}
+    #booking .bk-field{margin-bottom:14px}
+    #booking .bk-field label{display:block;font-size:12px;font-weight:600;color:#1a1a2e;margin-bottom:4px}
+    #booking .bk-field label .req{color:#dc2626}
+    #booking .bk-field input,
+    #booking .bk-field select,
+    #booking .bk-field textarea{width:100%;padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s;background:#fff}
+    #booking .bk-field input:focus,
+    #booking .bk-field select:focus,
+    #booking .bk-field textarea:focus{border-color:#c9a84c}
+    #booking .bk-field textarea{resize:vertical;min-height:50px}
+    #booking .bk-row{display:flex;gap:10px}
+    #booking .bk-row .bk-field{flex:1}
+    #booking .bk-submit{width:100%;padding:12px;background:#c9a84c;color:#1a1a2e;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
+    #booking .bk-submit:hover{background:#e8c97a}
+    #booking .bk-submit:disabled{opacity:.5;cursor:default}
+    #booking .bk-success{display:none;text-align:center;padding:40px 20px;background:#f0fdf4;border-radius:16px;border:1px solid #bbf7d0}
+    #booking .bk-success svg{width:44px;height:44px;color:#16a34a;margin-bottom:10px}
+    #booking .bk-success h4{font-size:17px;color:#1a1a2e;margin:0 0 6px}
+    #booking .bk-success p{font-size:14px;color:#6b6b80;margin:0;line-height:1.5}
+    #booking .bk-error{display:none;padding:10px 14px;background:#fef2f2;color:#dc2626;border-radius:8px;font-size:13px;margin-bottom:12px}
+
+    #booking .bk-info-card{background:#1a1a2e;border-radius:20px;padding:32px;color:#fff}
+    #booking .bk-info-card h3{margin:0 0 16px;font-size:18px;font-weight:700;color:#c9a84c}
+    #booking .bk-info-item{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
+    #booking .bk-info-item svg{flex-shrink:0;margin-top:2px}
+    #booking .bk-info-text{font-size:14px;line-height:1.5;color:rgba(255,255,255,.85)}
+    #booking .bk-info-text strong{color:#fff;font-weight:600}
+    #booking .bk-divider{height:1px;background:rgba(201,168,76,.25);margin:16px 0}
+    #booking .bk-hours{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+    #booking .bk-hours:last-child{border-bottom:none}
+    #booking .bk-hours-day{font-size:13px;color:rgba(255,255,255,.7)}
+    #booking .bk-hours-time{font-size:13px;font-weight:600;color:#fff}
+  </style>
+
+  <div class="bk-wrap">
+    <div class="bk-header">
+      <p class="bk-tag">Book Online</p>
+      <h2>Request Your Session</h2>
+      <p class="bk-sub">Fill in the form below and Gina will call you back to confirm your time and therapist. Same-day bookings often available.</p>
+    </div>
+
+    <div class="bk-grid">
+      <div class="bk-form-card">
+        <div class="bk-error" id="bkFormError"></div>
+        <form id="bkForm" onsubmit="bkSubmit(event)">
+          <div class="bk-field">
+            <label>Your Name <span class="req">*</span></label>
+            <input type="text" id="bkName" placeholder="e.g. Sarah" required>
+          </div>
+          <div class="bk-field">
+            <label>Phone <span class="req">*</span></label>
+            <input type="tel" id="bkPhone" placeholder="0401 234 567" required>
+          </div>
+          <div class="bk-row">
+            <div class="bk-field">
+              <label>Location <span class="req">*</span></label>
+              <select id="bkLocation" required>
+                <option value="">Select...</option>
+                <option value="Worongary">Worongary</option>
+                <option value="Southport">Southport</option>
+              </select>
+            </div>
+            <div class="bk-field">
+              <label>Preferred Date/Time</label>
+              <input type="text" id="bkDateTime" placeholder="e.g. Fri 2pm">
+            </div>
+          </div>
+          <div class="bk-row">
+            <div class="bk-field">
+              <label>Service <span class="req">*</span></label>
+              <select id="bkService" required>
+                <option value="">Select...</option>
+                <option value="Relaxation Massage">Relaxation Massage</option>
+                <option value="Deep Tissue Massage">Deep Tissue Massage</option>
+                <option value="Heaven Thai Signature">Heaven Thai Signature</option>
+                <option value="Authentic Thai Massage">Authentic Thai Massage</option>
+                <option value="Hot Stone Massage">Hot Stone Massage</option>
+                <option value="Couples Massage">Couples Massage</option>
+                <option value="Foot Reflexology">Foot Reflexology</option>
+              </select>
+            </div>
+            <div class="bk-field">
+              <label>Duration</label>
+              <select id="bkDuration">
+                <option value="">Not sure yet</option>
+                <option value="15 min">15 min (Trial)</option>
+                <option value="30 min">30 min</option>
+                <option value="45 min">45 min</option>
+                <option value="60 min">60 min</option>
+                <option value="75 min">75 min</option>
+                <option value="90 min">90 min</option>
+                <option value="120 min">120 min</option>
+              </select>
+            </div>
+          </div>
+          <div class="bk-field">
+            <label>Notes (optional)</label>
+            <textarea id="bkNotes" placeholder="Any specific concerns — sore back, tension areas, etc."></textarea>
+          </div>
+          <button type="submit" class="bk-submit" id="bkSubmitBtn">Request Booking</button>
+        </form>
+        <div class="bk-success" id="bkSuccess">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <h4>Thanks, we'll be in touch!</h4>
+          <p>Gina will call you back to confirm your booking.<br>For immediate help, call <strong>0451 826 539</strong></p>
+        </div>
+      </div>
+
+      <div class="bk-info-card">
+        <h3>Prefer to call or text?</h3>
+
+        <div class="bk-info-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><rect x="3" y="2" width="18" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <div class="bk-info-text">
+            <strong>Call us</strong><br>
+            <a href="tel:0451826539" style="color:#c9a84c;text-decoration:none">0451 826 539</a> (Worongary)<br>
+            <a href="tel:0491460208" style="color:#c9a84c;text-decoration:none">0491 460 208</a> (Southport)
+          </div>
+        </div>
+
+        <div class="bk-info-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <div class="bk-info-text">
+            <strong>Text us</strong><br>
+            <a href="sms:0451826539" style="color:#c9a84c;text-decoration:none">0451 826 539</a>
+          </div>
+        </div>
+
+        <div class="bk-info-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div class="bk-info-text">
+            <strong>Two locations</strong><br>
+            Worongary — 23 Mudgeeraba Rd<br>
+            Southport — 1A/5 Olympic Cct
+          </div>
+        </div>
+
+        <div class="bk-divider"></div>
+
+        <div><strong style="font-size:14px;color:#c9a84c;display:block;margin-bottom:8px">Studio Hours</strong>
+          <div class="bk-hours"><span class="bk-hours-day">Monday – Sunday</span><span class="bk-hours-time">9:00am – 7:00pm</span></div>
+        </div>
+
+        <div class="bk-divider"></div>
+
+        <div class="bk-info-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div class="bk-info-text">
+            <strong>Walk-ins welcome</strong><br>
+            Calling ahead guarantees your preferred time and therapist.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="locations" style="padding:80px 24px;background:#f8f5ef"><style>#locations .loc-grid{display:grid;grid-template-columns:1fr;gap:32px;max-width:1100px;margin:0 auto}@media(min-width:768px){#locations .loc-grid{grid-template-columns:1fr 1fr}}#locations .loc-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.09);border:1px solid rgba(201,168,76,.15);transition:transform .3s,box-shadow .3s}#locations .loc-card:hover{transform:translateY(-4px);box-shadow:0 16px 56px rgba(0,0,0,.14)}#locations .loc-card-body{padding:32px 32px 24px}#locations .loc-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#1a1a2e;margin:0 0 20px;letter-spacing:-.01em}#locations .loc-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}#locations .loc-row svg{flex-shrink:0;margin-top:3px}#locations .loc-row-text{font-size:14px;color:#4a5568;line-height:1.55}#locations .loc-row-text strong{color:#1a1a2e;font-weight:600}#locations .loc-book{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:11px 28px;border-radius:100px;border:2px solid #c9a84c;background:transparent;color:#c9a84c;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;transition:background .2s,color .2s}#locations .loc-book:hover{background:#c9a84c;color:#1a1a2e}#locations .loc-map{height:240px;overflow:hidden}#locations .loc-map iframe{width:100%;height:100%;border:0;display:block}</style><div style="max-width:1100px;margin:0 auto"><div style="text-align:center;margin-bottom:52px"><p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c">Find Us</p><h2 style="margin:0 0 0;font-size:clamp(30px,4vw,46px);font-weight:700;color:#1a1a2e;letter-spacing:-.02em;font-family:'Playfair Display',serif">Two Gold Coast Sanctuaries</h2><div style="width:48px;height:3px;background:#c9a84c;border-radius:2px;margin:16px auto 0"></div></div><div class="loc-grid"><div class="loc-card"><div class="loc-card-body"><h3 class="loc-name">Worongary Studio</h3><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="loc-row-text">Heaven Thai Massage Southport<br>1A/5 Olympic Cct, Southport QLD 4215</span></div><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg><span class="loc-row-text"><a href="tel:0491460208" style="color:#4a5568;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#4a5568'">0491 460 208</a></span></div><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="loc-row-text">Mon–Sun 9:00am – 7:00pm</span></div><a href="tel:0491460208" class="loc-book">Book Southport</a></div><div class="loc-map"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3521.5!2d153.408!3d-27.964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b910f2a2a2a2a2b%3A0x1!2s1A%2F5+Olympic+Cct%2C+Southport+QLD+4215!5e0!3m2!1sen!2sau!4v1700000000000" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></div><div class="loc-card"><div class="loc-card-body"><h3 class="loc-name">Southport Studio</h3><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="loc-row-text">Heaven Thai Massage Worongary<br>23 Mudgeeraba Rd, Worongary QLD</span></div><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg><span class="loc-row-text"><a href="tel:0451826539" style="color:#4a5568;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#4a5568'">0451 826 539</a></span></div><div class="loc-row"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="loc-row-text">Mon–Sun 9:00am – 7:00pm</span></div><a href="tel:0451826539" class="loc-book">Book Worongary</a></div><div class="loc-map"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3524.1!2d153.352!3d-28.060!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b910f7e7e7e7e7f%3A0x1!2sHeaven+Thai+Massage+Worongary%2C+23+Mudgeeraba+Rd%2C+Worongary+QLD!5e0!3m2!1sen!2sau!4v1700000000001" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></div></div></div></section><section class="section contact" id="contact" aria-label="Contact"><div class="section-inner"><div class="contact-grid"><div><h3>Get In Touch</h3><p style="color: var(--text-muted); font-size: 15px; margin: var(--s3) 0 var(--s6); line-height: 1.7;">Ready to book or have questions about a treatment? We'd love to hear from you. Give us a call for the fastest response, or use the form and we'll get back to you same day.</p><a href="tel:0451826539" class="contact-phone" aria-label="Call Heaven Thai Massage">
+ 0451 826 539
+ </a><p style="font-size:14px;color:var(--text-muted);margin-bottom:var(--s4);">📍 <strong>Two locations:</strong> Worongary &amp; Southport, Gold Coast</p><address class="contact-address"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2" style="display:inline; margin-right:6px; vertical-align: middle;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+ Mudgeeraba Road, Worongary<br>
+ Gold Coast, QLD Australia
+ </address><div style="margin-bottom: var(--s4);"><strong style="font-size: 14px; color: var(--text); display: block; margin-bottom: var(--s3);">Studio Hours</strong><div class="hours-grid"><span class="hours-day">Monday – Sunday</span><span class="hours-time">9:00am – 7:00pm</span></div></div></div><div style="background:var(--surface);border-radius:var(--radius-lg);padding:var(--s8) var(--s6);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.06)"><h4 style="font-size:20px;margin-bottom:var(--s4);color:var(--text)">Book by Phone or SMS</h4><p style="font-size:14px;color:var(--text-muted);margin-bottom:var(--s6);line-height:1.7">The easiest way to book is to give us a call or send a text. We'll confirm your treatment, therapist and time — often the same day.</p><a href="tel:0451826539" style="display:flex;align-items:center;gap:var(--s3);background:var(--secondary);color:var(--primary);font-weight:700;font-size:16px;padding:var(--s4) var(--s6);border-radius:100px;margin-bottom:var(--s3);transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 8px 24px rgba(201,168,76,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>Call 0451 826 539</a><a href="sms:0451826539" style="display:flex;align-items:center;gap:var(--s3);background:var(--primary);color:#fff;font-weight:700;font-size:16px;padding:var(--s4) var(--s6);border-radius:100px;transition:transform 0.2s,box-shadow 0.2s" onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>SMS 0451 826 539</a><p style="font-size:12px;color:var(--text-muted);margin-top:var(--s5);text-align:center">Mon–Sun 9am–7pm</p></div></div></div></section><section id="faq" style="padding:80px 24px;background:#f0ece3;border-top:4px solid #c9a84c"><div style="max-width:800px;margin:0 auto"><div style="text-align:center;margin-bottom:48px"><p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c">Common Questions</p><h2 style="margin:0 0 16px;font-size:clamp(28px,4vw,40px);font-weight:700;color:#1a1a2e;letter-spacing:-.02em">Frequently Asked Questions</h2><div style="width:48px;height:3px;background:#c9a84c;border-radius:2px;margin:0 auto"></div></div><div style="display:flex;flex-direction:column;gap:16px" id="faq-list"><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">Do I need to make an appointment or can I walk in? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">Walk-ins are always welcome — just come in when you're ready. That said, calling or texting ahead on 0451 826 539 guarantees your preferred time slot and therapist, especially on weekends.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">What should I wear during my massage? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">For Thai massage, loose comfortable clothing is ideal — we work through fabric using compression and stretching techniques. For relaxation or deep tissue massage, you'll be professionally draped with only the area being treated uncovered. Wear whatever makes you comfortable.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">How do I know which treatment is right for me? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">Not sure where to start? Give us a call and we'll chat through your needs — whether it's chronic tension, stress relief, or general relaxation — and recommend the best option. You can also try our 15-minute trial massage for just $20.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">Do you accept private health fund rebates? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">Private health fund rebates are available at our Worongary location. Please note that our Southport location does not currently offer health fund processing. Contact us to confirm your fund's eligibility before your visit.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">Is there parking available at the studio? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">Yes, free parking is available directly at the studio on Mudgeeraba Road, Worongary. Easy in, easy out — no stress before or after your session.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">How often should I get a massage? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">It depends on your goals. For general wellbeing and stress relief, once or twice a month works well. If you're dealing with chronic pain or muscle tension, weekly sessions often deliver the best results. We'll always give you an honest recommendation based on your situation.</p></details><details style="background:#f8f6f1;border-radius:14px;padding:20px 24px;border:1px solid rgba(0,0,0,.06)"><summary style="font-weight:700;font-size:16px;color:#1a1a2e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">Do you offer gift vouchers? <span style="color:#c9a84c;font-size:20px;font-weight:400">+</span></summary><p style="margin:12px 0 0;font-size:14px;color:#6b6b80;line-height:1.7">Yes! Gift vouchers are available for any treatment or dollar amount — perfect for birthdays, anniversaries, or just treating someone you care about. Call or SMS us on 0451 826 539 to arrange one.</p></details></div></div></section><footer class="footer" role="contentinfo"><div class="footer-grid"><div class="footer-brand"><span class="nav-logo-main" style="display:block; margin-bottom: var(--s2);">Heaven Thai</span><span style="font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: var(--s5);">Massage Studio · Worongary</span><p class="footer-tagline">Authentic Thai healing traditions brought to the Gold Coast. Visit us at either of our <strong style="color:var(--secondary)">two amazing locations</strong> — Worongary or Southport. Your body deserves expert care.</p><div class="social-links" role="list" aria-label="Social media links"><a href="#" class="social-link" aria-label="Facebook" role="listitem"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></a><a href="#" class="social-link" aria-label="Instagram" role="listitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a><a href="#" class="social-link" aria-label="Google Business" role="listitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg></a><a href="https://wa.me/61451826539" class="social-link" aria-label="WhatsApp" role="listitem"><svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a></div></div><div class="footer-col"><h4>Quick Links</h4><ul class="footer-links"><li><a href="#services">Services</a></li><li><a href="#process">Process</a></li><li><a href="#testimonials">Reviews</a></li><li><a href="#about">About</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#contact">Contact</a></li><li><a href="#faq">FAQ</a></li></ul></div><div class="footer-col"><h4>Our 2 Locations</h4><div style="margin-bottom:var(--s6)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--s3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><strong style="color:var(--secondary);font-size:13px;text-transform:uppercase;letter-spacing:.08em">Worongary</strong></div><div class="footer-contact-item" style="margin-bottom:var(--s2)"><span style="color:rgba(255,255,255,0.5);font-size:13px">Mudgeeraba Road, Worongary QLD</span></div><div class="footer-contact-item" style="margin-bottom:var(--s2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg><a href="tel:0451826539" style="color:rgba(255,255,255,0.5);font-size:13px">0451 826 539</a></div><div style="font-size:12px;color:rgba(255,255,255,0.35);padding-left:0">Mon–Sun 9am–7pm</div></div><div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:var(--s5)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--s3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><strong style="color:var(--secondary);font-size:13px;text-transform:uppercase;letter-spacing:.08em">Southport</strong></div><div class="footer-contact-item" style="margin-bottom:var(--s2)"><span style="color:rgba(255,255,255,0.5);font-size:13px">Southport, Gold Coast QLD</span></div><div class="footer-contact-item" style="margin-bottom:var(--s2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.82a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg><a href="tel:0491460208" style="color:rgba(255,255,255,0.5);font-size:13px">0491 460 208</a></div><div style="font-size:12px;color:rgba(255,255,255,0.35)">Mon–Sun 9am–7pm</div></div></div></div><div class="footer-bottom"><p>© 2026 Heaven Thai Massage. All rights reserved. Worongary, Gold Coast QLD.</p><div class="footer-legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div></div></footer><script>
+(function () {
+ 'use strict';
+ // ========================
+ // STICKY NAV
+ // ========================
+ const navbar = document.getElementById('navbar');
+ let lastScroll = 0;
+ window.addEventListener('scroll', function () {
+ const scrollY = window.scrollY;
+ if (scrollY > 60) {
+ navbar.classList.add('scrolled');
+ } else {
+ navbar.classList.remove('scrolled');
+ }
+ lastScroll = scrollY;
+ }, { passive: true });
+ // ========================
+ // HAMBURGER MENU
+ // ========================
+ const hamburger = document.getElementById('hamburger');
+ const mobileMenu = document.getElementById('mobileMenu');
+ const overlay = document.getElementById('overlay');
+ function openMenu() {
+ hamburger.classList.add('open');
+ mobileMenu.classList.add('open');
+ overlay.classList.add('open');
+ hamburger.setAttribute('aria-expanded', 'true');
+ document.body.style.overflow = 'hidden';
+ }
+ function closeMenu() {
+ hamburger.classList.remove('open');
+ mobileMenu.classList.remove('open');
+ overlay.classList.remove('open');
+ hamburger.setAttribute('aria-expanded', 'false');
+ document.body.style.overflow = '';
+ }
+ hamburger.addEventListener('click', function () {
+ mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
+ });
+ overlay.addEventListener('click', closeMenu);
+ document.querySelectorAll('.mobile-nav-link').forEach(function (link) {
+ link.addEventListener('click', closeMenu);
+ });
+ // ========================
+ // REVEAL ON SCROLL
+ // ========================
+ const revealElements = document.querySelectorAll('.reveal');
+ const revealObserver = new IntersectionObserver(function (entries) {
+ entries.forEach(function (entry) {
+ if (entry.isIntersecting) {
+ entry.target.classList.add('visible');
+ revealObserver.unobserve(entry.target);
+ }
+ });
+ }, {
+ threshold: 0.12,
+ rootMargin: '0px 0px -40px 0px'
+ });
+ revealElements.forEach(function (el) {
+ revealObserver.observe(el);
+ });
+ // ========================
+ // COUNT-UP ANIMATION
+ // ========================
+ const countElements = document.querySelectorAll('.count');
+ let counted = false;
+ function animateCount(el) {
+ const target = parseInt(el.getAttribute('data-target'), 10);
+ const duration = 1800;
+ const start = performance.now();
+ function update(now) {
+ const elapsed = now - start;
+ const progress = Math.min(elapsed / duration, 1);
+ const eased = 1 - Math.pow(1 - progress, 3);
+ const current = Math.floor(eased * target);
+ el.textContent = current.toLocaleString();
+ if (progress < 1) requestAnimationFrame(update);
+ }
+ requestAnimationFrame(update);
+ }
+ const statsSection = document.getElementById('stats');
+ const statsObserver = new IntersectionObserver(function (entries) {
+ entries.forEach(function (entry) {
+ if (entry.isIntersecting && !counted) {
+ counted = true;
+ countElements.forEach(animateCount);
+ statsObserver.unobserve(entry.target);
+ }
+ });
+ }, { threshold: 0.3 });
+ if (statsSection) statsObserver.observe(statsSection);
+ // ========================
+ // HERO PARALLAX
+ // ========================
+ const heroBg = document.getElementById('heroBg');
+ if (heroBg && window.matchMedia('(min-width: 1024px)').matches) {
+ document.addEventListener('mousemove', function (e) {
+ const x = (e.clientX / window.innerWidth - 0.5) * 10;
+ const y = (e.clientY / window.innerHeight - 0.5) * 6;
+ heroBg.style.transform = 'scale(1.05) translate(' + x + 'px, ' + y + 'px)';
+ }, { passive: true });
+ }
+ // ========================
+ // CONTACT FORM
+ // ========================
+ const form = document.getElementById('contactForm');
+ const submitBtn = document.getElementById('submitBtn');
+ const formSuccess = document.getElementById('formSuccess');
+ const formError = document.getElementById('formError');
+ if (form) {
+ form.addEventListener('submit', async function (e) {
+ e.preventDefault();
+ const name = document.getElementById('name').value.trim();
+ const email = document.getElementById('email').value.trim();
+ const phone = document.getElementById('phone').value.trim();
+ const message = document.getElementById('message').value.trim();
+ if (!name || !email || !message) {
+ formError.style.display = 'block';
+ formError.textContent = 'Please fill in all required fields.';
+ return;
+ }
+ submitBtn.textContent = 'Sending…';
+ submitBtn.disabled = true;
+ formSuccess.style.display = 'none';
+ formError.style.display = 'none';
+ try {
+ const response = await fetch('https://www.saabai.ai/api/site-factory/lead', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ name,
+ email,
+ phone,
+ message,
+ siteSlug: 'heaven-thai-massage'
+ })
+ });
+ if (response.ok) {
+ formSuccess.style.display = 'block';
+ form.reset();
+ } else {
+ throw new Error('Server error');
+ }
+ } catch (err) {
+ formError.textContent = 'Something went wrong. Please call us on 0451 826 539.';
+ formError.style.display = 'block';
+ } finally {
+ submitBtn.innerHTML = 'Send Message <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+ submitBtn.disabled = false;
+ }
+ });
+ }
+ // ========================
+ // SMOOTH ANCHOR SCROLL
+ // ========================
+ document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+ anchor.addEventListener('click', function (e) {
+ const target = document.querySelector(this.getAttribute('href'));
+ if (target) {
+ e.preventDefault();
+ const offset = 80;
+ const top = target.getBoundingClientRect().top + window.scrollY - offset;
+ window.scrollTo({ top, behavior: 'smooth' });
+ }
+ });
+ });
+})();
+</script><script id="sf-chat-widget">
+(function(){
+'use strict';
+var CFG={
+  slug:"heaven-thai-massage",
+  name:"Lily",
+  initials:"L",
+  greeting:"Sawasdee ka! I'm Lily, your Heaven Thai guide. Keen to book a massage or have questions? I'm here to help!",
+  primary:"#1e293b",
+  accent:"#d4a017",
+  bg:"#f8fafc",
+  text:"#0f172a",
+  placeholder:"Ask about Heaven Thai Massage…",
+  api:"https://www.saabai.ai/api/site-factory-chat",
+  storageKey:"sf-chat:heaven-thai-massage"
+};
+var msgs=[],isOpen=false,isTyping=false;
+try{var saved=localStorage.getItem(CFG.storageKey);if(saved)msgs=JSON.parse(saved);}catch(e){}
+function save(){try{localStorage.setItem(CFG.storageKey,JSON.stringify(msgs.slice(-40)));}catch(e){}}
+
+var style=document.createElement('style');
+style.textContent=
+'.sf-w{position:fixed;bottom:24px;right:24px;z-index:99999;font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:flex-end}'+
+".sf-btn{width:62px;height:62px;border-radius:50%;border:3px solid #d4a017;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .2s,box-shadow .2s;position:relative;padding:0;overflow:hidden}"+
+'.sf-btn:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(0,0,0,.35)}'+
+'.sf-btn::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.25;animation:sf-pulse 2.2s infinite}'+
+'.sf-btn::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;background:'+CFG.accent+';opacity:.12;animation:sf-pulse 2.2s .6s infinite}'+
+'@keyframes sf-pulse{0%{transform:scale(1);opacity:.25}80%,100%{transform:scale(1.75);opacity:0}}'+
+'.sf-panel{position:absolute;bottom:78px;right:0;width:340px;max-width:calc(100vw - 48px);height:490px;max-height:calc(100vh - 120px);background:'+CFG.bg+';border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden;transition:opacity .25s,transform .25s;opacity:0;transform:translateY(12px) scale(.97);pointer-events:none}'+
+'.sf-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all}'+
+'.sf-head{padding:14px 18px;background:'+CFG.primary+';color:#fff;display:flex;align-items:center;gap:12px;flex-shrink:0}'+
+'.sf-head-av{width:42px;height:42px;border-radius:50%;background:'+CFG.accent+';color:'+CFG.primary+';font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid rgba(255,255,255,.3)}'+
+'.sf-head-info{flex:1}'+
+'.sf-head-name{font-weight:700;font-size:14px;line-height:1.2}'+
+'.sf-head-status{font-size:11px;opacity:.75;display:flex;align-items:center;gap:5px;margin-top:2px}'+
+'.sf-head-status::before{content:"";width:7px;height:7px;background:#4ade80;border-radius:50%;flex-shrink:0}'+
+'.sf-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;line-height:1;padding:0 2px;margin-left:auto}'+
+'.sf-close:hover{color:#fff}'+
+'.sf-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}'+
+'.sf-msg{display:flex;gap:8px;max-width:90%}'+
+'.sf-msg.user{align-self:flex-end;flex-direction:row-reverse}'+
+'.sf-msg.bot{align-self:flex-start}'+
+'.sf-msg-av{width:30px;height:30px;border-radius:50%;background:'+CFG.accent+';color:'+CFG.primary+';font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}'+
+'.sf-msg-av-img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid '+CFG.accent+'}'+
+'.sf-msg-uav{width:30px;height:30px;border-radius:50%;background:'+CFG.primary+';color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}'+
+'.sf-msg-body{padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.55;word-break:break-word}'+
+'.sf-msg.bot .sf-msg-body{background:#fff;color:'+CFG.text+';border-bottom-left-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.07)}'+
+'.sf-msg.user .sf-msg-body{background:'+CFG.primary+';color:#fff;border-bottom-right-radius:4px}'+
+'.sf-typing{display:flex;gap:4px;padding:10px 13px;background:#fff;border-radius:14px;border-bottom-left-radius:4px;width:fit-content;box-shadow:0 2px 8px rgba(0,0,0,.07)}'+
+'.sf-dot{width:7px;height:7px;background:#bbb;border-radius:50%;animation:sf-dots 1.4s infinite}'+
+'.sf-dot:nth-child(2){animation-delay:.2s}.sf-dot:nth-child(3){animation-delay:.4s}'+
+'@keyframes sf-dots{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}'+
+'.sf-inp-area{padding:12px 14px;border-top:1px solid rgba(0,0,0,.08);display:flex;gap:8px;flex-shrink:0;background:'+CFG.bg+'}'+
+'.sf-inp{flex:1;padding:9px 14px;border:1.5px solid rgba(0,0,0,.1);border-radius:22px;font-size:13.5px;outline:none;background:#fff;color:'+CFG.text+';font-family:inherit}'+
+'.sf-inp:focus{border-color:'+CFG.accent+'}'+
+'.sf-send{width:38px;height:38px;border-radius:50%;border:none;background:'+CFG.accent+';cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0}'+
+'.sf-send:hover{transform:scale(1.08)}.sf-send:disabled{opacity:.4;cursor:default}'+
+'.sf-powered{text-align:center;font-size:10px;color:rgba(0,0,0,.28);padding:4px 0 8px;flex-shrink:0}'+
+'.sf-powered a{color:rgba(0,0,0,.28);text-decoration:none}';
+document.head.appendChild(style);
+
+var widget=document.createElement('div');
+widget.className='sf-w';
+widget.innerHTML=
+'<button class="sf-btn" id="sf-btn" aria-label="Chat with '+CFG.name+'">'+
+  "<img src=\"https://o0pi3c7vnnup4bhd.public.blob.vercel-storage.com/sites/heaven-thai-massage/generated/1779371115796.png\" alt=\"Lily\" style=\"width:100%;height:100%;object-fit:cover;border-radius:50%;position:relative;z-index:1\" onerror=\"this.style.opacity=0\">"+
+'</button>'+
+'<div class="sf-panel" id="sf-panel">'+
+  '<div class="sf-head">'+
+    "<img src=\"https://o0pi3c7vnnup4bhd.public.blob.vercel-storage.com/sites/heaven-thai-massage/generated/1779371115796.png\" alt=\"Lily\" style=\"width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #d4a017;flex-shrink:0\">"+
+    '<div class="sf-head-info"><div class="sf-head-name">'+CFG.name+'</div><div class="sf-head-status">Online now</div></div>'+
+    '<button class="sf-close" id="sf-close" aria-label="Close">&#x2715;</button>'+
+  '</div>'+
+  '<div class="sf-msgs" id="sf-msgs"></div>'+
+  '<div class="sf-inp-area">'+
+    '<input class="sf-inp" id="sf-inp" type="text" placeholder="'+CFG.placeholder+'" autocomplete="off">'+
+    '<button class="sf-send" id="sf-send" disabled aria-label="Send">'+
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>'+
+    '</button>'+
+  '</div>'+
+  '<div class="sf-powered">Powered by <a href="https://www.saabai.ai" target="_blank" rel="noopener">Saabai AI</a></div>'+
+'</div>';
+document.body.appendChild(widget);
+// JS-driven positioning: works even when position:fixed is broken by ancestor CSS transforms
+var _sfPos=function(){
+  var sx=window.pageXOffset||document.documentElement.scrollLeft||0;
+  var sy=window.pageYOffset||document.documentElement.scrollTop||0;
+  widget.style.position='absolute';
+  widget.style.top=(sy+window.innerHeight-96)+'px';
+  widget.style.left=(sx+window.innerWidth-96)+'px';
+  widget.style.bottom='auto';widget.style.right='auto';
+  widget.style.zIndex='99999';
+  widget.style.display='flex';widget.style.flexDirection='column';widget.style.alignItems='flex-end';
+  widget.style.fontFamily='system-ui,-apple-system,sans-serif';
+};
+_sfPos();
+window.addEventListener('scroll',_sfPos,{passive:true});
+window.addEventListener('resize',_sfPos,{passive:true});
+
+var btn=document.getElementById('sf-btn');
+var panel=document.getElementById('sf-panel');
+var closeBtn=document.getElementById('sf-close');
+var msgsEl=document.getElementById('sf-msgs');
+var inp=document.getElementById('sf-inp');
+var sendBtn=document.getElementById('sf-send');
+
+function toggle(){
+  isOpen=!isOpen;
+  panel.classList.toggle('open',isOpen);
+  if(isOpen&&msgs.length===0)addMsg('bot',CFG.greeting);
+  if(isOpen)setTimeout(function(){inp.focus();},100);
+}
+btn.addEventListener('click',toggle);
+closeBtn.addEventListener('click',toggle);
+
+function md(t){
+  var h=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code style="background:#f0f0f0;padding:2px 5px;border-radius:3px;font-size:12px;">$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" style="color:'+CFG.accent+';text-decoration:underline;">$1</a>');
+  var lines=h.split('\n'),res=[],inUl=false,inOl=false;
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i],um=l.match(/^\s*[-*]\s+(.+)$/),om=l.match(/^\s*\d+\.\s+(.+)$/);
+    if(um){if(!inUl){if(inOl){res.push('</ol>');inOl=false;}res.push('<ul style="margin:4px 0;padding-left:18px;">');inUl=true;}res.push('<li>'+um[1]+'</li>');}
+    else if(om){if(!inOl){if(inUl){res.push('</ul>');inUl=false;}res.push('<ol style="margin:4px 0;padding-left:18px;">');inOl=true;}res.push('<li>'+om[1]+'</li>');}
+    else{if(inUl){res.push('</ul>');inUl=false;}if(inOl){res.push('</ol>');inOl=false;}if(l.trim())res.push('<p style="margin:3px 0;">'+l+'</p>');}
+  }
+  if(inUl)res.push('</ul>');if(inOl)res.push('</ol>');
+  return res.join('');
+}
+
+function botAvHtml(){return '<img class="sf-msg-av-img" src="https://o0pi3c7vnnup4bhd.public.blob.vercel-storage.com/sites/heaven-thai-massage/generated/1779371115796.png" alt="'+CFG.name+'">';}
+
+function addMsg(role,text){
+  msgs.push({role:role,text:text,ts:Date.now()});
+  save();renderMsg({role:role,text:text});
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+}
+
+function renderMsg(m){
+  var d=document.createElement('div');
+  d.className='sf-msg '+m.role;
+  if(m.role==='bot'){
+    d.innerHTML=botAvHtml()+'<div class="sf-msg-body">'+md(m.text)+'</div>';
+  }else{
+    d.innerHTML='<div class="sf-msg-uav">You</div><div class="sf-msg-body">'+md(m.text)+'</div>';
+  }
+  msgsEl.appendChild(d);
+}
+
+function showTyping(){
+  if(isTyping)return;isTyping=true;
+  var d=document.createElement('div');d.className='sf-msg bot';d.id='sf-typing';
+  d.innerHTML=botAvHtml()+'<div class="sf-typing"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div>';
+  msgsEl.appendChild(d);msgsEl.scrollTop=msgsEl.scrollHeight;
+}
+function hideTyping(){isTyping=false;var el=document.getElementById('sf-typing');if(el)el.remove();}
+
+async function send(){
+  var text=inp.value.trim();if(!text||isTyping)return;
+  inp.value='';sendBtn.disabled=true;
+  addMsg('user',text);showTyping();
+  try{
+    var res=await fetch(CFG.api,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({slug:CFG.slug,messages:msgs.filter(function(m){return m.text!==CFG.greeting;}).slice(-10).map(function(m){return{role:m.role==='bot'?'assistant':'user',content:m.text};})})});
+    hideTyping();
+    if(res.ok){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that — could you rephrase?");}
+    else{addMsg('bot',"Something went wrong. Please try again shortly.");}
+  }catch(e){hideTyping();addMsg('bot',"Connection error. Please try again.");}
+  sendBtn.disabled=inp.value.trim()==='';
+}
+
+sendBtn.addEventListener('click',send);
+inp.addEventListener('keypress',function(e){if(e.key==='Enter')send();});
+inp.addEventListener('input',function(){sendBtn.disabled=inp.value.trim()==='';});
+msgs.forEach(renderMsg);
+msgsEl.scrollTop=msgsEl.scrollHeight;
+setTimeout(function(){if(!isOpen&&msgs.length===0)toggle();},50000);
+})();
+</script>
+
+
+
+<script>
+async function bkSubmit(e){
+  e.preventDefault();
+  var name=document.getElementById('bkName').value.trim();
+  var phone=document.getElementById('bkPhone').value.trim();
+  var location=document.getElementById('bkLocation').value;
+  var dateTime=document.getElementById('bkDateTime').value.trim();
+  var service=document.getElementById('bkService').value;
+  var duration=document.getElementById('bkDuration').value;
+  var notes=document.getElementById('bkNotes').value.trim();
+
+  if(!name||!phone||!location||!service){
+    document.getElementById('bkFormError').textContent='Please fill in all required fields.';
+    document.getElementById('bkFormError').style.display='block';
+    return;
+  }
+
+  var btn=document.getElementById('bkSubmitBtn');
+  btn.textContent='Sending…';btn.disabled=true;
+  document.getElementById('bkFormError').style.display='none';
+
+  try{
+    var msg='';
+    if(notes)msg+='Notes: '+notes+'\\n';
+    if(dateTime)msg+='Preferred: '+dateTime+'\\n';
+    msg+='Location: '+location;
+
+    var res=await fetch('https://www.saabai.ai/api/site-factory/lead',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:name,phone:phone,email:'',
+        message:msg,siteSlug:'heaven-thai-massage',
+        duration:duration,
+        eventType:service+' - '+location
+      })
+    });
+
+    if(res.ok){
+      document.getElementById('bkForm').style.display='none';
+      document.getElementById('bkSuccess').style.display='block';
+    }else throw new Error('Server error');
+  }catch(err){
+    document.getElementById('bkFormError').textContent='Something went wrong. Please call us on 0451 826 539.';
+    document.getElementById('bkFormError').style.display='block';
+  }finally{
+    btn.textContent='Request Booking';btn.disabled=false;
+  }
+}
+</script>
+
+</body></html>

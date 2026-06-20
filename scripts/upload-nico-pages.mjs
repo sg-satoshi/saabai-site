@@ -18,6 +18,16 @@ const files = [
   "faq.html",
 ];
 
+// Also upload the chat widget JS for Blob-based serving
+const jsBlobPath = "sites/nico-moretti/chat-widget.js";
+const jsContent = readFileSync(join(clientDir, "chat-widget.js"), "utf-8");
+await put(jsBlobPath, jsContent, {
+  access: "public",
+  contentType: "text/javascript; charset=utf-8",
+  allowOverwrite: true,
+});
+console.log("✓ chat-widget.js → " + jsBlobPath);
+
 for (const file of files) {
   const slug = file === "index.html" ? "index" : file.replace(".html", "");
   const blobPath = `sites/nico-moretti/${file}`;

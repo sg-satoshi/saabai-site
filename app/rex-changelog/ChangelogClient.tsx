@@ -30,8 +30,15 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "20 Jun 2026",
+    entries: [
+      { time: "13:44", tag: "NEW", title: "Add Sofia AI chat widget for Nico Moretti" }
+    ],
+  },
+  {
     date: "19 Jun 2026",
     entries: [
+      { time: "11:32", tag: "UPDATE", title: "Resolve merge conflict [skip ci]" },
       { time: "11:32", tag: "NEW", title: "Add booking form + per-site Telegram notifications" },
       { time: "09:00", tag: "NEW", title: "Cache WooCommerce orders in Redis for rex-dashboard revenue tab" },
       { time: "08:57", tag: "FIX", title: "Increase WooCommerce fetch timeout to 28s on rex-dashboard revenue tab" },
