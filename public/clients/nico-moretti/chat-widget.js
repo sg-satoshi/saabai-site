@@ -11,7 +11,7 @@
     bgColor: '#FAF8F5',
     textColor: '#1A1A1A',
     apiEndpoint: 'https://www.saabai.ai/api/nico-chat',
-    greeting: "Hello. I'm Sofia, Nico's personal booking consultant. I'm here to help you find the perfect experience — whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
+    greeting: "Hello. I'm Sofia, Nico's personal booking consultant. I'm here to help you find the perfect experience, whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
     placeholder: 'Ask me anything...',
     branding: 'Nico Moretti'
   };

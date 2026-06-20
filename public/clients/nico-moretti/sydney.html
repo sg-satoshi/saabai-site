@@ -170,7 +170,7 @@ From the Sydney Film Festival and the Sydney Symphony to Art Month, the MCA gala
 <span class="text-label-md font-label-md text-primary tracking-widest uppercase block mb-4">Sydney Engagements</span>
 <h2 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg text-on-surface">Tailored for Every Sydney Occasion</h2>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 <div class="bg-surface-container-highest p-10 border border-outline/10 hover:border-primary/30 transition-colors duration-500 group flex flex-col fade-up">
 <div class="mb-8 text-primary opacity-80 group-hover:opacity-100"><span class="material-symbols-outlined text-[40px]">work</span></div>
 <h3 class="text-headline-md font-headline-md text-on-surface mb-4">ASX & Corporate Events</h3>
@@ -185,6 +185,11 @@ From the Sydney Film Festival and the Sydney Symphony to Art Month, the MCA gala
 <div class="mb-8 text-primary opacity-80 group-hover:opacity-100"><span class="material-symbols-outlined text-[40px]">restaurant</span></div>
 <h3 class="text-headline-md font-headline-md text-on-surface mb-4">Private Harbour Dining</h3>
 <p class="text-body-md font-body-md text-on-surface-variant">Exclusive dining at Quay, Aria or Bennelong deserves company that matches the setting. Worldly conversation, impeccable table manners and the quiet confidence that turns a dinner reservation into a memorable evening.</p>
+</div>
+<div class="bg-surface-container-highest p-10 border border-outline/10 hover:border-primary/30 transition-colors duration-500 group flex flex-col fade-up" style="transition-delay:300ms">
+<div class="mb-8 text-primary opacity-80 group-hover:opacity-100"><span class="material-symbols-outlined text-[40px]">diversity_3</span></div>
+<h3 class="text-headline-md font-headline-md text-on-surface mb-4">The Husband Experience</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Arrive with the perfect plus-one. Nico steps seamlessly into the role of partner for family gatherings, weddings, work Christmas parties, and holiday events. He handles every introduction with effortless authenticity and ensures you walk into every occasion with the confidence of having the right person by your side.</p>
 </div>
 </div>
 </div>
@@ -207,6 +212,22 @@ From the Sydney Film Festival and the Sydney Symphony to Art Month, the MCA gala
 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 <div><label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="phone">Phone (Optional)</label><input class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors placeholder:text-surface-variant" id="phone" name="phone" placeholder="+61 4XX XXX XXX" type="tel"/></div>
 <div class="relative"><label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="duration">Duration</label><select class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors appearance-none cursor-pointer" id="duration" name="duration"><option class="bg-surface-container-highest text-surface-variant" disabled selected value="">Select a duration...</option><option class="bg-surface-container-highest text-on-surface" value="single-evening">Single Evening (4–6 hours)</option><option class="bg-surface-container-highest text-on-surface" value="full-day">Full Day (8+ hours)</option><option class="bg-surface-container-highest text-on-surface" value="weekend">Weekend (2 days)</option><option class="bg-surface-container-highest text-on-surface" value="multi-day">Multi-Day (3–5 days)</option><option class="bg-surface-container-highest text-on-surface" value="extended">Extended Engagement (1+ week)</option><option class="bg-surface-container-highest text-on-surface" value="discuss">To Be Discussed</option></select></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="relative">
+<label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="event_type">Nature of Event</label>
+<select class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors appearance-none cursor-pointer" id="event_type" name="event_type">
+<option class="bg-surface-container-highest text-surface-variant" disabled selected value="">Select an occasion...</option>
+<option class="bg-surface-container-highest text-on-surface" value="executive">Executive Function</option>
+<option class="bg-surface-container-highest text-on-surface" value="gala">Social Gala</option>
+<option class="bg-surface-container-highest text-on-surface" value="dinner">Private Dinner</option>
+<option class="bg-surface-container-highest text-on-surface" value="husband">The Husband Experience</option>
+<option class="bg-surface-container-highest text-on-surface" value="other">Other (Specify below)</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant top-8">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
 </div>
 <div><label class="block text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-2" for="message">Sydney Event Details</label><textarea class="w-full bg-transparent border-0 border-b border-outline/30 text-on-surface font-body-md px-0 py-2 focus:ring-0 focus:border-primary transition-colors placeholder:text-surface-variant resize-none" id="message" name="message" placeholder="Venue, date, occasion type..." rows="4"></textarea></div>
 <div class="pt-4 text-center"><button class="inline-block w-full md:w-auto px-12 py-4 bg-transparent border border-primary text-primary font-label-md uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all duration-300" type="submit">Submit Inquiry</button></div>
@@ -281,6 +302,6 @@ document.getElementById('nm-inquiry-form').addEventListener('submit', async func
     } catch { btn.textContent = 'Error. Please try again'; btn.disabled = false; }
 });
 </script>
-<script src="https://www.saabai.ai/clients/nico-moretti/chat-widget.js?1"></script>
+<script src="https://www.saabai.ai/clients/nico-moretti/chat-widget.js?2"></script>
 </body>
 </html>
