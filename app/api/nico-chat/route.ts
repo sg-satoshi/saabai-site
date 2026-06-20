@@ -68,7 +68,7 @@ export async function POST(req: Request) {
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: process.env.OPENROUTER_API_KEY,
     });
-    const model = openrouter("anthropic/claude-3-5-haiku");
+    const model = openrouter("anthropic/claude-3.5-haiku");
 
     const result = await generateText({
       model,
