@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "20 Jun 2026",
     entries: [
+      { time: "14:05", tag: "FIX", title: "Use claude-haiku-4.5 (replaces EOL 3.5-haiku) + map bot→assistant role" },
       { time: "14:00", tag: "FIX", title: "Update deprecated claude-3-5-haiku to claude-3.5-haiku (EOL on Bedrock)" },
       { time: "13:50", tag: "FIX", title: "Whitelist /api/nico-chat in proxy" },
       { time: "13:44", tag: "NEW", title: "Add Sofia AI chat widget for Nico Moretti" },
