@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "20 Jun 2026",
     entries: [
+      { time: "14:20", tag: "UPDATE", title: "Nico-chat: switch from OpenRouter/Claude to DeepSeek V4 Flash" },
       { time: "14:16", tag: "FIX", title: "Switch nico-chat to direct OpenRouter chat completions (bypass Responses API)" },
       { time: "14:12", tag: "FIX", title: "MaxOutputTokens for AI SDK v6 (not maxTokens)" },
       { time: "14:09", tag: "FIX", title: "Limit nico-chat maxTokens to 500 (credit budget)" },

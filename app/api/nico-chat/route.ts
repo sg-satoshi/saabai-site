@@ -36,7 +36,9 @@ Contact info to share when asked:
 - Phone: as listed on the website
 - Consultations arranged via the inquiry form on the site
 
-Keep responses warm, brief, and helpful. You're here to make the first connection easy and comfortable.`;
+Keep responses warm, brief, and helpful. You're here to make the first connection easy and comfortable.
+
+CRITICAL FORMATTING RULE: Never use em dashes (—) anywhere in your responses. Use commas, full stops, or bullet points instead. This applies to every single response without exception.`;
 
 export async function OPTIONS() {
   return new Response(null, {
