@@ -71,8 +71,7 @@ export async function POST(req: Request) {
         return { role, content: text };
       });
 
-    // Build OpenRouter chat completions payload
-    const openRouterMessages = [
+    const deepseekMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...chatMessages.map((m: { role: string; content: string }) => ({
         role: m.role,
@@ -80,25 +79,31 @@ export async function POST(req: Request) {
       })),
     ];
 
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "anthropic/claude-haiku-4.5",
-          messages: openRouterMessages,
-          max_tokens: 500,
-        }),
-      }
-    );
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      console.error("DEEPSEEK_API_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "Configuration error" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-v4-flash",
+        messages: deepseekMessages,
+        max_tokens: 500,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("OpenRouter error:", response.status, errorText);
+      console.error("DeepSeek error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Failed to generate response", details: `HTTP ${response.status}` }),
         {

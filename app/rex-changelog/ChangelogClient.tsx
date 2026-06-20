@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "20 Jun 2026",
     entries: [
+      { time: "14:16", tag: "FIX", title: "Switch nico-chat to direct OpenRouter chat completions (bypass Responses API)" },
       { time: "14:12", tag: "FIX", title: "MaxOutputTokens for AI SDK v6 (not maxTokens)" },
       { time: "14:09", tag: "FIX", title: "Limit nico-chat maxTokens to 500 (credit budget)" },
       { time: "14:05", tag: "FIX", title: "Use claude-haiku-4.5 (replaces EOL 3.5-haiku) + map bot→assistant role" },
