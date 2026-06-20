@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       model,
       system: SYSTEM_PROMPT,
       messages: chatMessages,
-      maxTokens: 500,
+      maxOutputTokens: 500,
     });
 
     return new Response(JSON.stringify({ content: result.text }), {
