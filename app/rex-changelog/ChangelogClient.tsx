@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "20 Jun 2026",
     entries: [
+      { time: "13:44", tag: "NEW", title: "Add Sofia AI chat widget for Nico Moretti" },
       { time: "13:44", tag: "NEW", title: "Add Sofia AI chat widget for Nico Moretti" }
     ],
   },

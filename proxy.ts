@@ -44,6 +44,7 @@ const PUBLIC_API = [
   "/api/lmm-chat",
   "/api/nextinvestment-chat",
   "/api/tributum-chat",
+  "/api/nico-chat",
   "/api/leadgen/chat",
   // Public Lex tools on the /lex page (no session check in handlers today)
   "/api/lex-extract",
