@@ -13,6 +13,8 @@ const HTML_PAGES = [
   "faq",
   // Service pages
   "husband-experience",
+  // Gift vouchers page
+  "gift-vouchers",
   // Heaven Thai Massage location pages
   "mudgeeraba", "carrara", "merrimac", "robina", "clear-island-waters",
   "highland-park", "nerang", "tallai", "gilston", "varsity-lakes",
