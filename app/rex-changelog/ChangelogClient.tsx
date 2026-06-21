@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "21 Jun 2026",
     entries: [
+      { time: "23:13", tag: "FIX", title: "All suburb/service links use full URLs (https://www.saabai.ai/sites/heaven-thai-massage/...)" },
       { time: "23:06", tag: "FIX", title: "Footer redesign - 4 columns, no duplicates, suburbs grid, Our Locations section" },
       { time: "22:53", tag: "NEW", title: "Heaven Thai Gift Vouchers page with Stripe-ready checkout (00-00)" },
       { time: "22:47", tag: "NEW", title: "Heaven Thai 24 location pages - suburbs within 10km of Worongary & Southport" },
