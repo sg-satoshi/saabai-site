@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "21 Jun 2026",
     entries: [
+      { time: "23:41", tag: "FIX", title: "Location page footer columns evenly spaced (1fr 1fr 1fr)" },
       { time: "23:40", tag: "FIX", title: "All Book Now links point to #booking form on main page" },
       { time: "23:36", tag: "UPDATE", title: "Force redeploy: hero-bg image fix" },
       { time: "23:33", tag: "FIX", title: "Location page hero alignment + full-width suburbs footer" },
