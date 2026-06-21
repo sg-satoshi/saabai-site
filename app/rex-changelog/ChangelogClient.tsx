@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "20 Jun 2026",
     entries: [
+      { time: "21:11", tag: "NEW", title: "Add husband-experience page route + dedicated service page" },
       { time: "20:58", tag: "NEW", title: "Add The Husband Experience service: cards, FAQ, Sofia prompt" },
       { time: "14:33", tag: "UPDATE", title: "Nico-chat: forbid em dashes in Sofia responses" },
       { time: "14:20", tag: "UPDATE", title: "Nico-chat: switch from OpenRouter/Claude to DeepSeek V4 Flash" },
