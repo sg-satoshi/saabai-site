@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "21 Jun 2026",
     entries: [
+      { time: "23:26", tag: "FIX", title: "Location pages - lotus logo in nav, hero background image, proper formatting" },
       { time: "23:20", tag: "FIX", title: "All location page navs + footer Quick Links with Gift Vouchers" },
       { time: "23:13", tag: "FIX", title: "All suburb/service links use full URLs (https://www.saabai.ai/sites/heaven-thai-massage/...)" },
       { time: "23:06", tag: "FIX", title: "Footer redesign - 4 columns, no duplicates, suburbs grid, Our Locations section" },
