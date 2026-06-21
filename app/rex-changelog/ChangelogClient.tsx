@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "21 Jun 2026",
     entries: [
+      { time: "23:33", tag: "FIX", title: "Location page hero alignment + full-width suburbs footer" },
       { time: "23:29", tag: "FIX", title: "Add id=testimonials to reviews carousel section so nav link scrolls to it" },
       { time: "23:26", tag: "FIX", title: "Location pages - lotus logo in nav, hero background image, proper formatting" },
       { time: "23:20", tag: "FIX", title: "All location page navs + footer Quick Links with Gift Vouchers" },
