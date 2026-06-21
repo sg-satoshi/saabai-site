@@ -13,6 +13,12 @@ const HTML_PAGES = [
   "faq",
   // Service pages
   "husband-experience",
+  // Heaven Thai Massage location pages
+  "mudgeeraba", "carrara", "merrimac", "robina", "clear-island-waters",
+  "highland-park", "nerang", "tallai", "gilston", "varsity-lakes",
+  "bonogin", "reedy-creek", "surfers-paradise", "main-beach", "labrador",
+  "biggera-waters", "ashmore", "molendinar", "parkwood", "arundel",
+  "helensvale", "runaway-bay", "bundall", "benowa",
 ];
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },

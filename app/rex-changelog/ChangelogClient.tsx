@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "21 Jun 2026",
+    entries: [
+      { time: "22:11", tag: "FIX", title: "Heaven Thai booking form - single column layout, compact contact info, privacy statement, both phone numbers in Get In Touch and Book by Phone sections" }
+    ],
+  },
+  {
     date: "20 Jun 2026",
     entries: [
       { time: "21:11", tag: "NEW", title: "Add husband-experience page route + dedicated service page" },
