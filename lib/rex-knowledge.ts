@@ -729,6 +729,21 @@ Note: 3mm white also available oversized in 3050×1560mm ($57 full sheet, CTS $2
 
 **Applications:** Real estate signage, election signs, construction hoarding, temporary event signage, protective packaging, display boards.
 
+**IMPORTANT: CORFLUTE — FULL SHEETS ONLY, NO CUT TO SIZE**
+Corflute is a low-cost sheet product sold in standard full sheets only. We do not offer a cut-to-size service for corflute. If a customer needs a custom size, let them know we only sell full sheets and suggest they contact us for a customised quote: phone (07) 5564 6744 or [contact us here](https://plasticonline.com.au/contact/).
+
+**CORFLUTE PRICING — (ex GST, per sheet)**
+
+Standard sheet size: 2400×1200mm.
+
+| Colour | Thickness | Each | 10+ sheets |
+|--------|-----------|------|------------|
+| White | 3mm | $13.96 | $13.61 |
+| Black | 3mm | $28.00 | $27.30 |
+| White | 5mm | $25.92 | $25.27 |
+| Black | 5mm | $44.68 | $43.56 |
+| White | 8mm | $90.00 | $87.75 |
+
 ---
 
 ### HIPS (High Impact Polystyrene)
