@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import dynamic from "next/dynamic";
-const BOChatWidget = dynamic(() => import("@/app/components/BOChatWidget"), { ssr: false });
+import { useState, useEffect } from "react";
+import BOChatWidget from "@/app/components/BOChatWidget";
 
 const C = {
   navy: "#123B5D",
@@ -101,6 +100,8 @@ export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", message: "", type: "employer" });
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -725,7 +726,7 @@ export default function BOConsultancyPage() {
         </div>
       </section>
 
-      <BOChatWidget />
+      {mounted && <BOChatWidget />}
 
       {/* ── Footer ── */}
       <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>
