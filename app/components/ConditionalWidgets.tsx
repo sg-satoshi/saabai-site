@@ -14,12 +14,13 @@ const SUPPRESS_PATHS = [
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
   // Client demo sites — their own experience
   "/sites/tributum-law-v2",
+  "/sites/bo-consultancy",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget"];
+const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();

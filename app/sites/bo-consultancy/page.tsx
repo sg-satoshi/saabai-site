@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BOChatWidget from "@/app/components/BOChatWidget";
 
 const C = {
   navy: "#123B5D",
@@ -184,6 +185,27 @@ export default function BOConsultancyPage() {
           overflow: "hidden",
         }}
       >
+        {/* Hero background image */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center 40%",
+            opacity: 0.18,
+            pointerEvents: "none",
+          }}
+        />
+        {/* Dark overlay for text legibility */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(to right, rgba(18,59,93,0.92) 0%, rgba(18,59,93,0.7) 60%, rgba(18,59,93,0.4) 100%)`,
+            pointerEvents: "none",
+          }}
+        />
         {/* Background geometric accent */}
         <div
           style={{
@@ -575,9 +597,9 @@ export default function BOConsultancyPage() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               {[
-                { label: "Email", value: "hello@boconsulting.com.au", href: "mailto:hello@boconsulting.com.au" },
+                { label: "Email", value: "info@boconsulting.com.au", href: "mailto:info@boconsulting.com.au" },
                 { label: "Phone", value: "1300 BO TEAM", href: "tel:1300268326" },
-                { label: "Operating Hours", value: "Mon–Fri: 7am – 6pm AEST", href: null },
+                { label: "Operating Hours", value: "Mon–Fri: 9am – 5pm AEST", href: null },
                 { label: "Coverage", value: "All states and territories, Australia", href: null },
               ].map((item, i) => (
                 <div key={i}>
@@ -712,6 +734,8 @@ export default function BOConsultancyPage() {
         </div>
       </section>
 
+      <BOChatWidget />
+
       {/* ── Footer ── */}
       <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -741,27 +765,8 @@ export default function BOConsultancyPage() {
             <div>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Contact</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <a href="mailto:hello@boconsulting.com.au" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>hello@boconsulting.com.au</a>
+                <a href="mailto:info@boconsulting.com.au" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>info@boconsulting.com.au</a>
                 <a href="tel:1300268326" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>1300 BO TEAM</a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "rgba(255,255,255,0.55)",
-                    fontSize: 14,
-                    textDecoration: "none",
-                    marginTop: 8,
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
-                  LinkedIn
-                </a>
               </div>
             </div>
           </div>

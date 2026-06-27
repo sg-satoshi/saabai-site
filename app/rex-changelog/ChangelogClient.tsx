@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "10:26", tag: "FIX", title: "BO Consultancy logo — transparent bg, cropped, white pill in nav" },
       { time: "10:20", tag: "NEW", title: "Add BO Consultancy recruitment site to site factory" }
     ],
   },
