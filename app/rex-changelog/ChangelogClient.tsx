@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "17:59", tag: "FIX", title: "BO Consulting nav, hamburger, and mobile overflow" },
       { time: "17:41", tag: "FIX", title: "Hamburger visible on mobile — remove inline display from desktop nav, vanilla JS toggle, remove saabai branding from email" },
       { time: "17:23", tag: "UPDATE", title: "Auto-update changelog" },
       { time: "17:01", tag: "NEW", title: "BO contact form — Resend API, vanilla JS tabs + submit, bypass React hydration" },

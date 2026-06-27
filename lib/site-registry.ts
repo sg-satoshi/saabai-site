@@ -86,6 +86,31 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     createdAt: 1749000000000,
     updatedAt: 1749000000000,
   },
+  {
+    id: "bo-consultancy",
+    slug: "bo-consultancy",
+    name: "BO Consulting",
+    niche: "professional-services",
+    description: "Blue-collar recruitment & labour hire specialist site (App Router, custom domain boconsulting.com.au)",
+    status: "live" as const,
+    source: "factory",
+    url: "https://boconsulting.com.au",
+    domains: ["boconsulting.com.au", "www.boconsulting.com.au"],
+    business: {
+      name: "BO Consulting",
+      tagline: "Connecting Australia's Workforce",
+      email: "info@boconsulting.com.au",
+    },
+    chatbot: {
+      enabled: true,
+      name: "Christina",
+      greeting: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?",
+      systemPrompt: "You are Christina, the BO Consulting assistant. Help visitors with blue-collar recruitment and labour hire inquiries.",
+      avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg",
+    },
+    createdAt: 1745000000000,
+    updatedAt: 1745000000000,
+  },
 ];
 
 export async function createSite(config: Omit<SiteConfig, "id" | "createdAt" | "updatedAt">): Promise<SiteConfig> {

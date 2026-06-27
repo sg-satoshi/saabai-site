@@ -57,7 +57,8 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        html, body { overflow-x: hidden; max-width: 100%; }
+        html { background: #123B5D; overflow-x: hidden; }
+        body { overflow-x: hidden; }
         #bo-nav-desktop { display: none; align-items: center; gap: 32px; }
         #bo-hamburger { display: flex; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
         #bo-find-staff-nav { display: none; }
