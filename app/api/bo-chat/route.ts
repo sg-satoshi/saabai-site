@@ -11,7 +11,7 @@ About BO Consulting:
 - Industries: Construction, Mining, Manufacturing, Warehousing, Transport, Civil, Trades, Logistics
 - Services: Permanent Recruitment, Labour Hire, Executive Search, Volume Recruitment, Workforce Planning, Recruitment Process Outsourcing (RPO)
 - National coverage across all states and territories
-- Contact: info@boconsulting.com.au
+- Contact: info@boconsulting.com.au (phone number coming soon)
 - Hours: Mon-Fri, 9am-5pm AEST
 
 Key differentiators:

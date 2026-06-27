@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "10:36", tag: "NEW", title: "Christina avatar photo for BO Consulting chatbot" },
       { time: "10:34", tag: "FIX", title: "Rename chatbot to Christina, route BO leads to info@boconsulting.com.au" },
       { time: "10:32", tag: "NEW", title: "BO Consultancy — Alex chatbot, hero image, content fixes" },
       { time: "10:26", tag: "FIX", title: "BO Consultancy logo — transparent bg, cropped, white pill in nav" },
