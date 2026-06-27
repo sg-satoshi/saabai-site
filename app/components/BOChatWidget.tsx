@@ -227,7 +227,7 @@ export default function BOChatWidget() {
 
       {/* Launcher */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((o) => !o)}
         aria-label="Chat with Christina"
         style={{
           width: 60,
@@ -243,17 +243,15 @@ export default function BOChatWidget() {
           fontSize: 22,
           fontWeight: 700,
           color: WHITE,
-          transition: "transform 0.2s",
           overflow: "hidden",
           padding: 0,
+          flexShrink: 0,
         }}
-        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
         {isOpen ? (
-          <span style={{ fontSize: 24, lineHeight: 1 }}>×</span>
+          <span style={{ fontSize: 24, lineHeight: 1, pointerEvents: "none" }}>×</span>
         ) : (
-          <img src={AVATAR} alt="Chat with Christina" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={AVATAR} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", display: "block" }} />
         )}
       </button>
     </div>

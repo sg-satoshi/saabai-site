@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "11:30", tag: "FIX", title: "BO Consultancy chatbot — render after mount to fix click handler hydration" },
       { time: "11:26", tag: "NEW", title: "BO Consultancy — fix chatbot hydration (dynamic ssr:false), add Privacy Policy and Terms pages" },
       { time: "11:19", tag: "FIX", title: "Custom domain middleware — pass through static assets and API calls to prevent double-path rewrite" },
       { time: "10:43", tag: "FIX", title: "Hide phone number on BO Consultancy site — new number coming soon" },

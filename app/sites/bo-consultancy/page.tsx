@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import BOChatWidget from "@/app/components/BOChatWidget";
 
 const C = {
@@ -100,9 +100,6 @@ export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", message: "", type: "employer" });
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await fetch("/api/site-factory/lead", {
@@ -726,7 +723,7 @@ export default function BOConsultancyPage() {
         </div>
       </section>
 
-      {mounted && <BOChatWidget />}
+      <BOChatWidget />
 
       {/* ── Footer ── */}
       <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>
