@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "18:20", tag: "FIX", title: "BO Consulting terms/privacy pages white background" },
       { time: "18:11", tag: "FIX", title: "BO Consulting white edge strips + add to site factory admin" },
       { time: "17:59", tag: "FIX", title: "BO Consulting nav, hamburger, and mobile overflow" },
       { time: "17:41", tag: "FIX", title: "Hamburger visible on mobile — remove inline display from desktop nav, vanilla JS toggle, remove saabai branding from email" },

@@ -17,6 +17,25 @@ const LEGACY_META: Record<string, LegacyMeta> = {
   "heaven-thai-massage": { name: "Heaven Thai Massage", niche: "health-wellness", description: "Traditional Thai massage studio in Worongary." },
 };
 
+// App Router sites hardcoded here as a reliable fallback (APP_ROUTER_SITES in site-registry
+// can be overridden by Redis slugs — this list always wins if slug not already present).
+const PINNED_SITES = [
+  {
+    id: "bo-consultancy",
+    slug: "bo-consultancy",
+    name: "BO Consulting",
+    niche: "professional-services",
+    description: "Blue-collar recruitment & labour hire (App Router, boconsulting.com.au)",
+    status: "live",
+    url: "https://boconsulting.com.au",
+    domains: ["boconsulting.com.au", "www.boconsulting.com.au"],
+    business: { name: "BO Consulting", email: "info@boconsulting.com.au" },
+    chatbot: { enabled: true, name: "Christina", greeting: "G'day! I'm Christina, the BO Consulting assistant.", systemPrompt: "You are Christina, the BO Consulting assistant.", avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg" },
+    createdAt: 1745000000000,
+    updatedAt: 1745000000000,
+  },
+];
+
 function scanLegacySites() {
   const clientsDir = path.join(process.cwd(), "public", "clients");
   const dirs: Array<ReturnType<typeof toSiteResult>> = [];
@@ -63,9 +82,11 @@ export async function GET() {
     const redisSites = await listSites();
     const legacySites = scanLegacySites();
 
-    // Merge, preferring Redis data for same slug
+    // Merge: Redis/APP_ROUTER first, then legacy, then pinned (fills any gaps)
     const seen = new Set(redisSites.map((s) => s.slug));
-    const merged = [...redisSites, ...legacySites.filter((s) => !seen.has(s.slug))];
+    const withLegacy = [...redisSites, ...legacySites.filter((s) => !seen.has(s.slug))];
+    const seen2 = new Set(withLegacy.map((s) => s.slug));
+    const merged = [...withLegacy, ...PINNED_SITES.filter((s) => !seen2.has(s.slug))];
 
     // Sort by name
     merged.sort((a, b) => a.name.localeCompare(b.name));
@@ -73,8 +94,9 @@ export async function GET() {
     return Response.json({ success: true, sites: merged });
   } catch (error) {
     console.error("List sites error:", error);
-    // Fallback to filesystem only
     const legacySites = scanLegacySites();
-    return Response.json({ success: true, sites: legacySites });
+    const seen = new Set(legacySites.map((s) => s.slug));
+    const merged = [...legacySites, ...PINNED_SITES.filter((s) => !seen.has(s.slug))];
+    return Response.json({ success: true, sites: merged });
   }
 }
