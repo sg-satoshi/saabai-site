@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
@@ -97,108 +96,114 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
         }}
       />
       {children}
-      <Script id="bo-chat-widget" strategy="afterInteractive">{`
-(function() {
-  if (document.getElementById('bo-widget-root')) return;
-  var NAVY='#123B5D',ORANGE='#F58220',AVATAR='/sites/bo-consultancy/christina-avatar.jpg';
-  var messages=[{role:'assistant',content:"G\\'day! I\\'m Christina, the BO Consulting assistant. Whether you\\'re looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?"}];
-  var isOpen=false;
+      <script dangerouslySetInnerHTML={{ __html: `(function() {
+  function init() {
+    if (document.getElementById('bo-widget-root')) return;
+    var NAVY='#123B5D',ORANGE='#F58220',AVATAR='/sites/bo-consultancy/christina-avatar.jpg';
+    var messages=[{role:'assistant',content:"G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?"}];
+    var isOpen=false;
 
-  var style=document.createElement('style');
-  style.textContent='@keyframes bo-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}#bo-widget-root *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}';
-  document.head.appendChild(style);
+    var style=document.createElement('style');
+    style.textContent='@keyframes bo-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}#bo-widget-root *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}';
+    document.head.appendChild(style);
 
-  var root=document.createElement('div');
-  root.id='bo-widget-root';
-  root.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:12px;pointer-events:none';
+    var root=document.createElement('div');
+    root.id='bo-widget-root';
+    root.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:12px;pointer-events:none';
 
-  var panel=document.createElement('div');
-  panel.style.cssText='width:380px;max-width:calc(100vw - 48px);border-radius:20px;overflow:hidden;flex-direction:column;height:520px;max-height:calc(100vh - 120px);background:#fff;box-shadow:0 24px 80px rgba(18,59,93,0.25);display:none;pointer-events:auto';
+    var panel=document.createElement('div');
+    panel.style.cssText='width:380px;max-width:calc(100vw - 48px);border-radius:20px;overflow:hidden;flex-direction:column;height:520px;max-height:calc(100vh - 120px);background:#fff;box-shadow:0 24px 80px rgba(18,59,93,0.25);display:none;pointer-events:auto';
 
-  var hdr=document.createElement('div');
-  hdr.style.cssText='background:'+NAVY+';padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0';
-  hdr.innerHTML='<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,0.2)"><img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover"></div><div style="flex:1"><div style="color:#fff;font-size:14px;font-weight:700">Christina</div><div style="color:rgba(255,255,255,0.6);font-size:12px">BO Consulting Assistant</div></div><button id="bo-close" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:22px;cursor:pointer;line-height:1;padding:0 4px">×</button>';
+    var hdr=document.createElement('div');
+    hdr.style.cssText='background:'+NAVY+';padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0';
+    hdr.innerHTML='<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(255,255,255,0.2)"><img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover"></div><div style="flex:1"><div style="color:#fff;font-size:14px;font-weight:700">Christina</div><div style="color:rgba(255,255,255,0.6);font-size:12px">BO Consulting Assistant</div></div><button id="bo-close" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:22px;cursor:pointer;line-height:1;padding:0 4px">&#215;</button>';
 
-  var msgs=document.createElement('div');
-  msgs.id='bo-msgs';
-  msgs.style.cssText='flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px';
+    var msgs=document.createElement('div');
+    msgs.id='bo-msgs';
+    msgs.style.cssText='flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px';
 
-  var inp=document.createElement('div');
-  inp.style.cssText='padding:12px;border-top:1px solid #F4F5F6;flex-shrink:0;display:flex;gap:8px';
-  inp.innerHTML='<input id="bo-inp" type="text" placeholder="Type a message…" style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #E2E6EA;font-size:14px;color:#1A2B3C;outline:none;background:#fff"><button id="bo-send" style="padding:10px 18px;border-radius:12px;border:none;background:'+ORANGE+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">Send</button>';
+    var inp=document.createElement('div');
+    inp.style.cssText='padding:12px;border-top:1px solid #F4F5F6;flex-shrink:0;display:flex;gap:8px';
+    inp.innerHTML='<input id="bo-inp" type="text" placeholder="Type a message..." style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #E2E6EA;font-size:14px;color:#1A2B3C;outline:none;background:#fff"><button id="bo-send" style="padding:10px 18px;border-radius:12px;border:none;background:'+ORANGE+';color:#fff;font-size:14px;font-weight:700;cursor:pointer">Send</button>';
 
-  panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(inp);
+    panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(inp);
 
-  var btn=document.createElement('button');
-  btn.id='bo-launch';
-  btn.setAttribute('aria-label','Chat with Christina');
-  btn.style.cssText='width:60px;height:60px;border-radius:50%;background:'+ORANGE+';border:3px solid '+ORANGE+';cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,130,32,0.45);overflow:hidden;padding:0;flex-shrink:0;pointer-events:auto';
-  btn.innerHTML='<img src="'+AVATAR+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none">';
+    var btn=document.createElement('button');
+    btn.id='bo-launch';
+    btn.setAttribute('aria-label','Chat with Christina');
+    btn.style.cssText='width:60px;height:60px;border-radius:50%;background:'+ORANGE+';border:3px solid '+ORANGE+';cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(245,130,32,0.45);overflow:hidden;padding:0;flex-shrink:0;pointer-events:auto';
+    btn.innerHTML='<img src="'+AVATAR+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none">';
 
-  root.appendChild(panel);root.appendChild(btn);
-  document.body.appendChild(root);
+    root.appendChild(panel);root.appendChild(btn);
+    document.body.appendChild(root);
 
-  function renderMsgs(){
-    msgs.innerHTML='';
-    messages.forEach(function(m){
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;gap:10px;flex-direction:'+(m.role==='user'?'row-reverse':'row');
-      if(m.role==='assistant'){
-        var av=document.createElement('div');
-        av.style.cssText='width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;margin-top:2px';
-        av.innerHTML='<img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover">';
-        row.appendChild(av);
+    function renderMsgs(){
+      msgs.innerHTML='';
+      messages.forEach(function(m){
+        var row=document.createElement('div');
+        row.style.cssText='display:flex;gap:10px;flex-direction:'+(m.role==='user'?'row-reverse':'row');
+        if(m.role==='assistant'){
+          var av=document.createElement('div');
+          av.style.cssText='width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0;margin-top:2px';
+          av.innerHTML='<img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover">';
+          row.appendChild(av);
+        }
+        var bub=document.createElement('div');
+        bub.style.cssText='max-width:75%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.6;background:'+(m.role==='user'?NAVY:'#F4F5F6')+';color:'+(m.role==='user'?'#fff':'#1A2B3C');
+        bub.textContent=m.content;
+        row.appendChild(bub);
+        msgs.appendChild(row);
+      });
+      msgs.scrollTop=msgs.scrollHeight;
+    }
+
+    function toggleOpen(){
+      isOpen=!isOpen;
+      if(isOpen){
+        panel.style.display='flex';
+        btn.innerHTML='<span style="font-size:24px;line-height:1;color:#fff;pointer-events:none">&#215;</span>';
+        renderMsgs();
+        setTimeout(function(){var i=document.getElementById('bo-inp');if(i)i.focus();},50);
+      } else {
+        panel.style.display='none';
+        btn.innerHTML='<img src="'+AVATAR+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none">';
       }
-      var bub=document.createElement('div');
-      bub.style.cssText='max-width:75%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.6;background:'+(m.role==='user'?NAVY:'#F4F5F6')+';color:'+(m.role==='user'?'#fff':'#1A2B3C');
-      bub.textContent=m.content;
-      row.appendChild(bub);
-      msgs.appendChild(row);
-    });
-    msgs.scrollTop=msgs.scrollHeight;
-  }
+    }
 
-  function toggleOpen(){
-    isOpen=!isOpen;
-    if(isOpen){
-      panel.style.display='flex';
-      btn.innerHTML='<span style="font-size:24px;line-height:1;color:#fff;pointer-events:none">×</span>';
+    async function send(){
+      var i=document.getElementById('bo-inp');
+      var txt=i?i.value.trim():'';
+      if(!txt)return;
+      i.value='';
+      messages.push({role:'user',content:txt});
       renderMsgs();
-      setTimeout(function(){var i=document.getElementById('bo-inp');if(i)i.focus();},50);
-    } else {
-      panel.style.display='none';
-      btn.innerHTML='<img src="'+AVATAR+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none">';
+      var typing=document.createElement('div');
+      typing.style.cssText='display:flex;gap:10px';
+      typing.innerHTML='<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover"></div><div style="padding:10px 14px;border-radius:16px;background:#F4F5F6;display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s 150ms infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s 300ms infinite"></span></div>';
+      msgs.appendChild(typing);
+      msgs.scrollTop=msgs.scrollHeight;
+      try{
+        var r=await fetch('/api/bo-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages})});
+        var d=await r.json();
+        messages.push({role:'assistant',content:d.content||'Sorry, having trouble. Email info@boconsulting.com.au'});
+      }catch(e){
+        messages.push({role:'assistant',content:'Having trouble connecting. Email info@boconsulting.com.au'});
+      }
+      renderMsgs();
     }
+
+    btn.addEventListener('click',toggleOpen);
+    document.getElementById('bo-close').addEventListener('click',toggleOpen);
+    document.getElementById('bo-send').addEventListener('click',send);
+    document.getElementById('bo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
   }
 
-  async function send(){
-    var i=document.getElementById('bo-inp');
-    var txt=i?i.value.trim():'';
-    if(!txt)return;
-    i.value='';
-    messages.push({role:'user',content:txt});
-    renderMsgs();
-    var typing=document.createElement('div');
-    typing.style.cssText='display:flex;gap:10px';
-    typing.innerHTML='<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="'+AVATAR+'" style="width:100%;height:100%;object-fit:cover"></div><div style="padding:10px 14px;border-radius:16px;background:#F4F5F6;display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s 150ms infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:'+ORANGE+';display:inline-block;animation:bo-bounce 1s 300ms infinite"></span></div>';
-    msgs.appendChild(typing);
-    msgs.scrollTop=msgs.scrollHeight;
-    try{
-      var r=await fetch('/api/bo-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages})});
-      var d=await r.json();
-      messages.push({role:'assistant',content:d.content||'Sorry, having trouble. Email info@boconsulting.com.au'});
-    }catch(e){
-      messages.push({role:'assistant',content:'Having trouble connecting. Email info@boconsulting.com.au'});
-    }
-    renderMsgs();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
-
-  btn.addEventListener('click',toggleOpen);
-  document.getElementById('bo-close').addEventListener('click',toggleOpen);
-  document.getElementById('bo-send').addEventListener('click',send);
-  document.getElementById('bo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
-})();
-      `}</Script>
+})();` }} />
     </>
   );
 }
