@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service | BO Consulting",
+  description: "BO Consulting's terms of service governing the use of our recruitment and labour hire services.",
+  robots: { index: false, follow: false },
+  alternates: { canonical: "https://www.boconsulting.com.au/terms" },
+};
+
 export default function TermsOfService() {
   const NAVY = "#123B5D";
   const ORANGE = "#F58220";

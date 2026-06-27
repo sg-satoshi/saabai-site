@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy | BO Consulting",
+  description: "BO Consulting's privacy policy — how we collect, use and protect your personal information.",
+  robots: { index: false, follow: false },
+  alternates: { canonical: "https://www.boconsulting.com.au/privacy-policy" },
+};
+
 export default function PrivacyPolicy() {
   const NAVY = "#123B5D";
   const ORANGE = "#F58220";
