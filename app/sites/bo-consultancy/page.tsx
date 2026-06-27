@@ -97,7 +97,6 @@ const NAV_ITEMS = ["About", "Industries", "Services", "Why Us", "Testimonials", 
 
 export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ type: "employer" });
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal }}>
@@ -122,7 +121,7 @@ export default function BOConsultancyPage() {
           </a>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32, display: "flex" }}>
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
             {NAV_ITEMS.map((item) => (
               <a
                 key={item}
@@ -145,42 +144,38 @@ export default function BOConsultancyPage() {
             >
               Find Staff
             </a>
-            {/* Hamburger */}
+            {/* Hamburger — visibility controlled by Tailwind md:hidden, toggle by vanilla JS */}
             <button
+              id="bo-hamburger"
               className="md:hidden"
-              onClick={() => setMenuOpen((o) => !o)}
               aria-label="Toggle menu"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 5 }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}
             >
-              <span style={{ display: "block", width: 24, height: 2, background: menuOpen ? "transparent" : "#fff", transition: "0.2s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
-              <span style={{ display: "block", width: 24, height: 2, background: "#fff", transition: "0.2s", transform: menuOpen ? "rotate(-45deg)" : "none" }} />
-              {!menuOpen && <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />}
+              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
+              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
+              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div style={{ background: C.navy, borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 24px 24px" }}>
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace(" ", "-")}`}
-                onClick={() => setMenuOpen(false)}
-                style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                {item}
-              </a>
-            ))}
+        {/* Mobile Menu — always in DOM, toggled by vanilla JS via id="bo-mobile-menu" */}
+        <div id="bo-mobile-menu" style={{ display: "none", background: C.navy, borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 24px 24px" }}>
+          {NAV_ITEMS.map((item) => (
             <a
-              href="#contact"
-              onClick={() => setMenuOpen(false)}
-              style={{ display: "block", marginTop: 16, background: C.orange, color: "#fff", padding: "14px", borderRadius: 8, fontSize: 15, fontWeight: 700, textDecoration: "none", textAlign: "center" }}
+              key={item}
+              href={`#${item.toLowerCase().replace(" ", "-")}`}
+              style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
             >
-              Find Staff
+              {item}
             </a>
-          </div>
-        )}
+          ))}
+          <a
+            href="#contact"
+            style={{ display: "block", marginTop: 16, background: C.orange, color: "#fff", padding: "14px", borderRadius: 8, fontSize: 15, fontWeight: 700, textDecoration: "none", textAlign: "center" }}
+          >
+            Find Staff
+          </a>
+        </div>
       </nav>
 
       {/* ── Hero ── */}

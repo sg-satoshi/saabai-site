@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 </html>`;
 
     await resend.emails.send({
-      from: "BO Consulting Website <noreply@saabai.ai>",
+      from: "BO Consulting <noreply@saabai.ai>",
       to: ["info@boconsulting.com.au"],
       replyTo: email,
       subject,

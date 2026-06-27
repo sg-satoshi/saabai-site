@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "17:23", tag: "UPDATE", title: "Auto-update changelog" },
       { time: "17:01", tag: "NEW", title: "BO contact form — Resend API, vanilla JS tabs + submit, bypass React hydration" },
       { time: "16:43", tag: "UPDATE", title: "Auto-update changelog" },
       { time: "16:02", tag: "FIX", title: "Use raw script tag for BO widget — bypasses RSC payload injection that fails on custom domain" },

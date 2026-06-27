@@ -198,6 +198,37 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
     document.getElementById('bo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
   }
 
+  function initNav() {
+    var hamburger = document.getElementById('bo-hamburger');
+    var menu = document.getElementById('bo-mobile-menu');
+    if (!hamburger || !menu) return;
+    var open = false;
+    hamburger.addEventListener('click', function() {
+      open = !open;
+      menu.style.display = open ? 'block' : 'none';
+      var spans = hamburger.querySelectorAll('span');
+      if (open) {
+        spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+        spans[1].style.transform = 'rotate(-45deg)';
+        spans[2].style.display = 'none';
+      } else {
+        spans[0].style.transform = 'none';
+        spans[1].style.transform = 'none';
+        spans[2].style.display = 'block';
+      }
+    });
+    menu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        open = false;
+        menu.style.display = 'none';
+        var spans = hamburger.querySelectorAll('span');
+        spans[0].style.transform = 'none';
+        spans[1].style.transform = 'none';
+        spans[2].style.display = 'block';
+      });
+    });
+  }
+
   function initForm() {
     var form = document.getElementById('bo-contact-form');
     if (!form) return;
@@ -248,9 +279,10 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { init(); initForm(); });
+    document.addEventListener('DOMContentLoaded', function() { init(); initNav(); initForm(); });
   } else {
     init();
+    initNav();
     initForm();
   }
 })();` }} />
