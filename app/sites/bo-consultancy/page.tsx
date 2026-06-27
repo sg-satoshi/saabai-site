@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createRoot } from "react-dom/client";
 import BOChatWidget from "@/app/components/BOChatWidget";
 
 const C = {
@@ -100,6 +101,17 @@ export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", message: "", type: "employer" });
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Mount widget in its own React root — bypasses the hydration mismatch on boconsulting.com.au
+  // where URL is "/" but page served is /sites/bo-consultancy, preventing onClick from attaching.
+  useEffect(() => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    root.render(<BOChatWidget />);
+    return () => { root.unmount(); document.body.removeChild(container); };
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await fetch("/api/site-factory/lead", {
@@ -722,8 +734,6 @@ export default function BOConsultancyPage() {
           </div>
         </div>
       </section>
-
-      <BOChatWidget />
 
       {/* ── Footer ── */}
       <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>

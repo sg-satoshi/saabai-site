@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "11:42", tag: "FIX", title: "Suppress Mia on boconsulting.com.au by hostname — usePathname returns / on custom domain not /sites/bo-consultancy" },
       { time: "11:37", tag: "FIX", title: "BO chatbot — revert to direct import, add pointerEvents:none on launcher children to fix click" },
       { time: "11:30", tag: "FIX", title: "BO Consultancy chatbot — render after mount to fix click handler hydration" },
       { time: "11:26", tag: "NEW", title: "BO Consultancy — fix chatbot hydration (dynamic ssr:false), add Privacy Policy and Terms pages" },
