@@ -56,6 +56,17 @@ export const metadata: Metadata = {
 export default function BOConsultancyLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        html, body { overflow-x: hidden; max-width: 100%; }
+        #bo-nav-desktop { display: none; align-items: center; gap: 32px; }
+        #bo-hamburger { display: flex; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
+        #bo-find-staff-nav { display: none; }
+        @media (min-width: 768px) {
+          #bo-nav-desktop { display: flex !important; }
+          #bo-hamburger { display: none !important; }
+          #bo-find-staff-nav { display: inline-flex !important; }
+        }
+      ` }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

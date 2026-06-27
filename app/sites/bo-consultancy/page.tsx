@@ -99,7 +99,7 @@ export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ type: "employer" });
 
   return (
-    <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal }}>
+    <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal, overflowX: "hidden" }}>
 
       {/* ── Sticky Nav ── */}
       <nav
@@ -120,8 +120,8 @@ export default function BOConsultancyPage() {
             <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
           </a>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
+          {/* Desktop Nav — visibility via CSS in layout.tsx (not Tailwind, unreliable on custom domain) */}
+          <div id="bo-nav-desktop" style={{ alignItems: "center", gap: 32 }}>
             {NAV_ITEMS.map((item) => (
               <a
                 key={item}
@@ -138,18 +138,17 @@ export default function BOConsultancyPage() {
           {/* Right side */}
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <a
+              id="bo-find-staff-nav"
               href="#contact"
-              className="hidden md:inline-flex"
-              style={{ background: C.orange, color: "#fff", padding: "10px 24px", borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+              style={{ background: C.orange, color: "#fff", padding: "10px 24px", borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none", alignItems: "center" }}
             >
               Find Staff
             </a>
-            {/* Hamburger — visibility controlled by Tailwind md:hidden, toggle by vanilla JS */}
+            {/* Hamburger — visibility via CSS in layout.tsx; toggle via vanilla JS in layout script */}
             <button
               id="bo-hamburger"
-              className="md:hidden"
               aria-label="Toggle menu"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 8 }}
             >
               <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
               <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
@@ -319,7 +318,7 @@ export default function BOConsultancyPage() {
 
       {/* ── About ── */}
       <section id="about" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 64, alignItems: "center" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 64, alignItems: "center" }}>
           <div>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               About BO Consulting
