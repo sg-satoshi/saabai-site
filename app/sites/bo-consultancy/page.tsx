@@ -129,7 +129,7 @@ export default function BOConsultancyPage() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           {/* Logo */}
           <a href="#" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
-            <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 40, width: "auto" }} />
+            <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
           </a>
 
           {/* Desktop Nav */}

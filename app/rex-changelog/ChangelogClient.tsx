@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "27 Jun 2026",
+    entries: [
+      { time: "10:20", tag: "NEW", title: "Add BO Consultancy recruitment site to site factory" }
+    ],
+  },
+  {
     date: "26 Jun 2026",
     entries: [
       { time: "11:16", tag: "FIX", title: "Corflute sold as full sheets only — no cut-to-size service" }
