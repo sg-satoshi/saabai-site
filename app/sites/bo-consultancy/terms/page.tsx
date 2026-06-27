@@ -12,7 +12,7 @@ export default function TermsOfService() {
   const ORANGE = "#F58220";
 
   return (
-    <main style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1A2B3C", minHeight: "100vh" }}>
+    <main style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: "#1A2B3C", minHeight: "100vh", background: "#fff" }}>
       {/* Nav */}
       <nav style={{ background: NAVY, padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <a href="/" style={{ textDecoration: "none" }}>
