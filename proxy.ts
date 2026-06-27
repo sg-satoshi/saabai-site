@@ -45,6 +45,7 @@ const PUBLIC_API = [
   "/api/nextinvestment-chat",
   "/api/tributum-chat",
   "/api/nico-chat",
+  "/api/bo-chat",
   "/api/leadgen/chat",
   // Public Lex tools on the /lex page (no session check in handlers today)
   "/api/lex-extract",
@@ -163,7 +164,12 @@ export async function proxy(req: NextRequest) {
     if (slug) {
       const url = req.nextUrl.clone();
       const pathname = url.pathname;
-      url.pathname = pathname === "/" || pathname === "" ? `/sites/${slug}` : `/sites/${slug}${pathname}`;
+      const siteBase = `/sites/${slug}`;
+      // Pass through API calls and static asset paths (already correct in public/)
+      if (pathname.startsWith("/api/") || pathname.startsWith(siteBase)) {
+        return NextResponse.next();
+      }
+      url.pathname = pathname === "/" || pathname === "" ? siteBase : `${siteBase}${pathname}`;
       return NextResponse.rewrite(url);
     }
   }
