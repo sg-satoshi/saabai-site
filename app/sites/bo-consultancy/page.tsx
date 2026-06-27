@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import BOChatWidget from "@/app/components/BOChatWidget";
+import dynamic from "next/dynamic";
+const BOChatWidget = dynamic(() => import("@/app/components/BOChatWidget"), { ssr: false });
 
 const C = {
   navy: "#123B5D",
@@ -765,8 +766,8 @@ export default function BOConsultancyPage() {
               © 2026 BO Consulting. All rights reserved.
             </p>
             <div style={{ display: "flex", gap: 24 }}>
-              <a href="#" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Privacy Policy</a>
-              <a href="#" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Terms of Service</a>
+              <a href="/privacy-policy" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Privacy Policy</a>
+              <a href="/terms" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Terms of Service</a>
             </div>
           </div>
         </div>
