@@ -47,7 +47,7 @@ export default function BOChatWidget() {
     {
       id: "init",
       role: "assistant",
-      parts: [{ type: "text", text: "G'day! I'm Alex, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?" }],
+      parts: [{ type: "text", text: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?" }],
     },
   ]);
   const [input, setInput] = useState("");
@@ -132,10 +132,10 @@ export default function BOChatWidget() {
                 border: "2px solid rgba(255,255,255,0.2)",
               }}
             >
-              A
+              C
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>Alex</div>
+              <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>Christina</div>
               <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>BO Consulting Assistant</div>
             </div>
             <button
@@ -167,7 +167,7 @@ export default function BOChatWidget() {
                       marginTop: 2,
                     }}
                   >
-                    A
+                    C
                   </div>
                 )}
                 <div
@@ -271,7 +271,7 @@ export default function BOChatWidget() {
       {/* Launcher */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Chat with Alex"
+        aria-label="Chat with Christina"
         style={{
           width: 56,
           height: 56,

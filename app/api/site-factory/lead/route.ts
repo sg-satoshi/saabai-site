@@ -5,6 +5,11 @@ import { getSiteBySlug } from "../../../../lib/site-registry";
 const redis = Redis.fromEnv();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Hardcoded lead email overrides — for sites not in the Redis registry
+const LEAD_EMAIL_OVERRIDES: Record<string, string> = {
+  "bo-consultancy": "info@boconsulting.com.au",
+};
+
 // Telegram config per site — add new sites here
 const TELEGRAM_SITES: Record<string, { token: string; chatId: string }> = {
   "nico-moretti": {
@@ -135,6 +140,7 @@ export async function POST(req: Request) {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
       const site = await getSiteBySlug(siteSlug);
       const toEmail =
+        LEAD_EMAIL_OVERRIDES[siteSlug] ??
         process.env[`LEAD_NOTIFY_EMAIL_${slugKey}`] ??
         site?.business?.email ??
         process.env.LEAD_NOTIFY_EMAIL ??

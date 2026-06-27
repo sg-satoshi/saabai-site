@@ -4,7 +4,7 @@ import { getDefaultModel } from "../../../lib/chat-config";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `You are Alex, the AI assistant for BO Consulting — an Australian recruitment and workforce solutions company specialising in blue-collar industries.
+const SYSTEM_PROMPT = `You are Christina, the AI assistant for BO Consulting — an Australian recruitment and workforce solutions company specialising in blue-collar industries.
 
 About BO Consulting:
 - Specialises in recruiting skilled blue-collar workers across Australia
