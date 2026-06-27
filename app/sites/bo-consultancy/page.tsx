@@ -96,19 +96,8 @@ const STATS = [
 const NAV_ITEMS = ["About", "Industries", "Services", "Why Us", "Testimonials", "Contact"];
 
 export default function BOConsultancyPage() {
-  const [formData, setFormData] = useState({ name: "", company: "", email: "", phone: "", message: "", type: "employer" });
-  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({ type: "employer" });
   const [menuOpen, setMenuOpen] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await fetch("/api/site-factory/lead", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...formData, siteSlug: "bo-consultancy" }),
-    });
-    setSubmitted(true);
-  }
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal }}>
@@ -639,110 +628,121 @@ export default function BOConsultancyPage() {
           <div>
             {/* Employer / Candidate toggle */}
             <div style={{ display: "flex", gap: 0, marginBottom: 32, background: C.lightGrey, borderRadius: 8, padding: 4 }}>
-              {["employer", "candidate"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFormData((f) => ({ ...f, type }))}
-                  style={{
-                    flex: 1,
-                    padding: "10px 0",
-                    borderRadius: 6,
-                    border: "none",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    background: formData.type === type ? C.navy : "transparent",
-                    color: formData.type === type ? "#fff" : C.grey,
-                    transition: "all 0.2s",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {type === "employer" ? "I'm Hiring" : "I'm Looking for Work"}
-                </button>
-              ))}
-            </div>
-
-            {submitted ? (
-              <div
+              <button
+                id="bo-tab-hiring"
+                onClick={() => setFormData((f) => ({ ...f, type: "employer" }))}
                 style={{
-                  background: C.lightGrey,
-                  borderRadius: 16,
-                  padding: 48,
-                  textAlign: "center",
-                  border: `1px solid ${C.border}`,
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 6,
+                  border: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  background: formData.type === "employer" ? C.navy : "transparent",
+                  color: formData.type === "employer" ? "#fff" : C.grey,
+                  transition: "all 0.2s",
                 }}
               >
-                <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
-                <h3 style={{ color: C.navy, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Thanks — we'll be in touch shortly.</h3>
-                <p style={{ color: C.grey, fontSize: 15 }}>Our team typically responds within a few hours during business hours.</p>
+                I&apos;m Hiring
+              </button>
+              <button
+                id="bo-tab-candidate"
+                onClick={() => setFormData((f) => ({ ...f, type: "candidate" }))}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                  borderRadius: 6,
+                  border: "none",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  background: formData.type === "candidate" ? C.navy : "transparent",
+                  color: formData.type === "candidate" ? "#fff" : C.grey,
+                  transition: "all 0.2s",
+                }}
+              >
+                I&apos;m Looking for Work
+              </button>
+            </div>
+
+            {/* Success message — always in DOM, shown by vanilla JS after submit */}
+            <div
+              id="bo-form-success"
+              style={{
+                display: "none",
+                background: C.lightGrey,
+                borderRadius: 16,
+                padding: 48,
+                textAlign: "center",
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
+              <h3 style={{ color: C.navy, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Thanks — we&apos;ll be in touch shortly.</h3>
+              <p style={{ color: C.grey, fontSize: 15 }}>Our team typically responds within a few hours during business hours.</p>
+            </div>
+
+            {/* Form — vanilla JS handles submission */}
+            <form id="bo-contact-form" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Name *</label>
+                <input
+                  id="bo-name"
+                  type="text"
+                  required
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
+                />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Email *</label>
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Email *</label>
+                <input
+                  id="bo-email"
+                  type="email"
+                  required
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
+                />
+              </div>
+              {formData.type === "employer" && (
+                <div id="bo-company-row">
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Company</label>
                   <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    id="bo-company"
+                    type="text"
                     style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
                   />
                 </div>
-                {formData.type === "employer" && (
-                  <div>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Company</label>
-                    <input
-                      type="text"
-                      value={formData.company}
-                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
-                    />
-                  </div>
-                )}
-                <div>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
-                    {formData.type === "employer" ? "What roles are you looking to fill?" : "What type of work are you looking for?"}
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, resize: "none", boxSizing: "border-box" }}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  style={{
-                    background: C.orange,
-                    color: "#fff",
-                    padding: "16px",
-                    borderRadius: 8,
-                    border: "none",
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "opacity 0.2s",
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
-                  onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
-                >
-                  Send Enquiry
-                </button>
-              </form>
-            )}
+              )}
+              <div>
+                <label id="bo-msg-label" style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
+                  {formData.type === "employer" ? "What roles are you looking to fill?" : "What type of work are you looking for?"}
+                </label>
+                <textarea
+                  id="bo-message"
+                  required
+                  rows={4}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, resize: "none", boxSizing: "border-box" }}
+                />
+              </div>
+              <button
+                type="submit"
+                style={{
+                  background: C.orange,
+                  color: "#fff",
+                  padding: "16px",
+                  borderRadius: 8,
+                  border: "none",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                Send Enquiry
+              </button>
+            </form>
           </div>
         </div>
       </section>

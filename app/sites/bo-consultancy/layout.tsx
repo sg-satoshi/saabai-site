@@ -198,10 +198,60 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
     document.getElementById('bo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
   }
 
+  function initForm() {
+    var form = document.getElementById('bo-contact-form');
+    if (!form) return;
+
+    var formSuccess = document.getElementById('bo-form-success');
+    var NAVY='#123B5D', GREY='#5C6670';
+    var currentType='employer';
+
+    function setTab(type) {
+      currentType = type;
+      var tabH = document.getElementById('bo-tab-hiring');
+      var tabC = document.getElementById('bo-tab-candidate');
+      var companyRow = document.getElementById('bo-company-row');
+      var msgLabel = document.getElementById('bo-msg-label');
+      if (tabH) { tabH.style.background = type==='employer' ? NAVY : 'transparent'; tabH.style.color = type==='employer' ? '#fff' : GREY; }
+      if (tabC) { tabC.style.background = type==='candidate' ? NAVY : 'transparent'; tabC.style.color = type==='candidate' ? '#fff' : GREY; }
+      if (companyRow) companyRow.style.display = type==='employer' ? '' : 'none';
+      if (msgLabel) msgLabel.textContent = type==='employer' ? 'What roles are you looking to fill?' : 'What type of work are you looking for?';
+    }
+
+    var tabH = document.getElementById('bo-tab-hiring');
+    var tabC = document.getElementById('bo-tab-candidate');
+    if (tabH) tabH.addEventListener('click', function() { setTab('employer'); });
+    if (tabC) tabC.addEventListener('click', function() { setTab('candidate'); });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var nameEl = document.getElementById('bo-name');
+      var emailEl = document.getElementById('bo-email');
+      var companyEl = document.getElementById('bo-company');
+      var messageEl = document.getElementById('bo-message');
+      var name = nameEl ? nameEl.value.trim() : '';
+      var email = emailEl ? emailEl.value.trim() : '';
+      var company = companyEl ? companyEl.value.trim() : '';
+      var message = messageEl ? messageEl.value.trim() : '';
+      if (!name || !email || !message) return;
+      var submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+      fetch('/api/bo-contact', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:name,email:email,company:company,message:message,formType:currentType})
+      }).finally(function() {
+        if (form) form.style.display = 'none';
+        if (formSuccess) formSuccess.style.display = 'block';
+      });
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() { init(); initForm(); });
   } else {
     init();
+    initForm();
   }
 })();` }} />
     </>
