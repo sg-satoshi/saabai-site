@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "27 Jun 2026",
     entries: [
+      { time: "16:02", tag: "FIX", title: "Use raw script tag for BO widget — bypasses RSC payload injection that fails on custom domain" },
       { time: "15:37", tag: "FIX", title: "Vanilla JS chat widget (bypasses React hydration on custom domain), mobile hamburger nav" },
       { time: "11:57", tag: "NEW", title: "BO Consultancy SEO — metadata, OG tags, JSON-LD structured data, canonical URLs" },
       { time: "11:56", tag: "FIX", title: "Mount BOChatWidget in independent React root to bypass hydration mismatch on custom domain" },
