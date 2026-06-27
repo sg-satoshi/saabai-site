@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import ChatWidget from "./ChatWidget";
 import MobileCtaBar from "./MobileCtaBar";
 import NewsTicker from "./NewsTicker";
@@ -22,9 +23,20 @@ const SUPPRESS_PATHS = [
 // Pages where the NewsTicker/Signal bar should be hidden
 const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy"];
 
+// Custom domains that have their own widgets — suppress all Saabai widgets
+const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au"];
+
 export default function ConditionalWidgets() {
   const pathname = usePathname();
-  const suppress = SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const [hostname, setHostname] = useState("");
+
+  useEffect(() => {
+    setHostname(window.location.hostname);
+  }, []);
+
+  const suppress =
+    SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
+    SUPPRESS_HOSTNAMES.includes(hostname);
 
   if (suppress) return null;
 
