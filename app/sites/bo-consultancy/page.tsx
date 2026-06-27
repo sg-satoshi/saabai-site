@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import BOChatWidget from "@/app/components/BOChatWidget";
+import { useState } from "react";
 
 const C = {
   navy: "#123B5D",
@@ -102,16 +100,6 @@ export default function BOConsultancyPage() {
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Mount widget in its own React root — bypasses the hydration mismatch on boconsulting.com.au
-  // where URL is "/" but page served is /sites/bo-consultancy, preventing onClick from attaching.
-  useEffect(() => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const root = createRoot(container);
-    root.render(<BOChatWidget />);
-    return () => { root.unmount(); document.body.removeChild(container); };
-  }, []);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await fetch("/api/site-factory/lead", {
@@ -138,19 +126,19 @@ export default function BOConsultancyPage() {
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           {/* Logo */}
-          <a href="#" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+          <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
             <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
           </a>
 
           {/* Desktop Nav */}
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }} className="hidden md:flex">
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: 32, display: "flex" }}>
             {NAV_ITEMS.map((item) => (
               <a
                 key={item}
                 href={`#${item.toLowerCase().replace(" ", "-")}`}
-                style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: 14, fontWeight: 500, transition: "color 0.2s" }}
+                style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: 14, fontWeight: 500 }}
                 onMouseOver={(e) => (e.currentTarget.style.color = "#fff")}
                 onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
               >
@@ -159,27 +147,51 @@ export default function BOConsultancyPage() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* Right side */}
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <a
               href="#contact"
-              style={{
-                background: C.orange,
-                color: "#fff",
-                padding: "10px 24px",
-                borderRadius: 6,
-                fontSize: 14,
-                fontWeight: 600,
-                textDecoration: "none",
-                transition: "opacity 0.2s",
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
-              onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+              className="hidden md:inline-flex"
+              style={{ background: C.orange, color: "#fff", padding: "10px 24px", borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none" }}
+            >
+              Find Staff
+            </a>
+            {/* Hamburger */}
+            <button
+              className="md:hidden"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Toggle menu"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 5 }}
+            >
+              <span style={{ display: "block", width: 24, height: 2, background: menuOpen ? "transparent" : "#fff", transition: "0.2s", transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+              <span style={{ display: "block", width: 24, height: 2, background: "#fff", transition: "0.2s", transform: menuOpen ? "rotate(-45deg)" : "none" }} />
+              {!menuOpen && <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div style={{ background: C.navy, borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 24px 24px" }}>
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase().replace(" ", "-")}`}
+                onClick={() => setMenuOpen(false)}
+                style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                {item}
+              </a>
+            ))}
+            <a
+              href="#contact"
+              onClick={() => setMenuOpen(false)}
+              style={{ display: "block", marginTop: 16, background: C.orange, color: "#fff", padding: "14px", borderRadius: 8, fontSize: 15, fontWeight: 700, textDecoration: "none", textAlign: "center" }}
             >
               Find Staff
             </a>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* ── Hero ── */}
