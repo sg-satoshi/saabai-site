@@ -11,6 +11,7 @@ const ORANGE = "#F58220";
 const LIGHT = "#F4F5F6";
 const TEXT = "#1A2B3C";
 const WHITE = "#ffffff";
+const AVATAR = "/sites/bo-consultancy/christina-avatar.jpg";
 
 function loadStored(): UIMessage[] | null {
   try {
@@ -116,23 +117,8 @@ export default function BOChatWidget() {
         >
           {/* Header */}
           <div style={{ background: NAVY, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: ORANGE,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 18,
-                fontWeight: 700,
-                color: WHITE,
-                flexShrink: 0,
-                border: "2px solid rgba(255,255,255,0.2)",
-              }}
-            >
-              C
+            <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: "2px solid rgba(255,255,255,0.2)" }}>
+              <img src={AVATAR} alt="Christina" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>Christina</div>
@@ -151,23 +137,8 @@ export default function BOChatWidget() {
             {messages.map((msg) => (
               <div key={msg.id} style={{ display: "flex", gap: 10, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
                 {msg.role === "assistant" && (
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      background: ORANGE,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: WHITE,
-                      flexShrink: 0,
-                      marginTop: 2,
-                    }}
-                  >
-                    C
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0, marginTop: 2 }}>
+                    <img src={AVATAR} alt="Christina" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                 )}
                 <div
@@ -187,22 +158,8 @@ export default function BOChatWidget() {
             ))}
             {loading && (
               <div style={{ display: "flex", gap: 10 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: ORANGE,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: WHITE,
-                    flexShrink: 0,
-                  }}
-                >
-                  A
+                <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                  <img src={AVATAR} alt="Christina" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ padding: "10px 14px", borderRadius: 16, background: LIGHT, display: "flex", gap: 4, alignItems: "center" }}>
                   {[0, 150, 300].map((delay) => (
@@ -273,11 +230,11 @@ export default function BOChatWidget() {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Chat with Christina"
         style={{
-          width: 56,
-          height: 56,
+          width: 60,
+          height: 60,
           borderRadius: "50%",
           background: ORANGE,
-          border: "none",
+          border: "3px solid " + ORANGE,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
@@ -287,11 +244,17 @@ export default function BOChatWidget() {
           fontWeight: 700,
           color: WHITE,
           transition: "transform 0.2s",
+          overflow: "hidden",
+          padding: 0,
         }}
         onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
         onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
-        {isOpen ? "×" : "💬"}
+        {isOpen ? (
+          <span style={{ fontSize: 24, lineHeight: 1 }}>×</span>
+        ) : (
+          <img src={AVATAR} alt="Chat with Christina" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        )}
       </button>
     </div>
   );
