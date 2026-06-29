@@ -13,6 +13,9 @@ const LIGHT = "#f5f5f7";
 const TEXT = "#1A2B3C";
 const WHITE = "#ffffff";
 
+const AVATAR = "/sites/wholesale-homes/chat-avatar.png";
+const AGENT_NAME = "Sophie";
+
 function loadStored(): { role: string; content: string }[] | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -38,7 +41,7 @@ function saveStored(messages: { role: string; content: string }[]) {
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: "assistant", content: "👋 Looking for house & land packages? I can help match you with the right property. Ask me about available packages, pricing, or how it works." },
+    { role: "assistant", content: "👋 Hi, I'm Sophie! Looking for house & land packages? I can help match you with the right property. Ask me about available packages, pricing, or how the wholesale process works." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -95,11 +98,9 @@ export function ChatWidget() {
         <div style={{ width: 380, maxWidth: "calc(100vw - 48px)", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", height: 520, maxHeight: "calc(100vh - 120px)", background: WHITE, boxShadow: "0 24px 80px rgba(26,43,60,0.25)" }}>
           {/* Header */}
           <div style={{ background: NAVY, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, fontWeight: 700, color: WHITE }}>
-              WH
-            </div>
+            <img src={AVATAR} alt={AGENT_NAME} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>Wholesale Homes</div>
+              <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>{AGENT_NAME}</div>
               <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>Online now</div>
             </div>
             <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "0 4px" }}>×</button>
@@ -110,7 +111,7 @@ export function ChatWidget() {
             {messages.map((msg, i) => (
               <div key={i} style={{ display: "flex", gap: 10, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
                 {msg.role === "assistant" && (
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, color: WHITE, marginTop: 2 }}>WH</div>
+                  <img src={AVATAR} alt={AGENT_NAME} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0, marginTop: 2 }} />
                 )}
                 <div style={{ maxWidth: "75%", padding: "10px 14px", borderRadius: 16, fontSize: 14, lineHeight: 1.6, background: msg.role === "user" ? TEAL : LIGHT, color: msg.role === "user" ? WHITE : TEXT, borderBottomLeftRadius: msg.role === "assistant" ? 4 : 16, borderBottomRightRadius: msg.role === "user" ? 4 : 16 }}>
                   {msg.content}
@@ -119,7 +120,7 @@ export function ChatWidget() {
             ))}
             {loading && (
               <div style={{ display: "flex", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, color: WHITE }}>WH</div>
+                <img src={AVATAR} alt={AGENT_NAME} style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                 <div style={{ padding: "10px 14px", borderRadius: 16, background: LIGHT, display: "flex", gap: 4, alignItems: "center", borderBottomLeftRadius: 4 }}>
                   {[0, 150, 300].map((delay) => (
                     <span key={delay} style={{ width: 7, height: 7, borderRadius: "50%", background: TEAL, display: "inline-block", animation: "wh-bounce 1s infinite", animationDelay: `${delay}ms` }} />
