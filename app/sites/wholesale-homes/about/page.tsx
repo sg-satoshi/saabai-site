@@ -31,6 +31,10 @@ export default function AboutPage() {
                   <div className="aspect-[1/1] w-full overflow-hidden bg-[#f5f2eb]">
                     <img src="/sites/wholesale-homes/nick-foale.jpg" alt="Nick Foale" className="h-full w-full object-cover" />
                   </div>
+                  <div className="px-5 pb-5 md:px-6 md:pb-6">
+                    <h2 className="text-lg font-semibold tracking-tight md:text-xl">Nick Foale</h2>
+                    <p className="text-xs text-[#5C6670] md:text-sm">Principal Advisor · Finance &amp; Real Estate</p>
+                  </div>
                 </div>
               </div>
             </div>
