@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "21:40", tag: "FIX", title: "Rewrite _next/static and site assets to saabai.ai on custom domains" },
       { time: "21:00", tag: "FIX", title: "Full mobile responsiveness — clamp headings, scaled-down hero on mobile, lifestyle image aspect-ratio, Inter font, iOS input font-size fix" },
       { time: "20:09", tag: "FIX", title: "Suppress NewsTicker on wholesale-homes site" },
       { time: "20:07", tag: "NEW", title: "Wire Wholesale Homes chat to AI backend, suppress Mia on site path" },

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 const COOKIE_KEY = "saabai_subscribed";
-const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2"];
+const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes"];
 
 const INDUSTRIES = ["Law / Legal", "Accounting / Finance", "Real Estate", "Other"];
 
