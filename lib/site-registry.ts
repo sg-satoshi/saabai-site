@@ -111,6 +111,31 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     createdAt: 1745000000000,
     updatedAt: 1745000000000,
   },
+  {
+    id: "wholesale-homes",
+    slug: "wholesale-homes",
+    name: "Wholesale Homes Australia",
+    niche: "real-estate",
+    description: "Pre-market house & land packages at wholesale pricing for Australian investors (App Router, custom domain wholesalehomes.com.au)",
+    status: "live" as const,
+    source: "factory",
+    url: "https://wholesalehomes.com.au",
+    domains: ["wholesalehomes.com.au", "www.wholesalehomes.com.au"],
+    business: {
+      name: "Wholesale Homes Australia",
+      tagline: "House & Land Packages. Below Market Price.",
+      email: "hello@wholesalehomes.com.au",
+      phone: "1300 000 000",
+    },
+    chatbot: {
+      enabled: true,
+      name: "Wholesale Homes Assistant",
+      greeting: "👋 Looking for house & land packages? Let me help match you.",
+      systemPrompt: "You are the Wholesale Homes Australia assistant. Help visitors find house and land packages at wholesale pricing below market value. Pre-qualify their budget, location, and investor type before routing to the principal advisor.",
+    },
+    createdAt: 1749000000000,
+    updatedAt: 1749000000000,
+  },
 ];
 
 export async function createSite(config: Omit<SiteConfig, "id" | "createdAt" | "updatedAt">): Promise<SiteConfig> {
