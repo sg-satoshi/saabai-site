@@ -123,7 +123,7 @@ export default function ContactPage() {
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-xs font-semibold text-[#5C6670] md:text-sm">Message (optional)</label>
+                      <label className="text-xs font-semibold text-[#5C6670] md:text-sm">Anything else we should know? <span className="font-normal text-[#9CA3AF]">(optional)</span></label>
                       <textarea name="message" rows={3} className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-4 py-2.5 text-sm outline-none focus:border-[#0891b2] resize-none md:text-base" />
                     </div>
                   </div>
