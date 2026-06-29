@@ -40,9 +40,11 @@ function saveStored(messages: { role: string; content: string }[]) {
 }
 
 export function ChatWidget() {
+  const WELCOME = "Hey, Sophie here. I was wondering, how long have you been looking at house and land packages? Some people I talk to have been searching for months without realising they can get the same homes for a lot less going wholesale. What kind of property are you thinking about?";
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: "assistant", content: "Hey, Sophie here. I was wondering, how long have you been looking at house and land packages? Some people I talk to have been searching for months without realising they can get the same homes for a lot less going wholesale. What kind of property are you thinking about?" },
+    { role: "assistant", content: WELCOME },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,6 +70,11 @@ export function ChatWidget() {
     }, 7000);
     return () => clearTimeout(timer);
   }, []);
+
+  function clearChat() {
+    setMessages([{ role: "assistant", content: WELCOME }]);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  }
 
   async function send() {
     const text = input.trim();
@@ -115,6 +122,9 @@ export function ChatWidget() {
               <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>{AGENT_NAME}</div>
               <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>Online now</div>
             </div>
+            {messages.length > 1 && (
+              <button onClick={clearChat} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", fontSize: 11, cursor: "pointer", padding: "0 4px", lineHeight: 1, whiteSpace: "nowrap", textDecoration: "underline", textUnderlineOffset: 2 }} title="Start a new conversation">Clear</button>
+            )}
             <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "0 4px" }}>×</button>
           </div>
 

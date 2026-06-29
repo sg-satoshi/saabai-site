@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "00:09", tag: "NEW", title: "Sophie auto-opens chat after 7s on first visit with proactive cold open" },
       { time: "00:02", tag: "FIX", title: "Sophie introduces as Wholesale Homes Specialist, set system prompt in Redis" }
     ],
   },
