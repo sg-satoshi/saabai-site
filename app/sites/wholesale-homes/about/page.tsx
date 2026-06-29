@@ -28,8 +28,8 @@ export default function AboutPage() {
               </div>
               <div className="lg:col-span-2">
                 <div className="rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:p-8">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0891b2]/10 text-[#0891b2] md:h-16 md:w-16">
-                    <Award className="h-6 w-6 md:h-7 md:w-7" />
+                  <div className="aspect-[1/1] w-full overflow-hidden rounded-2xl bg-[#f5f2eb] md:aspect-[4/5]">
+                    <img src="/sites/wholesale-homes/nick-foale.jpg" alt="Nick Foale" className="h-full w-full object-cover" />
                   </div>
                   <h2 className="mt-4 text-lg font-semibold tracking-tight md:mt-5 md:text-xl">Nick Foale</h2>
                   <p className="text-xs text-[#5C6670] md:text-sm">Principal Advisor · Finance &amp; Real Estate</p>
