@@ -15,6 +15,7 @@ const WHITE = "#ffffff";
 
 const AVATAR = "/sites/wholesale-homes/chat-avatar.png";
 const AGENT_NAME = "Sophie";
+const VISITED_KEY = "wholesale-homes-visited";
 
 function loadStored(): { role: string; content: string }[] | null {
   try {
@@ -41,7 +42,7 @@ function saveStored(messages: { role: string; content: string }[]) {
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: "assistant", content: "👋 Hi, I'm Sophie. I'm a Wholesale Homes Specialist here to help you find the right house and land package. Ask me about available packages, pricing, or how the wholesale process works." },
+    { role: "assistant", content: "Hey, Sophie here. I was wondering, how long have you been looking at house and land packages? Some people I talk to have been searching for months without realising they can get the same homes for a lot less going wholesale. What kind of property are you thinking about?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,6 +57,17 @@ export function ChatWidget() {
     saveStored(messages);
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-open chat after 7 seconds on first ever visit
+  useEffect(() => {
+    const alreadyVisited = localStorage.getItem(VISITED_KEY);
+    if (alreadyVisited) return;
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+      localStorage.setItem(VISITED_KEY, "1");
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, []);
 
   async function send() {
     const text = input.trim();
