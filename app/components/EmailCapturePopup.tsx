@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 
 const COOKIE_KEY = "saabai_subscribed";
 const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes"];
+const SKIP_HOSTNAMES = ["wholesalehomes.com.au", "www.wholesalehomes.com.au"];
 
 const INDUSTRIES = ["Law / Legal", "Accounting / Finance", "Real Estate", "Other"];
 
@@ -27,6 +28,8 @@ export default function EmailCapturePopup() {
     if (hasCookie(COOKIE_KEY)) return;
     const path = window.location.pathname;
     if (SKIP_PATHS.some(p => path.startsWith(p))) return;
+    const host = window.location.hostname;
+    if (SKIP_HOSTNAMES.includes(host)) return;
     setVisible(true);
   }, []);
 
