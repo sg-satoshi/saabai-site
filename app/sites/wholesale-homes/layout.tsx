@@ -9,8 +9,7 @@ const SITE_URL = "https://www.wholesalehomes.com.au";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Wholesale Homes Australia | House & Land Packages Below Market",
-    template: "%s | Wholesale Homes Australia",
+    absolute: "Wholesale Homes Australia | House & Land Packages Below Market",
   },
   description: "Exclusive pre-market access to Australia's best new home builds, at wholesale pricing. Partnered with Metricon and 12 leading builders.",
   keywords: ["house and land packages Australia", "wholesale property Australia", "new home builds", "below market property", "house and land deals"],

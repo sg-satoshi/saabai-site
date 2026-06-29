@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "23:22", tag: "NEW", title: "Full SEO overhaul — per-page titles/canonicals/descriptions via nested layouts, sitemap.xml + robots.txt, JSON-LD schemas (Organization, Product, BreadcrumbList, FAQPage), internal interlinking for similar packages, unique OG images per package" },
       { time: "23:08", tag: "FIX", title: "Suppress Mia + ticker on wholesalehomes.com.au via hostname check (pathname is /\nfrom custom domain)" },
       { time: "23:02", tag: "FIX", title: "Strip all Saabai branding from wholesale-homes site metadata — title, canonical, twitter, keywords, author, creator, publisher" },
       { time: "22:56", tag: "FIX", title: "Clean URLs on custom domain — remove /sites/wholesale-homes prefix from all nav links" },
