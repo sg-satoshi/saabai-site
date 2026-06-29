@@ -2,6 +2,7 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { use } from "react";
 import { ArrowLeft, Bed, Bath, Car, Maximize, Calendar, Building2, Ruler, Home, Check, ArrowRight } from "lucide-react";
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
@@ -9,7 +10,7 @@ import { ChatWidget } from "../../_components/ChatWidget";
 import { packages, formatPrice } from "../../_data/packages";
 
 export default function PackageDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = params as unknown as { id: string };
+  const { id } = use(params);
   const pkg = packages.find((p) => p.id === id);
   if (!pkg) notFound();
 

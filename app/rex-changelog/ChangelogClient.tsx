@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "22:41", tag: "NEW", title: "Add package descriptions, larger hero image, floorplan specs, inclusions, enriched detail pages" },
       { time: "22:11", tag: "NEW", title: "Add Nick Foale photo to About page" },
       { time: "22:05", tag: "FIX", title: "Update about page — Nick Foale, 25+ years experience" },
       { time: "21:58", tag: "FIX", title: "Suppress AI Readiness Audit exit popup on wholesale-homes" },
