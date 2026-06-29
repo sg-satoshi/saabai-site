@@ -16,6 +16,7 @@ export type Package = {
   badge: "Below Market" | "New Release" | "Limited Availability";
   image: string;
   highlight: string;
+  description: string;
 };
 
 export const packages: Package[] = [
@@ -32,6 +33,7 @@ export const packages: Package[] = [
     badge: "Below Market",
     image: "/sites/wholesale-homes/package-1.jpg",
     highlight: "Saved $68K vs current valuation",
+    description: "A spacious four-bedroom family home designed for modern living. The Northbridge 42 features an open-plan kitchen, dining and living area that flows onto a covered alfresco. The master suite includes a walk-in robe and ensuite, while the remaining bedrooms are serviced by a main bathroom with separate bath and shower. Located in Metricon's master-planned Northbridge Rise estate with parkland and future school precinct.",
   },
   {
     id: "parklands-haven-36",
@@ -46,6 +48,7 @@ export const packages: Package[] = [
     badge: "New Release",
     image: "/sites/wholesale-homes/package-2.jpg",
     highlight: "9% below comparable suburb sales",
+    description: "A thoughtfully designed four-bedroom home in Sydney's thriving North West Growth Corridor. The Parklands Haven 36 delivers a functional layout with a dedicated study, media room, and an expansive open-plan living area. The kitchen features a walk-in pantry and island bench. Set on a generous 512m² block within the sought-after Parklands Estate, close to the new Box Hill town centre and future rail.",
   },
   {
     id: "edgewater-loft-28",
@@ -60,6 +63,7 @@ export const packages: Package[] = [
     badge: "Limited Availability",
     image: "/sites/wholesale-homes/package-3.jpg",
     highlight: "Only 3 lots remaining",
+    description: "A low-maintenance three-bedroom home perfect for investors and first-home buyers. The Edgewater Loft 28 maximises its 312m² lot with an intelligent split-level design that separates the master suite from the secondary bedrooms. Open-plan living connects to a private courtyard. Located in Stockland's award-winning Aura community, minutes from the new Caloundra CBD and Baringa town centre. Only 3 lots remaining in this release.",
   },
   {
     id: "ridgeview-prestige-48",
@@ -74,6 +78,7 @@ export const packages: Package[] = [
     badge: "Below Market",
     image: "/sites/wholesale-homes/hero-home.jpg",
     highlight: "Premium corner lot, north-facing",
+    description: "A premium four-bedroom family residence on one of the largest lots in the Arcadia estate. The Ridgeview Prestige 48 offers dual living zones, a grand master retreat with ensuite and walk-in robe, and a gourmet kitchen with butler's pantry. The north-facing corner aspect captures natural light throughout the day and provides additional side access — ideal for a boat, caravan or future shed. Landscaping and driveway included.",
   },
   {
     id: "harbourline-villa-32",
@@ -88,6 +93,7 @@ export const packages: Package[] = [
     badge: "New Release",
     image: "/sites/wholesale-homes/interior-kitchen.jpg",
     highlight: "First release pricing locked in",
+    description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck. The chef's kitchen includes stone benchtops, gas cooking and a walk-in pantry. Part of the first release at Emerald Hills — pricing is locked in at pre-construction levels, well below future stages.",
   },
   {
     id: "sunnydale-terrace-30",
@@ -102,6 +108,7 @@ export const packages: Package[] = [
     badge: "Below Market",
     image: "/sites/wholesale-homes/lifestyle-living.jpg",
     highlight: "Growth corridor, strong rental demand",
+    description: "A smart three-bedroom terrace home in one of Queensland's fastest-growing corridors. The Sunnydale Terrace 30 delivers low-maintenance living with a private courtyard, single lock-up garage and separate storage. The master bedroom includes a walk-in robe and ensuite. Positioned within the Gainsborough Greens master-planned community featuring a championship golf course, village centre, and future school. Proven rental demand with vacancy rates under 1% in the area.",
   },
 ];
 
