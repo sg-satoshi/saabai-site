@@ -7,7 +7,10 @@ import { ArrowLeft, Bed, Bath, Car, Maximize, Calendar, Building2, Ruler, Home, 
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
 import { ChatWidget } from "../../_components/ChatWidget";
+import { PackageCard } from "../../_components/PackageCard";
 import { packages, formatPrice } from "../../_data/packages";
+
+const SITE_URL = "https://www.wholesalehomes.com.au";
 
 export default function PackageDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -16,8 +19,58 @@ export default function PackageDetail({ params }: { params: Promise<{ id: string
 
   const savings = pkg.retailPrice - pkg.wholesalePrice;
 
+  // Similar packages (same state or nearby, excluding current)
+  const similar = packages.filter((p) => p.id !== id && (p.state === pkg.state || Math.abs(p.wholesalePrice - pkg.wholesalePrice) < 150000)).slice(0, 3);
+
+  const pkgIndex = packages.findIndex((p) => p.id === id);
+  const imageUrl = `${SITE_URL}/sites/wholesale-homes/package-${Math.max(0, pkgIndex) + 1}.jpg`;
+
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `${pkg.name} — ${pkg.suburb}, ${pkg.state}`,
+    description: pkg.description,
+    image: imageUrl,
+    brand: { "@type": "Brand", name: pkg.builder },
+    offers: {
+      "@type": "Offer",
+      price: pkg.wholesalePrice,
+      priceCurrency: "AUD",
+      priceValidUntil: "2026-12-31",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/packages/${pkg.id}`,
+    },
+    category: "House & Land Package",
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Bedrooms", value: String(pkg.beds) },
+      { "@type": "PropertyValue", name: "Bathrooms", value: String(pkg.baths) },
+      { "@type": "PropertyValue", name: "Car Spaces", value: String(pkg.cars) },
+      { "@type": "PropertyValue", name: "Land Size", value: `${pkg.landSize} m²` },
+      { "@type": "PropertyValue", name: "House Size", value: `${pkg.houseSize} m²` },
+      { "@type": "PropertyValue", name: "Suburb", value: pkg.suburb },
+      { "@type": "PropertyValue", name: "State", value: pkg.state },
+      { "@type": "PropertyValue", name: "Land Ready", value: pkg.landReady },
+      { "@type": "PropertyValue", name: "Savings vs Retail", value: formatPrice(savings) },
+      { "@type": "PropertyValue", name: "Estate", value: pkg.estate },
+      { "@type": "PropertyValue", name: "Builder", value: pkg.builder },
+    ],
+  };
+
+  // BreadcrumbList
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Packages", item: `${SITE_URL}/packages` },
+      { "@type": "ListItem", position: 3, name: pkg.name, item: `${SITE_URL}/packages/${pkg.id}` },
+    ],
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main className="flex-1">
         <section className="py-10 md:py-16">
@@ -180,6 +233,24 @@ export default function PackageDetail({ params }: { params: Promise<{ id: string
                 </p>
               </div>
             </div>
+
+            {/* ── Similar Packages ── */}
+            {similar.length > 0 && (
+              <div className="mt-12 border-t border-[rgba(0,0,0,0.08)] pt-10 md:mt-16 md:pt-12">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight md:text-xl">Similar Packages</h2>
+                    <p className="mt-1 text-xs text-[#5C6670] md:text-sm">Other packages you might be interested in</p>
+                  </div>
+                  <Link href="/packages" className="text-xs font-semibold text-[#0891b2] hover:text-[#0369a1] md:text-sm">View all</Link>
+                </div>
+                <div className="mt-8 grid gap-5 md:grid-cols-3 md:gap-6">
+                  {similar.map((p) => (
+                    <PackageCard key={p.id} pkg={p} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── CTA ── */}
             <div className="mt-12 rounded-3xl bg-[#1A2B3C] p-8 text-center text-white md:mt-16 md:p-12">

@@ -21,11 +21,22 @@ const faqs = [
   { q: "What if I change my mind after securing a package?", a: "Most builders have a cooling-off period (typically 3–5 business days). We'll explain the terms before you sign anything." },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
 export default function FAQPage() {
   const [open, setOpen] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-screen flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Header />
       <main className="flex-1">
         <section className="py-16 md:py-28">
