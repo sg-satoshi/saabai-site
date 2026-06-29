@@ -13,12 +13,13 @@ export default function ContactPage() {
     e.preventDefault();
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
-    await fetch("/api/site-factory/lead", {
+    setSubmitted(true);
+    // Fire and forget — don't block UI on the API call
+    fetch("/api/site-factory/lead", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: "wholesale-homes", ...data }),
-    });
-    setSubmitted(true);
+      body: JSON.stringify({ siteSlug: "wholesale-homes", ...data }),
+    }).catch(() => {});
   }
 
   if (submitted) {

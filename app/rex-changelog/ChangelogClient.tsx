@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "00:29", tag: "FIX", title: "Switch hero bg from img tag to CSS background-image — covers full section on mobile" },
       { time: "00:22", tag: "FIX", title: "Contact form states — remove VIC, add SA, no default selection, use Select state... placeholder" },
       { time: "00:18", tag: "FIX", title: "Suppress AI Readiness Audit exit popup on wholesalehomes.com.au via hostname check (path-based check failed on custom domain)" },
       { time: "00:16", tag: "NEW", title: "Add Clear chat button to Sophie widget — resets conversation to welcome message, clears localStorage" },

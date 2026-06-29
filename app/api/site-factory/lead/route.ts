@@ -20,17 +20,31 @@ const TELEGRAM_SITES: Record<string, { token: string; chatId: string }> = {
     token: process.env.TG_HTM_BOT || "",
     chatId: process.env.TELEGRAM_CHAT_ID_HEAVEN_THAI_MASSAGE || "",
   },
+  "wholesale-homes": {
+    token: process.env.TG_WHOLESALE_HOMES_BOT || "",
+    chatId: process.env.TELEGRAM_CHAT_ID_WHOLESALE_HOMES || "",
+  },
 };
 
+function corsOrigin(origin: string | null): string {
+  const allowed = [
+    "https://nicomoretti.au",
+    "https://www.wholesalehomes.com.au",
+    "https://wholesalehomes.com.au",
+  ];
+  if (origin && allowed.includes(origin)) return origin;
+  return "https://nicomoretti.au";
+}
+
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "https://nicomoretti.au",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Access-Control-Max-Age": "86400",
 };
 
-function corsJson(data: unknown, status = 200): Response {
-  return Response.json(data, { status, headers: CORS_HEADERS });
+function corsJson(data: unknown, status = 200, origin?: string | null): Response {
+  const o = origin === undefined ? null : origin;
+  return Response.json(data, { status, headers: { ...CORS_HEADERS, "Access-Control-Allow-Origin": corsOrigin(o) } });
 }
 
 export const runtime = "edge";
@@ -101,17 +115,17 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+export async function OPTIONS(req: Request) {
+  return new Response(null, { status: 204, headers: { ...CORS_HEADERS, "Access-Control-Allow-Origin": corsOrigin(req.headers.get("origin")) } });
 }
 
 export async function POST(req: Request) {
   try {
-    const { name, email, phone, message, siteSlug, duration, eventType } =
+    const { name, email, phone, message, siteSlug, duration, eventType, state, budget } =
       await req.json();
 
     if (!siteSlug) {
-      return corsJson({ error: "siteSlug is required" }, 400);
+      return corsJson({ error: "siteSlug is required" }, 400, req.headers.get("origin"));
     }
 
     // EARLY TEST: env var send (right after req.json, before anything else)
@@ -120,15 +134,21 @@ export async function POST(req: Request) {
       await fetch(`https://api.telegram.org/bot${tgConfigEarly.token}/sendMessage?chat_id=${tgConfigEarly.chatId}&text=${encodeURIComponent("📥 EARLY: " + name)}`);
     }
 
+    const origin = req.headers.get("origin");
+
     const lead = {
       name: name || "",
       email: email || "",
       phone: phone || "",
       message: message || "",
+      state: state || "",
+      budget: budget || "",
       siteSlug,
       metadata: {
         ...(duration ? { duration } : {}),
         ...(eventType ? { eventType } : {}),
+        ...(state ? { state } : {}),
+        ...(budget ? { budget } : {}),
       },
       createdAt: Date.now(),
     };
@@ -159,6 +179,8 @@ export async function POST(req: Request) {
         const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
         let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
         msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
+        if (state) msg += `*State:* ${state}\n`;
+        if (budget) msg += `*Budget:* ${budget}\n`;
         if (duration) msg += `*Duration:* ${duration}\n`;
         if (eventType) msg += `*Event:* ${eventType}\n`;
         if (message) msg += `*Notes:* ${message}\n`;
@@ -170,12 +192,13 @@ export async function POST(req: Request) {
       console.error("Lead notification failed:", e);
     }
 
-    return corsJson({ success: true, message: "Lead captured" });
+    return corsJson({ success: true, message: "Lead captured" }, 200, origin);
   } catch (error) {
     console.error("Lead capture error:", error);
     return corsJson(
       { error: "Failed to capture lead" },
-      500
+      500,
+      origin
     );
   }
 }
