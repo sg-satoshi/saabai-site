@@ -23,7 +23,7 @@ export default function AboutPage() {
                   Wholesale Homes Australia was founded to solve a simple problem: new house and land packages are sold through display villages and realestate.com.au, marked up by 8–12%. Our network buys direct from builders, pre-market, and passes those savings on to you.
                 </p>
                 <p className="mt-4 text-sm leading-relaxed text-[#5C6670] md:text-base">
-                  Our principal advisor holds qualifications in both finance (credit license) and real estate — meaning a single conversation covers your borrowing capacity, property selection, and settlement timeline.
+                  Our principal advisor holds qualifications in both finance (credit license) and real estate — with 25+ years in banking, mortgage broking, and property development.
                 </p>
               </div>
               <div className="lg:col-span-2">
@@ -31,10 +31,10 @@ export default function AboutPage() {
                   <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0891b2]/10 text-[#0891b2] md:h-16 md:w-16">
                     <Award className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
-                  <h2 className="mt-4 text-lg font-semibold tracking-tight md:mt-5 md:text-xl">Your Name Here</h2>
+                  <h2 className="mt-4 text-lg font-semibold tracking-tight md:mt-5 md:text-xl">Nick Foale</h2>
                   <p className="text-xs text-[#5C6670] md:text-sm">Principal Advisor · Finance &amp; Real Estate</p>
                   <p className="mt-4 text-xs leading-relaxed text-[#5C6670] md:mt-5 md:text-sm">
-                    15+ years in banking, mortgage broking, and property development. Qualified across both finance and real estate to guide you from application to settlement.
+                    25+ years in banking, mortgage broking, and property development. Qualified across both finance and real estate to guide you from application to settlement.
                   </p>
                 </div>
               </div>
