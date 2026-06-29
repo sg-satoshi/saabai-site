@@ -82,11 +82,12 @@ export default function ContactPage() {
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-[#5C6670] md:text-sm">State of Interest</label>
-                      <select name="state" className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#0891b2] md:text-base">
-                        <option>VIC</option>
-                        <option>NSW</option>
-                        <option>QLD</option>
-                        <option>Other</option>
+                      <select name="state" className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2.5 text-sm text-[#5C6670] outline-none focus:border-[#0891b2] md:text-base">
+                        <option value="">Select state...</option>
+                        <option value="NSW">NSW</option>
+                        <option value="QLD">QLD</option>
+                        <option value="SA">SA</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">

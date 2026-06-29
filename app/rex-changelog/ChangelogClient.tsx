@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "00:18", tag: "FIX", title: "Suppress AI Readiness Audit exit popup on wholesalehomes.com.au via hostname check (path-based check failed on custom domain)" },
       { time: "00:16", tag: "NEW", title: "Add Clear chat button to Sophie widget — resets conversation to welcome message, clears localStorage" },
       { time: "00:09", tag: "NEW", title: "Sophie auto-opens chat after 7s on first visit with proactive cold open" },
       { time: "00:02", tag: "FIX", title: "Sophie introduces as Wholesale Homes Specialist, set system prompt in Redis" }
