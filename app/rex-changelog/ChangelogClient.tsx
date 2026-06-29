@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "00:34", tag: "NEW", title: "Wire wholesale-homes contact form to Telegram — add site to TELEGRAM_SITES, fix CORS for multiple origins, send state/budget in lead, add state/budget to Telegram alert message" },
       { time: "00:29", tag: "FIX", title: "Switch hero bg from img tag to CSS background-image — covers full section on mobile" },
       { time: "00:22", tag: "FIX", title: "Contact form states — remove VIC, add SA, no default selection, use Select state... placeholder" },
       { time: "00:18", tag: "FIX", title: "Suppress AI Readiness Audit exit popup on wholesalehomes.com.au via hostname check (path-based check failed on custom domain)" },
