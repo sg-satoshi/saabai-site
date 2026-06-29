@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "23:47", tag: "NEW", title: "Replace circular chat icon with pill-shaped 'Chat with us' CTA button + hover effect" },
       { time: "23:35", tag: "FIX", title: "Clean PackageCard View Package link — was still /sites/wholesale-homes/packages/..." },
       { time: "23:25", tag: "FIX", title: "Use absolute title on wholesale-homes layout to block root | Saabai template bleed, update child titles" },
       { time: "23:22", tag: "NEW", title: "Full SEO overhaul — per-page titles/canonicals/descriptions via nested layouts, sitemap.xml + robots.txt, JSON-LD schemas (Organization, Product, BreadcrumbList, FAQPage), internal interlinking for similar packages, unique OG images per package" },
