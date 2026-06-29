@@ -121,7 +121,7 @@ export async function OPTIONS(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { name, email, phone, message, siteSlug, duration, eventType, state, budget } =
+    const { name, email, phone, message, siteSlug, duration, eventType, state, budget, buyer_type, timeline } =
       await req.json();
 
     if (!siteSlug) {
@@ -143,12 +143,16 @@ export async function POST(req: Request) {
       message: message || "",
       state: state || "",
       budget: budget || "",
+      buyer_type: buyer_type || "",
+      timeline: timeline || "",
       siteSlug,
       metadata: {
         ...(duration ? { duration } : {}),
         ...(eventType ? { eventType } : {}),
         ...(state ? { state } : {}),
         ...(budget ? { budget } : {}),
+        ...(buyer_type ? { buyer_type } : {}),
+        ...(timeline ? { timeline } : {}),
       },
       createdAt: Date.now(),
     };
@@ -179,6 +183,8 @@ export async function POST(req: Request) {
         const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
         let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
         msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
+        if (buyer_type) msg += `*Type:* ${buyer_type}\n`;
+        if (timeline) msg += `*Timeline:* ${timeline}\n`;
         if (state) msg += `*State:* ${state}\n`;
         if (budget) msg += `*Budget:* ${budget}\n`;
         if (duration) msg += `*Duration:* ${duration}\n`;

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "01:00", tag: "UPDATE", title: "Trigger redeploy after TELEGRAM_CHAT_ID_WHOLESALE_HOMES env var update" },
       { time: "00:34", tag: "NEW", title: "Wire wholesale-homes contact form to Telegram — add site to TELEGRAM_SITES, fix CORS for multiple origins, send state/budget in lead, add state/budget to Telegram alert message" },
       { time: "00:29", tag: "FIX", title: "Switch hero bg from img tag to CSS background-image — covers full section on mobile" },
       { time: "00:22", tag: "FIX", title: "Contact form states — remove VIC, add SA, no default selection, use Select state... placeholder" },

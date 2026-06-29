@@ -92,13 +92,34 @@ export default function ContactPage() {
                       </select>
                     </div>
                     <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-[#5C6670] md:text-sm">I am a...</label>
+                      <select name="buyer_type" className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2.5 text-sm text-[#5C6670] outline-none focus:border-[#0891b2] md:text-base">
+                        <option value="">Select...</option>
+                        <option value="First home buyer">First home buyer</option>
+                        <option value="Investor">Investor</option>
+                        <option value="Downsizer">Downsizer</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-[#5C6670] md:text-sm">Budget Range</label>
                       <select name="budget" className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[#0891b2] md:text-base">
-                        <option>$400K – $600K</option>
-                        <option>$600K – $800K</option>
-                        <option>$800K – $1M</option>
-                        <option>$1M+</option>
-                        <option>Not sure</option>
+                        <option value="">Select budget...</option>
+                        <option value="$400K – $600K">$400K – $600K</option>
+                        <option value="$600K – $800K">$600K – $800K</option>
+                        <option value="$800K – $1M">$800K – $1M</option>
+                        <option value="$1M+">$1M+</option>
+                        <option value="Not sure">Not sure</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-[#5C6670] md:text-sm">When are you looking to buy?</label>
+                      <select name="timeline" className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2.5 text-sm text-[#5C6670] outline-none focus:border-[#0891b2] md:text-base">
+                        <option value="">Select timeline...</option>
+                        <option value="0–3 months">0–3 months</option>
+                        <option value="3–6 months">3–6 months</option>
+                        <option value="6–12 months">6–12 months</option>
+                        <option value="Just researching">Just researching</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
