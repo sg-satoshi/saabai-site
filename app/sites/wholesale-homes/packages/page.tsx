@@ -4,95 +4,62 @@ import { useMemo, useState } from "react";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 import { ChatWidget } from "../_components/ChatWidget";
-import { Section, SectionTitle } from "../_components/Section";
 import { PackageCard } from "../_components/PackageCard";
 import { packages } from "../_data/packages";
 
 export default function PackagesPage() {
-  const [state, setState] = useState("All");
-  const [beds, setBeds] = useState("Any");
-  const [maxPrice, setMaxPrice] = useState("Any");
-  const [sort, setSort] = useState("price-asc");
+  const [filterState, setFilterState] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"price-asc" | "price-desc">("price-asc");
 
   const filtered = useMemo(() => {
-    let list = packages.filter((p) => {
-      if (state !== "All" && p.state !== state) return false;
-      if (beds !== "Any" && p.beds < Number(beds)) return false;
-      if (maxPrice !== "Any" && p.wholesalePrice > Number(maxPrice)) return false;
-      return true;
-    });
-    list = list.slice().sort((a, b) => {
-      if (sort === "price-asc") return a.wholesalePrice - b.wholesalePrice;
-      if (sort === "price-desc") return b.wholesalePrice - a.wholesalePrice;
-      return a.landReady.localeCompare(b.landReady);
-    });
-    return list;
-  }, [state, beds, maxPrice, sort]);
+    let list = filterState === "all" ? packages : packages.filter((p) => p.state === filterState);
+    return [...list].sort((a, b) => sortBy === "price-asc" ? a.wholesalePrice - b.wholesalePrice : b.wholesalePrice - a.wholesalePrice);
+  }, [filterState, sortBy]);
+
+  const states = useMemo(() => ["all", ...new Set(packages.map((p) => p.state))], []);
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <Section className="border-b border-[rgba(0,0,0,0.08)] bg-[#f5f2eb]/40 !py-14">
-          <SectionTitle
-            as="h1"
-            eyebrow="Live Inventory"
-            title="Available House and Land Packages"
-            intro="Filter by location, budget, bedrooms and land size. Every package is a fixed-price contract, secured below current market valuation."
-          />
-          <p className="mt-4 text-sm text-[#5C6670]">{filtered.length} of {packages.length} packages</p>
-        </Section>
+        <section className="py-16 md:py-28">
+          <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Available Packages</p>
+            <h1 className="mt-3 text-[clamp(1.6rem,5vw,3rem)] font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
+              Live inventory, priced below market.
+            </h1>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#5C6670] md:mt-5 md:text-base">
+              Browse current packages from our builder network. Pricing reflects wholesale — not retail.
+            </p>
 
-        <Section className="!py-12">
-          <div className="grid gap-4 rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-5 md:grid-cols-4">
-            <Select label="State" value={state} onChange={setState} options={["All", "VIC", "NSW", "QLD"]} />
-            <Select label="Bedrooms" value={beds} onChange={setBeds} options={["Any", "2", "3", "4"]} />
-            <Select
-              label="Max Price"
-              value={maxPrice}
-              onChange={setMaxPrice}
-              options={["Any", "600000", "700000", "800000", "900000"]}
-              display={(v) => (v === "Any" ? "Any" : `$${Number(v).toLocaleString()}`)}
-            />
-            <Select
-              label="Sort"
-              value={sort}
-              onChange={setSort}
-              options={["price-asc", "price-desc", "land-ready"]}
-              display={(v) => ({ "price-asc": "Price: Low to High", "price-desc": "Price: High to Low", "land-ready": "Land Ready" }[v]!)}
-            />
-          </div>
+            <div className="mt-8 flex flex-wrap items-center gap-4 md:mt-10">
+              <div className="flex flex-wrap gap-2">
+                {states.map((s) => (
+                  <button key={s} onClick={() => setFilterState(s)} className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors md:px-5 md:py-2.5 md:text-sm ${filterState === s ? "bg-[#1A2B3C] text-white" : "bg-[#f0efec] text-[#5C6670] hover:bg-[#e4e2de]"}`}>
+                    {s === "all" ? "All States" : s}
+                  </button>
+                ))}
+              </div>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-full border border-[rgba(0,0,0,0.12)] bg-white px-4 py-2 text-xs font-semibold text-[#5C6670] outline-none md:px-5 md:py-2.5 md:text-sm">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
 
-          <div className="mt-10 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((p) => <PackageCard key={p.id} pkg={p} />)}
+            {filtered.length === 0 ? (
+              <p className="mt-16 text-center text-sm text-[#5C6670] md:text-base">No packages available in this state yet. Check back soon.</p>
+            ) : (
+              <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2 md:gap-7 lg:grid-cols-3">
+                {filtered.map((pkg) => (
+                  <PackageCard key={pkg.id} pkg={pkg} />
+                ))}
+              </div>
+            )}
           </div>
-          {filtered.length === 0 && (
-            <p className="mt-12 text-center text-[#5C6670]">No packages match those filters. Try widening your search.</p>
-          )}
-        </Section>
+        </section>
       </main>
       <Footer />
       <ChatWidget />
     </div>
-  );
-}
-
-function Select({
-  label, value, onChange, options, display,
-}: {
-  label: string; value: string; onChange: (v: string) => void;
-  options: string[]; display?: (v: string) => string;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5 text-xs">
-      <span className="font-semibold uppercase tracking-wider text-[#5C6670]">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-[rgba(0,0,0,0.12)] bg-[#f5f5f7] px-3 py-2.5 text-sm outline-none focus:border-[#0891b2]"
-      >
-        {options.map((o) => <option key={o} value={o}>{display ? display(o) : o}</option>)}
-      </select>
-    </label>
   );
 }

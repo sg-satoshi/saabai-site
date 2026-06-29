@@ -1,2 +1,18 @@
-/* Wholesale Homes Australia — minimal overrides */
-/* Tailwind classes are inherited from root globals.css */
+/* Wholesale Homes Australia — mobile-first overrides */
+/* Tailwind classes inherited from root globals.css */
+
+/* Ensure images never overflow their containers */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Smoother tap targets on mobile */
+@media (max-width: 767px) {
+  button, a { 
+    -webkit-tap-highlight-color: transparent; 
+  }
+  input, select, textarea {
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+}
