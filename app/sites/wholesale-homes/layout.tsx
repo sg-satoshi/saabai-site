@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-wh"
 export const metadata: Metadata = {
   title: "Wholesale Homes Australia · House & Land Packages Below Market",
   description: "Exclusive pre-market access to Australia's best new home builds, at wholesale pricing. Partnered with Metricon and 12 leading builders.",
+  icons: {
+    icon: "/sites/wholesale-homes/favicon.svg",
+  },
   openGraph: {
     title: "Wholesale Homes Australia · House & Land Below Market",
     description: "Pre-market access to Australia's best new house and land packages, secured at wholesale pricing.",
