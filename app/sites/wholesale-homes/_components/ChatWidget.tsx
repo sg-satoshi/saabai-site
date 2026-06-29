@@ -140,12 +140,39 @@ export function ChatWidget() {
         </div>
       )}
 
-      {/* Launcher */}
-      <button onClick={() => setIsOpen((o) => !o)} aria-label="Chat with us" style={{ width: 60, height: 60, borderRadius: "50%", border: "none", background: TEAL, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(8,145,178,0.45)", fontSize: 22, fontWeight: 700, color: WHITE, overflow: "hidden", padding: 0, flexShrink: 0 }}>
+      {/* Launcher — pill CTA */}
+      <button
+        onClick={() => setIsOpen((o) => !o)}
+        aria-label="Chat with us"
+        style={{
+          padding: "0 24px",
+          height: 56,
+          borderRadius: 28,
+          border: "none",
+          background: TEAL,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "0 4px 20px rgba(8,145,178,0.45)",
+          fontSize: 15,
+          fontWeight: 700,
+          color: WHITE,
+          flexShrink: 0,
+          transition: "background 0.2s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = TEAL_DK)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = TEAL)}
+      >
         {isOpen ? (
-          <span style={{ fontSize: 24, lineHeight: 1, pointerEvents: "none" }}>×</span>
+          <span style={{ fontSize: 20, lineHeight: 1, pointerEvents: "none" }}>×</span>
         ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ pointerEvents: "none" }}><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>
+          <>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white" style={{ pointerEvents: "none", flexShrink: 0 }}>
+              <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/>
+            </svg>
+            <span style={{ pointerEvents: "none" }}>Chat with us</span>
+          </>
         )}
       </button>
 
