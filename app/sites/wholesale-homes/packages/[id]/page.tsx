@@ -22,7 +22,7 @@ export default function PackageDetail({ params }: { params: Promise<{ id: string
       <main className="flex-1">
         <section className="py-10 md:py-16">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-            <Link href="/sites/wholesale-homes/packages" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5C6670] hover:text-[#1A2B3C] md:text-sm">
+            <Link href="/packages" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5C6670] hover:text-[#1A2B3C] md:text-sm">
               <ArrowLeft className="h-3.5 w-3.5 md:h-4 md:w-4" /> Back to packages
             </Link>
 
@@ -76,7 +76,7 @@ export default function PackageDetail({ params }: { params: Promise<{ id: string
                     ))}
                   </div>
 
-                  <Link href="/sites/wholesale-homes/contact" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:py-4">
+                  <Link href="/contact" className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:py-4">
                     Enquire About This Package
                   </Link>
                 </div>
@@ -186,7 +186,7 @@ export default function PackageDetail({ params }: { params: Promise<{ id: string
               <Building2 className="mx-auto h-7 w-7 text-[#0891b2]" />
               <h2 className="mt-4 text-xl font-semibold tracking-tight md:text-2xl">Want to secure this package?</h2>
               <p className="mx-auto mt-3 max-w-lg text-sm text-white/70">Speak with our principal advisor. A 20-minute call covers your finance, timeline, and next steps.</p>
-              <Link href="/sites/wholesale-homes/contact" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
+              <Link href="/contact" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
                 Enquire Now <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

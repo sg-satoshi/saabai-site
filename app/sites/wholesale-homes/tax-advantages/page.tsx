@@ -68,7 +68,7 @@ export default function TaxAdvantagesPage() {
             <p className="mx-auto mt-4 max-w-2xl text-sm text-white/70 md:mt-5 md:text-base">
               Negative gearing on new builds is still available now, but political headwinds are growing. The Budget signals the direction.
             </p>
-            <Link href="/sites/wholesale-homes/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
+            <Link href="/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
               Book a Discovery Call <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

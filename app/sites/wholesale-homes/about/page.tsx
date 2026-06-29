@@ -64,7 +64,7 @@ export default function AboutPage() {
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
             <h2 className="text-2xl font-semibold tracking-tight md:text-3xl lg:text-4xl">Ready to start?</h2>
             <p className="mx-auto mt-4 max-w-xl text-sm text-white/70 md:mt-5 md:text-base">Speak with our principal advisor. No obligation, no pressure.</p>
-            <Link href="/sites/wholesale-homes/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
+            <Link href="/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
               Book Your Discovery Call <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

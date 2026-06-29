@@ -34,10 +34,10 @@ export default function HomePage() {
               Exclusive pre-market access to Australia's best new home builds, before they hit the public market.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 md:mt-10 md:gap-4">
-              <Link href="/sites/wholesale-homes/packages" className="group inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
+              <Link href="/packages" className="group inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
                 Browse Available Packages<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link href="/sites/wholesale-homes/contact" className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#1A2B3C] md:px-7 md:py-4">
+              <Link href="/contact" className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#1A2B3C] md:px-7 md:py-4">
                 Book a Discovery Call
               </Link>
             </div>
@@ -67,7 +67,7 @@ export default function HomePage() {
                 <p className="mt-4 text-sm leading-relaxed text-[#5C6670] md:mt-5 md:text-base lg:text-lg">
                   The 2026 Federal Budget fundamentally rewrote the rules. Investors and first-home buyers who act on new construction are picking up a structural tax advantage that established property no longer offers.
                 </p>
-                <Link href="/sites/wholesale-homes/tax-advantages" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0891b2] hover:text-[#0369a1] md:mt-8">
+                <Link href="/tax-advantages" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0891b2] hover:text-[#0369a1] md:mt-8">
                   Read the full breakdown <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -128,7 +128,7 @@ export default function HomePage() {
                   Live inventory, secured at wholesale.
                 </h2>
               </div>
-              <Link href="/sites/wholesale-homes/packages" className="inline-flex items-center gap-2 text-sm font-semibold text-[#0891b2] hover:text-[#0369a1]">
+              <Link href="/packages" className="inline-flex items-center gap-2 text-sm font-semibold text-[#0891b2] hover:text-[#0369a1]">
                 View all packages <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -237,7 +237,7 @@ export default function HomePage() {
               <p className="mx-auto mt-4 max-w-xl text-sm text-white/70 md:mt-5 md:text-base">
                 A 20-minute conversation about your goals. No obligation, no pressure.
               </p>
-              <Link href="/sites/wholesale-homes/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
+              <Link href="/contact" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:mt-9 md:px-7 md:py-4">
                 Book Your Free Discovery Call <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

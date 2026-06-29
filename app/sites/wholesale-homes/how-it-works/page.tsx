@@ -42,7 +42,7 @@ export default function HowItWorksPage() {
             ))}
           </div>
           <div className="mx-auto mt-10 max-w-3xl px-6 text-center lg:px-10">
-            <Link href="/sites/wholesale-homes/contact" className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
+            <Link href="/contact" className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
               Start Your Journey <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

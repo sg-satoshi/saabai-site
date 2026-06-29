@@ -55,7 +55,7 @@ export default function FAQPage() {
 
             <div className="mt-10 text-center md:mt-12">
               <p className="text-sm text-[#5C6670] md:text-base">Still have questions?</p>
-              <Link href="/sites/wholesale-homes/contact" className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">Get in touch</Link>
+              <Link href="/contact" className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">Get in touch</Link>
             </div>
           </div>
         </section>

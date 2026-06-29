@@ -18,18 +18,18 @@ export function Footer() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Explore</p>
           <ul className="mt-4 space-y-2 text-sm text-white/80">
-            <li><Link href="/sites/wholesale-homes/packages" className="hover:text-white">Packages</Link></li>
-            <li><Link href="/sites/wholesale-homes/how-it-works" className="hover:text-white">How It Works</Link></li>
-            <li><Link href="/sites/wholesale-homes/tax-advantages" className="hover:text-white">Tax Advantages</Link></li>
-            <li><Link href="/sites/wholesale-homes/blog" className="hover:text-white">Blog</Link></li>
+            <li><Link href="/packages" className="hover:text-white">Packages</Link></li>
+            <li><Link href="/how-it-works" className="hover:text-white">How It Works</Link></li>
+            <li><Link href="/tax-advantages" className="hover:text-white">Tax Advantages</Link></li>
+            <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
           </ul>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Company</p>
           <ul className="mt-4 space-y-2 text-sm text-white/80">
-            <li><Link href="/sites/wholesale-homes/about" className="hover:text-white">About</Link></li>
-            <li><Link href="/sites/wholesale-homes/faq" className="hover:text-white">FAQ</Link></li>
-            <li><Link href="/sites/wholesale-homes/contact" className="hover:text-white">Contact</Link></li>
+            <li><Link href="/about" className="hover:text-white">About</Link></li>
+            <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
+            <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
           </ul>
         </div>
       </div>

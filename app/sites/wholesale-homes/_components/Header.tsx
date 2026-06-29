@@ -6,12 +6,12 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 
 const nav = [
-  { to: "/sites/wholesale-homes/packages", label: "Packages" },
-  { to: "/sites/wholesale-homes/how-it-works", label: "How It Works" },
-  { to: "/sites/wholesale-homes/tax-advantages", label: "Tax Advantages" },
-  { to: "/sites/wholesale-homes/about", label: "About" },
-  { to: "/sites/wholesale-homes/faq", label: "FAQ" },
-  { to: "/sites/wholesale-homes/blog", label: "Blog" },
+  { to: "/packages", label: "Packages" },
+  { to: "/how-it-works", label: "How It Works" },
+  { to: "/tax-advantages", label: "Tax Advantages" },
+  { to: "/about", label: "About" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/blog", label: "Blog" },
 ];
 
 export function Header() {
@@ -29,7 +29,7 @@ export function Header() {
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href="/sites/wholesale-homes/contact"
+            href="/contact"
             className="inline-flex items-center justify-center rounded-full bg-[#0891b2] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0369a1]"
           >
             Book Discovery Call
@@ -48,7 +48,7 @@ export function Header() {
               </Link>
             ))}
             <Link
-              href="/sites/wholesale-homes/contact"
+              href="/contact"
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex items-center justify-center rounded-full bg-[#0891b2] px-5 py-2.5 text-sm font-medium text-white"
             >
