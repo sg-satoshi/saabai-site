@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | BO Consulting",
-  description: "BO Consulting's privacy policy — how we collect, use and protect your personal information.",
+  description: "BO Consulting's privacy policy. How we collect, use and protect your personal information.",
   robots: { index: false, follow: false },
   alternates: { canonical: "https://www.boconsulting.com.au/privacy-policy" },
 };

@@ -33,7 +33,7 @@ const SERVICES = [
   },
   {
     title: "Labour Hire",
-    desc: "Flexible workforce solutions — scale up or down with pre-screened, safety-inducted workers ready to start.",
+    desc: "Flexible workforce solutions. Scale up or down with pre-screened, safety-inducted workers ready to start.",
     icon: "👷",
   },
   {
@@ -43,7 +43,7 @@ const SERVICES = [
   },
   {
     title: "Volume Recruitment",
-    desc: "High-volume hiring campaigns managed from brief to onboarding — fast, compliant and cost-effective.",
+    desc: "High-volume hiring campaigns managed from brief to onboarding. Fast, compliant and cost-effective.",
     icon: "📋",
   },
   {
@@ -53,7 +53,7 @@ const SERVICES = [
   },
   {
     title: "Recruitment Process Outsourcing",
-    desc: "We embed into your business as your dedicated recruitment function — same team, lower cost.",
+    desc: "We embed into your business as your dedicated recruitment function. Same team, lower cost.",
     icon: "🤝",
   },
 ];
@@ -64,26 +64,26 @@ const WHY = [
   { title: "Industry Specialists", desc: "Our consultants have worked in the industries they recruit for. They speak your language.", icon: "🎓" },
   { title: "National Coverage", desc: "Offices and networks across every major metro and regional market in Australia.", icon: "🗺️" },
   { title: "Relationship Driven", desc: "We build long-term partnerships, not transactional placements. Your success is ours.", icon: "🤝" },
-  { title: "Compliance Focus", desc: "Fully compliant labour hire. PAYG, super, WHS — all handled so you're protected.", icon: "🛡️" },
+  { title: "Compliance Focus", desc: "Fully compliant labour hire. PAYG, super, WHS all handled so you're protected.", icon: "🛡️" },
 ];
 
 const TESTIMONIALS = [
   {
-    text: "BO Consulting filled three site supervisor roles for us within two weeks. The quality of candidates was exceptional — all had the right tickets, experience and attitude. We've used them exclusively ever since.",
+    text: "BO Consulting filled three site supervisor roles for us within two weeks. The quality of candidates was exceptional. All had the right tickets, experience and attitude. We've used them exclusively ever since.",
     name: "James T.",
-    title: "Operations Manager, Commercial Builder — Queensland",
+    title: "Operations Manager, Commercial Builder, Queensland",
     initials: "JT",
   },
   {
     text: "We needed to ramp up 40 warehouse workers for peak season with less than three weeks notice. BO Consulting delivered on time, every worker was inducted and ready to go. Genuinely impressive.",
     name: "Michelle R.",
-    title: "Logistics Director, Distribution Centre — New South Wales",
+    title: "Logistics Director, Distribution Centre, New South Wales",
     initials: "MR",
   },
   {
     text: "What sets BO Consulting apart is that they actually understand civil construction. They don't send us candidates who look good on paper but have never been on a site. Every referral is the real deal.",
     name: "Dave K.",
-    title: "Project Director, Civil Infrastructure — Western Australia",
+    title: "Project Director, Civil Infrastructure, Western Australia",
     initials: "DK",
   },
 ];
@@ -99,7 +99,7 @@ const PROCESS = [
   {
     num: "01",
     title: "Brief Us",
-    desc: "Tell us what you need — the role, the site, the timeline. One call or email is all it takes.",
+    desc: "Tell us what you need: the role, the site, the timeline. One call or email is all it takes.",
     icon: "📋",
   },
   {
@@ -111,7 +111,7 @@ const PROCESS = [
   {
     num: "03",
     title: "You Hire",
-    desc: "Review our shortlist, interview your picks, and onboard — with our support every step of the way.",
+    desc: "Review our shortlist, interview your picks, and onboard with our support every step of the way.",
     icon: "✅",
   },
 ];
@@ -123,7 +123,7 @@ export default function BOConsultancyPage() {
 
   // Scroll reveal
   useEffect(() => {
-    // Mark JS as active — gates the opacity:0 hiding CSS so elements stay visible if JS fails
+    // Mark JS as active: gates the opacity:0 hiding CSS so elements stay visible if JS fails
     document.documentElement.classList.add("bo-js");
     const reveals = document.querySelectorAll("[data-reveal]");
     const observer = new IntersectionObserver(
@@ -746,7 +746,7 @@ export default function BOConsultancyPage() {
             Ready to build your workforce?
           </h2>
           <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 18, marginBottom: 40, lineHeight: 1.6 }}>
-            Talk to our team today. No lock-in contracts, no hidden fees — just great recruitment.
+            Talk to our team today. No lock-in contracts, no hidden fees. Just great recruitment.
           </p>
           <a
             href="#contact"
@@ -851,7 +851,7 @@ export default function BOConsultancyPage() {
               }}
             >
               <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
-              <h3 style={{ color: C.navy, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Thanks — we&apos;ll be in touch shortly.</h3>
+              <h3 style={{ color: C.navy, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Thanks, we&apos;ll be in touch shortly.</h3>
               <p style={{ color: C.grey, fontSize: 15 }}>Our team typically responds within a few hours during business hours.</p>
             </div>
 

@@ -71,7 +71,7 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
           #bo-hamburger { display: none !important; }
           #bo-find-staff-nav { display: inline-flex !important; }
         }
-        /* Scroll reveal — progressive enhancement: only hide if JS loaded */
+        /* Scroll reveal: progressive enhancement, only hide if JS loaded */
         html.bo-js [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
         html.bo-js [data-reveal].bo-visible { opacity: 1; transform: translateY(0); }
         html.bo-js [data-reveal][data-delay="1"] { transition-delay: 0.1s; }
