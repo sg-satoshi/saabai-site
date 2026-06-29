@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "15:29", tag: "FIX", title: "Bo-consultancy scroll reveal blank sections — gate opacity:0 behind html.bo-js class" },
       { time: "13:23", tag: "NEW", title: "Enhance boconsulting.com.au with scroll animations, parallax hero, and How It Works section" }
     ],
   },

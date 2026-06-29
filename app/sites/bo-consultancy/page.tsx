@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 
 const C = {
   navy: "#123B5D",
+  navyDark: "#0D2D47",
   orange: "#F58220",
+  orangeLight: "#FEF0E3",
   grey: "#5C6670",
   white: "#ffffff",
-  lightGrey: "#F4F5F6",
+  lightGrey: "#F7F8F9",
   charcoal: "#1A2B3C",
-  border: "#E2E6EA",
+  border: "#ECEEF0",
 };
 
 const INDUSTRIES = [
@@ -166,16 +168,6 @@ export default function BOConsultancyPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Hero parallax
-  useEffect(() => {
-    const heroBg = document.getElementById("bo-hero-bg");
-    if (!heroBg) return;
-    const onScroll = () => {
-      heroBg.style.transform = `translateY(${window.scrollY * 0.25}px)`;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal, overflowX: "hidden" }}>
@@ -194,7 +186,7 @@ export default function BOConsultancyPage() {
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
             <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
           </a>
@@ -257,7 +249,7 @@ export default function BOConsultancyPage() {
       <section
         id="home"
         style={{
-          background: `linear-gradient(135deg, ${C.navy} 0%, #0d2d47 60%, #1a4a6e 100%)`,
+          background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyDark} 60%, #1a4a6e 100%)`,
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -268,7 +260,7 @@ export default function BOConsultancyPage() {
         }}
       >
         <div
-          id="bo-hero-bg"
+          className="bo-hero-bg"
           style={{
             position: "absolute",
             inset: 0,
@@ -277,7 +269,7 @@ export default function BOConsultancyPage() {
             backgroundPosition: "center 40%",
             opacity: 0.18,
             pointerEvents: "none",
-            willChange: "transform",
+            transformOrigin: "center center",
           }}
         />
         <div
@@ -288,6 +280,7 @@ export default function BOConsultancyPage() {
             pointerEvents: "none",
           }}
         />
+        <div className="bo-stripe" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
         <div
           style={{
             position: "absolute",
@@ -313,10 +306,10 @@ export default function BOConsultancyPage() {
           }}
         />
 
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 32px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "80px 32px", position: "relative", zIndex: 1 }}>
           <div
             className="bo-hero-animate bo-hero-delay-1"
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,130,32,0.15)", border: "1px solid rgba(245,130,32,0.3)", borderRadius: 100, padding: "6px 16px", marginBottom: 32 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(254,240,227,0.12)", border: "1px solid rgba(245,130,32,0.35)", borderRadius: 100, padding: "6px 16px", marginBottom: 32 }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.orange, display: "inline-block" }} />
             <span style={{ color: C.orange, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
@@ -405,7 +398,7 @@ export default function BOConsultancyPage() {
 
       {/* ── About ── */}
       <section id="about" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 64, alignItems: "center" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 64, alignItems: "center" }}>
           <div data-reveal>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               About BO Consulting
@@ -457,7 +450,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Industries ── */}
       <section id="industries" style={{ background: C.lightGrey, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Industries We Serve
@@ -496,7 +489,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Services ── */}
       <section id="services" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               What We Do
@@ -546,12 +539,12 @@ export default function BOConsultancyPage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" style={{ background: C.navy, padding: "96px 32px", position: "relative", overflow: "hidden" }}>
+      <section id="how-it-works" className="bo-stripe" style={{ background: C.navy, padding: "96px 32px", position: "relative", overflow: "hidden" }}>
         {/* Background accent */}
         <div style={{ position: "absolute", right: "-5%", top: "0%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", left: "-5%", bottom: "0%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div data-reveal style={{ textAlign: "center", marginBottom: 72 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               How It Works
@@ -633,7 +626,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Why Us ── */}
       <section id="why-us" style={{ background: C.lightGrey, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Why BO Consulting
@@ -672,7 +665,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Testimonials ── */}
       <section id="testimonials" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div data-reveal style={{ textAlign: "center", marginBottom: 56 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Client Testimonials
@@ -776,7 +769,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Contact ── */}
       <section id="contact" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64 }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64 }}>
           <div data-reveal>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Get in Touch
@@ -933,7 +926,7 @@ export default function BOConsultancyPage() {
 
       {/* ── Footer ── */}
       <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48, marginBottom: 48 }}>
             <div>
               <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 40, marginBottom: 16, filter: "brightness(0) invert(1)" }} />

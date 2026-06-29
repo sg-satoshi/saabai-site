@@ -56,9 +56,13 @@ export const metadata: Metadata = {
 export default function BOConsultancyLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
       <style dangerouslySetInnerHTML={{ __html: `
-        html { background: #123B5D; overflow-x: hidden; }
-        body { overflow-x: hidden; }
+        html { background: #123B5D; overflow-x: hidden; scroll-behavior: smooth; }
+        body { overflow-x: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: "ss01"; }
+        h1, h2, h3, h4 { font-family: 'Sora', system-ui, sans-serif; letter-spacing: -0.02em; }
         #bo-nav-desktop { display: none; align-items: center; gap: 32px; }
         #bo-hamburger { display: flex; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
         #bo-find-staff-nav { display: none; }
@@ -88,11 +92,16 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
         /* Nav scroll */
         #bo-nav { transition: background 0.3s ease, box-shadow 0.3s ease; }
         #bo-nav.bo-nav-scrolled { background: rgba(18,59,93,1) !important; box-shadow: 0 4px 32px rgba(18,59,93,0.4); }
+        /* Ken Burns hero bg */
+        @keyframes bo-kenburns { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
+        .bo-hero-bg { animation: bo-kenburns 12s ease-out forwards; }
+        /* Stripe texture overlays */
+        .bo-stripe { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 2px, transparent 2px, transparent 12px); }
         /* Buttons */
-        .bo-btn { position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+        .bo-btn { position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(245,130,32,0.30); transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
         .bo-btn::after { content: ''; position: absolute; top: -50%; left: -60%; width: 30%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent); transform: skewX(-20deg); transition: left 0.5s; pointer-events: none; }
         .bo-btn:hover::after { left: 130%; }
-        .bo-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(245,130,32,0.38) !important; }
+        .bo-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(245,130,32,0.45) !important; }
         /* Cards */
         .bo-ind-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease, border-color 0.3s ease !important; cursor: default; }
         .bo-ind-card:hover { transform: translateY(-6px) !important; box-shadow: 0 16px 48px rgba(18,59,93,0.15) !important; border-color: rgba(245,130,32,0.35) !important; }
