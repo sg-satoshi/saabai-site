@@ -48,7 +48,7 @@ export function PackageCard({ pkg }: { pkg: Package }) {
         </div>
 
         <Link
-          href={`/sites/wholesale-homes/packages/${pkg.id}`}
+          href={`/packages/${pkg.id}`}
           className="mt-5 inline-flex items-center justify-center rounded-full border border-[#1A2B3C] px-5 py-2.5 text-sm font-medium text-[#1A2B3C] transition-colors hover:bg-[#1A2B3C] hover:text-white"
         >
           View Package
