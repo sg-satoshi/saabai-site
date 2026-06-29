@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const C = {
   navy: "#123B5D",
@@ -93,16 +93,94 @@ const STATS = [
   { val: "95%", label: "Retention Rate" },
 ];
 
+const PROCESS = [
+  {
+    num: "01",
+    title: "Brief Us",
+    desc: "Tell us what you need — the role, the site, the timeline. One call or email is all it takes.",
+    icon: "📋",
+  },
+  {
+    num: "02",
+    title: "We Source",
+    desc: "Our consultants tap their networks and databases to find pre-screened, reference-checked candidates fast.",
+    icon: "🔍",
+  },
+  {
+    num: "03",
+    title: "You Hire",
+    desc: "Review our shortlist, interview your picks, and onboard — with our support every step of the way.",
+    icon: "✅",
+  },
+];
+
 const NAV_ITEMS = ["About", "Industries", "Services", "Why Us", "Testimonials", "Contact"];
 
 export default function BOConsultancyPage() {
   const [formData, setFormData] = useState({ type: "employer" });
+
+  // Scroll reveal
+  useEffect(() => {
+    const reveals = document.querySelectorAll("[data-reveal]");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("bo-visible");
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+    );
+    reveals.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Stat items scroll reveal (separate for the hero bar)
+  useEffect(() => {
+    const stats = document.querySelectorAll(".bo-stat");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("bo-visible");
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    stats.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Nav scroll effect
+  useEffect(() => {
+    const nav = document.getElementById("bo-nav");
+    if (!nav) return;
+    const onScroll = () => {
+      nav.classList.toggle("bo-nav-scrolled", window.scrollY > 20);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Hero parallax
+  useEffect(() => {
+    const heroBg = document.getElementById("bo-hero-bg");
+    if (!heroBg) return;
+    const onScroll = () => {
+      heroBg.style.transform = `translateY(${window.scrollY * 0.25}px)`;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal, overflowX: "hidden" }}>
 
       {/* ── Sticky Nav ── */}
       <nav
+        id="bo-nav"
         style={{
           position: "fixed",
           top: 0,
@@ -115,18 +193,16 @@ export default function BOConsultancyPage() {
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
-          {/* Logo */}
           <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
             <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
           </a>
 
-          {/* Desktop Nav — visibility via CSS in layout.tsx (not Tailwind, unreliable on custom domain) */}
           <div id="bo-nav-desktop" style={{ alignItems: "center", gap: 32 }}>
             {NAV_ITEMS.map((item) => (
               <a
                 key={item}
                 href={`#${item.toLowerCase().replace(" ", "-")}`}
-                style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: 14, fontWeight: 500 }}
+                style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: 14, fontWeight: 500, transition: "color 0.2s" }}
                 onMouseOver={(e) => (e.currentTarget.style.color = "#fff")}
                 onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
               >
@@ -135,16 +211,15 @@ export default function BOConsultancyPage() {
             ))}
           </div>
 
-          {/* Right side */}
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <a
               id="bo-find-staff-nav"
               href="#contact"
+              className="bo-btn"
               style={{ background: C.orange, color: "#fff", padding: "10px 24px", borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none", alignItems: "center" }}
             >
               Find Staff
             </a>
-            {/* Hamburger — visibility via CSS in layout.tsx; toggle via vanilla JS in layout script */}
             <button
               id="bo-hamburger"
               aria-label="Toggle menu"
@@ -157,13 +232,12 @@ export default function BOConsultancyPage() {
           </div>
         </div>
 
-        {/* Mobile Menu — always in DOM, toggled by vanilla JS via id="bo-mobile-menu" */}
         <div id="bo-mobile-menu" style={{ display: "none", background: C.navy, borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 24px 24px" }}>
           {NAV_ITEMS.map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(" ", "-")}`}
-              style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", transition: "color 0.2s" }}
             >
               {item}
             </a>
@@ -191,8 +265,8 @@ export default function BOConsultancyPage() {
           overflow: "hidden",
         }}
       >
-        {/* Hero background image */}
         <div
+          id="bo-hero-bg"
           style={{
             position: "absolute",
             inset: 0,
@@ -201,9 +275,9 @@ export default function BOConsultancyPage() {
             backgroundPosition: "center 40%",
             opacity: 0.18,
             pointerEvents: "none",
+            willChange: "transform",
           }}
         />
-        {/* Dark overlay for text legibility */}
         <div
           style={{
             position: "absolute",
@@ -212,7 +286,6 @@ export default function BOConsultancyPage() {
             pointerEvents: "none",
           }}
         />
-        {/* Background geometric accent */}
         <div
           style={{
             position: "absolute",
@@ -239,26 +312,35 @@ export default function BOConsultancyPage() {
         />
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 32px", position: "relative", zIndex: 1 }}>
-          {/* Badge */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,130,32,0.15)", border: "1px solid rgba(245,130,32,0.3)", borderRadius: 100, padding: "6px 16px", marginBottom: 32 }}>
+          <div
+            className="bo-hero-animate bo-hero-delay-1"
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(245,130,32,0.15)", border: "1px solid rgba(245,130,32,0.3)", borderRadius: 100, padding: "6px 16px", marginBottom: 32 }}
+          >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.orange, display: "inline-block" }} />
             <span style={{ color: C.orange, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Australia's Workforce Specialists
+              Australia&apos;s Workforce Specialists
             </span>
           </div>
 
-          <h1 style={{ color: "#fff", fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 24, maxWidth: 800 }}>
-            Connecting Australia's{" "}
+          <h1
+            className="bo-hero-animate bo-hero-delay-2"
+            style={{ color: "#fff", fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 24, maxWidth: 800 }}
+          >
+            Connecting Australia&apos;s{" "}
             <span style={{ color: C.orange }}>Workforce.</span>
           </h1>
 
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "clamp(16px, 2vw, 20px)", maxWidth: 540, lineHeight: 1.7, marginBottom: 48 }}>
+          <p
+            className="bo-hero-animate bo-hero-delay-3"
+            style={{ color: "rgba(255,255,255,0.7)", fontSize: "clamp(16px, 2vw, 20px)", maxWidth: 540, lineHeight: 1.7, marginBottom: 48 }}
+          >
             Helping Australian businesses find reliable, skilled workers faster. Blue-collar recruitment done right.
           </p>
 
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div className="bo-hero-animate bo-hero-delay-4" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <a
               href="#contact"
+              className="bo-btn"
               style={{
                 background: C.orange,
                 color: "#fff",
@@ -289,14 +371,17 @@ export default function BOConsultancyPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
+                transition: "border-color 0.2s, background 0.2s",
               }}
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}
             >
               Looking for Work
             </a>
           </div>
 
-          {/* Trust Bar */}
           <div
+            className="bo-hero-animate bo-hero-delay-5"
             style={{
               display: "flex",
               gap: 48,
@@ -307,7 +392,7 @@ export default function BOConsultancyPage() {
             }}
           >
             {STATS.map((s, i) => (
-              <div key={i}>
+              <div key={i} className="bo-stat">
                 <div style={{ color: C.orange, fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{s.val}</div>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>{s.label}</div>
               </div>
@@ -319,12 +404,12 @@ export default function BOConsultancyPage() {
       {/* ── About ── */}
       <section id="about" style={{ background: C.white, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 64, alignItems: "center" }}>
-          <div>
+          <div data-reveal>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               About BO Consulting
             </p>
             <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 24 }}>
-              We don't just fill roles. We build workforces.
+              We don&apos;t just fill roles. We build workforces.
             </h2>
             <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.8, marginBottom: 20 }}>
               BO Consulting was built on a simple belief: Australian businesses deserve a recruitment partner that truly understands blue-collar work. Not just the roles, but the sites, the culture, the safety requirements and the pressure of project deadlines.
@@ -334,13 +419,15 @@ export default function BOConsultancyPage() {
             </p>
             <a
               href="#contact"
-              style={{ color: C.orange, fontSize: 15, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}
+              style={{ color: C.orange, fontSize: 15, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, transition: "gap 0.2s" }}
+              onMouseOver={(e) => (e.currentTarget.style.gap = "12px")}
+              onMouseOut={(e) => (e.currentTarget.style.gap = "8px")}
             >
               Talk to our team →
             </a>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          <div data-reveal data-delay="2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             {[
               { val: "8", label: "Industries Covered" },
               { val: "6", label: "Service Offerings" },
@@ -353,7 +440,10 @@ export default function BOConsultancyPage() {
                   background: i % 2 === 0 ? C.navy : C.lightGrey,
                   borderRadius: 16,
                   padding: "32px 24px",
+                  transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)",
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+                onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
                 <div style={{ color: i % 2 === 0 ? C.orange : C.navy, fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{item.val}</div>
                 <div style={{ color: i % 2 === 0 ? "rgba(255,255,255,0.6)" : C.grey, fontSize: 13, letterSpacing: "0.05em", textTransform: "uppercase" }}>{item.label}</div>
@@ -366,7 +456,7 @@ export default function BOConsultancyPage() {
       {/* ── Industries ── */}
       <section id="industries" style={{ background: C.lightGrey, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ marginBottom: 56, maxWidth: 640 }}>
+          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Industries We Serve
             </p>
@@ -382,22 +472,15 @@ export default function BOConsultancyPage() {
             {INDUSTRIES.map((ind, i) => (
               <div
                 key={i}
+                data-reveal
+                data-delay={String((i % 4) + 1)}
+                className="bo-ind-card"
                 style={{
                   background: C.white,
                   borderRadius: 12,
                   padding: "28px 24px",
                   border: `1px solid ${C.border}`,
                   boxShadow: "0 2px 12px rgba(18,59,93,0.06)",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  cursor: "default",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 32px rgba(18,59,93,0.12)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 12px rgba(18,59,93,0.06)";
                 }}
               >
                 <div style={{ fontSize: 32, marginBottom: 16 }}>{ind.icon}</div>
@@ -412,7 +495,7 @@ export default function BOConsultancyPage() {
       {/* ── Services ── */}
       <section id="services" style={{ background: C.white, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ marginBottom: 56, maxWidth: 640 }}>
+          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               What We Do
             </p>
@@ -428,6 +511,9 @@ export default function BOConsultancyPage() {
             {SERVICES.map((s, i) => (
               <div
                 key={i}
+                data-reveal
+                data-delay={String((i % 3) + 1)}
+                className="bo-svc-card"
                 style={{
                   background: C.lightGrey,
                   borderRadius: 16,
@@ -457,18 +543,104 @@ export default function BOConsultancyPage() {
         </div>
       </section>
 
+      {/* ── How It Works ── */}
+      <section id="how-it-works" style={{ background: C.navy, padding: "96px 32px", position: "relative", overflow: "hidden" }}>
+        {/* Background accent */}
+        <div style={{ position: "absolute", right: "-5%", top: "0%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: "-5%", bottom: "0%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+        <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div data-reveal style={{ textAlign: "center", marginBottom: 72 }}>
+            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
+              How It Works
+            </p>
+            <h2 style={{ color: "#fff", fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
+              Hired in three steps.
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 16, lineHeight: 1.7, maxWidth: 480, margin: "0 auto" }}>
+              Simple, fast, no lock-in contracts. We work at the speed your business demands.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 32 }}>
+            {PROCESS.map((step, i) => (
+              <div
+                key={i}
+                data-reveal
+                data-delay={String(i + 1)}
+                className="bo-process-card"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 20,
+                  padding: "48px 36px",
+                  textAlign: "center",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div style={{ position: "absolute", top: 20, right: 24, color: C.orange, fontSize: 52, fontWeight: 800, lineHeight: 1, opacity: 0.1 }}>
+                  {step.num}
+                </div>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 68,
+                    height: 68,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${C.orange}, #d96f10)`,
+                    marginBottom: 24,
+                    fontSize: 28,
+                  }}
+                >
+                  {step.icon}
+                </div>
+                <div style={{ color: C.orange, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Step {step.num}
+                </div>
+                <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginBottom: 14 }}>{step.title}</h3>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.7 }}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div data-reveal data-delay="4" style={{ textAlign: "center", marginTop: 56 }}>
+            <a
+              href="#contact"
+              className="bo-btn"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: C.orange,
+                color: "#fff",
+                padding: "16px 40px",
+                borderRadius: 8,
+                fontSize: 15,
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              Get Started Today →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── Why Us ── */}
-      <section id="why-us" style={{ background: C.navy, padding: "96px 32px" }}>
+      <section id="why-us" style={{ background: C.lightGrey, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ marginBottom: 56, maxWidth: 640 }}>
+          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Why BO Consulting
             </p>
-            <h2 style={{ color: "#fff", fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
+            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
               The difference is in the details.
             </h2>
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, lineHeight: 1.7 }}>
-              We've built our business around the things that actually matter to the industries we serve.
+            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7 }}>
+              We&apos;ve built our business around the things that actually matter to the industries we serve.
             </p>
           </div>
 
@@ -476,16 +648,20 @@ export default function BOConsultancyPage() {
             {WHY.map((w, i) => (
               <div
                 key={i}
+                data-reveal
+                data-delay={String((i % 3) + 1)}
+                className="bo-why-card"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: C.white,
+                  border: `1px solid ${C.border}`,
                   borderRadius: 16,
                   padding: "32px 28px",
+                  boxShadow: "0 2px 12px rgba(18,59,93,0.04)",
                 }}
               >
                 <div style={{ fontSize: 28, marginBottom: 16 }}>{w.icon}</div>
-                <h3 style={{ color: "#fff", fontSize: 17, fontWeight: 700, marginBottom: 10 }}>{w.title}</h3>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1.7 }}>{w.desc}</p>
+                <h3 style={{ color: C.navy, fontSize: 17, fontWeight: 700, marginBottom: 10 }}>{w.title}</h3>
+                <p style={{ color: C.grey, fontSize: 14, lineHeight: 1.7 }}>{w.desc}</p>
               </div>
             ))}
           </div>
@@ -493,9 +669,9 @@ export default function BOConsultancyPage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section id="testimonials" style={{ background: C.lightGrey, padding: "96px 32px" }}>
+      <section id="testimonials" style={{ background: C.white, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <div data-reveal style={{ textAlign: "center", marginBottom: 56 }}>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Client Testimonials
             </p>
@@ -508,11 +684,14 @@ export default function BOConsultancyPage() {
             {TESTIMONIALS.map((t, i) => (
               <div
                 key={i}
+                data-reveal
+                data-delay={String(i + 1)}
+                className="bo-test-card"
                 style={{
-                  background: C.white,
+                  background: C.lightGrey,
                   borderRadius: 16,
                   padding: "36px 32px",
-                  boxShadow: "0 4px 24px rgba(18,59,93,0.08)",
+                  boxShadow: "0 4px 24px rgba(18,59,93,0.06)",
                   border: `1px solid ${C.border}`,
                   display: "flex",
                   flexDirection: "column",
@@ -522,7 +701,7 @@ export default function BOConsultancyPage() {
                 <div>
                   <div style={{ color: C.orange, fontSize: 20, letterSpacing: 2, marginBottom: 20 }}>★★★★★</div>
                   <p style={{ color: C.charcoal, fontSize: 15, lineHeight: 1.8, fontStyle: "italic", marginBottom: 28 }}>
-                    "{t.text}"
+                    &ldquo;{t.text}&rdquo;
                   </p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -556,13 +735,18 @@ export default function BOConsultancyPage() {
 
       {/* ── CTA Banner ── */}
       <section
+        data-reveal
         style={{
           background: `linear-gradient(135deg, ${C.orange} 0%, #d96f10 100%)`,
           padding: "72px 32px",
           textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+        <div style={{ position: "absolute", right: "-5%", top: "-20%", width: 400, height: 400, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: "-5%", bottom: "-20%", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <h2 style={{ color: "#fff", fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 16 }}>
             Ready to build your workforce?
           </h2>
@@ -571,6 +755,7 @@ export default function BOConsultancyPage() {
           </p>
           <a
             href="#contact"
+            className="bo-btn"
             style={{
               background: C.white,
               color: C.orange,
@@ -590,15 +775,15 @@ export default function BOConsultancyPage() {
       {/* ── Contact ── */}
       <section id="contact" style={{ background: C.white, padding: "96px 32px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64 }}>
-          <div>
+          <div data-reveal>
             <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
               Get in Touch
             </p>
             <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 24 }}>
-              Let's find the right people for your business.
+              Let&apos;s find the right people for your business.
             </h2>
             <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7, marginBottom: 40 }}>
-              Whether you're an employer looking for skilled workers or a candidate looking for your next opportunity, we want to hear from you.
+              Whether you&apos;re an employer looking for skilled workers or a candidate looking for your next opportunity, we want to hear from you.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -610,7 +795,7 @@ export default function BOConsultancyPage() {
                 <div key={i}>
                   <p style={{ color: C.grey, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>{item.label}</p>
                   {item.href ? (
-                    <a href={item.href} style={{ color: C.navy, fontSize: 16, fontWeight: 600, textDecoration: "none" }}>{item.value}</a>
+                    <a href={item.href} style={{ color: C.navy, fontSize: 16, fontWeight: 600, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = C.orange)} onMouseOut={(e) => (e.currentTarget.style.color = C.navy)}>{item.value}</a>
                   ) : (
                     <p style={{ color: C.navy, fontSize: 16, fontWeight: 600 }}>{item.value}</p>
                   )}
@@ -619,8 +804,7 @@ export default function BOConsultancyPage() {
             </div>
           </div>
 
-          <div>
-            {/* Employer / Candidate toggle */}
+          <div data-reveal data-delay="2">
             <div style={{ display: "flex", gap: 0, marginBottom: 32, background: C.lightGrey, borderRadius: 8, padding: 4 }}>
               <button
                 id="bo-tab-hiring"
@@ -660,7 +844,6 @@ export default function BOConsultancyPage() {
               </button>
             </div>
 
-            {/* Success message — always in DOM, shown by vanilla JS after submit */}
             <div
               id="bo-form-success"
               style={{
@@ -677,7 +860,6 @@ export default function BOConsultancyPage() {
               <p style={{ color: C.grey, fontSize: 15 }}>Our team typically responds within a few hours during business hours.</p>
             </div>
 
-            {/* Form — vanilla JS handles submission */}
             <form id="bo-contact-form" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Name *</label>
@@ -685,7 +867,9 @@ export default function BOConsultancyPage() {
                   id="bo-name"
                   type="text"
                   required
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
                 />
               </div>
               <div>
@@ -694,7 +878,9 @@ export default function BOConsultancyPage() {
                   id="bo-email"
                   type="email"
                   required
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
                 />
               </div>
               {formData.type === "employer" && (
@@ -703,7 +889,9 @@ export default function BOConsultancyPage() {
                   <input
                     id="bo-company"
                     type="text"
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
                   />
                 </div>
               )}
@@ -715,11 +903,14 @@ export default function BOConsultancyPage() {
                   id="bo-message"
                   required
                   rows={4}
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, resize: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, resize: "none", boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
                 />
               </div>
               <button
                 type="submit"
+                className="bo-btn"
                 style={{
                   background: C.orange,
                   color: "#fff",
@@ -729,10 +920,7 @@ export default function BOConsultancyPage() {
                   fontSize: 15,
                   fontWeight: 700,
                   cursor: "pointer",
-                  transition: "opacity 0.2s",
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.9")}
-                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
               >
                 Send Enquiry
               </button>
@@ -748,14 +936,14 @@ export default function BOConsultancyPage() {
             <div>
               <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 40, marginBottom: 16, filter: "brightness(0) invert(1)" }} />
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, lineHeight: 1.7 }}>
-                Australia's specialist blue-collar workforce recruitment partner.
+                Australia&apos;s specialist blue-collar workforce recruitment partner.
               </p>
             </div>
             <div>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Industries</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {INDUSTRIES.slice(0, 5).map((ind, i) => (
-                  <a key={i} href="#industries" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>{ind.name}</a>
+                  <a key={i} href="#industries" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>{ind.name}</a>
                 ))}
               </div>
             </div>
@@ -763,14 +951,15 @@ export default function BOConsultancyPage() {
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Quick Links</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {["About", "Services", "Why Us", "Testimonials", "Contact"].map((link, i) => (
-                  <a key={i} href={`#${link.toLowerCase().replace(" ", "-")}`} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>{link}</a>
+                  <a key={i} href={`#${link.toLowerCase().replace(" ", "-")}`} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>{link}</a>
                 ))}
               </div>
             </div>
             <div>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Contact</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <a href="mailto:info@boconsulting.com.au" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none" }}>info@boconsulting.com.au</a>
+                <a href="mailto:info@boconsulting.com.au" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>info@boconsulting.com.au</a>
+                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14 }}>Mon–Fri: 9am – 5pm AEST</p>
               </div>
             </div>
           </div>
@@ -780,8 +969,8 @@ export default function BOConsultancyPage() {
               © 2026 BO Consulting. All rights reserved.
             </p>
             <div style={{ display: "flex", gap: 24 }}>
-              <a href="/privacy-policy" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Privacy Policy</a>
-              <a href="/terms" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none" }}>Terms of Service</a>
+              <a href="/sites/bo-consultancy/privacy-policy" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>Privacy Policy</a>
+              <a href="/sites/bo-consultancy/terms" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>Terms of Service</a>
             </div>
           </div>
         </div>

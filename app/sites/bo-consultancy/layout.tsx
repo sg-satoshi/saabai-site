@@ -67,6 +67,50 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
           #bo-hamburger { display: none !important; }
           #bo-find-staff-nav { display: inline-flex !important; }
         }
+        /* Scroll reveal */
+        [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
+        [data-reveal].bo-visible { opacity: 1; transform: translateY(0); }
+        [data-reveal][data-delay="1"] { transition-delay: 0.1s; }
+        [data-reveal][data-delay="2"] { transition-delay: 0.2s; }
+        [data-reveal][data-delay="3"] { transition-delay: 0.3s; }
+        [data-reveal][data-delay="4"] { transition-delay: 0.4s; }
+        [data-reveal][data-delay="5"] { transition-delay: 0.5s; }
+        [data-reveal][data-delay="6"] { transition-delay: 0.6s; }
+        [data-reveal][data-delay="7"] { transition-delay: 0.7s; }
+        /* Hero entrance */
+        @keyframes bo-hero-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .bo-hero-animate { animation: bo-hero-in 0.8s cubic-bezier(0.22,1,0.36,1) both; }
+        .bo-hero-delay-1 { animation-delay: 0.15s; }
+        .bo-hero-delay-2 { animation-delay: 0.3s; }
+        .bo-hero-delay-3 { animation-delay: 0.45s; }
+        .bo-hero-delay-4 { animation-delay: 0.6s; }
+        .bo-hero-delay-5 { animation-delay: 0.75s; }
+        /* Nav scroll */
+        #bo-nav { transition: background 0.3s ease, box-shadow 0.3s ease; }
+        #bo-nav.bo-nav-scrolled { background: rgba(18,59,93,1) !important; box-shadow: 0 4px 32px rgba(18,59,93,0.4); }
+        /* Buttons */
+        .bo-btn { position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+        .bo-btn::after { content: ''; position: absolute; top: -50%; left: -60%; width: 30%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent); transform: skewX(-20deg); transition: left 0.5s; pointer-events: none; }
+        .bo-btn:hover::after { left: 130%; }
+        .bo-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(245,130,32,0.38) !important; }
+        /* Cards */
+        .bo-ind-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease, border-color 0.3s ease !important; cursor: default; }
+        .bo-ind-card:hover { transform: translateY(-6px) !important; box-shadow: 0 16px 48px rgba(18,59,93,0.15) !important; border-color: rgba(245,130,32,0.35) !important; }
+        .bo-svc-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
+        .bo-svc-card:hover { transform: translateY(-6px) !important; box-shadow: 0 20px 48px rgba(18,59,93,0.14) !important; }
+        .bo-why-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), background 0.3s ease, border-color 0.3s ease !important; }
+        .bo-why-card:hover { transform: translateY(-4px) !important; background: rgba(255,255,255,0.08) !important; border-color: rgba(245,130,32,0.4) !important; }
+        .bo-test-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
+        .bo-test-card:hover { transform: translateY(-4px) !important; box-shadow: 0 16px 48px rgba(18,59,93,0.14) !important; }
+        .bo-process-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
+        .bo-process-card:hover { transform: translateY(-6px) !important; box-shadow: 0 20px 48px rgba(18,59,93,0.12) !important; }
+        @keyframes bo-stat-in { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        .bo-stat { opacity: 0; }
+        .bo-stat.bo-visible { animation: bo-stat-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .bo-stat:nth-child(1).bo-visible { animation-delay: 0s; }
+        .bo-stat:nth-child(2).bo-visible { animation-delay: 0.1s; }
+        .bo-stat:nth-child(3).bo-visible { animation-delay: 0.2s; }
+        .bo-stat:nth-child(4).bo-visible { animation-delay: 0.3s; }
       ` }} />
       <script
         type="application/ld+json"
