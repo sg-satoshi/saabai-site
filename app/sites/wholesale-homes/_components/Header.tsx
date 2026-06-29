@@ -11,6 +11,7 @@ const nav = [
   { to: "/tax-advantages", label: "Tax Advantages" },
   { to: "/about", label: "About" },
   { to: "/faq", label: "FAQ" },
+  { to: "/contact", label: "Contact" },
   { to: "/blog", label: "Blog" },
 ];
 

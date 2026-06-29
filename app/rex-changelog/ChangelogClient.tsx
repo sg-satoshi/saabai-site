@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "01:10", tag: "FIX", title: "Rename Message label to 'Anything else we should know? (optional)'" },
       { time: "01:05", tag: "NEW", title: "Add buyer type (first home buyer/investor/downsizer) and purchase timeline (0-3/3-6/6-12 months, researching) fields to contact form, send all fields to Telegram alert" },
       { time: "01:00", tag: "UPDATE", title: "Trigger redeploy after TELEGRAM_CHAT_ID_WHOLESALE_HOMES env var update" },
       { time: "00:34", tag: "NEW", title: "Wire wholesale-homes contact form to Telegram — add site to TELEGRAM_SITES, fix CORS for multiple origins, send state/budget in lead, add state/budget to Telegram alert message" },
