@@ -19,11 +19,16 @@ export default function HomePage() {
       <Header />
       <main className="flex-1">
         {/* ── Hero ── */}
-        <section className="relative isolate overflow-hidden">
-          <div className="absolute inset-0 -z-10">
-            <img src="/sites/wholesale-homes/hero-home.jpg" alt="" width={1920} height={1280} fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1A2B3C]/70 via-[#1A2B3C]/55 to-[#1A2B3C]/85" />
-          </div>
+        <section
+          className="relative isolate overflow-hidden"
+          style={{
+            backgroundImage: "url('/sites/wholesale-homes/hero-home.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1A2B3C]/70 via-[#1A2B3C]/55 to-[#1A2B3C]/85 -z-10" />
           <div className="mx-auto flex min-h-[70vh] w-full max-w-7xl flex-col justify-center px-6 py-20 text-white md:min-h-[88vh] md:py-28 lg:px-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80 md:text-xs">In partnership with Metricon</p>
             <h1 className="mt-4 max-w-4xl text-[clamp(2rem,7vw,4.5rem)] font-semibold leading-[1.08] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
