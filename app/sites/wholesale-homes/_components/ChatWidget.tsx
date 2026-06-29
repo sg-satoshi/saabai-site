@@ -41,7 +41,7 @@ function saveStored(messages: { role: string; content: string }[]) {
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: "assistant", content: "👋 Hi, I'm Sophie! Looking for house & land packages? I can help match you with the right property. Ask me about available packages, pricing, or how the wholesale process works." },
+    { role: "assistant", content: "👋 Hi, I'm Sophie. I'm a Wholesale Homes Specialist here to help you find the right house and land package. Ask me about available packages, pricing, or how the wholesale process works." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
