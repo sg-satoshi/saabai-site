@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "01:18", tag: "UPDATE", title: "Redeploy after TG_WHOLESALE_HOMES env vars" },
       { time: "01:11", tag: "FIX", title: "Add Contact link to nav between FAQ and Blog" },
       { time: "01:10", tag: "FIX", title: "Rename Message label to 'Anything else we should know? (optional)'" },
       { time: "01:05", tag: "NEW", title: "Add buyer type (first home buyer/investor/downsizer) and purchase timeline (0-3/3-6/6-12 months, researching) fields to contact form, send all fields to Telegram alert" },

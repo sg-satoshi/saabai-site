@@ -27,15 +27,10 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="lg:col-span-2">
-                <div className="rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:p-8">
-                  <div className="aspect-[1/1] w-full overflow-hidden rounded-2xl bg-[#f5f2eb] md:aspect-[4/5]">
+                <div className="rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white overflow-hidden">
+                  <div className="aspect-[1/1] w-full overflow-hidden bg-[#f5f2eb]">
                     <img src="/sites/wholesale-homes/nick-foale.jpg" alt="Nick Foale" className="h-full w-full object-cover" />
                   </div>
-                  <h2 className="mt-4 text-lg font-semibold tracking-tight md:mt-5 md:text-xl">Nick Foale</h2>
-                  <p className="text-xs text-[#5C6670] md:text-sm">Principal Advisor · Finance &amp; Real Estate</p>
-                  <p className="mt-4 text-xs leading-relaxed text-[#5C6670] md:mt-5 md:text-sm">
-                    25+ years in banking, mortgage broking, and property development. Qualified across both finance and real estate to guide you from application to settlement.
-                  </p>
                 </div>
               </div>
             </div>
