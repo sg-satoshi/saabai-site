@@ -165,9 +165,27 @@ export async function proxy(req: NextRequest) {
     if (slug) {
       const url = req.nextUrl.clone();
       const pathname = url.pathname;
+      // Rewrite _next/static assets to the real deployment domain so
+      // CSS, JS, and fonts load properly (the custom domain isn't a
+      // registered Vercel domain, so Vercel 404s on static chunks there).
+      if (pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
+        url.hostname = "www.saabai.ai";
+        return NextResponse.rewrite(url);
+      }
       const siteBase = `/sites/${slug}`;
-      // Pass through API calls and static asset paths (already correct in public/)
-      if (pathname.startsWith("/api/") || pathname.startsWith(siteBase)) {
+      // Pass through API calls (handled by route handlers, not static files)
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.next();
+      }
+      // Static assets under /sites/{slug}/* (images, fonts, etc.) — rewrite to saabai.ai.
+      // Page routes under /sites/{slug}/* (packages, how-it-works, etc.) pass through
+      // to the App Router. We distinguish by file extension.
+      if (pathname.startsWith(siteBase)) {
+        const isStatic = /\.\w+$/.test(pathname);
+        if (isStatic) {
+          url.hostname = "www.saabai.ai";
+          return NextResponse.rewrite(url);
+        }
         return NextResponse.next();
       }
       url.pathname = pathname === "/" || pathname === "" ? siteBase : `${siteBase}${pathname}`;
@@ -203,5 +221,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const proxyConfig = {
-  matcher: ["/((?!_next/|_static/|_vercel|favicon.ico).*)"],
+  matcher: ["/((?!_static/|_vercel).*)"],
 };
