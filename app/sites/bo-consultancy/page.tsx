@@ -121,6 +121,8 @@ export default function BOConsultancyPage() {
 
   // Scroll reveal
   useEffect(() => {
+    // Mark JS as active — gates the opacity:0 hiding CSS so elements stay visible if JS fails
+    document.documentElement.classList.add("bo-js");
     const reveals = document.querySelectorAll("[data-reveal]");
     const observer = new IntersectionObserver(
       (entries) => {

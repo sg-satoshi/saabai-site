@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "29 Jun 2026",
+    entries: [
+      { time: "13:23", tag: "NEW", title: "Enhance boconsulting.com.au with scroll animations, parallax hero, and How It Works section" }
+    ],
+  },
+  {
     date: "27 Jun 2026",
     entries: [
       { time: "18:46", tag: "FIX", title: "Add BO Consulting to site factory list via PINNED_SITES" },

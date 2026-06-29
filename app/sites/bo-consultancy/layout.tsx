@@ -67,16 +67,16 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
           #bo-hamburger { display: none !important; }
           #bo-find-staff-nav { display: inline-flex !important; }
         }
-        /* Scroll reveal */
-        [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
-        [data-reveal].bo-visible { opacity: 1; transform: translateY(0); }
-        [data-reveal][data-delay="1"] { transition-delay: 0.1s; }
-        [data-reveal][data-delay="2"] { transition-delay: 0.2s; }
-        [data-reveal][data-delay="3"] { transition-delay: 0.3s; }
-        [data-reveal][data-delay="4"] { transition-delay: 0.4s; }
-        [data-reveal][data-delay="5"] { transition-delay: 0.5s; }
-        [data-reveal][data-delay="6"] { transition-delay: 0.6s; }
-        [data-reveal][data-delay="7"] { transition-delay: 0.7s; }
+        /* Scroll reveal — progressive enhancement: only hide if JS loaded */
+        html.bo-js [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
+        html.bo-js [data-reveal].bo-visible { opacity: 1; transform: translateY(0); }
+        html.bo-js [data-reveal][data-delay="1"] { transition-delay: 0.1s; }
+        html.bo-js [data-reveal][data-delay="2"] { transition-delay: 0.2s; }
+        html.bo-js [data-reveal][data-delay="3"] { transition-delay: 0.3s; }
+        html.bo-js [data-reveal][data-delay="4"] { transition-delay: 0.4s; }
+        html.bo-js [data-reveal][data-delay="5"] { transition-delay: 0.5s; }
+        html.bo-js [data-reveal][data-delay="6"] { transition-delay: 0.6s; }
+        html.bo-js [data-reveal][data-delay="7"] { transition-delay: 0.7s; }
         /* Hero entrance */
         @keyframes bo-hero-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .bo-hero-animate { animation: bo-hero-in 0.8s cubic-bezier(0.22,1,0.36,1) both; }
@@ -105,12 +105,12 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
         .bo-process-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
         .bo-process-card:hover { transform: translateY(-6px) !important; box-shadow: 0 20px 48px rgba(18,59,93,0.12) !important; }
         @keyframes bo-stat-in { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        .bo-stat { opacity: 0; }
-        .bo-stat.bo-visible { animation: bo-stat-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
-        .bo-stat:nth-child(1).bo-visible { animation-delay: 0s; }
-        .bo-stat:nth-child(2).bo-visible { animation-delay: 0.1s; }
-        .bo-stat:nth-child(3).bo-visible { animation-delay: 0.2s; }
-        .bo-stat:nth-child(4).bo-visible { animation-delay: 0.3s; }
+        html.bo-js .bo-stat { opacity: 0; }
+        html.bo-js .bo-stat.bo-visible { animation: bo-stat-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+        html.bo-js .bo-stat:nth-child(1).bo-visible { animation-delay: 0s; }
+        html.bo-js .bo-stat:nth-child(2).bo-visible { animation-delay: 0.1s; }
+        html.bo-js .bo-stat:nth-child(3).bo-visible { animation-delay: 0.2s; }
+        html.bo-js .bo-stat:nth-child(4).bo-visible { animation-delay: 0.3s; }
       ` }} />
       <script
         type="application/ld+json"
