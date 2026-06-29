@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "09:16", tag: "FIX", title: "Nick photo card — removed text below photo so card bottom matches photo bottom, removed md:aspect-[4/5] crop" },
       { time: "01:18", tag: "UPDATE", title: "Redeploy after TG_WHOLESALE_HOMES env vars" },
       { time: "01:11", tag: "FIX", title: "Add Contact link to nav between FAQ and Blog" },
       { time: "01:10", tag: "FIX", title: "Rename Message label to 'Anything else we should know? (optional)'" },
