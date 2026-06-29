@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "20:07", tag: "NEW", title: "Wire Wholesale Homes chat to AI backend, suppress Mia on site path" },
       { time: "19:55", tag: "NEW", title: "Add Wholesale Homes Australia site (wholesalehomes.com.au) — 9 pages, packages data, site factory registration" },
       { time: "18:09", tag: "FIX", title: "Replace duplicated gallery image with new rooftop shot" },
       { time: "15:47", tag: "FIX", title: "Remove all em dashes from boconsulting.com.au content and chatbot" },

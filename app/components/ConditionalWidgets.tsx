@@ -23,7 +23,7 @@ const SUPPRESS_PATHS = [
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy"];
+const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy", "/sites/wholesale-homes"];
 
 // Custom domains that have their own widgets — suppress all Saabai widgets
 const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au"];
