@@ -1,84 +1,155 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+
+const STORAGE_KEY = "wholesale-homes-conversation";
+const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
+const SLUG = "wholesale-homes";
+
+const TEAL = "#0891b2";
+const TEAL_DK = "#0369a1";
+const NAVY = "#1A2B3C";
+const LIGHT = "#f5f5f7";
+const TEXT = "#1A2B3C";
+const WHITE = "#ffffff";
+
+function loadStored(): { role: string; content: string }[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const { messages, timestamp } = JSON.parse(raw);
+    if (Date.now() - new Date(timestamp).getTime() > STORAGE_TTL) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return messages as { role: string; content: string }[];
+  } catch {
+    return null;
+  }
+}
+
+function saveStored(messages: { role: string; content: string }[]) {
+  try {
+    if (messages.length <= 1) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, timestamp: new Date().toISOString() }));
+  } catch {}
+}
 
 export function ChatWidget() {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+    { role: "assistant", content: "👋 Looking for house & land packages? I can help match you with the right property. Ask me about available packages, pricing, or how it works." },
+  ]);
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
 
-  const prompts = [
-    "What's your approximate budget range?",
-    "Which state or region are you targeting?",
-    "Are you a first-home buyer or existing investor?",
-    "Great. Drop your email and our principal advisor will reach out within 24 hours.",
-  ];
+  useEffect(() => {
+    const stored = loadStored();
+    if (stored && stored.length > 1) setMessages(stored);
+  }, []);
 
-  const submit = () => {
-    if (!input.trim()) return;
-    setAnswers((a) => [...a, input]);
+  useEffect(() => {
+    saveStored(messages);
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function send() {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const userMsg = { role: "user", content: text };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput("");
-    setStep((s) => s + 1);
-  };
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/site-factory-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: SLUG,
+          messages: newMessages.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content })),
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data.content || "I'm not sure about that — could you rephrase?";
+        setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+      } else {
+        throw new Error("API error");
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Having trouble connecting. Please call us on 1300 000 000 or email hello@wholesalehomes.com.au." },
+      ]);
+    }
+    setLoading(false);
+  }
 
   return (
-    <>
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-5 py-3.5 text-sm font-medium text-white shadow-[0_30px_60px_-30px_rgba(26,43,60,0.35)] transition-transform hover:-translate-y-0.5"
-        >
-          <MessageCircle className="h-4 w-4" />
-          Chat with us
-        </button>
-      )}
-      {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_30px_60px_-30px_rgba(26,43,60,0.35)]">
-          <div className="flex items-center justify-between border-b border-[rgba(0,0,0,0.08)] bg-[#1A2B3C] px-4 py-3 text-white">
-            <div>
-              <p className="text-sm font-semibold">Wholesale Homes</p>
-              <p className="text-[11px] text-white/60">Typically replies in minutes</p>
+    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 200, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
+      {isOpen && (
+        <div style={{ width: 380, maxWidth: "calc(100vw - 48px)", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", height: 520, maxHeight: "calc(100vh - 120px)", background: WHITE, boxShadow: "0 24px 80px rgba(26,43,60,0.25)" }}>
+          {/* Header */}
+          <div style={{ background: NAVY, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16, fontWeight: 700, color: WHITE }}>
+              WH
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Close"><X className="h-4 w-4" /></button>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: WHITE, fontSize: 14, fontWeight: 700 }}>Wholesale Homes</div>
+              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12 }}>Online now</div>
+            </div>
+            <button onClick={() => setIsOpen(false)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "0 4px" }}>×</button>
           </div>
-          <div className="flex-1 space-y-3 overflow-y-auto bg-[#F7F8F9] p-4 text-sm">
-            <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white p-3 shadow-sm">
-              👋 Looking for house &amp; land packages? Let me help match you.
-            </div>
-            {prompts.slice(0, step + 1).map((p, i) => (
-              <div key={`p${i}`} className="space-y-2">
-                <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white p-3 shadow-sm">{p}</div>
-                {answers[i] && (
-                  <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#0891b2] p-3 text-white shadow-sm">
-                    {answers[i]}
-                  </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 16 }}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
+                {msg.role === "assistant" && (
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, color: WHITE, marginTop: 2 }}>WH</div>
                 )}
+                <div style={{ maxWidth: "75%", padding: "10px 14px", borderRadius: 16, fontSize: 14, lineHeight: 1.6, background: msg.role === "user" ? TEAL : LIGHT, color: msg.role === "user" ? WHITE : TEXT, borderBottomLeftRadius: msg.role === "assistant" ? 4 : 16, borderBottomRightRadius: msg.role === "user" ? 4 : 16 }}>
+                  {msg.content}
+                </div>
               </div>
             ))}
-            {step >= prompts.length && (
-              <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white p-3 shadow-sm">
-                Thanks. We&apos;ll be in touch shortly with packages that match.
+            {loading && (
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: TEAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, color: WHITE }}>WH</div>
+                <div style={{ padding: "10px 14px", borderRadius: 16, background: LIGHT, display: "flex", gap: 4, alignItems: "center", borderBottomLeftRadius: 4 }}>
+                  {[0, 150, 300].map((delay) => (
+                    <span key={delay} style={{ width: 7, height: 7, borderRadius: "50%", background: TEAL, display: "inline-block", animation: "wh-bounce 1s infinite", animationDelay: `${delay}ms` }} />
+                  ))}
+                </div>
               </div>
             )}
+            <div ref={endRef} />
           </div>
-          {step < prompts.length && (
-            <div className="flex items-center gap-2 border-t border-[rgba(0,0,0,0.08)] bg-white p-3">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submit()}
-                placeholder="Type your reply..."
-                className="flex-1 rounded-full border border-[rgba(0,0,0,0.12)] bg-[#f5f5f7] px-4 py-2 text-sm outline-none focus:border-[#0891b2]"
-              />
-              <button onClick={submit} className="rounded-full bg-[#0891b2] p-2 text-white" aria-label="Send">
-                <Send className="h-4 w-4" />
-              </button>
+
+          {/* Input */}
+          <div style={{ padding: "12px", borderTop: `1px solid ${LIGHT}`, flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") send(); }} placeholder="Type a message…" style={{ flex: 1, padding: "10px 14px", borderRadius: 12, border: "1px solid #E2E6EA", fontSize: 14, color: TEXT, outline: "none", background: WHITE }} />
+              <button onClick={send} disabled={loading || !input.trim()} style={{ padding: "10px 18px", borderRadius: 12, border: "none", background: TEAL, color: WHITE, fontSize: 14, fontWeight: 700, cursor: loading || !input.trim() ? "not-allowed" : "pointer", opacity: loading || !input.trim() ? 0.4 : 1, transition: "opacity 0.2s" }}>Send</button>
             </div>
-          )}
+          </div>
         </div>
       )}
-    </>
+
+      {/* Launcher */}
+      <button onClick={() => setIsOpen((o) => !o)} aria-label="Chat with us" style={{ width: 60, height: 60, borderRadius: "50%", border: "none", background: TEAL, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(8,145,178,0.45)", fontSize: 22, fontWeight: 700, color: WHITE, overflow: "hidden", padding: 0, flexShrink: 0 }}>
+        {isOpen ? (
+          <span style={{ fontSize: 24, lineHeight: 1, pointerEvents: "none" }}>×</span>
+        ) : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style={{ pointerEvents: "none" }}><path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z"/></svg>
+        )}
+      </button>
+
+      <style>{`@keyframes wh-bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }`}</style>
+    </div>
   );
 }

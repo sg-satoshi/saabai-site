@@ -18,6 +18,8 @@ const SUPPRESS_PATHS = [
   "/sites/bo-consultancy",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
+  // Wholesale Homes — has its own chat widget
+  "/sites/wholesale-homes",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
