@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "29 Jun 2026",
     entries: [
+      { time: "23:02", tag: "FIX", title: "Strip all Saabai branding from wholesale-homes site metadata — title, canonical, twitter, keywords, author, creator, publisher" },
       { time: "22:56", tag: "FIX", title: "Clean URLs on custom domain — remove /sites/wholesale-homes prefix from all nav links" },
       { time: "22:52", tag: "NEW", title: "Add house-icon SVG favicon for wholesale-homes site" },
       { time: "22:44", tag: "FIX", title: "Properly await params using React.use() in dynamic package detail page" },
