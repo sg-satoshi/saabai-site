@@ -97,7 +97,7 @@ export function EnquiryForm({ propertyName, propertyId, propertyPrice }: Props) 
         disabled={sending}
         className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0891b2] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#0369a1] disabled:opacity-60 sm:w-auto"
       >
-        {sending ? "Sending..." : "Send Enquiry"}
+        {sending ? "Sending..." : "Submit Your Enquiry"}
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "16:27", tag: "NEW", title: "Replace static CTA with property-specific enquiry form + sales copy" },
       { time: "16:15", tag: "FIX", title: "Crop VIC property images to photo portion only (remove text panel from promo graphics)" },
       { time: "16:11", tag: "FIX", title: "Equalize spacing above and below dual-income banner (mt-8 / mb-8)" },
       { time: "16:10", tag: "FIX", title: "Increase spacing above dual-income banner (mt-10 between filter pills and dark section)" },
