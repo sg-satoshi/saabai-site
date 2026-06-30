@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
 import { ChevronDown } from "lucide-react";
+import { DashboardErrorBoundary } from "../../_components/DashboardErrorBoundary";
 
 const AUTH_KEY = "wholesale_client_auth";
 
@@ -78,6 +79,7 @@ export default function ClientDashboard() {
   const sortLabel = sort === "price-low" ? "Price: Low to High" : sort === "price-high" ? "Price: High to Low" : "Sort";
 
   return (
+    <DashboardErrorBoundary>
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1 bg-[#f8f6f2]">
@@ -203,5 +205,6 @@ export default function ClientDashboard() {
       </main>
       <Footer />
     </div>
+    </DashboardErrorBoundary>
   );
 }
