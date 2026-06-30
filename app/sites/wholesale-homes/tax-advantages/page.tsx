@@ -14,7 +14,7 @@ export default function TaxAdvantagesPage() {
         <section className="py-16 md:py-28">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">2026 Federal Budget</p>
-            <h1 className="mt-3 max-w-3xl text-[clamp(1.6rem,5vw,3rem)] font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-[clamp(1.6rem,5vw,3rem)] font-semibold leading-tight tracking-tight text-[#1A2B3C] md:text-4xl lg:text-5xl">
               New construction is the only game left for property investors.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[#5C6670] md:mt-5 md:text-base lg:text-lg">

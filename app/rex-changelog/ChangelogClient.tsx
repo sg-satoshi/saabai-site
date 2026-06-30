@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "17:35", tag: "FIX", title: "Add text-[#1A2B3C] to main elements on all wholesale-homes pages to fix white-on-light text" },
       { time: "17:34", tag: "FIX", title: "Add bg-[#f8f6f2] to all page mains instead of layout wrapper (layout wrapper broke CSS)" },
       { time: "17:33", tag: "FIX", title: "Add light background to wholesale-homes layout to prevent dark body bg bleeding through all pages" },
       { time: "17:30", tag: "FIX", title: "Update registration confirmation copy" },
