@@ -97,7 +97,7 @@ export function ChatWidget() {
       });
       if (res.ok) {
         const data = await res.json();
-        const reply = data.content || "I'm not sure about that — could you rephrase?";
+        const reply = data.content || "I'm not sure about that. Could you rephrase?";
         setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
       } else {
         throw new Error("API error");

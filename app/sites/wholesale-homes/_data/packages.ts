@@ -78,7 +78,7 @@ export const packages: Package[] = [
     badge: "Below Market",
     image: "/sites/wholesale-homes/hero-home.jpg",
     highlight: "Premium corner lot, north-facing",
-    description: "A premium four-bedroom family residence on one of the largest lots in the Arcadia estate. The Ridgeview Prestige 48 offers dual living zones, a grand master retreat with ensuite and walk-in robe, and a gourmet kitchen with butler's pantry. The north-facing corner aspect captures natural light throughout the day and provides additional side access — ideal for a boat, caravan or future shed. Landscaping and driveway included.",
+    description: "A premium four-bedroom family residence on one of the largest lots in the Arcadia estate. The Ridgeview Prestige 48 offers dual living zones, a grand master retreat with ensuite and walk-in robe, and a gourmet kitchen with butler's pantry. The north-facing corner aspect captures natural light throughout the day and provides additional side access. Ideal for a boat, caravan or future shed. Landscaping and driveway included.",
   },
   {
     id: "harbourline-villa-32",
@@ -93,7 +93,7 @@ export const packages: Package[] = [
     badge: "New Release",
     image: "/sites/wholesale-homes/interior-kitchen.jpg",
     highlight: "First release pricing locked in",
-    description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck. The chef's kitchen includes stone benchtops, gas cooking and a walk-in pantry. Part of the first release at Emerald Hills — pricing is locked in at pre-construction levels, well below future stages.",
+    description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck. The chef's kitchen includes stone benchtops, gas cooking and a walk-in pantry. Part of the first release at Emerald Hills. Pricing is locked in at pre-construction levels, well below future stages.",
   },
   {
     id: "sunnydale-terrace-30",

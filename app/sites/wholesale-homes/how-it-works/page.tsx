@@ -7,12 +7,12 @@ import { Footer } from "../_components/Footer";
 import { ChatWidget } from "../_components/ChatWidget";
 
 const steps = [
-  { number: "1", title: "Browse Packages", desc: "Explore our exclusive inventory — VIC, NSW, QLD. Every package already priced below market." },
+  { number: "1", title: "Browse Packages", desc: "Explore our exclusive inventory. VIC, NSW, QLD. Every package already priced below market." },
   { number: "2", title: "Book a Discovery Call", desc: "A no-obligation chat with our principal advisor. They handle finance AND real estate in one conversation." },
   { number: "3", title: "Get Pre-Approved", desc: "Through our partner lending panel. We know exactly what each builder's lenders require." },
-  { number: "4", title: "Choose & Lock", desc: "Select your package. We secure it at wholesale pre-market pricing — before it hits the general market." },
+  { number: "4", title: "Choose & Lock", desc: "Select your package. We secure it at wholesale pre-market pricing. Before it hits the general market." },
   { number: "5", title: "Settlement & Build", desc: "Turn-key land settlement and build commencement. 12-month construction timeline, fully managed." },
-  { number: "6", title: "Handover", desc: "Walk into a completed home with landscaping, driveway, and inclusions — same spec as full retail." },
+  { number: "6", title: "Handover", desc: "Walk into a completed home with landscaping, driveway, and inclusions. Same spec as full retail." },
 ];
 
 export default function HowItWorksPage() {

@@ -28,16 +28,16 @@ export default function TaxAdvantagesPage() {
             <div className="grid gap-8 md:gap-10 lg:grid-cols-2 lg:gap-14">
               {[
                 {
-                  title: "Negative Gearing — New Builds Only",
+                  title: "Negative Gearing / New Builds Only",
                   body: "From 1 July 2027, negative gearing on established residential property is being phased out. New construction retains the benefit in full. Every dollar your new property runs at a loss is still deductible against your salary or other investment income. Established property investors lose this advantage.",
                 },
                 {
-                  title: "CGT — Favours New Construction",
-                  body: "The Budget reduces the CGT discount from 50% to 33% for most assets — but new construction retains the full 50% discount. For an investor selling a new build after 12 months, that could mean tens of thousands in reduced capital gains tax versus an established property.",
+                  title: "CGT / Favours New Construction",
+                  body: "The Budget reduces the CGT discount from 50% to 33% for most assets. But new construction retains the full 50% discount. For an investor selling a new build after 12 months, that could mean tens of thousands in reduced capital gains tax versus an established property.",
                 },
                 {
                   title: "$47B Housing Supply Boost",
-                  body: "The government is funnelling $47 billion into new housing supply — infrastructure grants, land release incentives, and direct construction funding. This creates the conditions for strong capital growth in growth corridors where new estates are being built.",
+                  body: "The government is funnelling $47 billion into new housing supply. Infrastructure grants, land release incentives, and direct construction funding. This creates the conditions for strong capital growth in growth corridors where new estates are being built.",
                 },
                 {
                   title: "Help to Buy & Shared Equity",
@@ -45,11 +45,11 @@ export default function TaxAdvantagesPage() {
                 },
                 {
                   title: "Depreciation Benefits",
-                  body: "New builds unlock significant depreciation schedules — typically $8,000–$15,000 per year in non-cash deductions for the first 10 years. Established properties offer minimal to no depreciation. This is cash-flow positive equity that established buyers miss entirely.",
+                  body: "New builds unlock significant depreciation schedules. Typically $8,000–$15,000 per year in non-cash deductions for the first 10 years. Established properties offer minimal to no depreciation. This is cash-flow positive equity that established buyers miss entirely.",
                 },
                 {
                   title: "Builder Incentives & Wholesale Pricing",
-                  body: "Builders are running incentives to move inventory: upgraded inclusions, reduced deposits, fixed-price contracts. Combined with wholesale pricing from our network, buyers can enter at 8–12% below comparable retail, building equity from day one — and accessing a market the general public never sees.",
+                  body: "Builders are running incentives to move inventory: upgraded inclusions, reduced deposits, fixed-price contracts. Combined with wholesale pricing from our network, buyers can enter at 8–12% below comparable retail, building equity from day one. Accessing a market the general public never sees.",
                 },
               ].map((item) => (
                 <div key={item.title} className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-5 md:p-7 lg:p-8">

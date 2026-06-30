@@ -23,7 +23,7 @@ export default function AboutPage() {
                   Wholesale Homes Australia was founded to solve a simple problem: new house and land packages are sold through display villages and realestate.com.au, marked up by 8–12%. Our network buys direct from builders, pre-market, and passes those savings on to you.
                 </p>
                 <p className="mt-4 text-sm leading-relaxed text-[#5C6670] md:text-base">
-                  Our principal advisor holds qualifications in both finance (credit license) and real estate — with 25+ years in banking, mortgage broking, and property development.
+                  Our principal advisor holds qualifications in both finance (credit license) and real estate. With 25+ years in banking, mortgage broking, and property development.
                 </p>
               </div>
               <div className="lg:col-span-2">
@@ -46,7 +46,7 @@ export default function AboutPage() {
             <div className="grid gap-6 md:grid-cols-3 md:gap-8">
               {[
                 { icon: Building2, title: "Builder Partnerships", desc: "We work directly with Metricon, Mirvac, Stockland, Henley, and 8 other builders to secure inventory pre-market." },
-                { icon: ShieldCheck, title: "Dual Qualification", desc: "Your principal advisor holds a credit license AND real estate license — two hats, one conversation. No hand-offs." },
+                { icon: ShieldCheck, title: "Dual Qualification", desc: "Your principal advisor holds a credit license AND real estate license. Two hats, one conversation. No hand-offs." },
                 { icon: Award, title: "Wholesale Network", desc: "Our model bypasses retail channels. You access the same product at builder-direct pricing, available before the general public." },
               ].map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:p-8">

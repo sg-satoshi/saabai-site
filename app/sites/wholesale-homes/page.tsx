@@ -125,7 +125,7 @@ export default function HomePage() {
                 Pre-market deals don't get published on public listings.
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#5C6670] md:mt-5 md:text-base lg:text-lg">
-                Our best inventory moves through a private client portal — first qualified, first secured. If you're serious about buying below market valuation, the next step is a 20-minute conversation with Nick to get you approved.
+                Our best inventory moves through a private client portal. First qualified, first secured. If you're serious about buying below market valuation, the next step is a 20-minute conversation with Nick to get you approved.
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-10 md:gap-4">
                 <Link href="/contact" className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">

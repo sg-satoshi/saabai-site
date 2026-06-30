@@ -10,7 +10,7 @@ const articles = [
   { title: "Why New Builds Will Dominate Australian Property in 2026", snippet: "The 2026 Federal Budget rewrote the rules for property investors. Here's why new construction is now the clear winner.", slug: "new-builds-dominate-2026" },
   { title: "Wholesale vs Retail: What You're Actually Paying For", snippet: "Most buyers never see the wholesale price. We break down the 8–12% gap and how it becomes your equity.", slug: "wholesale-vs-retail" },
   { title: "The Suburbs Where Builders Are Competing for Buyers", snippet: "Which growth corridors are offering the best incentives right now? Our monthly market snapshot.", slug: "builders-competing-suburbs" },
-  { title: "First Home Buyer Guide to House & Land Packages", snippet: "Deposit schemes, grants, and the wholesale advantage — everything a first-timer needs to know.", slug: "first-home-buyer-guide" },
+  { title: "First Home Buyer Guide to House & Land Packages", snippet: "Deposit schemes, grants, and the wholesale advantage. Everything a first-timer needs to know.", slug: "first-home-buyer-guide" },
   { title: "Depreciation Schedules: The $10K Tax Deduction Most Investors Miss", snippet: "New builds unlock significant non-cash deductions. Here's how to maximise them.", slug: "depreciation-schedules" },
 ];
 
@@ -46,7 +46,7 @@ export default function BlogPage() {
 
             <div className="mt-12 rounded-3xl bg-[#1A2B3C] p-8 text-white text-center md:mt-16 md:p-12">
               <h2 className="text-lg font-semibold tracking-tight md:text-xl">Get the weekly market update</h2>
-              <p className="mt-2 text-sm text-white/70">New packages, policy changes, and market intelligence — straight to your inbox.</p>
+              <p className="mt-2 text-sm text-white/70">New packages, policy changes, and market intelligence. Straight to your inbox.</p>
               <div className="mt-5 mx-auto flex max-w-md gap-3">
                 <input type="email" placeholder="Your email" className="flex-1 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm text-white placeholder-white/40 outline-none" />
                 <button className="rounded-full bg-[#0891b2] px-5 py-3 text-sm font-semibold transition-colors hover:bg-[#0369a1]">Subscribe</button>

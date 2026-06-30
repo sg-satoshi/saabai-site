@@ -15,7 +15,7 @@ const faqs = [
   { q: "How long does the build take?", a: "Typically 10–14 months from site start to handover, depending on the builder and estate stage." },
   { q: "What areas does Wholesale Homes cover?", a: "We currently operate in VIC (Tarneit, Werribee), NSW (Cobbitty, Gregory Hills), and QLD (Pimpama, Ormeau). We're expanding to SA and WA in late 2026." },
   { q: "Can I visit the land or display home?", a: "Absolutely. We arrange site visits to the estate and display homes after your discovery call." },
-  { q: "Is there a fee for buyers?", a: "No. Our revenue comes from builder commissions. You pay the same price — or less — than you would approaching the builder directly." },
+  { q: "Is there a fee for buyers?", a: "No. Our revenue comes from builder commissions. You pay the same price. Or less. than you would approaching the builder directly." },
   { q: "What if I'm not ready to buy yet?", a: "No pressure. Book a call to learn the process. You can take months to browse before committing." },
   { q: "Do you offer SMSF investment options?", a: "Yes. New house and land packages can be structured within a self-managed super fund. Ask our advisor on the call." },
   { q: "What if I change my mind after securing a package?", a: "Most builders have a cooling-off period (typically 3–5 business days). We'll explain the terms before you sign anything." },
