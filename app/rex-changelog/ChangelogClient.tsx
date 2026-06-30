@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "14:45", tag: "UPDATE", title: "Remove fake VIC listings: The Northbridge 42 and Ridgeview Prestige 48" },
       { time: "14:43", tag: "NEW", title: "Add Lot 36 Winterbrook Heyfield — dual occupancy, 69,990, 6.28-6.88% yield, 852m²" },
       { time: "14:41", tag: "NEW", title: "Add Lot 16 Woodlands Estate Nagambie — dual occupancy, 14,990, 6.3-6.7% yield" },
       { time: "14:39", tag: "NEW", title: "Add Lot 513 The Outlook Mooroopna — dual occupancy, 99,990, 6.3% yield" },
