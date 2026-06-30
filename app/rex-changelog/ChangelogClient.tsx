@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "16:41", tag: "FIX", title: "Remove all em dashes from wholesale-homes user-facing copy site-wide" },
       { time: "16:33", tag: "UI", title: "Force redeploy — clear Vercel cache, serve updated enquiry section" },
       { time: "16:32", tag: "FIX", title: "Packages nav link redirects to /client/dashboard when logged in, /packages when not" },
       { time: "16:31", tag: "FIX", title: "Re-crop VIC images to remove baked-in data overlay text and FIND OUT MORE buttons" },

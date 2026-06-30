@@ -108,7 +108,9 @@ export default function ClientLogin() {
 
             <p className="mt-6 text-center text-xs text-[#9CA3AF] md:text-sm">
               Don&apos;t have access yet?{" "}
-              <a href="/contact" className="text-[#0891b2] hover:underline">Request access from your advisor</a>
+              <a href="/client/register" className="text-[#0891b2] hover:underline">Request access</a>
+              {" "}or{" "}
+              <a href="/contact" className="text-[#0891b2] hover:underline">contact your advisor</a>
             </p>
           </div>
         </div>
