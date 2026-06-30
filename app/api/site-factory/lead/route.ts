@@ -8,6 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Hardcoded lead email overrides — for sites not in the Redis registry
 const LEAD_EMAIL_OVERRIDES: Record<string, string> = {
   "bo-consultancy": "info@boconsulting.com.au",
+  "wholesale-homes": "hello@wholesalehomes.com.au",
 };
 
 // Telegram config per site — add new sites here
