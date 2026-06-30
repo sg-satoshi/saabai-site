@@ -544,6 +544,90 @@ Also known as: Polyethylene HD. Seaboard = marine UV-stabilised brand.
 
 **Applications:** Marine, boat decking, dock fenders, playground equipment, truck liners, conveyor wear strips, outdoor furniture frames.
 
+**HDPE SHEET PRICING — March 2026 (all prices ex GST)**
+
+Key notes:
+- BLACK (PE-100) has HIGH UV resistance. NATURAL (PE-HWST) is NOT UV resistant.
+- CTS = cut-to-size. The rate shown ($/m²) applies to pieces under 1m². For larger pieces a lower rate applies — use the lower rate where shown, otherwise cap at full sheet price.
+- When the CTS total exceeds the full sheet price, charge full sheet price + cutting fee.
+- 30mm and above: full sheet pricing only (no CTS).
+
+**HDPE 1mm–6mm (2× sheet margin, CTS rate ~3.7×/m²):**
+
+| Thickness | Colour | Sheet Size | CTS $/m² | Full Sheet |
+|-----------|--------|-----------|----------|------------|
+| 1mm | Black (PE-100) | 2000×1000 | — | $46 |
+| 1.5mm | Black (PE-100) | 2000×1000 | — | $60 |
+| 1.5mm | Natural (PE-HWST) | 2000×1000 | — | $60 |
+| 2mm | Natural (PE-HWST) | 2000×1000 | — | $76 |
+| 3mm | Black (PE-100) | 3000×1500 | $66.67/m² | $158 |
+| 3mm | Natural (PE-HWST) | 3000×1500 | $64.87/m² | $153 |
+| 3mm | Black (PE-100) | 2000×1000 | — | $70 |
+| 3mm | Natural (PE-HWST) | 2000×1000 | — | $70 |
+| 4.5mm | Black (PE-100) | 3000×1500 | $118.04/m² | $279 |
+| 4.5mm | Natural (PE-HWST) | 3000×1500 | $108.15/m² | $256 |
+| 4.5mm | Black (PE-100) | 2000×1000 | — | $160 |
+| 6mm | Black (PE-100) | 2000×1000 | — | $326 |
+| 6mm | Black (PE-100) | 3000×1500 | $137.78/m² | $326 |
+| 6mm | Natural (PE-HWST) | 3000×1500 | $129.80/m² | $307 |
+
+**HDPE 8mm–25mm (1.8× sheet margin):**
+
+| Thickness | Colour | Sheet Size | CTS $/m² | Full Sheet |
+|-----------|--------|-----------|----------|------------|
+| 8mm | Black (PE-100) | 3000×1500 | $182.22/m² | $369 |
+| 8mm | Natural (PE-HWST) | 3000×1500 | $173.02/m² | $350 |
+| 10mm | Black (PE-100) | 3000×1500 | $217.78/m² | $441 |
+| 10mm | Black (PE-100) | 4000×2000 | — | $792 |
+| 10mm | Natural (PE-HWST) | 3000×1500 | $216.30/m² | $438 |
+| 10mm | Light Grey (PE-100 UV) | 3000×1500 | — | $489 |
+| 10mm | Black Checker Plate | 3000×2000 | — | $737 |
+| 12mm | Black (PE-100) | 4000×2000 | — | $936 |
+| 12mm | Natural (PE-HWST) | 3000×1500 | $240.07/m² | $526 |
+| 12mm | Light Grey (PE-100) | 3000×1500 | — | $586 |
+| 12mm | Black Checker Plate | 3000×2000 | — | $853 |
+| 12mm | Signal Grey Checker (UV) | 3000×2000 | — | $853 |
+| 15mm | Black (PE-100) | 3000×1500 | $308.33/m² | $675 |
+| 15mm | Black (PE-100) | 4000×2000 | — | $1,206 |
+| 15mm | Natural (PE-HWST) | 3000×1500 | $300.12/m² | $657 |
+| 15mm | Light Grey (PE-100 UV) | 3000×1500 | — | $733 |
+| 15mm | Black Checker Plate | 3000×2000 | — | $1,067 |
+| 15mm | Signal Grey Checker (UV) | 3000×2000 | — | $1,067 |
+| 20mm | Black (PE-100) | 3000×1500 | $407.00/m² | $891 |
+| 20mm | Black (PE-100) | 4000×2000 | — | $1,566 |
+| 20mm | Natural (PE-HWST) | 3000×1500 | $400.16/m² | $876 |
+| 20mm | Light Grey (PE-100 UV) | 3000×1500 | — | $1,056 |
+| 20mm | Black Checker Plate (UV) | 3000×2000 | — | $1,422 |
+| 20mm | Signal Grey Checker (UV) | 3000×2000 | — | $1,422 |
+| 20mm | Yellow Checker Plate (UV) | 3000×2000 | — | $1,659 |
+| 25mm | Black (PE-100) | 3000×1500 | $530.33/m² | $1,161 |
+| 25mm | Black (PE-100) | 4000×2000 | — | $2,016 |
+| 25mm | Natural (PE-HWST) | 3000×1500 | $500.16/m² | $1,095 |
+
+**HDPE 30mm+ (full sheet only):**
+
+| Thickness | Colour | Sheet Size | Full Sheet |
+|-----------|--------|-----------|------------|
+| 30mm | Black (PE-100) | 3000×1500 | $1,243 |
+| 30mm | Black (PE-100) | 4000×2000 | $2,145 |
+| 30mm | Natural (PE-HWST) | 3000×1500 | $1,186 |
+| 40mm | Black (PE-100) | 2000×1000 | $845 |
+| 40mm | Black (PE-100) | 3000×1500 | $1,918 |
+| 50mm | Black (PE-100) | 2000×1000 | $1,203 |
+| 50mm | Black (PE-100) | 4060×2030 | $4,913 |
+| 60mm | Black (PE-100) | 2000×1000 | $2,288 |
+| 100mm | Black (PE-100) | 2000×1000 | $4,570 |
+| 140mm | Black (PE-100) | 2000×1000 | $4,313 |
+| 150mm | Black (PE-100) | 2000×1000 | $6,076 |
+
+**Yellow HDPE (PE-100 UV) — full sheet only:**
+
+| Thickness | Sheet Size | Full Sheet |
+|-----------|-----------|------------|
+| 6mm | 3000×1500 | $390 |
+| 10mm | 3000×1500 | $557 |
+| 20mm | 3000×1500 | $1,142 |
+
 ---
 
 ### POLYPROPYLENE (PP)
