@@ -44,7 +44,7 @@ export default function ClientRegister() {
             </div>
             <h1 className="mt-6 text-xl font-bold md:text-2xl">Application submitted</h1>
             <p className="mt-3 text-sm leading-relaxed text-[#5C6670]">
-              Thanks for your interest. Nick will review your application and send you login details within 24 hours. Keep an eye on your inbox.
+              Thanks for your interest. We will review your application and send your login details within 24 hours. Keep an eye on your inbox.
             </p>
             <Link
               href="/client-login"
