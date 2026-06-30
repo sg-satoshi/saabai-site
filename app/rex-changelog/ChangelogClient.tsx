@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "12:39", tag: "FIX", title: "Add DashboardErrorBoundary to catch and display client-side errors on dashboard" },
       { time: "12:36", tag: "FIX", title: "Remove unused lucide-react imports from dashboard and package detail pages" },
       { time: "12:31", tag: "UPDATE", title: "Redeploy after WHOLESALE_CLIENT_EMAIL and WHOLESALE_CLIENT_PASS env vars" },
       { time: "12:21", tag: "NEW", title: "Move packages behind client login — dashboard shows full package gallery with state filters, sort, badges; public /packages and /packages/[id] redirect to login; new /client/packages/[id] detail page behind auth" },

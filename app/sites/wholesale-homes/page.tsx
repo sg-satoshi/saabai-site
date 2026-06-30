@@ -5,13 +5,6 @@ import { ArrowRight, Check, Sparkles, ShieldCheck, Star, Building2 } from "lucid
 import { Header } from "./_components/Header";
 import { Footer } from "./_components/Footer";
 import { ChatWidget } from "./_components/ChatWidget";
-import { Section } from "./_components/Section";
-import { packages } from "./_data/packages";
-import { PackageCard } from "./_components/PackageCard";
-import heroImg from "@/public/sites/wholesale-homes/hero-home.jpg";
-import kitchenImg from "@/public/sites/wholesale-homes/interior-kitchen.jpg";
-
-const featured = packages.slice(0, 3);
 
 export default function HomePage() {
   return (
@@ -39,8 +32,8 @@ export default function HomePage() {
               Exclusive pre-market access to Australia's best new home builds, before they hit the public market.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 md:mt-10 md:gap-4">
-              <Link href="/packages" className="group inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
-                Browse Available Packages<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <Link href="/contact" className="group inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
+                Get Started<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link href="/contact" className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#1A2B3C] md:px-7 md:py-4">
                 Book a Discovery Call
@@ -126,21 +119,22 @@ export default function HomePage() {
         {/* ── Featured Packages ── */}
         <section className="py-16 md:py-28 bg-[#f5f2eb]/40">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
-            <div className="flex flex-wrap items-end justify-between gap-4 md:gap-6">
-              <div className="max-w-3xl">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Featured Packages</p>
-                <h2 className="mt-3 text-[clamp(1.6rem,5vw,3rem)] font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
-                  Live inventory, secured at wholesale.
-                </h2>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Client Access Only</p>
+              <h2 className="mt-3 text-[clamp(1.6rem,5vw,3rem)] font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
+                Pre-market deals don't get published on public listings.
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#5C6670] md:mt-5 md:text-base lg:text-lg">
+                Our best inventory moves through a private client portal — first qualified, first secured. If you're serious about buying below market valuation, the next step is a 20-minute conversation with Nick to get you approved.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-10 md:gap-4">
+                <Link href="/contact" className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:px-7 md:py-4">
+                  Book Your Discovery Call <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="/client-login" className="inline-flex items-center gap-2 rounded-full border border-[rgba(0,0,0,0.12)] px-6 py-3.5 text-sm font-semibold text-[#5C6670] transition-colors hover:border-[#0891b2]/30 hover:text-[#0891b2] md:px-7 md:py-4">
+                  Existing Client? Log In
+                </Link>
               </div>
-              <Link href="/packages" className="inline-flex items-center gap-2 text-sm font-semibold text-[#0891b2] hover:text-[#0369a1]">
-                View all packages <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2 md:gap-7 lg:grid-cols-3">
-              {featured.map((pkg) => (
-                <PackageCard key={pkg.id} pkg={pkg} />
-              ))}
             </div>
           </div>
         </section>
