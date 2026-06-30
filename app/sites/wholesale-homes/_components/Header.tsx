@@ -27,11 +27,14 @@ export function Header() {
               {n.label}
             </Link>
           ))}
-          <Link href="/client-login" className="text-sm font-medium text-[#0891b2] transition-colors hover:text-[#0369a1]">
-            Client Login
-          </Link>
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
+          <Link
+            href="/client-login"
+            className="text-sm font-medium text-[#0891b2] transition-colors hover:text-[#0369a1]"
+          >
+            Client Login
+          </Link>
           <Link
             href="/contact"
             className="inline-flex items-center justify-center rounded-full bg-[#0891b2] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0369a1]"
