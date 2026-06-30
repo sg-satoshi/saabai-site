@@ -97,61 +97,74 @@ export default function ClientPackageDetail() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back to all packages
             </Link>
 
-            <div className="mt-6 grid gap-8 md:grid-cols-5">
-              {/* Image */}
-              <div className="md:col-span-3">
-                <div className="aspect-[16/10] overflow-hidden rounded-3xl bg-[#f5f2eb]">
-                  <img src={pkg.image} alt={pkg.name} className="h-full w-full object-cover" />
+            {/* Hero Image */}
+            <div className="mt-6 overflow-hidden rounded-3xl bg-[#f5f2eb]">
+              <img src={pkg.image} alt={pkg.name} className="aspect-[21/9] w-full object-cover md:aspect-[3/1]" />
+            </div>
+
+            {/* Info Panel — below the image like the promo templates */}
+            <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm md:p-8">
+              {/* Header Row */}
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white md:text-xs ${
+                    pkg.badge === "Limited Availability" ? "bg-[#0891b2]" : pkg.badge === "New Release" ? "bg-green-600" : "bg-[#1A2B3C]"
+                  }`}>
+                    {pkg.badge}
+                  </span>
+                  <h1 className="mt-3 text-xl font-semibold tracking-tight md:text-2xl">{pkg.name}</h1>
+                  <p className="mt-1 text-sm text-[#5C6670]">{pkg.suburb}, {pkg.state}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-[#5C6670]">Package Price</p>
+                  <p className="text-2xl font-bold text-[#0891b2] md:text-3xl">{formatPrice(pkg.wholesalePrice)}</p>
                 </div>
               </div>
 
-              {/* Details */}
-              <div className="md:col-span-2">
-                <span className={`inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white md:text-xs ${
-                  pkg.badge === "Limited Availability" ? "bg-[#0891b2]" : pkg.badge === "New Release" ? "bg-green-600" : "bg-[#1A2B3C]"
-                }`}>
-                  {pkg.badge}
-                </span>
-                <h1 className="mt-3 text-xl font-semibold tracking-tight md:text-2xl">{pkg.name}</h1>
-                <p className="mt-1 text-sm text-[#5C6670]">{pkg.suburb}, {pkg.state}</p>
+              {/* Divider */}
+              <div className="my-6 border-t border-[rgba(0,0,0,0.06)]" />
 
-                <div className="mt-6 space-y-4 border-t border-[rgba(0,0,0,0.06)] pt-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#5C6670]">Package Price</span>
-                    <span className="text-lg font-bold text-[#0891b2]">{formatPrice(pkg.wholesalePrice)}</span>
+              {/* Price Breakdown & Yield */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {pkg.landPrice && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670]">Land</p>
+                    <p className="text-sm font-semibold">{formatPrice(pkg.landPrice)}</p>
+                    <p className="text-[10px] text-[#5C6670]">{pkg.landSize}m²</p>
                   </div>
-                  {pkg.landPrice && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-[#5C6670]">Land Price</span>
-                      <span className="text-sm font-semibold">{formatPrice(pkg.landPrice)}</span>
-                    </div>
-                  )}
-                  {pkg.totalBuildPrice && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-[#5C6670]">Total Build Price</span>
-                      <span className="text-sm font-semibold">{formatPrice(pkg.totalBuildPrice)}</span>
-                    </div>
-                  )}
-                  {pkg.yieldVal && (
-                    <div className="flex items-center justify-between border-t border-[rgba(0,0,0,0.06)] pt-4">
-                      <span className="text-sm text-[#5C6670]">Forecasted Yield</span>
-                      <span className="text-sm font-bold text-green-600">{pkg.yieldVal}</span>
-                    </div>
-                  )}
-                </div>
+                )}
+                {pkg.totalBuildPrice && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670]">Build</p>
+                    <p className="text-sm font-semibold">{formatPrice(pkg.totalBuildPrice)}</p>
+                    <p className="text-[10px] text-[#5C6670]">incl. main + granny</p>
+                  </div>
+                )}
+                {pkg.yieldVal && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670]">Forecasted Yield</p>
+                    <p className="text-sm font-bold text-green-600">{pkg.yieldVal}</p>
+                  </div>
+                )}
+              </div>
 
-                {/* Main House Specs */}
-                <div className="mt-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#5C6670]">Main House</p>
-                  <div className="flex flex-wrap gap-2">
+              {/* Divider */}
+              <div className="my-6 border-t border-[rgba(0,0,0,0.06)]" />
+
+              {/* Specs */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* Main House */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670]">Main House</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {[
-                      pkg.houseSize && { icon: Home, label: "House", value: `${pkg.houseSize}m²` },
+                      pkg.houseSize && { icon: Home, label: "Size", value: `${pkg.houseSize}m²` },
                       pkg.landSize && { icon: MapPin, label: "Land", value: `${pkg.landSize}m²` },
-                      { icon: Home, label: "Bedrooms", value: pkg.beds },
-                      { icon: Bath, label: "Bathrooms", value: pkg.baths },
-                      { icon: Car, label: "Car Spaces", value: pkg.cars },
+                      { icon: Home, label: "Beds", value: pkg.beds },
+                      { icon: Bath, label: "Baths", value: pkg.baths },
+                      { icon: Car, label: "Cars", value: pkg.cars },
                     ].filter(Boolean).map((s: any) => (
-                      <div key={s.label} className="flex items-center gap-2 rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-3.5 py-2.5">
+                      <div key={s.label} className="flex items-center gap-1.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f6f2] px-3 py-2">
                         <s.icon className="h-3.5 w-3.5 text-[#0891b2]" />
                         <div>
                           <p className="text-[10px] text-[#5C6670]">{s.label}</p>
@@ -160,19 +173,22 @@ export default function ClientPackageDetail() {
                       </div>
                     ))}
                   </div>
+                  {pkg.landReady && (
+                    <p className="mt-2 text-xs text-[#5C6670]">Land ready: {pkg.landReady}</p>
+                  )}
                 </div>
 
-                {/* Granny Flat Specs */}
+                {/* Granny Flat */}
                 {pkg.grannyBeds && (
-                  <div className="mt-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#0891b2]">Granny Flat</p>
-                    <div className="flex flex-wrap gap-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#0891b2]">Granny Flat</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {[
                         pkg.grannySize && { icon: Home, label: "Size", value: `${pkg.grannySize}m²` },
-                        { icon: Home, label: "Bedrooms", value: pkg.grannyBeds },
-                        { icon: Bath, label: "Bathrooms", value: pkg.grannyBaths },
+                        { icon: Home, label: "Beds", value: pkg.grannyBeds },
+                        { icon: Bath, label: "Baths", value: pkg.grannyBaths },
                       ].filter(Boolean).map((s: any) => (
-                        <div key={s.label} className="flex items-center gap-2 rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-3.5 py-2.5">
+                        <div key={s.label} className="flex items-center gap-1.5 rounded-xl border border-[rgba(0,0,0,0.08)] bg-[#f8f6f2] px-3 py-2">
                           <s.icon className="h-3.5 w-3.5 text-[#0891b2]" />
                           <div>
                             <p className="text-[10px] text-[#5C6670]">{s.label}</p>
@@ -183,13 +199,14 @@ export default function ClientPackageDetail() {
                     </div>
                   </div>
                 )}
-
-                <p className="mt-5 text-sm leading-relaxed text-[#0891b2]">{pkg.highlight}</p>
               </div>
+
+              {/* Highlight */}
+              <p className="mt-5 text-sm leading-relaxed text-[#0891b2]">{pkg.highlight}</p>
             </div>
 
             {/* Description */}
-            <div className="mt-10 md:mt-14">
+            <div className="mt-6">
               <div className="max-w-3xl">
                 <h2 className="text-base font-semibold md:text-lg">About this package</h2>
                 <p className="mt-3 text-sm leading-relaxed text-[#5C6670] md:text-base">{pkg.description}</p>
@@ -197,7 +214,7 @@ export default function ClientPackageDetail() {
             </div>
 
             {/* CTA */}
-            <div className="mt-10 rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:mt-14 md:p-8">
+            <div className="mt-10 rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:mt-8 md:p-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-base font-semibold md:text-lg">Interested in this package?</h3>
