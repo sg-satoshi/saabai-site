@@ -7,8 +7,6 @@ import { Footer } from "../_components/Footer";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 const AUTH_KEY = "wholesale_client_auth";
-const VALID_EMAIL = "client@wholesalehomes.com.au";
-const VALID_PASS = "client123";
 
 export default function ClientLogin() {
   const router = useRouter();
@@ -16,16 +14,30 @@ export default function ClientLogin() {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (email.trim().toLowerCase() === VALID_EMAIL && password === VALID_PASS) {
-      localStorage.setItem(AUTH_KEY, JSON.stringify({ email: VALID_EMAIL, loggedInAt: Date.now() }));
-      router.push("/client/dashboard");
-    } else {
-      setError("Invalid email or password. Please try again.");
+    try {
+      const res = await fetch("/api/wholesale-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      if (res.ok) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ email: email.trim(), loggedInAt: Date.now() }));
+        router.push("/client/dashboard");
+      } else {
+        setError("Invalid email or password. Please try again.");
+      }
+    } catch {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -87,9 +99,10 @@ export default function ClientLogin() {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#0891b2] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] md:text-base"
+                disabled={loading}
+                className="w-full rounded-full bg-[#0891b2] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] disabled:opacity-60 md:text-base"
               >
-                Sign In
+                {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
 

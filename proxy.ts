@@ -61,6 +61,7 @@ const PUBLIC_API = [
   "/api/leadgen/lead",
   "/api/subscribe",
   "/api/onboarding",
+  "/api/wholesale-auth",
   // Public lead-gen tool (top of funnel)
   "/api/analyze-document",
   // AI Audit fact-find — token-gated public questionnaire (clients have no login)
