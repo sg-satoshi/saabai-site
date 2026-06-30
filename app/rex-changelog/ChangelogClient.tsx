@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "14:02", tag: "FIX", title: "Wire contact form to email hello@wholesalehomes.com.au via LEAD_EMAIL_OVERRIDES" },
       { time: "13:03", tag: "FIX", title: "Replace Featured Packages section (with property cards) with sales copy/CTAs; update hero CTA from /packages to /contact; remove unused imports" },
       { time: "12:39", tag: "FIX", title: "Add DashboardErrorBoundary to catch and display client-side errors on dashboard" },
       { time: "12:36", tag: "FIX", title: "Remove unused lucide-react imports from dashboard and package detail pages" },

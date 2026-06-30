@@ -27,6 +27,12 @@ type Package = {
   badge: "Below Market" | "New Release" | "Limited Availability";
   image: string;
   highlight: string;
+  landSize?: number;
+  houseSize?: number;
+  grannyBeds?: number;
+  grannyBaths?: number;
+  grannySize?: number;
+  lot?: string;
 };
 
 const allPackages: Package[] = [
@@ -36,6 +42,7 @@ const allPackages: Package[] = [
   { id: "ridgeview-prestige-48", name: "Ridgeview Prestige 48", suburb: "Officer", state: "VIC", estate: "Arcadia", builder: "Metricon", beds: 4, baths: 3, cars: 2, retailPrice: 849000, wholesalePrice: 772000, badge: "Below Market", image: "/sites/wholesale-homes/hero-home.jpg", highlight: "Premium corner lot, north-facing" },
   { id: "harbourline-villa-32", name: "Harbourline Villa 32", suburb: "Cobbitty", state: "NSW", estate: "Emerald Hills", builder: "Mirvac Partner", beds: 4, baths: 2, cars: 2, retailPrice: 742000, wholesalePrice: 678000, badge: "New Release", image: "/sites/wholesale-homes/interior-kitchen.jpg", highlight: "First release pricing locked in" },
   { id: "sunnydale-terrace-30", name: "Sunnydale Terrace 30", suburb: "Pimpama", state: "QLD", estate: "Gainsborough Greens", builder: "Metricon", beds: 3, baths: 2, cars: 2, retailPrice: 645000, wholesalePrice: 589000, badge: "Below Market", image: "/sites/wholesale-homes/lifestyle-living.jpg", highlight: "Growth corridor, strong rental demand" },
+  { id: "kyabram-greens-lot-32", name: "Lot 32 — Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", landSize: 1100, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32" },
 ];
 
 const STATES = ["All States", "VIC", "NSW", "QLD"];
@@ -191,6 +198,10 @@ export default function ClientDashboard() {
                       <span>{pkg.beds} bed{pkg.beds > 1 ? "s" : ""}</span>
                       <span>{pkg.baths} bath{pkg.baths > 1 ? "s" : ""}</span>
                       <span>{pkg.cars} car{pkg.cars > 1 ? "s" : ""}</span>
+                      {pkg.landSize && <span>{pkg.landSize}m²</span>}
+                      {pkg.grannyBeds && (
+                        <span className="text-[#0891b2]">+Granny {pkg.grannyBeds} bed{pkg.grannyBeds > 1 ? "s" : ""}</span>
+                      )}
                     </div>
                   </div>
                 </Link>
