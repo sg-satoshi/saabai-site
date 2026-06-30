@@ -18,7 +18,7 @@ export default function BlogPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 bg-[#f8f6f2]">
         <section className="py-16 md:py-28">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Resources</p>

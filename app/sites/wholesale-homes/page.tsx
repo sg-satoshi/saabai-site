@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 bg-[#f8f6f2]">
         {/* ── Hero ── */}
         <section
           className="relative isolate overflow-hidden"
