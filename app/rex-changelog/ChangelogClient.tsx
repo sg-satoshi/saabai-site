@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "16:11", tag: "FIX", title: "Equalize spacing above and below dual-income banner (mt-8 / mb-8)" },
       { time: "16:10", tag: "FIX", title: "Increase spacing above dual-income banner (mt-10 between filter pills and dark section)" },
       { time: "16:06", tag: "NEW", title: "Add 'Regional Victoria's Best Dual-Income Opportunities' banner on VIC filter, Dual Income tags on cards, dual-income messaging in all 6 VIC package descriptions" },
       { time: "16:04", tag: "NEW", title: "Redesign package detail page — vertical stack layout with hero image, info panel below like promo templates" },
