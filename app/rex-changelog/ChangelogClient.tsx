@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "12:05", tag: "FIX", title: "Move Client Login link to right side, left of Book Discovery Call button (not in nav)" },
       { time: "12:02", tag: "NEW", title: "Client portal — /client-login page with auth, /client/dashboard with package overview, milestones, quick actions. Client Login link in nav." },
       { time: "10:46", tag: "NEW", title: "Add HDPE sheet pricing table to Rex knowledge base (March 2026)" },
       { time: "09:42", tag: "FIX", title: "Restore Nick name + title below photo with zero gap, remove only the bio text and padding gap" },

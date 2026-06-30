@@ -28,10 +28,10 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex lg:pl-16">
           <Link
             href="/client-login"
-            className="text-sm font-medium text-[#0891b2] transition-colors hover:text-[#0369a1]"
+            className="text-sm font-medium text-[#0891b2] whitespace-nowrap transition-colors hover:text-[#0369a1]"
           >
             Client Login
           </Link>
