@@ -171,7 +171,7 @@ export default function ClientDashboard() {
             {/* Package grid */}
             {/* VIC dual-income messaging */}
             {(filterState === "VIC" || filterState === "All States") && allPackages.some(p => p.state === "VIC" && p.grannyBeds) && (
-              <div className="mb-8 rounded-2xl bg-[#1A2B3C] p-6 md:p-8">
+              <div className="mt-10 mb-8 rounded-2xl bg-[#1A2B3C] p-6 md:p-8">
                 <h3 className="text-xl font-bold text-white md:text-2xl">Regional Victoria's Best Dual-Income Opportunities</h3>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <p className="text-sm leading-relaxed text-white/80">

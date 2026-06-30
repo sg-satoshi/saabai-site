@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "16:06", tag: "NEW", title: "Add 'Regional Victoria's Best Dual-Income Opportunities' banner on VIC filter, Dual Income tags on cards, dual-income messaging in all 6 VIC package descriptions" },
       { time: "16:04", tag: "NEW", title: "Redesign package detail page — vertical stack layout with hero image, info panel below like promo templates" },
       { time: "15:21", tag: "UPDATE", title: "Redeploy to refresh Telegram env vars" },
       { time: "14:45", tag: "UPDATE", title: "Remove fake VIC listings: The Northbridge 42 and Ridgeview Prestige 48" },
