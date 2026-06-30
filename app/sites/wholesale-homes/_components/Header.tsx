@@ -27,6 +27,9 @@ export function Header() {
               {n.label}
             </Link>
           ))}
+          <Link href="/client-login" className="text-sm font-medium text-[#0891b2] transition-colors hover:text-[#0369a1]">
+            Client Login
+          </Link>
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
           <Link
@@ -48,6 +51,9 @@ export function Header() {
                 {n.label}
               </Link>
             ))}
+            <Link href="/client-login" onClick={() => setOpen(false)} className="py-2 text-sm font-medium text-[#0891b2]">
+              Client Login
+            </Link>
             <Link
               href="/contact"
               onClick={() => setOpen(false)}
