@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "12:11", tag: "UPDATE", title: "Redeploy to ensure proxy.ts PUBLIC_API includes /api/wholesale-auth" },
       { time: "12:10", tag: "FIX", title: "Move client login credentials to env vars via /api/wholesale-auth — no more hardcoded email/password in source" },
       { time: "12:08", tag: "FIX", title: "Increase space between Blog nav link and Client Login (pl-16), tighten Client Login to Book Discovery Call (gap-2)" },
       { time: "12:05", tag: "FIX", title: "Move Client Login link to right side, left of Book Discovery Call button (not in nav)" },
