@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "14:41", tag: "NEW", title: "Add Lot 16 Woodlands Estate Nagambie — dual occupancy, 14,990, 6.3-6.7% yield" },
       { time: "14:39", tag: "NEW", title: "Add Lot 513 The Outlook Mooroopna — dual occupancy, 99,990, 6.3% yield" },
       { time: "14:37", tag: "NEW", title: "Add Lot 49 Orchardfield Estate Kyabram — dual occupancy, 89,990, 6.45% yield" },
       { time: "14:36", tag: "NEW", title: "Add Lot 42 The Willows Yarrawonga — lakefront dual occupancy, 69,990, 5.6% yield" },
