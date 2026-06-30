@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "17:30", tag: "FIX", title: "Update registration confirmation copy" },
       { time: "17:27", tag: "NEW", title: "Newsletter popup (12s delay, first name + email) + registration form for approval-gated client access" },
       { time: "16:41", tag: "FIX", title: "Remove all em dashes from wholesale-homes user-facing copy site-wide" },
       { time: "16:33", tag: "UI", title: "Force redeploy — clear Vercel cache, serve updated enquiry section" },
