@@ -5,7 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "../../../_components/Header";
 import { Footer } from "../../../_components/Footer";
-import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign } from "lucide-react";
+import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone } from "lucide-react";
+import { EnquiryForm } from "../../../_components/EnquiryForm";
 
 const AUTH_KEY = "wholesale_client_auth";
 
@@ -213,16 +214,28 @@ export default function ClientPackageDetail() {
               </div>
             </div>
 
-            {/* CTA */}
+            {/* CTA — Enquiry Section */}
             <div className="mt-10 rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:mt-8 md:p-8">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-base font-semibold md:text-lg">Interested in this package?</h3>
-                  <p className="mt-1 text-sm text-[#5C6670]">Contact your advisor to secure this property.</p>
+              <div className="grid gap-6 md:grid-cols-5">
+                <div className="md:col-span-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Your Next Step</p>
+                  <h3 className="mt-2 text-xl font-bold leading-tight tracking-tight md:text-2xl">
+                    This package moves fast. Big blocks with dual-income potential at this price point don't sit.
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-[#5C6670]">
+                    Drop your details below and Nick will call you within 24 hours to walk through the numbers, answer your questions, and get this one secured if it's the right fit.
+                  </p>
+                  <p className="mt-3 text-xs text-[#5C6670]">
+                    Or call <a href="tel:1300000000" className="font-semibold text-[#0891b2] hover:underline">1300 000 000</a> to speak with Nick directly.
+                  </p>
                 </div>
-                <a href="tel:1300000000" className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1] whitespace-nowrap">
-                  Call Nick Foale
-                </a>
+                <div className="md:col-span-3">
+                  <EnquiryForm
+                    propertyName={pkg.name}
+                    propertyId={pkg.id}
+                    propertyPrice={formatPrice(pkg.wholesalePrice)}
+                  />
+                </div>
               </div>
             </div>
           </div>
