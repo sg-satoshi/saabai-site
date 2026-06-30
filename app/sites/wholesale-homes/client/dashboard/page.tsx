@@ -169,6 +169,21 @@ export default function ClientDashboard() {
             </div>
 
             {/* Package grid */}
+            {/* VIC dual-income messaging */}
+            {(filterState === "VIC" || filterState === "All States") && allPackages.some(p => p.state === "VIC" && p.grannyBeds) && (
+              <div className="mb-8 rounded-2xl bg-[#1A2B3C] p-6 md:p-8">
+                <h3 className="text-xl font-bold text-white md:text-2xl">Regional Victoria's Best Dual-Income Opportunities</h3>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <p className="text-sm leading-relaxed text-white/80">
+                    Dual-income properties continue to be one of the strongest-performing investment strategies, offering the potential for higher rental returns and multiple income streams from a single title.
+                  </p>
+                  <p className="text-sm leading-relaxed text-white/80">
+                    This week's Stock in Focus showcases six fixed-price house and land opportunities across Regional Victoria, each positioned within <strong className="text-[#d4a84b]">established and growing communities with strong rental demand and attractive forecast yields.</strong>
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((pkg) => (
                 <Link
@@ -193,6 +208,11 @@ export default function ClientDashboard() {
                     >
                       {pkg.badge}
                     </span>
+                    {pkg.grannyBeds && (
+                      <span className="absolute right-3 top-3 rounded-full bg-[#d4a84b]/90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wide text-white md:text-[10px]">
+                        Dual Income
+                      </span>
+                    )}
                   </div>
                   <div className="p-4 md:p-5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#5C6670] md:text-xs">
