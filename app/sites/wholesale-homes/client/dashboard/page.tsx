@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "../../_components/Header";
 import { Footer } from "../../_components/Footer";
-import { ChevronDown, Home, ArrowRight, Lock } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 const AUTH_KEY = "wholesale_client_auth";
 

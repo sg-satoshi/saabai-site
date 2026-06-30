@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "12:31", tag: "UPDATE", title: "Redeploy after WHOLESALE_CLIENT_EMAIL and WHOLESALE_CLIENT_PASS env vars" },
       { time: "12:21", tag: "NEW", title: "Move packages behind client login — dashboard shows full package gallery with state filters, sort, badges; public /packages and /packages/[id] redirect to login; new /client/packages/[id] detail page behind auth" },
       { time: "12:11", tag: "UPDATE", title: "Redeploy to ensure proxy.ts PUBLIC_API includes /api/wholesale-auth" },
       { time: "12:10", tag: "FIX", title: "Move client login credentials to env vars via /api/wholesale-auth — no more hardcoded email/password in source" },

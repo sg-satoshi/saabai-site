@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Header } from "../../../_components/Header";
 import { Footer } from "../../../_components/Footer";
-import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, DollarSign, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Home, Bath, Car, MapPin, Calendar } from "lucide-react";
 
 const AUTH_KEY = "wholesale_client_auth";
 
