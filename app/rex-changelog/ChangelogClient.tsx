@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "17:44", tag: "FIX", title: "Header bg-white/85 was transparent — dark body was bleeding through as blue-grey tint" },
       { time: "17:41", tag: "FIX", title: "Add explicit text-[#1A2B3C] to tax-advantages h1 (was inheriting white from body)" },
       { time: "17:35", tag: "FIX", title: "Add text-[#1A2B3C] to main elements on all wholesale-homes pages to fix white-on-light text" },
       { time: "17:34", tag: "FIX", title: "Add bg-[#f8f6f2] to all page mains instead of layout wrapper (layout wrapper broke CSS)" },
