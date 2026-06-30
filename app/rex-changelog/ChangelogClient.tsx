@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "14:33", tag: "NEW", title: "Add Kyabram Greens Lot 32 (main house + granny flat) with 1,100m² land and 6.5% yield to client portal" },
       { time: "14:02", tag: "FIX", title: "Wire contact form to email hello@wholesalehomes.com.au via LEAD_EMAIL_OVERRIDES" },
       { time: "13:03", tag: "FIX", title: "Replace Featured Packages section (with property cards) with sales copy/CTAs; update hero CTA from /packages to /contact; remove unused imports" },
       { time: "12:39", tag: "FIX", title: "Add DashboardErrorBoundary to catch and display client-side errors on dashboard" },

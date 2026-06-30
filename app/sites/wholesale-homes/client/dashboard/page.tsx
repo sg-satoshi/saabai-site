@@ -33,6 +33,9 @@ type Package = {
   grannyBaths?: number;
   grannySize?: number;
   lot?: string;
+  landPrice?: number;
+  totalBuildPrice?: number;
+  yieldVal?: string;
 };
 
 const allPackages: Package[] = [
@@ -43,6 +46,7 @@ const allPackages: Package[] = [
   { id: "harbourline-villa-32", name: "Harbourline Villa 32", suburb: "Cobbitty", state: "NSW", estate: "Emerald Hills", builder: "Mirvac Partner", beds: 4, baths: 2, cars: 2, retailPrice: 742000, wholesalePrice: 678000, badge: "New Release", image: "/sites/wholesale-homes/interior-kitchen.jpg", highlight: "First release pricing locked in" },
   { id: "sunnydale-terrace-30", name: "Sunnydale Terrace 30", suburb: "Pimpama", state: "QLD", estate: "Gainsborough Greens", builder: "Metricon", beds: 3, baths: 2, cars: 2, retailPrice: 645000, wholesalePrice: 589000, badge: "Below Market", image: "/sites/wholesale-homes/lifestyle-living.jpg", highlight: "Growth corridor, strong rental demand" },
   { id: "kyabram-greens-lot-32", name: "Lot 32 — Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", landSize: 1100, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32" },
+  { id: "the-willows-42", name: "Lot 42 — Main House + Granny Flat", suburb: "Yarrawonga", state: "VIC", estate: "The Willows", builder: "The Willows Yarrawonga", beds: 4, baths: 2, cars: 2, retailPrice: 869990, wholesalePrice: 869990, badge: "New Release", image: "/sites/wholesale-homes/the-willows.jpg", highlight: "5.6% forecasted yield — lakefront dual occupancy", landSize: 783, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "42", landPrice: 330500, totalBuildPrice: 539490, yieldVal: "5.6%" },
 ];
 
 const STATES = ["All States", "VIC", "NSW", "QLD"];
