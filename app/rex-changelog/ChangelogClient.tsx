@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "30 Jun 2026",
     entries: [
+      { time: "16:31", tag: "FIX", title: "Re-crop VIC images to remove baked-in data overlay text and FIND OUT MORE buttons" },
       { time: "16:29", tag: "UI", title: "Update enquiry copy with marketing copy — 'Lock In Your Yield' headline, dynamic price/yield, stronger urgency" },
       { time: "16:27", tag: "NEW", title: "Replace static CTA with property-specific enquiry form + sales copy" },
       { time: "16:15", tag: "FIX", title: "Crop VIC property images to photo portion only (remove text panel from promo graphics)" },

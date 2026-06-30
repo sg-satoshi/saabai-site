@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
+
+const AUTH_KEY = "wholesale_client_auth";
 
 const nav = [
   { to: "/packages", label: "Packages" },
@@ -17,13 +19,20 @@ const nav = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(!!localStorage.getItem(AUTH_KEY));
+  }, []);
+
+  const packagesHref = loggedIn ? "/client/dashboard" : "/packages";
   return (
     <header className="sticky top-0 z-40 border-b border-[rgba(0,0,0,0.08)] bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6 lg:px-10">
         <Logo />
         <nav className="hidden items-center gap-8 lg:flex">
           {nav.map((n) => (
-            <Link key={n.to} href={n.to} className="text-sm text-[#5C6670]/70 transition-colors hover:text-[#5C6670]">
+            <Link key={n.to} href={n.to === "/packages" ? packagesHref : n.to} className="text-sm text-[#5C6670]/70 transition-colors hover:text-[#5C6670]">
               {n.label}
             </Link>
           ))}
@@ -50,7 +59,7 @@ export function Header() {
         <div className="border-t border-[rgba(0,0,0,0.08)] bg-white lg:hidden">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-1 px-6 py-4 lg:px-10">
             {nav.map((n) => (
-              <Link key={n.to} href={n.to} onClick={() => setOpen(false)} className="py-2 text-sm">
+              <Link key={n.to} href={n.to === "/packages" ? packagesHref : n.to} onClick={() => setOpen(false)} className="py-2 text-sm">
                 {n.label}
               </Link>
             ))}
