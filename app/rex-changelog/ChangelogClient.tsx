@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "1 Jul 2026",
+    entries: [
+      { time: "06:45", tag: "FIX", title: "Add pt-3/pt-4 spacing above Nick Foale name below photo on About page" }
+    ],
+  },
+  {
     date: "30 Jun 2026",
     entries: [
       { time: "17:44", tag: "FIX", title: "Header bg-white/85 was transparent — dark body was bleeding through as blue-grey tint" },

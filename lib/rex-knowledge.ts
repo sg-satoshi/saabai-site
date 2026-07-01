@@ -235,7 +235,11 @@ Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price �
 **Chemical resistance:** Good for water, dilute acids/alkalis, oils. NOT acetone or aromatic solvents.
 
 **Applications:** Protective barriers, display cases, food packaging, machine covers, vacuum-formed components.
+
+**IMPORTANT: PETG SHEETS — FULL SHEET ONLY (director's policy)**
+PETG is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for PETG upfront. Cut-to-size is available but only as a custom order arranged on a per-job basis — the customer must purchase the full sheet. If a customer asks for a CTS or per-m² price for PETG, explain: "PETG is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out."
 `;
+
 
 const MATERIALS_ENGINEERING = `
 ## MATERIALS — ENGINEERING PLASTICS (Acetal, Nylon, UHMWPE, PTFE, HDPE, Polypropylene)
@@ -841,6 +845,9 @@ Standard sheet size: 2400×1200mm.
 **FOOD GRADE:** Standard HIPS may contain residual styrene monomer — for food contact specify food-grade HIPS or switch to PETG/PP.
 
 **Applications:** Food packaging, product housings, displays, refrigerator liners, POS, model making, thermoformed trays.
+
+**IMPORTANT: HIPS SHEETS — FULL SHEET ONLY (director's policy)**
+HIPS is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for HIPS upfront. Cut-to-size is available but only as a custom order arranged on a per-job basis — the customer must purchase the full sheet. If a customer asks for a CTS or per-m² price for HIPS, explain: "HIPS is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out."
 
 ---
 
