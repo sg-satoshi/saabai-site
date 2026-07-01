@@ -16,6 +16,9 @@ export default function BorrowingPowerEstimator() {
   const [cc, setCc] = useState(0);
   const [ir, setIr] = useState(6.3);
   const [lt, setLt] = useState(30);
+  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">("pAndI");
+  const [ioPeriod, setIoPeriod] = useState(5);
+  const [rateType, setRateType] = useState<"variable" | "fixed">("variable");
   const [le, setLe] = useState(2500);
   const [expanded, setExpanded] = useState(false);
 
@@ -29,7 +32,16 @@ export default function BorrowingPowerEstimator() {
   const maxB = safeDiv(avail * (1 - Math.pow(1 + srm, -tpm)), srm);
   const pp = maxB + deposit;
   const lvr = pp > 0 ? (maxB / pp) * 100 : 0;
-  const estRepay = safeDiv(maxB * rm * Math.pow(1 + rm, tpm), Math.pow(1 + rm, tpm) - 1);
+  // P&I repayment
+  const pmiRepay = safeDiv(maxB * rm * Math.pow(1 + rm, tpm), Math.pow(1 + rm, tpm) - 1);
+  // IO repayment
+  const ioRepay = maxB > 0 && rm > 0 ? maxB * rm : 0;
+  const remainingTerm = Math.max(1, lt - (ltType === "interestOnly" ? ioPeriod : 0));
+  const rt = remainingTerm * 12;
+  const postIO = ltType === "interestOnly" && maxB > 0 && rm > 0
+    ? safeDiv(maxB * rm * Math.pow(1 + rm, rt), Math.pow(1 + rm, rt) - 1)
+    : pmiRepay;
+  const effectiveRepay = ltType === "interestOnly" ? ioRepay : pmiRepay;
   const below80 = lvr <= 80;
 
   const fmt$ = (n: number) => "$" + Math.round(n).toLocaleString("en-AU");
@@ -55,7 +67,7 @@ export default function BorrowingPowerEstimator() {
     const r = (ir + delta) / 100 / 12;
     const pow = Math.pow(1 + r, tpm);
     const repay = safeDiv(maxB * r * pow, pow - 1);
-    return { name: "+" + delta + "%", repay: Math.round(repay), delta: Math.round(repay - estRepay) };
+    return { name: "+" + delta + "%", repay: Math.round(repay), delta: Math.round(repay - pmiRepay) };
   });
 
   return (
@@ -82,6 +94,7 @@ export default function BorrowingPowerEstimator() {
               { label: "Your Income", val: income, set: setIncome, suffix: "$/yr" },
               { label: "Partner Income", val: pi, set: setPi, suffix: "$/yr" },
               { label: "Deposit", val: deposit, set: setDeposit, suffix: "$" },
+              { label: "Rate Type", val: rateType, set: setRateType, isSelect: true, opts: [{ label: "Variable", value: "variable" }, { label: "Fixed", value: "fixed" }] },
               { label: "Interest Rate", val: ir, set: setIr, suffix: "%", step: 0.1 },
               { label: "Loan Term", val: lt, set: setLt, isSelect: true, opts: [{ label: "20yr", value: "20" }, { label: "25yr", value: "25" }, { label: "30yr", value: "30" }] },
             ].map((f: any, i) => (
@@ -122,6 +135,23 @@ export default function BorrowingPowerEstimator() {
                   </div>
                 </div>
               ))}
+              <div>
+                <label className="block text-[9px] font-medium text-[#5C6670] mb-0.5">Loan Type</label>
+                <select value={ltType} onChange={e => setLtType(e.target.value as "pAndI" | "interestOnly")}
+                  className="w-full rounded-lg border border-[rgba(0,0,0,0.1)] bg-white px-2 py-1.5 text-[11px] text-[#1A2B3C] outline-none focus:border-[#d4a84b] transition-colors appearance-none cursor-pointer">
+                  <option value="pAndI">P&I (Principal & Interest)</option>
+                  <option value="interestOnly">Interest Only</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] font-medium text-[#5C6670] mb-0.5">IO Period</label>
+                <div className="relative">
+                  <input type="number" value={ioPeriod} onChange={e => setIoPeriod(Number(e.target.value) || 0)}
+                    disabled={ltType !== "interestOnly"}
+                    className="w-full rounded-lg border border-[rgba(0,0,0,0.1)] bg-white px-2 py-1.5 text-[11px] text-[#1A2B3C] outline-none focus:border-[#d4a84b] transition-colors text-right disabled:opacity-50" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#9CA3AF] pointer-events-none">yr</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -131,7 +161,7 @@ export default function BorrowingPowerEstimator() {
           <MetricMini label="Max Borrow" val={fmt$(Math.round(maxB))} color="#0891b2" sub={`stressed at ${stress.toFixed(1)}%`} />
           <MetricMini label="Est. Property" val={fmt$(Math.round(pp))} color="#d4a84b" sub={`loan + $${Math.round(deposit).toLocaleString()} dep`} />
           <MetricMini label="Loan-to-Value" val={lvr.toFixed(1) + "%"} color={lvr > 80 ? "#dc2626" : lvr > 70 ? "#f59e0b" : "#16a34a"} sub={below80 ? "Under 80% - no LMI" : "Over 80% - LMI may apply"} />
-          <MetricMini label="Monthly Repay" val={fmt$(Math.round(estRepay))} color="#16a34a" sub={`${ir.toFixed(1)}% over ${lt}yr P&I`} />
+          <MetricMini label="Monthly Repay" val={fmt$(Math.round(effectiveRepay))} color="#16a34a" sub={`${ir.toFixed(1)}% ${rateType} · ${ltType === "interestOnly" ? ioPeriod + "yr IO " : ""}${remainingTerm}yr P&I`} />
           <MetricMini label="Total Income" val={fmt$(Math.round(ti))} color="#16a34a" sub={`$${Math.round(mi).toLocaleString()}/mo`} />
           <MetricMini label="Monthly Surplus" val={fmt$(Math.round(avail))} color={avail >= 0 ? "#0891b2" : "#dc2626"} sub="after expenses" />
           <MetricMini label="Stress Rate" val={stress.toFixed(1) + "%"} color="#f59e0b" sub="APRA +3% buffer" />
