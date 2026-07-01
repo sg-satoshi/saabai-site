@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "21:12", tag: "FIX", title: "Fix input text color visibility, add all 8 states to stamp duty calculator, fix em dashes" },
       { time: "21:06", tag: "UPDATE", title: "Wholesale Homes portal: client sidebar shell, 3 calculators, resources hub, account page" },
       { time: "14:21", tag: "FIX", title: "Rex sheet size fitting logic + cutting fee always additional" },
       { time: "13:43", tag: "FIX", title: "Add text-[#1A2B3C] to 'Live inventory, priced below market' heading — was invisible white-on-light" },

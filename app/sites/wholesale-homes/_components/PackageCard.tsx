@@ -7,7 +7,7 @@ export function PackageCard({ pkg }: { pkg: Package }) {
   const savings = pkg.retailPrice - pkg.wholesalePrice;
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white transition-shadow hover:shadow-[0_30px_60px_-30px_rgba(26,43,60,0.35)]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#F7F8F9]">
+      <div className="relative aspect-[3/2] overflow-hidden bg-[#F7F8F9]">
         <img
           src={pkg.image}
           alt={`${pkg.name} in ${pkg.suburb}`}
@@ -37,13 +37,22 @@ export function PackageCard({ pkg }: { pkg: Package }) {
         </div>
 
         <div className="mt-5 border-t border-[rgba(0,0,0,0.08)] pt-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#9CA3AF]">Reg. Retail Price</span>
+          </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-sm text-[#5C6670] line-through">{formatPrice(pkg.retailPrice)}</span>
-            <span className="rounded-full bg-[#0891b2]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#0891b2]">
-              Save {formatPrice(savings)}
+            <span className="text-sm text-[#9CA3AF] line-through">{formatPrice(pkg.retailPrice)}</span>
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+              {Math.round(savings / pkg.retailPrice * 100)}% OFF for Members
             </span>
           </div>
-          <p className="text-2xl font-semibold tracking-tight text-[#1A2B3C]">{formatPrice(pkg.wholesalePrice)}</p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#0891b2]">Members Price</span>
+          </div>
+          <p className="text-2xl font-bold tracking-tight text-[#1A2B3C]">{formatPrice(pkg.wholesalePrice)}</p>
+          <p className="mt-0.5 text-xs font-medium text-green-600">
+            ${(savings / 1000).toFixed(0)}k Discount for Members
+          </p>
           <p className="mt-1 text-xs text-[#5C6670]">Land ready {pkg.landReady}</p>
         </div>
 

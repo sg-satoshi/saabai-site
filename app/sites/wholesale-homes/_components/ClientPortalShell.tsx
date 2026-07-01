@@ -52,6 +52,17 @@ export function ClientPortalShell({ children, userName }: Props) {
   const [authed, setAuthed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    function check() {
+      setIsMobile(window.innerWidth < 1024);
+    }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Persist sidebar state
   useEffect(() => {
@@ -99,7 +110,7 @@ export function ClientPortalShell({ children, userName }: Props) {
         />
       )}
 
-      {/* ── Sidebar ──────────────────────────────────────────────────── */}
+      {/* ── Sidebar ── desktop pinned, mobile slides in ── */}
       <aside
         style={{
           position: "fixed", top: 0, left: 0, bottom: 0,
@@ -109,13 +120,11 @@ export function ClientPortalShell({ children, userName }: Props) {
           display: "flex",
           flexDirection: "column",
           zIndex: 50,
-          transition: "width 0.2s ease",
+          transition: "width 0.2s ease, transform 0.25s ease",
           overflow: "hidden",
-          // On mobile, slide in from left
-          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
-          ...(typeof window !== "undefined" && window.innerWidth >= 1024
-            ? { transform: "none" }
-            : {}),
+          transform: isMobile
+            ? mobileOpen ? "translateX(0)" : "translateX(-100%)"
+            : "none",
         }}
       >
         {/* Logo area */}
@@ -235,7 +244,7 @@ export function ClientPortalShell({ children, userName }: Props) {
       <div
         style={{
           flex: 1,
-          marginLeft: typeof window !== "undefined" && window.innerWidth >= 1024 ? sidebarWidth : 0,
+          marginLeft: isMobile ? 0 : sidebarWidth,
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",

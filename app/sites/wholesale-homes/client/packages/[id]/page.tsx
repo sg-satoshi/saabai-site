@@ -80,7 +80,7 @@ export default function ClientPackageDetail() {
 
             {/* Hero Image */}
             <div className="mt-6 overflow-hidden rounded-3xl bg-[#f5f2eb]">
-              <img src={pkg.image} alt={pkg.name} className="aspect-[21/9] w-full object-cover md:aspect-[3/1]" />
+              <img src={pkg.image} alt={pkg.name} className="aspect-[3/2] w-full object-cover md:aspect-[16/9]" />
             </div>
 
             {/* Info Panel — below the image like the promo templates */}
@@ -97,8 +97,20 @@ export default function ClientPackageDetail() {
                   <p className="mt-1 text-sm text-[#5C6670]">{pkg.suburb}, {pkg.state}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-[#5C6670]">Package Price</p>
-                  <p className="text-2xl font-bold text-[#0891b2] md:text-3xl">{formatPrice(pkg.wholesalePrice)}</p>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] text-[#9CA3AF]">Reg. Retail</span>
+                    <span className="text-xs text-[#9CA3AF] line-through">{formatPrice(pkg.retailPrice)}</span>
+                    <span className="rounded bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                      {Math.round((pkg.retailPrice - pkg.wholesalePrice) / pkg.retailPrice * 100)}% OFF
+                    </span>
+                  </div>
+                  <div className="mt-0.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#0891b2]">Members Price</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#1A2B3C] md:text-3xl">{formatPrice(pkg.wholesalePrice)}</p>
+                  <p className="text-xs font-medium text-green-600">
+                    ${((pkg.retailPrice - pkg.wholesalePrice) / 1000).toFixed(0)}k Discount for Members
+                  </p>
                 </div>
               </div>
 

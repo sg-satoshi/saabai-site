@@ -179,7 +179,7 @@ export default function ClientDashboard() {
                   href={`/client/packages/${pkg.id}`}
                   className="group rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white overflow-hidden transition-shadow hover:shadow-md"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden bg-[#f5f2eb]">
+                  <div className="relative aspect-[3/2] overflow-hidden bg-[#f5f2eb]">
                     <img
                       src={pkg.image}
                       alt={pkg.name}
@@ -207,7 +207,22 @@ export default function ClientDashboard() {
                       {pkg.suburb.toUpperCase()}, {pkg.state}
                     </p>
                     <h3 className="mt-1 text-sm font-semibold tracking-tight md:text-base">{pkg.name}</h3>
-                    <p className="mt-1 text-xs text-[#0891b2] md:text-sm">{formatPrice(pkg.wholesalePrice)}</p>
+                    <div className="mt-2 space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] text-[#9CA3AF]">Reg. Retail:</span>
+                        <span className="text-[10px] text-[#9CA3AF] line-through">{formatPrice(pkg.retailPrice)}</span>
+                        <span className="rounded bg-green-100 px-1.5 py-0.5 text-[9px] font-bold text-green-700">
+                          {Math.round((pkg.retailPrice - pkg.wholesalePrice) / pkg.retailPrice * 100)}% OFF
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-[#0891b2]">Members Price</span>
+                        <span className="text-sm font-bold text-[#1A2B3C] md:text-base">{formatPrice(pkg.wholesalePrice)}</span>
+                      </div>
+                      <p className="text-[10px] font-medium text-green-600">
+                        ${((pkg.retailPrice - pkg.wholesalePrice) / 1000).toFixed(0)}k Discount
+                      </p>
+                    </div>
                     <div className="mt-3 flex items-center gap-3 text-[10px] text-[#5C6670] md:text-xs">
                       <span>{pkg.beds} bed{pkg.beds > 1 ? "s" : ""}</span>
                       <span>{pkg.baths} bath{pkg.baths > 1 ? "s" : ""}</span>

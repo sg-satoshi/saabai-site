@@ -42,9 +42,9 @@ export default function ClientRegister() {
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-green-100 text-green-600">
               <CheckCircle className="h-8 w-8" />
             </div>
-            <h1 className="mt-6 text-xl font-bold md:text-2xl">Application submitted</h1>
+            <h1 className="mt-6 text-xl font-bold md:text-2xl">Your free trial is on its way</h1>
             <p className="mt-3 text-sm leading-relaxed text-[#5C6670]">
-              Thanks for your interest. We will review your application and send your login details within 24 hours. Keep an eye on your inbox.
+              Thanks for your interest. We will review your application and send your login details within 24 hours. Once approved, you will get <strong>7 days free access</strong> to browse our full inventory and see every package's exclusive Members Price.
             </p>
             <Link
               href="/client-login"
@@ -66,10 +66,15 @@ export default function ClientRegister() {
         <div className="w-full max-w-lg">
           <div className="rounded-3xl bg-white p-6 shadow-sm md:p-8">
             <div className="mb-6 text-center">
-              <h1 className="text-xl font-bold md:text-2xl">Request Client Access</h1>
+              <h1 className="text-xl font-bold md:text-2xl">Start Your Free Trial</h1>
               <p className="mt-2 text-sm text-[#5C6670]">
-                Fill in your details and Nick will review your application. Approved investors get access to our full inventory at wholesale pricing.
+                Get <strong className="text-[#0891b2]">7 days free access</strong> to browse our full inventory of pre-market house and land packages. See the Reg. Retail Price vs your exclusive Members Price on every package.
               </p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <span className="rounded-full bg-green-100 px-3 py-1 text-[10px] font-bold text-green-700">7 Days Free</span>
+                <span className="rounded-full bg-[#0891b2]/10 px-3 py-1 text-[10px] font-medium text-[#0891b2]">No obligation</span>
+                <span className="rounded-full bg-[#d4a84b]/10 px-3 py-1 text-[10px] font-medium text-[#d4a84b]">Cancel anytime</span>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
