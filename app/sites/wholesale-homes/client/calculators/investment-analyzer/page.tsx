@@ -542,23 +542,19 @@ export default function InvestmentAnalyzer() {
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={340}>
-                <ReAreaChart data={yieldMeterData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                <BarChart data={yieldMeterData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }} barSize={100}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#9CA3AF" }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#9CA3AF", fontWeight: 600 }} />
                   <YAxis tick={{ fontSize: 9, fill: "#9CA3AF" }} tickFormatter={v => v + "%"} domain={[0, 'auto']} />
-                  <Tooltip content={<>{null}</>} />
-                  <BarChart data={yieldMeterData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                    <Bar dataKey="value" name="Yield" radius={[6, 6, 0, 0]} barSize={80}>
-                      {yieldMeterData.map((entry, idx) => (
-                        <Cell key={idx} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                    <Tooltip content={({ active, payload }: any) => {
-                      if (!active || !payload) return null;
-                      return <div className="rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 shadow-lg"><p className="text-xs font-semibold" style={{ color: payload[0]?.color }}>{payload[0]?.payload?.name}: {payload[0]?.value?.toFixed(2)}%</p></div>;
-                    }} />
-                  </BarChart>
-                </ReAreaChart>
+                  <Tooltip content={({ active, payload }: any) =>
+                    active && payload ? <div className="rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 shadow-lg"><p className="text-xs font-semibold" style={{ color: payload[0]?.color }}>{payload[0]?.payload?.name}: {payload[0]?.value?.toFixed(2)}%</p></div> : null
+                  } />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {yieldMeterData.map((entry, idx) => (
+                      <Cell key={idx} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </>
           )}

@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "22:12", tag: "NEW", title: "Add interactive LVR control — clickable progress bar, bi-directional sync with loan amount, deposit/LMI display" },
       { time: "22:11", tag: "NEW", title: "Add break-even analysis to investment analyzer — rent needed, weekly gap, years to break even with growth" },
       { time: "22:08", tag: "FIX", title: "Rename 'P&I' to 'Principle & Interest (P&I)' in both calculators for clarity" },
       { time: "22:07", tag: "NEW", title: "Borrowing power — add loan type (P&I vs IO), IO period, rate type (variable/fixed)" },
