@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, type ReactNode, type CSSProperties } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import {
   AreaChart as ReAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -12,6 +12,7 @@ import {
 } from "../_shared";
 import { Segmented, InsightCard, AnimatedNumber, UI, FONT_DISPLAY, FONT_UI } from "../../_ui/primitives";
 import { ChartTooltip, CHART, AXIS_TICK, LegendChips } from "../../_ui/charts";
+import { Card, Eyebrow, Title, LedgerRow } from "../../_ui/tearsheet";
 
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
 
@@ -562,31 +563,3 @@ export default function InvestmentAnalyzer() {
   );
 }
 
-// ── Local presentational pieces (tear-sheet aesthetic) ──
-function Card({ children, style, className }: { children: ReactNode; style?: CSSProperties; className?: string }) {
-  return (
-    <div className={className} style={{ background: UI.boneCard, border: `1px solid ${UI.hair}`, borderRadius: 20, padding: "22px 24px", boxShadow: "0 1px 2px rgba(16,24,40,0.03), 0 16px 40px -28px rgba(16,24,40,0.4)", ...style }}>
-      {children}
-    </div>
-  );
-}
-
-function Eyebrow({ children }: { children: ReactNode }) {
-  return <p style={{ fontFamily: FONT_UI, fontSize: 11, fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: UI.teal, margin: 0 }}>{children}</p>;
-}
-
-function Title({ children }: { children: ReactNode }) {
-  return <h3 style={{ fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 500, color: UI.ink, letterSpacing: "-0.01em", margin: "5px 0 0" }}>{children}</h3>;
-}
-
-function LedgerRow({ label, sub, value, valueColor, strong, last }: { label: string; sub?: string; value: string; valueColor?: string; strong?: boolean; last?: boolean }) {
-  return (
-    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, padding: "13px 0", borderBottom: last ? "none" : `1px solid ${UI.hair}` }}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: FONT_UI, fontSize: 13.5, fontWeight: strong ? 600 : 500, color: UI.ink }}>{label}</div>
-        {sub && <div style={{ fontFamily: FONT_UI, fontSize: 11.5, color: UI.faintInk, marginTop: 1 }}>{sub}</div>}
-      </div>
-      <div style={{ fontFamily: FONT_DISPLAY, fontSize: strong ? 26 : 21, fontWeight: 500, color: valueColor ?? UI.ink, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{value}</div>
-    </div>
-  );
-}
