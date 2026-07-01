@@ -112,6 +112,8 @@ export default function InvestmentAnalyzer() {
   const [la, setLa] = useState(583200);
   const [ir, setIr] = useState(6.3);
   const [lt, setLt] = useState(30);
+  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">("pAndI");
+  const [ioPeriod, setIoPeriod] = useState(5);
   const [pf, setPf] = useState<PaymentFreq>("monthly");
   const [mr, setMr] = useState(520);
   const [gr, setGr] = useState(320);
@@ -142,10 +144,24 @@ export default function InvestmentAnalyzer() {
   const tae = cr + ins + mgmtCost + maint + sf + wc;
   const rm = ir / 100 / 12;
   const tpm = lt * 12;
+  // P&I repayment
   const mrRepay = la > 0 && rm > 0 ? (la * rm * Math.pow(1 + rm, tpm)) / (Math.pow(1 + rm, tpm) - 1) : 0;
-  const fp = pf === "monthly" ? mrRepay : pf === "fortnightly" ? mrRepay * 12 / 26 : mrRepay * 12 / 52;
-  const tyLR = mrRepay * 12;
-  const tioL = la > 0 ? mrRepay * tpm - la : 0;
+  // IO repayment — interest only
+  const ioRepayMonthly = la > 0 && rm > 0 ? la * rm : 0;
+  // Active repayment depends on loan type
+  const effectiveRepay = ltType === "interestOnly" ? ioRepayMonthly : mrRepay;
+  const fp = pf === "monthly" ? effectiveRepay : pf === "fortnightly" ? effectiveRepay * 12 / 26 : effectiveRepay * 12 / 52;
+  const tyLR = effectiveRepay * 12;
+  // Remaining term after IO period (for post-IO P&I phase)
+  const remainingTerm = Math.max(1, lt - (ltType === "interestOnly" ? ioPeriod : 0));
+  const remainingMonths = remainingTerm * 12;
+  const postIORepay = ltType === "interestOnly" && la > 0 && rm > 0
+    ? (la * rm * Math.pow(1 + rm, remainingMonths)) / (Math.pow(1 + rm, remainingMonths) - 1)
+    : mrRepay;
+  // Total interest over life
+  const tioL = ltType === "interestOnly" && la > 0
+    ? ioRepayMonthly * ioPeriod * 12 + postIORepay * remainingMonths - la
+    : (la > 0 ? mrRepay * tpm - la : 0);
   const nri = effRent - tae;
   const ycfBT = nri - tyLR;
   const wcfBT = ycfBT / 52;
@@ -158,10 +174,29 @@ export default function InvestmentAnalyzer() {
   function projectYear(y: number) {
     const gm = Math.pow(1 + cgr / 100, y);
     const pv = pp * gm;
-    const eq = pv - la;
+    // During IO period: no principal paid. After: amortize la over remaining term.
+    let loanBalAfter = la;
+    if (ltType === "interestOnly" && y > ioPeriod) {
+      const postYrs = y - ioPeriod;
+      const rateM = rm;
+      const n = remainingMonths;
+      const balAfterIO = la;
+      const repay = postIORepay;
+      for (let m = 0; m < postYrs * 12; m++) {
+        const intPart = balAfterIO * rateM;
+        const prinPart = repay - intPart;
+        if (balAfterIO - prinPart < 0) break;
+        if (m === postYrs * 12 - 1) loanBalAfter = Math.max(0, balAfterIO - prinPart);
+      }
+    } else if (ltType === "pAndI") {
+      loanBalAfter = la * (1 + rm) ** (y * 12) - mrRepay * ((1 + rm) ** (y * 12) - 1) / rm;
+      loanBalAfter = Math.max(0, Math.round(loanBalAfter));
+    }
+    const eq = pv - loanBalAfter;
     const totalCF = y > 0 ? Array.from({ length: y }, (_, i) => {
       const rg = 1.03 ** i; const eg = 1.025 ** i;
-      return (yrRent * (1 - vr / 100) * rg - tae * eg) - mrRepay * 12;
+      const yrRepay = i < ioPeriod && ltType === "interestOnly" ? ioRepayMonthly * 12 : postIORepay * 12;
+      return (yrRent * (1 - vr / 100) * rg - tae * eg) - yrRepay;
     }).reduce((a, b) => a + b, 0) : 0;
     const neq = eq + Math.max(0, totalCF);
     const tr = neq - initInv;
@@ -185,18 +220,32 @@ export default function InvestmentAnalyzer() {
   const amortData = useMemo(() =>
     Array.from({ length: Math.min(lt, 30) }, (_, i) => {
       const y = i + 1;
-      const bal = la * (1 + rm) ** (y * 12) - mrRepay * ((1 + rm) ** (y * 12) - 1) / rm;
-      const totalPd = mrRepay * y * 12;
-      const intPd = totalPd - (la - Math.max(0, bal));
+      const isIO = ltType === "interestOnly" && y <= ioPeriod;
+      const repay = isIO ? ioRepayMonthly * 12 : postIORepay * 12;
+      let remaining;
+      if (isIO) {
+        remaining = la; // no principal paid during IO
+      } else if (ltType === "interestOnly") {
+        // Post-IO: amortize from la over remaining term
+        const postYr = y - ioPeriod;
+        remaining = la * (1 + rm) ** (postYr * 12) - postIORepay * ((1 + rm) ** (postYr * 12) - 1) / rm;
+        remaining = Math.max(0, Math.round(remaining));
+      } else {
+        remaining = la * (1 + rm) ** (y * 12) - mrRepay * ((1 + rm) ** (y * 12) - 1) / rm;
+        remaining = Math.max(0, Math.round(remaining));
+      }
+      const totalPd = isIO ? repay * y : (ioRepayMonthly * Math.min(ioPeriod, y) * 12 + postIORepay * Math.max(0, y - ioPeriod) * 12);
+      const intPd = isIO ? repay * y : (ioRepayMonthly * Math.min(ioPeriod, y) * 12 + (postIORepay * Math.max(0, y - ioPeriod) * 12 - (la - remaining)));
       const prinPd = totalPd - intPd;
       return {
         year: y,
-        remaining: Math.round(Math.max(0, bal)),
+        remaining: Math.round(remaining),
         interest: Math.round(intPd),
         principal: Math.round(prinPd),
         totalPaid: Math.round(totalPd),
+        isIO: isIO,
       };
-    }), [la, rm, mrRepay, lt]);
+    }), [la, rm, mrRepay, lt, ltType, ioPeriod, ioRepayMonthly, postIORepay, remainingMonths]);
 
   const yieldMeterData = useMemo(() => [
     { name: "Gross Yield", value: gy, fill: "#0891b2" },
@@ -233,6 +282,13 @@ export default function InvestmentAnalyzer() {
       const dti = (tyLR / ci) * 100;
       if (dti < 30) ins.push({ type: "positive", title: "Healthy DTI", detail: `${dti.toFixed(0)}% debt-to-income. Strong position to proceed.` });
       else ins.push({ type: "warning", title: `DTI at ${dti.toFixed(0)}%`, detail: `Consider lower entry price or larger deposit.` });
+    }
+    // IO vs P&I comparison
+    if (ltType === "interestOnly") {
+      const pmiSavings = (mrRepay - effectiveRepay) * 12;
+      ins.push({ type: "info", title: "Interest-Only Analysis", detail: `IO saves **$${fmt(Math.round(pmiSavings))}/yr** during the ${ioPeriod}-year IO period compared to P&I ($${fmt(Math.round(effectiveRepay))}/${pf} vs $${fmt(Math.round(mrRepay))}/${pf}). After year ${ioPeriod}, repayments jump to **$${fmt(Math.round(postIORepay))}/mo** (P&I over ${remainingTerm}yr). The cash flow benefit today comes at the cost of higher total interest over the loan life ($${fmt(Math.round(tioL))} vs $${fmt(Math.round(la > 0 ? mrRepay * tpm - la : 0))} for P&I). Best used when you plan to sell or refinance before the IO period ends.` });
+    } else {
+      ins.push({ type: "info", title: "P&I vs Interest-Only", detail: `Currently on P&I at **$${fmt(Math.round(effectiveRepay))}/${pf}**. Switching to IO (${ioPeriod}yr) would reduce payments to **$${fmt(Math.round(ioRepayMonthly))}/mo** ($${fmt(Math.round((mrRepay - ioRepayMonthly) * 12))}/yr savings), improving cash flow by $${Math.round((mrRepay - ioRepayMonthly) * 12 / 52)}/week. Total interest would increase by $${fmt(Math.round(tioL - (la > 0 ? mrRepay * tpm - la : 0)))} over the loan life.` });
     }
     return ins;
   }, [wcfBT, lvr, gy, cgr, yr5, ir, la, tpm, mrRepay, gf, gr, mr, pp, initInv, ci, tyLR]);
@@ -306,8 +362,12 @@ export default function InvestmentAnalyzer() {
             ]} />
             <InputStrip id="row2" items={[
               { label: "Pay Frequency", val: pf, set: setPf, isSelect: true, opts: [{ label: "Weekly", value: "weekly" }, { label: "Fortnightly", value: "fortnightly" }, { label: "Monthly", value: "monthly" }] },
+              { label: "Loan Type", val: ltType, set: setLtType, isSelect: true, opts: [{ label: "P&I", value: "pAndI" }, { label: "Interest Only", value: "interestOnly" }] },
+              { label: "IO Period", val: ioPeriod, set: setIoPeriod, suffix: "yr", disabled: ltType !== "interestOnly" },
               { label: "Main Rent /wk", val: mr, set: setMr, suffix: "$" },
               { label: "Granny Rent /wk", val: gr, set: setGr, suffix: "$", disabled: !gf },
+            ]} />
+            <InputStrip id="row3" items={[
               { label: "Growth Rate", val: cgr, set: setCgr, step: 0.5, suffix: "%" },
               { label: "Vacancy", val: vr, set: setVr, step: 0.5, suffix: "%" },
             ]} />
@@ -419,8 +479,8 @@ export default function InvestmentAnalyzer() {
           <MetricMini label="Gross Yield" val={gy.toFixed(1) + "%"} color="#0891b2" sub={fmt$(yrRent) + "/yr"} />
           <MetricMini label="Net Yield" val={nyBL.toFixed(1) + "%"} color="#16a34a" sub={fmt$(nri) + "/yr net"} />
           <MetricMini label="5-Yr ROI" val={yr5.roi + "%"} color={yr5.roi >= 20 ? "#16a34a" : "#f59e0b"} sub={fmt$(yr5.tr)} />
-          <MetricMini label="Monthly Repay" val={fmt$(Math.round(mrRepay))} color="#1A2B3C" sub={lt + "yr P&I"} />
-          <MetricMini label="Total Interest" val={fmt$(Math.round(tioL))} color="#dc2626" sub="over loan life" />
+          <MetricMini label={`${ltType === "interestOnly" ? "IO" : "P&I"} Repay`} val={fmt$(Math.round(effectiveRepay))} color="#1A2B3C" sub={`${pf} · ${ltType === "interestOnly" ? ioPeriod + "yr IO then " : ""}${remainingTerm}yr P&I`} />
+          <MetricMini label="Total Interest" val={fmt$(Math.round(tioL))} color="#dc2626" sub={`${ltType === "interestOnly" ? "IO " + ioPeriod + "yr + P&I " + remainingTerm + "yr" : lt + "yr P&I"}`} />
           <MetricMini label="Initial Outlay" val={fmt$(initInv)} color="#7c3aed" sub={fmt$(dep) + " dep + " + fmt$(tbc) + " costs"} />
           <MetricMini label="10-Yr Value" val={fmt$(yr10.pv)} color="#7c3aed" sub={"+$" + fmt(yr10.pv - pp) + " growth"} />
         </div>
@@ -447,7 +507,7 @@ export default function InvestmentAnalyzer() {
             <div>
               <p className="text-[9px] text-[#5C6670]">Loan Cost</p>
               <p className="text-sm font-semibold text-[#dc2626]">-{fmt$(Math.round(tyLR))}</p>
-              <p className="text-[9px] text-[#5C6670]">{ir.toFixed(1)}% · ${fmt(Math.round(fp))} {pf}</p>
+              <p className="text-[9px] text-[#5C6670]">{ir.toFixed(1)}% · ${fmt(Math.round(fp))} {pf} · {ltType === "interestOnly" ? "IO" : "P&I"}</p>
             </div>
             <div>
               <p className="text-[9px] text-[#5C6670]">Net Rental</p>

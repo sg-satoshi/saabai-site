@@ -2,189 +2,187 @@
 
 import { useState } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { TrendingUp, DollarSign, Percent, Home } from "lucide-react";
+import { TrendingUp, DollarSign, Home, Building2, Percent } from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  Cell, PieChart, Pie, Legend,
+} from "recharts";
 
 export default function DualIncomeYieldCalculator() {
-  const [purchasePrice, setPurchasePrice] = useState(789990);
-  const [mainRent, setMainRent] = useState(420);
-  const [grannyRent, setGrannyRent] = useState(280);
-  const [rates, setRates] = useState(2500);
-  const [insurance, setInsurance] = useState(1800);
-  const [management, setManagement] = useState(7);
-  const [maintenance, setMaintenance] = useState(1500);
+  const [pp, setPp] = useState(789990);
+  const [mr, setMr] = useState(420);
+  const [gr, setGr] = useState(280);
+  const [cr, setCr] = useState(2500);
+  const [ins, setIns] = useState(1800);
+  const [mgmt, setMgmt] = useState(7);
+  const [maint, setMaint] = useState(1500);
 
-  const totalWeeklyRent = mainRent + grannyRent;
-  const yearlyRent = totalWeeklyRent * 52;
-  const mgmtCosts = yearlyRent * (management / 100);
-  const totalExpenses = rates + insurance + mgmtCosts + maintenance;
-  const netYearlyIncome = yearlyRent - totalExpenses;
-  const grossYield = (yearlyRent / purchasePrice) * 100;
-  const netYield = (netYearlyIncome / purchasePrice) * 100;
-  const weeklyCashflow = netYearlyIncome / 52;
+  const twr = mr + gr;
+  const yrRent = twr * 52;
+  const mgmtCost = yrRent * (mgmt / 100);
+  const tae = cr + ins + mgmtCost + maint;
+  const nri = yrRent - tae;
+  const gy = pp > 0 ? (yrRent / pp) * 100 : 0;
+  const ny = pp > 0 ? (nri / pp) * 100 : 0;
+  const wcf = nri / 52;
+  const mcf = nri / 12;
+
+  const yieldData = [
+    { name: "Gross Yield", value: gy, fill: "#0891b2" },
+    { name: "Net Yield", value: ny, fill: "#16a34a" },
+    { name: "Income Return on Cash", value: pp > 0 ? (nri / (pp * 0.2)) * 100 : 0, fill: "#7c3aed" },
+  ];
+
+  const incomeBreakdown = [
+    { name: "Main House Rent", value: mr * 52, fill: "#0891b2" },
+    { name: "Granny Flat Rent", value: gr * 52, fill: "#16a34a" },
+    { name: "Total Rent", value: yrRent, fill: "#f59e0b" },
+    { name: "Less Expenses", value: -tae, fill: "#dc2626" },
+  ];
+
+  const fmt$ = (n: number) => "$" + Math.round(n).toLocaleString("en-AU");
+  const fmt1k = (n: number) => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : Math.round(n).toLocaleString("en-AU");
 
   return (
     <ClientPortalShell>
-      <div style={{ maxWidth: 900 }}>
-        {/* Back link */}
-        <a
-          href="/client/calculators"
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            fontSize: 12, fontWeight: 600, color: "#0891b2",
-            textDecoration: "none", marginBottom: 16,
-          }}
-        >
-          &larr; Back to Calculators
-        </a>
+      <div style={{ maxWidth: 1060 }}>
+        <a href="/client/calculators" className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0891b2] hover:underline mb-3">&larr; Back to Calculators</a>
 
-        <div style={{ marginBottom: 28 }}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">
-            Calculator
-          </p>
-          <h1 className="mt-2 text-[clamp(1.3rem,3vw,1.8rem)] font-semibold leading-tight tracking-tight text-[#1A2B3C]">
-            Dual Income Yield Calculator
-          </h1>
-          <p className="mt-1 text-sm text-[#5C6670]">
-            Estimate your net rental yield on house + granny flat investment packages.
-          </p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0891b2]/10">
+            <Building2 className="h-6 w-6 text-[#0891b2]" />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2]">Calculator</p>
+            <h1 className="text-xl font-bold tracking-tight text-[#1A2B3C]">Dual Income Yield</h1>
+            <p className="text-xs text-[#5C6670]">Estimate returns on house + granny flat investments.</p>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-5">
-          {/* Inputs */}
-          <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-5 md:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670] mb-4">Property Details</p>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Purchase Price ($)</label>
-                <input
-                  type="number"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
+        {/* ── COMPACT INPUTS ── */}
+        <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 mb-5 shadow-sm">
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Adjust any number. Everything updates instantly.</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Purchase Price", val: pp, set: setPp, suffix: "$" },
+              { label: "Main Rent /wk", val: mr, set: setMr, suffix: "$" },
+              { label: "Granny Flat /wk", val: gr, set: setGr, suffix: "$" },
+              { label: "Council Rates", val: cr, set: setCr, suffix: "$" },
+              { label: "Insurance", val: ins, set: setIns, suffix: "$" },
+              { label: "Mgmt Fee", val: mgmt, set: setMgmt, suffix: "%", step: 0.5 },
+              { label: "Maintenance", val: maint, set: setMaint, suffix: "$" },
+            ].map((f, i) => (
+              <div key={i}>
+                <label className="block text-[9px] font-medium text-[#5C6670] mb-0.5">{f.label}</label>
+                <div className="relative">
+                  <input type="number" value={f.val} onChange={e => f.set(Number(e.target.value) || 0)}
+                    step={f.step ?? 1}
+                    className="w-full rounded-lg border border-[rgba(0,0,0,0.1)] bg-white px-2 py-1.5 text-[11px] text-[#1A2B3C] outline-none focus:border-[#0891b2] transition-colors text-right" />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#9CA3AF] pointer-events-none">{f.suffix}</span>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Main House Weekly Rent ($)</label>
-                <input
-                  type="number"
-                  value={mainRent}
-                  onChange={(e) => setMainRent(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Granny Flat Weekly Rent ($)</label>
-                <input
-                  type="number"
-                  value={grannyRent}
-                  onChange={(e) => setGrannyRent(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670] mt-6 mb-4">Annual Costs</p>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Council Rates ($)</label>
-                <input
-                  type="number"
-                  value={rates}
-                  onChange={(e) => setRates(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Insurance ($)</label>
-                <input
-                  type="number"
-                  value={insurance}
-                  onChange={(e) => setInsurance(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Property Management (%)</label>
-                <input
-                  type="number"
-                  value={management}
-                  onChange={(e) => setManagement(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                  step="0.5"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#5C6670]">Maintenance Reserve ($)</label>
-                <input
-                  type="number"
-                  value={maintenance}
-                  onChange={(e) => setMaintenance(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
-                />
-              </div>
-            </div>
+        {/* ── KEY METRICS ── */}
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          <MetricMini label="Gross Annual Rent" val={fmt$(yrRent)} color="#0891b2" sub={`${mr}/wk main + ${gr}/wk granny`} />
+          <MetricMini label="Net Annual Income" val={fmt$(nri)} color={nri >= 0 ? "#16a34a" : "#dc2626"} sub="after all costs" />
+          <MetricMini label="Weekly Cashflow" val={fmt$(Math.round(wcf))} color={wcf >= 0 ? "#16a34a" : "#dc2626"} sub="before loan" />
+          <MetricMini label="Expenses /yr" val={fmt$(tae)} color="#dc2626" sub={`${mgmt}% mgmt · rates · ins · maint`} />
+          <MetricMini label="Gross Yield" val={gy.toFixed(2) + "%"} color="#0891b2" sub={fmt$(yrRent) + "/yr ÷ " + fmt$(pp)} />
+          <MetricMini label="Net Yield" val={ny.toFixed(2) + "%"} color="#16a34a" sub={fmt$(nri) + "/yr net"} />
+          <MetricMini label="Net Monthly" val={fmt$(Math.round(mcf))} color="#7c3aed" sub="net rental income" />
+          <MetricMini label="Total Weekly Rent" val={fmt$(twr)} color="#f59e0b" sub={`Main ${mr} + Granny ${gr}`} />
+        </div>
+
+        {/* ── BIG CHARTS ── */}
+        <div className="grid gap-5 md:grid-cols-2 mb-5">
+          {/* Yield Comparison */}
+          <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 md:p-5 shadow-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Yield Comparison</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={yieldData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }} barSize={70}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#9CA3AF" }} />
+                <YAxis tick={{ fontSize: 9, fill: "#9CA3AF" }} tickFormatter={v => v + "%"} domain={[0, "auto"]} />
+                <Tooltip content={({ active, payload }: any) =>
+                  active && payload ? <div className="rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 shadow-lg"><p className="text-xs font-semibold" style={{ color: payload[0]?.color }}>{payload[0]?.payload?.name}: {payload[0]?.value?.toFixed(2)}%</p></div> : null
+                } />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {yieldData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Results */}
-          <div className="md:col-span-3">
-            <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670] mb-5">Results</p>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl bg-[#f0fdf4] p-4 border border-green-100">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-green-700">Gross Yield</p>
-                  <p className="mt-1 text-2xl font-bold text-green-600">{grossYield.toFixed(2)}%</p>
-                  <p className="text-xs text-green-700/70">${yearlyRent.toLocaleString()}/yr rent</p>
-                </div>
-                <div className="rounded-xl bg-[#f0f9ff] p-4 border border-[#0891b2]/20">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#0891b2]">Net Yield</p>
-                  <p className="mt-1 text-2xl font-bold text-[#0891b2]">{netYield.toFixed(2)}%</p>
-                  <p className="text-xs text-[#0891b2]/70">After all costs</p>
-                </div>
-                <div className="rounded-xl bg-[#1A2B3C] p-4 border border-[rgba(255,255,255,0.08)]">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Weekly Cashflow</p>
-                  <p className="mt-1 text-2xl font-bold text-white">${weeklyCashflow.toFixed(0)}</p>
-                  <p className="text-xs text-white/60">per week</p>
-                </div>
-                <div className="rounded-xl bg-[#fefce8] p-4 border border-yellow-200">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-yellow-800">Total Weekly Rent</p>
-                  <p className="mt-1 text-2xl font-bold text-yellow-700">${totalWeeklyRent}</p>
-                  <p className="text-xs text-yellow-800/70">Main ${mainRent} + Granny ${grannyRent}</p>
-                </div>
-              </div>
-
-              <div className="mt-6 rounded-xl bg-[#f8f6f2] p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670] mb-2">Income Breakdown</p>
-                <div className="space-y-2">
-                  <Row label="Gross annual rent" value={`$${yearlyRent.toLocaleString()}`} />
-                  <Row label="Less property management" value={`-$${mgmtCosts.toLocaleString()}`} negative />
-                  <Row label="Less council rates" value={`-$${rates.toLocaleString()}`} negative />
-                  <Row label="Less insurance" value={`-$${insurance.toLocaleString()}`} negative />
-                  <Row label="Less maintenance reserve" value={`-$${maintenance.toLocaleString()}`} negative />
-                  <div className="border-t border-[rgba(0,0,0,0.08)] pt-2">
-                    <Row label="Net annual income" value={`$${netYearlyIncome.toLocaleString()}`} bold />
-                  </div>
-                </div>
-              </div>
-
-              <p className="mt-4 text-[10px] text-[#9CA3AF] leading-relaxed">
-                This calculator provides an estimate only. Actual yields depend on purchase costs,
-                vacancy rates, interest rates, and individual property characteristics.
-                Speak with Nick for personalised figures.
-              </p>
-            </div>
+          {/* Income Breakdown */}
+          <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 md:p-5 shadow-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Income Breakdown</p>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={[
+                { name: "Main Rent", value: mr * 52, fill: "#0891b2" },
+                { name: "Granny Flat", value: gr * 52, fill: "#16a34a" },
+                { name: "Total Rent", value: yrRent, fill: "#f59e0b" },
+                { name: "Expenses", value: -tae, fill: "#dc2626" },
+                { name: "Net Income", value: nri, fill: nri >= 0 ? "#7c3aed" : "#dc2626" },
+              ]} margin={{ top: 5, right: 10, left: -10, bottom: 0 }} barSize={50}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#9CA3AF" }} />
+                <YAxis tick={{ fontSize: 9, fill: "#9CA3AF" }} tickFormatter={v => "$" + fmt1k(v)} />
+                <Tooltip content={({ active, payload }: any) =>
+                  active && payload ? <div className="rounded-xl border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 shadow-lg"><p className="text-xs font-semibold" style={{ color: payload[0]?.color }}>{payload[0]?.payload?.name}: ${Math.abs(payload[0]?.value || 0).toLocaleString("en-AU")}</p></div> : null
+                } />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {[
+                    { name: "Main Rent", value: mr * 52, fill: "#0891b2" },
+                    { name: "Granny Flat", value: gr * 52, fill: "#16a34a" },
+                    { name: "Total Rent", value: yrRent, fill: "#f59e0b" },
+                    { name: "Expenses", value: -tae, fill: "#dc2626" },
+                    { name: "Net Income", value: nri, fill: nri >= 0 ? "#7c3aed" : "#dc2626" },
+                  ].map((e, i) => <Cell key={i} fill={e.fill} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* ── DETAILED BREAKDOWN ── */}
+        <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 md:p-5 mb-6 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Annual Breakdown</p>
+          <div className="space-y-2 text-xs">
+            <Row label="Gross annual rent" val={fmt$(yrRent)} color="#0891b2" />
+            <Row label={`Less property management (${mgmt}%)`} val={"-" + fmt$(mgmtCost)} color="#dc2626" />
+            <Row label="Less council rates" val={"-" + fmt$(cr)} color="#dc2626" />
+            <Row label="Less insurance" val={"-" + fmt$(ins)} color="#dc2626" />
+            <Row label="Less maintenance reserve" val={"-" + fmt$(maint)} color="#dc2626" />
+            <div className="border-t border-[rgba(0,0,0,0.06)] my-1" />
+            <Row label="Net annual income" val={fmt$(nri)} color={nri >= 0 ? "#16a34a" : "#dc2626"} bold />
+            <Row label="Weekly cash flow" val={fmt$(Math.round(wcf))} color={wcf >= 0 ? "#16a34a" : "#dc2626"} />
+          </div>
+          <p className="mt-3 text-[9px] text-[#9CA3AF]">This calculator provides an estimate only. Speak with Nick for personalised figures.</p>
         </div>
       </div>
     </ClientPortalShell>
   );
 }
 
-function Row({ label, value, negative, bold }: { label: string; value: string; negative?: boolean; bold?: boolean }) {
+function MetricMini({ label, val, color, sub }: { label: string; val: string; color: string; sub: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
+      <p className="text-[8px] font-semibold uppercase tracking-wider text-[#5C6670] truncate">{label}</p>
+      <p className="mt-0.5 text-sm font-bold" style={{ color }}>{val}</p>
+      <p className="text-[8px] text-[#9CA3AF] truncate">{sub}</p>
+    </div>
+  );
+}
+
+function Row({ label, val, color, bold }: { label: string; val: string; color?: string; bold?: boolean }) {
+  return (
+    <div className="flex justify-between items-center">
       <span className={`text-xs ${bold ? "font-semibold text-[#1A2B3C]" : "text-[#5C6670]"}`}>{label}</span>
-      <span className={`text-xs font-semibold ${negative ? "text-red-500" : bold ? "text-[#0891b2]" : "text-[#1A2B3C]"}`}>{value}</span>
+      <span className={`text-xs ${bold ? "font-semibold" : ""}`} style={{ color: color ?? "#1A2B3C" }}>{val}</span>
     </div>
   );
 }
