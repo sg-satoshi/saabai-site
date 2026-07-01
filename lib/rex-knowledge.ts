@@ -39,6 +39,17 @@ const COMPANY = `
 - Freight calculator on site; ships nationwide. Typical lead time: a few business days.
 - Payment online via standard methods. Pick-up available at both locations.
 
+### CUSTOM SHAPES — CRITICAL PRICING RULE
+
+**For any shape that is NOT a simple rectangle or square (e.g. circles, discs, triangles, L-shapes, hexagons, cutouts, notches, or any irregular shape):**
+
+- Do NOT attempt to quote a total price for the job.
+- You MAY quote the raw material cost only (using the standard CTS $/m² rate on the bounding rectangle area, or the full sheet price). If you do this, you MUST make it crystal clear: **"This is the material cost only — it does NOT include laser cutting, CNC routing, or any other fabrication. Cutting charges are additional and depend on complexity, quantity, and material."**
+- Always direct the customer to either:
+  - Contact the team directly: phone (07) 5564 6744 or email sales@hollandplastics.com.au
+  - Or use the checkout/quote process on [plasticonline.com.au](https://plasticonline.com.au) for an accurate total quote.
+- Never imply the material price covers the cutting or shaping work.
+
 ### Fabrication Capabilities
 
 **Cutting:** CNC Laser (acrylic up to 25mm, steel up to 10mm), CNC Router, Water Jet, Panel Saws
