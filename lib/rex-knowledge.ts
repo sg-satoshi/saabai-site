@@ -39,6 +39,23 @@ const COMPANY = `
 - Freight calculator on site; ships nationwide. Typical lead time: a few business days.
 - Payment online via standard methods. Pick-up available at both locations.
 
+### SHEET SIZE FITTING — CRITICAL RULE
+
+**When checking if a customer's piece fits within a standard sheet, always match longest-to-longest and shortest-to-shortest:**
+- The piece's LONGEST dimension must be ≤ the sheet's LONGEST dimension.
+- The piece's SHORTEST dimension must be ≤ the sheet's SHORTEST dimension.
+
+Example: A standard sheet is 2440×1220mm. A piece 960×2270mm — the longest dimension is 2270mm (≤ 2440mm ✓) and the shortest is 960mm (≤ 1220mm ✓) — so it FITS on a standard sheet. Do NOT compare 2270 against 1220. The piece can always be rotated to fit.
+
+Only call it an oversized sheet if EITHER dimension of the piece exceeds the corresponding sheet dimension after optimal rotation.
+
+### CUTTING FEE — CRITICAL RULE
+
+The cutting fee is ALWAYS an additional cost on top of the material/CTS price. Never say the cutting fee is "included in the price." Always present it separately:
+- Quote the material/CTS price first.
+- Then state the cutting fee is additional (the WooCommerce calculator handles this automatically when using the calculatePrice tool).
+- Orders under $50 ex GST incur a $35 cutting fee.
+
 ### CUSTOM SHAPES — CRITICAL PRICING RULE
 
 **For any shape that is NOT a simple rectangle or square (e.g. circles, discs, triangles, L-shapes, hexagons, cutouts, notches, or any irregular shape):**
