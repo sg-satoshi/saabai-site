@@ -7,7 +7,7 @@ import { BookOpen, TrendingUp, FileText, Shield, DollarSign, Home, ArrowRight } 
 const RESOURCES = [
   {
     title: "First Home Buyer Guide",
-    desc: "The complete step-by-step guide to buying your first home — from deposit to settlement.",
+    desc: "The complete step-by-step guide to buying your first home, from deposit to settlement.",
     icon: FileText,
     color: "#0891b2",
     href: "#",
@@ -31,7 +31,7 @@ const RESOURCES = [
   },
   {
     title: "Investment Structures",
-    desc: "Individual, joint, trust, or company — which structure is right for your property investment strategy.",
+    desc: "Individual, joint, trust, or company. Which structure is right for your property investment strategy.",
     icon: Shield,
     color: "#8b5cf6",
     href: "#",

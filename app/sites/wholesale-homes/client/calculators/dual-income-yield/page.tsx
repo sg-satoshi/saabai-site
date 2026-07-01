@@ -60,7 +60,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={purchasePrice}
                   onChange={(e) => setPurchasePrice(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -69,7 +69,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={mainRent}
                   onChange={(e) => setMainRent(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -78,7 +78,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={grannyRent}
                   onChange={(e) => setGrannyRent(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={rates}
                   onChange={(e) => setRates(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -100,7 +100,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={insurance}
                   onChange={(e) => setInsurance(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -109,7 +109,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={management}
                   onChange={(e) => setManagement(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                   step="0.5"
                 />
               </div>
@@ -119,7 +119,7 @@ export default function DualIncomeYieldCalculator() {
                   type="number"
                   value={maintenance}
                   onChange={(e) => setMaintenance(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
             </div>

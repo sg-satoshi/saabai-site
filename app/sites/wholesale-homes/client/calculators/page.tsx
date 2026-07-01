@@ -8,7 +8,7 @@ const CALCULATORS = [
   {
     slug: "dual-income-yield",
     label: "Dual Income Yield Calculator",
-    desc: "Estimate your net rental yield on dual-occupancy packages — main house + granny flat income streams.",
+    desc: "Estimate your net rental yield on dual-occupancy packages, main house + granny flat income streams.",
     icon: TrendingUp,
     color: "#0891b2",
   },

@@ -68,7 +68,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={income}
                   onChange={(e) => setIncome(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -77,7 +77,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={partnerIncome}
                   onChange={(e) => setPartnerIncome(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -86,7 +86,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={deposit}
                   onChange={(e) => setDeposit(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -95,7 +95,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={livingExpenses}
                   onChange={(e) => setLivingExpenses(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={otherLoans}
                   onChange={(e) => setOtherLoans(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
               </div>
               <div>
@@ -117,7 +117,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={creditCards}
                   onChange={(e) => setCreditCards(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 />
                 <p className="mt-0.5 text-[10px] text-[#9CA3AF]">Lenders assess 3.6% of limit as monthly liability</p>
               </div>
@@ -131,7 +131,7 @@ export default function BorrowingPowerEstimator() {
                   type="number"
                   value={interestRate}
                   onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                   step="0.1"
                 />
               </div>
@@ -140,7 +140,7 @@ export default function BorrowingPowerEstimator() {
                 <select
                   value={loanTerm}
                   onChange={(e) => setLoanTerm(Number(e.target.value))}
-                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] px-3 py-2 text-sm outline-none focus:border-[#0891b2]"
+                  className="mt-1 w-full rounded-lg border border-[rgba(0,0,0,0.12)] bg-white px-3 py-2 text-sm text-[#1A2B3C] outline-none focus:border-[#0891b2]"
                 >
                   <option value={20}>20 years</option>
                   <option value={25}>25 years</option>
@@ -176,7 +176,7 @@ export default function BorrowingPowerEstimator() {
                   <p className={`text-[10px] font-semibold uppercase tracking-wider ${belowEighty ? 'text-green-700' : 'text-yellow-800'}`}>Loan-to-Value Ratio</p>
                   <p className={`mt-1 text-2xl font-bold ${belowEighty ? "text-green-600" : "text-yellow-700"}`}>{lvr.toFixed(1)}%</p>
                   <p className={`text-xs ${belowEighty ? "text-green-700/70" : "text-yellow-800/70"}`}>
-                    {belowEighty ? "Under 80% — no LMI likely needed" : "Over 80% — LMI may apply"}
+                    {belowEighty ? "Under 80% - no LMI likely needed" : "Over 80% - LMI may apply"}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#f0fdf4] p-4 border border-green-100 sm:col-span-2">
