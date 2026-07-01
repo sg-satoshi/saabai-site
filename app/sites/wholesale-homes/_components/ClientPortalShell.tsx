@@ -256,26 +256,30 @@ export function ClientPortalShell({ children, userName }: Props) {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: isMobile ? "space-between" : "flex-end",
             height: 60,
             padding: "0 24px",
             background: C.cardBg,
             borderBottom: "1px solid rgba(0,0,0,0.06)",
           }}
         >
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              border: "none", background: "transparent",
-              fontSize: 13, fontWeight: 600, color: "#1A2B3C",
-              cursor: "pointer",
-            }}
-          >
-            <Menu style={{ width: 20, height: 20 }} />
-            <span>Menu</span>
-          </button>
+          {/* Mobile hamburger — only meaningful on narrow viewports, where the
+              sidebar is off-screen. On desktop the sidebar is always pinned
+              visible, so this button would open an overlay with nothing to reveal. */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileOpen(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                border: "none", background: "transparent",
+                fontSize: 13, fontWeight: 600, color: "#1A2B3C",
+                cursor: "pointer",
+              }}
+            >
+              <Menu style={{ width: 20, height: 20 }} />
+              <span>Menu</span>
+            </button>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 13, color: "#5C6670" }}>

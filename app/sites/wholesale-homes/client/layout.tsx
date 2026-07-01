@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Fraunces, Manrope } from "next/font/google";
 
-// Editorial "tear sheet" type system for the client calculators:
-// Fraunces (optical serif) carries the monumental financial figures,
-// Manrope handles UI/labels. Exposed as CSS variables so every calculator
-// page can opt into them via var(--font-fraunces) / var(--font-manrope).
+// Editorial "tear sheet" type system for the client portal:
+// Fraunces (optical serif) carries monumental figures/headings, Manrope
+// handles UI/labels. Exposed as CSS variables so any page under /client
+// (calculators, resources, dashboard, account) can opt in via
+// var(--font-fraunces) / var(--font-manrope).
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
@@ -16,7 +17,7 @@ const manrope = Manrope({
   display: "swap",
 });
 
-export default function CalculatorsLayout({ children }: { children: ReactNode }) {
+export default function ClientLayout({ children }: { children: ReactNode }) {
   // display:contents so the wrapper contributes no box — it only propagates
   // the font CSS variables down the tree.
   return (
