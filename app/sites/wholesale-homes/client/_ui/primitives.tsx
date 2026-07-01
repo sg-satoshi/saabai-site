@@ -26,7 +26,16 @@ export const UI = {
   violet: "#7c3aed",   // legacy token (unused in calculators)
   canvas: "#f6f8fb",
   card: "#ffffff",
+  // Tear-sheet editorial layer
+  bone: "#f3efe7",     // warm paper canvas
+  boneCard: "#fbf9f4", // raised paper surface
+  heroInk: "#0c1a16",  // near-black green-ink hero
+  hair: "rgba(18,30,26,0.12)", // hairline rule
+  faintInk: "rgba(18,30,26,0.55)",
 } as const;
+
+export const FONT_DISPLAY = "var(--font-fraunces), Georgia, serif";
+export const FONT_UI = "var(--font-manrope), ui-sans-serif, system-ui, sans-serif";
 
 export type Tone = "neutral" | "teal" | "green" | "amber" | "red" | "violet" | "gold";
 

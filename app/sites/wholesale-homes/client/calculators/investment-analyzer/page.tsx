@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, type ReactNode, type CSSProperties } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { Zap } from "lucide-react";
 import {
   AreaChart as ReAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell,
@@ -11,7 +10,7 @@ import {
   calcStampDuty, STATE_NAMES, type State,
   fmtNum as fmt, fmtAUD as fmt$, fmtCompact as fmtK,
 } from "../_shared";
-import { Panel, SectionHeader, StatCard, Segmented, InsightCard, UI } from "../../_ui/primitives";
+import { Segmented, InsightCard, AnimatedNumber, UI, FONT_DISPLAY, FONT_UI } from "../../_ui/primitives";
 import { ChartTooltip, CHART, AXIS_TICK, LegendChips } from "../../_ui/charts";
 
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
@@ -96,7 +95,7 @@ export default function InvestmentAnalyzer() {
     for (let y = 0; y <= 30; y++) {
       const projectedRent = currentRentWeekly * 52 * Math.pow(rentGrowth, y) * (1 - vr / 100);
       const projectedExpenses = tae * Math.pow(expGrowth, y);
-      const yrRepay = ltType === "interestOnly" && y < ioPeriod ? ioRepayMonthly * 12 : 
+      const yrRepay = ltType === "interestOnly" && y < ioPeriod ? ioRepayMonthly * 12 :
                        ltType === "interestOnly" ? postIORepay * 12 : mrRepay * 12;
       if (projectedRent - projectedExpenses - yrRepay >= 0) return y;
     }
@@ -238,113 +237,154 @@ export default function InvestmentAnalyzer() {
     <div id={id} className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
       {items.map((i, idx) => (
         <div key={idx} className="min-w-0">
-          <label className="mb-1 block truncate text-[11px] font-medium text-[#64748b]">{i.label}</label>
+          <label className="mb-1 block truncate" style={{ fontFamily: FONT_UI, fontSize: 11, fontWeight: 500, color: UI.muted }}>{i.label}</label>
           <div className="relative">
             {i.isSelect ? (
               <select value={i.val} onChange={e => i.set(e.target.value)}
-                className="w-full cursor-pointer appearance-none rounded-xl border border-[rgba(15,23,42,0.1)] bg-white px-3 py-2 text-[12px] text-[#0f1e2e] outline-none transition-colors focus:border-[#0891b2]"
+                className="w-full cursor-pointer appearance-none rounded-lg bg-white px-3 py-2 text-[12px] outline-none transition-colors focus:border-[#0891b2]"
+                style={{ border: `1px solid ${UI.hair}`, color: UI.ink, fontFamily: FONT_UI }}
                 disabled={i.disabled}>
                 {(i.opts || []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             ) : (
               <input type="number" value={i.val} onChange={e => i.set(Number(e.target.value) || 0)}
                 step={i.step ?? 1} disabled={i.disabled}
-                className="w-full rounded-xl border border-[rgba(15,23,42,0.1)] bg-white px-3 py-2 text-right text-[13px] text-[#0f1e2e] outline-none transition-colors focus:border-[#0891b2] disabled:cursor-not-allowed disabled:opacity-50" />
+                className="w-full rounded-lg bg-white px-3 py-2 text-right text-[13px] outline-none transition-colors focus:border-[#0891b2] disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ border: `1px solid ${UI.hair}`, color: UI.ink, fontFamily: FONT_DISPLAY, fontVariantNumeric: "tabular-nums" }} />
             )}
-            {i.suffix && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#94a3b8]">{i.suffix}</span>}
+            {i.suffix && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: UI.faint }}>{i.suffix}</span>}
           </div>
         </div>
       ))}
     </div>
   ), []);
 
-  const tabTitle = tab === "equity" ? "Equity & Growth" : tab === "amort" ? "Loan Amortization" : "Yield Comparison";
+  const tabTitle = tab === "equity" ? "Equity & growth" : tab === "amort" ? "Loan amortisation" : "Yield comparison";
   const tabSub = tab === "equity" ? "Property value, loan balance & equity over 30 years" : tab === "amort" ? "Principal vs interest paid each year" : "Gross, net & cash-on-cash returns";
+
+  const rateSens = Math.round((mrRepay * 12 - (la * ((ir + 1) / 100 / 12) * Math.pow(1 + (ir + 1) / 100 / 12, tpm)) / (Math.pow(1 + (ir + 1) / 100 / 12, tpm) - 1) * 12) / 52);
+  const bePct = Math.round(currentRentWeekly / breakEvenRentWeekly * 100);
 
   return (
     <ClientPortalShell>
-      <div style={{ maxWidth: 1180 }} className="mx-auto">
-        <a href="/client/calculators" className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: UI.teal }}>&larr; Back to Calculators</a>
+      <style>{`@keyframes whRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}.wh-rise{animation:whRise .6s cubic-bezier(.2,.7,.2,1) both}@media (prefers-reduced-motion:reduce){.wh-rise{animation:none}}`}</style>
 
-        {/* ── HEADER ── */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: `${UI.teal}14` }}>
-              <Zap className="h-6 w-6" style={{ color: UI.teal }} />
+      <div style={{ maxWidth: 1160, margin: "0 auto", fontFamily: FONT_UI, color: UI.ink }}>
+
+        {/* ── MASTHEAD ── */}
+        <div className="wh-rise" style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingBottom: 14, borderBottom: `1px solid ${UI.hair}` }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: UI.teal }}>Wholesale Homes — Investment Analysis</span>
+          <a href="/client/calculators" style={{ fontSize: 12, fontWeight: 500, color: UI.faintInk, textDecoration: "none" }}>← All calculators</a>
+        </div>
+
+        {/* ── HERO ── */}
+        <div className="wh-rise" style={{ animationDelay: "60ms", position: "relative", overflow: "hidden", borderRadius: 28, background: UI.heroInk, color: "#e8efe9", padding: "clamp(28px,4vw,44px)", margin: "18px 0 22px" }}>
+          <div aria-hidden style={{ position: "absolute", top: -140, right: -70, width: 460, height: 460, background: "radial-gradient(circle, rgba(8,145,178,0.38), rgba(8,145,178,0) 66%)", pointerEvents: "none" }} />
+          <div aria-hidden style={{ position: "absolute", bottom: -170, left: -80, width: 400, height: 400, background: "radial-gradient(circle, rgba(20,160,120,0.16), rgba(0,0,0,0) 70%)", pointerEvents: "none" }} />
+          <div aria-hidden style={{ position: "absolute", inset: 0, opacity: 0.045, pointerEvents: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+          <div style={{ position: "relative", display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "space-between", alignItems: "flex-end" }}>
+            <div style={{ maxWidth: 580, minWidth: 260 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(103,197,214,0.85)" }}>The verdict</span>
+              <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: "clamp(30px,4.6vw,52px)", lineHeight: 1.04, letterSpacing: "-0.02em", margin: "12px 0 0" }}>
+                This home {wcfBT >= 0 ? "pays you" : "costs you"}{" "}
+                <span style={{ color: wcfBT >= 0 ? "#5fd4ab" : "#f4a6b6" }}>
+                  <AnimatedNumber value={Math.abs(wcfBT)} format={(n) => fmt$(Math.round(n))} />
+                </span>{" "}
+                a week.
+              </h1>
+              <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "rgba(232,239,233,0.68)", maxWidth: 520 }}>
+                {wcfBT >= 0 ? "Positive" : "Negative"} pre-tax cash flow on a {fmt$(pp)} purchase at {lvr.toFixed(0)}% LVR · {ir.toFixed(1)}% over {lt} years{gf ? " · dual granny-flat income" : ""}.
+              </p>
             </div>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: UI.teal }}>Property Investment Analyzer</p>
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: UI.ink }}>Run the Numbers</h1>
+            <div style={{ display: "flex", gap: 30 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(232,239,233,0.5)", marginBottom: 8 }}>Equity · year 10</div>
+                <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: "clamp(26px,3.6vw,40px)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                  <AnimatedNumber value={yr10.eq} format={(n) => fmt$(Math.round(n))} />
+                </div>
+              </div>
+              <div style={{ borderLeft: "1px solid rgba(232,239,233,0.16)", paddingLeft: 30 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(232,239,233,0.5)", marginBottom: 8 }}>5-year ROI</div>
+                <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: "clamp(26px,3.6vw,40px)", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                  <AnimatedNumber value={yr5.roi} format={(n) => n.toFixed(1) + "%"} />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="rounded-full px-4 py-2 text-sm font-semibold" style={{ background: wcfBT >= 0 ? `${UI.green}14` : `${UI.red}14`, color: wcfBT >= 0 ? UI.green : UI.red }}>
-            {wcfBT >= 0 ? `Cash-flow positive · +${fmt$(Math.round(wcfBT))}/wk` : `Cash-flow deficit · ${fmt$(Math.round(wcfBT))}/wk`}
           </div>
         </div>
 
-        {/* ── HERO KPI BAND ── */}
-        <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-          <StatCard label="Weekly Cashflow" value={wcfBT} format={(n) => (n >= 0 ? "+" : "") + fmt$(Math.round(n))} tone={wcfBT >= 0 ? "green" : "red"} sub={`${pf} · $${fmt(Math.round(fp))}`} />
-          <StatCard label="5-Year ROI" value={yr5.roi} format={(n) => n.toFixed(1) + "%"} tone="teal" sub={`${fmt$(yr5.tr)} total`} />
-          <StatCard label="Gross Yield" value={gy} format={(n) => n.toFixed(1) + "%"} tone="neutral" sub={`${fmt$(yrRent)} rent/yr`} />
-          <StatCard label="Equity @ 10yr" value={yr10.eq} format={(n) => fmt$(Math.round(n))} tone="neutral" sub={`${fmt$(initInv)} invested`} />
-          <StatCard label="Loan-to-Value" value={lvr} format={(n) => n.toFixed(1) + "%"} tone={lvr > 80 ? "red" : lvr > 70 ? "amber" : "neutral"} chip={lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI"} chipTone={lvr > 80 ? "red" : lvr > 70 ? "amber" : "teal"} />
-        </div>
+        {/* ── FIGURES LEDGER STRIP ── */}
+        <Card className="wh-rise" style={{ animationDelay: "120ms", padding: 0, marginBottom: 22 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
+            {[
+              { label: "Weekly cashflow", value: (wcfBT >= 0 ? "+" : "") + fmt$(Math.round(wcfBT)), sub: `${pf} · $${fmt(Math.round(fp))}`, color: wcfBT >= 0 ? UI.green : UI.red },
+              { label: "Gross yield", value: gy.toFixed(1) + "%", sub: `${fmt$(yrRent)} / yr`, color: UI.ink },
+              { label: "Net yield", value: nyBL.toFixed(1) + "%", sub: `${fmt$(nri)} net`, color: UI.ink },
+              { label: `${ltType === "interestOnly" ? "IO" : "P&I"} repayment`, value: fmt$(Math.round(fp)), sub: pf, color: UI.ink },
+              { label: "Total interest", value: fmt$(Math.round(tioL)), sub: `over ${lt} yrs`, color: UI.ink },
+            ].map((f, i) => (
+              <div key={f.label} style={{ padding: "18px 22px", borderLeft: i ? `1px solid ${UI.hair}` : "none" }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: UI.muted }}>{f.label}</div>
+                <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: 27, lineHeight: 1.1, marginTop: 6, color: f.color, fontVariantNumeric: "tabular-nums" }}>{f.value}</div>
+                <div style={{ fontSize: 11.5, color: UI.faint, marginTop: 2 }}>{f.sub}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-        {/* ── INPUTS + CHART ── */}
-        <div className="mb-6 grid gap-5 lg:grid-cols-5">
-          {/* Assumptions */}
-          <div className="lg:col-span-2">
-            <Panel>
-              <SectionHeader eyebrow="Assumptions" title="Your numbers" subtitle="Adjust anything — everything updates live." />
+        {/* ── ASSUMPTIONS + CHART ── */}
+        <div className="wh-rise" style={{ animationDelay: "180ms", display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)", marginBottom: 22 }}>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+            {/* Assumptions */}
+            <Card>
+              <Eyebrow>Assumptions</Eyebrow>
+              <Title>Your numbers</Title>
+              <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Adjust anything — everything updates live.</p>
 
               {/* LVR control */}
-              <div className="rounded-2xl border p-3.5" style={{ borderColor: UI.line, background: "#fbfcfe" }}>
-                <div className="mb-1 flex items-center justify-between">
+              <div style={{ borderRadius: 16, border: `1px solid ${UI.hair}`, background: UI.bone, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 4 }}>
                   <div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: UI.muted }}>Loan-to-Value Ratio</span>
-                    <div className="mt-0.5 flex items-baseline gap-2">
-                      <span className="text-2xl font-bold" style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }}>{lvr.toFixed(1)}%</span>
-                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: UI.muted }}>Loan-to-value</div>
+                    <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 500, fontSize: 30, lineHeight: 1.1, color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.ink, fontVariantNumeric: "tabular-nums" }}>{lvr.toFixed(1)}%</div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[11px]" style={{ color: UI.muted }}>Loan Amount</span>
-                    <div className="relative mt-0.5" style={{ width: 140 }}>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 11, color: UI.muted, marginBottom: 4 }}>Loan amount</div>
+                    <div style={{ position: "relative", width: 140 }}>
                       <input type="number" value={la} onChange={e => {
                         const v = Number(e.target.value) || 0;
                         setLa(Math.min(v, pp));
                         setLvrInput(pp > 0 ? Math.round(v / pp * 1000) / 10 : 0);
                       }}
-                        className="w-full rounded-xl border bg-white px-3 py-2 text-right text-[13px] font-semibold outline-none transition-colors focus:border-[#0891b2]"
-                        style={{ borderColor: UI.line, color: UI.ink }} />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px]" style={{ color: UI.faint }}>$</span>
+                        className="w-full rounded-lg bg-white px-3 py-2 text-right outline-none focus:border-[#0891b2]"
+                        style={{ border: `1px solid ${UI.hair}`, color: UI.ink, fontFamily: FONT_DISPLAY, fontSize: 14, fontWeight: 500, fontVariantNumeric: "tabular-nums" }} />
+                      <span className="pointer-events-none" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: UI.faint }}>$</span>
                     </div>
                   </div>
                 </div>
-                {/* LVR bar — click to set */}
-                <div className="relative mt-2 h-6 cursor-pointer" onClick={e => {
+                <div style={{ position: "relative", height: 24, marginTop: 8, cursor: "pointer" }} onClick={e => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const pct = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
                   setLvrInput(pct);
                   setLa(Math.round(pp * pct / 100));
                 }}>
-                  <div className="absolute inset-0 overflow-hidden rounded-full bg-gray-100">
-                    <div style={{ width: "70%", position: "absolute", inset: 0, background: UI.green, opacity: 0.12 }} />
+                  <div style={{ position: "absolute", inset: 0, borderRadius: 999, overflow: "hidden", background: "rgba(18,30,26,0.06)" }}>
+                    <div style={{ width: "70%", position: "absolute", inset: 0, background: UI.green, opacity: 0.1 }} />
                     <div style={{ width: "10%", left: "70%", position: "absolute", inset: 0, background: UI.amber, opacity: 0.12 }} />
                     <div style={{ width: "20%", left: "80%", position: "absolute", inset: 0, background: UI.red, opacity: 0.12 }} />
                   </div>
-                  <div className="h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(lvr, 100)}%`, background: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }} />
-                  <div className="absolute top-0 h-full w-0.5 bg-white/80" style={{ left: "70%" }} />
-                  <div className="absolute top-0 h-full w-0.5 bg-white/80" style={{ left: "80%" }} />
-                  <div className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 bg-white shadow-md transition-all" style={{ left: `calc(${Math.min(lvr, 100)}% - 8px)`, borderColor: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }} />
+                  <div style={{ height: "100%", borderRadius: 999, transition: "all .2s", width: `${Math.min(lvr, 100)}%`, background: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }} />
+                  <div style={{ position: "absolute", top: 0, height: "100%", width: 2, background: "rgba(251,249,244,0.9)", left: "70%" }} />
+                  <div style={{ position: "absolute", top: 0, height: "100%", width: 2, background: "rgba(251,249,244,0.9)", left: "80%" }} />
+                  <div style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", height: 16, width: 16, borderRadius: 999, background: "#fff", border: "2px solid", boxShadow: "0 1px 4px rgba(0,0,0,0.2)", left: `calc(${Math.min(lvr, 100)}% - 8px)`, borderColor: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }} />
                 </div>
-                <div className="mt-1 flex justify-between text-[10px]" style={{ color: UI.faint }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: UI.faint }}>
                   <span>Deposit ${Math.round(pp - la).toLocaleString()}</span>
-                  <span style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }}>{lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI needed"}</span>
+                  <span style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green, fontWeight: 500 }}>{lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI needed"}</span>
                 </div>
               </div>
 
-              <div className="mt-3 space-y-3">
+              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
                 <InputStrip id="row1" items={[
                   { label: "Purchase Price", val: pp, set: (v: number) => { setPp(v); if (isLvrDriven) setLa(Math.round(v * lvrInput / 100)); }, suffix: "$" },
                   { label: "State", val: st, set: setSt, isSelect: true, opts: Object.entries(STATE_NAMES).map(([k, v]) => ({ label: v, value: k })) },
@@ -364,27 +404,27 @@ export default function InvestmentAnalyzer() {
                   { label: "Growth Rate", val: cgr, set: setCgr, step: 0.5, suffix: "%" },
                   { label: "Vacancy", val: vr, set: setVr, step: 0.5, suffix: "%" },
                 ]} />
-                <label className="flex cursor-pointer items-center gap-2 pt-1">
-                  <input type="checkbox" checked={gf} onChange={e => setGf(e.target.checked)} className="h-4 w-4 rounded border-gray-300" style={{ accentColor: UI.teal }} />
-                  <span className="text-xs" style={{ color: UI.muted }}>Property has a granny flat (dual income)</span>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", paddingTop: 2 }}>
+                  <input type="checkbox" checked={gf} onChange={e => setGf(e.target.checked)} style={{ height: 16, width: 16, accentColor: UI.teal }} />
+                  <span style={{ fontSize: 12.5, color: UI.muted }}>Property has a granny flat (dual income)</span>
                 </label>
               </div>
-            </Panel>
-          </div>
+            </Card>
 
-          {/* Chart */}
-          <div className="lg:col-span-3">
-            <Panel className="flex h-full flex-col">
-              <SectionHeader
-                eyebrow="Projection"
-                title={tabTitle}
-                subtitle={tabSub}
-                right={<Segmented value={tab} onChange={setTab} options={[{ label: "Equity", value: "equity" }, { label: "Loan", value: "amort" }, { label: "Yield", value: "yield" }]} />}
-              />
+            {/* Chart */}
+            <Card style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+                <div>
+                  <Eyebrow>Projection</Eyebrow>
+                  <Title>{tabTitle}</Title>
+                  <p style={{ fontSize: 12, color: UI.faintInk, margin: "3px 0 0" }}>{tabSub}</p>
+                </div>
+                <Segmented value={tab} onChange={setTab} options={[{ label: "Equity", value: "equity" }, { label: "Loan", value: "amort" }, { label: "Yield", value: "yield" }]} />
+              </div>
 
               {tab === "equity" && (
                 <>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <ReAreaChart data={equityData} margin={{ top: 5, right: 10, left: -6, bottom: 0 }}>
                       <defs>
                         <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={UI.ink2} stopOpacity={0.16} /><stop offset="95%" stopColor={UI.ink2} stopOpacity={0.01} /></linearGradient>
@@ -399,13 +439,13 @@ export default function InvestmentAnalyzer() {
                       <Area type="monotone" dataKey="equity" name="Equity" stroke={UI.teal} strokeWidth={2.5} fill="url(#eqGrad)" dot={false} animationDuration={CHART.animationMs} />
                     </ReAreaChart>
                   </ResponsiveContainer>
-                  <div className="mt-3"><LegendChips items={[{ label: "Property", color: UI.ink2 }, { label: "Loan", color: UI.faint }, { label: "Equity", color: UI.teal }]} /></div>
+                  <div style={{ marginTop: 12 }}><LegendChips items={[{ label: "Property", color: UI.ink2 }, { label: "Loan", color: UI.faint }, { label: "Equity", color: UI.teal }]} /></div>
                 </>
               )}
 
               {tab === "amort" && (
                 <>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={amortData.slice(0, 15)} margin={{ top: 5, right: 10, left: -6, bottom: 0 }} barCategoryGap="22%">
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                       <XAxis dataKey="year" tick={AXIS_TICK} tickFormatter={v => "Y" + v} />
@@ -415,12 +455,12 @@ export default function InvestmentAnalyzer() {
                       <Bar dataKey="interest" name="Interest" stackId="a" fill={UI.faint} radius={[4, 4, 0, 0]} animationDuration={CHART.animationMs} />
                     </BarChart>
                   </ResponsiveContainer>
-                  <div className="mt-3"><LegendChips items={[{ label: "Principal", color: UI.teal }, { label: "Interest", color: UI.faint }]} /></div>
+                  <div style={{ marginTop: 12 }}><LegendChips items={[{ label: "Principal", color: UI.teal }, { label: "Interest", color: UI.faint }]} /></div>
                 </>
               )}
 
               {tab === "yield" && (
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={yieldMeterData} margin={{ top: 5, right: 10, left: -6, bottom: 0 }} barSize={90}>
                     <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                     <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontWeight: 600 }} />
@@ -438,137 +478,115 @@ export default function InvestmentAnalyzer() {
                   </BarChart>
                 </ResponsiveContainer>
               )}
-            </Panel>
+            </Card>
           </div>
         </div>
 
-        {/* ── BREAK-EVEN ── */}
-        <Panel className="mb-6">
-          <SectionHeader eyebrow="Break-even" title="What it takes to wash its face" />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Rent to break even</p>
-              <p className="text-xl font-bold" style={{ color: UI.ink }}>{fmt$(Math.round(breakEvenRentWeekly))}/wk</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>${Math.round(breakEvenRentAnnual).toLocaleString()}/yr needed</p>
+        {/* ── LEDGERS: BREAK-EVEN + ANNUAL CASH FLOW ── */}
+        <div className="wh-rise" style={{ animationDelay: "240ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", marginBottom: 22 }}>
+          <Card>
+            <Eyebrow>Break-even</Eyebrow>
+            <Title>What it takes to wash its face</Title>
+            <div style={{ marginTop: 12 }}>
+              <LedgerRow label="Rent to break even" sub={`${fmt$(Math.round(breakEvenRentAnnual))} / yr`} value={`${fmt$(Math.round(breakEvenRentWeekly))}/wk`} />
+              <LedgerRow label="Current rent" sub={`${mr}/wk main${gf ? ` + ${gr}/wk granny` : ""}`} value={`${fmt$(currentRentWeekly)}/wk`} />
+              <LedgerRow label="Weekly gap" sub={rentGapWeekly <= 0 ? "above break-even" : "below break-even"} value={rentGapWeekly <= 0 ? `+${fmt$(Math.round(-rentGapWeekly))}` : `−${fmt$(Math.round(rentGapWeekly))}`} valueColor={rentGapWeekly <= 0 ? UI.green : UI.red} />
+              <LedgerRow last label="Time to break even" sub={breakEvenYear !== null ? "at 3% rent growth" : "at current growth"} value={breakEvenYear !== null ? `${breakEvenYear} yrs` : "30+ yrs"} valueColor={breakEvenYear !== null ? UI.ink : UI.red} />
             </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Current rent</p>
-              <p className="text-xl font-bold" style={{ color: UI.ink }}>{fmt$(currentRentWeekly)}/wk</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{mr}/wk main {gf ? "+ " + gr + "/wk granny" : ""}</p>
+            <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ height: 6, flex: 1, borderRadius: 999, overflow: "hidden", background: "rgba(18,30,26,0.08)" }}>
+                <div style={{ height: "100%", borderRadius: 999, transition: "width .3s", width: `${Math.min(100, bePct)}%`, background: currentRentWeekly >= breakEvenRentWeekly ? UI.green : UI.amber }} />
+              </div>
+              <span style={{ fontFamily: FONT_DISPLAY, fontSize: 15, fontWeight: 500, color: currentRentWeekly >= breakEvenRentWeekly ? UI.green : UI.amber }}>{bePct}%</span>
             </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Weekly gap</p>
-              <p className="text-xl font-bold" style={{ color: rentGapWeekly <= 0 ? UI.green : UI.red }}>
-                {rentGapWeekly <= 0 ? "Surplus $" + Math.round(-rentGapWeekly) : "Shortfall $" + Math.round(rentGapWeekly)}
-              </p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{rentGapWeekly <= 0 ? "above break-even" : "below break-even"}</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>{breakEvenYear !== null ? "Break-even in" : "Not projected"}</p>
-              <p className="text-xl font-bold" style={{ color: breakEvenYear !== null ? UI.ink : UI.red }}>
-                {breakEvenYear !== null ? breakEvenYear + " years" : "30+ years"}
-              </p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{breakEvenYear !== null ? "at 3% rent growth" : "at current growth"}</p>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "#eef2f6" }}>
-              <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, currentRentWeekly / breakEvenRentWeekly * 100)}%`, background: currentRentWeekly >= breakEvenRentWeekly ? UI.green : UI.amber }} />
-            </div>
-            <span className="text-xs font-semibold" style={{ color: currentRentWeekly >= breakEvenRentWeekly ? UI.green : UI.amber }}>
-              {Math.round(currentRentWeekly / breakEvenRentWeekly * 100)}%
-            </span>
-          </div>
-        </Panel>
+          </Card>
 
-        {/* ── ANNUAL BREAKDOWN ── */}
-        <Panel className="mb-6">
-          <SectionHeader eyebrow="Cash flow" title="Annual breakdown" />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Gross Rent</p>
-              <p className="text-lg font-bold" style={{ color: UI.ink }}>{fmt$(yrRent)}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{mr}/wk main {gf ? "+ " + gr + "/wk granny" : ""}</p>
+          <Card>
+            <Eyebrow>Cash flow</Eyebrow>
+            <Title>Annual statement</Title>
+            <div style={{ marginTop: 12 }}>
+              <LedgerRow label="Gross rent" sub={`${mr}/wk main${gf ? ` + ${gr}/wk granny` : ""}`} value={fmt$(yrRent)} />
+              <LedgerRow label="Vacancy" sub={`${vr}% allowance`} value={`−${fmt$(Math.round(yrRent - effRent))}`} valueColor={UI.faintInk} />
+              <LedgerRow label="Operating expenses" sub={`${mgmt}% mgmt · rates · ins · maint`} value={`−${fmt$(tae)}`} valueColor={UI.faintInk} />
+              <LedgerRow label="Loan cost" sub={`${ir.toFixed(1)}% · ${ltType === "interestOnly" ? "IO" : "P&I"}`} value={`−${fmt$(Math.round(tyLR))}`} valueColor={UI.faintInk} />
+              <LedgerRow strong last label="Net cash flow" sub={`${wcfBT >= 0 ? "+" : "−"}$${Math.abs(Math.round(wcfBT))}/wk before tax`} value={`${ycfBT >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(ycfBT)))}`} valueColor={ycfBT >= 0 ? UI.green : UI.red} />
             </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Vacancy</p>
-              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(Math.round(yrRent - effRent))}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{vr}% vacancy rate</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Expenses</p>
-              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(tae)}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{mgmt}% mgmt · rates · ins · maint</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Loan Cost</p>
-              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(Math.round(tyLR))}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{ir.toFixed(1)}% · ${fmt(Math.round(fp))} {pf} · {ltType === "interestOnly" ? "IO" : "P&I"}</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Net Rental</p>
-              <p className="text-lg font-bold" style={{ color: nri >= 0 ? UI.green : UI.red }}>{fmt$(nri)}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>before loan</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Net Cash Flow</p>
-              <p className="text-lg font-bold" style={{ color: ycfBT >= 0 ? UI.green : UI.red }}>{ycfBT >= 0 ? "+" : ""}{fmt$(Math.round(ycfBT))}</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{wcfBT >= 0 ? "+" : ""}${Math.round(wcfBT)}/wk</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>LVR</p>
-              <p className="text-lg font-bold" style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.ink }}>{lvr.toFixed(1)}%</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>{lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "Strong"}</p>
-            </div>
-            <div>
-              <p className="text-[11px]" style={{ color: UI.muted }}>Rate Sensitivity</p>
-              <p className="text-lg font-bold" style={{ color: UI.ink }}>~${Math.round((mrRepay * 12 - (la * ((ir + 1) / 100 / 12) * Math.pow(1 + (ir + 1) / 100 / 12, tpm)) / (Math.pow(1 + (ir + 1) / 100 / 12, tpm) - 1) * 12) / 52)}/wk</p>
-              <p className="text-[11px]" style={{ color: UI.faint }}>per +1% rate</p>
-            </div>
-          </div>
-        </Panel>
+            <p style={{ fontSize: 11, color: UI.faint, marginTop: 12 }}>A 1% rate rise adds ~${rateSens}/wk to repayments.</p>
+          </Card>
+        </div>
 
-        {/* ── TABLE + INSIGHTS ── */}
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Panel>
-            <SectionHeader eyebrow="Timeline" title="Equity & ROI over time" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+        {/* ── TIMELINE + INSIGHTS ── */}
+        <div className="wh-rise" style={{ animationDelay: "300ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+          <Card>
+            <Eyebrow>Timeline</Eyebrow>
+            <Title>Equity & ROI over time</Title>
+            <div style={{ overflowX: "auto", marginTop: 12 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr className="border-b" style={{ borderColor: UI.line }}>
-                    {["Year", "Value", "Equity", "Cash Flow", "Net Position", "ROI"].map(h => (
-                      <th key={h} className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wider" style={{ color: UI.muted }}>{h}</th>
+                  <tr style={{ borderBottom: `1px solid ${UI.hair}` }}>
+                    {["Year", "Value", "Equity", "Cash flow", "Net position", "ROI"].map(h => (
+                      <th key={h} style={{ textAlign: "left", padding: "0 8px 8px 0", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: UI.muted }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody style={{ fontFamily: FONT_DISPLAY, fontVariantNumeric: "tabular-nums" }}>
                   {[yr1, projectYear(3), yr5, projectYear(7), yr10].map(r => (
-                    <tr key={r.y} className="border-b transition-colors hover:bg-[#f8fafc]" style={{ borderColor: UI.line }}>
-                      <td className="px-2 py-2.5 text-[12px] font-medium">{r.y}y</td>
-                      <td className="px-2 py-2.5 text-[12px] font-semibold">{fmt$(r.pv)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.teal }}>{fmt$(r.eq)}</td>
-                      <td className="px-2 py-2.5 text-[12px]" style={{ color: r.cf >= 0 ? UI.green : UI.red }}>{r.cf >= 0 ? "+" : ""}{fmt$(r.cf)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.ink }}>{fmt$(r.neq)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-bold" style={{ color: UI.ink }}>{r.roi}%</td>
+                    <tr key={r.y} style={{ borderBottom: `1px solid ${UI.hair}` }}>
+                      <td style={{ padding: "11px 8px 11px 0", fontSize: 13, fontWeight: 500, color: UI.faintInk }}>{r.y}y</td>
+                      <td style={{ padding: "11px 8px 11px 0", fontSize: 14, fontWeight: 500 }}>{fmt$(r.pv)}</td>
+                      <td style={{ padding: "11px 8px 11px 0", fontSize: 14, fontWeight: 500, color: UI.teal }}>{fmt$(r.eq)}</td>
+                      <td style={{ padding: "11px 8px 11px 0", fontSize: 14, color: r.cf >= 0 ? UI.green : UI.red }}>{r.cf >= 0 ? "+" : "−"}{fmt$(Math.abs(r.cf))}</td>
+                      <td style={{ padding: "11px 8px 11px 0", fontSize: 14, fontWeight: 500 }}>{fmt$(r.neq)}</td>
+                      <td style={{ padding: "11px 0", fontSize: 14, fontWeight: 500 }}>{r.roi}%</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-2 text-[10px]" style={{ color: UI.faint }}>3% rent growth, 2.5% expense inflation applied. After-tax returns depend on marginal rate and depreciation.</p>
-          </Panel>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 10 }}>3% rent growth, 2.5% expense inflation applied. After-tax returns depend on marginal rate and depreciation.</p>
+          </Card>
 
-          <Panel>
-            <SectionHeader eyebrow="Analysis" title="What the numbers say" />
-            <div className="grid gap-2">
+          <Card>
+            <Eyebrow>Analysis</Eyebrow>
+            <Title>What the numbers say</Title>
+            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
               {analysis.map((a, i) => (
                 <InsightCard key={i} type={a.type} title={a.title} detail={a.detail.replace(/\*\*/g, "")} />
               ))}
             </div>
-            <p className="mt-3 text-[10px]" style={{ color: UI.faint }}>Rule-based analysis. Always verify with a qualified advisor.</p>
-          </Panel>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Rule-based analysis. Always verify with a qualified advisor.</p>
+          </Card>
         </div>
       </div>
     </ClientPortalShell>
+  );
+}
+
+// ── Local presentational pieces (tear-sheet aesthetic) ──
+function Card({ children, style, className }: { children: ReactNode; style?: CSSProperties; className?: string }) {
+  return (
+    <div className={className} style={{ background: UI.boneCard, border: `1px solid ${UI.hair}`, borderRadius: 20, padding: "22px 24px", boxShadow: "0 1px 2px rgba(16,24,40,0.03), 0 16px 40px -28px rgba(16,24,40,0.4)", ...style }}>
+      {children}
+    </div>
+  );
+}
+
+function Eyebrow({ children }: { children: ReactNode }) {
+  return <p style={{ fontFamily: FONT_UI, fontSize: 11, fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: UI.teal, margin: 0 }}>{children}</p>;
+}
+
+function Title({ children }: { children: ReactNode }) {
+  return <h3 style={{ fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 500, color: UI.ink, letterSpacing: "-0.01em", margin: "5px 0 0" }}>{children}</h3>;
+}
+
+function LedgerRow({ label, sub, value, valueColor, strong, last }: { label: string; sub?: string; value: string; valueColor?: string; strong?: boolean; last?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, padding: "13px 0", borderBottom: last ? "none" : `1px solid ${UI.hair}` }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: FONT_UI, fontSize: 13.5, fontWeight: strong ? 600 : 500, color: UI.ink }}>{label}</div>
+        {sub && <div style={{ fontFamily: FONT_UI, fontSize: 11.5, color: UI.faintInk, marginTop: 1 }}>{sub}</div>}
+      </div>
+      <div style={{ fontFamily: FONT_DISPLAY, fontSize: strong ? 26 : 21, fontWeight: 500, color: valueColor ?? UI.ink, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{value}</div>
+    </div>
   );
 }
