@@ -7,19 +7,23 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // ── Tokens ────────────────────────────────────────────────────────────────────
+// Professional light-fintech palette: teal is the single brand accent, refined
+// emerald/rose carry money +/- signals, amber is reserved for a real caution
+// state, and everything structural sits on an ink/slate neutral ramp.
 export const UI = {
-  ink: "#0f1e2e",
-  ink2: "#334155",
-  muted: "#64748b",
-  faint: "#94a3b8",
+  ink: "#0f1e2e",      // primary text / neutral "authoritative" numbers
+  ink2: "#334155",     // slate-700 — secondary data series
+  muted: "#64748b",    // slate-500 — labels
+  faint: "#94a3b8",    // slate-400 — sub-text + neutral chart series
   line: "rgba(15,23,42,0.07)",
-  teal: "#0891b2",
-  tealDk: "#0369a1",
-  gold: "#d4a84b",
-  green: "#16a34a",
-  amber: "#f59e0b",
-  red: "#dc2626",
-  violet: "#7c3aed",
+  teal: "#0891b2",     // brand accent (matches the rest of the site)
+  tealDk: "#0e7490",   // deep teal — strong fills / ramp end
+  tealLt: "#67c5d6",   // light teal — ramp start
+  gold: "#d4a84b",     // legacy token (unused in calculators)
+  green: "#059669",    // emerald-600 — positive money (distinct from brand teal)
+  amber: "#b45309",    // amber-700 — caution only
+  red: "#be123c",      // rose-700 — negative money
+  violet: "#7c3aed",   // legacy token (unused in calculators)
   canvas: "#f6f8fb",
   card: "#ffffff",
 } as const;

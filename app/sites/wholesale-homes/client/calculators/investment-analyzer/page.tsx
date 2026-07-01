@@ -181,9 +181,9 @@ export default function InvestmentAnalyzer() {
     }), [la, rm, mrRepay, lt, ltType, ioPeriod, ioRepayMonthly, postIORepay, remainingMonths]);
 
   const yieldMeterData = useMemo(() => [
-    { name: "Gross Yield", value: gy, fill: "#0891b2" },
-    { name: "Net Yield", value: nyBL, fill: "#16a34a" },
-    { name: "Cash-on-Cash", value: nyOI, fill: "#7c3aed" },
+    { name: "Gross Yield", value: gy, fill: "#0e7490" },
+    { name: "Net Yield", value: nyBL, fill: "#0891b2" },
+    { name: "Cash-on-Cash", value: nyOI, fill: "#67c5d6" },
   ], [gy, nyBL, nyOI]);
 
   // ── Analysis ──
@@ -269,11 +269,11 @@ export default function InvestmentAnalyzer() {
         {/* ── HEADER ── */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: `${UI.violet}14` }}>
-              <Zap className="h-6 w-6" style={{ color: UI.violet }} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: `${UI.teal}14` }}>
+              <Zap className="h-6 w-6" style={{ color: UI.teal }} />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: UI.violet }}>Property Investment Analyzer</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: UI.teal }}>Property Investment Analyzer</p>
               <h1 className="text-2xl font-bold tracking-tight" style={{ color: UI.ink }}>Run the Numbers</h1>
             </div>
           </div>
@@ -285,10 +285,10 @@ export default function InvestmentAnalyzer() {
         {/* ── HERO KPI BAND ── */}
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
           <StatCard label="Weekly Cashflow" value={wcfBT} format={(n) => (n >= 0 ? "+" : "") + fmt$(Math.round(n))} tone={wcfBT >= 0 ? "green" : "red"} sub={`${pf} · $${fmt(Math.round(fp))}`} />
-          <StatCard label="5-Year ROI" value={yr5.roi} format={(n) => n.toFixed(1) + "%"} tone={yr5.roi >= 20 ? "green" : "amber"} sub={`${fmt$(yr5.tr)} total`} />
-          <StatCard label="Gross Yield" value={gy} format={(n) => n.toFixed(1) + "%"} tone="teal" sub={`${fmt$(yrRent)} rent/yr`} />
-          <StatCard label="Equity @ 10yr" value={yr10.eq} format={(n) => fmt$(Math.round(n))} tone="violet" sub={`${fmt$(initInv)} invested`} />
-          <StatCard label="Loan-to-Value" value={lvr} format={(n) => n.toFixed(1) + "%"} tone={lvr > 80 ? "red" : lvr > 70 ? "amber" : "green"} chip={lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI"} />
+          <StatCard label="5-Year ROI" value={yr5.roi} format={(n) => n.toFixed(1) + "%"} tone="teal" sub={`${fmt$(yr5.tr)} total`} />
+          <StatCard label="Gross Yield" value={gy} format={(n) => n.toFixed(1) + "%"} tone="neutral" sub={`${fmt$(yrRent)} rent/yr`} />
+          <StatCard label="Equity @ 10yr" value={yr10.eq} format={(n) => fmt$(Math.round(n))} tone="neutral" sub={`${fmt$(initInv)} invested`} />
+          <StatCard label="Loan-to-Value" value={lvr} format={(n) => n.toFixed(1) + "%"} tone={lvr > 80 ? "red" : lvr > 70 ? "amber" : "neutral"} chip={lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI"} chipTone={lvr > 80 ? "red" : lvr > 70 ? "amber" : "teal"} />
         </div>
 
         {/* ── INPUTS + CHART ── */}
@@ -387,19 +387,19 @@ export default function InvestmentAnalyzer() {
                   <ResponsiveContainer width="100%" height={320}>
                     <ReAreaChart data={equityData} margin={{ top: 5, right: 10, left: -6, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={UI.violet} stopOpacity={0.28} /><stop offset="95%" stopColor={UI.violet} stopOpacity={0.01} /></linearGradient>
-                        <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={UI.green} stopOpacity={0.38} /><stop offset="95%" stopColor={UI.green} stopOpacity={0.02} /></linearGradient>
+                        <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={UI.ink2} stopOpacity={0.16} /><stop offset="95%" stopColor={UI.ink2} stopOpacity={0.01} /></linearGradient>
+                        <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={UI.teal} stopOpacity={0.34} /><stop offset="95%" stopColor={UI.teal} stopOpacity={0.02} /></linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART.grid} />
                       <XAxis dataKey="year" tick={AXIS_TICK} tickFormatter={v => v + "y"} />
                       <YAxis tick={AXIS_TICK} tickFormatter={fmtK} />
                       <Tooltip content={<ChartTooltip />} />
-                      <Area type="monotone" dataKey="propertyValue" name="Property Value" stroke={UI.violet} strokeWidth={2.5} fill="url(#propGrad)" dot={false} animationDuration={CHART.animationMs} />
-                      <Area type="monotone" dataKey="loanBalance" name="Loan Balance" stroke={UI.red} strokeWidth={2} fill="none" strokeDasharray="4 4" dot={false} animationDuration={CHART.animationMs} />
-                      <Area type="monotone" dataKey="equity" name="Equity" stroke={UI.green} strokeWidth={2.5} fill="url(#eqGrad)" dot={false} animationDuration={CHART.animationMs} />
+                      <Area type="monotone" dataKey="propertyValue" name="Property Value" stroke={UI.ink2} strokeWidth={2.5} fill="url(#propGrad)" dot={false} animationDuration={CHART.animationMs} />
+                      <Area type="monotone" dataKey="loanBalance" name="Loan Balance" stroke={UI.faint} strokeWidth={2} fill="none" strokeDasharray="4 4" dot={false} animationDuration={CHART.animationMs} />
+                      <Area type="monotone" dataKey="equity" name="Equity" stroke={UI.teal} strokeWidth={2.5} fill="url(#eqGrad)" dot={false} animationDuration={CHART.animationMs} />
                     </ReAreaChart>
                   </ResponsiveContainer>
-                  <div className="mt-3"><LegendChips items={[{ label: "Property", color: UI.violet }, { label: "Loan", color: UI.red }, { label: "Equity", color: UI.green }]} /></div>
+                  <div className="mt-3"><LegendChips items={[{ label: "Property", color: UI.ink2 }, { label: "Loan", color: UI.faint }, { label: "Equity", color: UI.teal }]} /></div>
                 </>
               )}
 
@@ -412,10 +412,10 @@ export default function InvestmentAnalyzer() {
                       <YAxis tick={AXIS_TICK} tickFormatter={fmtK} />
                       <Tooltip cursor={{ fill: "rgba(15,23,42,0.03)" }} content={<ChartTooltip />} />
                       <Bar dataKey="principal" name="Principal" stackId="a" fill={UI.teal} animationDuration={CHART.animationMs} />
-                      <Bar dataKey="interest" name="Interest" stackId="a" fill={UI.amber} radius={[4, 4, 0, 0]} animationDuration={CHART.animationMs} />
+                      <Bar dataKey="interest" name="Interest" stackId="a" fill={UI.faint} radius={[4, 4, 0, 0]} animationDuration={CHART.animationMs} />
                     </BarChart>
                   </ResponsiveContainer>
-                  <div className="mt-3"><LegendChips items={[{ label: "Principal", color: UI.teal }, { label: "Interest", color: UI.amber }]} /></div>
+                  <div className="mt-3"><LegendChips items={[{ label: "Principal", color: UI.teal }, { label: "Interest", color: UI.faint }]} /></div>
                 </>
               )}
 
@@ -448,12 +448,12 @@ export default function InvestmentAnalyzer() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Rent to break even</p>
-              <p className="text-xl font-bold" style={{ color: UI.teal }}>{fmt$(Math.round(breakEvenRentWeekly))}/wk</p>
+              <p className="text-xl font-bold" style={{ color: UI.ink }}>{fmt$(Math.round(breakEvenRentWeekly))}/wk</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>${Math.round(breakEvenRentAnnual).toLocaleString()}/yr needed</p>
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Current rent</p>
-              <p className="text-xl font-bold" style={{ color: UI.green }}>{fmt$(currentRentWeekly)}/wk</p>
+              <p className="text-xl font-bold" style={{ color: UI.ink }}>{fmt$(currentRentWeekly)}/wk</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{mr}/wk main {gf ? "+ " + gr + "/wk granny" : ""}</p>
             </div>
             <div>
@@ -465,7 +465,7 @@ export default function InvestmentAnalyzer() {
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>{breakEvenYear !== null ? "Break-even in" : "Not projected"}</p>
-              <p className="text-xl font-bold" style={{ color: breakEvenYear !== null ? UI.green : UI.red }}>
+              <p className="text-xl font-bold" style={{ color: breakEvenYear !== null ? UI.ink : UI.red }}>
                 {breakEvenYear !== null ? breakEvenYear + " years" : "30+ years"}
               </p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{breakEvenYear !== null ? "at 3% rent growth" : "at current growth"}</p>
@@ -487,22 +487,22 @@ export default function InvestmentAnalyzer() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Gross Rent</p>
-              <p className="text-lg font-bold" style={{ color: UI.green }}>{fmt$(yrRent)}</p>
+              <p className="text-lg font-bold" style={{ color: UI.ink }}>{fmt$(yrRent)}</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{mr}/wk main {gf ? "+ " + gr + "/wk granny" : ""}</p>
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Vacancy</p>
-              <p className="text-lg font-bold" style={{ color: UI.red }}>-{fmt$(Math.round(yrRent - effRent))}</p>
+              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(Math.round(yrRent - effRent))}</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{vr}% vacancy rate</p>
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Expenses</p>
-              <p className="text-lg font-bold" style={{ color: UI.red }}>-{fmt$(tae)}</p>
+              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(tae)}</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{mgmt}% mgmt · rates · ins · maint</p>
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Loan Cost</p>
-              <p className="text-lg font-bold" style={{ color: UI.red }}>-{fmt$(Math.round(tyLR))}</p>
+              <p className="text-lg font-bold" style={{ color: UI.ink }}>-{fmt$(Math.round(tyLR))}</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{ir.toFixed(1)}% · ${fmt(Math.round(fp))} {pf} · {ltType === "interestOnly" ? "IO" : "P&I"}</p>
             </div>
             <div>
@@ -517,12 +517,12 @@ export default function InvestmentAnalyzer() {
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>LVR</p>
-              <p className="text-lg font-bold" style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.green }}>{lvr.toFixed(1)}%</p>
+              <p className="text-lg font-bold" style={{ color: lvr > 80 ? UI.red : lvr > 70 ? UI.amber : UI.ink }}>{lvr.toFixed(1)}%</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>{lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "Strong"}</p>
             </div>
             <div>
               <p className="text-[11px]" style={{ color: UI.muted }}>Rate Sensitivity</p>
-              <p className="text-lg font-bold" style={{ color: UI.amber }}>~${Math.round((mrRepay * 12 - (la * ((ir + 1) / 100 / 12) * Math.pow(1 + (ir + 1) / 100 / 12, tpm)) / (Math.pow(1 + (ir + 1) / 100 / 12, tpm) - 1) * 12) / 52)}/wk</p>
+              <p className="text-lg font-bold" style={{ color: UI.ink }}>~${Math.round((mrRepay * 12 - (la * ((ir + 1) / 100 / 12) * Math.pow(1 + (ir + 1) / 100 / 12, tpm)) / (Math.pow(1 + (ir + 1) / 100 / 12, tpm) - 1) * 12) / 52)}/wk</p>
               <p className="text-[11px]" style={{ color: UI.faint }}>per +1% rate</p>
             </div>
           </div>
@@ -546,10 +546,10 @@ export default function InvestmentAnalyzer() {
                     <tr key={r.y} className="border-b transition-colors hover:bg-[#f8fafc]" style={{ borderColor: UI.line }}>
                       <td className="px-2 py-2.5 text-[12px] font-medium">{r.y}y</td>
                       <td className="px-2 py-2.5 text-[12px] font-semibold">{fmt$(r.pv)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.green }}>{fmt$(r.eq)}</td>
+                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.teal }}>{fmt$(r.eq)}</td>
                       <td className="px-2 py-2.5 text-[12px]" style={{ color: r.cf >= 0 ? UI.green : UI.red }}>{r.cf >= 0 ? "+" : ""}{fmt$(r.cf)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.violet }}>{fmt$(r.neq)}</td>
-                      <td className="px-2 py-2.5 text-[12px] font-bold" style={{ color: r.roi >= 15 ? UI.green : UI.amber }}>{r.roi}%</td>
+                      <td className="px-2 py-2.5 text-[12px] font-semibold" style={{ color: UI.ink }}>{fmt$(r.neq)}</td>
+                      <td className="px-2 py-2.5 text-[12px] font-bold" style={{ color: UI.ink }}>{r.roi}%</td>
                     </tr>
                   ))}
                 </tbody>
