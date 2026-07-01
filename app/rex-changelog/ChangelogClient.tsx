@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "21:46", tag: "PRICING", title: "Wholesale homes - SEO metadata, calculator pricing display, free trial, investment analyzer with Recharts, image aspect fix, header cleanup" },
       { time: "21:12", tag: "FIX", title: "Fix input text color visibility, add all 8 states to stamp duty calculator, fix em dashes" },
       { time: "21:06", tag: "UPDATE", title: "Wholesale Homes portal: client sidebar shell, 3 calculators, resources hub, account page" },
       { time: "14:21", tag: "FIX", title: "Rex sheet size fitting logic + cutting fee always additional" },

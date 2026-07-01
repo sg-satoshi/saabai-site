@@ -6,11 +6,8 @@ const SITE_URL = "https://www.wholesalehomes.com.au";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default:
-      "House & Land Packages Below Market Price | Wholesale Homes Australia",
-    template: "%s | Wholesale Homes Australia",
-  },
+  title:
+    "House & Land Packages Below Market Price | Wholesale Homes Australia",
   description:
     "Australia's exclusive pre-market access to house and land packages below bank valuation. Partnered with Metricon, Stockland, Mirvac & 12 leading builders. Speak with principal advisor Nick Foale.",
   keywords: [
