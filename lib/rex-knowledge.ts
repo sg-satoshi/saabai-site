@@ -211,12 +211,13 @@ Prismatic diffuser sheets for lighting applications. CTS = cut-to-size ($/m²). 
 
 **EGG CRATE LOUVRE PRICING — April 2026 (ex GST, supplier: AST)**
 
-| Thickness | Colour | Cell Size | Sheet Size | CTS ($/m²) | Full Sheet |
-|-----------|--------|-----------|------------|-----------|------------|
-| 8mm | Opal | 16×16mm | 1210×600 | $66.00 | $69 |
-| 16mm | Silver | 16×16mm | 1213×603 | $143.55 | $54 |
+**IMPORTANT: EGG CRATE — FULL SHEETS ONLY (director's policy)**
+Egg Crate Louvre is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing upfront. If a customer asks for CTS, explain: "Egg Crate is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out."
 
-Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price — charge full sheet price ($54) instead.
+| Thickness | Colour | Cell Size | Sheet Size | Full Sheet |
+|-----------|--------|-----------|------------|------------|
+| 8mm | Opal | 16×16mm | 1210×600 | $69 |
+| 16mm | Silver | 16×16mm | 1213×603 | $54 |
 
 ---
 
@@ -238,6 +239,19 @@ Note: For the 16mm Silver eggcrate, the CTS rate exceeds the full sheet price �
 
 **IMPORTANT: PETG SHEETS — FULL SHEET ONLY (director's policy)**
 PETG is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for PETG upfront. Cut-to-size is available but only as a custom order arranged on a per-job basis — the customer must purchase the full sheet. If a customer asks for a CTS or per-m² price for PETG, explain: "PETG is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out."
+
+**PETG CLEAR SHEET PRICING — March 2026 (ex GST, all 2440×1220mm, supplier: AST)**
+
+| Thickness | Full Sheet |
+|-----------|------------|
+| 0.5mm | $46 |
+| 0.75mm | $47 |
+| 1mm | $62 |
+| 1.5mm | $88 |
+| 2mm | $118 |
+| 3mm | $169 |
+
+Note: 6mm Clear PETG available — contact team for pricing.
 `;
 
 
@@ -817,8 +831,8 @@ Note: 3mm white also available oversized in 3050×1560mm ($57 full sheet, CTS $2
 
 **Applications:** Real estate signage, election signs, construction hoarding, temporary event signage, protective packaging, display boards.
 
-**IMPORTANT: CORFLUTE — FULL SHEETS ONLY, NO CUT TO SIZE**
-Corflute is a low-cost sheet product sold in standard full sheets only. We do not offer a cut-to-size service for corflute. If a customer needs a custom size, let them know we only sell full sheets and suggest they contact us for a customised quote: phone (07) 5564 6744 or [contact us here](https://plasticonline.com.au/contact/).
+**IMPORTANT: CORFLUTE — FULL SHEETS ONLY (director's policy)**
+Corflute is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for Corflute upfront. If a customer asks for CTS, explain: "Corflute is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out." Phone (07) 5564 6744 or [contact us here](https://plasticonline.com.au/contact/).
 
 **CORFLUTE PRICING — (ex GST, per sheet)**
 
@@ -848,6 +862,30 @@ Standard sheet size: 2400×1200mm.
 
 **IMPORTANT: HIPS SHEETS — FULL SHEET ONLY (director's policy)**
 HIPS is sold by the full sheet only. Do NOT quote cut-to-size ($/m²) pricing for HIPS upfront. Cut-to-size is available but only as a custom order arranged on a per-job basis — the customer must purchase the full sheet. If a customer asks for a CTS or per-m² price for HIPS, explain: "HIPS is full-sheet only — we can discuss cutting on a per-job basis, but you'll need to purchase the full sheet. Get in touch and we'll sort it out."
+
+**HIPS SHEET PRICING — March 2026 (ex GST, supplier: AST)**
+
+| Thickness | Colour | Sheet Size | Full Sheet |
+|-----------|--------|-----------|------------|
+| 0.5mm | White | 1370×760 | $8 |
+| 0.75mm | Black | 1370×760 | $12 |
+| 0.75mm | White | 1370×760 | $12 |
+| 1mm | Black | 1370×760 | $16 |
+| 1mm | Black | 2440×1220 | $48 |
+| 1mm | White | 1370×760 | $16 |
+| 1mm | White | 2440×1220 | $49 |
+| 1.5mm | Black | 1370×760 | $25 |
+| 1.5mm | Black | 2440×1220 | $73 |
+| 1.5mm | White | 1370×760 | $25 |
+| 1.5mm | White | 2440×1220 | $72 |
+| 2mm | Black | 1370×760 | $30 |
+| 2mm | Black | 2440×1220 | $96 |
+| 2mm | White | 1370×760 | $33 |
+| 2mm | White | 2440×1220 | $95 |
+| 3mm | Black | 1370×760 | $39 |
+| 3mm | Black | 2440×1220 | $141 |
+| 3mm | White | 1370×760 | $41 |
+| 3mm | White | 2440×1220 | $146 |
 
 ---
 

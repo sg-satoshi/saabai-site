@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "11:26", tag: "UPDATE", title: "Resolve changelog merge conflict" },
       { time: "11:26", tag: "NEW", title: "PETG and HIPS full-sheet-only policy in Rex knowledge base" },
       { time: "06:45", tag: "FIX", title: "Add pt-3/pt-4 spacing above Nick Foale name below photo on About page" }
     ],
