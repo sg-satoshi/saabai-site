@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone, Calculator } from "lucide-react";
+import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone, Calculator, Check, FileText } from "lucide-react";
 import { EnquiryForm } from "../../../_components/EnquiryForm";
 import { setSelectedProperty } from "../../../_lib/selectedProperty";
 
@@ -33,6 +33,15 @@ type Pkg = {
   yieldVal?: string;
   landPrice?: number;
   totalBuildPrice?: number;
+  brochureUrl?: string;
+  inclusions?: string[];
+  rentalAppraisal?: {
+    url: string;
+    weeklyMain: number;
+    weeklyGranny: number;
+    appraiser: string;
+    company: string;
+  };
 };
 
 const allPackages: Pkg[] = [
@@ -40,7 +49,17 @@ const allPackages: Pkg[] = [
   { id: "edgewater-loft-28", name: "Edgewater Loft 28", suburb: "Caloundra South", state: "QLD", estate: "Aura", builder: "Stockland Partner", beds: 3, baths: 2, cars: 1, landSize: 312, houseSize: 184, retailPrice: 612000, wholesalePrice: 558000, landReady: "Feb 2026", badge: "Limited Availability", image: "/sites/wholesale-homes/package-3.jpg", highlight: "Only 3 lots remaining", description: "A low-maintenance three-bedroom home perfect for investors and first-home buyers. The Edgewater Loft 28 maximises its 312m² lot with an intelligent split-level design. Open-plan living connects to a private courtyard. Located in Stockland's award-winning Aura community, minutes from the new Caloundra CBD." },
   { id: "harbourline-villa-32", name: "Harbourline Villa 32", suburb: "Cobbitty", state: "NSW", estate: "Emerald Hills", builder: "Mirvac Partner", beds: 4, baths: 2, cars: 2, landSize: 420, houseSize: 232, retailPrice: 742000, wholesalePrice: 678000, landReady: "Aug 2026", badge: "New Release", image: "/sites/wholesale-homes/interior-kitchen.jpg", highlight: "First release pricing locked in", description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck." },
   { id: "sunnydale-terrace-30", name: "Sunnydale Terrace 30", suburb: "Pimpama", state: "QLD", estate: "Gainsborough Greens", builder: "Metricon", beds: 3, baths: 2, cars: 2, landSize: 392, houseSize: 198, retailPrice: 645000, wholesalePrice: 589000, landReady: "Apr 2026", badge: "Below Market", image: "/sites/wholesale-homes/lifestyle-living.jpg", highlight: "Growth corridor, strong rental demand", description: "A smart three-bedroom terrace home in one of Queensland's fastest-growing corridors. The Sunnydale Terrace 30 delivers low-maintenance living with a private courtyard and master bedroom with ensuite." },
-  { id: "kyabram-greens-lot-32", name: "Lot 32 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, landSize: 1100, houseSize: 179, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", description: "Dual occupancy, dual income. Lot 32 delivers a main residence plus a separate granny flat on a generous 1,100m² lot in Kyabram Greens Estate. One of Regional Victoria's strongest-performing investment strategies. The main house features 4 bedrooms, 2 bathrooms, and open-plan living across 179m². The granny flat adds 2 bedrooms, 1 bathroom, and its own living area, offering the potential for higher rental returns and multiple income streams from a single title. Positioned within an established and growing community with strong rental demand. Forecasted yield of 6.5%.", grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32", landPrice: 210000, totalBuildPrice: 569990, yieldVal: "6.5%" },
+  { id: "kyabram-greens-lot-32", name: "Lot 32 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, landSize: 1100, houseSize: 159.58, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", description: "Dual occupancy, dual income. Lot 32 delivers a main residence plus a separate granny flat on a generous 1,100m² lot in Kyabram Greens Estate. One of Regional Victoria's strongest-performing investment strategies. The main house features 4 bedrooms, 2 bathrooms, and open-plan living across 159.58m². The granny flat adds 2 bedrooms, 1 bathroom, and its own living area, offering the potential for higher rental returns and multiple income streams from a single title. Positioned within an established and growing community with strong rental demand — Kyabram is a regional hub of ~7,300 residents in the Goulburn Valley, anchored by dairy and food-manufacturing employment. Forecasted yield of 6.5%.", grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32", landPrice: 210000, totalBuildPrice: 569990, yieldVal: "6.5%",
+    brochureUrl: "/sites/wholesale-homes/documents/kyabram-greens-lot-32-brochure.pdf",
+    inclusions: ["2590mm ceiling height", "20mm Caesarstone benchtop to kitchen, bathroom & ensuite", "900mm stainless steel upright cooker & rangehood", "Coloured through concrete driveway & granny flat path", "Flyscreens to all openable windows & sliding doors", "Concrete perimeter path around entire home", "Colorbond motorised sectional garage door with remote", "Roller blinds throughout", "Front & rear landscaping, letterbox & clothesline"],
+    rentalAppraisal: {
+      url: "/sites/wholesale-homes/documents/kyabram-greens-lot-32-rental-appraisal.pdf",
+      weeklyMain: 580,
+      weeklyGranny: 400,
+      appraiser: "Ian Koh",
+      company: "Koham Property",
+    },
+  },
   { id: "the-willows-42", name: "Lot 42 / Main House + Granny Flat", suburb: "Yarrawonga", state: "VIC", estate: "The Willows", builder: "The Willows Yarrawonga", beds: 4, baths: 2, cars: 2, landSize: 783, houseSize: 179, retailPrice: 869990, wholesalePrice: 869990, badge: "New Release", image: "/sites/wholesale-homes/the-willows.jpg", highlight: "5.6% forecasted yield / lakefront dual occupancy", description: "Dual occupancy, dual income. Lot 42 in The Willows Estate, Yarrawonga is a premium dual-income opportunity on a 783m² lot in a master-planned lakefront community. Dual-income properties continue to be one of the strongest-performing investment strategies, and this package delivers: a 4-bedroom main house with 2 bathrooms and open-plan living across 179m², plus a separate granny flat with 2 bedrooms, 1 bathroom, and its own living area. Perfect for dual income, extended family, or holiday rental. Established and growing community with strong rental demand. Forecasted yield of 5.6%.", grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "42", landPrice: 330500, totalBuildPrice: 539490, yieldVal: "5.6%" },
   { id: "orchardfield-49", name: "Lot 49 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Orchardfield Estate", builder: "Orchardfield", beds: 4, baths: 2, cars: 2, landSize: 521, houseSize: 179, retailPrice: 789990, wholesalePrice: 789990, badge: "New Release", image: "/sites/wholesale-homes/orchardfield.jpg", highlight: "6.45% forecasted yield / dual income package", description: "Dual occupancy, dual income. Lot 49 in Orchardfield Estate, Kyabram is a fixed-price dual-income opportunity on a 521m² lot within one of Regional Victoria's strongest-performing investment categories. The main house offers 4 bedrooms, 2 bathrooms, and open-plan living across 179m². The granny flat adds 2 bedrooms, 1 bathroom, and its own living area. Delivering the potential for multiple income streams from a single title. Located in an established and growing community with strong rental demand. Forecasted yield of 6.45%.", grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "49", landPrice: 229000, totalBuildPrice: 560990, yieldVal: "6.45%" },
   { id: "the-outlook-513", name: "Lot 513 / Main House + Granny Flat", suburb: "Mooroopna", state: "VIC", estate: "The Outlook", builder: "The Outlook Mooroopna", beds: 4, baths: 2, cars: 2, landSize: 612, houseSize: 179, retailPrice: 799990, wholesalePrice: 799990, badge: "New Release", image: "/sites/wholesale-homes/the-outlook.jpg", highlight: "6.3% forecasted yield / dual occupancy near reserve", description: "Dual occupancy, dual income. Lot 513 in The Outlook, Mooroopna is a dual-income package on a 612m² lot in a growing Goulburn Valley community. Dual-income properties continue to be one of the strongest-performing investment strategies. The main house offers 4 bedrooms, 2 bathrooms, and open-plan living across 179m². The granny flat adds 2 bedrooms, 1 bathroom, and its own living area. Ideal for higher rental returns and extended family. Situated near a natural bushland reserve in a community with strong rental demand. Forecasted yield of 6.3%.", grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "513", landPrice: 255000, totalBuildPrice: 544990, yieldVal: "6.3%" },
@@ -114,7 +133,10 @@ export default function ClientPackageDetail() {
                   </p>
                   <Link
                     href="/client/calculators/investment-analyzer"
-                    onClick={() => setSelectedProperty({ id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb })}
+                    onClick={() => setSelectedProperty({
+                      id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb,
+                      mainRent: pkg.rentalAppraisal?.weeklyMain, grannyRent: pkg.rentalAppraisal?.weeklyGranny,
+                    })}
                     className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#1A2B3C] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0d1b2a]"
                   >
                     <Calculator className="h-3.5 w-3.5" /> Run the Numbers
@@ -159,7 +181,7 @@ export default function ClientPackageDetail() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670]">Main House</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {[
-                      pkg.houseSize && { icon: Home, label: "Size", value: `${pkg.houseSize}m²` },
+                      pkg.houseSize && { icon: Home, label: "Size", value: `${Math.round(pkg.houseSize)}m²` },
                       pkg.landSize && { icon: MapPin, label: "Land", value: `${pkg.landSize}m²` },
                       { icon: Home, label: "Beds", value: pkg.beds },
                       { icon: Bath, label: "Baths", value: pkg.baths },
@@ -213,6 +235,54 @@ export default function ClientPackageDetail() {
                 <p className="mt-3 text-sm leading-relaxed text-[#5C6670] md:text-base">{pkg.description}</p>
               </div>
             </div>
+
+            {/* Documents, inclusions & rental appraisal */}
+            {(pkg.brochureUrl || pkg.rentalAppraisal || pkg.inclusions) && (
+              <div className="mt-8 grid gap-6 md:grid-cols-2">
+                {pkg.inclusions && (
+                  <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#5C6670]">Highlighted Inclusions</p>
+                    <ul className="mt-3 space-y-1.5">
+                      {pkg.inclusions.map((i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-[#5C6670]">
+                          <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#0891b2]" /> {i}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {(pkg.rentalAppraisal || pkg.brochureUrl) && (
+                  <div className="rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[#0891b2]">Professional Rental Appraisal</p>
+                    {pkg.rentalAppraisal && (
+                      <>
+                        <div className="mt-3 flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-[#1A2B3C]">${pkg.rentalAppraisal.weeklyMain + pkg.rentalAppraisal.weeklyGranny}/wk</span>
+                          <span className="text-xs text-[#5C6670]">combined</span>
+                        </div>
+                        <p className="mt-1 text-xs text-[#5C6670]">Main house ${pkg.rentalAppraisal.weeklyMain}/wk + Granny flat ${pkg.rentalAppraisal.weeklyGranny}/wk</p>
+                        <p className="mt-3 text-xs leading-relaxed text-[#5C6670]">
+                          Appraised by <strong className="text-[#1A2B3C]">{pkg.rentalAppraisal.appraiser}</strong>, {pkg.rentalAppraisal.company} — based on comparable rental evidence, property condition and current market conditions. Use these figures directly in the calculators for accurate cash-flow projections.
+                        </p>
+                      </>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {pkg.brochureUrl && (
+                        <a href={pkg.brochureUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,0,0,0.08)] px-4 py-2 text-xs font-semibold text-[#1A2B3C] transition-colors hover:border-[#0891b2]/30">
+                          <FileText className="h-3.5 w-3.5" /> Sales Brochure (PDF)
+                        </a>
+                      )}
+                      {pkg.rentalAppraisal && (
+                        <a href={pkg.rentalAppraisal.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,0,0,0.08)] px-4 py-2 text-xs font-semibold text-[#1A2B3C] transition-colors hover:border-[#0891b2]/30">
+                          <FileText className="h-3.5 w-3.5" /> Rental Appraisal (PDF)
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* CTA — Enquiry Section */}
             <div className="mt-10 rounded-3xl border border-[rgba(0,0,0,0.08)] bg-white p-6 md:mt-8 md:p-8">

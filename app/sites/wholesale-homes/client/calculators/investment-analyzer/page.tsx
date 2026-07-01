@@ -44,8 +44,8 @@ export default function InvestmentAnalyzer() {
   const [ltType, setLtType] = useState<"pAndI" | "interestOnly">(saved.ltType ?? "pAndI");
   const [ioPeriod, setIoPeriod] = useState(saved.ioPeriod ?? 5);
   const [pf, setPf] = useState<PaymentFreq>(saved.pf ?? "monthly");
-  const [mr, setMr] = useState(saved.mr ?? 520);
-  const [gr, setGr] = useState(saved.gr ?? 320);
+  const [mr, setMr] = useState(selectedProperty?.mainRent ?? saved.mr ?? 520);
+  const [gr, setGr] = useState(selectedProperty?.grannyRent ?? saved.gr ?? 320);
   const [cr, setCr] = useState(saved.cr ?? 2500);
   const [ins, setIns] = useState(saved.ins ?? 1800);
   const [mgmt, setMgmt] = useState(saved.mgmt ?? 7);

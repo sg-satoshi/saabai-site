@@ -38,6 +38,7 @@ type Package = {
   landPrice?: number;
   totalBuildPrice?: number;
   yieldVal?: string;
+  rentalAppraisal?: { weeklyMain: number; weeklyGranny: number };
 };
 
 const allPackages: Package[] = [
@@ -45,7 +46,7 @@ const allPackages: Package[] = [
   { id: "edgewater-loft-28", name: "Edgewater Loft 28", suburb: "Caloundra South", state: "QLD", estate: "Aura", builder: "Stockland Partner", beds: 3, baths: 2, cars: 1, retailPrice: 612000, wholesalePrice: 558000, badge: "Limited Availability", image: "/sites/wholesale-homes/package-3.jpg", highlight: "Only 3 lots remaining" },
   { id: "harbourline-villa-32", name: "Harbourline Villa 32", suburb: "Cobbitty", state: "NSW", estate: "Emerald Hills", builder: "Mirvac Partner", beds: 4, baths: 2, cars: 2, retailPrice: 742000, wholesalePrice: 678000, badge: "New Release", image: "/sites/wholesale-homes/interior-kitchen.jpg", highlight: "First release pricing locked in" },
   { id: "sunnydale-terrace-30", name: "Sunnydale Terrace 30", suburb: "Pimpama", state: "QLD", estate: "Gainsborough Greens", builder: "Metricon", beds: 3, baths: 2, cars: 2, retailPrice: 645000, wholesalePrice: 589000, badge: "Below Market", image: "/sites/wholesale-homes/lifestyle-living.jpg", highlight: "Growth corridor, strong rental demand" },
-  { id: "kyabram-greens-lot-32", name: "Lot 32 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", landSize: 1100, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32" },
+  { id: "kyabram-greens-lot-32", name: "Lot 32 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Kyabram Greens Estate", builder: "Kyabram Greens", beds: 4, baths: 2, cars: 2, retailPrice: 779990, wholesalePrice: 779990, badge: "New Release", image: "/sites/wholesale-homes/kyabram-greens.jpg", highlight: "6.5% forecasted yield with dual income", landSize: 1100, houseSize: 159.58, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "32", rentalAppraisal: { weeklyMain: 580, weeklyGranny: 400 } },
   { id: "the-willows-42", name: "Lot 42 / Main House + Granny Flat", suburb: "Yarrawonga", state: "VIC", estate: "The Willows", builder: "The Willows Yarrawonga", beds: 4, baths: 2, cars: 2, retailPrice: 869990, wholesalePrice: 869990, badge: "New Release", image: "/sites/wholesale-homes/the-willows.jpg", highlight: "5.6% forecasted yield / lakefront dual occupancy", landSize: 783, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "42", landPrice: 330500, totalBuildPrice: 539490, yieldVal: "5.6%" },
   { id: "orchardfield-49", name: "Lot 49 / Main House + Granny Flat", suburb: "Kyabram", state: "VIC", estate: "Orchardfield Estate", builder: "Orchardfield", beds: 4, baths: 2, cars: 2, retailPrice: 789990, wholesalePrice: 789990, badge: "New Release", image: "/sites/wholesale-homes/orchardfield.jpg", highlight: "6.45% forecasted yield / dual income package", landSize: 521, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "49", landPrice: 229000, totalBuildPrice: 560990, yieldVal: "6.45%" },
   { id: "the-outlook-513", name: "Lot 513 / Main House + Granny Flat", suburb: "Mooroopna", state: "VIC", estate: "The Outlook", builder: "The Outlook Mooroopna", beds: 4, baths: 2, cars: 2, retailPrice: 799990, wholesalePrice: 799990, badge: "New Release", image: "/sites/wholesale-homes/the-outlook.jpg", highlight: "6.3% forecasted yield / dual occupancy near reserve", landSize: 612, houseSize: 179, grannyBeds: 2, grannyBaths: 1, grannySize: 59, lot: "513", landPrice: 255000, totalBuildPrice: 544990, yieldVal: "6.3%" },
@@ -84,7 +85,10 @@ export default function ClientDashboard() {
 
   function runNumbers(pkg: Package, e: React.MouseEvent) {
     e.stopPropagation(); e.preventDefault();
-    setSelectedProperty({ id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb });
+    setSelectedProperty({
+      id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb,
+      mainRent: pkg.rentalAppraisal?.weeklyMain, grannyRent: pkg.rentalAppraisal?.weeklyGranny,
+    });
     router.push("/client/calculators/investment-analyzer");
   }
 
@@ -346,7 +350,7 @@ export default function ClientDashboard() {
                   { label: "Badge", render: (p: Package) => <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white ${p.badge === "Limited Availability" ? "bg-[#0891b2]" : p.badge === "New Release" ? "bg-green-600" : "bg-[#1A2B3C]"}`}>{p.badge}</span> },
                   { label: "Beds / Baths / Cars", render: (p: Package) => <>{p.beds} bed · {p.baths} bath · {p.cars} car{p.grannyBeds ? <span className="text-[#0891b2]"> + GF {p.grannyBeds} bed</span> : ""}</> },
                   { label: "Land Size", render: (p: Package) => p.landSize ? <>{p.landSize}m²</> : "-" },
-                  { label: "House Size", render: (p: Package) => p.houseSize ? <>{p.houseSize}m²</> : "-" },
+                  { label: "House Size", render: (p: Package) => p.houseSize ? <>{Math.round(p.houseSize)}m²</> : "-" },
                   { label: "Retail Price", render: (p: Package) => <span className="text-[#9CA3AF] line-through">{formatPrice(p.retailPrice)}</span> },
                   { label: "Members Price", render: (p: Package) => <span className="text-lg font-bold text-[#0891b2]">{formatPrice(p.wholesalePrice)}</span> },
                   { label: "You Save", render: (p: Package) => { const s = p.retailPrice - p.wholesalePrice; return <span className="font-semibold text-green-600">{formatPrice(s)} ({Math.round(s / p.retailPrice * 100)}%)</span>; } },

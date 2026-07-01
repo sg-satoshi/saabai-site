@@ -16,6 +16,9 @@ export type SelectedProperty = {
   price: number;
   state?: string;
   suburb?: string;
+  /** Real appraised weekly rents, when available — takes priority over generic defaults. */
+  mainRent?: number;
+  grannyRent?: number;
 };
 
 export function setSelectedProperty(p: SelectedProperty): void {
