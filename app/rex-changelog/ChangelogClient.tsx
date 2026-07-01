@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "13:17", tag: "NEW", title: "Rex custom shape pricing rule — material only, cutting costs additional" },
       { time: "11:28", tag: "NEW", title: "Add PETG/HIPS pricing + full-sheet-only policy for PETG, HIPS, Corflute, Egg Crate" },
       { time: "11:26", tag: "UPDATE", title: "Resolve changelog merge conflict" },
       { time: "11:26", tag: "NEW", title: "PETG and HIPS full-sheet-only policy in Rex knowledge base" },

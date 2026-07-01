@@ -116,7 +116,7 @@ export default function ClientDashboard() {
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
             {/* Heading */}
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Available Packages</p>
-            <h2 className="mt-2 text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-tight tracking-tight md:text-3xl">Live inventory, priced below market.</h2>
+            <h2 className="mt-2 text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-tight tracking-tight text-[#1A2B3C] md:text-3xl">Live inventory, priced below market.</h2>
             <p className="mt-2 text-sm text-[#5C6670] md:text-base">Browse current packages from our builder network. Pricing reflects wholesale. Not retail.</p>
 
             {/* Filters */}
