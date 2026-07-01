@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "22:07", tag: "NEW", title: "Borrowing power — add loan type (P&I vs IO), IO period, rate type (variable/fixed)" },
       { time: "22:02", tag: "NEW", title: "All calculators rebuilt with Recharts — yield, stamp duty, borrowing power, investment analyzer. Big interactive charts, compact inputs, modern UI" },
       { time: "21:51", tag: "FIX", title: "Strip root layout template bleed — use plain string title for wholesale homes layout so '| Saabai' is not appended" },
       { time: "21:46", tag: "PRICING", title: "Wholesale homes - SEO metadata, calculator pricing display, free trial, investment analyzer with Recharts, image aspect fix, header cleanup" },

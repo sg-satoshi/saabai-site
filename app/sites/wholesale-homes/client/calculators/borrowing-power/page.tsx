@@ -139,7 +139,7 @@ export default function BorrowingPowerEstimator() {
                 <label className="block text-[9px] font-medium text-[#5C6670] mb-0.5">Loan Type</label>
                 <select value={ltType} onChange={e => setLtType(e.target.value as "pAndI" | "interestOnly")}
                   className="w-full rounded-lg border border-[rgba(0,0,0,0.1)] bg-white px-2 py-1.5 text-[11px] text-[#1A2B3C] outline-none focus:border-[#d4a84b] transition-colors appearance-none cursor-pointer">
-                  <option value="pAndI">P&I (Principal & Interest)</option>
+                  <option value="pAndI">Principle & Interest (P&I)</option>
                   <option value="interestOnly">Interest Only</option>
                 </select>
               </div>

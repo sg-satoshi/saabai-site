@@ -362,7 +362,7 @@ export default function InvestmentAnalyzer() {
             ]} />
             <InputStrip id="row2" items={[
               { label: "Pay Frequency", val: pf, set: setPf, isSelect: true, opts: [{ label: "Weekly", value: "weekly" }, { label: "Fortnightly", value: "fortnightly" }, { label: "Monthly", value: "monthly" }] },
-              { label: "Loan Type", val: ltType, set: setLtType, isSelect: true, opts: [{ label: "P&I", value: "pAndI" }, { label: "Interest Only", value: "interestOnly" }] },
+              { label: "Loan Type", val: ltType, set: setLtType, isSelect: true, opts: [{ label: "Principle & Interest (P&I)", value: "pAndI" }, { label: "Interest Only", value: "interestOnly" }] },
               { label: "IO Period", val: ioPeriod, set: setIoPeriod, suffix: "yr", disabled: ltType !== "interestOnly" },
               { label: "Main Rent /wk", val: mr, set: setMr, suffix: "$" },
               { label: "Granny Rent /wk", val: gr, set: setGr, suffix: "$", disabled: !gf },
