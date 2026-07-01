@@ -110,6 +110,8 @@ export default function InvestmentAnalyzer() {
   const [gf, setGf] = useState(true);
   const [sdO, setSdO] = useState<number | null>(null);
   const [la, setLa] = useState(583200);
+  const [lvrInput, setLvrInput] = useState(80); // LVR in %, synced with loan amount
+  const [isLvrDriven, setIsLvrDriven] = useState(true); // true = LVR slider drives loan, false = loan input drives LVR
   const [ir, setIr] = useState(6.3);
   const [lt, setLt] = useState(30);
   const [ltType, setLtType] = useState<"pAndI" | "interestOnly">("pAndI");
@@ -378,11 +380,74 @@ export default function InvestmentAnalyzer() {
         {/* ── COMPACT INPUT STRIP ── */}
         <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 mb-6 shadow-sm">
           <p className="text-[9px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Adjust any number. Everything updates instantly.</p>
-          <div className="space-y-3">
+            <div className="space-y-3">
+              {/* LVR Control — replaces standalone Loan Amount */}
+              <div className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-3 mb-3 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-[#5C6670]">Loan-to-Value Ratio</span>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <span className="text-xl font-bold" style={{ color: lvr > 80 ? "#dc2626" : lvr > 70 ? "#f59e0b" : "#16a34a" }}>{lvr.toFixed(1)}%</span>
+                      <span className="text-[10px] text-[#5C6670]">LVR</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-[#5C6670]">Loan Amount</span>
+                    <div className="relative mt-0.5" style={{ width: 130 }}>
+                      <input type="number" value={la} onChange={e => {
+                        const v = Number(e.target.value) || 0;
+                        setLa(Math.min(v, pp));
+                        setLvrInput(pp > 0 ? Math.round(v / pp * 1000) / 10 : 0);
+                      }}
+                        className="w-full rounded-lg border border-[rgba(0,0,0,0.1)] bg-white px-2 py-1.5 text-[12px] text-[#1A2B3C] outline-none focus:border-[#0891b2] transition-colors text-right font-semibold" />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#9CA3AF] pointer-events-none">$</span>
+                    </div>
+                  </div>
+                </div>
+                {/* LVR Progress Bar — click/drag to adjust */}
+                <div className="relative h-6 mt-2 cursor-pointer" onClick={e => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(100, (e.clientX - rect.left) / rect.width * 100));
+                  setLvrInput(pct);
+                  setLa(Math.round(pp * pct / 100));
+                }}>
+                  <div className="absolute inset-0 rounded-full overflow-hidden bg-gray-100">
+                    <div style={{ width: "70%", position: "absolute", inset: 0, background: "#16a34a", opacity: 0.12 }} />
+                    <div style={{ width: "10%", left: "70%", position: "absolute", inset: 0, background: "#f59e0b", opacity: 0.12 }} />
+                    <div style={{ width: "20%", left: "80%", position: "absolute", inset: 0, background: "#dc2626", opacity: 0.12 }} />
+                  </div>
+                  <div className="h-full rounded-full transition-all duration-200" style={{
+                    width: `${Math.min(lvr, 100)}%`,
+                    background: lvr > 80 ? "#dc2626" : lvr > 70 ? "#f59e0b" : "#16a34a",
+                  }} />
+                  <div className="absolute top-0 h-full w-0.5 bg-white/80" style={{ left: "70%" }} />
+                  <div className="absolute top-0 h-full w-0.5 bg-white/80" style={{ left: "80%" }} />
+                  {/* Drag handle */}
+                  <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 shadow-md transition-all" style={{
+                    left: `calc(${Math.min(lvr, 100)}% - 8px)`,
+                    borderColor: lvr > 80 ? "#dc2626" : lvr > 70 ? "#f59e0b" : "#16a34a",
+                  }} />
+                </div>
+                <div className="flex justify-between mt-0.5 text-[8px] text-[#5C6670]">
+                  <span>0%</span>
+                  <span style={{ color: "#16a34a" }}>70%</span>
+                  <span style={{ color: "#f59e0b" }}>80%</span>
+                  <span>100%</span>
+                </div>
+                <div className="flex justify-between mt-1 text-[9px]">
+                  <div>
+                    <span className="text-[#5C6670]">Deposit: </span>
+                    <span className="font-semibold text-[#1A2B3C]">${Math.round(pp - la).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="text-[#5C6670]">{lvr > 80 ? "LMI applies" : lvr > 70 ? "Borderline" : "No LMI needed"}</span>
+                  </div>
+                </div>
+              </div>
             <InputStrip id="row1" items={[
-              { label: "Purchase Price", val: pp, set: setPp, suffix: "$" },
+              { label: "Purchase Price", val: pp, set: (v: number) => { setPp(v); if (isLvrDriven) setLa(Math.round(v * lvrInput / 100)); } , suffix: "$" },
               { label: "State", val: st, set: setSt, isSelect: true, opts: Object.entries(STATE_NAMES).map(([k, v]) => ({ label: v, value: k })) },
-              { label: "Loan Amount", val: la, set: setLa, suffix: "$" },
+              { label: "Loan Amount", val: la, set: (v: number) => { setLa(Math.min(v, pp)); setLvrInput(pp > 0 ? Math.round(v / pp * 1000) / 10 : 0); }, suffix: "$" },
               { label: "Interest Rate", val: ir, set: setIr, step: 0.1, suffix: "%" },
               { label: "Term", val: lt, set: setLt, isSelect: true, opts: [{ label: "20 years", value: "20" }, { label: "25 years", value: "25" }, { label: "30 years", value: "30" }] },
             ]} />
