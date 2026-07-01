@@ -82,7 +82,7 @@ export default function ClientPackageDetail() {
       <ClientPortalShell>
         <div className="flex flex-1 items-center justify-center px-6 py-24">
           <div className="text-center">
-            <p className="text-lg font-semibold">Package not found</p>
+            <p className="text-lg font-semibold text-[#1A2B3C]">Package not found</p>
             <Link href="/client/dashboard" className="mt-4 inline-flex items-center gap-2 text-sm text-[#0891b2] hover:underline">
               <ArrowLeft className="h-4 w-4" /> Back to packages
             </Link>
@@ -122,7 +122,7 @@ export default function ClientPackageDetail() {
                   }`}>
                     {pkg.badge}
                   </span>
-                  <h1 className="mt-3 text-xl font-semibold tracking-tight md:text-2xl">{pkg.name}</h1>
+                  <h1 className="mt-3 text-xl font-semibold tracking-tight text-[#1A2B3C] md:text-2xl">{pkg.name}</h1>
                   <p className="mt-1 text-sm text-[#5C6670]">{pkg.suburb}, {pkg.state}</p>
                 </div>
                 <div className="text-right">
@@ -161,14 +161,14 @@ export default function ClientPackageDetail() {
                 {pkg.landPrice && (
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670]">Land</p>
-                    <p className="text-sm font-semibold">{formatPrice(pkg.landPrice)}</p>
+                    <p className="text-sm font-semibold text-[#1A2B3C]">{formatPrice(pkg.landPrice)}</p>
                     <p className="text-[10px] text-[#5C6670]">{pkg.landSize}m²</p>
                   </div>
                 )}
                 {pkg.totalBuildPrice && (
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670]">Build</p>
-                    <p className="text-sm font-semibold">{formatPrice(pkg.totalBuildPrice)}</p>
+                    <p className="text-sm font-semibold text-[#1A2B3C]">{formatPrice(pkg.totalBuildPrice)}</p>
                     <p className="text-[10px] text-[#5C6670]">incl. main + granny</p>
                   </div>
                 )}
@@ -200,7 +200,7 @@ export default function ClientPackageDetail() {
                         <s.icon className="h-3.5 w-3.5 text-[#0891b2]" />
                         <div>
                           <p className="text-[10px] text-[#5C6670]">{s.label}</p>
-                          <p className="text-xs font-semibold">{s.value}</p>
+                          <p className="text-xs font-semibold text-[#1A2B3C]">{s.value}</p>
                         </div>
                       </div>
                     ))}
@@ -224,7 +224,7 @@ export default function ClientPackageDetail() {
                           <s.icon className="h-3.5 w-3.5 text-[#0891b2]" />
                           <div>
                             <p className="text-[10px] text-[#5C6670]">{s.label}</p>
-                            <p className="text-xs font-semibold">{s.value}</p>
+                            <p className="text-xs font-semibold text-[#1A2B3C]">{s.value}</p>
                           </div>
                         </div>
                       ))}
@@ -240,7 +240,7 @@ export default function ClientPackageDetail() {
             {/* Description */}
             <div className="mt-6">
               <div className="max-w-3xl">
-                <h2 className="text-base font-semibold md:text-lg">About this package</h2>
+                <h2 className="text-base font-semibold text-[#1A2B3C] md:text-lg">About this package</h2>
                 <p className="mt-3 text-sm leading-relaxed text-[#5C6670] md:text-base">{pkg.description}</p>
               </div>
             </div>
@@ -298,7 +298,7 @@ export default function ClientPackageDetail() {
               <div className="grid gap-6 md:grid-cols-5">
                 <div className="md:col-span-2">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0891b2] md:text-xs">Your Next Step</p>
-                  <h3 className="mt-2 text-xl font-bold leading-tight tracking-tight md:text-2xl">
+                  <h3 className="mt-2 text-xl font-bold leading-tight tracking-tight text-[#1A2B3C] md:text-2xl">
                     Lock In Your Yield. Secure This Dual-Income Package Today
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-[#5C6670]">
