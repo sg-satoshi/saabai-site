@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "14:21", tag: "FIX", title: "Rex sheet size fitting logic + cutting fee always additional" },
       { time: "13:43", tag: "FIX", title: "Add text-[#1A2B3C] to 'Live inventory, priced below market' heading — was invisible white-on-light" },
       { time: "13:17", tag: "NEW", title: "Rex custom shape pricing rule — material only, cutting costs additional" },
       { time: "11:28", tag: "NEW", title: "Add PETG/HIPS pricing + full-sheet-only policy for PETG, HIPS, Corflute, Egg Crate" },

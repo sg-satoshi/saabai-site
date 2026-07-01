@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Header } from "../../_components/Header";
-import { Footer } from "../../_components/Footer";
+import { ClientPortalShell } from "../../_components/ClientPortalShell";
 import { ChevronDown } from "lucide-react";
-import { DashboardErrorBoundary } from "../../_components/DashboardErrorBoundary";
 
 const AUTH_KEY = "wholesale_client_auth";
 
@@ -92,25 +90,15 @@ export default function ClientDashboard() {
   const sortLabel = sort === "price-low" ? "Price: Low to High" : sort === "price-high" ? "Price: High to Low" : "Sort";
 
   return (
-    <DashboardErrorBoundary>
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1 bg-[#f8f6f2]">
-        {/* Dashboard header */}
-        <section className="border-b border-[rgba(0,0,0,0.08)] bg-white">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight md:text-xl">Client Portal</h1>
-              <p className="mt-0.5 text-sm text-[#5C6670]">Access exclusive pre-market inventory.</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="rounded-full border border-[rgba(0,0,0,0.12)] px-5 py-2 text-xs font-medium text-[#5C6670] transition-colors hover:bg-[#f5f5f7] md:text-sm"
-            >
-              Sign Out
-            </button>
+    <ClientPortalShell userName={"Client"}>
+      <section className="border-b border-[rgba(0,0,0,0.08)] bg-white">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight md:text-xl">Client Portal</h1>
+            <p className="mt-0.5 text-sm text-[#5C6670]">Access exclusive pre-market inventory.</p>
           </div>
-        </section>
+        </div>
+      </section>
 
         <section className="py-10 md:py-16">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
@@ -239,9 +227,6 @@ export default function ClientDashboard() {
             )}
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
-    </DashboardErrorBoundary>
+      </ClientPortalShell>
   );
 }

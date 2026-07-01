@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Header } from "../../../_components/Header";
-import { Footer } from "../../../_components/Footer";
+import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone } from "lucide-react";
 import { EnquiryForm } from "../../../_components/EnquiryForm";
-
-const AUTH_KEY = "wholesale_client_auth";
 
 type Pkg = {
   id: string;
@@ -55,41 +51,25 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
 
 export default function ClientPackageDetail() {
-  const router = useRouter();
   const params = useParams<{ id: string }>();
-  const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem(AUTH_KEY)) {
-      router.replace("/client-login");
-    } else {
-      setAuthed(true);
-    }
-  }, [router]);
-
   const pkg = allPackages.find((p) => p.id === params.id);
-
-  if (!authed) return null;
   if (!pkg) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex flex-1 items-center justify-center px-6">
+      <ClientPortalShell>
+        <div className="flex flex-1 items-center justify-center px-6 py-24">
           <div className="text-center">
             <p className="text-lg font-semibold">Package not found</p>
             <Link href="/client/dashboard" className="mt-4 inline-flex items-center gap-2 text-sm text-[#0891b2] hover:underline">
               <ArrowLeft className="h-4 w-4" /> Back to packages
             </Link>
           </div>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </ClientPortalShell>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
+    <ClientPortalShell>
       <main className="flex-1 bg-[#f8f6f2]">
         <section className="py-8 md:py-12">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
@@ -241,7 +221,6 @@ export default function ClientPackageDetail() {
           </div>
         </section>
       </main>
-      <Footer />
-    </div>
+      </ClientPortalShell>
   );
 }
