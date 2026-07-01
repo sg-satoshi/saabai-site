@@ -170,6 +170,26 @@ export default function InvestmentAnalyzer() {
   const nyBL = pp > 0 ? (nri / pp) * 100 : 0;
   const nyOI = initInv > 0 ? (nri / initInv) * 100 : 0;
 
+  // ── Break-even calculations ──
+  // Rent required (annual) to cover all costs = (Total Expenses + Total Loan) / (1 - vacancy)
+  const breakEvenRentAnnual = (tae + tyLR) / (1 - vr / 100);
+  const breakEvenRentWeekly = breakEvenRentAnnual / 52;
+  const currentRentWeekly = mr + (gf ? gr : 0);
+  const rentGapWeekly = breakEvenRentWeekly - currentRentWeekly; // positive = need more rent
+  // Time to break even with rent growth (3%/yr) vs expense growth (2.5%/yr)
+  const breakEvenYear = (() => {
+    const rentGrowth = 1.03;
+    const expGrowth = 1.025;
+    for (let y = 0; y <= 30; y++) {
+      const projectedRent = currentRentWeekly * 52 * Math.pow(rentGrowth, y) * (1 - vr / 100);
+      const projectedExpenses = tae * Math.pow(expGrowth, y);
+      const yrRepay = ltType === "interestOnly" && y < ioPeriod ? ioRepayMonthly * 12 : 
+                       ltType === "interestOnly" ? postIORepay * 12 : mrRepay * 12;
+      if (projectedRent - projectedExpenses - yrRepay >= 0) return y;
+    }
+    return null;
+  })();
+
   // ── Projections ──
   function projectYear(y: number) {
     const gm = Math.pow(1 + cgr / 100, y);
@@ -274,6 +294,12 @@ export default function InvestmentAnalyzer() {
     const rpUp = la > 0 && rmUp > 0 ? (la * rmUp * Math.pow(1 + rmUp, tpm)) / (Math.pow(1 + rmUp, tpm) - 1) : 0;
     const wi = ((rpUp - mrRepay) * 12) / 52;
     ins.push({ type: "info", title: "Rate Sensitivity", detail: `A 1% rate rise adds **$${wi.toFixed(0)}/week**. 0.25% RBA move = $${(wi / 4).toFixed(0)}/week.` });
+    // Break-even analysis
+    if (rentGapWeekly > 0) {
+      ins.push({ type: "warning", title: `Need $${Math.round(rentGapWeekly)}/wk More Rent to Break Even`, detail: `You need **$${Math.round(breakEvenRentWeekly)}/wk** total rent to cover all costs ($${Math.round(breakEvenRentAnnual).toLocaleString()}/yr). Currently at $${currentRentWeekly}/wk. ${breakEvenYear !== null ? `At 3% annual rent growth, this property reaches break-even in **${breakEvenYear} years**.` : "Even with 3% annual rent growth, this property won't break even within 30 years."} Every $$50/week in rent adds $${Math.round(50 * 52 * (1 - vr / 100) / 12).toLocaleString()}/mo to your bottom line.` });
+    } else {
+      ins.push({ type: "positive", title: "Already Break-Even", detail: `Your current rent of **$${currentRentWeekly}/wk** exceeds the $${Math.round(breakEvenRentWeekly)}/wk needed to break even. You're cash flow positive from day one — rent is covering all costs including the loan.` });
+    }
     if (gf) {
       const wgf = mr * 52 / pp * 100;
       ins.push({ type: "positive", title: `Granny Flat Adds ${(gy - wgf).toFixed(1)}% Yield`, detail: `Granny flat contributes **$${gr}/week**. Without it: ${wgf.toFixed(1)}% gross yield.` });
@@ -291,7 +317,7 @@ export default function InvestmentAnalyzer() {
       ins.push({ type: "info", title: "P&I vs Interest-Only", detail: `Currently on P&I at **$${fmt(Math.round(effectiveRepay))}/${pf}**. Switching to IO (${ioPeriod}yr) would reduce payments to **$${fmt(Math.round(ioRepayMonthly))}/mo** ($${fmt(Math.round((mrRepay - ioRepayMonthly) * 12))}/yr savings), improving cash flow by $${Math.round((mrRepay - ioRepayMonthly) * 12 / 52)}/week. Total interest would increase by $${fmt(Math.round(tioL - (la > 0 ? mrRepay * tpm - la : 0)))} over the loan life.` });
     }
     return ins;
-  }, [wcfBT, lvr, gy, cgr, yr5, ir, la, tpm, mrRepay, gf, gr, mr, pp, initInv, ci, tyLR]);
+  }, [wcfBT, lvr, gy, cgr, yr5, ir, la, tpm, mrRepay, gf, gr, mr, pp, initInv, ci, tyLR, breakEvenRentWeekly, breakEvenRentAnnual, currentRentWeekly, rentGapWeekly, breakEvenYear, vr]);
 
   // ── Input control ──
   type InputDef = { label: string; val: number | string; set: (v: any) => void; step?: number; isSelect?: boolean; opts?: { label: string; value: string }[]; disabled?: boolean; suffix?: string };
@@ -480,9 +506,51 @@ export default function InvestmentAnalyzer() {
           <MetricMini label="Net Yield" val={nyBL.toFixed(1) + "%"} color="#16a34a" sub={fmt$(nri) + "/yr net"} />
           <MetricMini label="5-Yr ROI" val={yr5.roi + "%"} color={yr5.roi >= 20 ? "#16a34a" : "#f59e0b"} sub={fmt$(yr5.tr)} />
           <MetricMini label={`${ltType === "interestOnly" ? "IO" : "P&I"} Repay`} val={fmt$(Math.round(effectiveRepay))} color="#1A2B3C" sub={`${pf} · ${ltType === "interestOnly" ? ioPeriod + "yr IO then " : ""}${remainingTerm}yr P&I`} />
+          <MetricMini label="Rent Needed BE" val={fmt$(Math.round(breakEvenRentWeekly))} color={rentGapWeekly <= 0 ? "#16a34a" : "#dc2626"} sub={`${rentGapWeekly > 0 ? "need +$" + Math.round(rentGapWeekly) + "/wk" : "already break-even"}`} />
           <MetricMini label="Total Interest" val={fmt$(Math.round(tioL))} color="#dc2626" sub={`${ltType === "interestOnly" ? "IO " + ioPeriod + "yr + P&I " + remainingTerm + "yr" : lt + "yr P&I"}`} />
           <MetricMini label="Initial Outlay" val={fmt$(initInv)} color="#7c3aed" sub={fmt$(dep) + " dep + " + fmt$(tbc) + " costs"} />
-          <MetricMini label="10-Yr Value" val={fmt$(yr10.pv)} color="#7c3aed" sub={"+$" + fmt(yr10.pv - pp) + " growth"} />
+        </div>
+
+        {/* ── BREAK-EVEN ANALYSIS ── */}
+        <div className="rounded-2xl border border-[rgba(0,0,0,0.06)] bg-white p-4 md:p-5 mb-5 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5C6670] mb-3">Break-Even Analysis</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-[9px] text-[#5C6670]">Rent Required to Break Even</p>
+              <p className="text-xl font-bold" style={{ color: "#0891b2" }}>{fmt$(Math.round(breakEvenRentWeekly))}/wk</p>
+              <p className="text-[9px] text-[#5C6670]">${Math.round(breakEvenRentAnnual).toLocaleString()}/yr needed</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-[#5C6670]">Current Rent</p>
+              <p className="text-xl font-bold" style={{ color: "#16a34a" }}>{fmt$(currentRentWeekly)}/wk</p>
+              <p className="text-[9px] text-[#5C6670]">{mr}/wk main {gf ? "+ " + gr + "/wk granny" : ""}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-[#5C6670]">Weekly Gap</p>
+              <p className="text-xl font-bold" style={{ color: rentGapWeekly <= 0 ? "#16a34a" : "#dc2626" }}>
+                {rentGapWeekly <= 0 ? "Surplus $" + Math.round(-rentGapWeekly) : "Shortfall $" + Math.round(rentGapWeekly)}
+              </p>
+              <p className="text-[9px] text-[#5C6670]">{rentGapWeekly <= 0 ? "above break-even" : "below break-even"}</p>
+            </div>
+            <div>
+              <p className="text-[9px] text-[#5C6670]">{breakEvenYear !== null ? "Break-Even in" : "Not projected"}</p>
+              <p className="text-xl font-bold" style={{ color: breakEvenYear !== null ? "#16a34a" : "#dc2626" }}>
+                {breakEvenYear !== null ? breakEvenYear + " years" : "30+ years"}
+              </p>
+              <p className="text-[9px] text-[#5C6670]">{breakEvenYear !== null ? "at 3% rent growth" : "at current growth"}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{
+                width: `${Math.min(100, currentRentWeekly / breakEvenRentWeekly * 100)}%`,
+                background: currentRentWeekly >= breakEvenRentWeekly ? "#16a34a" : "#f59e0b",
+              }} />
+            </div>
+            <span className="text-[9px] font-medium" style={{ color: currentRentWeekly >= breakEvenRentWeekly ? "#16a34a" : "#f59e0b" }}>
+              {Math.round(currentRentWeekly / breakEvenRentWeekly * 100)}%
+            </span>
+          </div>
         </div>
 
         {/* ── INCOME / COST BREAKDOWN ── */}
