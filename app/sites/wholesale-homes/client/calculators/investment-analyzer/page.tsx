@@ -13,7 +13,9 @@ import {
 import { Segmented, InsightCard, AnimatedNumber, UI, FONT_DISPLAY, FONT_UI } from "../../_ui/primitives";
 import { ChartTooltip, CHART, AXIS_TICK, LegendChips } from "../../_ui/charts";
 import { Card, Eyebrow, Title, LedgerRow } from "../../_ui/tearsheet";
+import { IncomeTaxCard } from "../../_ui/incomeTax";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
+import { useClientProfile, marginalRate, taxableIncomeOf } from "../../../_lib/clientProfile";
 
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
 
@@ -53,6 +55,10 @@ export default function InvestmentAnalyzer() {
   useEffect(() => {
     saveJSON(STORAGE_KEY, { pp, st, gf, sdO, la, lvrInput, isLvrDriven, ir, lt, ltType, ioPeriod, pf, mr, gr, cr, ins, mgmt, maint, sf, wc, vr, cgr, bc, scp, ci, tab });
   }, [pp, st, gf, sdO, la, lvrInput, isLvrDriven, ir, lt, ltType, ioPeriod, pf, mr, gr, cr, ins, mgmt, maint, sf, wc, vr, cgr, bc, scp, ci, tab]);
+
+  // ── Income & tax (shared across calculators) ──
+  const [profile, setProfile] = useClientProfile();
+  const taxRate = marginalRate(taxableIncomeOf(profile));
 
   // ── Derived ──
   const sd = useMemo(() => sdO ?? calcStampDuty(pp, st), [pp, st, sdO]);
@@ -195,6 +201,15 @@ export default function InvestmentAnalyzer() {
     { name: "Cash-on-Cash", value: nyOI, fill: "#67c5d6" },
   ], [gy, nyBL, nyOI]);
 
+  // ── After-tax cash flow ──
+  // Only loan interest is deductible, not principal — use year-1 interest from
+  // the amortisation schedule (correct for both P&I and interest-only loans).
+  const yr1Interest = amortData[0]?.interest ?? 0;
+  const taxableResult = effRent - tae - yr1Interest;
+  const taxDelta = -taxableResult * taxRate; // loss -> refund (+); profit -> tax payable (-)
+  const afterTaxAnnual = ycfBT + taxDelta;
+  const afterTaxWeekly = afterTaxAnnual / 52;
+
   // ── Analysis ──
   const analysis = useMemo(() => {
     const ins: { type: "positive" | "warning" | "info"; title: string; detail: string }[] = [];
@@ -238,8 +253,14 @@ export default function InvestmentAnalyzer() {
     } else {
       ins.push({ type: "info", title: "P&I vs Interest-Only", detail: `Currently on P&I at **$${fmt(Math.round(effectiveRepay))}/${pf}**. Switching to IO (${ioPeriod}yr) would reduce payments to **$${fmt(Math.round(ioRepayMonthly))}/mo** ($${fmt(Math.round((mrRepay - ioRepayMonthly) * 12))}/yr savings), improving cash flow by $${Math.round((mrRepay - ioRepayMonthly) * 12 / 52)}/week. Total interest would increase by $${fmt(Math.round(tioL - (la > 0 ? mrRepay * tpm - la : 0)))} over the loan life.` });
     }
+    // Tax impact
+    if (taxDelta > 0) {
+      ins.push({ type: "positive", title: `Negative Gearing Saves $${fmt(Math.round(taxDelta))}/yr`, detail: `The property's **$${fmt(Math.abs(Math.round(taxableResult)))} taxable loss** offsets your other income at your ${(taxRate * 100).toFixed(1)}% marginal rate, turning a **$${Math.abs(Math.round(wcfBT))}/wk** pre-tax cost into **$${Math.abs(Math.round(afterTaxWeekly))}/wk** after tax.` });
+    } else if (taxDelta < 0) {
+      ins.push({ type: "info", title: `Tax Payable of $${fmt(Math.round(-taxDelta))}/yr`, detail: `The property is taxable-profitable, so the **$${fmt(Math.round(taxableResult))} rental result** is taxed at your ${(taxRate * 100).toFixed(1)}% marginal rate, trimming pre-tax cash flow of **$${Math.round(wcfBT)}/wk** to **$${Math.round(afterTaxWeekly)}/wk** after tax.` });
+    }
     return ins;
-  }, [wcfBT, lvr, gy, cgr, yr5, ir, la, tpm, mrRepay, gf, gr, mr, pp, initInv, ci, tyLR, breakEvenRentWeekly, breakEvenRentAnnual, currentRentWeekly, rentGapWeekly, breakEvenYear, vr]);
+  }, [wcfBT, lvr, gy, cgr, yr5, ir, la, tpm, mrRepay, gf, gr, mr, pp, initInv, ci, tyLR, breakEvenRentWeekly, breakEvenRentAnnual, currentRentWeekly, rentGapWeekly, breakEvenYear, vr, taxDelta, taxableResult, taxRate, afterTaxWeekly]);
 
   // ── Input control ──
   type InputDef = { label: string; val: number | string; set: (v: any) => void; step?: number; isSelect?: boolean; opts?: { label: string; value: string }[]; disabled?: boolean; suffix?: string };
@@ -522,6 +543,24 @@ export default function InvestmentAnalyzer() {
               <LedgerRow strong last label="Net cash flow" sub={`${wcfBT >= 0 ? "+" : "−"}$${Math.abs(Math.round(wcfBT))}/wk before tax`} value={`${ycfBT >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(ycfBT)))}`} valueColor={ycfBT >= 0 ? UI.green : UI.red} />
             </div>
             <p style={{ fontSize: 11, color: UI.faint, marginTop: 12 }}>A 1% rate rise adds ~${rateSens}/wk to repayments.</p>
+          </Card>
+        </div>
+
+        {/* ── INCOME & TAX ── */}
+        <div className="wh-rise" style={{ animationDelay: "270ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", marginBottom: 22 }}>
+          <Card>
+            <IncomeTaxCard profile={profile} setProfile={setProfile} />
+          </Card>
+          <Card>
+            <Eyebrow>Tax impact</Eyebrow>
+            <Title>After-tax cash flow</Title>
+            <div style={{ marginTop: 12 }}>
+              <LedgerRow label="Pre-tax cash flow" sub={`before tax, ${pf}`} value={`${ycfBT >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(ycfBT)))}`} />
+              <LedgerRow label="Taxable rental result" sub="rent − costs − loan interest" value={`${taxableResult >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(taxableResult)))}`} valueColor={UI.faintInk} />
+              <LedgerRow label={taxDelta >= 0 ? "Tax benefit (negative gearing)" : "Tax payable on profit"} sub={`${(taxRate * 100).toFixed(1)}% marginal rate`} value={`${taxDelta >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(taxDelta)))}`} valueColor={taxDelta >= 0 ? UI.green : UI.red} />
+              <LedgerRow strong last label="After-tax cash flow" sub={`${afterTaxWeekly >= 0 ? "+" : "−"}$${Math.abs(Math.round(afterTaxWeekly))}/wk`} value={`${afterTaxAnnual >= 0 ? "+" : "−"}${fmt$(Math.abs(Math.round(afterTaxAnnual)))}`} valueColor={afterTaxAnnual >= 0 ? UI.green : UI.red} />
+            </div>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Assumes your marginal rate applies to the property's full result. Indicative only — confirm with your accountant.</p>
           </Card>
         </div>
 

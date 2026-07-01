@@ -9,7 +9,9 @@ import { fmtAUD as fmt$ } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
 import { PageWrap, Masthead, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { IncomeTaxCard } from "../../_ui/incomeTax";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
+import { useClientProfile, marginalRate, taxableIncomeOf } from "../../../_lib/clientProfile";
 
 const STORAGE_KEY = "wh_calc_dual_income_yield";
 
@@ -27,6 +29,10 @@ export default function DualIncomeYieldCalculator() {
     saveJSON(STORAGE_KEY, { pp, mr, gr, cr, ins, mgmt, maint });
   }, [pp, mr, gr, cr, ins, mgmt, maint]);
 
+  // Income & tax (shared with the other calculators)
+  const [profile, setProfile] = useClientProfile();
+  const taxRate = marginalRate(taxableIncomeOf(profile));
+
   const twr = mr + gr;
   const yrRent = twr * 52;
   const mgmtCost = yrRent * (mgmt / 100);
@@ -35,6 +41,8 @@ export default function DualIncomeYieldCalculator() {
   const gy = pp > 0 ? (yrRent / pp) * 100 : 0;
   const ny = pp > 0 ? (nri / pp) * 100 : 0;
   const wcf = nri / 52;
+  const afterTaxNri = nri - nri * taxRate; // no loan modelled here, so tax applies to the full net rental result
+  const afterTaxWeekly = afterTaxNri / 52;
 
   const yieldData = [
     { name: "Gross", value: gy, fill: "#0e7490" },
@@ -125,6 +133,23 @@ export default function DualIncomeYieldCalculator() {
           </div>
           <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>Estimate only, before loan repayments and tax. Speak with Nick for personalised figures.</p>
         </Card>
+
+        {/* Income & tax */}
+        <div className="wh-rise" style={{ animationDelay: "300ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+          <Card>
+            <IncomeTaxCard profile={profile} setProfile={setProfile} />
+          </Card>
+          <Card>
+            <Eyebrow>Tax impact</Eyebrow>
+            <Title>After-tax income</Title>
+            <div style={{ marginTop: 12 }}>
+              <LedgerRow label="Net rental income" sub="before tax" value={fmt$(nri)} />
+              <LedgerRow label="Tax" sub={`${(taxRate * 100).toFixed(1)}% marginal rate on net income`} value={`−${fmt$(Math.round(nri * taxRate))}`} valueColor={UI.faintInk} />
+              <LedgerRow strong last label="After-tax income" sub={`${afterTaxWeekly >= 0 ? "+" : "−"}$${Math.abs(Math.round(afterTaxWeekly))}/wk`} value={fmt$(Math.round(afterTaxNri))} valueColor={afterTaxNri >= 0 ? UI.green : UI.red} />
+            </div>
+            <p style={{ fontSize: 10.5, color: UI.faint, marginTop: 12 }}>No loan modelled in this calculator — for after-tax cash flow with financing, use the Investment Analyzer.</p>
+          </Card>
+        </div>
       </PageWrap>
     </ClientPortalShell>
   );
