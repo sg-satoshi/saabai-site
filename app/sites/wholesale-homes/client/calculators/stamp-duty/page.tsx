@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -12,10 +12,18 @@ import {
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
 import { PageWrap, Masthead, Hero, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { loadJSON, saveJSON } from "../../../_lib/portal";
+
+const STORAGE_KEY = "wh_calc_stamp_duty";
 
 export default function StampDutyCalculator() {
-  const [price, setPrice] = useState(729000);
-  const [state, setState] = useState<State>("NSW");
+  const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
+  const [price, setPrice] = useState(saved.price ?? 729000);
+  const [state, setState] = useState<State>(saved.state ?? "NSW");
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEY, { price, state });
+  }, [price, state]);
 
   const duty = calcSD(price, state);
   const dutyPct = price > 0 ? (duty / price) * 100 : 0;

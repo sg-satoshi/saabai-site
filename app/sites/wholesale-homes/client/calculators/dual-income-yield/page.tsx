@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -9,15 +9,23 @@ import { fmtAUD as fmt$ } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
 import { PageWrap, Masthead, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { loadJSON, saveJSON } from "../../../_lib/portal";
+
+const STORAGE_KEY = "wh_calc_dual_income_yield";
 
 export default function DualIncomeYieldCalculator() {
-  const [pp, setPp] = useState(789990);
-  const [mr, setMr] = useState(420);
-  const [gr, setGr] = useState(280);
-  const [cr, setCr] = useState(2500);
-  const [ins, setIns] = useState(1800);
-  const [mgmt, setMgmt] = useState(7);
-  const [maint, setMaint] = useState(1500);
+  const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
+  const [pp, setPp] = useState(saved.pp ?? 789990);
+  const [mr, setMr] = useState(saved.mr ?? 420);
+  const [gr, setGr] = useState(saved.gr ?? 280);
+  const [cr, setCr] = useState(saved.cr ?? 2500);
+  const [ins, setIns] = useState(saved.ins ?? 1800);
+  const [mgmt, setMgmt] = useState(saved.mgmt ?? 7);
+  const [maint, setMaint] = useState(saved.maint ?? 1500);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEY, { pp, mr, gr, cr, ins, mgmt, maint });
+  }, [pp, mr, gr, cr, ins, mgmt, maint]);
 
   const twr = mr + gr;
   const yrRent = twr * 52;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -10,20 +10,28 @@ import { fmtAUD as fmt$, fmtCompact as fmt1k, safeDiv } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
 import { PageWrap, Masthead, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { loadJSON, saveJSON } from "../../../_lib/portal";
+
+const STORAGE_KEY = "wh_calc_borrowing_power";
 
 export default function BorrowingPowerEstimator() {
-  const [income, setIncome] = useState(150000);
-  const [pi, setPi] = useState(0);
-  const [deposit, setDeposit] = useState(150000);
-  const [other, setOther] = useState(300);
-  const [cc, setCc] = useState(0);
-  const [ir, setIr] = useState(6.3);
-  const [lt, setLt] = useState(30);
-  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">("pAndI");
-  const [ioPeriod, setIoPeriod] = useState(5);
-  const [rateType, setRateType] = useState<"variable" | "fixed">("variable");
-  const [le, setLe] = useState(2500);
-  const [expanded, setExpanded] = useState(false);
+  const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
+  const [income, setIncome] = useState(saved.income ?? 150000);
+  const [pi, setPi] = useState(saved.pi ?? 0);
+  const [deposit, setDeposit] = useState(saved.deposit ?? 150000);
+  const [other, setOther] = useState(saved.other ?? 300);
+  const [cc, setCc] = useState(saved.cc ?? 0);
+  const [ir, setIr] = useState(saved.ir ?? 6.3);
+  const [lt, setLt] = useState(saved.lt ?? 30);
+  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">(saved.ltType ?? "pAndI");
+  const [ioPeriod, setIoPeriod] = useState(saved.ioPeriod ?? 5);
+  const [rateType, setRateType] = useState<"variable" | "fixed">(saved.rateType ?? "variable");
+  const [le, setLe] = useState(saved.le ?? 2500);
+  const [expanded, setExpanded] = useState(saved.expanded ?? false);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEY, { income, pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded });
+  }, [income, pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded]);
 
   const ti = income + pi;
   const mi = ti / 12;

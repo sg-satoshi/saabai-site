@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
 import {
   AreaChart as ReAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -13,37 +13,46 @@ import {
 import { Segmented, InsightCard, AnimatedNumber, UI, FONT_DISPLAY, FONT_UI } from "../../_ui/primitives";
 import { ChartTooltip, CHART, AXIS_TICK, LegendChips } from "../../_ui/charts";
 import { Card, Eyebrow, Title, LedgerRow } from "../../_ui/tearsheet";
+import { loadJSON, saveJSON } from "../../../_lib/portal";
 
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
 
+const STORAGE_KEY = "wh_calc_investment_analyzer";
+
 export default function InvestmentAnalyzer() {
-  // ── State ──
-  const [pp, setPp] = useState(729000);
-  const [st, setSt] = useState<State>("NSW");
-  const [gf, setGf] = useState(true);
-  const [sdO, setSdO] = useState<number | null>(null);
-  const [la, setLa] = useState(583200);
-  const [lvrInput, setLvrInput] = useState(80); // LVR in %, synced with loan amount
-  const [isLvrDriven, setIsLvrDriven] = useState(true); // true = LVR slider drives loan, false = loan input drives LVR
-  const [ir, setIr] = useState(6.3);
-  const [lt, setLt] = useState(30);
-  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">("pAndI");
-  const [ioPeriod, setIoPeriod] = useState(5);
-  const [pf, setPf] = useState<PaymentFreq>("monthly");
-  const [mr, setMr] = useState(520);
-  const [gr, setGr] = useState(320);
-  const [cr, setCr] = useState(2500);
-  const [ins, setIns] = useState(1800);
-  const [mgmt, setMgmt] = useState(7);
-  const [maint, setMaint] = useState(1500);
-  const [sf, setSf] = useState(0);
-  const [wc, setWc] = useState(800);
-  const [vr, setVr] = useState(3);
-  const [cgr, setCgr] = useState(4);
-  const [bc, setBc] = useState<number | null>(null);
-  const [scp, setScp] = useState(2.5);
-  const [ci, setCi] = useState(150000);
-  const [tab, setTab] = useState("equity");
+  // ── State (restored from the last saved scenario, if any) ──
+  const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
+  const [pp, setPp] = useState(saved.pp ?? 729000);
+  const [st, setSt] = useState<State>(saved.st ?? "NSW");
+  const [gf, setGf] = useState(saved.gf ?? true);
+  const [sdO, setSdO] = useState<number | null>(saved.sdO ?? null);
+  const [la, setLa] = useState(saved.la ?? 583200);
+  const [lvrInput, setLvrInput] = useState(saved.lvrInput ?? 80); // LVR in %, synced with loan amount
+  const [isLvrDriven, setIsLvrDriven] = useState(saved.isLvrDriven ?? true); // true = LVR slider drives loan, false = loan input drives LVR
+  const [ir, setIr] = useState(saved.ir ?? 6.3);
+  const [lt, setLt] = useState(saved.lt ?? 30);
+  const [ltType, setLtType] = useState<"pAndI" | "interestOnly">(saved.ltType ?? "pAndI");
+  const [ioPeriod, setIoPeriod] = useState(saved.ioPeriod ?? 5);
+  const [pf, setPf] = useState<PaymentFreq>(saved.pf ?? "monthly");
+  const [mr, setMr] = useState(saved.mr ?? 520);
+  const [gr, setGr] = useState(saved.gr ?? 320);
+  const [cr, setCr] = useState(saved.cr ?? 2500);
+  const [ins, setIns] = useState(saved.ins ?? 1800);
+  const [mgmt, setMgmt] = useState(saved.mgmt ?? 7);
+  const [maint, setMaint] = useState(saved.maint ?? 1500);
+  const [sf, setSf] = useState(saved.sf ?? 0);
+  const [wc, setWc] = useState(saved.wc ?? 800);
+  const [vr, setVr] = useState(saved.vr ?? 3);
+  const [cgr, setCgr] = useState(saved.cgr ?? 4);
+  const [bc, setBc] = useState<number | null>(saved.bc ?? null);
+  const [scp, setScp] = useState(saved.scp ?? 2.5);
+  const [ci, setCi] = useState(saved.ci ?? 150000);
+  const [tab, setTab] = useState(saved.tab ?? "equity");
+
+  // ── Persist the scenario on every change ──
+  useEffect(() => {
+    saveJSON(STORAGE_KEY, { pp, st, gf, sdO, la, lvrInput, isLvrDriven, ir, lt, ltType, ioPeriod, pf, mr, gr, cr, ins, mgmt, maint, sf, wc, vr, cgr, bc, scp, ci, tab });
+  }, [pp, st, gf, sdO, la, lvrInput, isLvrDriven, ir, lt, ltType, ioPeriod, pf, mr, gr, cr, ins, mgmt, maint, sf, wc, vr, cgr, bc, scp, ci, tab]);
 
   // ── Derived ──
   const sd = useMemo(() => sdO ?? calcStampDuty(pp, st), [pp, st, sdO]);
