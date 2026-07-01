@@ -14,8 +14,8 @@ import {
   X,
   ChevronLeft,
 } from "lucide-react";
+import { AUTH_KEY } from "../_lib/portal";
 
-const AUTH_KEY = "wholesale_client_auth";
 const SIDEBAR_STORAGE_KEY = "wh_client_sidebar";
 
 // ── Palette ──────────────────────────────────────────────────────────────────

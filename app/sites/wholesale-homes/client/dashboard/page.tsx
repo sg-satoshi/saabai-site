@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { ClientPortalShell } from "../../_components/ClientPortalShell";
-import { ChevronDown, Heart, Printer, X, Check, BarChart3, Download, ArrowRight } from "lucide-react";
+import { ChevronDown, Heart, X, Check, BarChart3, Download, ArrowRight } from "lucide-react";
+import { loadJSON as load, saveJSON as save } from "../../_lib/portal";
 
-const AUTH_KEY = "wholesale_client_auth";
 const SAVED_KEY = "wh_client_saved";
 const COMPARE_KEY = "wh_client_compare";
 
@@ -56,32 +55,14 @@ const STATES = ["All States", "VIC", "NSW", "QLD"];
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
 
-function load<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
-}
-function save(key: string, val: any) {
-  if (typeof window !== "undefined") localStorage.setItem(key, JSON.stringify(val));
-}
-
 export default function ClientDashboard() {
-  const router = useRouter();
-  const [authed, setAuthed] = useState(false);
   const [filterState, setFilterState] = useState("All States");
   const [sort, setSort] = useState<SortOption>("default");
   const [sortOpen, setSortOpen] = useState(false);
-  const [saved, setSaved] = useState<Set<string>>(new Set(load(SAVED_KEY, [])));
-  const [compare, setCompare] = useState<Set<string>>(new Set(load(COMPARE_KEY, [])));
+  const [saved, setSaved] = useState<Set<string>>(new Set(load<string[]>(SAVED_KEY, [])));
+  const [compare, setCompare] = useState<Set<string>>(new Set(load<string[]>(COMPARE_KEY, [])));
   const [showCompare, setShowCompare] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-
-  useEffect(() => {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) { router.replace("/client-login"); }
-    else { setAuthed(true); }
-  }, [router]);
-
-  if (!authed) return null;
 
   function toggleSave(id: string, e: React.MouseEvent) {
     e.stopPropagation(); e.preventDefault();

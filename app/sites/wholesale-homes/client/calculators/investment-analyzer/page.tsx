@@ -2,106 +2,18 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import {
-  TrendingUp, DollarSign, Home, Building2, Percent, Calendar,
-  Calculator, Lightbulb, AlertTriangle, CheckCircle2, ArrowRight,
-  ChevronDown, ChevronUp, Zap, BarChart3, PieChart, LineChart,
-  AreaChart, Gauge,
-} from "lucide-react";
+import { Lightbulb, AlertTriangle, CheckCircle2, Zap } from "lucide-react";
 import {
   AreaChart as ReAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Legend, Cell, ComposedChart, Line,
+  ResponsiveContainer, BarChart, Bar, Legend, Cell,
 } from "recharts";
+import {
+  calcStampDuty, STATE_NAMES, type State,
+  fmtNum as fmt, fmtAUD as fmt$, fmtCompact as fmtK,
+  MetricMini,
+} from "../_shared";
 
-type State = "NSW" | "VIC" | "QLD" | "WA" | "SA" | "TAS" | "ACT" | "NT";
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
-
-const STATE_NAMES: Record<State, string> = {
-  NSW: "New South Wales", VIC: "Victoria", QLD: "Queensland",
-  WA: "Western Australia", SA: "South Australia", TAS: "Tasmania",
-  ACT: "ACT", NT: "Northern Territory",
-};
-
-const FREQ_LABELS: Record<PaymentFreq, string> = {
-  weekly: "Weekly", fortnightly: "Fortnightly", monthly: "Monthly",
-};
-const FREQ_PER_YEAR: Record<PaymentFreq, number> = { weekly: 52, fortnightly: 26, monthly: 12 };
-
-function calcStampDuty(price: number, state: State): number {
-  if (price <= 0) return 0;
-  switch (state) {
-    case "NSW": {
-      if (price <= 16000) return price * 0.0125;
-      if (price <= 35000) return 200 + (price - 16000) * 0.015;
-      if (price <= 93000) return 485 + (price - 35000) * 0.0175;
-      if (price <= 351000) return 1500 + (price - 93000) * 0.035;
-      if (price <= 1168000) return 10530 + (price - 351000) * 0.045;
-      return 47295 + (price - 1168000) * 0.055;
-    }
-    case "VIC": {
-      if (price <= 25000) return price * 0.014;
-      if (price <= 130000) return 350 + (price - 25000) * 0.024;
-      if (price <= 960000) return 2870 + (price - 130000) * 0.05;
-      if (price <= 2000000) return 44370 + (price - 960000) * 0.055;
-      return 110000 + (price - 2000000) * 0.065;
-    }
-    case "QLD": {
-      if (price <= 5000) return 0;
-      if (price <= 75000) return (price - 5000) * 0.015;
-      if (price <= 540000) return 1050 + (price - 75000) * 0.035;
-      if (price <= 1000000) return 17325 + (price - 540000) * 0.045;
-      return 38025 + (price - 1000000) * 0.0575;
-    }
-    case "WA": {
-      let duty: number;
-      if (price <= 120000) duty = price * 0.019;
-      else if (price <= 150000) duty = 2280 + (price - 120000) * 0.0285;
-      else if (price <= 360000) duty = 3135 + (price - 150000) * 0.038;
-      else if (price <= 725000) duty = 11115 + (price - 360000) * 0.0475;
-      else duty = 28453 + (price - 725000) * 0.0515;
-      return duty;
-    }
-    case "SA": {
-      if (price <= 12000) return price * 0.01;
-      if (price <= 30000) return 120 + (price - 12000) * 0.02;
-      if (price <= 50000) return 480 + (price - 30000) * 0.03;
-      if (price <= 100000) return 1080 + (price - 50000) * 0.035;
-      if (price <= 200000) return 2830 + (price - 100000) * 0.04;
-      if (price <= 250000) return 6830 + (price - 200000) * 0.0425;
-      if (price <= 300000) return 8955 + (price - 250000) * 0.0475;
-      if (price <= 500000) return 11330 + (price - 300000) * 0.05;
-      return 21330 + (price - 500000) * 0.055;
-    }
-    case "TAS": {
-      if (price <= 3000) return 50;
-      if (price <= 25000) return 50 + (price - 3000) * 0.0175;
-      if (price <= 75000) return 435 + (price - 25000) * 0.0225;
-      if (price <= 200000) return 1560 + (price - 75000) * 0.035;
-      if (price <= 375000) return 5935 + (price - 200000) * 0.04;
-      if (price <= 725000) return 12935 + (price - 375000) * 0.0425;
-      return 27810 + (price - 725000) * 0.045;
-    }
-    case "ACT": {
-      if (price <= 260000) return price * 0.0028;
-      if (price <= 300000) return 728 + (price - 260000) * 0.022;
-      if (price <= 500000) return 1608 + (price - 300000) * 0.034;
-      if (price <= 750000) return 8408 + (price - 500000) * 0.0432;
-      if (price <= 1000000) return 19208 + (price - 750000) * 0.059;
-      if (price <= 1455000) return 33958 + (price - 1000000) * 0.064;
-      return price * 0.0454;
-    }
-    case "NT": {
-      if (price <= 525000) { const V = price / 1000; return 0.06571441 * V * V + 15 * V; }
-      if (price <= 3000000) return price * 0.0495;
-      if (price <= 5000000) return price * 0.0575;
-      return price * 0.0595;
-    }
-  }
-}
-
-function fmt(n: number) { return n.toLocaleString("en-AU", { maximumFractionDigits: 0 }); }
-function fmtK(n: number) { return n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : fmt(n); }
-function fmt$(n: number) { return "$" + fmt(n); }
 
 export default function InvestmentAnalyzer() {
   // ── State ──
@@ -130,8 +42,6 @@ export default function InvestmentAnalyzer() {
   const [bc, setBc] = useState<number | null>(null);
   const [scp, setScp] = useState(2.5);
   const [ci, setCi] = useState(150000);
-  const [csv, setCsv] = useState(50000);
-  const [elr, setElr] = useState(0);
   const [tab, setTab] = useState("equity");
 
   // ── Derived ──
@@ -228,16 +138,16 @@ export default function InvestmentAnalyzer() {
     return { y, pv: Math.round(pv), eq: Math.round(eq), cf: Math.round(totalCF), neq: Math.round(neq), tr: Math.round(tr), roi: Math.round(roi * 10) / 10, aroi: Math.round(aroi * 10) / 10, sc: Math.round(sc) };
   }
 
-  const yr1 = useMemo(() => projectYear(1), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv]);
-  const yr5 = useMemo(() => projectYear(5), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv]);
-  const yr10 = useMemo(() => projectYear(10), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv]);
+  const yr1 = useMemo(() => projectYear(1), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv, ltType, ioPeriod, rm, remainingMonths, postIORepay]);
+  const yr5 = useMemo(() => projectYear(5), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv, ltType, ioPeriod, rm, remainingMonths, postIORepay]);
+  const yr10 = useMemo(() => projectYear(10), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv, ltType, ioPeriod, rm, remainingMonths, postIORepay]);
 
   // ── Chart data ──
   const equityData = useMemo(() =>
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30].map(y => {
       const p = projectYear(y);
       return { year: y, propertyValue: p.pv, loanBalance: la, equity: p.eq, cashflow: p.cf };
-    }), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv]);
+    }), [pp, la, cgr, scp, yrRent, vr, tae, mrRepay, initInv, ltType, ioPeriod, rm, remainingMonths, postIORepay]);
 
   const amortData = useMemo(() =>
     Array.from({ length: Math.min(lt, 30) }, (_, i) => {
@@ -715,16 +625,5 @@ export default function InvestmentAnalyzer() {
         </div>
       </div>
     </ClientPortalShell>
-  );
-}
-
-// ── Mini Metric ──
-function MetricMini({ label, val, color, sub }: { label: string; val: string; color: string; sub: string }) {
-  return (
-    <div className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-[8px] font-semibold uppercase tracking-wider text-[#5C6670] truncate">{label}</p>
-      <p className="mt-0.5 text-sm font-bold" style={{ color }}>{val}</p>
-      <p className="text-[8px] text-[#9CA3AF] truncate">{sub}</p>
-    </div>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { Home, DollarSign, Percent, TrendingUp } from "lucide-react";
+import { Home } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-  ComposedChart, Line, Area,
+  ComposedChart, Line,
 } from "recharts";
+import { fmtAUD as fmt$, fmtCompact as fmt1k, safeDiv, MetricMini } from "../_shared";
 
 export default function BorrowingPowerEstimator() {
   const [income, setIncome] = useState(150000);
@@ -44,9 +45,6 @@ export default function BorrowingPowerEstimator() {
   const effectiveRepay = ltType === "interestOnly" ? ioRepay : pmiRepay;
   const below80 = lvr <= 80;
 
-  const fmt$ = (n: number) => "$" + Math.round(n).toLocaleString("en-AU");
-  const fmt1k = (n: number) => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : Math.round(n).toLocaleString("en-AU");
-
   // Affordability data
   const affordData = [
     { name: "Monthly Income", value: mi, fill: "#16a34a" },
@@ -54,12 +52,6 @@ export default function BorrowingPowerEstimator() {
     { name: "Other Loans", value: -other, fill: "#f59e0b" },
     { name: "Card Liability", value: -(cc * 0.036), fill: "#dc2626" },
     { name: "Available for Loan", value: avail, fill: "#0891b2" },
-  ];
-
-  // LVR color zones
-  const lvrData = [
-    { name: "Equity", value: 100 - Math.min(lvr, 100), fill: "#16a34a" },
-    { name: "Loan", value: Math.min(lvr, 100), fill: lvr > 80 ? "#dc2626" : lvr > 70 ? "#f59e0b" : "#0891b2" },
   ];
 
   // Rate sensitivity
@@ -264,16 +256,3 @@ export default function BorrowingPowerEstimator() {
   );
 }
 
-function MetricMini({ label, val, color, sub }: { label: string; val: string; color: string; sub: string }) {
-  return (
-    <div className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-[8px] font-semibold uppercase tracking-wider text-[#5C6670] truncate">{label}</p>
-      <p className="mt-0.5 text-sm font-bold" style={{ color }}>{val}</p>
-      <p className="text-[8px] text-[#9CA3AF] truncate">{sub}</p>
-    </div>
-  );
-}
-
-function safeDiv(a: number, b: number): number {
-  return b === 0 || !isFinite(b) || a <= 0 ? 0 : a / b;
-}

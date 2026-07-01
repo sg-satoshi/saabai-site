@@ -3,20 +3,13 @@
 import { useState, useEffect } from "react";
 import { ClientPortalShell } from "../../_components/ClientPortalShell";
 import { User, Mail, Phone, Key, Shield, ArrowRight } from "lucide-react";
-
-const AUTH_KEY = "wholesale_client_auth";
+import { AUTH_KEY, loadJSON, type ClientAuth } from "../../_lib/portal";
 
 export default function AccountPage() {
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (raw) {
-      try {
-        const data = JSON.parse(raw);
-        setUserEmail(data.email || "");
-      } catch {}
-    }
+    setUserEmail(loadJSON<ClientAuth>(AUTH_KEY, {}).email || "");
   }, []);
 
   return (

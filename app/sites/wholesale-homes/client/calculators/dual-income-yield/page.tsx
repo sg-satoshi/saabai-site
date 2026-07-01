@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { TrendingUp, DollarSign, Home, Building2, Percent } from "lucide-react";
+import { Building2 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  Cell, PieChart, Pie, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
+import { fmtAUD as fmt$, fmtCompact as fmt1k, MetricMini, Row } from "../_shared";
 
 export default function DualIncomeYieldCalculator() {
   const [pp, setPp] = useState(789990);
@@ -32,16 +32,6 @@ export default function DualIncomeYieldCalculator() {
     { name: "Net Yield", value: ny, fill: "#16a34a" },
     { name: "Income Return on Cash", value: pp > 0 ? (nri / (pp * 0.2)) * 100 : 0, fill: "#7c3aed" },
   ];
-
-  const incomeBreakdown = [
-    { name: "Main House Rent", value: mr * 52, fill: "#0891b2" },
-    { name: "Granny Flat Rent", value: gr * 52, fill: "#16a34a" },
-    { name: "Total Rent", value: yrRent, fill: "#f59e0b" },
-    { name: "Less Expenses", value: -tae, fill: "#dc2626" },
-  ];
-
-  const fmt$ = (n: number) => "$" + Math.round(n).toLocaleString("en-AU");
-  const fmt1k = (n: number) => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : Math.round(n).toLocaleString("en-AU");
 
   return (
     <ClientPortalShell>
@@ -168,21 +158,3 @@ export default function DualIncomeYieldCalculator() {
   );
 }
 
-function MetricMini({ label, val, color, sub }: { label: string; val: string; color: string; sub: string }) {
-  return (
-    <div className="rounded-xl border border-[rgba(0,0,0,0.06)] bg-white p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-[8px] font-semibold uppercase tracking-wider text-[#5C6670] truncate">{label}</p>
-      <p className="mt-0.5 text-sm font-bold" style={{ color }}>{val}</p>
-      <p className="text-[8px] text-[#9CA3AF] truncate">{sub}</p>
-    </div>
-  );
-}
-
-function Row({ label, val, color, bold }: { label: string; val: string; color?: string; bold?: boolean }) {
-  return (
-    <div className="flex justify-between items-center">
-      <span className={`text-xs ${bold ? "font-semibold text-[#1A2B3C]" : "text-[#5C6670]"}`}>{label}</span>
-      <span className={`text-xs ${bold ? "font-semibold" : ""}`} style={{ color: color ?? "#1A2B3C" }}>{val}</span>
-    </div>
-  );
-}

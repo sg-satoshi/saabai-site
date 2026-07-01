@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "../_components/Header";
 import { Footer } from "../_components/Footer";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-
-const AUTH_KEY = "wholesale_client_auth";
+import { AUTH_KEY, saveJSON } from "../_lib/portal";
 
 export default function ClientLogin() {
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function ClientLogin() {
       });
 
       if (res.ok) {
-        localStorage.setItem(AUTH_KEY, JSON.stringify({ email: email.trim(), loggedInAt: Date.now() }));
+        saveJSON(AUTH_KEY, { email: email.trim(), loggedInAt: Date.now() });
         router.push("/client/dashboard");
       } else {
         setError("Invalid email or password. Please try again.");
