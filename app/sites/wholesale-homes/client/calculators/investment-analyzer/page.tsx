@@ -12,23 +12,31 @@ import {
 } from "../_shared";
 import { Segmented, InsightCard, AnimatedNumber, UI, FONT_DISPLAY, FONT_UI } from "../../_ui/primitives";
 import { ChartTooltip, CHART, AXIS_TICK, LegendChips } from "../../_ui/charts";
-import { Card, Eyebrow, Title, LedgerRow } from "../../_ui/tearsheet";
+import { Masthead, CalculatorNav, Card, Eyebrow, Title, LedgerRow } from "../../_ui/tearsheet";
 import { IncomeTaxCard } from "../../_ui/incomeTax";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
 import { useClientProfile, marginalRate, taxableIncomeOf } from "../../../_lib/clientProfile";
+import { consumeSelectedProperty, type SelectedProperty } from "../../../_lib/selectedProperty";
 
 type PaymentFreq = "weekly" | "fortnightly" | "monthly";
 
 const STORAGE_KEY = "wh_calc_investment_analyzer";
+const VALID_STATES = new Set(Object.keys(STATE_NAMES));
 
 export default function InvestmentAnalyzer() {
   // ── State (restored from the last saved scenario, if any) ──
   const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
-  const [pp, setPp] = useState(saved.pp ?? 729000);
-  const [st, setSt] = useState<State>(saved.st ?? "NSW");
+  // "Run the numbers" from a package card/detail page takes priority over the
+  // saved scenario — it's a fresh, explicit intent to model a specific property.
+  const [selectedProperty] = useState<SelectedProperty | null>(() => consumeSelectedProperty());
+  const [pp, setPp] = useState(selectedProperty?.price ?? saved.pp ?? 729000);
+  const [st, setSt] = useState<State>(
+    (selectedProperty?.state && VALID_STATES.has(selectedProperty.state) ? selectedProperty.state as State : undefined)
+      ?? saved.st ?? "NSW"
+  );
   const [gf, setGf] = useState(saved.gf ?? true);
   const [sdO, setSdO] = useState<number | null>(saved.sdO ?? null);
-  const [la, setLa] = useState(saved.la ?? 583200);
+  const [la, setLa] = useState(selectedProperty ? Math.round(selectedProperty.price * 0.8) : (saved.la ?? 583200));
   const [lvrInput, setLvrInput] = useState(saved.lvrInput ?? 80); // LVR in %, synced with loan amount
   const [isLvrDriven, setIsLvrDriven] = useState(saved.isLvrDriven ?? true); // true = LVR slider drives loan, false = loan input drives LVR
   const [ir, setIr] = useState(saved.ir ?? 6.3);
@@ -302,11 +310,14 @@ export default function InvestmentAnalyzer() {
 
       <div style={{ maxWidth: 1160, margin: "0 auto", fontFamily: FONT_UI, color: UI.ink }}>
 
-        {/* ── MASTHEAD ── */}
-        <div className="wh-rise" style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingBottom: 14, borderBottom: `1px solid ${UI.hair}` }}>
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: UI.teal }}>Wholesale Homes — Investment Analysis</span>
-          <a href="/client/calculators" style={{ fontSize: 12, fontWeight: 500, color: UI.faintInk, textDecoration: "none" }}>← All calculators</a>
-        </div>
+        <Masthead label="Wholesale Homes — Investment Analysis" />
+        <CalculatorNav current="investment-analyzer" />
+
+        {selectedProperty && (
+          <div className="wh-rise" style={{ animationDelay: "40ms", display: "inline-flex", alignItems: "center", gap: 8, borderRadius: 999, background: `${UI.teal}14`, color: UI.teal, padding: "8px 16px", fontSize: 12.5, fontWeight: 600, margin: "14px 0 0" }}>
+            Showing numbers for {selectedProperty.name}{selectedProperty.suburb ? `, ${selectedProperty.suburb}` : ""}
+          </div>
+        )}
 
         {/* ── HERO ── */}
         <div className="wh-rise" style={{ animationDelay: "60ms", position: "relative", overflow: "hidden", borderRadius: 28, background: UI.heroInk, color: "#e8efe9", padding: "clamp(28px,4vw,44px)", margin: "18px 0 22px" }}>

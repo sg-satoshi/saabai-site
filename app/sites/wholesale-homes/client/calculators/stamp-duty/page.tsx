@@ -11,7 +11,7 @@ import {
 } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
-import { PageWrap, Masthead, Hero, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { PageWrap, Masthead, CalculatorNav, Hero, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
 
 const STORAGE_KEY = "wh_calc_stamp_duty";
@@ -43,6 +43,7 @@ export default function StampDutyCalculator() {
     <ClientPortalShell>
       <PageWrap>
         <Masthead label="Wholesale Homes — Stamp Duty" />
+        <CalculatorNav current="stamp-duty" />
 
         <Hero
           eyebrow="Upfront cost"

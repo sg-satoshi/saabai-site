@@ -8,7 +8,7 @@ import {
 import { fmtAUD as fmt$ } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
-import { PageWrap, Masthead, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { PageWrap, Masthead, CalculatorNav, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
 import { IncomeTaxCard } from "../../_ui/incomeTax";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
 import { useClientProfile, marginalRate, taxableIncomeOf } from "../../../_lib/clientProfile";
@@ -54,6 +54,7 @@ export default function DualIncomeYieldCalculator() {
     <ClientPortalShell>
       <PageWrap>
         <Masthead label="Wholesale Homes — Dual Income Yield" />
+        <CalculatorNav current="dual-income-yield" />
 
         <Hero
           eyebrow="Rental return"

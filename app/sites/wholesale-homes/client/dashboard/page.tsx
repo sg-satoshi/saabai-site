@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ClientPortalShell } from "../../_components/ClientPortalShell";
-import { ChevronDown, Heart, X, Check, BarChart3, Download, ArrowRight } from "lucide-react";
+import { ChevronDown, Heart, X, Check, BarChart3, Download, ArrowRight, Calculator, Lock } from "lucide-react";
 import { loadJSON as load, saveJSON as save } from "../../_lib/portal";
+import { setSelectedProperty } from "../../_lib/selectedProperty";
+import { Hero, RISE_CSS } from "../_ui/tearsheet";
 
 const SAVED_KEY = "wh_client_saved";
 const COMPARE_KEY = "wh_client_compare";
@@ -56,6 +59,7 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
 
 export default function ClientDashboard() {
+  const router = useRouter();
   const [filterState, setFilterState] = useState("All States");
   const [sort, setSort] = useState<SortOption>("default");
   const [sortOpen, setSortOpen] = useState(false);
@@ -76,6 +80,12 @@ export default function ClientDashboard() {
     const next = new Set(compare);
     if (next.has(id)) next.delete(id); else if (next.size < 3) next.add(id);
     setCompare(next); save(COMPARE_KEY, [...next]);
+  }
+
+  function runNumbers(pkg: Package, e: React.MouseEvent) {
+    e.stopPropagation(); e.preventDefault();
+    setSelectedProperty({ id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb });
+    router.push("/client/calculators/investment-analyzer");
   }
 
   function getPkg(id: string) { return allPackages.find(p => p.id === id); }
@@ -128,16 +138,30 @@ export default function ClientDashboard() {
 
   const sortLabel = sort === "price-low" ? "Price: Low to High" : sort === "price-high" ? "Price: High to Low" : "Sort";
   const comparePkgs = [...compare].map(id => getPkg(id)).filter(Boolean) as Package[];
+  const avgDiscountPct = Math.round(
+    allPackages.reduce((sum, p) => sum + (p.retailPrice - p.wholesalePrice) / p.retailPrice, 0) / allPackages.length * 100
+  );
 
   return (
     <ClientPortalShell userName={"Client"}>
-      <section className="border-b border-[rgba(0,0,0,0.08)] bg-white">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight md:text-xl">Client Portal</h1>
-            <p className="mt-0.5 text-sm text-[#5C6670]">Access exclusive pre-market inventory.</p>
+      <style>{RISE_CSS}</style>
+
+      <section className="bg-[#f8f6f2]">
+        <div className="mx-auto w-full max-w-7xl px-6 pt-8 lg:px-10">
+          <div className="wh-rise mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#1A2B3C]/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1A2B3C]">
+            <Lock className="h-3 w-3" /> Members only — not publicly listed
           </div>
-          <div className="flex items-center gap-3">
+          <Hero
+            eyebrow="Private client access"
+            headline={<>You&rsquo;re inside our <span style={{ color: "#5fd4ab" }}>members-only</span> portal.</>}
+            sub="This inventory is never advertised publicly. Every package below is reserved for approved clients, priced below bank valuation, before it reaches the open market."
+            stats={[
+              { label: "Live packages", value: allPackages.length },
+              { label: "Avg. member discount", value: avgDiscountPct + "%" },
+            ]}
+            delay={20}
+          />
+          <div className="wh-rise -mt-1 mb-2 flex items-center justify-end gap-3" style={{ animationDelay: "120ms" }}>
             <button onClick={printReport} className="flex items-center gap-1.5 rounded-full border border-[rgba(0,0,0,0.08)] bg-white px-4 py-2 text-xs font-medium text-[#5C6670] transition-colors hover:border-[#0891b2]/30">
               <Download className="h-3.5 w-3.5" /> Report
             </button>
@@ -219,6 +243,11 @@ export default function ClientDashboard() {
                       className={`flex h-8 w-8 items-center justify-center rounded-full shadow-sm backdrop-blur-sm transition-colors ${isComp ? "bg-[#0891b2] text-white" : "bg-white/90 hover:bg-white text-[#5C6670]"}`}
                       title={isComp ? "Remove from compare" : compare.size >= 3 ? "Max 3 to compare" : "Add to compare"}>
                       {isComp ? <Check className="h-4 w-4" /> : <BarChart3 className="h-3.5 w-3.5" />}
+                    </button>
+                    <button onClick={(e) => runNumbers(pkg, e)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#5C6670] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+                      title="Run the Numbers">
+                      <Calculator className="h-3.5 w-3.5" />
                     </button>
                   </div>
 

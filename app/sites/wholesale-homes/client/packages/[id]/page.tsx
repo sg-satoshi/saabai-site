@@ -3,8 +3,9 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ClientPortalShell } from "../../../_components/ClientPortalShell";
-import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone } from "lucide-react";
+import { ArrowLeft, Home, Bath, Car, MapPin, Calendar, Building2, DollarSign, Phone, Calculator } from "lucide-react";
 import { EnquiryForm } from "../../../_components/EnquiryForm";
+import { setSelectedProperty } from "../../../_lib/selectedProperty";
 
 type Pkg = {
   id: string;
@@ -111,6 +112,13 @@ export default function ClientPackageDetail() {
                   <p className="text-xs font-medium text-green-600">
                     ${((pkg.retailPrice - pkg.wholesalePrice) / 1000).toFixed(0)}k Discount for Members
                   </p>
+                  <Link
+                    href="/client/calculators/investment-analyzer"
+                    onClick={() => setSelectedProperty({ id: pkg.id, name: pkg.name, price: pkg.wholesalePrice, state: pkg.state, suburb: pkg.suburb })}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#1A2B3C] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#0d1b2a]"
+                  >
+                    <Calculator className="h-3.5 w-3.5" /> Run the Numbers
+                  </Link>
                 </div>
               </div>
 

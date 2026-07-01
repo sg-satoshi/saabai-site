@@ -9,14 +9,20 @@ import {
 import { fmtAUD as fmt$, fmtCompact as fmt1k, safeDiv } from "../_shared";
 import { UI, FONT_DISPLAY, AnimatedNumber } from "../../_ui/primitives";
 import { CHART, AXIS_TICK } from "../../_ui/charts";
-import { PageWrap, Masthead, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { PageWrap, Masthead, CalculatorNav, Hero, FiguresStrip, Card, Eyebrow, Title, LedgerRow, FieldGrid } from "../../_ui/tearsheet";
+import { IncomeTaxCard } from "../../_ui/incomeTax";
 import { loadJSON, saveJSON } from "../../../_lib/portal";
+import { useClientProfile, taxableIncomeOf } from "../../../_lib/clientProfile";
 
 const STORAGE_KEY = "wh_calc_borrowing_power";
 
 export default function BorrowingPowerEstimator() {
   const [saved] = useState<Record<string, any>>(() => loadJSON(STORAGE_KEY, {}));
-  const [income, setIncome] = useState(saved.income ?? 150000);
+  // "Your Income" is sourced from the shared Income & tax profile (entered
+  // once, reused across every calculator); Partner Income stays local since
+  // it's specific to household borrowing serviceability.
+  const [profile, setProfile] = useClientProfile();
+  const income = taxableIncomeOf(profile);
   const [pi, setPi] = useState(saved.pi ?? 0);
   const [deposit, setDeposit] = useState(saved.deposit ?? 150000);
   const [other, setOther] = useState(saved.other ?? 300);
@@ -30,8 +36,8 @@ export default function BorrowingPowerEstimator() {
   const [expanded, setExpanded] = useState(saved.expanded ?? false);
 
   useEffect(() => {
-    saveJSON(STORAGE_KEY, { income, pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded });
-  }, [income, pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded]);
+    saveJSON(STORAGE_KEY, { pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded });
+  }, [pi, deposit, other, cc, ir, lt, ltType, ioPeriod, rateType, le, expanded]);
 
   const ti = income + pi;
   const mi = ti / 12;
@@ -77,6 +83,7 @@ export default function BorrowingPowerEstimator() {
     <ClientPortalShell>
       <PageWrap>
         <Masthead label="Wholesale Homes — Borrowing Power" />
+        <CalculatorNav current="borrowing-power" />
 
         <Hero
           eyebrow="Lending capacity"
@@ -103,8 +110,10 @@ export default function BorrowingPowerEstimator() {
             <Title>Your position</Title>
             <p style={{ fontSize: 12.5, color: UI.faintInk, margin: "4px 0 16px" }}>Income, deposit and rate — everything updates live.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ borderRadius: 12, border: `1px solid ${UI.hair}`, background: UI.bone, padding: "8px 12px", fontSize: 11.5, color: UI.faintInk }}>
+                Your income is set in the <strong style={{ color: UI.ink }}>Income &amp; tax</strong> section below — it's shared across every calculator.
+              </div>
               <FieldGrid items={[
-                { label: "Your Income", val: income, set: setIncome, suffix: "$/yr" },
                 { label: "Partner Income", val: pi, set: setPi, suffix: "$/yr" },
                 { label: "Deposit", val: deposit, set: setDeposit, suffix: "$" },
               ]} />
@@ -157,7 +166,13 @@ export default function BorrowingPowerEstimator() {
           </Card>
         </div>
 
-        <div className="wh-rise" style={{ animationDelay: "240ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", marginBottom: 22 }}>
+        <div className="wh-rise" style={{ animationDelay: "220ms", marginBottom: 22 }}>
+          <Card>
+            <IncomeTaxCard profile={profile} setProfile={setProfile} />
+          </Card>
+        </div>
+
+        <div className="wh-rise" style={{ animationDelay: "260ms", display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", marginBottom: 22 }}>
           {/* Rate sensitivity */}
           <Card style={{ display: "flex", flexDirection: "column" }}>
             <Eyebrow>Stress</Eyebrow>
