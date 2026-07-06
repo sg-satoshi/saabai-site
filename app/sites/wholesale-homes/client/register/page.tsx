@@ -37,18 +37,18 @@ export default function ClientRegister() {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
-        <main className="flex flex-1 items-center justify-center bg-[#f8f6f2] px-6">
+        <main className="flex flex-1 items-center justify-center bg-[#f8f6f2] px-6 py-16">
           <div className="w-full max-w-md text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-green-100 text-green-600">
               <CheckCircle className="h-8 w-8" />
             </div>
-            <h1 className="mt-6 text-xl font-bold md:text-2xl">Your free trial is on its way</h1>
+            <h1 className="mt-6 text-xl font-bold text-[#1A2B3C] md:text-2xl">Your free trial is on its way</h1>
             <p className="mt-3 text-sm leading-relaxed text-[#5C6670]">
               Thanks for your interest. We will review your application and send your login details within 24 hours. Once approved, you will get <strong>7 days free access</strong> to browse our full inventory and see every package's exclusive Members Price.
             </p>
             <Link
               href="/client-login"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1]"
+              className="mt-6 mb-8 inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1]"
             >
               Back to Login
             </Link>
