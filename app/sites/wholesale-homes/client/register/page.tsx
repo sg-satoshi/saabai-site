@@ -83,7 +83,7 @@ export default function ClientRegister() {
                 <div className="relative mt-1">
                   <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6670]" />
                   <input id="name" name="name" required
-                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
+                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
                   />
                 </div>
               </div>
@@ -93,7 +93,7 @@ export default function ClientRegister() {
                 <div className="relative mt-1">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6670]" />
                   <input id="email" name="email" type="email" required
-                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
+                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
                   />
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function ClientRegister() {
                 <div className="relative mt-1">
                   <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6670]" />
                   <input id="phone" name="phone" type="tel" required
-                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
+                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
                   />
                 </div>
               </div>
@@ -113,7 +113,7 @@ export default function ClientRegister() {
                 <div className="relative mt-1">
                   <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6670]" />
                   <input id="postcode" name="postcode" required
-                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
+                    className="w-full rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-4 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
                   />
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function ClientRegister() {
                 <div className="relative mt-1">
                   <Briefcase className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6670]" />
                   <select id="investorType" name="investorType" required
-                    className="w-full appearance-none rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-8 text-sm outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
+                    className="w-full appearance-none rounded-xl border border-[rgba(0,0,0,0.1)] bg-white py-3 pl-10 pr-8 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2] focus:ring-1 focus:ring-[#0891b2]/20"
                   >
                     <option value="">Select one</option>
                     <option value="First home buyer">First home buyer</option>

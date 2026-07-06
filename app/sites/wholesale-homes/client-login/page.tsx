@@ -101,7 +101,7 @@ export default function ClientLogin() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
                         required
-                        className="w-full rounded-xl bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-[#0891b2]"
+                        className="w-full rounded-xl bg-white py-2.5 pl-10 pr-4 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2]"
                         style={{ border: `1px solid ${UI.hair}`, color: UI.ink }}
                       />
                     </div>
@@ -117,7 +117,7 @@ export default function ClientLogin() {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
                         required
-                        className="w-full rounded-xl bg-white py-2.5 pl-10 pr-10 text-sm outline-none transition-colors focus:border-[#0891b2]"
+                        className="w-full rounded-xl bg-white py-2.5 pl-10 pr-10 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2]"
                         style={{ border: `1px solid ${UI.hair}`, color: UI.ink }}
                       />
                       <button
