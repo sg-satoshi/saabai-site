@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "13:46", tag: "NEW", title: "Add Banyan Hill Lot 1042 - Affogato 21 Tasman (Metricon NSW)" },
       { time: "13:43", tag: "FIX", title: "Fix input text color on register + login pages" },
       { time: "13:39", tag: "UPDATE", title: "Clean up unused raw extracted images" },
       { time: "13:39", tag: "NEW", title: "Add 16 Astel Homes packages (SA) with photos from stocklist PDF" },
