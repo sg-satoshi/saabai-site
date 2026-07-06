@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "1 Jul 2026",
     entries: [
+      { time: "22:26", tag: "NEW", title: "Members area — save/shortlist, compare up to 3 packages side-by-side, download report PDF" },
       { time: "22:15", tag: "FIX", title: "Yield chart blank — remove nested ReAreaChart wrapper (Recharts doesn't support chart nesting)" },
       { time: "22:12", tag: "NEW", title: "Add interactive LVR control — clickable progress bar, bi-directional sync with loan amount, deposit/LMI display" },
       { time: "22:11", tag: "NEW", title: "Add break-even analysis to investment analyzer — rent needed, weekly gap, years to break even with growth" },
