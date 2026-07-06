@@ -56,7 +56,7 @@ export default function ContactPage() {
 
                 <div className="mt-8 space-y-4 md:mt-10">
                   {[
-                    { icon: Phone, text: "1300 000 000", href: "tel:1300000000" },
+                    { icon: Phone, text: "0488 165 908", href: "tel:0488165908" },
                     { icon: Mail, text: "hello@wholesalehomes.com.au", href: "mailto:hello@wholesalehomes.com.au" },
                   ].map(({ icon: Icon, text, href }) => (
                     <a key={href} href={href} className="flex items-center gap-3 text-sm text-[#5C6670] hover:text-[#1A2B3C] md:text-base">

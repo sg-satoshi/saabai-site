@@ -323,7 +323,7 @@ export default function ClientPackageDetail() {
                     At {formatPrice(pkg.wholesalePrice)} with a proven {pkg.yieldVal} net yield, this house + granny flat combination is already performing below replacement cost in one of Regional Victoria's tightest rental markets. Properties like this rarely last. Once they're gone, the next equivalent will cost more and yield less. Let's get your numbers locked in now while the package is still available.
                   </p>
                   <p className="mt-3 text-xs text-[#5C6670]">
-                    Or call <a href="tel:1300000000" className="font-semibold text-[#0891b2] hover:underline">1300 000 000</a> to speak with Nick directly.
+                    Or call <a href="tel:0488165908" className="font-semibold text-[#0891b2] hover:underline">0488 165 908</a> to speak with Nick directly.
                   </p>
                 </div>
                 <div className="md:col-span-3">

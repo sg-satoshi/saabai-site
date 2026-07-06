@@ -125,7 +125,7 @@ const APP_ROUTER_SITES: SiteConfig[] = [
       name: "Wholesale Homes Australia",
       tagline: "House & Land Packages. Below Market Price.",
       email: "hello@wholesalehomes.com.au",
-      phone: "1300 000 000",
+      phone: "0488 165 908",
     },
     chatbot: {
       enabled: true,

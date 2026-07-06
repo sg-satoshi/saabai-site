@@ -178,6 +178,10 @@ export async function proxy(req: NextRequest) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.next();
       }
+      // Admin and auth pages should pass through without the site slug prefix
+      if (pathname.startsWith("/saabai-admin") || pathname.startsWith("/admin") || pathname.startsWith("/login")) {
+        return NextResponse.next();
+      }
       // Static assets under /sites/{slug}/* (images, fonts, etc.) — rewrite to saabai.ai.
       // Page routes under /sites/{slug}/* (packages, how-it-works, etc.) pass through
       // to the App Router. We distinguish by file extension.

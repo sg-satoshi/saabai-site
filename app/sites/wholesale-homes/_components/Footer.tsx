@@ -11,7 +11,7 @@ export function Footer() {
             Pre-market access to Australia&apos;s best house and land packages, secured at wholesale pricing through exclusive builder partnerships.
           </p>
           <div className="mt-6 flex flex-col gap-1.5 text-sm text-white/70">
-            <a href="tel:1300000000" className="hover:text-white">1300 000 000</a>
+            <a href="tel:0488165908" className="hover:text-white">0488 165 908</a>
             <a href="mailto:hello@wholesalehomes.com.au" className="hover:text-white">hello@wholesalehomes.com.au</a>
           </div>
         </div>

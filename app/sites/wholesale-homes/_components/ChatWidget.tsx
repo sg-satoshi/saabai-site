@@ -105,7 +105,7 @@ export function ChatWidget() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Having trouble connecting. Please call us on 1300 000 000 or email hello@wholesalehomes.com.au." },
+        { role: "assistant", content: "Having trouble connecting. Please call us on 0488 165 908 or email hello@wholesalehomes.com.au." },
       ]);
     }
     setLoading(false);
