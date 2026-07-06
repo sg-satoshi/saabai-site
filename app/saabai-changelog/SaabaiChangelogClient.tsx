@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "6 Jul 2026",
+    entries: [
+      { time: "13:56", tag: "NEW", title: "Add Wholesale Leads approval dashboard in admin panel" }
+    ],
+  },
+  {
     date: "18 Jun 2026",
     entries: [
       { time: "22:38", tag: "UPDATE", title: "Changelog auto-update [skip ci]" }

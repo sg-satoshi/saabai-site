@@ -71,28 +71,26 @@ export default function WholesaleLeadsClient() {
 
   async function approveLead(lead: Lead) {
     setApproving(lead.email);
-    const password = generatePassword();
 
     try {
-      const res = await fetch("/api/user-directory", {
+      const res = await fetch("/api/site-factory/approve-lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: lead.name,
           email: lead.email,
-          password,
-          role: "user",
-          dashboardUrl: "/sites/wholesale-homes/client/dashboard",
+          phone: lead.phone,
+          buyer_type: lead.buyer_type,
         }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setToast(`Approved! Login sent to ${lead.email}`);
+        setToast(`Approved! Welcome email sent to ${lead.email}`);
         setLeads((prev) => prev.filter((l) => l.email !== lead.email));
       } else {
-        setToast(data?.error || "Failed to create user");
+        setToast(data?.error || "Failed to approve");
       }
     } catch {
       setToast("Network error approving lead");
@@ -197,13 +195,6 @@ export default function WholesaleLeadsClient() {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function generatePassword(): string {
-  const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let pw = "";
-  for (let i = 0; i < 12; i++) pw += chars[Math.floor(Math.random() * chars.length)];
-  return pw + "!";
+    );
+  }
 }
