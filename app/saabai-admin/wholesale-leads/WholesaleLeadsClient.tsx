@@ -16,30 +16,30 @@ interface Lead {
 }
 
 const C = {
-  bg:        "#f5f5f7",
-  surface:   "#ffffff",
-  border:    "rgba(0,0,0,0.08)",
-  teal:      "#0891b2",
-  tealBg:    "rgba(8,145,178,0.08)",
-  green:     "#16a34a",
-  greenBg:   "rgba(22,163,74,0.08)",
-  greenBdr:  "rgba(22,163,74,0.25)",
-  red:       "#dc2626",
-  redBg:     "rgba(220,38,26,0.08)",
-  text:      "#111827",
-  textDim:   "#6b7280",
-  muted:     "#9ca3af",
+  bg: "#f5f5f7",
+  surface: "#ffffff",
+  border: "rgba(0,0,0,0.08)",
+  teal: "#0891b2",
+  tealBg: "rgba(8,145,178,0.08)",
+  green: "#16a34a",
+  greenBg: "rgba(22,163,74,0.08)",
+  greenBdr: "rgba(22,163,74,0.25)",
+  red: "#dc2626",
+  redBg: "rgba(220,38,26,0.08)",
+  text: "#111827",
+  textDim: "#6b7280",
+  muted: "#9ca3af",
 };
 
 function ago(ms: number): string {
   const s = Math.floor((Date.now() - ms) / 1000);
-  if (s < 60) return `${s}s ago`;
+  if (s < 60) return s + "s ago";
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return m + "m ago";
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return h + "h ago";
   const d = Math.floor(h / 24);
-  return `${d}d ago`;
+  return d + "d ago";
 }
 
 export default function WholesaleLeadsClient() {
@@ -60,18 +60,19 @@ export default function WholesaleLeadsClient() {
       } else {
         setError("Failed to fetch leads");
       }
-    } catch {
+    } catch (_) {
       setError("Network error");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchLeads(); }, [fetchLeads]);
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
 
-  async function approveLead(lead: Lead) {
+  const handleApprove = async (lead: Lead) => {
     setApproving(lead.email);
-
     try {
       const res = await fetch("/api/site-factory/approve-lead", {
         method: "POST",
@@ -83,21 +84,19 @@ export default function WholesaleLeadsClient() {
           buyer_type: lead.buyer_type,
         }),
       });
-
       const data = await res.json();
-
       if (res.ok) {
-        setToast(`Approved! Welcome email sent to ${lead.email}`);
+        setToast("Approved! Welcome email sent to " + lead.email);
         setLeads((prev) => prev.filter((l) => l.email !== lead.email));
       } else {
         setToast(data?.error || "Failed to approve");
       }
-    } catch {
+    } catch (_) {
       setToast("Network error approving lead");
     } finally {
       setApproving(null);
     }
-  }
+  };
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 960 }}>
@@ -116,7 +115,7 @@ export default function WholesaleLeadsClient() {
         <button
           onClick={fetchLeads}
           style={{
-            padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
+            padding: "8px 16px", borderRadius: 8, border: "1px solid " + C.border,
             background: C.surface, fontSize: 12, fontWeight: 600, color: C.text, cursor: "pointer",
           }}
         >
@@ -124,16 +123,17 @@ export default function WholesaleLeadsClient() {
         </button>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div style={{
           padding: "10px 16px", marginBottom: 16, borderRadius: 10,
-          background: C.greenBg, border: `1px solid ${C.greenBdr}`,
+          background: C.greenBg, border: "1px solid " + C.greenBdr,
           fontSize: 13, fontWeight: 500, color: C.green,
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
           <span>{toast}</span>
-          <button onClick={() => setToast(null)} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, color: C.green }}>&times;</button>
+          <button onClick={() => setToast(null)} style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, color: C.green }}>
+            &times;
+          </button>
         </div>
       )}
 
@@ -143,7 +143,7 @@ export default function WholesaleLeadsClient() {
       {!loading && !error && leads.length === 0 && (
         <div style={{
           padding: 40, textAlign: "center", borderRadius: 16,
-          border: `1px dashed ${C.border}`, background: C.surface,
+          border: "1px dashed " + C.border, background: C.surface,
         }}>
           <p style={{ fontSize: 15, fontWeight: 600, color: C.text }}>No pending registrations</p>
           <p style={{ fontSize: 12, color: C.textDim, marginTop: 4 }}>
@@ -159,7 +159,7 @@ export default function WholesaleLeadsClient() {
               key={lead.email + lead.createdAt}
               style={{
                 padding: "16px 20px", borderRadius: 14,
-                background: C.surface, border: `1px solid ${C.border}`,
+                background: C.surface, border: "1px solid " + C.border,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -178,7 +178,7 @@ export default function WholesaleLeadsClient() {
                   </div>
                 </div>
                 <button
-                  onClick={() => approveLead(lead)}
+                  onClick={() => handleApprove(lead)}
                   disabled={approving === lead.email}
                   style={{
                     padding: "8px 18px", borderRadius: 8, border: "none",
@@ -195,6 +195,6 @@ export default function WholesaleLeadsClient() {
           ))}
         </div>
       )}
-    );
-  }
+    </div>
+  );
 }

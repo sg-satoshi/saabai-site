@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "13:59", tag: "NEW", title: "Add approve-lead API with welcome email flow" },
       { time: "13:56", tag: "NEW", title: "Add Wholesale Leads approval dashboard in admin panel" },
       { time: "13:50", tag: "FIX", title: "Fix success page: heading color + spacing below button" },
       { time: "13:47", tag: "UPDATE", title: "Clean up raw extracted images from Banyan Hill PDF" },
