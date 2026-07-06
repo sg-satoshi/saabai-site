@@ -353,7 +353,23 @@ export const packages: Package[] = [
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
     highlight: "Largest Emilia block at 296m². $745K fixed.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on the largest Emilia block at 296m² Torrens title with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. Maximum block size for the Emilia design, ideal for those wanting extra outdoor area.",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on the largest Emilia block at 296m² Torrens title with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. Maximum block size for the Emilia design, ideal for those wanting extra outdoor space.",
+  },
+  // Banyan Hill - Metricon
+  {
+    id: "banyan-hill-lot-1042",
+    name: "Lot 1042 - Affogato 21 Tasman",
+    suburb: "Cumbalum",
+    state: "NSW",
+    estate: "Banyan Hill",
+    builder: "Metricon",
+    beds: 4, baths: 2, cars: 2, landSize: 455, houseSize: 199,
+    retailPrice: 1045216, wholesalePrice: 1045216,
+    landReady: "Jan 2027",
+    badge: "New Release",
+    image: "/sites/wholesale-homes/banyan-hill/banyan-hill-hero.jpg",
+    highlight: "Metricon Affogato 21 on 455m². Tasman facade. Title Jan 2027.",
+    description: "A stunning 4-bedroom Metricon Affogato 21MK2 with Tasman facade in Banyan Hill Estate, Cumbalum. Set on a generous 455m² block with 199m² of living, double garage, and premium inclusions. Two-part contract. Land title estimated January 2027. Located in the sought-after Banyan Hill master-planned community.",
   },
 ];
 

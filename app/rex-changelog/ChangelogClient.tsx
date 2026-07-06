@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "13:43", tag: "FIX", title: "Fix input text color on register + login pages" },
       { time: "13:39", tag: "UPDATE", title: "Clean up unused raw extracted images" },
       { time: "13:39", tag: "NEW", title: "Add 16 Astel Homes packages (SA) with photos from stocklist PDF" },
       { time: "13:24", tag: "NEW", title: "Resources — short paragraphs, hero images, card thumbnails, improved readability" },
