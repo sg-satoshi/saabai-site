@@ -99,6 +99,18 @@ const NAV: {
         ),
       },
       {
+        label: "Wholesale Leads",
+        href: "/saabai-admin/wholesale-leads",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <path d="M2 2h10v10H2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M2 6h10M6 2v10" stroke="currentColor" strokeWidth="1.3"/>
+            <circle cx="5" cy="9" r="0.5" fill="currentColor"/>
+            <circle cx="9" cy="9" r="0.5" fill="currentColor"/>
+          </svg>
+        ),
+      },
+      {
         label: "Payments",
         href: "/saabai-admin/payments",
         icon: (

@@ -67,7 +67,7 @@ export default function AccountPage() {
                 href="/contact"
                 className="inline-flex items-center gap-2 rounded-full bg-[#0891b2] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0369a1]"
               >
-                Contact Nick <ArrowRight className="h-4 w-4" />
+                Contact us <ArrowRight className="h-4 w-4" />
               </a>
             </Section>
           </div>
