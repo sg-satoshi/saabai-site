@@ -32,6 +32,7 @@ export default function BlogPage() {
             <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-2 md:gap-7 lg:grid-cols-3">
               {articles.map((article) => (
                 <article key={article.slug} className="group flex flex-col rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_-15px_rgba(26,43,60,0.15)] md:p-6">
+                  <Link href={`/blog/${article.slug}`} className="no-underline">
                   <p className="text-xs text-[#0891b2] font-semibold uppercase tracking-wider">Article</p>
                   <h2 className="mt-2 text-sm font-semibold tracking-tight md:text-base">{article.title}</h2>
                   <p className="mt-2 text-xs leading-relaxed text-[#5C6670] md:text-sm">{article.snippet}</p>
@@ -40,6 +41,7 @@ export default function BlogPage() {
                       Read more <ArrowRight className="h-3 w-3" />
                     </span>
                   </div>
+                  </Link>
                 </article>
               ))}
             </div>

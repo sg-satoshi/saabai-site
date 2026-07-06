@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "14:09", tag: "FIX", title: "Fix proxy admin route passthrough + phone number update" },
       { time: "14:01", tag: "FIX", title: "Fix build: template literal in JSX + approve flow with welcome email" },
       { time: "13:59", tag: "NEW", title: "Add approve-lead API with welcome email flow" },
       { time: "13:56", tag: "NEW", title: "Add Wholesale Leads approval dashboard in admin panel" },
