@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "6 Jul 2026",
+    entries: [
+      { time: "13:17", tag: "NEW", title: "Resources page with 5 professionally written articles — First Home Buyer, Negative Gearing, Dual Income, Investment Structures, Deposit & Finance" }
+    ],
+  },
+  {
     date: "1 Jul 2026",
     entries: [
       { time: "22:26", tag: "NEW", title: "Members area — save/shortlist, compare up to 3 packages side-by-side, download report PDF" },
