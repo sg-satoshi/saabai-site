@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "13:39", tag: "NEW", title: "Add 16 Astel Homes packages (SA) with photos from stocklist PDF" },
       { time: "13:24", tag: "NEW", title: "Resources — short paragraphs, hero images, card thumbnails, improved readability" },
       { time: "13:17", tag: "NEW", title: "Resources page with 5 professionally written articles — First Home Buyer, Negative Gearing, Dual Income, Investment Structures, Deposit & Finance" }
     ],
