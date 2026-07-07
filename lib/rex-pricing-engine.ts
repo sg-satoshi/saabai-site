@@ -1208,24 +1208,14 @@ function priceRod(rows: RodRow[], col: string, diameterMm: number, lengthMm: num
   if (!row) return notFound(url);
 
   const requestedM = lengthMm / 1000;
-  let unitPrice: number;
-  let note: string;
 
-  if (requestedM <= 0 || requestedM >= row.standardLengthM) {
-    // Full standard length (or not specified — default to full)
-    const lengths = requestedM > row.standardLengthM
-      ? Math.ceil(requestedM / row.standardLengthM)
-      : 1;
-    unitPrice = r2(row.fullLengthPrice * lengths);
-    note = lengths > 1 ? `${lengths} × ${row.standardLengthM}m lengths` : `${row.standardLengthM}m length`;
-  } else if (row.ctsRatePerM) {
-    unitPrice = r2(row.ctsRatePerM * requestedM);
-    note = `${lengthMm}mm cut to size`;
-  } else {
-    // No CTS — sell full length
-    unitPrice = row.fullLengthPrice;
-    note = `full ${row.standardLengthM}m length (no CTS for this size)`;
-  }
+  // Rods are sold as full standard lengths only — no cut-to-size.
+  // If a longer length is requested, round up to the number of full lengths needed.
+  const lengths = requestedM > row.standardLengthM
+    ? Math.ceil(requestedM / row.standardLengthM)
+    : 1;
+  const unitPrice = r2(row.fullLengthPrice * lengths);
+  const note = lengths > 1 ? `${lengths} × ${row.standardLengthM}m lengths` : `${row.standardLengthM}m length`;
 
   return buildResult(unitPrice, qty, note, url);
 }

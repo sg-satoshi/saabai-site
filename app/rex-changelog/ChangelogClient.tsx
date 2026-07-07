@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Jul 2026",
     entries: [
+      { time: "14:26", tag: "NEW", title: "Add wholesale-homes admin with own login, dashboard, leads, users, packages pages" },
       { time: "14:16", tag: "NEW", title: "Add blog article pages with SEO metadata, images, and dynamic routes" },
       { time: "14:09", tag: "FIX", title: "Fix proxy admin route passthrough + phone number update" },
       { time: "14:01", tag: "FIX", title: "Fix build: template literal in JSX + approve flow with welcome email" },

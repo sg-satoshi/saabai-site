@@ -89,7 +89,9 @@ const PRODUCTS = `
 
 **Rods:** Acrylic, Acetal (POM-C), Nylon, HDPE, UHMWPE, Polypropylene, PVC, PTFE (Teflon), PEEK
 
-**Tubes:** Acrylic (clear, opal, square), Polycarbonate
+**IMPORTANT: RODS — FULL STANDARD LENGTHS ONLY (no cut-to-size).** Rods are sold by the full standard length only (usually 1m; some grades/sizes vary). Do NOT quote a cut-to-size or per-metre price for rods. If a customer wants a shorter piece, quote the full standard length price and let them know they can cut it down themselves, or contact the team for a custom cutting job.
+
+**Tubes:** Acrylic (clear, opal, square), Polycarbonate. Tubes are also sold by the full standard length only (no cut-to-size).
 
 ### Accessories & Adhesives
 

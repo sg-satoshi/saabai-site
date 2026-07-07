@@ -171,7 +171,7 @@ export async function POST(req: Request) {
                 diameterMm:  { type: "number", description: "Rod or tube outer diameter in mm" },
                 widthMm:     { type: "number", description: "Sheet width in mm" },
                 heightMm:    { type: "number", description: "Sheet height in mm" },
-                lengthMm:    { type: "number", description: "Rod or tube length in mm (omit or 0 for full standard length)" },
+                lengthMm:    { type: "number", description: "Rod or tube length in mm. Rods and tubes are sold as full standard lengths only (no cut-to-size); a shorter length still prices as one full standard length. A longer length rounds up to multiple full lengths." },
                 quantity:    { type: "number", description: "Number of pieces, default 1" },
               },
               required: ["type", "material"],
