@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "7 Jul 2026",
+    entries: [
+      { time: "14:14", tag: "FIX", title: "Rods sold as full standard lengths only — remove cut-to-size" }
+    ],
+  },
+  {
     date: "6 Jul 2026",
     entries: [
       { time: "14:26", tag: "NEW", title: "Add wholesale-homes admin with own login, dashboard, leads, users, packages pages" },

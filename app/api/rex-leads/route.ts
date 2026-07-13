@@ -873,8 +873,8 @@ export async function POST(req: Request) {
     // Resolve client config — defaults to PlasticOnline for backwards compatibility
     const clientConfig = getClientConfig(clientId);
     const resend = new Resend(getResendKey(clientConfig));
-    const FROM_EMAIL = clientConfig.email.from;
-    const TEAM_EMAIL = clientConfig.email.teamEmail;
+    const FROM_EMAIL = clientConfig.email.from.trim();
+    const TEAM_EMAIL = clientConfig.email.teamEmail.trim();
 
     // Detect device type (mobile vs desktop)
     const device = detectDevice(req, deviceHint);
@@ -1013,9 +1013,16 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Team notification — only send if we have at least an email or mobile.
-    //    Suppresses noise from anonymous one-question chats with no contact details.
-    if (email || mobile) {
+    // 3. Team notification.
+    //    PlasticOnline: only notify when a customer has DELIBERATELY given an email (the
+    //    "email me this quote" form or end-of-chat panel). The silent mid-chat auto-capture
+    //    (source "rex_mid_chat") fires whenever an email appears in conversation, which pinged
+    //    the team even when staff were just pricing a job — so it's suppressed here.
+    //    Other clients keep the original behaviour (notify whenever email or mobile is captured).
+    const notifyTeam = clientConfig.id === "plon"
+      ? (!!email && source !== "rex_mid_chat")
+      : (!!email || !!mobile);
+    if (notifyTeam) {
       tasks.push(
         resend.emails.send({
           from: FROM_EMAIL,

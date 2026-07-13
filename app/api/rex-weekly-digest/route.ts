@@ -382,8 +382,8 @@ export async function GET(req: NextRequest) {
 
     // ── Send client email (PLON team) ──────────────────────────────────────────
     const plonResend = new Resend(process.env.PLON_RESEND_API_KEY ?? process.env.RESEND_API_KEY);
-    const fromEmail = process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>";
-    const teamEmail = process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.au";
+    const fromEmail = (process.env.PLON_FROM_EMAIL ?? "Rex at PlasticOnline <onboarding@resend.dev>").trim();
+    const teamEmail = (process.env.PLON_TEAM_EMAIL ?? "enquiries@plasticonline.com.au").trim();
 
     let clientEmailSent = false;
     try {
