@@ -83,7 +83,9 @@ function addBusinessDays(date: Date, days: number): Date {
  */
 function getNurtureScheduleTime(captureTime: string | undefined): string {
   const leadTime = captureTime ? new Date(captureTime) : new Date();
-  const brisbane = new Date(leadTime.toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }));
+  // en-US (MM/DD/YYYY) round-trips through new Date() reliably; en-AU (DD/MM/YYYY) returns
+  // Invalid Date for days > 12, which threw "Invalid time value" and killed the whole email flow.
+  const brisbane = new Date(leadTime.toLocaleString("en-US", { timeZone: "Australia/Brisbane" }));
   const target = addBusinessDays(brisbane, 3);
   target.setHours(10, 0, 0, 0);
   return target.toISOString();
@@ -98,7 +100,9 @@ function getFollowUpScheduleTime(captureTime: string | undefined): string {
   const leadTime = captureTime ? new Date(captureTime) : new Date();
   
   // Convert to Brisbane timezone (AEST/AEDT)
-  const brisbaneTime = new Date(leadTime.toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }));
+  // en-US (MM/DD/YYYY) round-trips through new Date() reliably; en-AU (DD/MM/YYYY) returns
+  // Invalid Date for days > 12, which threw "Invalid time value" and killed the whole email flow.
+  const brisbaneTime = new Date(leadTime.toLocaleString("en-US", { timeZone: "Australia/Brisbane" }));
   const hour = brisbaneTime.getHours();
   const dayOfWeek = brisbaneTime.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   
