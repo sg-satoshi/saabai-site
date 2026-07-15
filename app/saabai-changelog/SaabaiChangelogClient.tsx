@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "13 Jul 2026",
     entries: [
+      { time: "10:18", tag: "FIX", title: "Critical — Rex quote emails silently dying on days 13-31 of each month" },
       { time: "10:09", tag: "FIX", title: "Only notify PlasticOnline team on deliberate customer email submissions" }
     ],
   },

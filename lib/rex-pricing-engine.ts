@@ -1267,7 +1267,7 @@ export function getPricing(input: PricingInput): PriceResult {
       case "acetal":          return priceAcetalSheet(col, thick, w, h, qty);
       case "ptfe":            return pricePTFESheet(thick, w, h, qty);
       case "corflute":        return priceCorflute(col, thick, qty);
-      case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"));
+      case "uhmwpe":          return priceGenericSheet(UHMWPE, col, thick, w, h, qty, getProductUrl("uhmwpe"), true);
       case "polypropylene":   return priceGenericSheet(POLYPROPYLENE, col, thick, w, h, qty, getProductUrl("polypropylene"));
       case "hdpe":            return priceHDPESheet(hdpeCol, thick, w, h, qty);
       case "seaboard":        return priceGenericSheet(SEABOARD, (col === "natural" || col === "") ? "white" : col, thick, w, h, qty, getProductUrl("seaboard"));
