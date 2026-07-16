@@ -133,6 +133,41 @@ export async function GET(req: Request) {
 - **When things go wrong**: `git rebase --abort && git reset --hard origin/main` is the clean reset.
 - **Push only after clean state**: Your branch must be "up to date with origin/main" before pushing.
 
+### 9. Custom-domain hydration trap — the #1 recurring failure
+
+Client custom domains (boconsulting.com.au, nicomoretti.au, wholesalehomes.com.au) are served via `proxy.ts` rewrite: the browser URL is `/` while the app renders `/sites/<slug>`, so **React hydration fails silently — onClick, useEffect, and usePathname DO NOT work there**.
+
+- All interactivity on client sites (chat widget, hamburger, form tabs, scroll reveals) must be vanilla JS injected via raw `<script dangerouslySetInnerHTML>` in the layout.
+- Never gate content visibility behind JS: `opacity:0`/reveal styles only under an `html.<prefix>-js` class that JS adds — the page must be fully visible without JS.
+- Widget/ticker suppression by hostname, not path.
+- Verify EVERY site change in three places: `saabai.ai/sites/<slug>` AND the custom domain (www + apex) AND a mobile viewport. All three, every time.
+
+### 10. Client-facing copy rules
+
+Zero em dashes (—) and no AI-tell phrases anywhere client-facing: page copy, FAQs, JSON-LD strings, chatbot prompts/responses, meta descriptions. Run `grep -n '—'` on touched files before shipping. Australian English (optimise, colour, customised). Unique copy per page — never templated clones across location pages. Client sites are fully white-label: no Mia widget, no news ticker, no saabai.ai sender addresses; leads route to the client's own email.
+
+### 11. Wrong-repo guard
+
+This repo = saabai.ai + client sites ONLY. mylife.saabai.ai lives in `~/mylife-saabai`. Rex pushes: `git pull` first, then push to BOTH remotes (sg-satoshi/rex + dhargraves1987-sys/rex). State the target repo before any push.
+
+---
+
+## Playbooks — read on demand (don't load unless the task matches)
+
+| When the task is… | Read |
+|---|---|
+| New client site (Stitch mockup → live) | `docs/claude/new-client-site-checklist.md` |
+| "update for rex" / Rex pricing or knowledge | `docs/claude/rex-playbook.md` |
+| SEO, location pages, Google Search Console | `docs/claude/seo-pass.md` |
+| Anything touching a specific client, DNS, or admin accounts | `docs/claude/clients-and-ops.md` |
+
+## Task management
+
+- Plan non-trivial work in `tasks/todo.md` (checkable items; review section when done).
+- After ANY correction from Shane: add the pattern + prevention rule to `tasks/lessons.md`. Read `tasks/lessons.md` at session start.
+- Before retrying an approach that failed before: check `tasks/failed-attempts.md` — don't repeat a documented dead end. Record new dead ends there.
+- Deferred work ("later", "not now") goes in `tasks/roadmap.md`.
+
 ---
 
 ## Current Model Configuration (via Vercel env vars)
