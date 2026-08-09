@@ -28,6 +28,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "9 Aug 2026",
+    entries: [
+      { time: "20:00", tag: "UPDATE", title: "Web services offering design spec" }
+    ],
+  },
+  {
     date: "16 Jul 2026",
     entries: [
       { time: "07:48", tag: "FIX", title: "Cap UHMWPE cut-to-size at full sheet price + cutting fee" }
