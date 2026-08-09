@@ -319,6 +319,17 @@ function buildNavSections(products: ProductInfo[], activePath: string): NavSecti
     section: "Account",
     items: [
       {
+        label: "Billing",
+        href: "/dashboard/billing",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M1 5.5h12" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M3.5 8.5h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        ),
+      },
+      {
         label: "Settings",
         href: "/dashboard/settings",
         icon: <SettingsIcon />,
