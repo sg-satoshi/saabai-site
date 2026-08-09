@@ -12,6 +12,7 @@ const navSections: NavSection[] = [
     links: [
       { label: "AI Audit", href: "/ai-audit", isNew: true },
       { label: "Services", href: "/services" },
+      { label: "Websites", href: "/websites", isNew: true },
       { label: "Advisory", href: "/advisory" },
       { label: "Process", href: "/process" },
     ],
