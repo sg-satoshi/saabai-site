@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "9 Aug 2026",
     entries: [
+      { time: "21:09", tag: "UPDATE", title: "Flush changelog entries for websites launch" },
       { time: "20:50", tag: "NEW", title: "Link Websites offering in nav and footer" },
       { time: "20:50", tag: "NEW", title: "Add AI-native websites offering page" },
       { time: "20:15", tag: "UPDATE", title: "Web services offering implementation plan" },

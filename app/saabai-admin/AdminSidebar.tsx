@@ -122,6 +122,16 @@ const NAV: {
           </svg>
         ),
       },
+      {
+        label: "Products",
+        href: "/saabai-admin/products",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1.2l5 2.6v6.4L7 12.8 2 10.2V3.8l5-2.6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M2 3.8l5 2.6 5-2.6M7 6.4v6.4" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+          </svg>
+        ),
+      },
     ],
   },
   {
