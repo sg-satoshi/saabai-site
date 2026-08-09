@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
+import { getPublishableKey } from "../../../lib/stripe";
 import ProductsClient from "./ProductsClient";
 
 export const metadata = { title: "Products — Saabai Admin" };
@@ -18,5 +19,5 @@ export default async function ProductsPage() {
   const isAdmin = await isAdminSession(session.clientId);
   if (!isAdmin) redirect("/saabai-admin");
 
-  return <ProductsClient />;
+  return <ProductsClient publishableKey={getPublishableKey()} />;
 }

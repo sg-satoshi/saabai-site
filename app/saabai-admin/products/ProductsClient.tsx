@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import AdminShell from "../AdminSidebar";
+import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import type { CatalogueProduct, BillingType, Interval } from "../../../lib/product-catalogue";
 import { feeDisplay, type FeeKey, type FeeDisplay } from "../../../lib/product-pricing";
 
@@ -445,8 +447,212 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
   );
 }
 
+// ── Sell panel ────────────────────────────────────────────────────────────────
+const CARD_STYLE = {
+  base: { fontSize: "14px", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", color: C.text, "::placeholder": { color: C.muted } },
+  invalid: { color: C.red },
+};
+
+interface QuoteLine { key: "setup" | "recurring" | "one_time"; label: string; original: number; final: number }
+interface QuoteResp {
+  quote: { lines: QuoteLine[]; couponCode: string | null; couponAmountOff: number | null };
+  couponError: string | null;
+  billingType: BillingType;
+  interval: Interval | null;
+  trialDays: number | null;
+  gstInclusive: boolean;
+  productName: string;
+}
+
+function lineSuffix(line: QuoteLine, interval: Interval | null): string {
+  if (line.key === "one_time") return " one-off";
+  if (line.key === "setup") return " setup";
+  return "/" + (interval ? INTERVAL_LABEL[interval] : "month");
+}
+
+function SellPanel({ product, onClose, onSold }: { product: CatalogueProduct; onClose: () => void; onSold: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [resp, setResp] = useState<QuoteResp | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [linkUrl, setLinkUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const fetchQuote = useCallback(async (withCode: string) => {
+    try {
+      const res = await fetch("/api/admin/sell/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, code: withCode || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCouponMsg(data.error || "Could not load pricing"); return; }
+      setResp(data);
+      if (data.couponError) setCouponMsg(data.couponError);
+      else if (withCode && data.quote.couponCode) setCouponMsg(`Code ${data.quote.couponCode} applied`);
+      else setCouponMsg(null);
+    } catch (e) {
+      setCouponMsg(e instanceof Error ? e.message : String(e));
+    }
+  }, [product.id]);
+
+  useEffect(() => { fetchQuote(""); }, [fetchQuote]);
+
+  async function chargeNow() {
+    setError(null); setSuccess(null);
+    if (!email.trim()) { setError("Customer email is required"); return; }
+    if (!stripe || !elements) { setError("Payment form is still loading"); return; }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/sell/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Charge failed"); setBusy(false); return; }
+      if (data.clientSecret) {
+        const { error: confErr, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: elements.getElement(CardElement)! },
+        });
+        if (confErr) setError(confErr.message || "Payment failed");
+        else if (paymentIntent && (paymentIntent.status === "succeeded" || paymentIntent.status === "processing")) {
+          setSuccess("Payment successful. Client account created and welcome email sent.");
+          onSold();
+        } else setError(`Payment status: ${paymentIntent?.status}`);
+      } else {
+        setSuccess("Subscription started (no upfront charge). Client account created.");
+        onSold();
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function genLink() {
+    setError(null); setSuccess(null); setLinkUrl(null); setCopied(false);
+    if (!email.trim()) { setError("Customer email is required"); return; }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/sell/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, customerName: name.trim(), customerEmail: email.trim(), code: code.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Could not create link");
+      else setLinkUrl(data.url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const q = resp?.quote;
+  const interval = resp?.interval ?? product.interval ?? null;
+
+  return (
+    <div onClick={() => !busy && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", zIndex: 200 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 460, background: C.bg, borderRadius: 14, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 800, color: C.text }}>Sell — {product.name}</h2>
+
+        {/* Live price */}
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14, margin: "12px 0 16px" }}>
+          {q ? (
+            <>
+              {q.lines.map((ln) => (
+                <div key={ln.key} style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 6, marginBottom: 3 }}>
+                  <span style={{ fontSize: 11, color: C.muted, fontWeight: 600, width: 56 }}>{ln.label}</span>
+                  {ln.final < ln.original ? (
+                    <>
+                      <span style={{ fontSize: 12, color: C.muted, textDecoration: "line-through" }}>{fmtCents(ln.original)}</span>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: C.teal }}>{fmtCents(ln.final)}{lineSuffix(ln, interval)}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 15, fontWeight: 800, color: C.teal }}>{fmtCents(ln.final)}{lineSuffix(ln, interval)}</span>
+                  )}
+                </div>
+              ))}
+              {q.couponAmountOff ? (
+                <p style={{ margin: "6px 0 0", fontSize: 11, color: C.green, fontWeight: 600 }}>Coupon {q.couponCode}: {fmtCents(q.couponAmountOff)} off applied at checkout</p>
+              ) : null}
+              {resp?.trialDays ? <p style={{ margin: "4px 0 0", fontSize: 11, color: C.dim }}>{resp.trialDays}-day free trial</p> : null}
+            </>
+          ) : (
+            <p style={{ margin: 0, fontSize: 12, color: C.muted }}>Loading price…</p>
+          )}
+        </div>
+
+        <Field label="Customer name">
+          <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Smith" />
+        </Field>
+        <Field label="Customer email">
+          <input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@firm.com.au" />
+        </Field>
+
+        <Field label="Coupon code (optional)">
+          <div style={{ display: "flex", gap: 8 }}>
+            <input style={{ ...inputStyle, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value)} placeholder="LAUNCH25" />
+            <button type="button" onClick={() => fetchQuote(code.trim())} style={{ padding: "9px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+              Apply
+            </button>
+          </div>
+          {couponMsg && (
+            <p style={{ margin: "6px 0 0", fontSize: 11, fontWeight: 600, color: resp?.couponError ? C.red : C.green }}>{couponMsg}</p>
+          )}
+        </Field>
+
+        {/* Card entry for charge-now */}
+        <Field label="Card (for charge now)">
+          <div style={{ ...inputStyle, padding: "12px" }}>
+            <CardElement options={{ style: CARD_STYLE }} />
+          </div>
+        </Field>
+
+        {error && <p style={{ margin: "0 0 10px", fontSize: 12, color: C.red }}>{error}</p>}
+        {success && <p style={{ margin: "0 0 10px", fontSize: 12, color: C.green, fontWeight: 600 }}>{success}</p>}
+
+        {linkUrl && (
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+            <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.dim }}>Payment link</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input readOnly value={linkUrl} style={{ ...inputStyle, fontSize: 11 }} onFocus={(e) => e.currentTarget.select()} />
+              <button type="button" onClick={() => { navigator.clipboard?.writeText(linkUrl); setCopied(true); }} style={{ padding: "9px 14px", borderRadius: 8, border: "none", background: C.text, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+          <button onClick={genLink} disabled={busy} style={{ flex: 1, padding: "11px 0", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.6 : 1 }}>
+            Generate link
+          </button>
+          <button onClick={chargeNow} disabled={busy} style={{ ...btnPrimary, flex: 1, opacity: busy ? 0.6 : 1 }}>
+            {busy ? "Working…" : "Charge card now"}
+          </button>
+        </div>
+        <button onClick={() => onClose()} disabled={busy} style={{ width: "100%", marginTop: 10, padding: "9px 0", borderRadius: 8, border: "none", background: "transparent", color: C.dim, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function ProductsClient() {
+export default function ProductsClient({ publishableKey }: { publishableKey: string | null }) {
+  const stripePromise = useMemo(() => (publishableKey ? loadStripe(publishableKey) : null), [publishableKey]);
+  const [selling, setSelling] = useState<CatalogueProduct | null>(null);
   const [tab, setTab] = useState<"products" | "coupons">("products");
   const [products, setProducts] = useState<CatalogueProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -612,6 +818,14 @@ export default function ProductsClient() {
                   <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 600, color: C.muted }}>
                     {p.gstInclusive ? "incl. GST" : "+ GST"}
                   </p>
+                  {p.active && (
+                    <button
+                      onClick={() => setSelling(p)}
+                      style={{ width: "100%", marginBottom: 8, padding: "9px 0", borderRadius: 7, border: "none", background: C.teal, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                    >
+                      Sell
+                    </button>
+                  )}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={() => { setFormError(null); setForm(fromProduct(p)); }} style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                       Edit
@@ -744,6 +958,13 @@ export default function ProductsClient() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Sell panel */}
+      {selling && (
+        <Elements stripe={stripePromise}>
+          <SellPanel product={selling} onClose={() => setSelling(null)} onSold={load} />
+        </Elements>
       )}
     </AdminShell>
   );

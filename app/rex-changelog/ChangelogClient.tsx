@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "10 Aug 2026",
+    entries: [
+      { time: "08:27", tag: "NEW", title: "Product discounts (was/now/save) + Stripe coupon code manager" }
+    ],
+  },
+  {
     date: "9 Aug 2026",
     entries: [
       { time: "23:29", tag: "NEW", title: "Admin product manager — Stripe-backed catalogue at /saabai-admin/products" },
