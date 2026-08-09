@@ -12,6 +12,40 @@ import {
   type Interval,
   type CatalogueProduct,
 } from "./product-catalogue";
+import type { ProductDiscount, FeeKey } from "./product-pricing";
+
+// Which fee keys a discount may target, per billing type.
+const FEE_KEYS_FOR: Record<BillingType, FeeKey[]> = {
+  one_time: ["one_time"],
+  recurring: ["recurring"],
+  setup_monthly: ["setup", "recurring"],
+};
+
+/** Parse + validate an optional discount from the request body. Returns undefined if absent/invalid. */
+function parseDiscount(raw: unknown, billingType: BillingType): ProductDiscount | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const d = raw as Record<string, unknown>;
+
+  const kind = d.kind === "fixed" ? "fixed" : "percent";
+  const value = typeof d.value === "number" ? d.value : parseFloat(String(d.value));
+  if (!value || Number.isNaN(value) || value <= 0) return undefined;
+  if (kind === "percent" && value > 100) return undefined;
+
+  const allowed = FEE_KEYS_FOR[billingType];
+  const appliesTo = Array.isArray(d.appliesTo)
+    ? (d.appliesTo.filter((k): k is FeeKey => allowed.includes(k as FeeKey)))
+    : [];
+  if (appliesTo.length === 0) return undefined;
+
+  const discount: ProductDiscount = {
+    kind,
+    value: kind === "fixed" ? Math.round(value) : value,
+    appliesTo,
+  };
+  if (typeof d.endDate === "string" && d.endDate.trim()) discount.endDate = d.endDate.trim();
+  if (typeof d.label === "string" && d.label.trim()) discount.label = d.label.trim();
+  return discount;
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 // Matches the page guard (payments/page.tsx) — any admin session, which
@@ -51,6 +85,9 @@ export function validateProductInput(body: Record<string, unknown>): { input?: P
     gstInclusive: body?.gstInclusive !== false,
     billingType,
   };
+
+  const discount = parseDiscount(body.discount, billingType);
+  if (discount) input.discount = discount;
 
   if (billingType === "one_time") {
     const amt = toCents(body.oneTimeAmount);

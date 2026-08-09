@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "9 Aug 2026",
     entries: [
+      { time: "23:29", tag: "NEW", title: "Admin product manager — Stripe-backed catalogue at /saabai-admin/products" },
       { time: "21:09", tag: "UPDATE", title: "Flush changelog entries for websites launch" },
       { time: "20:50", tag: "NEW", title: "Link Websites offering in nav and footer" },
       { time: "20:50", tag: "NEW", title: "Add AI-native websites offering page" },

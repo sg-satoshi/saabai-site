@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminShell from "../AdminSidebar";
 import type { CatalogueProduct, BillingType, Interval } from "../../../lib/product-catalogue";
+import { feeDisplay, type FeeKey, type FeeDisplay } from "../../../lib/product-pricing";
 
 // ── Theme (matches PaymentsClient) ────────────────────────────────────────────
 const C = {
@@ -32,6 +33,12 @@ const INTERVAL_LABEL: Record<Interval, string> = {
   yearly: "year",
 };
 
+const FEE_LABEL: Record<FeeKey, string> = {
+  setup: "Setup fee",
+  recurring: "Recurring",
+  one_time: "One-time",
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtCents(cents?: number): string {
   if (cents == null) return "";
@@ -51,13 +58,62 @@ function centsToDollars(cents?: number): string {
   return cents != null ? String(cents / 100) : "";
 }
 
-function priceLabel(p: CatalogueProduct): string {
-  if (p.billingType === "one_time") return `${fmtCents(p.oneTimeAmount)} one-off`;
-  const per = p.interval ? INTERVAL_LABEL[p.interval] : "month";
-  if (p.billingType === "recurring") {
-    return `${fmtCents(p.recurringAmount)}/${per}${p.trialDays ? ` · ${p.trialDays}d trial` : ""}`;
+function feeKeysFor(bt: BillingType): FeeKey[] {
+  return bt === "one_time" ? ["one_time"] : bt === "recurring" ? ["recurring"] : ["setup", "recurring"];
+}
+
+function fmtDate(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtUnix(sec?: number | null): string {
+  if (!sec) return "";
+  return new Date(sec * 1000).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Was / now / save price display ────────────────────────────────────────────
+function PriceBlock({ p }: { p: CatalogueProduct }) {
+  const rows: { label: string; fee: FeeDisplay; suffix: string }[] = [];
+  if (p.billingType === "one_time") {
+    rows.push({ label: "", fee: feeDisplay("one_time", p.oneTimeAmount || 0, p.discount), suffix: " one-off" });
+  } else {
+    const per = p.interval ? INTERVAL_LABEL[p.interval] : "month";
+    if (p.billingType === "setup_monthly") {
+      rows.push({ label: "Setup", fee: feeDisplay("setup", p.setupFee || 0, p.discount), suffix: "" });
+    }
+    rows.push({ label: p.billingType === "setup_monthly" ? "Then" : "", fee: feeDisplay("recurring", p.recurringAmount || 0, p.discount), suffix: "/" + per });
   }
-  return `${fmtCents(p.setupFee)} setup + ${fmtCents(p.recurringAmount)}/${per}`;
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: 6, marginBottom: 2 }}>
+          {r.label && <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{r.label}</span>}
+          {r.fee.isDiscounted ? (
+            <>
+              <span style={{ fontSize: 12, color: C.muted, textDecoration: "line-through" }}>{fmtCents(r.fee.original)}</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: C.teal }}>{fmtCents(r.fee.discounted)}{r.suffix}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: C.green, background: C.greenBg, padding: "1px 6px", borderRadius: 4 }}>
+                Save {fmtCents(r.fee.saveCents)} ({r.fee.savePercent}%)
+              </span>
+            </>
+          ) : (
+            <span style={{ fontSize: 15, fontWeight: 800, color: C.teal }}>{fmtCents(r.fee.original)}{r.suffix}</span>
+          )}
+        </div>
+      ))}
+      {p.discount && (p.discount.label || p.discount.endDate) && (
+        <p style={{ margin: "2px 0 0", fontSize: 10, fontWeight: 600, color: C.dim }}>
+          {p.discount.label}
+          {p.discount.label && p.discount.endDate ? " · " : ""}
+          {p.discount.endDate ? `ends ${fmtDate(p.discount.endDate)}` : ""}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ── Form types ────────────────────────────────────────────────────────────────
@@ -74,6 +130,13 @@ interface FormState {
   trialDays: string;
   gstInclusive: boolean;
   active: boolean;
+  // discount
+  discountOn: boolean;
+  discKind: "percent" | "fixed";
+  discValue: string;
+  discApplies: Record<FeeKey, boolean>;
+  discEnd: string;
+  discLabel: string;
 }
 
 function blankForm(): FormState {
@@ -90,10 +153,17 @@ function blankForm(): FormState {
     trialDays: "",
     gstInclusive: true,
     active: true,
+    discountOn: false,
+    discKind: "percent",
+    discValue: "",
+    discApplies: { setup: true, recurring: true, one_time: true },
+    discEnd: "",
+    discLabel: "",
   };
 }
 
 function fromProduct(p: CatalogueProduct): FormState {
+  const d = p.discount;
   return {
     id: p.id,
     name: p.name,
@@ -107,6 +177,16 @@ function fromProduct(p: CatalogueProduct): FormState {
     trialDays: p.trialDays ? String(p.trialDays) : "",
     gstInclusive: p.gstInclusive,
     active: p.active,
+    discountOn: !!d,
+    discKind: d?.kind || "percent",
+    discValue: d ? (d.kind === "fixed" ? centsToDollars(d.value) : String(d.value)) : "",
+    discApplies: {
+      setup: d ? d.appliesTo.includes("setup") : true,
+      recurring: d ? d.appliesTo.includes("recurring") : true,
+      one_time: d ? d.appliesTo.includes("one_time") : true,
+    },
+    discEnd: d?.endDate || "",
+    discLabel: d?.label || "",
   };
 }
 
@@ -143,48 +223,231 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
     <button
       type="button"
       onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: 0,
-        marginBottom: 14,
-      }}
+      style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 14 }}
     >
-      <span
-        style={{
-          width: 38,
-          height: 22,
-          borderRadius: 22,
-          background: on ? C.green : "#d1d5db",
-          position: "relative",
-          transition: "background 0.15s",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            top: 2,
-            left: on ? 18 : 2,
-            width: 18,
-            height: 18,
-            borderRadius: "50%",
-            background: "#fff",
-            transition: "left 0.15s",
-          }}
-        />
+      <span style={{ width: 38, height: 22, borderRadius: 22, background: on ? C.green : "#d1d5db", position: "relative", transition: "background 0.15s", flexShrink: 0 }}>
+        <span style={{ position: "absolute", top: 2, left: on ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
       </span>
       <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{label}</span>
     </button>
   );
 }
 
+const btnPrimary: React.CSSProperties = {
+  padding: "10px 18px", borderRadius: 8, border: "none", background: C.blue, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
+};
+
+// ── Coupons tab ─────────────────────────────────────────────────────────────
+interface CouponCode {
+  id: string;
+  code: string;
+  active: boolean;
+  timesRedeemed: number;
+  maxRedemptions: number | null;
+  expiresAt: number | null;
+  percentOff: number | null;
+  amountOff: number | null;
+  currency: string | null;
+  duration: string;
+  durationMonths: number | null;
+  restrictedProducts: string[];
+}
+
+function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
+  const [codes, setCodes] = useState<CouponCode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const [f, setF] = useState({
+    code: "",
+    kind: "percent" as "percent" | "fixed",
+    value: "",
+    duration: "once" as "once" | "forever" | "repeating",
+    durationMonths: "3",
+    maxRedemptions: "",
+    expiresAt: "",
+    productId: "",
+  });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/admin/coupons");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load codes");
+      setCodes(data.codes || []);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function create() {
+    setSaving(true);
+    setFormErr(null);
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: f.code,
+          kind: f.kind,
+          value: parseFloat(f.value),
+          duration: f.duration,
+          durationMonths: f.duration === "repeating" ? parseInt(f.durationMonths, 10) : undefined,
+          maxRedemptions: f.maxRedemptions ? parseInt(f.maxRedemptions, 10) : undefined,
+          expiresAt: f.expiresAt || undefined,
+          productId: f.productId || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Create failed");
+      setF({ ...f, code: "", value: "", maxRedemptions: "", expiresAt: "", productId: "" });
+      await load();
+    } catch (e) {
+      setFormErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deactivate(id: string) {
+    if (!confirm("Deactivate this code? Customers will no longer be able to use it.")) return;
+    try {
+      const res = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function offLabel(c: CouponCode): string {
+    if (c.percentOff != null) return `${c.percentOff}% off`;
+    if (c.amountOff != null) return `${fmtCents(c.amountOff)} off`;
+    return "";
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 340px) 1fr", gap: 24, alignItems: "start" }}>
+      {/* Create form */}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
+        <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 800, color: C.text }}>New coupon code</h3>
+
+        <Field label="Code">
+          <input style={{ ...inputStyle, textTransform: "uppercase" }} value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} placeholder="e.g. LAUNCH25" />
+        </Field>
+
+        <Field label="Discount">
+          <div style={{ display: "flex", gap: 8 }}>
+            <select style={{ ...inputStyle, width: 110 }} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as "percent" | "fixed" })}>
+              <option value="percent">% off</option>
+              <option value="fixed">$ off</option>
+            </select>
+            <input style={inputStyle} type="number" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder={f.kind === "percent" ? "25" : "50"} />
+          </div>
+        </Field>
+
+        <Field label="Duration (for subscriptions)">
+          <select style={inputStyle} value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as "once" | "forever" | "repeating" })}>
+            <option value="once">Once (first payment)</option>
+            <option value="repeating">Repeating (X months)</option>
+            <option value="forever">Forever</option>
+          </select>
+        </Field>
+
+        {f.duration === "repeating" && (
+          <Field label="Number of months">
+            <input style={inputStyle} type="number" value={f.durationMonths} onChange={(e) => setF({ ...f, durationMonths: e.target.value })} placeholder="3" />
+          </Field>
+        )}
+
+        <Field label="Restrict to product (optional)">
+          <select style={inputStyle} value={f.productId} onChange={(e) => setF({ ...f, productId: e.target.value })}>
+            <option value="">Any product</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Max redemptions (optional)">
+          <input style={inputStyle} type="number" value={f.maxRedemptions} onChange={(e) => setF({ ...f, maxRedemptions: e.target.value })} placeholder="e.g. 50" />
+        </Field>
+
+        <Field label="Expires (optional)">
+          <input style={inputStyle} type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
+        </Field>
+
+        {formErr && <p style={{ margin: "0 0 10px", fontSize: 12, color: C.red }}>{formErr}</p>}
+
+        <button style={{ ...btnPrimary, width: "100%", opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={create}>
+          {saving ? "Creating…" : "Create code"}
+        </button>
+        <p style={{ margin: "10px 0 0", fontSize: 11, color: C.dim, lineHeight: 1.5 }}>
+          Codes are stored in Stripe and become redeemable once the checkout piece is live.
+        </p>
+      </div>
+
+      {/* List */}
+      <div>
+        {loading ? (
+          <p style={{ color: C.muted, fontSize: 13 }}>Loading codes…</p>
+        ) : err ? (
+          <p style={{ color: C.red, fontSize: 13 }}>{err}</p>
+        ) : codes.length === 0 ? (
+          <div style={{ padding: 32, textAlign: "center", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+            <p style={{ margin: 0, fontSize: 13, color: C.dim }}>No coupon codes yet.</p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {codes.map((c) => {
+              const prodName = c.restrictedProducts.length
+                ? products.find((p) => c.restrictedProducts.includes(p.stripeProductId))?.name || "1 product"
+                : null;
+              return (
+                <div key={c.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, opacity: c.active ? 1 : 0.55 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 14, fontWeight: 800, color: C.text }}>{c.code}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, background: "rgba(15,118,110,0.08)", padding: "1px 7px", borderRadius: 4 }}>{offLabel(c)}</span>
+                      {!c.active && <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Inactive</span>}
+                    </div>
+                    <p style={{ margin: 0, fontSize: 11, color: C.dim }}>
+                      {c.duration === "repeating" ? `${c.durationMonths} months` : c.duration}
+                      {" · "}
+                      {c.timesRedeemed} used{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ""}
+                      {c.expiresAt ? ` · expires ${fmtUnix(c.expiresAt)}` : ""}
+                      {prodName ? ` · ${prodName} only` : ""}
+                    </p>
+                  </div>
+                  {c.active && (
+                    <button
+                      onClick={() => deactivate(c.id)}
+                      style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.redBg}`, background: C.redBg, color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+                    >
+                      Deactivate
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ProductsClient() {
+  const [tab, setTab] = useState<"products" | "coupons">("products");
   const [products, setProducts] = useState<CatalogueProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -207,12 +470,14 @@ export default function ProductsClient() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   function patch(p: Partial<FormState>) {
-    setForm((f) => (f ? { ...f, ...p } : f));
+    setForm((cur) => (cur ? { ...cur, ...p } : cur));
+  }
+
+  function patchApplies(key: FeeKey, on: boolean) {
+    setForm((cur) => (cur ? { ...cur, discApplies: { ...cur.discApplies, [key]: on } } : cur));
   }
 
   async function save() {
@@ -237,14 +502,24 @@ export default function ProductsClient() {
       if (form.billingType === "setup_monthly") payload.setupFee = dollarsToCents(form.setup);
     }
 
+    if (form.discountOn && form.discValue.trim()) {
+      const applies = feeKeysFor(form.billingType).filter((k) => form.discApplies[k]);
+      const value = form.discKind === "fixed" ? dollarsToCents(form.discValue) : parseFloat(form.discValue);
+      if (applies.length && value > 0) {
+        payload.discount = {
+          kind: form.discKind,
+          value,
+          appliesTo: applies,
+          endDate: form.discEnd || undefined,
+          label: form.discLabel.trim() || undefined,
+        };
+      }
+    }
+
     try {
       const url = form.id ? `/api/admin/products/${form.id}` : "/api/admin/products";
       const method = form.id ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Save failed");
       setForm(null);
@@ -268,16 +543,18 @@ export default function ProductsClient() {
     }
   }
 
-  const btnPrimary: React.CSSProperties = {
-    padding: "10px 18px",
-    borderRadius: 8,
-    border: "none",
-    background: C.blue,
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: 700,
-    cursor: "pointer",
-  };
+  const tabBtn = (key: "products" | "coupons", label: string) => (
+    <button
+      onClick={() => setTab(key)}
+      style={{
+        padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700,
+        background: tab === key ? C.text : "transparent",
+        color: tab === key ? "#fff" : C.dim,
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <AdminShell activePath="/saabai-admin/products">
@@ -285,16 +562,25 @@ export default function ProductsClient() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.text }}>Products</h1>
-          <button style={btnPrimary} onClick={() => { setFormError(null); setForm(blankForm()); }}>
-            + Add product
-          </button>
+          {tab === "products" && (
+            <button style={btnPrimary} onClick={() => { setFormError(null); setForm(blankForm()); }}>
+              + Add product
+            </button>
+          )}
         </div>
-        <p style={{ margin: "0 0 24px", fontSize: 13, color: C.dim }}>
-          Create the products you sell. Each one syncs to Stripe as a product and price.
+        <p style={{ margin: "0 0 18px", fontSize: 13, color: C.dim }}>
+          Create the products you sell, set discounts, and manage coupon codes. Everything syncs to Stripe.
         </p>
 
-        {/* List */}
-        {loading ? (
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 22, background: C.surface, padding: 4, borderRadius: 10, width: "fit-content" }}>
+          {tabBtn("products", "Products")}
+          {tabBtn("coupons", "Coupons")}
+        </div>
+
+        {tab === "coupons" ? (
+          <CouponsPanel products={products} />
+        ) : loading ? (
           <p style={{ color: C.muted, fontSize: 13 }}>Loading products…</p>
         ) : loadError ? (
           <p style={{ color: C.red, fontSize: 13 }}>{loadError}</p>
@@ -305,18 +591,7 @@ export default function ProductsClient() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             {products.map((p) => (
-              <div
-                key={p.id}
-                style={{
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                  opacity: p.active ? 1 : 0.6,
-                }}
-              >
+              <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column", opacity: p.active ? 1 : 0.6 }}>
                 {p.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.imageUrl} alt={p.name} style={{ width: "100%", height: 140, objectFit: "cover", background: C.surface }} />
@@ -328,30 +603,20 @@ export default function ProductsClient() {
                 <div style={{ padding: 16, flex: 1, display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.text }}>{p.name}</h3>
-                    {!p.active && (
-                      <span style={{ fontSize: 9, fontWeight: 700, color: C.muted, background: "rgba(0,0,0,0.05)", padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>Inactive</span>
-                    )}
+                    {!p.active && <span style={{ fontSize: 9, fontWeight: 700, color: C.muted, background: "rgba(0,0,0,0.05)", padding: "2px 6px", borderRadius: 4, textTransform: "uppercase" }}>Inactive</span>}
                   </div>
                   <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim, lineHeight: 1.5, flex: 1 }}>
                     {p.description || <span style={{ color: C.muted }}>No description</span>}
                   </p>
-                  <p style={{ margin: "0 0 12px", fontSize: 14, fontWeight: 700, color: C.teal }}>
-                    {priceLabel(p)}
-                    <span style={{ fontSize: 10, fontWeight: 600, color: C.muted, marginLeft: 6 }}>
-                      {p.gstInclusive ? "incl. GST" : "+ GST"}
-                    </span>
+                  <PriceBlock p={p} />
+                  <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 600, color: C.muted }}>
+                    {p.gstInclusive ? "incl. GST" : "+ GST"}
                   </p>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => { setFormError(null); setForm(fromProduct(p)); }}
-                      style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                    >
+                    <button onClick={() => { setFormError(null); setForm(fromProduct(p)); }} style={{ flex: 1, padding: "8px 0", borderRadius: 7, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                       Edit
                     </button>
-                    <button
-                      onClick={() => archive(p)}
-                      style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${C.redBg}`, background: C.redBg, color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                    >
+                    <button onClick={() => archive(p)} style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${C.redBg}`, background: C.redBg, color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                       Archive
                     </button>
                   </div>
@@ -364,29 +629,16 @@ export default function ProductsClient() {
 
       {/* Add / edit modal */}
       {form && (
-        <div
-          onClick={() => !saving && setForm(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", zIndex: 200 }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "100%", maxWidth: 480, background: C.bg, borderRadius: 14, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}
-          >
-            <h2 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800, color: C.text }}>
-              {form.id ? "Edit product" : "New product"}
-            </h2>
+        <div onClick={() => !saving && setForm(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 16px", overflowY: "auto", zIndex: 200 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: C.bg, borderRadius: 14, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.25)" }}>
+            <h2 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 800, color: C.text }}>{form.id ? "Edit product" : "New product"}</h2>
 
             {!form.id && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.dim }}>Quick start from a website tier</p>
                 <div style={{ display: "flex", gap: 8 }}>
                   {PRESETS.map((pr) => (
-                    <button
-                      key={pr.label}
-                      type="button"
-                      onClick={() => patch({ name: pr.label, billingType: "setup_monthly", interval: "monthly", setup: pr.setup, recurring: pr.recurring })}
-                      style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                    >
+                    <button key={pr.label} type="button" onClick={() => patch({ name: pr.label, billingType: "setup_monthly", interval: "monthly", setup: pr.setup, recurring: pr.recurring })} style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                       {pr.label}
                     </button>
                   ))}
@@ -399,12 +651,7 @@ export default function ProductsClient() {
             </Field>
 
             <Field label="Description">
-              <textarea
-                style={{ ...inputStyle, minHeight: 60, resize: "vertical", fontFamily: "inherit" }}
-                value={form.description}
-                onChange={(e) => patch({ description: e.target.value })}
-                placeholder="Short summary shown on the product card"
-              />
+              <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical", fontFamily: "inherit" }} value={form.description} onChange={(e) => patch({ description: e.target.value })} placeholder="Short summary shown on the product card" />
             </Field>
 
             <Field label="Image URL (optional)">
@@ -448,24 +695,50 @@ export default function ProductsClient() {
               </>
             )}
 
+            {/* Discount */}
+            <div style={{ borderTop: `1px solid ${C.border}`, margin: "6px 0 14px", paddingTop: 14 }}>
+              <Toggle on={form.discountOn} onClick={() => patch({ discountOn: !form.discountOn })} label="Add a discount (sale price)" />
+              {form.discountOn && (
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
+                  <Field label="Discount">
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <select style={{ ...inputStyle, width: 110 }} value={form.discKind} onChange={(e) => patch({ discKind: e.target.value as "percent" | "fixed" })}>
+                        <option value="percent">% off</option>
+                        <option value="fixed">$ off</option>
+                      </select>
+                      <input style={inputStyle} type="number" value={form.discValue} onChange={(e) => patch({ discValue: e.target.value })} placeholder={form.discKind === "percent" ? "25" : "50"} />
+                    </div>
+                  </Field>
+                  <Field label="Applies to">
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                      {feeKeysFor(form.billingType).map((k) => (
+                        <label key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
+                          <input type="checkbox" checked={form.discApplies[k]} onChange={(e) => patchApplies(k, e.target.checked)} />
+                          {FEE_LABEL[k]}
+                        </label>
+                      ))}
+                    </div>
+                  </Field>
+                  <Field label="Sale ends (optional)">
+                    <input style={inputStyle} type="date" value={form.discEnd} onChange={(e) => patch({ discEnd: e.target.value })} />
+                  </Field>
+                  <Field label="Label (optional)">
+                    <input style={inputStyle} value={form.discLabel} onChange={(e) => patch({ discLabel: e.target.value })} placeholder="e.g. Launch offer" />
+                  </Field>
+                </div>
+              )}
+            </div>
+
             <Toggle on={form.gstInclusive} onClick={() => patch({ gstInclusive: !form.gstInclusive })} label="Prices include GST" />
             <Toggle on={form.active} onClick={() => patch({ active: !form.active })} label="Active (available to sell)" />
 
             {formError && <p style={{ margin: "0 0 12px", fontSize: 12, color: C.red }}>{formError}</p>}
 
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button
-                onClick={() => setForm(null)}
-                disabled={saving}
-                style={{ flex: 1, padding: "11px 0", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
+              <button onClick={() => setForm(null)} disabled={saving} style={{ flex: 1, padding: "11px 0", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                 Cancel
               </button>
-              <button
-                onClick={save}
-                disabled={saving}
-                style={{ ...btnPrimary, flex: 1, opacity: saving ? 0.6 : 1 }}
-              >
+              <button onClick={save} disabled={saving} style={{ ...btnPrimary, flex: 1, opacity: saving ? 0.6 : 1 }}>
                 {saving ? "Saving…" : form.id ? "Save changes" : "Create product"}
               </button>
             </div>
