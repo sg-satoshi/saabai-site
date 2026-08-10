@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "16:47", tag: "UI", title: "How-to-use guide for the billing system" },
       { time: "09:46", tag: "NEW", title: "Client billing area — invoices + PDFs + Stripe portal in dashboard" },
       { time: "09:11", tag: "NEW", title: "Selling — catalogue checkout (charge now + payment link) with coupons" },
       { time: "08:27", tag: "NEW", title: "Product discounts (was/now/save) + Stripe coupon code manager" }

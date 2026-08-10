@@ -50,6 +50,40 @@ export async function resolveCoupon(
   };
 }
 
+/**
+ * Validate a coupon for a free-form (non-product) manual charge. Same checks as
+ * resolveCoupon, but rejects product-restricted codes since there is no product
+ * to match against.
+ */
+export async function resolveCouponForManual(
+  stripe: Stripe,
+  codeInput: string | undefined,
+): Promise<{ coupon?: ResolvedCoupon; error?: string }> {
+  const code = (codeInput || "").trim();
+  if (!code) return {};
+
+  const list = await stripe.promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
+  const pc = list.data[0];
+  if (!pc) return { error: "Coupon code not found or inactive" };
+  if (pc.expires_at && pc.expires_at * 1000 < Date.now()) return { error: "Coupon code has expired" };
+  if (pc.max_redemptions && pc.times_redeemed >= pc.max_redemptions) return { error: "Coupon code has reached its redemption limit" };
+
+  const c = pc.promotion.coupon as Stripe.Coupon;
+  const restricted = c.applies_to?.products;
+  if (restricted && restricted.length > 0) {
+    return { error: "This code only applies to a specific product. Use the Sell button on that product instead." };
+  }
+
+  return {
+    coupon: {
+      promotionCodeId: pc.id,
+      code: pc.code,
+      percentOff: c.percent_off ?? null,
+      amountOff: c.amount_off ?? null,
+    },
+  };
+}
+
 export interface BakedAmounts {
   setup?: number;
   recurring?: number;

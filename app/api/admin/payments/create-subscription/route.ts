@@ -5,14 +5,12 @@
  * Admin-only — requires valid saabai_session cookie.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../../lib/auth";
 import { getStripe } from "../../../../../lib/stripe";
+import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { resolveCouponForManual } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 // Map readable intervals to Stripe interval + interval_count
 const INTERVAL_MAP: Record<string, { interval: "day" | "week" | "month" | "year"; interval_count: number }> = {
@@ -26,18 +24,15 @@ const INTERVAL_MAP: Record<string, { interval: "day" | "week" | "month" | "year"
 const MAX_DAYS = 365; // Stripe max interval_count for day
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
+  if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, interval, customDays } = await req.json();
+    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -115,6 +110,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Validate an optional coupon and apply it natively to the subscription.
+    let appliedCode: string | null = null;
+    const subDiscounts: { promotion_code: string }[] = [];
+    if (promotionCode) {
+      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode);
+      if (couponErr) return NextResponse.json({ error: couponErr }, { status: 400 });
+      if (coupon) {
+        subDiscounts.push({ promotion_code: coupon.promotionCodeId });
+        appliedCode = coupon.code;
+      }
+    }
+
     // Create the subscription — starts immediately
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
@@ -124,10 +131,12 @@ export async function POST(req: NextRequest) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
+      ...(subDiscounts.length ? { discounts: subDiscounts } : {}),
       metadata: {
         source: "saabai-admin-subscription",
         description,
         interval,
+        coupon_code: appliedCode || "",
       },
       expand: ["latest_invoice.payment_intent"],
     });

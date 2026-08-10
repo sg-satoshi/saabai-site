@@ -4,31 +4,23 @@
  * Admin-only — requires valid saabai_session cookie.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../../lib/auth";
 import { getStripe } from "../../../../../lib/stripe";
+import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { resolveCouponForManual, couponOff } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
-
 export async function POST(req: NextRequest) {
-  // Auth
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
+  if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const stripe = getStripe();
 
-  let paymentIntent: import("stripe").Stripe.PaymentIntent | null = null;
-
   try {
-    const { amount, description, customerName, customerEmail } = await req.json();
+    const { amount, description, customerName, customerEmail, promotionCode } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -36,6 +28,21 @@ export async function POST(req: NextRequest) {
     }
     if (!description || typeof description !== "string") {
       return NextResponse.json({ error: "Description is required" }, { status: 400 });
+    }
+
+    // Apply an optional coupon to the one-time amount (server-authoritative).
+    let chargeAmount = Math.round(amount);
+    let appliedCode: string | null = null;
+    if (promotionCode) {
+      const { coupon, error } = await resolveCouponForManual(stripe, promotionCode);
+      if (error) return NextResponse.json({ error }, { status: 400 });
+      if (coupon) {
+        chargeAmount = couponOff(chargeAmount, coupon);
+        appliedCode = coupon.code;
+        if (chargeAmount < 50) {
+          return NextResponse.json({ error: "Amount after the coupon is below the $0.50 minimum" }, { status: 400 });
+        }
+      }
     }
 
     // Create or find customer
@@ -55,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount),
+      amount: chargeAmount,
       currency: "aud",
       description,
       customer: customerId,
@@ -64,6 +71,7 @@ export async function POST(req: NextRequest) {
         description,
         customer_name: customerName || "",
         customer_email: customerEmail || "",
+        coupon_code: appliedCode || "",
       },
       automatic_payment_methods: { enabled: true },
     });

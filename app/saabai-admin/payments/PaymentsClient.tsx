@@ -150,6 +150,41 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState("");
+  const [couponInfo, setCouponInfo] = useState<{ code: string; percentOff: number | null; amountOff: number | null } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
+  function discountedCents(cents: number): number {
+    if (!couponInfo) return cents;
+    if (couponInfo.percentOff != null) return Math.max(0, Math.round(cents * (1 - couponInfo.percentOff / 100)));
+    if (couponInfo.amountOff != null) return Math.max(0, cents - couponInfo.amountOff);
+    return cents;
+  }
+
+  async function applyCoupon() {
+    setCouponMsg(null);
+    setCouponInfo(null);
+    const codeTrim = coupon.trim();
+    if (!codeTrim) { setCouponMsg("Enter a coupon code"); return; }
+    setCouponBusy(true);
+    try {
+      const amtCents = Math.round(parseFloat(amount || "0") * 100) || undefined;
+      const res = await fetch("/api/admin/payments/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeTrim, amount: amtCents }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCouponMsg(data.error || "Invalid coupon"); return; }
+      setCouponInfo({ code: data.code, percentOff: data.percentOff, amountOff: data.amountOff });
+      setCouponMsg(`Code ${data.code} applied`);
+    } catch (e) {
+      setCouponMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCouponBusy(false);
+    }
+  }
 
   async function handleSubmit() {
     setError(null);
@@ -187,6 +222,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             description: description.trim(),
             customerName: customerName.trim() || undefined,
             customerEmail: customerEmail.trim() || undefined,
+            promotionCode: coupon.trim() || undefined,
           }),
         });
 
@@ -222,6 +258,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             customerEmail: customerEmail.trim(),
             interval,
             customDays: interval === "custom" ? parseInt(customDays) || 30 : undefined,
+            promotionCode: coupon.trim() || undefined,
           }),
         });
 
@@ -356,6 +393,47 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         <Input value={customerEmail} onChange={setCustomerEmail} placeholder="e.g. john@example.com" type="email" />
       </Field>
 
+      <Field label="Coupon code (optional)">
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={coupon}
+            onChange={e => { setCoupon(e.target.value); setCouponInfo(null); setCouponMsg(null); }}
+            placeholder="e.g. LAUNCH25"
+            style={{
+              width: "100%", padding: "9px 12px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.card,
+              fontSize: 13, color: C.text, outline: "none", boxSizing: "border-box",
+              textTransform: "uppercase",
+            }}
+          />
+          <button
+            type="button"
+            onClick={applyCoupon}
+            disabled={couponBusy}
+            style={{
+              padding: "9px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+              background: C.card, color: C.text, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", whiteSpace: "nowrap", opacity: couponBusy ? 0.6 : 1,
+            }}
+          >
+            {couponBusy ? "…" : "Apply"}
+          </button>
+        </div>
+        {couponMsg && (
+          <p style={{ margin: "6px 0 0", fontSize: 11, fontWeight: 600, color: couponInfo ? C.green : C.red }}>{couponMsg}</p>
+        )}
+        {couponInfo && amount && mode === "onetime" && (
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: C.text }}>
+            <span style={{ color: C.muted, textDecoration: "line-through" }}>{fmtDollar(Math.round(parseFloat(amount || "0") * 100))}</span>
+            {" → "}
+            <span style={{ fontWeight: 700, color: C.green }}>{fmtDollar(discountedCents(Math.round(parseFloat(amount || "0") * 100)))}</span>
+          </p>
+        )}
+        {couponInfo && mode === "recurring" && (
+          <p style={{ margin: "4px 0 0", fontSize: 11, color: C.dim }}>Applied to the subscription at checkout.</p>
+        )}
+      </Field>
+
       <Field label="Card Details">
         <div style={{
           padding: "10px 12px", borderRadius: 8,
@@ -379,7 +457,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         }}
       >
         {loading ? "Processing..." : mode === "onetime"
-          ? (fmtAmount ? `Charge ${fmtAmount}` : "Charge")
+          ? (amount ? `Charge ${fmtDollar(discountedCents(Math.round(parseFloat(amount || "0") * 100)))}` : "Charge")
           : (fmtAmount ? `Start Subscription (${fmtAmount}/${interval})` : "Start Subscription")}
       </button>
     </div>
