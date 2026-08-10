@@ -475,6 +475,34 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ hostedUrl: string } | null>(null);
+  const [coupon, setCoupon] = useState("");
+  const [couponInfo, setCouponInfo] = useState<{ code: string; percentOff: number | null; amountOff: number | null } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
+  async function applyCoupon() {
+    setCouponMsg(null);
+    setCouponInfo(null);
+    const codeTrim = coupon.trim();
+    if (!codeTrim) { setCouponMsg("Enter a coupon code"); return; }
+    setCouponBusy(true);
+    try {
+      const amtCents = Math.round(parseFloat(amount || "0") * 100) || undefined;
+      const res = await fetch("/api/admin/payments/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeTrim, amount: amtCents }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setCouponMsg(data.error || "Invalid coupon"); return; }
+      setCouponInfo({ code: data.code, percentOff: data.percentOff, amountOff: data.amountOff });
+      setCouponMsg(`Code ${data.code} applied to this invoice`);
+    } catch (e) {
+      setCouponMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCouponBusy(false);
+    }
+  }
 
   async function handleSubmit() {
     setError(null);
@@ -505,6 +533,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
           customerName: customerName.trim() || undefined,
           customerEmail: customerEmail.trim(),
           message: message.trim() || undefined,
+          promotionCode: coupon.trim() || undefined,
         }),
       });
 
@@ -518,6 +547,9 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
         setCustomerName("");
         setCustomerEmail("");
         setMessage("");
+        setCoupon("");
+        setCouponInfo(null);
+        setCouponMsg(null);
         onSuccess();
       }
     } catch (err) {
@@ -580,6 +612,37 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
             boxSizing: "border-box", fontFamily: "inherit",
           }}
         />
+      </Field>
+
+      <Field label="Coupon code (optional)">
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={coupon}
+            onChange={e => { setCoupon(e.target.value); setCouponInfo(null); setCouponMsg(null); }}
+            placeholder="e.g. LAUNCH25"
+            style={{
+              width: "100%", padding: "9px 12px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.card,
+              fontSize: 13, color: C.text, outline: "none", boxSizing: "border-box",
+              textTransform: "uppercase",
+            }}
+          />
+          <button
+            type="button"
+            onClick={applyCoupon}
+            disabled={couponBusy}
+            style={{
+              padding: "9px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+              background: C.card, color: C.text, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", whiteSpace: "nowrap", opacity: couponBusy ? 0.6 : 1,
+            }}
+          >
+            {couponBusy ? "…" : "Apply"}
+          </button>
+        </div>
+        {couponMsg && (
+          <p style={{ margin: "6px 0 0", fontSize: 11, fontWeight: 600, color: couponInfo ? C.green : C.red }}>{couponMsg}</p>
+        )}
       </Field>
 
       {error && <p style={{ margin: "10px 0 0", fontSize: 12, color: C.red }}>{error}</p>}

@@ -4,29 +4,23 @@
  * Admin-only — requires valid saabai_session cookie.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../../lib/auth";
 import { getStripe } from "../../../../../lib/stripe";
+import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { resolveCouponForManual } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
-
 export async function POST(req: NextRequest) {
-  // Auth
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  // Auth — any admin session (env admin or directory-role admin), matching the page guard.
+  if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, message } = await req.json();
+    const { amount, description, customerName, customerEmail, message, promotionCode } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -37,6 +31,18 @@ export async function POST(req: NextRequest) {
     }
     if (!customerEmail || typeof customerEmail !== "string") {
       return NextResponse.json({ error: "Customer email is required for invoices" }, { status: 400 });
+    }
+
+    // Validate an optional coupon (applied to the whole invoice below).
+    let appliedCode: string | null = null;
+    const invoiceDiscounts: { promotion_code: string }[] = [];
+    if (promotionCode) {
+      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode);
+      if (couponErr) return NextResponse.json({ error: couponErr }, { status: 400 });
+      if (coupon) {
+        invoiceDiscounts.push({ promotion_code: coupon.promotionCodeId });
+        appliedCode = coupon.code;
+      }
     }
 
     // Find or create customer
@@ -66,9 +72,11 @@ export async function POST(req: NextRequest) {
     const invoice = await stripe.invoices.create({
       customer: customerId,
       description: message || description,
+      ...(invoiceDiscounts.length ? { discounts: invoiceDiscounts } : {}),
       metadata: {
         source: "saabai-admin-payments",
         description,
+        coupon_code: appliedCode || "",
       },
       auto_advance: false, // we'll finalize + send manually
     });
