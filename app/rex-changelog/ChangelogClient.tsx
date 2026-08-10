@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "21:25", tag: "NEW", title: "Cycle-repair lead notifications — Telegram + branded logo email" },
       { time: "20:58", tag: "FIX", title: "Cycle-repair images/logo on custom domain + hide exit popup" },
       { time: "20:49", tag: "NEW", title: "Wire stuscyclerepairs.com custom domain for cycle-repair site" },
       { time: "20:42", tag: "NEW", title: "Enlarge cycle-repair logos + register site in Site Factory" },
