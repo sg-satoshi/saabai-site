@@ -59,15 +59,6 @@ export async function POST(req: NextRequest) {
       customerId = customer.id;
     }
 
-    // Create invoice item
-    await stripe.invoiceItems.create({
-      customer: customerId,
-      amount: Math.round(amount),
-      currency: "aud",
-      description,
-      metadata: { source: "saabai-admin-payments" },
-    });
-
     // Due date: an exact date (overrides) or payment terms in days. Stripe wants
     // exactly one of due_date / days_until_due with collection_method send_invoice.
     let dueConfig: { due_date: number } | { days_until_due: number };
@@ -96,6 +87,17 @@ export async function POST(req: NextRequest) {
         coupon_code: appliedCode || "",
       },
       auto_advance: false, // we'll finalize + send manually
+    });
+
+    // Attach the line item to THIS invoice explicitly. Relying on Stripe to sweep
+    // up pending invoice items is unreliable and left the invoice totalling $0.
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: invoice.id,
+      amount: Math.round(amount),
+      currency: "aud",
+      description,
+      metadata: { source: "saabai-admin-payments" },
     });
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
