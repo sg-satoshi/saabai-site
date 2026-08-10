@@ -27,7 +27,7 @@ const SUPPRESS_PATHS = [
 const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy", "/sites/wholesale-homes"];
 
 // Custom domains that have their own widgets — suppress all Saabai widgets
-const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au", "wholesalehomes.com.au", "www.wholesalehomes.com.au"];
+const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au", "wholesalehomes.com.au", "www.wholesalehomes.com.au", "stuscyclerepairs.com", "www.stuscyclerepairs.com"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();

@@ -70,7 +70,8 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     status: "live" as const,
     source: "external",
     externalPlatform: "Lovable",
-    url: "https://www.saabai.ai/sites/cycle-repair",
+    url: "https://stuscyclerepairs.com",
+    domains: ["stuscyclerepairs.com", "www.stuscyclerepairs.com"],
     business: {
       name: "Stu's Cycle Repairs",
       tagline: "We Come To You",
