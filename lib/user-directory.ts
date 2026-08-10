@@ -66,7 +66,7 @@ export async function listDirectoryUsers(): Promise<DirectoryUser[]> {
   return Object.values(raw)
     .map(v => parse<DirectoryUser>(v))
     .filter((u): u is DirectoryUser => u !== null)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 }
 
 export async function deleteDirectoryUser(email: string): Promise<void> {

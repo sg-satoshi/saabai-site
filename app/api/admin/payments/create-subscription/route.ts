@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode } = await req.json();
+    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode, setupFee, startDate } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -59,6 +59,28 @@ export async function POST(req: NextRequest) {
 
     if (!customerEmail || typeof customerEmail !== "string") {
       return NextResponse.json({ error: "Customer email is required for subscriptions" }, { status: 400 });
+    }
+
+    // Optional one-off first payment (setup fee), charged now with the card.
+    const setupAmount = Number.isFinite(setupFee) ? Math.max(0, Math.round(setupFee)) : 0;
+
+    // Optional start date — when the recurring billing first comes out.
+    let billingAnchor: number | null = null;
+    if (typeof startDate === "string" && startDate.trim()) {
+      const ts = Math.floor(new Date(startDate.trim() + "T09:00:00").getTime() / 1000);
+      if (Number.isNaN(ts) || ts * 1000 <= Date.now()) {
+        return NextResponse.json({ error: "Start date must be in the future" }, { status: 400 });
+      }
+      billingAnchor = ts;
+      // A future start with no upfront payment means there is no charge now to
+      // capture the card, so the recurring charge would later fail. Require a
+      // first payment for delayed-start subscriptions.
+      if (setupAmount < 50) {
+        return NextResponse.json(
+          { error: "A future start date needs a first payment amount so the card can be captured today." },
+          { status: 400 },
+        );
+      }
     }
 
     // Find or create customer
@@ -122,8 +144,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create the subscription — starts immediately
-    const subscription = await stripe.subscriptions.create({
+    const subParams: import("stripe").Stripe.SubscriptionCreateParams = {
       customer: customerId,
       items: [{ price: price.id }],
       payment_behavior: "default_incomplete",
@@ -139,7 +160,23 @@ export async function POST(req: NextRequest) {
         coupon_code: appliedCode || "",
       },
       expand: ["latest_invoice.payment_intent"],
-    });
+    };
+
+    // One-off first payment (setup fee) — added to the first invoice, charged now.
+    if (setupAmount >= 50) {
+      subParams.add_invoice_items = [
+        { price_data: { currency: "aud", product: productId, unit_amount: setupAmount }, quantity: 1 },
+      ];
+    }
+
+    // Delay the first recurring charge to the chosen start date (no proration for
+    // the gap). The setup fee above still bills now and captures the card.
+    if (billingAnchor) {
+      subParams.billing_cycle_anchor = billingAnchor;
+      subParams.proration_behavior = "none";
+    }
+
+    const subscription = await stripe.subscriptions.create(subParams);
 
     const latestInvoice = subscription.latest_invoice as unknown as Record<string, unknown>;
     let clientSecret: string | null = null;
@@ -154,6 +191,8 @@ export async function POST(req: NextRequest) {
       subscriptionId: subscription.id,
       clientSecret,
       amount: price.unit_amount,
+      setupAmount,
+      startDate: billingAnchor ? startDate : null,
       interval,
       status: subscription.status,
     });

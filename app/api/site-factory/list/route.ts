@@ -88,8 +88,8 @@ export async function GET() {
     const seen2 = new Set(withLegacy.map((s) => s.slug));
     const merged = [...withLegacy, ...PINNED_SITES.filter((s) => !seen2.has(s.slug))];
 
-    // Sort by name
-    merged.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by name (null-safe — a record with a missing name previously crashed this).
+    merged.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     return Response.json({ success: true, sites: merged });
   } catch (error) {

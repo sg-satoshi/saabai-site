@@ -147,6 +147,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
   const [customerEmail, setCustomerEmail] = useState("");
   const [interval, setInterval] = useState("monthly");
   const [customDays, setCustomDays] = useState("30");
+  const [setupFee, setSetupFee] = useState("");
+  const [subStartDate, setSubStartDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -259,6 +261,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             interval,
             customDays: interval === "custom" ? parseInt(customDays) || 30 : undefined,
             promotionCode: coupon.trim() || undefined,
+            setupFee: setupFee.trim() ? Math.round(parseFloat(setupFee) * 100) : undefined,
+            startDate: subStartDate || undefined,
           }),
         });
 
@@ -277,7 +281,9 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           if (confirmError) {
             setError(confirmError.message || "Subscription payment failed");
           } else if (paymentIntent.status === "succeeded") {
-            setSuccess(`Subscription started — ${fmtDollar(data.amount)} ${data.interval}`);
+            const first = data.setupAmount ? `First payment ${fmtDollar(data.setupAmount)} taken. ` : "";
+            const starts = data.startDate ? ` starting ${data.startDate}` : "";
+            setSuccess(`${first}Subscription ${fmtDollar(data.amount)} ${data.interval}${starts}`);
             clearForm();
             onSuccess();
           } else {
@@ -301,6 +307,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
     setDescription("");
     setCustomerName("");
     setCustomerEmail("");
+    setSetupFee("");
+    setSubStartDate("");
   }
 
   const fmtAmount = amount ? fmtDollar(Math.round(parseFloat(amount || "0") * 100)) : "";
@@ -382,6 +390,41 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
               <Input value={customDays} onChange={setCustomDays} placeholder="Number of days" type="number" />
             </div>
           )}
+        </Field>
+      )}
+
+      {mode === "recurring" && (
+        <Field label="First payment / setup fee (AUD, optional)">
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 12, top: 9, fontSize: 13, color: C.muted, pointerEvents: "none" }}>$</span>
+            <input
+              value={setupFee}
+              onChange={e => setSetupFee(e.target.value)}
+              placeholder="e.g. 1000"
+              type="number"
+              step="0.01"
+              style={{
+                width: "100%", padding: "9px 12px 9px 28px", borderRadius: 8,
+                border: `1px solid ${C.border}`, background: C.card,
+                fontSize: 13, color: C.text, outline: "none", boxSizing: "border-box",
+              }}
+            />
+          </div>
+        </Field>
+      )}
+
+      {mode === "recurring" && (
+        <Field label="Recurring start date (optional, needs a first payment)">
+          <input
+            type="date"
+            value={subStartDate}
+            onChange={e => setSubStartDate(e.target.value)}
+            style={{
+              width: "100%", padding: "9px 12px", borderRadius: 8,
+              border: `1px solid ${C.border}`, background: C.card,
+              fontSize: 13, color: C.text, outline: "none", boxSizing: "border-box",
+            }}
+          />
         </Field>
       )}
 
