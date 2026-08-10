@@ -55,9 +55,9 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-bg text-fg font-sans">
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-muted-line">
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/sites/cycle-repair" className="flex items-center">
-            <Logo width={240} height={48} className="h-12 sm:h-14 w-auto" />
+            <Logo width={160} height={68} className="h-[58px] sm:h-[68px] w-auto" />
           </Link>
           <a
             href="tel:0405225721"

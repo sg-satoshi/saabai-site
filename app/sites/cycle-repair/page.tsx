@@ -70,9 +70,9 @@ export default function Index() {
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-muted-line">
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <a href="#top" className="flex items-center">
-            <Logo width={240} height={48} className="h-12 sm:h-14 w-auto" />
+            <Logo width={160} height={68} className="h-[58px] sm:h-[68px] w-auto" />
           </a>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#services" className="hover:text-brand transition-colors">Services</a>
@@ -440,7 +440,7 @@ export default function Index() {
       <footer className="bg-surface/50 border-t border-muted-line pt-16 pb-28 md:pb-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
-            <Logo width={200} height={40} className="h-9 w-auto opacity-90" />
+            <Logo width={118} height={50} className="h-[50px] w-auto opacity-90" />
             <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
               Stu&apos;s Cycle Repairs © {new Date().getFullYear()}
             </span>

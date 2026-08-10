@@ -62,6 +62,32 @@ export interface SiteConfig {
 // App Router sites (hardcoded in code, not in Redis/Blob)
 const APP_ROUTER_SITES: SiteConfig[] = [
   {
+    id: "cycle-repair",
+    slug: "cycle-repair",
+    name: "Stu's Cycle Repairs",
+    niche: "trades",
+    description: "Mobile bicycle mechanic, Gold Coast (App Router, ported from Lovable)",
+    status: "live" as const,
+    source: "external",
+    externalPlatform: "Lovable",
+    url: "https://www.saabai.ai/sites/cycle-repair",
+    business: {
+      name: "Stu's Cycle Repairs",
+      tagline: "We Come To You",
+      phone: "0405 225 721",
+      email: "stuscyclerepairs@gmail.com",
+      address: "Gold Coast, QLD",
+    },
+    chatbot: {
+      enabled: false,
+      name: "",
+      greeting: "",
+      systemPrompt: "",
+    },
+    createdAt: 1786354800000,
+    updatedAt: 1786354800000,
+  },
+  {
     id: "tributum-law-v2",
     slug: "tributum-law-v2",
     name: "Tributum Law v2",

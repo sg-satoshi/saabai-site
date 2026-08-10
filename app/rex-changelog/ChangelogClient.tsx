@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "19:32", tag: "FIX", title: "Suppress Mia, news ticker and mobile CTA bar on /sites/cycle-repair" },
       { time: "19:22", tag: "NEW", title: "Stu's Cycle Repairs client site (Site Factory port from Lovable)" },
       { time: "18:49", tag: "UPDATE", title: "Stu's Cycle Repairs site port design spec" },
       { time: "18:26", tag: "NEW", title: "Separate discount per fee (setup vs recurring) on products" },
