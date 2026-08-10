@@ -16,6 +16,7 @@ const SUPPRESS_PATHS = [
   // Client demo sites — their own experience
   "/sites/tributum-law-v2",
   "/sites/bo-consultancy",
+  "/sites/cycle-repair",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
   // Wholesale Homes — has its own chat widget
