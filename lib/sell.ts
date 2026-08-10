@@ -10,7 +10,7 @@
  */
 import type Stripe from "stripe";
 import type { CatalogueProduct } from "./product-catalogue";
-import { feeDisplay } from "./product-pricing";
+import { feeDisplay, normalizeDiscounts } from "./product-pricing";
 
 export interface ResolvedCoupon {
   promotionCodeId: string;
@@ -95,7 +95,7 @@ export interface BakedAmounts {
 
 /** Amounts after the product's own discount (what we build Stripe prices / charges from). */
 export function bakedAmounts(product: CatalogueProduct): BakedAmounts {
-  const d = product.discount;
+  const d = normalizeDiscounts(product);
   if (product.billingType === "one_time") {
     return { oneTime: feeDisplay("one_time", product.oneTimeAmount || 0, d).discounted };
   }
@@ -132,7 +132,7 @@ export interface SaleQuote {
  * Fixed-$ coupons are surfaced separately since Stripe applies them to the invoice total.
  */
 export function buildQuote(product: CatalogueProduct, coupon?: ResolvedCoupon | null): SaleQuote {
-  const d = product.discount;
+  const d = normalizeDiscounts(product);
   const pct = coupon?.percentOff ?? null;
   const foldPct = (n: number) => (pct != null ? Math.max(0, Math.round(n * (1 - pct / 100))) : n);
 

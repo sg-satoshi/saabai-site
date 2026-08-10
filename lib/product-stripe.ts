@@ -12,7 +12,7 @@ import {
   type Interval,
   type CatalogueProduct,
 } from "./product-catalogue";
-import type { ProductDiscount, FeeKey } from "./product-pricing";
+import type { FeeDiscount, FeeKey } from "./product-pricing";
 
 // Which fee keys a discount may target, per billing type.
 const FEE_KEYS_FOR: Record<BillingType, FeeKey[]> = {
@@ -21,30 +21,32 @@ const FEE_KEYS_FOR: Record<BillingType, FeeKey[]> = {
   setup_monthly: ["setup", "recurring"],
 };
 
-/** Parse + validate an optional discount from the request body. Returns undefined if absent/invalid. */
-function parseDiscount(raw: unknown, billingType: BillingType): ProductDiscount | undefined {
-  if (!raw || typeof raw !== "object") return undefined;
-  const d = raw as Record<string, unknown>;
-
-  const kind = d.kind === "fixed" ? "fixed" : "percent";
-  const value = typeof d.value === "number" ? d.value : parseFloat(String(d.value));
-  if (!value || Number.isNaN(value) || value <= 0) return undefined;
-  if (kind === "percent" && value > 100) return undefined;
-
+/** Parse + validate the per-fee discounts array from the request body. At most one per fee. */
+function parseDiscounts(raw: unknown, billingType: BillingType): FeeDiscount[] {
+  if (!Array.isArray(raw)) return [];
   const allowed = FEE_KEYS_FOR[billingType];
-  const appliesTo = Array.isArray(d.appliesTo)
-    ? (d.appliesTo.filter((k): k is FeeKey => allowed.includes(k as FeeKey)))
-    : [];
-  if (appliesTo.length === 0) return undefined;
+  const out: FeeDiscount[] = [];
+  const seen = new Set<FeeKey>();
 
-  const discount: ProductDiscount = {
-    kind,
-    value: kind === "fixed" ? Math.round(value) : value,
-    appliesTo,
-  };
-  if (typeof d.endDate === "string" && d.endDate.trim()) discount.endDate = d.endDate.trim();
-  if (typeof d.label === "string" && d.label.trim()) discount.label = d.label.trim();
-  return discount;
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const d = item as Record<string, unknown>;
+
+    const appliesTo = d.appliesTo as FeeKey;
+    if (!allowed.includes(appliesTo) || seen.has(appliesTo)) continue;
+
+    const kind = d.kind === "fixed" ? "fixed" : "percent";
+    const value = typeof d.value === "number" ? d.value : parseFloat(String(d.value));
+    if (!value || Number.isNaN(value) || value <= 0) continue;
+    if (kind === "percent" && value > 100) continue;
+
+    const fd: FeeDiscount = { appliesTo, kind, value: kind === "fixed" ? Math.round(value) : value };
+    if (typeof d.endDate === "string" && d.endDate.trim()) fd.endDate = d.endDate.trim();
+    if (typeof d.label === "string" && d.label.trim()) fd.label = d.label.trim();
+    out.push(fd);
+    seen.add(appliesTo);
+  }
+  return out;
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────
@@ -86,8 +88,8 @@ export function validateProductInput(body: Record<string, unknown>): { input?: P
     billingType,
   };
 
-  const discount = parseDiscount(body.discount, billingType);
-  if (discount) input.discount = discount;
+  const discounts = parseDiscounts(body.discounts, billingType);
+  if (discounts.length) input.discounts = discounts;
 
   if (billingType === "one_time") {
     const amt = toCents(body.oneTimeAmount);

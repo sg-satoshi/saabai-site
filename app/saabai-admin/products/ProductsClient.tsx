@@ -5,7 +5,7 @@ import AdminShell from "../AdminSidebar";
 import { CardElement, Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import type { CatalogueProduct, BillingType, Interval } from "../../../lib/product-catalogue";
-import { feeDisplay, type FeeKey, type FeeDisplay } from "../../../lib/product-pricing";
+import { feeDisplay, normalizeDiscounts, type FeeKey, type FeeDisplay } from "../../../lib/product-pricing";
 
 // ── Theme (matches PaymentsClient) ────────────────────────────────────────────
 const C = {
@@ -78,15 +78,16 @@ function fmtUnix(sec?: number | null): string {
 
 // ── Was / now / save price display ────────────────────────────────────────────
 function PriceBlock({ p }: { p: CatalogueProduct }) {
+  const discounts = normalizeDiscounts(p);
   const rows: { label: string; fee: FeeDisplay; suffix: string }[] = [];
   if (p.billingType === "one_time") {
-    rows.push({ label: "", fee: feeDisplay("one_time", p.oneTimeAmount || 0, p.discount), suffix: " one-off" });
+    rows.push({ label: "", fee: feeDisplay("one_time", p.oneTimeAmount || 0, discounts), suffix: " one-off" });
   } else {
     const per = p.interval ? INTERVAL_LABEL[p.interval] : "month";
     if (p.billingType === "setup_monthly") {
-      rows.push({ label: "Setup", fee: feeDisplay("setup", p.setupFee || 0, p.discount), suffix: "" });
+      rows.push({ label: "Setup", fee: feeDisplay("setup", p.setupFee || 0, discounts), suffix: "" });
     }
-    rows.push({ label: p.billingType === "setup_monthly" ? "Then" : "", fee: feeDisplay("recurring", p.recurringAmount || 0, p.discount), suffix: "/" + per });
+    rows.push({ label: p.billingType === "setup_monthly" ? "Then" : "", fee: feeDisplay("recurring", p.recurringAmount || 0, discounts), suffix: "/" + per });
   }
 
   return (
@@ -107,18 +108,30 @@ function PriceBlock({ p }: { p: CatalogueProduct }) {
           )}
         </div>
       ))}
-      {p.discount && (p.discount.label || p.discount.endDate) && (
-        <p style={{ margin: "2px 0 0", fontSize: 10, fontWeight: 600, color: C.dim }}>
-          {p.discount.label}
-          {p.discount.label && p.discount.endDate ? " · " : ""}
-          {p.discount.endDate ? `ends ${fmtDate(p.discount.endDate)}` : ""}
+      {discounts.filter((d) => d.label || d.endDate).map((d, i) => (
+        <p key={i} style={{ margin: "2px 0 0", fontSize: 10, fontWeight: 600, color: C.dim }}>
+          {d.label}
+          {d.label && d.endDate ? " · " : ""}
+          {d.endDate ? `ends ${fmtDate(d.endDate)}` : ""}
         </p>
-      )}
+      ))}
     </div>
   );
 }
 
 // ── Form types ────────────────────────────────────────────────────────────────
+interface DiscBlock {
+  on: boolean;
+  kind: "percent" | "fixed";
+  value: string;
+  end: string;
+  label: string;
+}
+
+function blankDisc(): DiscBlock {
+  return { on: false, kind: "percent", value: "", end: "", label: "" };
+}
+
 interface FormState {
   id: string | null;
   name: string;
@@ -132,13 +145,8 @@ interface FormState {
   trialDays: string;
   gstInclusive: boolean;
   active: boolean;
-  // discount
-  discountOn: boolean;
-  discKind: "percent" | "fixed";
-  discValue: string;
-  discApplies: Record<FeeKey, boolean>;
-  discEnd: string;
-  discLabel: string;
+  // a separate discount per fee
+  disc: Record<FeeKey, DiscBlock>;
 }
 
 function blankForm(): FormState {
@@ -155,17 +163,23 @@ function blankForm(): FormState {
     trialDays: "",
     gstInclusive: true,
     active: true,
-    discountOn: false,
-    discKind: "percent",
-    discValue: "",
-    discApplies: { setup: true, recurring: true, one_time: true },
-    discEnd: "",
-    discLabel: "",
+    disc: { setup: blankDisc(), recurring: blankDisc(), one_time: blankDisc() },
   };
 }
 
 function fromProduct(p: CatalogueProduct): FormState {
-  const d = p.discount;
+  const list = normalizeDiscounts(p);
+  const discFor = (fee: FeeKey): DiscBlock => {
+    const d = list.find((x) => x.appliesTo === fee);
+    if (!d) return blankDisc();
+    return {
+      on: true,
+      kind: d.kind,
+      value: d.kind === "fixed" ? centsToDollars(d.value) : String(d.value),
+      end: d.endDate || "",
+      label: d.label || "",
+    };
+  };
   return {
     id: p.id,
     name: p.name,
@@ -179,16 +193,7 @@ function fromProduct(p: CatalogueProduct): FormState {
     trialDays: p.trialDays ? String(p.trialDays) : "",
     gstInclusive: p.gstInclusive,
     active: p.active,
-    discountOn: !!d,
-    discKind: d?.kind || "percent",
-    discValue: d ? (d.kind === "fixed" ? centsToDollars(d.value) : String(d.value)) : "",
-    discApplies: {
-      setup: d ? d.appliesTo.includes("setup") : true,
-      recurring: d ? d.appliesTo.includes("recurring") : true,
-      one_time: d ? d.appliesTo.includes("one_time") : true,
-    },
-    discEnd: d?.endDate || "",
-    discLabel: d?.label || "",
+    disc: { setup: discFor("setup"), recurring: discFor("recurring"), one_time: discFor("one_time") },
   };
 }
 
@@ -698,8 +703,8 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
     setForm((cur) => (cur ? { ...cur, ...p } : cur));
   }
 
-  function patchApplies(key: FeeKey, on: boolean) {
-    setForm((cur) => (cur ? { ...cur, discApplies: { ...cur.discApplies, [key]: on } } : cur));
+  function patchDisc(key: FeeKey, p: Partial<DiscBlock>) {
+    setForm((cur) => (cur ? { ...cur, disc: { ...cur.disc, [key]: { ...cur.disc[key], ...p } } } : cur));
   }
 
   async function save() {
@@ -724,19 +729,23 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
       if (form.billingType === "setup_monthly") payload.setupFee = dollarsToCents(form.setup);
     }
 
-    if (form.discountOn && form.discValue.trim()) {
-      const applies = feeKeysFor(form.billingType).filter((k) => form.discApplies[k]);
-      const value = form.discKind === "fixed" ? dollarsToCents(form.discValue) : parseFloat(form.discValue);
-      if (applies.length && value > 0) {
-        payload.discount = {
-          kind: form.discKind,
+    // A separate discount per fee, only for the fees this billing type has.
+    const discounts: Record<string, unknown>[] = [];
+    for (const key of feeKeysFor(form.billingType)) {
+      const b = form.disc[key];
+      if (!b.on || !b.value.trim()) continue;
+      const value = b.kind === "fixed" ? dollarsToCents(b.value) : parseFloat(b.value);
+      if (value > 0) {
+        discounts.push({
+          appliesTo: key,
+          kind: b.kind,
           value,
-          appliesTo: applies,
-          endDate: form.discEnd || undefined,
-          label: form.discLabel.trim() || undefined,
-        };
+          endDate: b.end || undefined,
+          label: b.label.trim() || undefined,
+        });
       }
     }
+    if (discounts.length) payload.discounts = discounts;
 
     try {
       const url = form.id ? `/api/admin/products/${form.id}` : "/api/admin/products";
@@ -925,38 +934,36 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
               </>
             )}
 
-            {/* Discount */}
+            {/* Discounts — a separate sale price per fee */}
             <div style={{ borderTop: `1px solid ${C.border}`, margin: "6px 0 14px", paddingTop: 14 }}>
-              <Toggle on={form.discountOn} onClick={() => patch({ discountOn: !form.discountOn })} label="Add a discount (sale price)" />
-              {form.discountOn && (
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
-                  <Field label="Discount">
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <select style={{ ...inputStyle, width: 110 }} value={form.discKind} onChange={(e) => patch({ discKind: e.target.value as "percent" | "fixed" })}>
-                        <option value="percent">% off</option>
-                        <option value="fixed">$ off</option>
-                      </select>
-                      <input style={inputStyle} type="number" value={form.discValue} onChange={(e) => patch({ discValue: e.target.value })} placeholder={form.discKind === "percent" ? "25" : "50"} />
-                    </div>
-                  </Field>
-                  <Field label="Applies to">
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                      {feeKeysFor(form.billingType).map((k) => (
-                        <label key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.text, cursor: "pointer" }}>
-                          <input type="checkbox" checked={form.discApplies[k]} onChange={(e) => patchApplies(k, e.target.checked)} />
-                          {FEE_LABEL[k]}
-                        </label>
-                      ))}
-                    </div>
-                  </Field>
-                  <Field label="Sale ends (optional)">
-                    <input style={inputStyle} type="date" value={form.discEnd} onChange={(e) => patch({ discEnd: e.target.value })} />
-                  </Field>
-                  <Field label="Label (optional)">
-                    <input style={inputStyle} value={form.discLabel} onChange={(e) => patch({ discLabel: e.target.value })} placeholder="e.g. Launch offer" />
-                  </Field>
-                </div>
-              )}
+              <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: C.text }}>Discounts (sale price)</p>
+              {feeKeysFor(form.billingType).map((k) => {
+                const b = form.disc[k];
+                return (
+                  <div key={k} style={{ marginBottom: 10 }}>
+                    <Toggle on={b.on} onClick={() => patchDisc(k, { on: !b.on })} label={`Discount the ${FEE_LABEL[k].toLowerCase()}`} />
+                    {b.on && (
+                      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: 14 }}>
+                        <Field label="Amount off">
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <select style={{ ...inputStyle, width: 110 }} value={b.kind} onChange={(e) => patchDisc(k, { kind: e.target.value as "percent" | "fixed" })}>
+                              <option value="percent">% off</option>
+                              <option value="fixed">$ off</option>
+                            </select>
+                            <input style={inputStyle} type="number" value={b.value} onChange={(e) => patchDisc(k, { value: e.target.value })} placeholder={b.kind === "percent" ? "25" : "50"} />
+                          </div>
+                        </Field>
+                        <Field label="Sale ends (optional)">
+                          <input style={inputStyle} type="date" value={b.end} onChange={(e) => patchDisc(k, { end: e.target.value })} />
+                        </Field>
+                        <Field label="Label (optional)">
+                          <input style={inputStyle} value={b.label} onChange={(e) => patchDisc(k, { label: e.target.value })} placeholder="e.g. Launch offer" />
+                        </Field>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <Toggle on={form.gstInclusive} onClick={() => patch({ gstInclusive: !form.gstInclusive })} label="Prices include GST" />

@@ -5,7 +5,7 @@
  * Stripe sync lives in the API routes (app/api/admin/products), not here.
  */
 import { getRedis } from "./redis";
-import type { ProductDiscount } from "./product-pricing";
+import type { ProductDiscount, FeeDiscount } from "./product-pricing";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,8 @@ export interface CatalogueProduct {
   interval?: Interval;      // recurring + setup_monthly
   setupFee?: number;        // setup_monthly
   trialDays?: number;       // optional; applied at checkout, not stored on Stripe price
-  discount?: ProductDiscount; // optional sale price; display + stored, charged at checkout
+  discounts?: FeeDiscount[]; // per-fee sale prices (setup vs recurring vs one-time)
+  discount?: ProductDiscount; // legacy single discount; read-only fallback for old records
   stripeProductId: string;
   // For setup_monthly, the setup fee lives on its own Stripe product so coupons
   // can target setup vs recurring independently.
