@@ -479,6 +479,8 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
   const [couponInfo, setCouponInfo] = useState<{ code: string; percentOff: number | null; amountOff: number | null } | null>(null);
   const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [couponBusy, setCouponBusy] = useState(false);
+  const [termsDays, setTermsDays] = useState("7");
+  const [exactDate, setExactDate] = useState("");
 
   async function applyCoupon() {
     setCouponMsg(null);
@@ -534,6 +536,8 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
           customerEmail: customerEmail.trim(),
           message: message.trim() || undefined,
           promotionCode: coupon.trim() || undefined,
+          daysUntilDue: parseInt(termsDays, 10),
+          dueDate: exactDate || undefined,
         }),
       });
 
@@ -547,6 +551,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
         setCustomerName("");
         setCustomerEmail("");
         setMessage("");
+        setExactDate("");
         setCoupon("");
         setCouponInfo(null);
         setCouponMsg(null);
@@ -610,6 +615,37 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
             border: `1px solid ${C.border}`, background: C.card,
             fontSize: 13, color: C.text, outline: "none", resize: "vertical",
             boxSizing: "border-box", fontFamily: "inherit",
+          }}
+        />
+      </Field>
+
+      <Field label="Payment terms">
+        <select
+          value={termsDays}
+          onChange={e => setTermsDays(e.target.value)}
+          disabled={!!exactDate}
+          style={{
+            width: "100%", padding: "9px 12px", borderRadius: 8,
+            border: `1px solid ${C.border}`, background: exactDate ? C.surface : C.card,
+            fontSize: 13, color: C.text, outline: "none", fontFamily: "inherit",
+          }}
+        >
+          <option value="0">Due on receipt</option>
+          <option value="7">Due in 7 days</option>
+          <option value="14">Due in 14 days</option>
+          <option value="30">Due in 30 days</option>
+        </select>
+      </Field>
+
+      <Field label="Or exact due date (optional, overrides terms)">
+        <input
+          type="date"
+          value={exactDate}
+          onChange={e => setExactDate(e.target.value)}
+          style={{
+            width: "100%", padding: "9px 12px", borderRadius: 8,
+            border: `1px solid ${C.border}`, background: C.card,
+            fontSize: 13, color: C.text, outline: "none", boxSizing: "border-box",
           }}
         />
       </Field>

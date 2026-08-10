@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "22:00", tag: "FIX", title: "Invoice send requires collection_method send_invoice" },
       { time: "21:52", tag: "FIX", title: "Use Stripe fetch HTTP client (server-side Stripe calls failing in prod)" },
       { time: "21:25", tag: "NEW", title: "Cycle-repair lead notifications — Telegram + branded logo email" },
       { time: "20:58", tag: "FIX", title: "Cycle-repair images/logo on custom domain + hide exit popup" },

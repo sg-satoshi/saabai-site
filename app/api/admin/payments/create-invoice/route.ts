@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, message, promotionCode } = await req.json();
+    const { amount, description, customerName, customerEmail, message, promotionCode, daysUntilDue, dueDate } = await req.json();
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -68,13 +68,27 @@ export async function POST(req: NextRequest) {
       metadata: { source: "saabai-admin-payments" },
     });
 
+    // Due date: an exact date (overrides) or payment terms in days. Stripe wants
+    // exactly one of due_date / days_until_due with collection_method send_invoice.
+    let dueConfig: { due_date: number } | { days_until_due: number };
+    if (typeof dueDate === "string" && dueDate.trim()) {
+      const ts = Math.floor(new Date(dueDate.trim() + "T23:59:59").getTime() / 1000);
+      if (Number.isNaN(ts) || ts * 1000 <= Date.now()) {
+        return NextResponse.json({ error: "Due date must be in the future" }, { status: 400 });
+      }
+      dueConfig = { due_date: ts };
+    } else {
+      const days = Number.isFinite(daysUntilDue) ? Math.max(0, Math.round(daysUntilDue)) : 7;
+      dueConfig = { days_until_due: days };
+    }
+
     // Create and finalize invoice. collection_method "send_invoice" is required
     // to email the customer a payable invoice (vs auto-charging a saved card).
     const invoice = await stripe.invoices.create({
       customer: customerId,
       description: message || description,
       collection_method: "send_invoice",
-      days_until_due: 7,
+      ...dueConfig,
       ...(invoiceDiscounts.length ? { discounts: invoiceDiscounts } : {}),
       metadata: {
         source: "saabai-admin-payments",
