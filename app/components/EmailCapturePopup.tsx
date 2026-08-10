@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 
 const COOKIE_KEY = "saabai_subscribed";
-const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes"];
-const SKIP_HOSTNAMES = ["wholesalehomes.com.au", "www.wholesalehomes.com.au"];
+const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes", "/sites/cycle-repair"];
+const SKIP_HOSTNAMES = ["wholesalehomes.com.au", "www.wholesalehomes.com.au", "stuscyclerepairs.com", "www.stuscyclerepairs.com"];
 
 const INDUSTRIES = ["Law / Legal", "Accounting / Finance", "Real Estate", "Other"];
 

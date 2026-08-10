@@ -2,8 +2,8 @@ import Link from "next/link";
 import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
 
-const drivetrainImg = "/cycle-repair/drivetrain.jpg";
-const mechanicImg = "/cycle-repair/mechanic.jpg";
+const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
+const mechanicImg = "/sites/cycle-repair/mechanic.jpg";
 
 const jsonLd = {
   "@context": "https://schema.org",

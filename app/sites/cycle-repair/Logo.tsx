@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-// TODO: real logo — using /cycle-repair/stus-logo-v2.png (transparent PNG, ~2.36:1).
+// TODO: real logo — using /sites/cycle-repair/stus-logo-v2.png (transparent PNG, ~2.36:1).
 // Falls back to a text wordmark if the image fails to load.
 export function Logo({
   className,
@@ -26,7 +26,7 @@ export function Logo({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/cycle-repair/stus-logo-v2.png"
+      src="/sites/cycle-repair/stus-logo-v2.png"
       alt="Stu's Cycle Repairs"
       width={width}
       height={height}

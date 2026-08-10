@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "Mobile bike repairs across the Gold Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.",
   authors: [{ name: "Stu's Cycle Repairs" }],
-  icons: { icon: "/cycle-repair/favicon.png" },
+  icons: { icon: "/sites/cycle-repair/favicon.png" },
   openGraph: {
     type: "website",
     title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic",
