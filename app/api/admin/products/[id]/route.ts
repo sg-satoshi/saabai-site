@@ -18,6 +18,7 @@ import {
   validateProductInput,
   createStripePrices,
   archiveStripePrices,
+  ensureSetupProduct,
 } from "../../../../../lib/product-stripe";
 
 export const runtime = "nodejs";
@@ -49,25 +50,36 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       active: input.active,
     });
 
-    // Stripe prices are immutable — recreate only when the pricing actually changed
+    // Ensure the setup fee has its own Stripe product (backfills existing products
+    // on save so setup-scoped coupons can target it).
+    let setupProductId = existing.stripeSetupProductId;
+    const needsSetupSplit = input.billingType === "setup_monthly" && !setupProductId;
+    if (input.billingType === "setup_monthly") {
+      setupProductId = await ensureSetupProduct(stripe, input.name, existing.stripeSetupProductId);
+    }
+
+    // Stripe prices are immutable — recreate only when pricing changed, or when we
+    // just moved the setup fee onto its own product.
     const priceChanged =
       input.billingType !== existing.billingType ||
       input.oneTimeAmount !== existing.oneTimeAmount ||
       input.recurringAmount !== existing.recurringAmount ||
       input.interval !== existing.interval ||
       input.setupFee !== existing.setupFee ||
-      input.gstInclusive !== existing.gstInclusive;
+      input.gstInclusive !== existing.gstInclusive ||
+      needsSetupSplit;
 
     let priceIds = existing.stripePriceIds;
     if (priceChanged) {
       await archiveStripePrices(stripe, existing.stripePriceIds);
-      priceIds = await createStripePrices(stripe, input, existing.stripeProductId);
+      priceIds = await createStripePrices(stripe, input, existing.stripeProductId, setupProductId);
     }
 
     const updated: CatalogueProduct = {
       id: existing.id,
       ...input,
       stripeProductId: existing.stripeProductId,
+      stripeSetupProductId: setupProductId,
       stripePriceIds: priceIds,
       createdAt: existing.createdAt,
       updatedAt: new Date().toISOString(),

@@ -253,6 +253,7 @@ interface CouponCode {
   duration: string;
   durationMonths: number | null;
   restrictedProducts: string[];
+  appliesTo: string;
 }
 
 function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
@@ -265,6 +266,7 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
     code: "",
     kind: "percent" as "percent" | "fixed",
     value: "",
+    appliesTo: "both" as "setup" | "recurring" | "both",
     duration: "once" as "once" | "forever" | "repeating",
     durationMonths: "3",
     maxRedemptions: "",
@@ -300,6 +302,7 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
           code: f.code,
           kind: f.kind,
           value: parseFloat(f.value),
+          appliesTo: f.appliesTo,
           duration: f.duration,
           durationMonths: f.duration === "repeating" ? parseInt(f.durationMonths, 10) : undefined,
           maxRedemptions: f.maxRedemptions ? parseInt(f.maxRedemptions, 10) : undefined,
@@ -356,6 +359,14 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
           </div>
         </Field>
 
+        <Field label="Applies to">
+          <select style={inputStyle} value={f.appliesTo} onChange={(e) => setF({ ...f, appliesTo: e.target.value as "setup" | "recurring" | "both" })}>
+            <option value="both">Both (setup + recurring)</option>
+            <option value="setup">Setup fee only</option>
+            <option value="recurring">Recurring only</option>
+          </select>
+        </Field>
+
         <Field label="Duration (for subscriptions)">
           <select style={inputStyle} value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as "once" | "forever" | "repeating" })}>
             <option value="once">Once (first payment)</option>
@@ -370,13 +381,16 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
           </Field>
         )}
 
-        <Field label="Restrict to product (optional)">
+        <Field label={f.appliesTo === "both" ? "Restrict to product (optional)" : "Product (required for this scope)"}>
           <select style={inputStyle} value={f.productId} onChange={(e) => setF({ ...f, productId: e.target.value })}>
-            <option value="">Any product</option>
+            <option value="">{f.appliesTo === "both" ? "Any product" : "Select a product…"}</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
+          {f.appliesTo === "setup" && (
+            <p style={{ margin: "5px 0 0", fontSize: 10, color: C.dim }}>Only setup + monthly products have a separate setup fee to target.</p>
+          )}
         </Field>
 
         <Field label="Max redemptions (optional)">
@@ -411,14 +425,16 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {codes.map((c) => {
               const prodName = c.restrictedProducts.length
-                ? products.find((p) => c.restrictedProducts.includes(p.stripeProductId))?.name || "1 product"
+                ? products.find((p) => c.restrictedProducts.includes(p.stripeProductId) || (p.stripeSetupProductId != null && c.restrictedProducts.includes(p.stripeSetupProductId)))?.name || "1 product"
                 : null;
+              const scopeLabel = c.appliesTo === "setup" ? "Setup only" : c.appliesTo === "recurring" ? "Recurring only" : null;
               return (
                 <div key={c.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, opacity: c.active ? 1 : 0.55 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
                       <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 14, fontWeight: 800, color: C.text }}>{c.code}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, background: "rgba(15,118,110,0.08)", padding: "1px 7px", borderRadius: 4 }}>{offLabel(c)}</span>
+                      {scopeLabel && <span style={{ fontSize: 10, fontWeight: 700, color: C.blue, background: C.blueBg, padding: "1px 7px", borderRadius: 4 }}>{scopeLabel}</span>}
                       {!c.active && <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Inactive</span>}
                     </div>
                     <p style={{ margin: 0, fontSize: 11, color: C.dim }}>

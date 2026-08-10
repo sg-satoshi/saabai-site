@@ -34,6 +34,7 @@ export async function GET() {
         duration: c.duration,
         durationMonths: c.duration_in_months ?? null,
         restrictedProducts: c.applies_to?.products ?? [],
+        appliesTo: (c.metadata?.applies_to as string) ?? "both",
       };
     });
     return NextResponse.json({ codes });
@@ -66,10 +67,15 @@ export async function POST(req: NextRequest) {
   const duration: "once" | "forever" | "repeating" =
     body?.duration === "forever" ? "forever" : body?.duration === "repeating" ? "repeating" : "once";
 
+  // Which fees the code discounts. "setup"/"recurring" require a product so we can
+  // point Stripe at the right underlying product; "both" is general.
+  const appliesTo: "setup" | "recurring" | "both" =
+    body?.appliesTo === "setup" ? "setup" : body?.appliesTo === "recurring" ? "recurring" : "both";
+
   try {
     const stripe = getStripe();
 
-    const couponParams: Stripe.CouponCreateParams = { duration, name: code };
+    const couponParams: Stripe.CouponCreateParams = { duration, name: code, metadata: { applies_to: appliesTo } };
     if (kind === "percent") {
       couponParams.percent_off = value;
     } else {
@@ -80,9 +86,23 @@ export async function POST(req: NextRequest) {
       const months = parseInt(String(body?.durationMonths), 10);
       couponParams.duration_in_months = !months || months < 1 ? 1 : months;
     }
-    if (body?.productId) {
-      const product = await getProduct(String(body.productId));
-      if (product) couponParams.applies_to = { products: [product.stripeProductId] };
+
+    // Resolve product scoping.
+    const product = body?.productId ? await getProduct(String(body.productId)) : null;
+    if ((appliesTo === "setup" || appliesTo === "recurring") && !product) {
+      return NextResponse.json({ error: "Pick a product for a setup-only or recurring-only code" }, { status: 400 });
+    }
+    if (appliesTo === "setup") {
+      if (product!.billingType !== "setup_monthly" || !product!.stripeSetupProductId) {
+        return NextResponse.json({ error: "This product has no separate setup fee. Re-save it first, or pick a setup + monthly product." }, { status: 400 });
+      }
+      couponParams.applies_to = { products: [product!.stripeSetupProductId] };
+    } else if (appliesTo === "recurring") {
+      couponParams.applies_to = { products: [product!.stripeProductId] };
+    } else if (product) {
+      // "Both" restricted to one product: cover its main and setup products.
+      const ids = [product.stripeProductId, product.stripeSetupProductId].filter(Boolean) as string[];
+      couponParams.applies_to = { products: ids };
     }
 
     const coupon = await stripe.coupons.create(couponParams);

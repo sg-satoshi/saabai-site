@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       };
       if (product.billingType === "setup_monthly" && baked.setup) {
         subParams.add_invoice_items = [
-          { price_data: { currency: "aud", product: product.stripeProductId, unit_amount: baked.setup, tax_behavior: taxBehavior }, quantity: 1 },
+          { price_data: { currency: "aud", product: product.stripeSetupProductId || product.stripeProductId, unit_amount: baked.setup, tax_behavior: taxBehavior }, quantity: 1 },
         ];
       }
       if (product.trialDays) subParams.trial_period_days = product.trialDays;

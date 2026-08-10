@@ -28,6 +28,9 @@ export interface CatalogueProduct {
   trialDays?: number;       // optional; applied at checkout, not stored on Stripe price
   discount?: ProductDiscount; // optional sale price; display + stored, charged at checkout
   stripeProductId: string;
+  // For setup_monthly, the setup fee lives on its own Stripe product so coupons
+  // can target setup vs recurring independently.
+  stripeSetupProductId?: string;
   stripePriceIds: { oneTime?: string; recurring?: string; setup?: string };
   createdAt: string;
   updatedAt: string;
@@ -93,12 +96,14 @@ export function buildProduct(
   input: ProductInput,
   stripeProductId: string,
   stripePriceIds: CatalogueProduct["stripePriceIds"],
+  stripeSetupProductId?: string,
 ): CatalogueProduct {
   const now = new Date().toISOString();
   return {
     ...input,
     id: "prod_" + uid(),
     stripeProductId,
+    stripeSetupProductId,
     stripePriceIds,
     createdAt: now,
     updatedAt: now,

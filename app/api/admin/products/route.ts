@@ -10,6 +10,7 @@ import {
   isAdminRequest,
   validateProductInput,
   createStripePrices,
+  ensureSetupProduct,
 } from "../../../../lib/product-stripe";
 
 export const runtime = "nodejs";
@@ -51,9 +52,15 @@ export async function POST(req: NextRequest) {
       metadata: { source: "saabai-catalogue" },
     });
 
-    const priceIds = await createStripePrices(stripe, input, stripeProduct.id);
+    // setup_monthly keeps its setup fee on a separate Stripe product for coupon targeting.
+    let setupProductId: string | undefined;
+    if (input.billingType === "setup_monthly") {
+      setupProductId = await ensureSetupProduct(stripe, input.name);
+    }
 
-    const product = buildProduct(input, stripeProduct.id, priceIds);
+    const priceIds = await createStripePrices(stripe, input, stripeProduct.id, setupProductId);
+
+    const product = buildProduct(input, stripeProduct.id, priceIds, setupProductId);
     await saveProduct(product);
 
     return NextResponse.json({ product });

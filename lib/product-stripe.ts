@@ -126,6 +126,7 @@ export async function createStripePrices(
   stripe: Stripe,
   input: ProductInput,
   stripeProductId: string,
+  stripeSetupProductId?: string,
 ): Promise<CatalogueProduct["stripePriceIds"]> {
   const tax_behavior: "inclusive" | "exclusive" = input.gstInclusive ? "inclusive" : "exclusive";
   const ids: CatalogueProduct["stripePriceIds"] = {};
@@ -152,8 +153,9 @@ export async function createStripePrices(
   ids.recurring = recurring.id;
 
   if (input.billingType === "setup_monthly") {
+    // Setup fee lives on its own Stripe product (falls back to main if not split).
     const setup = await stripe.prices.create({
-      product: stripeProductId,
+      product: stripeSetupProductId || stripeProductId,
       currency: "aud",
       unit_amount: input.setupFee!,
       tax_behavior,
@@ -162,6 +164,23 @@ export async function createStripePrices(
   }
 
   return ids;
+}
+
+/** Ensure a "<name> — Setup fee" Stripe product exists for a setup_monthly product. */
+export async function ensureSetupProduct(
+  stripe: Stripe,
+  name: string,
+  existingId?: string,
+): Promise<string> {
+  if (existingId) {
+    await stripe.products.update(existingId, { name: `${name} — Setup fee`, active: true }).catch(() => null);
+    return existingId;
+  }
+  const product = await stripe.products.create({
+    name: `${name} — Setup fee`,
+    metadata: { source: "saabai-catalogue-setup" },
+  });
+  return product.id;
 }
 
 /** Archive every Stripe price id we hold for a product (used on price change / archive). */

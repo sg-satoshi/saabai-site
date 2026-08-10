@@ -36,7 +36,10 @@ export async function resolveCoupon(
 
   const c = pc.promotion.coupon as Stripe.Coupon;
   const restricted = c.applies_to?.products;
-  if (restricted && restricted.length > 0 && !restricted.includes(product.stripeProductId)) {
+  // A code may be scoped to this product's main (recurring/one-time) product OR its
+  // separate setup-fee product. Stripe then applies it only to the matching line.
+  const allowed = [product.stripeProductId, product.stripeSetupProductId].filter(Boolean) as string[];
+  if (restricted && restricted.length > 0 && !restricted.some((r) => allowed.includes(r))) {
     return { error: "This code does not apply to this product" };
   }
 

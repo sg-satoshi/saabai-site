@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const lineItems: SessionLineItem[] = [];
     if (product.billingType === "one_time") {
       lineItems.push({
-        price_data: { currency: "aud", product_data: { name: product.name }, unit_amount: baked.oneTime || 0, tax_behavior: taxBehavior },
+        price_data: { currency: "aud", product: product.stripeProductId, unit_amount: baked.oneTime || 0, tax_behavior: taxBehavior },
         quantity: 1,
       });
     } else {
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       lineItems.push({
         price_data: {
           currency: "aud",
-          product_data: { name: product.name },
+          product: product.stripeProductId,
           unit_amount: baked.recurring || 0,
           recurring: { interval: cfg.interval, interval_count: cfg.interval_count },
           tax_behavior: taxBehavior,
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       });
       if (product.billingType === "setup_monthly" && baked.setup) {
         lineItems.push({
-          price_data: { currency: "aud", product_data: { name: `${product.name} setup fee` }, unit_amount: baked.setup, tax_behavior: taxBehavior },
+          price_data: { currency: "aud", product: product.stripeSetupProductId || product.stripeProductId, unit_amount: baked.setup, tax_behavior: taxBehavior },
           quantity: 1,
         });
       }
