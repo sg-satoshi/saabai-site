@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "18:26", tag: "NEW", title: "Separate discount per fee (setup vs recurring) on products" },
       { time: "18:01", tag: "NEW", title: "Coupons can target setup vs recurring (setup fee on its own Stripe product)" },
       { time: "17:08", tag: "NEW", title: "Coupon code field on Send Invoice (Payments page)" },
       { time: "17:04", tag: "NEW", title: "Coupon code field on the Payments page manual charge + recurring" },
