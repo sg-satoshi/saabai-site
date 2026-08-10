@@ -68,10 +68,13 @@ export async function POST(req: NextRequest) {
       metadata: { source: "saabai-admin-payments" },
     });
 
-    // Create and finalize invoice
+    // Create and finalize invoice. collection_method "send_invoice" is required
+    // to email the customer a payable invoice (vs auto-charging a saved card).
     const invoice = await stripe.invoices.create({
       customer: customerId,
       description: message || description,
+      collection_method: "send_invoice",
+      days_until_due: 7,
       ...(invoiceDiscounts.length ? { discounts: invoiceDiscounts } : {}),
       metadata: {
         source: "saabai-admin-payments",
