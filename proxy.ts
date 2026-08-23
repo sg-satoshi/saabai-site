@@ -87,10 +87,15 @@ const PUBLIC_API = [
   // Public content
   "/api/news",
   "/api/og",
-  // Scheduled jobs (each route checks Authorization: Bearer CRON_SECRET)
+  // Scheduled jobs (each route checks Authorization: Bearer ${CRON_SECRET}
   "/api/cron",
   "/api/rex-weekly-digest",
   "/api/instagram/cron",
+  // MCP gateway — self-authenticated. The route enforces Authorization: Bearer
+  // MCP_API_KEY via authorizeRequest(); exempt at the proxy so it can be reached
+  // on the master domain (saabai.ai) like any external MCP client, not just via
+  // the custom-domain /api pass-through.
+  "/api/mcp",
 ];
 
 // Admin-only endpoints (destructive, PII, or operator tooling). Require a

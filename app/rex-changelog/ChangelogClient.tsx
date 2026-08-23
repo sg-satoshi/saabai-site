@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "23 Aug 2026",
+    entries: [
+      { time: "15:48", tag: "UPDATE", title: "Redeploy trigger to bake in fresh MCP_API_KEY" }
+    ],
+  },
+  {
     date: "10 Aug 2026",
     entries: [
       { time: "22:35", tag: "NEW", title: "Subscription setup fee + start date; fix: null-safe site/user list sort" },
