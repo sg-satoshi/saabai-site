@@ -54,6 +54,14 @@ Using Cloudflare **proxied** (orange cloud) on a domain serving a Vercel API can
 
 ---
 
+## Finance write path (Phase 3, live 2026-08-23)
+
+- **`finance.create_invoice`** (`saabai_create_invoice`) creates a B2B consulting invoice (SG-NNN) in the ledger. Always **approval-gated** (`risk: high`, `requiresApproval: true`), audited, and requires the `finance.write` capability (granted to the operator agent). The number is auto-generated; `GST` stays `0` (not GST-registered). Handler validates the client exists first.
+- **Invoice file-naming convention (owner requirement):** any invoice PDF/attachment filename must read **"Invoice SG-NNN.pdf"** (with the "Invoice " prefix), e.g. "Invoice SG-044.pdf", never just "SG-044.pdf". Apply wherever a filename is generated (email attachment, download link).
+- **Sending (email) is the next increment** — the create/write path is done; emailing the invoice is separate and not yet built.
+
+---
+
 ## Operational rules going forward
 
 1. **New `/api/*` route → update `proxy.ts`** (add to `PUBLIC_API` or `ADMIN_API`) in the same change, or it will 401 on the master domain.

@@ -145,7 +145,7 @@ service-layer abstraction + configuration-over-code**, which this plan builds no
 1. ✅ **Foundation (done):** `lib/mcp/schema.ts` (SaabaiTool metadata), `lib/mcp/registry.ts` (metadata-driven registry + guardrail chain), `lib/mcp/permissions.ts` (capability gate), `lib/mcp/tools.ts` (5 read tools as metadata), `lib/mcp/server.ts` (server from registry). Verified: `tsc` + `verify-mcp` green.
 2. ✅ **Guardrails (done):** `lib/mcp/businessRules.ts` (rules), `lib/mcp/audit.ts` (append-only audit), `lib/mcp/approval.ts` (approval store + gate), `lib/mcp/store.ts` (Redis-or-memory persistence), mock `test_risky_action` + `approvals_resolve`/`approvals_get`. Verified: approval e2e (pending→reject/approve→executed), permission-negative, audit recording all pass.
 3. ⬜ **Tenancy:** thread `tenantId` into ctx + audit (already defaulted; formalize per-tenant rules).
-4. ⬜ **Write path (real need):** invoicing automation (create/send SG-NNN) gated by approval + rules + audit.
+4. ✅ **Write path (create done; send is next increment):** `finance.create_invoice` (create SG-NNN) gated by approval + rules + audit. Live 2026-08-23. The email/send step is the remaining part of this line item.
 5. ⬜ **Admin reader:** surface audit + approvals for a future dashboard.
 6. Verify each with the existing test-harness pattern; keep `tsc` + `build` green.
 
