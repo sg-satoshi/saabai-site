@@ -51,7 +51,9 @@ async function authorizeByCookie(req: Request): Promise<AuthResult> {
 }
 
 export async function authorizeRequest(req: Request): Promise<AuthResult> {
-  const key = process.env.MCP_API_KEY;
+  // Defensive: trim trailing whitespace/newline in case the env var was stored
+  // with one (env value length must match the bearer token exactly).
+  const key = (process.env.MCP_API_KEY ?? "").trim();
   const isProd = process.env.VERCEL_ENV === "production";
 
   // Fail-closed: key must be configured in production.
