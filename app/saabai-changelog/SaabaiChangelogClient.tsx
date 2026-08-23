@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "24 Aug 2026",
     entries: [
+      { time: "01:59", tag: "UPDATE", title: "MCP gateway deployment & operations notes (proxy gate lesson)" },
       { time: "01:50", tag: "FIX", title: "Allow /api/mcp through proxy API gate on master domain" }
     ],
   },

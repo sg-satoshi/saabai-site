@@ -12,6 +12,7 @@ import type { McpContext } from "./schema";
 export const DEFAULT_CAPABILITIES = [
   "customers.read",
   "finance.read",
+  "finance.write",
   "approvals.write",
   "test.write",
 ];

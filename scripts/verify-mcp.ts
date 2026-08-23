@@ -112,14 +112,15 @@ async function main() {
 
   const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
   assert("tools/list HTTP 200", list.status, 200);
-  assert("tools/list has exactly 8 tools", list.json?.result?.tools?.length, 8);
+  assert("tools/list has exactly 9 tools", list.json?.result?.tools?.length, 9);
   const names = (list.json?.result?.tools ?? []).map((t: { name: string }) => t.name).sort();
   assert(
-    "tool names match the eight contracts",
+    "tool names match the nine contracts",
     names,
     [
       "saabai_approvals_get",
       "saabai_approvals_resolve",
+      "saabai_create_invoice",
       "saabai_get_invoice",
       "saabai_list_customers",
       "saabai_list_invoice_clients",
@@ -199,6 +200,49 @@ async function main() {
     status: getBody?.approval?.status,
     reviewedBy: getBody?.approval?.reviewedBy,
   }, { status: "executed", reviewedBy: "shane" });
+
+  // ── Write path: create_invoice (Phase 3) ────────────────────────────────
+  console.log("\nWrite path (create invoice)");
+  const inv = await rpc({
+    jsonrpc: "2.0",
+    id: 10,
+    method: "tools/call",
+    params: {
+      name: "saabai_create_invoice",
+      arguments: {
+        date: "2026-08-23",
+        clientId: "cl_default_hp",
+        lineItems: [{ type: "fixed", description: "Consulting", total: 2000 }],
+      },
+    },
+  });
+  const invBody = callText(inv.json);
+  assert("create_invoice NOT executed, returns approval_required", invBody?.approval_required, true);
+  const invReqId = invBody?.requestId;
+  assert("create_invoice approval request id", typeof invReqId, "string");
+
+  const invApprove = await rpc({
+    jsonrpc: "2.0",
+    id: 11,
+    method: "tools/call",
+    params: {
+      name: "saabai_approvals_resolve",
+      arguments: { requestId: invReqId, decision: "approve", reviewer: "shane" },
+    },
+  });
+  const invApproveBody = callText(invApprove.json);
+  assert("approve create_invoice → status executed", invApproveBody?.status, "executed");
+  const createdInner = callText(invApproveBody);
+  assert("approve create_invoice creates the invoice", createdInner?.created, true);
+  assert(
+    "created invoice carries an SG-NNN number + totals",
+    {
+      number: createdInner?.invoice?.number,
+      total: createdInner?.invoice?.total,
+      status: createdInner?.invoice?.status,
+    },
+    { number: "SG-015", total: 2000, status: "unpaid" }
+  );
 
   // ── Permissions gate ─────────────────────────────────────────────────────
   console.log("\nPermissions");

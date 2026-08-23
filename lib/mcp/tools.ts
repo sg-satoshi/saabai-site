@@ -13,6 +13,7 @@ import {
   listInvoices,
   getInvoice,
   listClients,
+  createInvoice,
   type Invoice,
   type InvoiceClient,
 } from "../invoice-store";
@@ -207,7 +208,57 @@ export function createSaabaiTools(): SaabaiTool[] {
       },
     },
 
-    // 6. Mock HIGH-risk action (approval-gate demonstration) -----------------
+    // 6. Create invoice (write path, Phase 3) -------------------------------
+    {
+      key: "finance.create_invoice",
+      name: "saabai_create_invoice",
+      description:
+        "Create a new B2B consulting invoice (SG-NNN) in the ledger. This is a real financial write " +
+        "and ALWAYS requires human approval. The invoice number is generated automatically.",
+      inputSchema: z.object({
+        date: z.string().describe("Invoice date, YYYY-MM-DD"),
+        clientId: z.string().describe("Invoice client id (see saabai_list_invoice_clients)"),
+        lineItems: z
+          .array(
+            z.object({
+              type: z.enum(["hourly", "fixed"]).optional(),
+              description: z.string(),
+              hours: z.number().optional(),
+              rate: z.number().optional(),
+              total: z.number().optional(),
+              notes: z.string().optional(),
+            })
+          )
+          .min(1)
+          .describe("One or more line items"),
+        notes: z.string().optional(),
+        status: z.enum(["unpaid", "paid", "overdue"]).optional().describe("Defaults to unpaid"),
+      }),
+      requiredCapability: "finance.write",
+      risk: "high",
+      tenantScope: "tenant",
+      requiresApproval: true,
+      audit: true,
+      handler: async (args) => {
+        const clients = await listClients();
+        const client = clients.find((c) => c.id === args.clientId);
+        if (!client) {
+          return jsonText({
+            error: `Unknown clientId '${args.clientId}'. Use saabai_list_invoice_clients to find valid ids.`,
+          });
+        }
+        const invoice = await createInvoice({
+          date: args.date,
+          clientId: args.clientId,
+          lineItems: args.lineItems,
+          notes: args.notes,
+          status: args.status,
+        });
+        return jsonText({ created: true, invoice });
+      },
+    },
+
+    // 7. Mock HIGH-risk action (approval-gate demonstration) -----------------
     {
       key: "test.risky_action",
       name: "saabai_test_risky_action",
