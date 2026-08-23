@@ -240,12 +240,15 @@ function deduplicateSites(sites: Site[]): Site[] {
   const map = new Map<string, Site>();
   // Sort so properly-slugged, domain-having entries win
   const sorted = [...sites].sort((a, b) => {
-    const aScore = (a.domains?.length ? 2 : 0) + (/^[a-z0-9-]+$/.test(a.slug) ? 1 : 0);
-    const bScore = (b.domains?.length ? 2 : 0) + (/^[a-z0-9-]+$/.test(b.slug) ? 1 : 0);
+    const aScore = ((a.domains?.length ? 2 : 0)) + (/^[a-z0-9-]+$/.test(a.slug || "") ? 1 : 0);
+    const bScore = ((b.domains?.length ? 2 : 0)) + (/^[a-z0-9-]+$/.test(b.slug || "") ? 1 : 0);
     return bScore - aScore;
   });
   for (const site of sorted) {
-    const key = site.name.toLowerCase().trim();
+    // Guard against records with a missing/empty name — the list endpoint has
+    // shipped such records before and `.name.toLowerCase()` crashed this page.
+    const key = (site.name || site.slug || "").toString().toLowerCase().trim();
+    if (!key) continue;
     const existing = map.get(key);
     if (!existing) {
       map.set(key, site);
@@ -2840,7 +2843,7 @@ export default function SiteFactoryClient() {
   const filteredSites = dedupedSites
     .filter(s => {
       const q = listSearch.toLowerCase();
-      const matchSearch = !q || s.name.toLowerCase().includes(q) || (s.domains || []).some(d => d.toLowerCase().includes(q)) || s.slug.toLowerCase().includes(q);
+      const matchSearch = !q || (s.name || "").toLowerCase().includes(q) || (s.domains || []).some(d => d.toLowerCase().includes(q)) || (s.slug || "").toLowerCase().includes(q);
       const matchNiche  = listNiche === "all" || s.niche === listNiche;
       const matchStatus = listStatus === "all" || (listStatus === "custom-domain" ? (s.domains || []).length > 0 : s.status === listStatus);
       return matchSearch && matchNiche && matchStatus;
@@ -2848,8 +2851,8 @@ export default function SiteFactoryClient() {
     .sort((a, b) => {
       if (listSort === "newest") return b.createdAt - a.createdAt;
       if (listSort === "oldest") return a.createdAt - b.createdAt;
-      if (listSort === "az")     return a.name.localeCompare(b.name);
-      if (listSort === "za")     return b.name.localeCompare(a.name);
+      if (listSort === "az")     return (a.name || "").localeCompare(b.name || "");
+      if (listSort === "za")     return (b.name || "").localeCompare(a.name || "");
       return 0;
     });
 

@@ -186,7 +186,7 @@ export async function listSites(): Promise<SiteConfig[]> {
   try {
     const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
     const redisSites: SiteConfig[] = data
-      ? Object.values(data).map(v => (typeof v === "string" ? JSON.parse(v) : v))
+      ? Object.values(data).map(parseSiteValue).filter((s): s is SiteConfig => s !== null)
       : [];
 
     // Merge App Router sites, preferring Redis data if same slug exists
@@ -197,6 +197,46 @@ export async function listSites(): Promise<SiteConfig[]> {
   } catch {
     return APP_ROUTER_SITES;
   }
+}
+
+/**
+ * Normalize a raw value read from the `saabai:sites` Redis hash into a usable
+ * SiteConfig, or null if it can't be made valid.
+ *
+ * Handles the double-encode bug where a field was stored as a JSON array
+ * wrapping a single JSON object string, e.g. `["{\"id\":...,\"name\":...}"]`.
+ * @upstash/redis auto-deserializes such a value into a JS array for hgetall,
+ * so naive code (`typeof v === "string" ? JSON.parse(v) : v`) would pass the
+ * array through verbatim and the client would crash on `.name.toLowerCase()`.
+ */
+function parseSiteValue(v: unknown): SiteConfig | null {
+  if (v == null) return null;
+  let obj: unknown = v;
+  // If the stored value is a JSON string, parse it.
+  if (typeof v === "string") {
+    try {
+      obj = JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
+  // A JSON array wrapping a single object/string (the double-encode / list bug).
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return null;
+    obj = obj[0];
+    if (typeof obj === "string") {
+      try {
+        obj = JSON.parse(obj);
+      } catch {
+        return null;
+      }
+    }
+  }
+  if (!obj || typeof obj !== "object") return null;
+  const site = obj as Partial<SiteConfig>;
+  // Only accept records that are actually usable — a slug AND a non-empty name.
+  if (!site.slug || !site.name || !site.name.trim()) return null;
+  return site as SiteConfig;
 }
 
 export async function updateSite(id: string, updates: Partial<SiteConfig>): Promise<void> {
