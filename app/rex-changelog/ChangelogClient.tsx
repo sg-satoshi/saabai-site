@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "10 Aug 2026",
     entries: [
+      { time: "22:35", tag: "NEW", title: "Subscription setup fee + start date; fix: null-safe site/user list sort" },
       { time: "22:19", tag: "FIX", title: "Invoice total $0 — attach line item to the invoice explicitly" },
       { time: "22:15", tag: "NEW", title: "Due date on Send Invoice (payment terms + optional exact date)" },
       { time: "22:00", tag: "FIX", title: "Invoice send requires collection_method send_invoice" },
