@@ -3,6 +3,7 @@
  * Mirrors the mylife.saabai.ai invoicing tool but synced server-side.
  */
 import { getRedis } from "./redis";
+import type { Redis } from "@upstash/redis";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ const INV_PREFIX = "admin:invoices:";
 const CLI_PREFIX = "admin:invoice-clients:";
 const INV_INDEX = "admin:invoices:index";
 const CLI_INDEX = "admin:invoice-clients:index";
+const INV_SEQ_KEY = "admin:invoices:seq";
 
 const DEFAULT_CLIENTS: InvoiceClient[] = [
   { id: "cl_default_hp", name: "Holland Plastics", address: "13 Distribution Ave, Molendinar QLD 4214" },
@@ -90,13 +92,45 @@ export function calcInvoiceTotals(items: InvoiceLineItem[]): { subtotal: number;
   };
 }
 
-export function nextInvoiceNumber(invoices: Invoice[]): string {
-  const nums = invoices.map(inv => {
+/**
+ * Next invoice number (SG-NNN).
+ * With Redis: atomic counter (admin:invoices:seq) — never collides under concurrency.
+ * Without Redis: deterministic fallback from the provided invoices (tests/dry runs).
+ */
+async function ensureSeq(redis: Redis, existing?: Invoice[]): Promise<void> {
+  const cur = Number((await redis.get<unknown>(INV_SEQ_KEY)) ?? 0);
+  if (cur > 0) return;
+  const list = existing ?? (await listInvoices());
+  let max = 0;
+  for (const inv of list) {
     const m = inv.number.match(/SG-(\d+)/);
-    return m ? parseInt(m[1], 10) : 0;
-  });
-  const max = nums.length ? Math.max(...nums) : 14;
-  return "SG-" + String(max + 1).padStart(3, "0");
+    if (m) max = Math.max(max, parseInt(m[1], 10));
+  }
+  // set only if still absent (nx) so a concurrent create can't clobber it
+  await redis.set(INV_SEQ_KEY, String(max), { nx: true });
+}
+
+async function bumpSeq(redis: Redis, number: string): Promise<void> {
+  const m = number.match(/SG-(\d+)/);
+  if (!m) return;
+  const n = parseInt(m[1], 10);
+  const cur = Number((await redis.get<unknown>(INV_SEQ_KEY)) ?? 0);
+  if (cur < n) await redis.set(INV_SEQ_KEY, String(n));
+}
+
+export async function nextInvoiceNumber(existing?: Invoice[]): Promise<string> {
+  const redis = getRedis();
+  if (!redis) {
+    const nums = (existing ?? []).map(inv => {
+      const m = inv.number.match(/SG-(\d+)/);
+      return m ? parseInt(m[1], 10) : 0;
+    });
+    const max = nums.length ? Math.max(...nums) : 14;
+    return "SG-" + String(max + 1).padStart(3, "0");
+  }
+  await ensureSeq(redis, existing);
+  const n = await redis.incr(INV_SEQ_KEY);
+  return "SG-" + String(n).padStart(3, "0");
 }
 
 // ── Client operations ───────────────────────────────────────────────────────
@@ -161,9 +195,19 @@ export async function createInvoice(data: {
   const existing = await listInvoices();
   const totals = calcInvoiceTotals(data.lineItems);
 
+  const redis = getRedis();
+  let number: string;
+  if (data.number) {
+    number = data.number;
+    // keep the atomic counter ahead of any explicitly-supplied number
+    if (redis) await bumpSeq(redis, number);
+  } else {
+    number = await nextInvoiceNumber(existing);
+  }
+
   const invoice: Invoice = {
     id: "inv_" + uid(),
-    number: data.number || nextInvoiceNumber(existing),
+    number,
     date: data.date,
     clientId: data.clientId,
     lineItems: data.lineItems,
@@ -176,7 +220,6 @@ export async function createInvoice(data: {
     updatedAt: new Date().toISOString(),
   };
 
-  const redis = getRedis();
   if (redis) {
     await redis.set(INV_PREFIX + invoice.id, invoice);
     await redis.sadd(INV_INDEX, invoice.id);
