@@ -14,6 +14,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { readAudit } from "../lib/mcp/audit";
 import { assertCapability } from "../lib/mcp/permissions";
 import type { McpContext } from "../lib/mcp/schema";
+import { invoiceFileName, buildInvoicePdf } from "../lib/invoice-send";
 
 let failures = 0;
 function assert(name: string, actual: unknown, expected: unknown) {
@@ -112,10 +113,10 @@ async function main() {
 
   const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
   assert("tools/list HTTP 200", list.status, 200);
-  assert("tools/list has exactly 9 tools", list.json?.result?.tools?.length, 9);
+  assert("tools/list has exactly 10 tools", list.json?.result?.tools?.length, 10);
   const names = (list.json?.result?.tools ?? []).map((t: { name: string }) => t.name).sort();
   assert(
-    "tool names match the nine contracts",
+    "tool names match the ten contracts",
     names,
     [
       "saabai_approvals_get",
@@ -126,6 +127,7 @@ async function main() {
       "saabai_list_invoice_clients",
       "saabai_list_invoices",
       "saabai_query_receivables",
+      "saabai_send_invoice",
       "saabai_test_risky_action",
     ]
   );
@@ -243,6 +245,49 @@ async function main() {
     },
     { number: "SG-015", total: 2000, status: "unpaid" }
   );
+
+  // ── Send path: PDF naming + approval gate (Phase 3 "send") ──────────────
+  console.log("\nSend path (invoice email)");
+  assert("invoice filename uses 'Invoice' prefix", invoiceFileName("SG-015"), "Invoice SG-015.pdf");
+  const mockInv = {
+    id: "inv_x",
+    number: "SG-015",
+    date: "2026-08-23",
+    clientId: "cl_x",
+    lineItems: [{ type: "fixed" as const, description: "Consulting", total: 2000 }],
+    subtotal: 2000,
+    gst: 0,
+    total: 2000,
+    status: "unpaid" as const,
+    createdAt: "",
+    updatedAt: "",
+  };
+  const mockClient = { id: "cl_x", name: "Holland Plastics", address: "x", email: "x@y" };
+  const pdf = await buildInvoicePdf(mockInv as any, mockClient as any);
+  const header = Buffer.from(pdf).toString("utf8").slice(0, 5);
+  assert("buildInvoicePdf produces a PDF (header %PDF-)", header, "%PDF-");
+
+  const send = await rpc({
+    jsonrpc: "2.0",
+    id: 12,
+    method: "tools/call",
+    params: { name: "saabai_send_invoice", arguments: { number: "SG-999" } },
+  });
+  const sendBody = callText(send.json);
+  assert("send_invoice NOT executed, returns approval_required", sendBody?.approval_required, true);
+  const sendReqId = sendBody?.requestId;
+  assert("send_invoice approval request id", typeof sendReqId, "string");
+  const sendReject = await rpc({
+    jsonrpc: "2.0",
+    id: 13,
+    method: "tools/call",
+    params: {
+      name: "saabai_approvals_resolve",
+      arguments: { requestId: sendReqId, decision: "reject", reviewer: "smoke" },
+    },
+  });
+  const sendRejectBody = callText(sendReject.json);
+  assert("send_invoice reject → rejected", sendRejectBody?.status, "rejected");
 
   // ── Permissions gate ─────────────────────────────────────────────────────
   console.log("\nPermissions");

@@ -25,6 +25,7 @@ import {
 import { getApprovalRequest, resolveApproval } from "./approval";
 import { getToolByKey, executeToolHandler } from "./registry";
 import { recordAudit } from "./audit";
+import { sendInvoiceEmail } from "../invoice-send";
 
 const LIMIT = z.number().int().min(1).max(200).default(50);
 
@@ -258,7 +259,50 @@ export function createSaabaiTools(): SaabaiTool[] {
       },
     },
 
-    // 7. Mock HIGH-risk action (approval-gate demonstration) -----------------
+    // 7. Send invoice (Phase 3 "send") --------------------------------------
+    {
+      key: "finance.send_invoice",
+      name: "saabai_send_invoice",
+      description:
+        "Email an existing SG-NNN invoice to its client as a PDF attachment named 'Invoice SG-NNN.pdf'. " +
+        "This is a real financial side-effect and ALWAYS requires human approval.",
+      inputSchema: z
+        .object({
+          id: z.string().optional(),
+          number: z.string().optional().describe("SG-NNN, e.g. SG-015"),
+        })
+        .refine((v) => Boolean(v.id || v.number), { message: "Provide 'id' or 'number'" }),
+      requiredCapability: "finance.write",
+      risk: "high",
+      tenantScope: "tenant",
+      requiresApproval: true,
+      audit: true,
+      handler: async (args) => {
+        let invoice: Invoice | null = null;
+        if (args.id) invoice = await getInvoice(args.id);
+        if (!invoice && args.number) {
+          const all = await listInvoices();
+          const n = args.number as string;
+          invoice = all.find((i) => i.number === n || i.number.startsWith(n)) ?? null;
+        }
+        if (!invoice) return jsonText({ error: "Invoice not found" });
+        const clients = await listClients();
+        const client = clients.find((c) => c.id === invoice!.clientId) ?? null;
+        if (!client) return jsonText({ error: "Invoice client not found" });
+        if (!client.email) {
+          return jsonText({ error: `Client '${client.name}' has no email address to send to` });
+        }
+        try {
+          const res = await sendInvoiceEmail(invoice, client);
+          return jsonText(res);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return jsonText({ sent: false, error: msg });
+        }
+      },
+    },
+
+    // 8. Mock HIGH-risk action (approval-gate demonstration) -----------------
     {
       key: "test.risky_action",
       name: "saabai_test_risky_action",
