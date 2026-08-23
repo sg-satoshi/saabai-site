@@ -20,6 +20,7 @@ export interface AuthResult {
   ok: boolean;
   status: number;
   message?: string;
+  debug?: { keySet: boolean; keyLen: number; tokenLen: number; isProd: boolean };
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -68,7 +69,13 @@ export async function authorizeRequest(req: Request): Promise<AuthResult> {
   if (header.startsWith("Bearer ")) {
     const token = header.slice(7).trim();
     if (token && safeEqual(token, key)) return { ok: true, status: 200 };
-    return { ok: false, status: 401, message: "Unauthorized" };
+    return {
+      ok: false,
+      status: 401,
+      message: "Unauthorized",
+      // TEMP DIAGNOSTIC — remove after deploy verification
+      debug: { keySet: !!key, keyLen: key.length, tokenLen: token.length, isProd },
+    };
   }
 
   // Allow the admin cookie as a secondary gate (browser curl) even when key is set.
