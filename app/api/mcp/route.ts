@@ -18,7 +18,7 @@ async function handle(req: Request): Promise<Response> {
   const auth = await authorizeRequest(req);
   if (!auth.ok) {
     return new Response(
-      JSON.stringify({ error: auth.message ?? "Unauthorized", ...(auth.debug ? { debug: auth.debug } : {}) }),
+      JSON.stringify({ error: auth.message ?? "Unauthorized" }),
       { status: auth.status, headers: { "Content-Type": "application/json" } }
     );
   }
