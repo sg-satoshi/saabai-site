@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "24 Aug 2026",
     entries: [
+      { time: "02:32", tag: "FIX", title: "Atomic SG-NNN counter, no duplicate invoice numbers" },
       { time: "02:14", tag: "NEW", title: "Add finance.send_invoice (Phase 3 send) with PDF attachment" },
       { time: "02:09", tag: "UPDATE", title: "Mark Phase 3 write path done + invoice filename convention" },
       { time: "02:05", tag: "NEW", title: "Add finance.create_invoice write path (Phase 3)" },

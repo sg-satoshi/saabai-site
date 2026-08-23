@@ -7,6 +7,11 @@
  */
 process.env.MCP_API_KEY = "test-key-123";
 process.env.VERCEL_ENV = "development";
+// Hermetic: never touch real Redis / the live invoice ledger, even if an .env
+// is loaded in the shell. This harness must always run as an in-memory dry-run.
+delete process.env.UPSTASH_REDIS_REST_URL;
+delete process.env.UPSTASH_REDIS_REST_TOKEN;
+delete process.env.RESEND_API_KEY;
 
 import { authorizeRequest } from "../lib/mcp/auth";
 import { createSaabaiMcpServer } from "../lib/mcp/server";

@@ -66,7 +66,18 @@ export async function kvSet(key: string, value: unknown, ttlSeconds?: number): P
 
 export async function kvGet<T>(key: string): Promise<T | null> {
   const raw = await backendInstance().get(key);
-  return raw ? (JSON.parse(raw) as T) : null;
+  if (raw == null) return null;
+  // In-memory backend returns the raw JSON string; the Redis backend's `.get()`
+  // already auto-deserializes to an object. Handle both so we never
+  // JSON.parse an already-parsed value (which coerces to "[object Object]").
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return raw as unknown as T;
+    }
+  }
+  return raw as T;
 }
 
 export async function kvListAppend(key: string, value: unknown): Promise<void> {
