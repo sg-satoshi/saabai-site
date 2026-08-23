@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "24 Aug 2026",
+    entries: [
+      { time: "01:50", tag: "FIX", title: "Allow /api/mcp through proxy API gate on master domain" }
+    ],
+  },
+  {
     date: "23 Aug 2026",
     entries: [
       { time: "15:48", tag: "UPDATE", title: "Redeploy trigger to bake in fresh MCP_API_KEY" }
