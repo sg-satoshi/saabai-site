@@ -14,19 +14,44 @@ interface Agent {
   active: boolean;
 }
 
+// Admin light theme palette (matches the /saabai-admin content pages).
+const C = {
+  surface: "#ffffff",
+  border: "rgba(0,0,0,0.08)",
+  teal: "#0891b2",
+  tealBg: "rgba(8,145,178,0.08)",
+  text: "#111827",
+  textDim: "#6b7280",
+  muted: "#9ca3af",
+};
+
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "bots", label: "Bots" },
   { key: "train", label: "Train" },
 ];
 
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-saabai-card border border-saabai-border rounded-2xl p-5 ${className}`}>{children}</div>
+const Card = ({ children }: { children: React.ReactNode }) => (
+  <div style={{
+    background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14,
+    padding: "18px 20px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+  }}>{children}</div>
 );
 
-const label = "block text-xs uppercase tracking-wide text-saabai-text-dim mb-1";
-const input =
-  "w-full bg-saabai-surface border border-saabai-border rounded-lg px-3 py-2 text-sm text-saabai-text outline-none focus:border-saabai-teal";
+const cardStyle: React.CSSProperties = {
+  background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14,
+  padding: "18px 20px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em",
+  textTransform: "uppercase", color: C.textDim, marginBottom: 6,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", background: "#fff", border: `1px solid ${C.border}`, borderRadius: 8,
+  padding: "9px 12px", fontSize: 14, color: C.text, outline: "none",
+};
 
 export default function PortalClient() {
   const [slug, setSlug] = useState("test-tenant");
@@ -36,6 +61,7 @@ export default function PortalClient() {
   const [sources, setSources] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
 
   const json = async (r: Response) => {
     const b = await r.json().catch(() => ({}));
@@ -44,7 +70,7 @@ export default function PortalClient() {
   };
 
   const load = useCallback(async () => {
-    setMsg("");
+    setErr("");
     try {
       const [a, o, s] = await Promise.all([
         fetch(`/api/ai-agent/agents?slug=${slug}`, { credentials: "same-origin" }).then(json),
@@ -55,14 +81,14 @@ export default function PortalClient() {
       setOverview(o);
       setSources(s.sources ?? []);
     } catch (e: any) {
-      setMsg(e.message || "Failed to load");
+      setErr(e.message || "Failed to load");
     }
   }, [slug]);
 
   useEffect(() => { load(); }, [load]);
 
   const saveAgent = async (agent: Partial<Agent>) => {
-    setBusy(true); setMsg("");
+    setBusy(true); setErr(""); setMsg("");
     try {
       const body: any = { slug, ...agent };
       if (agent.id) body.id = agent.id;
@@ -75,12 +101,12 @@ export default function PortalClient() {
       setMsg(`Saved "${r.agent?.name ?? "agent"}".`);
       await load();
     } catch (e: any) {
-      setMsg(e.message || "Save failed");
+      setErr(e.message || "Save failed");
     } finally { setBusy(false); }
   };
 
   const train = async (url: string) => {
-    setBusy(true); setMsg("");
+    setBusy(true); setErr(""); setMsg("");
     try {
       const r = await fetch("/api/ai-agent/ingest", {
         method: "POST",
@@ -91,43 +117,44 @@ export default function PortalClient() {
       setMsg(`Trained: ${r.chunks} chunks.`);
       await load();
     } catch (e: any) {
-      setMsg(e.message || "Train failed");
+      setErr(e.message || "Train failed");
     } finally { setBusy(false); }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold">AI Agent Portal</h1>
-        <p className="text-saabai-text-dim text-sm">Configure, train, and monitor a client&apos;s trained AI agent.</p>
-      </header>
+    <div style={{ padding: "28px 30px", maxWidth: 1080 }}>
+      <h1 style={{ margin: "0 0 2px", fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-0.3px" }}>AI Agent Portal</h1>
+      <p style={{ margin: "0 0 22px", fontSize: 13, color: C.textDim }}>Configure, train, and monitor a client&apos;s trained AI agent.</p>
 
-      <div className="mb-6 flex flex-wrap items-center gap-4">
-        <label className="text-sm text-saabai-text-dim">Tenant</label>
-        <input value={slug} onChange={(e) => setSlug(e.target.value)} className={input + " max-w-xs"} />
-      </div>
-
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === t.key ? "bg-saabai-gold text-black" : "bg-saabai-card border border-saabai-border text-saabai-text"
-            }`}
-          >
-            {t.label}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 18 }}>
+        <span style={{ fontSize: 12, color: C.textDim, fontWeight: 600 }}>Tenant</span>
+        <input value={slug} onChange={(e) => setSlug(e.target.value)} style={{ ...inputStyle, width: 220 }} />
+        <div style={{ display: "flex", gap: 6, marginLeft: 8, flexWrap: "wrap" }}>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{
+                padding: "7px 15px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: `1px solid ${tab === t.key ? "transparent" : C.border}`,
+                background: tab === t.key ? C.teal : "#fff", color: tab === t.key ? "#fff" : C.text,
+                cursor: "pointer", transition: "all 0.12s ease",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+          <button onClick={load} style={{ padding: "7px 15px", borderRadius: 8, fontSize: 13, fontWeight: 600, border: `1px solid ${C.border}`, background: "#fff", color: C.text, cursor: "pointer" }}>
+            Refresh
           </button>
-        ))}
-        <button onClick={load} className="px-4 py-2 rounded-lg text-sm bg-saabai-card border border-saabai-border">
-          Refresh
-        </button>
+        </div>
       </div>
 
-      {msg && <div className="mb-4 text-sm text-saabai-teal-bright">{msg}</div>}
+      {msg && <div style={{ padding: "9px 14px", marginBottom: 14, borderRadius: 8, background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.25)", fontSize: 13, color: "#16a34a" }}>{msg}</div>}
+      {err && <div style={{ padding: "9px 14px", marginBottom: 14, borderRadius: 8, background: "rgba(220,38,26,0.08)", border: "1px solid rgba(220,38,26,0.25)", fontSize: 13, color: "#dc2626" }}>{err}</div>}
 
       {tab === "overview" && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
           <Card><Stat k="Conversations" v={overview?.conversations ?? 0} /></Card>
           <Card><Stat k="Contained %" v={`${overview?.containedRate ?? 0}%`} /></Card>
           <Card><Stat k="Messages" v={overview?.messages ?? 0} /></Card>
@@ -137,27 +164,23 @@ export default function PortalClient() {
         </div>
       )}
 
-      {tab === "bots" && (
-        <div className="space-y-4">
-          <BotEditor agents={agents} slug={slug} onSave={saveAgent} busy={busy} />
-        </div>
-      )}
+      {tab === "bots" && <BotEditor agents={agents} onSave={saveAgent} busy={busy} />}
 
       {tab === "train" && (
-        <div className="space-y-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <TrainForm onTrain={train} busy={busy} />
-          <Card>
-            <div className="text-sm font-semibold mb-3">Knowledge sources</div>
-            {sources.length === 0 && <div className="text-sm text-saabai-text-dim">No sources trained yet.</div>}
-            <ul className="space-y-2">
+          <div style={cardStyle}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>Knowledge sources</div>
+            {sources.length === 0 && <div style={{ fontSize: 13, color: C.textDim }}>No sources trained yet.</div>}
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
               {sources.map((s) => (
-                <li key={s.id} className="flex justify-between text-sm border-b border-saabai-border pb-2">
-                  <span className="truncate pr-4">{s.title || s.url}</span>
-                  <span className="text-saabai-text-dim">{s.status} · {s.chunk_count ?? 0} chunks</span>
+                <li key={s.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderBottom: `1px solid ${C.border}`, fontSize: 13 }}>
+                  <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{(s.title || s.url) as string}</span>
+                  <span style={{ color: C.textDim, flexShrink: 0 }}>{s.status} · {s.chunk_count ?? 0} chunks</span>
                 </li>
               ))}
             </ul>
-          </Card>
+          </div>
         </div>
       )}
     </div>
@@ -166,12 +189,12 @@ export default function PortalClient() {
 
 const Stat = ({ k, v }: { k: string; v: any }) => (
   <div>
-    <div className="text-2xl font-bold text-saabai-gold-bright">{v}</div>
-    <div className="text-xs text-saabai-text-dim uppercase tracking-wide">{k}</div>
+    <div style={{ fontSize: 24, fontWeight: 800, color: C.teal, letterSpacing: "-0.5px" }}>{v}</div>
+    <div style={{ fontSize: 11, color: C.textDim, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{k}</div>
   </div>
 );
 
-function BotEditor({ agents, slug, onSave, busy }: { agents: Agent[]; slug: string; onSave: (a: Partial<Agent>) => void; busy: boolean }) {
+function BotEditor({ agents, onSave, busy }: { agents: Agent[]; onSave: (a: Partial<Agent>) => void; busy: boolean }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("cs");
   const [greeting, setGreeting] = useState("");
@@ -184,35 +207,37 @@ function BotEditor({ agents, slug, onSave, busy }: { agents: Agent[]; slug: stri
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <div className="text-sm font-semibold mb-3">{editing ? "Edit bot" : "Add a bot (persona)"}</div>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div><label className={label}>Name</label><input value={name} onChange={(e) => setName(e.target.value)} className={input} placeholder="e.g. Sales Agent" /></div>
-          <div><label className={label}>Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={input}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={cardStyle}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>{editing ? "Edit bot" : "Add a bot (persona)"}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div><label style={labelStyle}>Name</label><input value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} placeholder="e.g. Sales Agent" /></div>
+          <div><label style={labelStyle}>Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
               <option value="cs">Customer Service</option>
               <option value="sales">Sales</option>
               <option value="booking">Booking</option>
               <option value="concierge">Concierge</option>
             </select>
           </div>
-          <div className="md:col-span-2"><label className={label}>Greeting</label><input value={greeting} onChange={(e) => setGreeting(e.target.value)} className={input} placeholder="Hi! How can I help?" /></div>
-          <div className="md:col-span-2"><label className={label}>System prompt (persona)</label><textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} className={input} placeholder="You are a warm, confident sales assistant for this business. Answer from the provided information..." /></div>
+          <div style={{ gridColumn: "1 / -1" }}><label style={labelStyle}>Greeting</label><input value={greeting} onChange={(e) => setGreeting(e.target.value)} style={inputStyle} placeholder="Hi! How can I help?" /></div>
+          <div style={{ gridColumn: "1 / -1" }}><label style={labelStyle}>System prompt (persona)</label><textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={4} style={{ ...inputStyle, resize: "vertical" }} placeholder="You are a warm, confident sales assistant..." /></div>
         </div>
-        <button onClick={add} disabled={busy || !prompt} className="mt-4 px-4 py-2 rounded-lg bg-saabai-gold text-black text-sm font-semibold disabled:opacity-50">{busy ? "Saving…" : editing ? "Update bot" : "Create bot"}</button>
-      </Card>
+        <button onClick={add} disabled={busy || !prompt} style={{ marginTop: 14, padding: "8px 16px", borderRadius: 8, border: "none", background: C.teal, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", disabled: busy ? "opacity:0.5" : undefined } as any}>
+          {busy ? "Saving…" : editing ? "Update bot" : "Create bot"}
+        </button>
+      </div>
 
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {agents.map((a) => (
-          <Card key={a.id} className="mb-3 flex items-center justify-between">
-            <div>
-              <div className="font-semibold">{a.name}</div>
-              <div className="text-xs text-saabai-text-dim">{a.type} · {a.model_tier} · {a.active ? "active" : "inactive"}</div>
-              <div className="text-xs text-saabai-text-dim mt-1 truncate max-w-md">{a.system_prompt.slice(0, 90)}…</div>
+          <div key={a.id} style={{ ...cardStyle, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{a.name}</div>
+              <div style={{ fontSize: 12, color: C.textDim }}>{a.type} · {a.model_tier} · {a.active ? "active" : "inactive"}</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 460 }}>{a.system_prompt.slice(0, 90)}…</div>
             </div>
-            <button onClick={() => { setEditing(a.id); setName(a.name); setType(a.type); setGreeting(a.greeting || ""); setPrompt(a.system_prompt); }} className="px-3 py-1.5 text-xs rounded-lg border border-saabai-border">Edit</button>
-          </Card>
+            <button onClick={() => { setEditing(a.id); setName(a.name); setType(a.type); setGreeting(a.greeting || ""); setPrompt(a.system_prompt); }} style={{ padding: "6px 13px", borderRadius: 8, border: `1px solid ${C.border}`, background: "#fff", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>Edit</button>
+          </div>
         ))}
       </div>
     </div>
@@ -223,14 +248,16 @@ function TrainForm({ onTrain, busy }: { onTrain: (url: string) => void; busy: bo
   const [url, setUrl] = useState("");
   const submit = () => { if (url) onTrain(url); setUrl(""); };
   return (
-    <Card>
-      <div className="text-sm font-semibold mb-3">Train the agent</div>
-      <label className={label}>Website / page URL</label>
-      <div className="flex gap-2">
-        <input value={url} onChange={(e) => setUrl(e.target.value)} className={input} placeholder="https://yoursite.com/about" />
-        <button onClick={submit} disabled={busy || !url} className="px-4 py-2 rounded-lg bg-saabai-gold text-black text-sm font-semibold whitespace-nowrap disabled:opacity-50">{busy ? "Training…" : "Train"}</button>
+    <div style={cardStyle}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>Train the agent</div>
+      <label style={labelStyle}>Website / page URL</label>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={url} onChange={(e) => setUrl(e.target.value)} style={inputStyle} placeholder="https://yoursite.com/about" />
+        <button onClick={submit} disabled={busy || !url} style={{ padding: "0 18px", borderRadius: 8, border: "none", background: C.teal, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0, opacity: busy || !url ? 0.5 : 1 }}>
+          {busy ? "Training…" : "Train"}
+        </button>
       </div>
-      <p className="text-xs text-saabai-text-dim mt-2">The page is read, chunked, embedded, and used to answer. The raw file is not stored.</p>
-    </Card>
+      <p style={{ fontSize: 12, color: C.textDim, margin: "8px 0 0" }}>The page is read, chunked, embedded, and used to answer. The raw file is not stored.</p>
+    </div>
   );
 }

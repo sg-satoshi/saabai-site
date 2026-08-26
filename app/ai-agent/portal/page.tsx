@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
+import AdminShell from "../../saabai-admin/AdminSidebar";
 import PortalClient from "./portal-client";
 
 export const metadata = { title: "AI Agent Portal — Saabai" };
@@ -19,14 +20,14 @@ export default async function Page() {
     }
   }
   if (!session || !(await isAdminSession(session.clientId))) {
-    redirect("/admin/login?redirect=/ai-agent/portal");
+    redirect("/login?redirect=/ai-agent/portal");
   }
 
   return (
-    <div className="min-h-screen bg-saabai-bg text-saabai-text font-[family-name:var(--font-geist-sans)]">
-      <Suspense fallback={<div className="pt-40 text-center text-saabai-text-dim">Loading portal…</div>}>
+    <AdminShell activePath="/ai-agent/portal">
+      <Suspense fallback={<div style={{ padding: 40, fontSize: 14, color: "#6b7280" }}>Loading portal…</div>}>
         <PortalClient />
       </Suspense>
-    </div>
+    </AdminShell>
   );
 }
