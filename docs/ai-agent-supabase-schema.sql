@@ -234,10 +234,16 @@ create policy tenant_self on tenants
 -- =============================================================================
 -- `authenticated` = the Postgres role our minted JWT carries (decision B).
 -- RLS on every table scopes it to its own tenant_id; grant row access so the
--- policy (not a broad privilege) is what limits the data. `anon` is intentionally
--- NOT granted: no unauthenticated client (e.g. the public widget) touches these
--- tables directly.
+-- policy (not a broad privilege) is what limits the data.
 grant select, insert, update, delete on all tables in schema public to authenticated;
+
+-- DEFENSIVE: even if Supabase's "Automatically expose new tables" was left ON
+-- during project creation (it grants default privileges to `anon`), strip ALL
+-- access from the public anon role. The public widget never talks to the DB
+-- directly — it goes through the server route, which mints the authenticated JWT.
+revoke all on all tables in schema public from anon, public;
+alter default privileges in schema public revoke all on tables from anon, public;
+alter default privileges in schema public revoke all on sequences from anon, public;
 
 -- `service_role` — internal cron / worker ONLY. NEVER minted to a client.
 grant select, insert, update, delete on all tables in schema public to service_role;
