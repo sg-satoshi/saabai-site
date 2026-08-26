@@ -37,6 +37,17 @@ const NAV: {
         ),
       },
       {
+        label: "AI Agents",
+        href: "/ai-agent/portal",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M4.5 7h5M4.5 9.5h2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            <path d="M4.5 3V2a1 1 0 011-1h3a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.3"/>
+          </svg>
+        ),
+      },
+      {
         label: "Site Factory",
         href: "/saabai-admin/site-factory",
         icon: (
