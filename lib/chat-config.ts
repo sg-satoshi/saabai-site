@@ -18,10 +18,12 @@
  */
 
 import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import { openai, createOpenAI } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { xai } from "@ai-sdk/xai";
 import type { LanguageModel } from "ai";
+
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 
 function resolveModel(envKey: string, fallback: string): LanguageModel {
   const value = process.env[envKey] ?? fallback;
@@ -44,6 +46,16 @@ function resolveModel(envKey: string, fallback: string): LanguageModel {
       return google(modelId);
     case "xai":
       return xai(modelId);
+    case "deepseek": {
+      // Prefer the product-dedicated key (never clobber Hermes's own key).
+      const key = process.env.AGENT_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
+      if (!key) {
+        throw new Error(
+          "[chat-config] AGENT_DEEPSEEK_API_KEY (or DEEPSEEK_API_KEY) is not set for provider \"deepseek\""
+        );
+      }
+      return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key })(modelId);
+    }
     default:
       throw new Error(
         `[chat-config] Unknown provider "${provider}" in ${envKey}="${value}". ` +
@@ -76,6 +88,24 @@ export function getPremiumModel(): LanguageModel {
  */
 export function getModel(tier: "default" | "premium" = "default"): LanguageModel {
   return tier === "premium" ? getPremiumModel() : getDefaultModel();
+}
+
+/**
+ * DeepSeek model (OpenAI-compatible via /v1). Cheap, 1M context, text-only.
+ * default = V4 Flash (~$0.14/$0.28 per M), premium = V4 Pro (~$0.435/$0.87 per M).
+ * Requires AGENT_DEEPSEEK_API_KEY (falls back to DEEPSEEK_API_KEY). Route via
+ * DEFAULT_CHAT_MODEL/PREMIUM_CHAT_MODEL as "deepseek:deepseek-v4-flash", or call
+ * getDeepSeekModel() directly.
+ */
+export function getDeepSeekModel(tier: "default" | "premium" = "default"): LanguageModel {
+  const modelId = tier === "premium" ? "deepseek-v4-pro" : "deepseek-v4-flash";
+  const key = process.env.AGENT_DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
+  if (!key) {
+    throw new Error(
+      "[chat-config] AGENT_DEEPSEEK_API_KEY (or DEEPSEEK_API_KEY) is not set (getDeepSeekModel)"
+    );
+  }
+  return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key })(modelId);
 }
 
 /**
