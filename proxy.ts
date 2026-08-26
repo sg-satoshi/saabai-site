@@ -128,6 +128,10 @@ const ADMIN_API = [
   "/api/deploy",
   "/api/imagine",
   "/api/subscribers",
+  // AI Agent portal (admin/operator — Train ingest, persona config, analytics)
+  "/api/ai-agent/ingest",
+  "/api/ai-agent/agents",
+  "/api/ai-agent/overview",
 ];
 
 function matches(pathname: string, prefixes: string[]): boolean {
