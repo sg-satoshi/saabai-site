@@ -252,6 +252,31 @@ grant select, insert, update, delete on all tables in schema public to service_r
 -- widget, never behind a client-facing route without a trusted auth gate.
 
 -- =============================================================================
+-- RAG RETRIEVAL (pgvector similarity, tenant-isolated)
+-- =============================================================================
+-- Standard Supabase RAG function. SECURITY DEFINER so it can read chunks, but it
+-- SCOPE the rows by the caller's JWT claim (auth.jwt() ->> 'tenant_id') — so a
+-- client can only retrieve its own chunks + the shared 'industry' rows. Call via
+-- tenantClient(tenantId).rpc('match_knowledge', {...}) so the JWT claim is present.
+create or replace function match_knowledge(
+  query_embedding vector(1536),
+  match_count int default 6
+) returns table (id text, tenant_id text, source_id text, content text, similarity float)
+language sql security definer stable
+as $$
+  select
+    kc.id,
+    kc.tenant_id,
+    kc.source_id,
+    kc.content,
+    1 - (kc.embedding <=> query_embedding) as similarity
+  from knowledge_chunks kc
+  where kc.tenant_id = (auth.jwt() ->> 'tenant_id') or kc.tenant_id = 'industry'
+  order by kc.embedding <=> query_embedding
+  limit match_count;
+$$;
+
+-- =============================================================================
 -- NOTES
 -- =============================================================================
 -- 1. embedding dim (1536) must match your embedding model. If switching models
