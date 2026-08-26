@@ -84,6 +84,10 @@ const PUBLIC_API = [
   "/api/rex-transcript", // self-checks admin session for reads
   "/api/leadgen/widget",
   "/api/leadgen/config",
+  // Saabai AI Agent public widget + chat (self-authenticated by slug; config
+  // injected server-side, no API key or tenant data reaches the browser)
+  "/api/ai-agent/widget",
+  "/api/ai-agent/chat",
   // Public content
   "/api/news",
   "/api/og",
