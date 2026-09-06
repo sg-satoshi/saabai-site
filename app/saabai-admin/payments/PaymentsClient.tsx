@@ -289,9 +289,32 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
           } else {
             setError(`Payment status: ${paymentIntent.status}`);
           }
+        } else if (data.setupIntentClientSecret) {
+          // Delayed-start / future-anchored subscription: Stripe did not create
+          // an immediate invoice, so this is a SetupIntent (capture the card for
+          // the upcoming invoice) rather than a PaymentIntent (charge now).
+          const { error: confirmError, setupIntent } = await stripe.confirmCardSetup(data.setupIntentClientSecret, {
+            payment_method: { card: elements.getElement(CardElement)! },
+          });
+
+          if (confirmError) {
+            setError(confirmError.message || "Card could not be saved");
+          } else if (setupIntent.status === "succeeded") {
+            const starts = data.startDate ? ` starting ${data.startDate}` : "";
+            setSuccess(`Subscription card saved${starts}. First charge will occur on the billing date.`);
+            clearForm();
+            onSuccess();
+          } else {
+            setError(`Card setup status: ${setupIntent.status}`);
+          }
         } else {
-          setSuccess(`Subscription created (status: ${data.status})`);
-          clearForm();
+          // No payment path returned by the API. The subscription object may
+          // exist in Stripe but no card was captured and nothing was charged.
+          // Do NOT report this as success.
+          setError(
+            "Subscription was created but no payment method was captured, so no charge was made. " +
+            "Check the subscription in Stripe or retry."
+          );
           onSuccess();
         }
       }

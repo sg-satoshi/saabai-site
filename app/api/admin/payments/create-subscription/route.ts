@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
         interval,
         coupon_code: appliedCode || "",
       },
-      expand: ["latest_invoice.payment_intent"],
+      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     };
 
     // One-off first payment (setup fee) — added to the first invoice, charged now.
@@ -187,9 +187,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // When the billing cycle is anchored to a FUTURE date, Stripe does not
+    // create an immediate invoice/PaymentIntent. Instead it issues a
+    // pending_setup_intent to capture the card for the upcoming invoice.
+    // Surface that client secret so the frontend can confirm the card.
+    const pendingSetup = subscription.pending_setup_intent as unknown as Record<string, unknown> | null;
+    let setupIntentClientSecret: string | null = null;
+    if (pendingSetup && typeof pendingSetup !== "string") {
+      setupIntentClientSecret = (pendingSetup as unknown as Record<string, string | null>).client_secret;
+    }
+
     return NextResponse.json({
       subscriptionId: subscription.id,
       clientSecret,
+      setupIntentClientSecret,
       amount: price.unit_amount,
       setupAmount,
       startDate: billingAnchor ? startDate : null,
