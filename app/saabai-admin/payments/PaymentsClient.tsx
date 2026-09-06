@@ -102,10 +102,59 @@ function TypeBadge({ type }: { type: "charge" | "invoice" | "subscription" }) {
 
 // ── Input block ─────────────────────────────────────────────────────────────
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span
+      role="img"
+      aria-label="More info"
+      tabIndex={0}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help", outline: "none" }}
+    >
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="8" cy="8" r="6.7" stroke="#9ca3af" strokeWidth="1.3" />
+        <path d="M8 7.4v3.7" stroke="#9ca3af" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="8" cy="5.1" r="0.9" fill="#9ca3af" />
+      </svg>
+      {open && (
+        <span
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            marginTop: 6,
+            zIndex: 30,
+            width: 250,
+            background: "#111827",
+            color: "#f5f5f7",
+            padding: "9px 11px",
+            borderRadius: 8,
+            fontSize: 11,
+            lineHeight: 1.5,
+            fontWeight: 400,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+            whiteSpace: "normal",
+            textAlign: "left",
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: C.text, letterSpacing: 0.3 }}>{label}</p>
+      <p style={{ margin: "0 0 5px", fontSize: 11, fontWeight: 700, color: C.text, letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 6 }}>
+        <span>{label}</span>
+        {hint && <InfoTip text={hint} />}
+      </p>
       {children}
     </div>
   );
@@ -391,7 +440,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       {mode === "recurring" && (
-        <Field label="Billing Interval">
+        <Field label="Billing Interval" hint="How often the recurring amount is billed. Monthly = one charge each month.">
           <select
             value={interval}
             onChange={e => setInterval(e.target.value)}
@@ -417,7 +466,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       )}
 
       {mode === "recurring" && (
-        <Field label="First payment / setup fee (AUD, optional)">
+        <Field label="First payment / setup fee (AUD, optional)" hint="Extra one-off amount added to the first invoice, on top of the recurring amount. Leave blank if you only want the recurring charge.">
           <div style={{ position: "relative" }}>
             <span style={{ position: "absolute", left: 12, top: 9, fontSize: 13, color: C.muted, pointerEvents: "none" }}>$</span>
             <input
@@ -437,7 +486,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       )}
 
       {mode === "recurring" && (
-        <Field label="Recurring start date (optional, needs a first payment)">
+        <Field label="Recurring start date (optional, needs a first payment)" hint="LEAVE BLANK to charge now. Setting a date delays the first recurring charge to that day. A setup fee is then required so the card is captured today, and the charge is billed on the start date.">
           <input
             type="date"
             value={subStartDate}
@@ -455,7 +504,8 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
         <Input value={customerName} onChange={setCustomerName} placeholder="e.g. John Smith" />
       </Field>
 
-      <Field label={mode === "recurring" ? "Customer Email" : "Customer Email (optional)"}>
+      <Field label={mode === "recurring" ? "Customer Email" : "Customer Email (optional)"}
+        hint={mode === "recurring" ? "Creates the Stripe customer for this subscription. Required so the monthly charge has somewhere to go." : "Used to create a Stripe customer for the charge. Leave blank to charge a card without attaching it to a customer."}>
         <Input value={customerEmail} onChange={setCustomerEmail} placeholder="e.g. john@example.com" type="email" />
       </Field>
 
@@ -685,7 +735,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
         />
       </Field>
 
-      <Field label="Payment terms">
+      <Field label="Payment terms" hint="Days until the invoice is due. Sets the due date on the invoice.">
         <select
           value={termsDays}
           onChange={e => setTermsDays(e.target.value)}
@@ -703,7 +753,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
         </select>
       </Field>
 
-      <Field label="Or exact due date (optional, overrides terms)">
+      <Field label="Or exact due date (optional, overrides terms)" hint="Sets a specific due date instead of the payment-terms offset. Leave blank to use the terms above.">
         <input
           type="date"
           value={exactDate}

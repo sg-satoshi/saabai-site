@@ -28,8 +28,21 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "6 Sep 2026",
+    entries: [
+      { time: "18:24", tag: "FIX", title: "Return setup-intent secret for delayed-start subs and never show false 'subscription created' success when no card was captured" }
+    ],
+  },
+  {
+    date: "26 Aug 2026",
+    entries: [
+      { time: "23:36", tag: "NEW", title: "Admin-gate the portal page (redirect to login) + sidebar link" }
+    ],
+  },
+  {
     date: "24 Aug 2026",
     entries: [
+      { time: "09:44", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },
       { time: "09:44", tag: "FIX", title: "Null-safe site list render + normalize double-encoded Redis site records" },
       { time: "02:39", tag: "FIX", title: "Handle Redis auto-deserialized values in kvGet" },
       { time: "02:32", tag: "FIX", title: "Atomic SG-NNN counter, no duplicate invoice numbers" },

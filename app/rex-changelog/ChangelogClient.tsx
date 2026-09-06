@@ -32,6 +32,7 @@ const CHANGELOG: Day[] = [
   {
     date: "24 Aug 2026",
     entries: [
+      { time: "09:44", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },
       { time: "02:39", tag: "FIX", title: "Handle Redis auto-deserialized values in kvGet" },
       { time: "02:32", tag: "FIX", title: "Atomic SG-NNN counter, no duplicate invoice numbers" },
       { time: "02:14", tag: "NEW", title: "Add finance.send_invoice (Phase 3 send) with PDF attachment" },
