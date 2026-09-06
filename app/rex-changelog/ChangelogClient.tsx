@@ -30,6 +30,12 @@ const TAG_STYLES: Record<Tag, { bg: string; text: string; border: string }> = {
 
 const CHANGELOG: Day[] = [
   {
+    date: "6 Sep 2026",
+    entries: [
+      { time: "23:48", tag: "NEW", title: "Add hover (i) help tooltips to confusing payment fields (recurring start date, setup fee, interval, terms)" }
+    ],
+  },
+  {
     date: "24 Aug 2026",
     entries: [
       { time: "09:44", tag: "UPDATE", title: "Changelog auto-update [skip ci]" },

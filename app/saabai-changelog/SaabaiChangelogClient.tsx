@@ -30,6 +30,7 @@ const CHANGELOG: Day[] = [
   {
     date: "6 Sep 2026",
     entries: [
+      { time: "23:48", tag: "NEW", title: "Add hover (i) help tooltips to confusing payment fields (recurring start date, setup fee, interval, terms)" },
       { time: "18:24", tag: "FIX", title: "Return setup-intent secret for delayed-start subs and never show false 'subscription created' success when no card was captured" }
     ],
   },
