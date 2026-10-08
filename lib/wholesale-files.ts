@@ -1,6 +1,5 @@
 /**
- * Members-only Wholesale Homes files (brochures, rental appraisals, and the
- * marketing flyers that have the package price printed on them). They live in
+ * Members-only Wholesale Homes files (brochures and rental appraisals). They live in
  * private/wholesale-homes (NOT public/), so they're only reachable through
  * /api/wholesale-files/<name>, which checks the session first.
  *
@@ -12,12 +11,6 @@ export const WH_FILES_ROUTE = "/api/wholesale-files";
 export const WH_MEMBER_FILES: Record<string, string> = {
   "kyabram-greens-lot-32-brochure.pdf": "application/pdf",
   "kyabram-greens-lot-32-rental-appraisal.pdf": "application/pdf",
-  "kyabram-greens.jpg": "image/jpeg",
-  "the-willows.jpg": "image/jpeg",
-  "orchardfield.jpg": "image/jpeg",
-  "the-outlook.jpg": "image/jpeg",
-  "woodlands.jpg": "image/jpeg",
-  "winterbrook.jpg": "image/jpeg",
 };
 
 export function memberFileUrl(name: keyof typeof WH_MEMBER_FILES | string): string {

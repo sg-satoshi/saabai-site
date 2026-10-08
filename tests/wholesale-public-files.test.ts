@@ -68,7 +68,7 @@ test("Files: signed-out visitors are sent to the client login (right path on eac
   const b = await getFile("kyabram-greens-lot-32-rental-appraisal.pdf", "", "saabai.ai");
   assert.equal(b.headers.get("location"), "/sites/wholesale-homes/client-login");
   for (const cookie of [await saabai("stu-cycle-test"), "wh_session=forged.value", "wh_admin_session=forged.value"]) {
-    assert.equal((await getFile("the-willows.jpg", cookie)).status, 307, cookie.split("=")[0]);
+    assert.equal((await getFile("kyabram-greens-lot-32-rental-appraisal.pdf", cookie)).status, 307, cookie.split("=")[0]);
   }
 });
 
@@ -82,13 +82,11 @@ test("Files: members (per-user and shared), Wholesale admins and Saabai admins g
     assert.equal(r.headers.get("x-content-type-options"), "nosniff");
     assert.ok(r.bytes!.equals(onDisk));
   }
-  const img = await getFile("kyabram-greens.jpg", await member());
-  assert.equal(img.headers.get("content-type"), "image/jpeg");
 });
 
 test("Files: only allow-listed names are served, even when signed in", async () => {
   const cookie = await member();
-  for (const name of ["../../package.json", "..%2F..%2F.env", "package.json", "kyabram-greens-thumb.jpg", "constructor", "__proto__", "toString"]) {
+  for (const name of ["../../package.json", "..%2F..%2F.env", "package.json", "kyabram-greens-thumb.jpg", "kyabram-greens.jpg", "the-willows.jpg", "constructor", "__proto__", "toString"]) {
     assert.equal((await getFile(name, cookie)).status, 404, name);
   }
 });
@@ -114,12 +112,24 @@ test("Files: every link points at the authenticated route, and every linked file
   for (const u of urls.filter((u) => u.startsWith("/api/wholesale-files/"))) {
     assert.ok(WH_MEMBER_FILES[u.split("/").pop()!], `${u} is allow-listed`);
   }
-  assert.equal(urls.filter((u) => u.startsWith("/api/wholesale-files/")).length, 14);
+  assert.equal(urls.filter((u) => u.startsWith("/api/wholesale-files/")).length, 2, "only the two PDFs are locked");
   // No code anywhere still points at the old public locations.
   const walk = (d: string): string[] => readdirSync(d).flatMap((n) => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : /\.(tsx?|jsx?|md|json)$/.test(n) ? [p] : []; });
-  const old = /\/sites\/wholesale-homes\/(documents\/|(kyabram-greens|the-willows|orchardfield|the-outlook|woodlands|winterbrook)\.jpg)/;
+  const old = /\/sites\/wholesale-homes\/documents\//;
   const hits = [...walk(join(ROOT, "app")), ...walk(join(ROOT, "lib"))].filter((f) => old.test(readFileSync(f, "utf8")));
   assert.deepEqual(hits, []);
+});
+
+test("Flyer images stay public at their original paths (Shane's call), and member links use them", async () => {
+  const { packageDetails, dashboardPackages } = await import("../app/sites/wholesale-homes/_data/member-packages");
+  const flyers = ["kyabram-greens", "the-willows", "orchardfield", "the-outlook", "woodlands", "winterbrook"];
+  for (const f of flyers) {
+    assert.ok(existsSync(join(ROOT, `public/sites/wholesale-homes/${f}.jpg`)), `${f}.jpg is public`);
+    assert.ok(!existsSync(join(ROOT, `private/wholesale-homes/${f}.jpg`)), `${f}.jpg not duplicated in private/`);
+    const url = `/sites/wholesale-homes/${f}.jpg`;
+    assert.equal(packageDetails.filter((p) => p.image === url).length, 1, `${f} detail image`);
+    assert.equal(dashboardPackages.filter((p) => p.image === url).length, 1, `${f} dashboard image`);
+  }
 });
 
 test("Files: the proxy lets the route through on both domains (it checks the session itself)", async () => {
