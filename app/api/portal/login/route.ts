@@ -6,18 +6,16 @@
 
 import { getRedis } from "../../../../lib/redis";
 import { Resend } from "resend";
+import { randomBytes } from "crypto";
+import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai.ai";
 
+// 256-bit crypto-random, URL-safe token (was Math.random, which is predictable).
 function generateToken(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let token = "";
-  for (let i = 0; i < 32; i++) {
-    token += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return token;
+  return randomBytes(32).toString("base64url");
 }
 
 function magicLinkEmail(email: string, link: string): string {
@@ -121,8 +119,10 @@ export async function POST(req: Request) {
     await redis.set(`portal:token:${token}`, normalised, { ex: 900 });
 
     // Store redirect if provided
-    if (redirectParam && typeof redirectParam === "string") {
-      await redis.set(`portal:redirect:${token}`, redirectParam, { ex: 900 });
+    // Only same-origin relative paths are kept (blocks open redirects).
+    const safe = safeRedirect(redirectParam, "");
+    if (safe) {
+      await redis.set(`portal:redirect:${token}`, safe, { ex: 900 });
     }
 
     // Build magic link

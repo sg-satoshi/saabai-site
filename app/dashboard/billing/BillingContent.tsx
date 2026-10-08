@@ -31,6 +31,13 @@ interface Invoice {
   description: string | null;
 }
 
+interface SitePlan {
+  siteName: string;
+  amount: number | null;
+  status: string | null;
+  nextBillingDate: string | null;
+}
+
 function fmtMoney(cents: number, currency: string): string {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: (currency || "aud").toUpperCase(), maximumFractionDigits: 2 }).format(cents / 100);
 }
@@ -61,6 +68,14 @@ export default function BillingContent() {
   const [error, setError] = useState<string | null>(null);
   const [portalBusy, setPortalBusy] = useState(false);
   const [portalErr, setPortalErr] = useState<string | null>(null);
+  const [sitePlan, setSitePlan] = useState<SitePlan | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard/billing/site-plan")
+      .then((r) => (r.ok ? r.json() : { plan: null }))
+      .then((d) => setSitePlan(d.plan || null))
+      .catch(() => setSitePlan(null));
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,6 +113,26 @@ export default function BillingContent() {
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <h1 style={{ margin: "0 0 4px", fontSize: 24, fontWeight: 800, color: C.text }}>Billing</h1>
       <p style={{ margin: "0 0 22px", fontSize: 13, color: C.dim }}>Your invoices and payment details, all in one place.</p>
+
+      {/* Website plan (read-only, only for clients billed outside Stripe) */}
+      {sitePlan && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, borderRadius: 14, padding: 22, marginBottom: 22 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text }}>Your website plan</p>
+          <p style={{ margin: "4px 0 14px", fontSize: 12, color: C.dim }}>{sitePlan.siteName}</p>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
+            {sitePlan.amount != null && (
+              <div><p style={{ margin: 0, fontSize: 11, color: C.muted }}>Monthly</p><p style={{ margin: "2px 0 0", fontSize: 15, fontWeight: 700, color: C.text }}>{fmtMoney(sitePlan.amount, "aud")}</p></div>
+            )}
+            {sitePlan.status && (
+              <div><p style={{ margin: 0, fontSize: 11, color: C.muted }}>Status</p><p style={{ margin: "2px 0 0", fontSize: 15, fontWeight: 700, color: C.text, textTransform: "capitalize" }}>{sitePlan.status}</p></div>
+            )}
+            {sitePlan.nextBillingDate && (
+              <div><p style={{ margin: 0, fontSize: 11, color: C.muted }}>Next billing date</p><p style={{ margin: "2px 0 0", fontSize: 15, fontWeight: 700, color: C.text }}>{new Date(sitePlan.nextBillingDate).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</p></div>
+            )}
+          </div>
+          <p style={{ margin: "14px 0 0", fontSize: 12, color: C.dim }}>To change your plan, just email hello@saabai.ai.</p>
+        </div>
+      )}
 
       {/* Manage billing */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22, marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>

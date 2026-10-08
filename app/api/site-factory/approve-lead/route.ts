@@ -3,7 +3,9 @@ import { Resend } from "resend";
 import { saveDirectoryUser, getDirectoryUser } from "../../../../lib/user-directory";
 
 const redis = Redis.fromEnv();
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Created lazily: constructing Resend at module load throws when
+// RESEND_API_KEY is absent (e.g. Preview builds), failing the whole build.
+const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
 export const runtime = "edge";
 
@@ -126,7 +128,7 @@ export async function POST(req: Request) {
 
     // Send welcome email
     try {
-      await resend.emails.send({
+      await getResend().emails.send({
         from: "Wholesale Homes <hello@wholesalehomes.com.au>",
         to: email,
         subject: `Welcome to Wholesale Homes — your portal is ready`,

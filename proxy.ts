@@ -34,6 +34,7 @@ const PUBLIC_API = [
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/auth/magic-link",    // client magic-link request + verify (self-validating)
   "/api/portal/login",
   "/api/portal/auth",        // magic-link handler — sets the session cookie
   "/api/rex-dashboard-auth", // dashboard password login — issues the cookie

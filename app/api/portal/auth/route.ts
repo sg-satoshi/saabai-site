@@ -9,6 +9,7 @@
 
 import { getRedis } from "../../../../lib/redis";
 import { signSession } from "../../../../lib/portal-session";
+import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,13 +44,14 @@ export async function GET(req: Request) {
   }
 
   // Validate one-time magic link token from Redis
-  const email = await redis.get(`portal:token:${token}`) as string | null;
+  if (token.length > 200) {
+    return Response.redirect(`${BASE_URL}/client-portal?error=invalid_token`, 302);
+  }
+  // Atomic read + delete so a token can only ever be used once.
+  const email = await redis.getdel(`portal:token:${token}`) as string | null;
   if (!email) {
     return Response.redirect(`${BASE_URL}/client-portal?error=invalid_token`, 302);
   }
-
-  // Consume token — one-time use
-  await redis.del(`portal:token:${token}`);
 
   // Check for stored redirect
   const redirectTo = await redis.get(`portal:redirect:${token}`) as string | null;
@@ -61,7 +63,9 @@ export async function GET(req: Request) {
   // Return an HTML page (200 OK) that sets the cookie and redirects via JS.
   // Browsers always process cookies on 200 responses before running scripts —
   // no race condition, no CDN stripping issues.
-  const dest = redirectTo ? (redirectTo.startsWith("http") ? redirectTo : `${BASE_URL}${redirectTo}`) : `${BASE_URL}/client-portal`;
+  // Same-origin relative paths only; absolute/protocol-relative URLs fall back
+  // to the portal (previously any "http..." value was followed: open redirect).
+  const dest = `${BASE_URL}${safeRedirect(redirectTo, "/client-portal")}`;
   const html = `<!DOCTYPE html>
 <html>
 <head>

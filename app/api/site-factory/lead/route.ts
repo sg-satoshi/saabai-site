@@ -3,7 +3,9 @@ import { Resend } from "resend";
 import { getSiteBySlug } from "../../../../lib/site-registry";
 
 const redis = Redis.fromEnv();
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Created lazily: constructing Resend at module load throws when
+// RESEND_API_KEY is absent (e.g. Preview builds), failing the whole build.
+const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
 // Hardcoded lead email overrides — for sites not in the Redis registry
 const LEAD_EMAIL_OVERRIDES: Record<string, string> = {
@@ -171,7 +173,7 @@ export async function POST(req: Request) {
         process.env.LEAD_NOTIFY_EMAIL ??
         "shanegoldberg@pm.me";
 
-      await resend.emails.send({
+      await getResend().emails.send({
         from: "noreply@saabai.ai",
         to: toEmail,
         subject: `New inquiry — ${name || "Anonymous"} via ${siteSlug}`,

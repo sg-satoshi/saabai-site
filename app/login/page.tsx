@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import LoginForm from "./LoginForm";
+import { safeRedirect } from "../../lib/safe-redirect";
 
 export const metadata = { title: "Client Portal, Saabai" };
 
@@ -17,13 +18,14 @@ export default async function LoginPage({
   // Skip login if already authenticated
   if (token) {
     const session = await verifySessionToken(token);
-    if (session) redirect(params.redirect ?? "/dashboard");
+    if (session) redirect(safeRedirect(params.redirect, "/dashboard"));
   }
 
   const isInvalid  = params.error === "invalid";
   const registered = params.registered === "1";
   const regError   = params.reg_error ?? "";
-  const redirectTo = params.redirect ?? "";
+  const redirectTo = params.redirect ? safeRedirect(params.redirect, "") : "";
+  const linkError  = params.error === "link";
 
   return (
     <div style={{
@@ -81,6 +83,7 @@ export default async function LoginPage({
           isInvalid={isInvalid}
           registered={registered}
           regError={regError}
+          linkError={linkError}
         />
       </div>
     </div>

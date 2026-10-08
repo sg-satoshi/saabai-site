@@ -9,6 +9,8 @@ export interface DirectoryUser {
   role: "admin" | "user";
   dashboardUrl: string;
   products?: ProductId[];
+  /** Site Factory site this client owns (links requests + plan to their website). */
+  siteId?: string;
   approvedAt: string;
   createdAt: string;
   profile?: UserProfile;
