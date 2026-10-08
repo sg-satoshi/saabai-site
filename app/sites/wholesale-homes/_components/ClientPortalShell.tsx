@@ -15,6 +15,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { AUTH_KEY } from "../_lib/portal";
+import { useWhBase } from "../_lib/base-context";
 
 const SIDEBAR_STORAGE_KEY = "wh_client_sidebar";
 
@@ -49,6 +50,13 @@ interface Props {
 export function ClientPortalShell({ children, userName }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const base = useWhBase();
+  const [preview, setPreview] = useState(false);
+
+  // Admins (Wholesale or Saabai) can view the portal without a client account.
+  useEffect(() => {
+    fetch("/api/wholesale-auth").then((r) => (r.ok ? r.json() : null)).then((d) => setPreview(!!d?.preview)).catch(() => {});
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -81,10 +89,11 @@ export function ClientPortalShell({ children, userName }: Props) {
   async function handleLogout() {
     await fetch("/api/wholesale-auth", { method: "DELETE" }).catch(() => {});
     localStorage.removeItem(AUTH_KEY);
-    router.push("/client-login");
+    router.push(`${base}/client-login`);
+    router.refresh();
   }
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => pathname === base + href || pathname.startsWith(base + href + "/");
 
   const sidebarWidth = sidebarOpen ? 240 : 64;
 
@@ -155,7 +164,7 @@ export function ClientPortalShell({ children, userName }: Props) {
             return (
               <Link
                 key={n.href}
-                href={n.href}
+                href={base + n.href}
                 onClick={() => setMobileOpen(false)}
                 style={{
                   display: "flex", alignItems: "center", gap: 12,
@@ -292,6 +301,11 @@ export function ClientPortalShell({ children, userName }: Props) {
 
         {/* Page content */}
         <main style={{ flex: 1, padding: "24px 24px 32px" }}>
+          {preview && (
+            <div role="status" style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 10, background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.25)", color: "#0e7490", fontSize: 13, fontWeight: 600 }}>
+              Admin preview: you&apos;re viewing the client portal as an admin, not as a client.
+            </div>
+          )}
           {children}
         </main>
       </div>

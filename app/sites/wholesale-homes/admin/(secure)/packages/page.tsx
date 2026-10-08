@@ -1,26 +1,15 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import AdminShell from "../AdminShell";
+import { packageDetails } from "../../../_data/member-packages";
 
+// Server component (admin only, see ../layout.tsx): the package list is
+// rendered here instead of being bundled into browser JavaScript.
 export default function AdminPackages() {
-  const [packages, setPackages] = useState<{ id: string; name: string; suburb: string; state: string; builder: string; wholesalePrice: number }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    import("../../_data/packages").then((mod) => {
-      setPackages(mod.packages);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
-
+  const packages = packageDetails;
   return (
     <AdminShell>
       <div style={{ maxWidth: 900 }}>
         <h1 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 800, color: "#111827" }}>Packages</h1>
         <p style={{ margin: "0 0 24px", fontSize: 13, color: "#6b7280" }}>{packages.length} active package{packages.length !== 1 ? "s" : ""}</p>
-
-        {loading && <p style={{ fontSize: 13, color: "#6b7280" }}>Loading...</p>}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {packages.map((p) => (

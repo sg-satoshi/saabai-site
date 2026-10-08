@@ -1,3 +1,9 @@
+/**
+ * Wholesale Homes package list used for public SEO metadata on
+ * /packages/[id] (server-rendered only). Do not import from a "use client"
+ * file: that would ship the whole list in the browser bundle. Members-only
+ * data lives in member-packages.ts.
+ */
 export type Package = {
   id: string;
   name: string;
@@ -373,5 +379,4 @@ export const packages: Package[] = [
   },
 ];
 
-export const formatPrice = (n: number) =>
-  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
+export { formatPrice } from "../_lib/format";

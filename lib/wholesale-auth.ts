@@ -28,7 +28,8 @@ const KEY_LABEL = "saabai/wholesale-homes/client-session/v1";
 export interface WholesaleSession {
   email: string;
   name: string;
-  source: "account" | "shared";
+  /** "admin-preview": a Wholesale or Saabai admin viewing the portal (never a wh_session). */
+  source: "account" | "shared" | "admin-preview";
 }
 
 interface TokenPayload {
@@ -63,7 +64,7 @@ function sharedCreds(): { email: string; pass: string } | null {
 }
 
 interface AuthOk {
-  session: WholesaleSession;
+  session: WholesaleSession & { source: "account" | "shared" };
   pwv: string;
 }
 
@@ -165,12 +166,4 @@ export function clearWholesaleSessionCookie(): string {
   return `${WH_COOKIE}=; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=0`;
 }
 
-/**
- * Where the Wholesale client login lives for this host. On wholesalehomes.com.au
- * the site is served at the root; on saabai.ai / previews it's under /sites/….
- */
-export function wholesaleBasePath(host: string | null | undefined): string {
-  const h = (host || "").split(":")[0].toLowerCase();
-  const isSaabaiHost = h === "saabai.ai" || h.endsWith(".saabai.ai") || h.endsWith(".vercel.app") || h === "localhost" || h.startsWith("127.");
-  return isSaabaiHost ? WH_DASHBOARD_PREFIX : "";
-}
+export { wholesaleBasePath } from "./wholesale-paths";

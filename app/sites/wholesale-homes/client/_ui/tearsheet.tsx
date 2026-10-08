@@ -8,6 +8,7 @@
 import { type ReactNode, type CSSProperties } from "react";
 import Link from "next/link";
 import { UI, FONT_DISPLAY, FONT_UI } from "./primitives";
+import { useWhBase } from "../../_lib/base-context";
 
 export const RISE_CSS = `@keyframes whRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}.wh-rise{animation:whRise .6s cubic-bezier(.2,.7,.2,1) both}@media (prefers-reduced-motion:reduce){.wh-rise{animation:none}}`;
 
@@ -21,10 +22,11 @@ export function PageWrap({ children }: { children: ReactNode }) {
 }
 
 export function Masthead({ label }: { label: string }) {
+  const base = useWhBase();
   return (
     <div className="wh-rise" style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 12, paddingBottom: 14, borderBottom: `1px solid ${UI.hair}` }}>
       <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: UI.teal }}>{label}</span>
-      <a href="/client/calculators" style={{ fontSize: 12, fontWeight: 500, color: UI.faintInk, textDecoration: "none" }}>← All calculators</a>
+      <a href={`${base}/client/calculators`} style={{ fontSize: 12, fontWeight: 500, color: UI.faintInk, textDecoration: "none" }}>← All calculators</a>
     </div>
   );
 }
@@ -38,6 +40,7 @@ const CALCULATORS_NAV = [
 
 /** Pill switcher so a client can jump between calculators without going back to the hub. */
 export function CalculatorNav({ current }: { current: string }) {
+  const base = useWhBase();
   return (
     <div className="wh-rise" style={{ animationDelay: "20ms", display: "flex", flexWrap: "wrap", gap: 8, margin: "16px 0 4px" }}>
       {CALCULATORS_NAV.map((c) => {
@@ -45,7 +48,7 @@ export function CalculatorNav({ current }: { current: string }) {
         return (
           <Link
             key={c.slug}
-            href={`/client/calculators/${c.slug}`}
+            href={`${base}/client/calculators/${c.slug}`}
             style={{
               padding: "7px 14px",
               borderRadius: 999,

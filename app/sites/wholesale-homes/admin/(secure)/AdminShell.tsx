@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, Mail, Package, FileText, LogOut, Menu, X, ChevronLeft } from "lucide-react";
-
-const ADMIN_KEY = "wholesale_admin_auth";
+import { LayoutDashboard, Users, Mail, Package, Eye, LogOut, Menu, ChevronLeft } from "lucide-react";
+import { WH_ADMIN_BASE } from "../../../../../lib/wholesale-paths";
+import { useWhBase } from "../../_lib/base-context";
 
 const C = {
   bg: "#0d1b2a", hover: "#152238", active: "#1a2e4a",
@@ -15,30 +15,25 @@ const C = {
 };
 
 const NAV = [
-  { label: "Dashboard",  href: "/admin",           icon: LayoutDashboard },
-  { label: "Leads",      href: "/admin/leads",      icon: Mail },
-  { label: "Users",      href: "/admin/users",      icon: Users },
-  { label: "Packages",   href: "/admin/packages",   icon: Package },
+  { label: "Dashboard",  href: WH_ADMIN_BASE,               icon: LayoutDashboard },
+  { label: "Leads",      href: `${WH_ADMIN_BASE}/leads`,    icon: Mail },
+  { label: "Users",      href: `${WH_ADMIN_BASE}/users`,    icon: Users },
+  { label: "Packages",   href: `${WH_ADMIN_BASE}/packages`, icon: Package },
 ];
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [authed, setAuthed] = useState(false);
+  const base = useWhBase();
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    const raw = localStorage.getItem(ADMIN_KEY);
-    if (!raw) router.replace("/admin/login");
-    else setAuthed(true);
-  }, [router]);
-
-  if (!authed) return null;
-
-  function logout() {
-    localStorage.removeItem(ADMIN_KEY);
-    router.push("/admin/login");
+  // Access is checked on the server (see (secure)/layout.tsx); this shell is
+  // only ever rendered for a signed-in Wholesale admin.
+  async function logout() {
+    await fetch("/api/wholesale-admin-auth", { method: "DELETE" }).catch(() => {});
+    router.push(`${WH_ADMIN_BASE}/login`);
+    router.refresh();
   }
 
   const isActive = (href: string) => pathname === href;
@@ -87,6 +82,10 @@ export default function AdminShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div style={{ padding: "6px", borderTop: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }}>
+          <a href={`${base}/client/dashboard`} target="_blank" rel="noopener"
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 8, textDecoration: "none", color: C.dim, fontSize: 12, whiteSpace: "nowrap" }}>
+            <Eye size={16} /> {open && <span>Preview client portal</span>}
+          </a>
           {open && (
             <button onClick={() => setOpen(false)}
               style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 8, border: "none", background: "transparent", color: C.dim, fontSize: 12, cursor: "pointer" }}>

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
-
-const ADMIN_KEY = "wholesale_admin_auth";
+import { WH_ADMIN_BASE } from "../../../../../lib/wholesale-paths";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -27,8 +26,10 @@ export default function AdminLogin() {
       });
 
       if (res.ok) {
-        localStorage.setItem(ADMIN_KEY, JSON.stringify({ email: email.trim(), loggedInAt: Date.now() }));
-        router.push("/admin");
+        // The server set a signed HttpOnly session cookie; nothing is stored here.
+        localStorage.removeItem("wholesale_admin_auth"); // old flag, no longer used
+        router.push(WH_ADMIN_BASE);
+        router.refresh();
       } else {
         setError("Invalid credentials. Please try again.");
       }
