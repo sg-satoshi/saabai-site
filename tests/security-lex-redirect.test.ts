@@ -1,11 +1,12 @@
 /**
- * Lex portal magic-link allow-list + rate limit.
+ * Lex portal magic-link allow-list + rate limit, and login redirect validation.
  * Runs against an in-memory mock of the Upstash REST API, no real services.
  *
  *   npm run test:portal
  */
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { createMockUpstash } from "../scripts/dev/mock-upstash.mjs";
 
@@ -137,4 +138,27 @@ test("Lex link keeps only safe same-origin redirects", async () => {
   await requestLink("hello@saabai.ai", "https://evil.com/phish");
   await settle(1);
   assert.deepEqual(mock.exec(["KEYS", "portal:redirect:*"]), [], "absolute redirect is dropped");
+});
+
+// ── admin login redirect validation ───────────────────────────────────────
+test("admin login redirect: only same-origin relative paths survive", async () => {
+  const { safeRedirect } = await import("../lib/safe-redirect");
+  const admin = (v: unknown) => safeRedirect(v, "/saabai-admin");
+  assert.equal(admin(undefined), "/saabai-admin");
+  assert.equal(admin("/saabai-admin/users?tab=1"), "/saabai-admin/users?tab=1");
+  for (const bad of ["https://evil.com", "//evil.com", "/\\evil.com", "javascript:alert(1)", "http:/evil.com", " https://evil.com", "/\t/evil.com", ["/a", "/b"], 42]) {
+    assert.equal(admin(bad), "/saabai-admin", `should reject ${JSON.stringify(bad)}`);
+  }
+});
+
+test("admin and PLON login pages never use the raw ?redirect= value", () => {
+  for (const [file, fallback] of [
+    ["app/saabai-admin/login/page.tsx", "/saabai-admin"],
+    ["app/admin/login/page.tsx", "/saabai-admin"],
+    ["app/plon/login/page.tsx", "/rex-dashboard"],
+  ]) {
+    const src = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.ok(src.includes(`safeRedirect(params.redirect, "${fallback}")`), `${file} must validate with safeRedirect`);
+    assert.ok(!/params\.redirect\s*\?\?/.test(src), `${file} still uses params.redirect directly`);
+  }
 });
