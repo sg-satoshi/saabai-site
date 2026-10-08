@@ -1,10 +1,11 @@
 /**
- * Wholesale Homes package list used for public SEO metadata on
- * /packages/[id] (server-rendered only). Do not import from a "use client"
- * file: that would ship the whole list in the browser bundle. Members-only
- * data lives in member-packages.ts.
+ * PUBLIC Wholesale Homes package teasers for the open /packages pages and
+ * their search-engine metadata. Deliberately has NO prices, yields, rents or
+ * other members-only figures: those live in member-packages.ts and are only
+ * shown after sign-in. tests/wholesale-public-files.test.ts checks this file
+ * stays free of them.
  */
-export type Package = {
+export type PublicPackage = {
   id: string;
   name: string;
   suburb: string;
@@ -16,16 +17,15 @@ export type Package = {
   cars: number;
   landSize: number;
   houseSize: number;
-  retailPrice: number;
-  wholesalePrice: number;
   landReady: string;
   badge: "Below Market" | "New Release" | "Limited Availability";
   image: string;
+  /** Short, figure-free selling point ("" when there isn't one). */
   highlight: string;
   description: string;
 };
 
-export const packages: Package[] = [
+export const packages: PublicPackage[] = [
   {
     id: "northbridge-rise-42",
     name: "The Northbridge 42",
@@ -33,13 +33,16 @@ export const packages: Package[] = [
     state: "VIC",
     estate: "Northbridge Rise",
     builder: "Metricon",
-    beds: 4, baths: 2, cars: 2, landSize: 448, houseSize: 248,
-    retailPrice: 689000, wholesalePrice: 621000,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 448,
+    houseSize: 248,
     landReady: "Mar 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/package-1.jpg",
-    highlight: "Saved $68K vs current valuation",
-    description: "A spacious four-bedroom family home designed for modern living. The Northbridge 42 features an open-plan kitchen, dining and living area that flows onto a covered alfresco. The master suite includes a walk-in robe and ensuite, while the remaining bedrooms are serviced by a main bathroom with separate bath and shower. Located in Metricon's master-planned Northbridge Rise estate with parkland and future school precinct.",
+    highlight: "",
+    description: "A spacious four-bedroom family home designed for modern living. The Northbridge 42 features an open-plan kitchen, dining and living area that flows onto a covered alfresco. The master suite includes a walk-in robe and ensuite, while the remaining bedrooms are serviced by a main bathroom with separate bath and shower. Located in Metricon's master-planned Northbridge Rise estate with parkland and future school precinct."
   },
   {
     id: "parklands-haven-36",
@@ -48,13 +51,16 @@ export const packages: Package[] = [
     state: "NSW",
     estate: "Parklands Estate",
     builder: "Metricon",
-    beds: 4, baths: 2, cars: 2, landSize: 512, houseSize: 218,
-    retailPrice: 798000, wholesalePrice: 729000,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 512,
+    houseSize: 218,
     landReady: "Jun 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/package-2.jpg",
-    highlight: "9% below comparable suburb sales",
-    description: "A thoughtfully designed four-bedroom home in Sydney's thriving North West Growth Corridor. The Parklands Haven 36 delivers a functional layout with a dedicated study, media room, and an expansive open-plan living area. The kitchen features a walk-in pantry and island bench. Set on a generous 512m² block within the sought-after Parklands Estate, close to the new Box Hill town centre and future rail.",
+    highlight: "",
+    description: "A thoughtfully designed four-bedroom home in Sydney's thriving North West Growth Corridor. The Parklands Haven 36 delivers a functional layout with a dedicated study, media room, and an expansive open-plan living area. The kitchen features a walk-in pantry and island bench. Set on a generous 512m² block within the sought-after Parklands Estate, close to the new Box Hill town centre and future rail."
   },
   {
     id: "edgewater-loft-28",
@@ -63,13 +69,16 @@ export const packages: Package[] = [
     state: "QLD",
     estate: "Aura",
     builder: "Stockland Partner",
-    beds: 3, baths: 2, cars: 1, landSize: 312, houseSize: 184,
-    retailPrice: 612000, wholesalePrice: 558000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 312,
+    houseSize: 184,
     landReady: "Feb 2026",
     badge: "Limited Availability",
     image: "/sites/wholesale-homes/package-3.jpg",
     highlight: "Only 3 lots remaining",
-    description: "A low-maintenance three-bedroom home perfect for investors and first-home buyers. The Edgewater Loft 28 maximises its 312m² lot with an intelligent split-level design that separates the master suite from the secondary bedrooms. Open-plan living connects to a private courtyard. Located in Stockland's award-winning Aura community, minutes from the new Caloundra CBD and Baringa town centre. Only 3 lots remaining in this release.",
+    description: "A low-maintenance three-bedroom home perfect for investors and first-home buyers. The Edgewater Loft 28 maximises its 312m² lot with an intelligent split-level design that separates the master suite from the secondary bedrooms. Open-plan living connects to a private courtyard. Located in Stockland's award-winning Aura community, minutes from the new Caloundra CBD and Baringa town centre. Only 3 lots remaining in this release."
   },
   {
     id: "ridgeview-prestige-48",
@@ -78,13 +87,16 @@ export const packages: Package[] = [
     state: "VIC",
     estate: "Arcadia",
     builder: "Metricon",
-    beds: 4, baths: 3, cars: 2, landSize: 560, houseSize: 286,
-    retailPrice: 849000, wholesalePrice: 772000,
+    beds: 4,
+    baths: 3,
+    cars: 2,
+    landSize: 560,
+    houseSize: 286,
     landReady: "May 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/hero-home.jpg",
     highlight: "Premium corner lot, north-facing",
-    description: "A premium four-bedroom family residence on one of the largest lots in the Arcadia estate. The Ridgeview Prestige 48 offers dual living zones, a grand master retreat with ensuite and walk-in robe, and a gourmet kitchen with butler's pantry. The north-facing corner aspect captures natural light throughout the day and provides additional side access. Ideal for a boat, caravan or future shed. Landscaping and driveway included.",
+    description: "A premium four-bedroom family residence on one of the largest lots in the Arcadia estate. The Ridgeview Prestige 48 offers dual living zones, a grand master retreat with ensuite and walk-in robe, and a gourmet kitchen with butler's pantry. The north-facing corner aspect captures natural light throughout the day and provides additional side access. Ideal for a boat, caravan or future shed. Landscaping and driveway included."
   },
   {
     id: "harbourline-villa-32",
@@ -93,13 +105,16 @@ export const packages: Package[] = [
     state: "NSW",
     estate: "Emerald Hills",
     builder: "Mirvac Partner",
-    beds: 4, baths: 2, cars: 2, landSize: 420, houseSize: 232,
-    retailPrice: 742000, wholesalePrice: 678000,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 420,
+    houseSize: 232,
     landReady: "Aug 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/interior-kitchen.jpg",
-    highlight: "First release pricing locked in",
-    description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck. The chef's kitchen includes stone benchtops, gas cooking and a walk-in pantry. Part of the first release at Emerald Hills. Pricing is locked in at pre-construction levels, well below future stages.",
+    highlight: "",
+    description: "A beautifully proportioned four-bedroom home designed by Mirvac's award-winning architecture team. The Harbourline Villa 32 features a striking facade, a formal entry foyer, and a light-filled open-plan living area that opens onto a covered entertainer's deck. The chef's kitchen includes stone benchtops, gas cooking and a walk-in pantry. Part of the first release at Emerald Hills."
   },
   {
     id: "sunnydale-terrace-30",
@@ -108,16 +123,17 @@ export const packages: Package[] = [
     state: "QLD",
     estate: "Gainsborough Greens",
     builder: "Metricon",
-    beds: 3, baths: 2, cars: 2, landSize: 392, houseSize: 198,
-    retailPrice: 645000, wholesalePrice: 589000,
+    beds: 3,
+    baths: 2,
+    cars: 2,
+    landSize: 392,
+    houseSize: 198,
     landReady: "Apr 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/lifestyle-living.jpg",
-    highlight: "Growth corridor, strong rental demand",
-    description: "A smart three-bedroom terrace home in one of Queensland's fastest-growing corridors. The Sunnydale Terrace 30 delivers low-maintenance living with a private courtyard, single lock-up garage and separate storage. The master bedroom includes a walk-in robe and ensuite. Positioned within the Gainsborough Greens master-planned community featuring a championship golf course, village centre, and future school. Proven rental demand with vacancy rates under 1% in the area.",
+    highlight: "",
+    description: "A smart three-bedroom terrace home in one of Queensland's fastest-growing corridors. The Sunnydale Terrace 30 delivers low-maintenance living with a private courtyard, single lock-up garage and separate storage. The master bedroom includes a walk-in robe and ensuite. Positioned within the Gainsborough Greens master-planned community featuring a championship golf course, village centre, and future school."
   },
-  // ── Astel Homes ──────────────────────────────────────────────────────
-  // North-Angle Vale
   {
     id: "astel-zara-404",
     name: "Lot 404 - Zara",
@@ -125,15 +141,17 @@ export const packages: Package[] = [
     state: "SA",
     estate: "North-Angle Vale",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 1, landSize: 300, houseSize: 180,
-    retailPrice: 769613, wholesalePrice: 769613,
+    beds: 4,
+    baths: 2,
+    cars: 1,
+    landSize: 300,
+    houseSize: 180,
     landReady: "Jul 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-zara.jpg",
     highlight: "Full turnkey package, Torrens title. Proposed commencement Sep 2026.",
-    description: "A stylish 4-bedroom Zara design in the North-Angle Vale Estate. Full turnkey package on a 300m² Torrens title block with single garage. Fixed price includes all inclusions. Rental appraisal $640-$690 per week (indicative). Proposed site commencement September 2026, subject to land availability. Perfect for investors seeking a quality SA growth corridor property with strong rental demand and competitive pricing.",
+    description: "A stylish 4-bedroom Zara design in the North-Angle Vale Estate. Full turnkey package on a 300m² Torrens title block with single garage. Proposed site commencement September 2026, subject to land availability."
   },
-  // Virginia Park Estate - Premium Stock
   {
     id: "astel-angelina-11",
     name: "Lot 11 - Angelina",
@@ -141,13 +159,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Virginia Park Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 2, landSize: 409, houseSize: 230,
-    retailPrice: 885701, wholesalePrice: 885701,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 409,
+    houseSize: 230,
     landReady: "Jul 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/astel/astel-angelina.jpg",
-    highlight: "Premium stock, price reduced. 2.7m ceilings, silver inclusions, upgraded landscaping.",
-    description: "Premium 4-bedroom Angelina design in Virginia Park Estate. Features 2.7m high ceilings throughout, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. A generous 409m² block with double garage. Rental appraisal $700-$750 per week. Land contract due July 2026 with proposed site commencement October 2026. Premium inclusions at a reduced price point.",
+    highlight: "",
+    description: "Premium 4-bedroom Angelina design in Virginia Park Estate. Features 2.7m high ceilings throughout, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. A generous 409m² block with double garage. Land contract due July 2026 with proposed site commencement October 2026."
   },
   {
     id: "astel-angelina-28",
@@ -156,13 +177,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Virginia Park Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 2, landSize: 410, houseSize: 230,
-    retailPrice: 887000, wholesalePrice: 887000,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 410,
+    houseSize: 230,
     landReady: "Jul 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/astel/astel-angelina.jpg",
     highlight: "Premium corner lot, upgraded inclusions throughout.",
-    description: "Premium 4-bedroom Angelina design on a 410m² block in Virginia Park Estate. Features 2.7m high ceilings, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. Double garage with side access potential. Rental appraisal $700-$750 per week. Land contract due July 2026. Exceptional value with premium inclusions at a reduced price.",
+    description: "Premium 4-bedroom Angelina design on a 410m² block in Virginia Park Estate. Features 2.7m high ceilings, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. Double garage with side access potential. Land contract due July 2026."
   },
   {
     id: "astel-angelina-42",
@@ -171,15 +195,17 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Virginia Park Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 2, landSize: 338, houseSize: 230,
-    retailPrice: 818006, wholesalePrice: 818006,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 338,
+    houseSize: 230,
     landReady: "Jul 2026",
     badge: "Below Market",
     image: "/sites/wholesale-homes/astel/astel-angelina.jpg",
-    highlight: "Premium inclusions, lower entry price point.",
-    description: "Premium 4-bedroom Angelina design on a 338m² block in Virginia Park Estate. Features 2.7m high ceilings, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. Double garage. Rental appraisal $700-$750 per week. The most affordable entry into the premium Virginia Park estate. Land contract due July 2026.",
+    highlight: "",
+    description: "Premium 4-bedroom Angelina design on a 338m² block in Virginia Park Estate. Features 2.7m high ceilings, silver inclusions package, upgraded landscaping, stone benchtops, and ducted reverse cycle air conditioning. Double garage. The most affordable entry into the premium Virginia Park estate. Land contract due July 2026."
   },
-  // Emerald Estate - Angle Vale
   {
     id: "astel-zara-69",
     name: "Lot 69 - Zara",
@@ -187,13 +213,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Emerald Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 1, landSize: 300, houseSize: 180,
-    retailPrice: 794600, wholesalePrice: 794600,
+    beds: 4,
+    baths: 2,
+    cars: 1,
+    landSize: 300,
+    houseSize: 180,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-zara.jpg",
     highlight: "Emerald Estate release. Full turnkey package on 300m².",
-    description: "A 4-bedroom Zara design in the sought-after Emerald Estate, Angle Vale. Full turnkey package on a 300m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q2 2027. Rental appraisal $630-$680 per week. Ideal for investors targeting SA's northern growth corridor.",
+    description: "A 4-bedroom Zara design in the sought-after Emerald Estate, Angle Vale. Full turnkey package on a 300m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q2 2027. Ideal for investors targeting SA's northern growth corridor."
   },
   {
     id: "astel-zara-70",
@@ -202,13 +231,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Emerald Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 1, landSize: 300, houseSize: 180,
-    retailPrice: 794600, wholesalePrice: 794600,
+    beds: 4,
+    baths: 2,
+    cars: 1,
+    landSize: 300,
+    houseSize: 180,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-zara.jpg",
     highlight: "Emerald Estate. Full turnkey, 300m² block, single garage.",
-    description: "A 4-bedroom Zara design in Emerald Estate, Angle Vale. Full turnkey package on a 300m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q2 2027. Rental appraisal $630-$680 per week. A well-priced entry into Adelaide's fastest-growing corridor.",
+    description: "A 4-bedroom Zara design in Emerald Estate, Angle Vale. Full turnkey package on a 300m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q2 2027."
   },
   {
     id: "astel-zara-88",
@@ -217,13 +249,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Emerald Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 1, landSize: 310, houseSize: 180,
-    retailPrice: 807520, wholesalePrice: 807520,
+    beds: 4,
+    baths: 2,
+    cars: 1,
+    landSize: 310,
+    houseSize: 180,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-zara.jpg",
     highlight: "Larger 310m² block in Emerald Estate.",
-    description: "A 4-bedroom Zara design on a larger 310m² block in Emerald Estate, Angle Vale. Full turnkey package with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q2 2027. Rental appraisal $630-$680 per week. The extra land size provides more outdoor space and flexibility.",
+    description: "A 4-bedroom Zara design on a larger 310m² block in Emerald Estate, Angle Vale. Full turnkey package with single garage. Land title due September 2026 with proposed commencement Q2 2027. The extra land size provides more outdoor space and flexibility."
   },
   {
     id: "astel-zara-89",
@@ -232,15 +267,17 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Emerald Estate",
     builder: "Astel Homes",
-    beds: 4, baths: 2, cars: 1, landSize: 310, houseSize: 180,
-    retailPrice: 807520, wholesalePrice: 807520,
+    beds: 4,
+    baths: 2,
+    cars: 1,
+    landSize: 310,
+    houseSize: 180,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-zara.jpg",
     highlight: "Emerald Estate. 310m² block, full turnkey package.",
-    description: "A 4-bedroom Zara design on a 310m² block in Emerald Estate, Angle Vale. Full turnkey package with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q2 2027. Rental appraisal $630-$680 per week. One of the larger blocks in this release, offering excellent value for investors.",
+    description: "A 4-bedroom Zara design on a 310m² block in Emerald Estate, Angle Vale. Full turnkey package with single garage. Land title due September 2026 with proposed commencement Q2 2027. One of the larger blocks in this release, offering excellent value for investors."
   },
-  // Daniel Street - Elizabeth Park
   {
     id: "astel-emilia-1",
     name: "Lot 1 - Emilia",
@@ -248,13 +285,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 233, houseSize: 150,
-    retailPrice: 710000, wholesalePrice: 710000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 233,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
-    highlight: "Affordable 3-bedroom turnkey. Rental $600-$620/wk.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 233m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. An affordable entry point into Adelaide's northern suburbs with strong rental demand.",
+    highlight: "",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 233m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q4 2026."
   },
   {
     id: "astel-emilia-2",
@@ -263,13 +303,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 211, houseSize: 150,
-    retailPrice: 705000, wholesalePrice: 705000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 211,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
-    highlight: "Lowest price point in the Astel release.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 211m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. The most affordable package in this release with strong rental yield potential.",
+    highlight: "",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 211m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q4 2026."
   },
   {
     id: "astel-emilia-3",
@@ -278,13 +321,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 214, houseSize: 150,
-    retailPrice: 710000, wholesalePrice: 710000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 214,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
-    highlight: "3-bedroom turnkey. Fixed price all-inclusive.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 214m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. A well-priced investment opportunity in Adelaide's northern growth corridor.",
+    highlight: "",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 214m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q4 2026."
   },
   {
     id: "astel-kris-4",
@@ -293,13 +339,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 276, houseSize: 160,
-    retailPrice: 735000, wholesalePrice: 735000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 276,
+    houseSize: 160,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-kris.jpg",
     highlight: "Kris design with single + carport on large 276m² block.",
-    description: "A 3-bedroom Kris design on Daniel Street, Elizabeth Park. Full turnkey package on a generous 276m² Torrens title block with single garage and carport. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. Extra off-street parking and larger block make this a standout option.",
+    description: "A 3-bedroom Kris design on Daniel Street, Elizabeth Park. Full turnkey package on a generous 276m² Torrens title block with single garage and carport. Land title due September 2026 with proposed commencement Q4 2026. Extra off-street parking and larger block make this a standout option."
   },
   {
     id: "astel-kris-5",
@@ -308,13 +357,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 2, landSize: 261, houseSize: 160,
-    retailPrice: 730000, wholesalePrice: 730000,
+    beds: 3,
+    baths: 2,
+    cars: 2,
+    landSize: 261,
+    houseSize: 160,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-kris.jpg",
     highlight: "Kris design with double carport. 261m² block.",
-    description: "A 3-bedroom Kris design on Daniel Street, Elizabeth Park. Full turnkey package on a 261m² Torrens title block with double carport. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. Double carport provides excellent tenant appeal and practicality.",
+    description: "A 3-bedroom Kris design on Daniel Street, Elizabeth Park. Full turnkey package on a 261m² Torrens title block with double carport. Land title due September 2026 with proposed commencement Q4 2026. Double carport provides excellent tenant appeal and practicality."
   },
   {
     id: "astel-emilia-6",
@@ -323,13 +375,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 213, houseSize: 150,
-    retailPrice: 735000, wholesalePrice: 735000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 213,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
-    highlight: "Emilia design, single garage. $735K all-in.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 213m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. A reliable investment option in Adelaide's affordable northern suburbs.",
+    highlight: "",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a 213m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q4 2026. A reliable investment option in Adelaide's affordable northern suburbs."
   },
   {
     id: "astel-emilia-7",
@@ -338,13 +393,16 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 281, houseSize: 150,
-    retailPrice: 740000, wholesalePrice: 740000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 281,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
     highlight: "Larger 281m² block. Excellent value.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a generous 281m² Torrens title block with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. One of the larger Emilia blocks, offering more outdoor space at a competitive price.",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on a generous 281m² Torrens title block with single garage. Land title due September 2026 with proposed commencement Q4 2026."
   },
   {
     id: "astel-emilia-8",
@@ -353,15 +411,17 @@ export const packages: Package[] = [
     state: "SA",
     estate: "Daniel Street",
     builder: "Astel Homes",
-    beds: 3, baths: 2, cars: 1, landSize: 296, houseSize: 150,
-    retailPrice: 745000, wholesalePrice: 745000,
+    beds: 3,
+    baths: 2,
+    cars: 1,
+    landSize: 296,
+    houseSize: 150,
     landReady: "Sep 2026",
     badge: "New Release",
     image: "/sites/wholesale-homes/astel/astel-emilia.jpg",
-    highlight: "Largest Emilia block at 296m². $745K fixed.",
-    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on the largest Emilia block at 296m² Torrens title with single garage. Fixed price includes all inclusions. Land title due September 2026 with proposed commencement Q4 2026. Rental appraisal $600-$620 per week. Maximum block size for the Emilia design, ideal for those wanting extra outdoor space.",
+    highlight: "",
+    description: "A 3-bedroom Emilia design on Daniel Street, Elizabeth Park. Full turnkey package on the largest Emilia block at 296m² Torrens title with single garage. Land title due September 2026 with proposed commencement Q4 2026. Maximum block size for the Emilia design, ideal for those wanting extra outdoor space."
   },
-  // Banyan Hill - Metricon
   {
     id: "banyan-hill-lot-1042",
     name: "Lot 1042 - Affogato 21 Tasman",
@@ -369,14 +429,19 @@ export const packages: Package[] = [
     state: "NSW",
     estate: "Banyan Hill",
     builder: "Metricon",
-    beds: 4, baths: 2, cars: 2, landSize: 455, houseSize: 199,
-    retailPrice: 1045216, wholesalePrice: 1045216,
+    beds: 4,
+    baths: 2,
+    cars: 2,
+    landSize: 455,
+    houseSize: 199,
     landReady: "Jan 2027",
     badge: "New Release",
     image: "/sites/wholesale-homes/banyan-hill/banyan-hill-hero.jpg",
     highlight: "Metricon Affogato 21 on 455m². Tasman facade. Title Jan 2027.",
-    description: "A stunning 4-bedroom Metricon Affogato 21MK2 with Tasman facade in Banyan Hill Estate, Cumbalum. Set on a generous 455m² block with 199m² of living, double garage, and premium inclusions. Two-part contract. Land title estimated January 2027. Located in the sought-after Banyan Hill master-planned community.",
-  },
+    description: "A stunning 4-bedroom Metricon Affogato 21MK2 with Tasman facade in Banyan Hill Estate, Cumbalum. Set on a generous 455m² block with 199m² of living, double garage, and premium inclusions. Two-part contract. Land title estimated January 2027. Located in the sought-after Banyan Hill master-planned community."
+  }
 ];
 
-export { formatPrice } from "../_lib/format";
+export function getPublicPackage(id: string): PublicPackage | null {
+  return packages.find((p) => p.id === id) ?? null;
+}
