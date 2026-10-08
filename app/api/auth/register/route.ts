@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import { savePendingRequest, getPortalUser } from "../../../../lib/portal-users";
 import { loadClients } from "../../../../lib/clients";
+import { getDirectoryUser } from "../../../../lib/user-directory";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Don't re-register someone already approved
-  const existing = await getPortalUser(email);
+  const existing = (await getDirectoryUser(email)) ?? (await getPortalUser(email));
   if (existing) {
     failUrl.searchParams.set("reg_error", "exists");
     return Response.redirect(failUrl.toString(), 303);

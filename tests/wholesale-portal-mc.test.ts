@@ -235,3 +235,56 @@ test("wholesaleBasePath picks the right login path per host", async () => {
   assert.equal(wholesaleBasePath("saabai-site-abc.vercel.app"), "/sites/wholesale-homes");
   assert.equal(wholesaleBasePath("localhost:3000"), "/sites/wholesale-homes");
 });
+
+// ── (b) portal approvals can sign in ──────────────────────────────────────
+async function approve(body: object) {
+  const { POST } = await import("../app/api/admin/portal-users/route");
+  return POST(new NextRequest(`${BASE}/api/admin/portal-users`, { method: "POST", headers: { cookie: await adminCookie(), "content-type": "application/json" }, body: JSON.stringify({ action: "approve", ...body }) }));
+}
+
+test("Portal approval with a blank password: directory account + welcome link, then /login works", async () => {
+  const res = await approve({ email: "NewBie@Firm.test", name: "New Bie", dashboardUrl: "/dashboard" });
+  assert.equal(res.status, 200);
+  const u = await storedUser("newbie@firm.test");
+  assert.equal(u?.role, "user");
+  assert.match(String(u?.password), /^scrypt:/);
+  assert.deepEqual(mock.exec(["HKEYS", "portal:pending"]), [], "request cleared");
+  assert.equal(sentEmails.length, 1);
+  assert.match(sentEmails[0].html, /www\.saabai\.ai\/reset-password\?token=[^"]+welcome=1/);
+  assert.equal((await setPasswordFromEmail(sentEmails[0].html, "Newbie-Pass-1")).status, 200);
+  assert.equal(new URL((await saabaiLogin("newbie@firm.test", "Newbie-Pass-1")).location).pathname, "/dashboard");
+});
+
+test("Portal approval with an admin-set password: that password works at /login and isn't emailed", async () => {
+  assert.equal((await approve({ email: "newbie@firm.test", name: "New Bie", password: "Admin-Set-Pass-9", dashboardUrl: "https://evil.com" })).status, 200);
+  assert.equal((await storedUser("newbie@firm.test"))?.dashboardUrl, "/dashboard", "unsafe dashboard URL falls back");
+  assert.equal(new URL((await saabaiLogin("newbie@firm.test", "Admin-Set-Pass-9")).location).pathname, "/dashboard");
+  assert.ok(!sentEmails[0].html.includes("Admin-Set-Pass-9"));
+  // Approving again doesn't overwrite the account.
+  assert.equal((await approve({ email: "newbie@firm.test", password: "Other-Pass-123" })).status, 409);
+  assert.equal(new URL((await saabaiLogin("newbie@firm.test", "Admin-Set-Pass-9")).location).pathname, "/dashboard");
+});
+
+test("Portal approvals need a Saabai admin session", async () => {
+  const { POST } = await import("../app/api/admin/portal-users/route");
+  const { createSessionToken } = await import("../lib/auth");
+  const res = await POST(new NextRequest(`${BASE}/api/admin/portal-users`, { method: "POST", headers: { cookie: `saabai_session=${await createSessionToken("stu-cycle-test")}`, "content-type": "application/json" }, body: JSON.stringify({ action: "approve", email: "x@y.test" }) }));
+  assert.equal(res.status, 401);
+});
+
+test("Older approvals stuck in portal:users can now sign in and are moved into the user store (hashed)", async () => {
+  assert.match((await saabaiLogin("legacy@firm.test", "wrong-password")).location, /error=invalid/);
+  assert.equal(await storedUser("legacy@firm.test"), null, "no migration on a wrong password");
+
+  const ok = await saabaiLogin("legacy@firm.test", "legacy-plain-pw");
+  assert.equal(new URL(ok.location).pathname, "/dashboard");
+  const u = await storedUser("legacy@firm.test");
+  assert.equal(u?.name, "Legacy Person");
+  assert.equal(u?.role, "user");
+  assert.match(String(u?.password), /^scrypt:/);
+  assert.equal(new URL((await saabaiLogin("legacy@firm.test", "legacy-plain-pw")).location).pathname, "/dashboard");
+
+  // An env-var account's email is never shadowed by an old portal record.
+  assert.match((await saabaiLogin("env@client.test", "portal-pw-xyz")).location, /error=invalid/);
+  assert.equal(await storedUser("env@client.test"), null);
+});

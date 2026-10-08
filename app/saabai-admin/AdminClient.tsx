@@ -1070,8 +1070,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
   }
 
   async function approve(req: PendingRequest) {
-    const password = passwords[req.email]?.trim();
-    if (!password) return;
+    const password = passwords[req.email]?.trim() ?? "";
     setBusy(req.email);
     try {
       const res = await fetch("/api/admin/portal-users", {
@@ -1082,7 +1081,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
           email: req.email,
           name: req.name,
           password,
-          dashboardUrl: dashUrls[req.email] || "/rex-dashboard",
+          dashboardUrl: dashUrls[req.email] || "/dashboard",
         }),
       });
       if (res.ok) {
@@ -1169,10 +1168,11 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
                 <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: "uppercase" as const }}>Set credentials</p>
                 <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: "0 0 4px", fontSize: 10, color: C.muted }}>Password</p>
+                    <p style={{ margin: "0 0 4px", fontSize: 10, color: C.muted }}>Password (optional)</p>
                     <input
-                      type="text"
-                      placeholder="Set their password"
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Blank: they choose via email link"
                       value={passwords[req.email] ?? ""}
                       onChange={e => setPasswords(p => ({ ...p, [req.email]: e.target.value }))}
                       style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", fontSize: 12, color: C.text, background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, outline: "none", fontFamily: "inherit" }}
@@ -1182,7 +1182,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
                     <p style={{ margin: "0 0 4px", fontSize: 10, color: C.muted }}>Dashboard</p>
                     <input
                       type="text"
-                      placeholder="/rex-dashboard"
+                      placeholder="/dashboard"
                       value={dashUrls[req.email] ?? ""}
                       onChange={e => setDashUrls(d => ({ ...d, [req.email]: e.target.value }))}
                       style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", fontSize: 12, color: C.text, background: C.card, border: `1px solid ${C.border}`, borderRadius: 7, outline: "none", fontFamily: "inherit" }}
@@ -1190,8 +1190,8 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
                   </div>
                   <button
                     onClick={() => approve(req)}
-                    disabled={!passwords[req.email]?.trim() || busy === req.email}
-                    style={{ padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const, opacity: !passwords[req.email]?.trim() ? 0.5 : 1 }}
+                    disabled={busy === req.email}
+                    style={{ padding: "8px 16px", borderRadius: 7, border: "none", cursor: "pointer", background: C.green, color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const }}
                   >
                     {busy === req.email ? "Saving..." : "Confirm"}
                   </button>
