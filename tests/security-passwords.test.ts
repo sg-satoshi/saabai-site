@@ -335,3 +335,44 @@ test("Wholesale Homes approve-lead: hashed password, branded welcome email witho
   assert.match(sentEmails[0].html, /reset-password\?token=/);
   assert.ok(!/Your Login Details|>Password</i.test(sentEmails[0].html));
 });
+
+// ── forgot password: link is emailed, never returned ──────────────────────
+test("forgot-password never returns the reset link, responds identically, and emails a single-use link", async () => {
+  const forgot = await import("../app/api/auth/forgot-password/route");
+  const ask = (email: string) => forgot.POST(new NextRequest(`${BASE}/api/auth/forgot-password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) }));
+
+  const known = await ask("stu@cycle.test");
+  const unknown = await ask("ghost@nowhere.test");
+  const knownText = await known.text();
+  assert.equal(known.status, unknown.status);
+  assert.equal(knownText, await unknown.text());
+  assert.ok(!/resetLink|token|http/i.test(knownText), `response leaked a link: ${knownText}`);
+
+  await waitFor(() => sentEmails.length > 0);
+  await new Promise((r) => setTimeout(r, 100));
+  assert.equal(sentEmails.length, 1, "only the real account gets an email");
+  assert.equal(sentEmails[0].to, "stu@cycle.test");
+  const token = /reset-password\?token=([^"&]+)/.exec(sentEmails[0].html)?.[1];
+  assert.ok(token);
+
+  const reset = await import("../app/api/auth/reset-password/route");
+  const use = (password: string) => reset.POST(new NextRequest(`${BASE}/api/auth/reset-password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, password }) }));
+  assert.equal((await use("Reset-Pass-456")).status, 200);
+  assert.equal((await use("Reset-Pass-789")).status, 400, "single use");
+  assert.match(String((await storedUser("stu@cycle.test"))?.password), /^scrypt:/);
+  assert.equal(new URL((await login("stu@cycle.test", "Reset-Pass-456")).location).pathname, "/dashboard");
+  // Old raw-token keys are not used any more.
+  const keys = mock.exec(["KEYS", "saabai:reset:*"]);
+  assert.deepEqual(keys, []);
+});
+
+test("forgot-password is rate limited per email (5 per 15 minutes)", async () => {
+  const forgot = await import("../app/api/auth/forgot-password/route");
+  for (let i = 0; i < 8; i++) {
+    const r = await forgot.POST(new NextRequest(`${BASE}/api/auth/forgot-password`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "stu@cycle.test" }) }));
+    assert.equal(r.status, 200);
+  }
+  await waitFor(() => sentEmails.length >= 5);
+  await new Promise((r) => setTimeout(r, 200));
+  assert.equal(sentEmails.length, 5);
+});

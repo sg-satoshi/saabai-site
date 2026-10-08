@@ -30,13 +30,11 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resetLink, setResetLink] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setResetLink("");
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -46,11 +44,7 @@ export default function ForgotPasswordPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
         setSent(true);
-        if (data.resetLink) {
-          setResetLink(data.resetLink);
-        }
       } else {
         const data = await res.json();
         setError(data.error || "Something went wrong. Try again.");
@@ -125,29 +119,10 @@ export default function ForgotPasswordPage() {
                 Reset link sent
               </p>
               <p style={{ margin: 0, fontSize: 13, color: "rgba(134,239,172,0.75)" }}>
-                If an account with this email exists, you will receive a reset link.
+                If an account with this email exists, a reset link is on its way. It works once and expires in 1 hour.
               </p>
             </div>
 
-            {resetLink && (
-              <div style={{
-                padding: "12px 14px",
-                background: "rgba(98,197,209,0.08)",
-                border: "1px solid rgba(98,197,209,0.2)",
-                borderRadius: 10,
-                marginBottom: 16,
-              }}>
-                <p style={{ margin: "0 0 6px", fontSize: 11, color: "rgba(98,197,209,0.6)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
-                  Reset link (dev mode)
-                </p>
-                <a
-                  href={resetLink}
-                  style={{ fontSize: 12, color: "#62c5d1", wordBreak: "break-all" }}
-                >
-                  {resetLink}
-                </a>
-              </div>
-            )}
 
             <a
               href="/login"
