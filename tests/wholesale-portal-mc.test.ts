@@ -298,3 +298,28 @@ test("Mission Control: no PIN in client code; server layout requires an admin se
   assert.match(layout, /isAdminSession\(session\.clientId\)/);
   assert.match(layout, /redirect\("\/login\?redirect=\/mission-control"\)/);
 });
+
+// ── custom-domain API auth ────────────────────────────────────────────────
+async function proxyCall(host: string, path: string) {
+  const { proxy } = await import("../proxy");
+  const res = await proxy(new NextRequest(`https://${host}${path}`, { headers: { host } }));
+  return { status: res.status, next: res.headers.get("x-middleware-next") === "1", rewrite: res.headers.get("x-middleware-rewrite") ?? "" };
+}
+
+test("Custom domains no longer bypass API auth; site-facing public endpoints still work", async () => {
+  for (const path of ["/api/user-directory", "/api/site-factory/approve-lead", "/api/admin/portal-users", "/api/edge/profile", "/api/growth"]) {
+    const r = await proxyCall("www.wholesalehomes.com.au", path);
+    assert.equal(r.status, 401, `${path} must require a session on the custom domain`);
+    assert.equal(r.next, false);
+  }
+  for (const path of ["/api/site-factory/lead", "/api/site-factory-chat", "/api/wholesale-auth", "/api/wholesale-admin-auth", "/api/auth/reset-password", "/api/auth/forgot-password", "/api/cycle-repair/lead"]) {
+    assert.equal((await proxyCall("www.wholesalehomes.com.au", path)).next, true, `${path} stays reachable on the custom domain`);
+  }
+  // Pages are still rewritten to the site.
+  assert.match((await proxyCall("www.wholesalehomes.com.au", "/client/dashboard")).rewrite, /\/sites\/wholesale-homes\/client\/dashboard$/);
+  assert.match((await proxyCall("www.wholesalehomes.com.au", "/set-password")).rewrite, /\/sites\/wholesale-homes\/set-password$/);
+  // Same rules on saabai.ai.
+  assert.equal((await proxyCall("www.saabai.ai", "/api/user-directory")).status, 401);
+  assert.equal((await proxyCall("www.saabai.ai", "/api/site-factory-chat")).status, 401);
+  assert.equal((await proxyCall("www.saabai.ai", "/api/wholesale-auth")).next, true);
+});

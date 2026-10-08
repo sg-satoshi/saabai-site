@@ -63,6 +63,8 @@ const PUBLIC_API = [
   "/api/subscribe",
   "/api/onboarding",
   "/api/wholesale-auth",
+  "/api/wholesale-admin-auth", // credential check only (returns success/fail)
+  "/api/cycle-repair/lead",    // Stu's Cycle Repairs contact form
   // Public lead-gen tool (top of funnel)
   "/api/analyze-document",
   // AI Audit fact-find — token-gated public questionnaire (clients have no login)
@@ -98,8 +100,7 @@ const PUBLIC_API = [
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer
   // MCP_API_KEY via authorizeRequest(); exempt at the proxy so it can be reached
-  // on the master domain (saabai.ai) like any external MCP client, not just via
-  // the custom-domain /api pass-through.
+  // on the master domain (saabai.ai) like any external MCP client.
   "/api/mcp",
 ];
 
@@ -135,6 +136,13 @@ const ADMIN_API = [
   "/api/ai-agent/overview",
 ];
 
+// Public endpoints that client websites on their own domains call today but
+// that stay session-protected on saabai.ai (e.g. the site chat widget, which
+// is also the Site Factory authoring chat). Only allowed on custom domains.
+const CUSTOM_DOMAIN_PUBLIC_API = [
+  "/api/site-factory-chat",
+];
+
 function matches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
@@ -163,6 +171,19 @@ async function getSession(req: NextRequest): Promise<{ clientId: string } | null
   return null;
 }
 
+async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse> {
+  if (matches(pathname, PUBLIC_API)) return NextResponse.next();
+
+  const session = await getSession(req);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (matches(pathname, ADMIN_API) && session.clientId !== ADMIN_ID) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return NextResponse.next();
+}
+
 export async function proxy(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const hostname = host.split(":")[0];
@@ -188,9 +209,12 @@ export async function proxy(req: NextRequest) {
         return NextResponse.rewrite(url);
       }
       const siteBase = `/sites/${slug}`;
-      // Pass through API calls (handled by route handlers, not static files)
+      // API calls are NOT a free pass on custom domains: they get the same
+      // deny-by-default checks as on saabai.ai (below), plus a short list of
+      // site-facing public endpoints.
       if (pathname.startsWith("/api/")) {
-        return NextResponse.next();
+        if (matches(pathname, CUSTOM_DOMAIN_PUBLIC_API)) return NextResponse.next();
+        return apiAuth(req, pathname);
       }
       // Admin and auth pages should pass through without the site slug prefix
       if (pathname.startsWith("/saabai-admin") || pathname.startsWith("/admin") || pathname.startsWith("/login")) {
@@ -215,18 +239,7 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ── API routes: deny-by-default ──────────────────────────────────────
-  if (pathname.startsWith("/api/")) {
-    if (matches(pathname, PUBLIC_API)) return NextResponse.next();
-
-    const session = await getSession(req);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (matches(pathname, ADMIN_API) && session.clientId !== ADMIN_ID) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    return NextResponse.next();
-  }
+  if (pathname.startsWith("/api/")) return apiAuth(req, pathname);
 
   // ── Page routes: redirect to login when protected ────────────────────
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
