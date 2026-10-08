@@ -125,7 +125,7 @@ test("Wholesale: approve-lead account -> welcome email -> set password on wholes
   assert.equal(ok.status, 200);
   assert.match(ok.cookie, /wh_session=[^;]+; Path=\/; HttpOnly;( Secure;)? SameSite=Lax; Max-Age=604800/);
   const me = await whMe(ok.token);
-  assert.deepEqual(me, { status: 200, body: { authenticated: true, email: "wendy@homes.test", name: "Wendy Buyer" } });
+  assert.deepEqual(me, { status: 200, body: { authenticated: true, email: "wendy@homes.test", name: "Wendy Buyer", preview: false } });
 });
 
 test("Wholesale: wrong password and unknown emails are rejected without a cookie", async () => {
