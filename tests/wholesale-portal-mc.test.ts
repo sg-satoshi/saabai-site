@@ -288,3 +288,13 @@ test("Older approvals stuck in portal:users can now sign in and are moved into t
   assert.match((await saabaiLogin("env@client.test", "portal-pw-xyz")).location, /error=invalid/);
   assert.equal(await storedUser("env@client.test"), null);
 });
+
+// ── (c) Mission Control ───────────────────────────────────────────────────
+test("Mission Control: no PIN in client code; server layout requires an admin session", () => {
+  const page = readFileSync(new URL("../app/mission-control/page.tsx", import.meta.url), "utf8");
+  assert.ok(!/NEXT_PUBLIC_MC_PASSWORD|saabai2026|AuthGate|mc_unlocked/.test(page), "PIN code removed");
+  const layout = readFileSync(new URL("../app/mission-control/layout.tsx", import.meta.url), "utf8");
+  assert.match(layout, /verifySessionToken/);
+  assert.match(layout, /isAdminSession\(session\.clientId\)/);
+  assert.match(layout, /redirect\("\/login\?redirect=\/mission-control"\)/);
+});
