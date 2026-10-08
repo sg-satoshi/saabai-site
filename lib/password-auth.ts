@@ -56,7 +56,7 @@ export async function authenticateWithPassword(rawEmail: string, password: strin
  * only writes if the stored value is unchanged, so a concurrent password change
  * is never overwritten. Never throws.
  */
-async function upgradeStoredPassword(email: string, previousStored: string, password: string): Promise<boolean> {
+export async function upgradeStoredPassword(email: string, previousStored: string, password: string): Promise<boolean> {
   try {
     const hashed = await hashPassword(password);
     const fresh = await getDirectoryUser(email);
@@ -70,3 +70,4 @@ async function upgradeStoredPassword(email: string, previousStored: string, pass
     return false;
   }
 }
+

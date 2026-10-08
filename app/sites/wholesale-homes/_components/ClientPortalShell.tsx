@@ -49,7 +49,6 @@ interface Props {
 export function ClientPortalShell({ children, userName }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [authed, setAuthed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -70,14 +69,8 @@ export function ClientPortalShell({ children, userName }: Props) {
     if (saved !== null) setSidebarOpen(saved === "true");
   }, []);
 
-  useEffect(() => {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) {
-      router.replace("/client-login");
-    } else {
-      setAuthed(true);
-    }
-  }, [router]);
+  // Access is enforced server-side (see client/*/layout.tsx and the signed
+  // wh_session cookie). The localStorage flag is only a UI hint for the header.
 
   function toggleSidebar() {
     const next = !sidebarOpen;
@@ -85,12 +78,11 @@ export function ClientPortalShell({ children, userName }: Props) {
     localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    await fetch("/api/wholesale-auth", { method: "DELETE" }).catch(() => {});
     localStorage.removeItem(AUTH_KEY);
     router.push("/client-login");
   }
-
-  if (!authed) return null;
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 

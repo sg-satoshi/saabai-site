@@ -332,7 +332,7 @@ test("Wholesale Homes approve-lead: hashed password, branded welcome email witho
   assert.match(String((await storedUser("wendy@homes.test"))?.password), /^scrypt:/);
   assert.equal(sentEmails.length, 1);
   assert.match(sentEmails[0].html, /Wholesale Homes Australia/);
-  assert.match(sentEmails[0].html, /reset-password\?token=/);
+  assert.match(sentEmails[0].html, /wholesalehomes\.com\.au\/set-password\?token=/);
   assert.ok(!/Your Login Details|>Password</i.test(sentEmails[0].html));
 });
 
