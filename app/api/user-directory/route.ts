@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products } = body;
+    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId } = body;
 
     if (!name || !email || !password) {
       return Response.json({ error: "Name, email, and password required" }, { status: 400 });
@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       role,
       dashboardUrl,
       ...(Array.isArray(products) ? { products } : {}),
+      ...(typeof siteId === "string" && siteId ? { siteId: siteId.slice(0, 100) } : {}),
       approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };
@@ -84,7 +85,7 @@ export async function PATCH(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { originalEmail, name, email, password, role, dashboardUrl, products } = body;
+    const { originalEmail, name, email, password, role, dashboardUrl, products, siteId } = body;
     if (!originalEmail) return Response.json({ error: "originalEmail required" }, { status: 400 });
 
     const existing = await getDirectoryUser(originalEmail);
@@ -100,6 +101,11 @@ export async function PATCH(req: NextRequest) {
       ...(Array.isArray(products) ? { products } : {}),
       ...(password ? { password } : {}),
     };
+    // siteId: string links the client to a website; "" unlinks; undefined leaves it.
+    if (typeof siteId === "string") {
+      if (siteId) updated.siteId = siteId.slice(0, 100);
+      else delete updated.siteId;
+    }
 
     // If email changed, delete old key first
     if (newEmail !== originalEmail.toLowerCase()) {

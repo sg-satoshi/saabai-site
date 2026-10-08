@@ -38,14 +38,44 @@ export default function LoginForm({
   isInvalid,
   registered,
   regError,
+  linkError = false,
 }: {
   redirectTo: string;
   isInvalid: boolean;
   registered: boolean;
   regError: string;
+  linkError?: boolean;
 }) {
-  const [view, setView] = useState<"login" | "request">("login");
+  const [view, setView] = useState<"login" | "request" | "magic" | "magic-sent">(linkError ? "magic" : "login");
   const [showSuccess, setShowSuccess] = useState(registered);
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicBusy, setMagicBusy] = useState(false);
+  const [magicErr, setMagicErr] = useState("");
+
+  async function requestMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    if (magicBusy || !magicEmail.includes("@")) return;
+    setMagicBusy(true);
+    setMagicErr("");
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: magicEmail.trim(), redirect: redirectTo }),
+      });
+      if (!res.ok) throw new Error("failed");
+      setView("magic-sent");
+    } catch {
+      setMagicErr("Something went wrong. Please try again.");
+    } finally {
+      setMagicBusy(false);
+    }
+  }
+
+  const linkBtnStyle: React.CSSProperties = {
+    background: "none", border: "none", cursor: "pointer",
+    color: "rgba(98,197,209,0.6)", fontSize: 12, padding: 0, fontFamily: "inherit",
+  };
 
   if (showSuccess) {
     return (
@@ -77,6 +107,67 @@ export default function LoginForm({
           Back to sign in
         </button>
       </div>
+    );
+  }
+
+  if (view === "magic-sent") {
+    return (
+      <div>
+        <div style={{
+          marginBottom: 24, padding: "14px 16px", textAlign: "center",
+          background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 10,
+        }}>
+          <p style={{ margin: "0 0 4px", fontSize: 14, color: "#86efac", fontWeight: 700 }}>Check your email</p>
+          <p style={{ margin: 0, fontSize: 13, color: "rgba(134,239,172,0.75)", lineHeight: 1.5 }}>
+            If {magicEmail.trim() || "that email"} has a client account, a sign-in link is on its way. It expires in 15 minutes.
+          </p>
+        </div>
+        <p style={{ textAlign: "center", fontSize: 12, color: "rgba(131,153,192,0.5)" }}>
+          <button type="button" onClick={() => setView("login")} style={linkBtnStyle}>Back to sign in</button>
+        </p>
+      </div>
+    );
+  }
+
+  if (view === "magic") {
+    return (
+      <form onSubmit={requestMagicLink}>
+        {linkError && (
+          <div style={{ marginBottom: 16, padding: "10px 14px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: 10 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "#fca5a5", fontWeight: 500 }}>
+              That sign-in link has expired or was already used. Please request a new one.
+            </p>
+          </div>
+        )}
+        <p style={{ margin: "0 0 16px", fontSize: 13, color: "rgba(240,244,255,0.6)", lineHeight: 1.55 }}>
+          Enter the email you use with Saabai and we&apos;ll email you a one-time sign-in link. No password needed.
+        </p>
+        <div style={{ marginBottom: 20 }}>
+          <label htmlFor="magic-email" style={labelStyle}>Email</label>
+          <input
+            id="magic-email" name="email" type="email" autoComplete="email" autoFocus required
+            placeholder="you@company.com" value={magicEmail}
+            onChange={e => setMagicEmail(e.target.value)}
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+        </div>
+        {magicErr && <p style={{ margin: "-8px 0 14px", fontSize: 12, color: "#fca5a5" }}>{magicErr}</p>}
+        <button
+          type="submit" disabled={magicBusy}
+          style={{
+            width: "100%", padding: "12px", fontSize: 14, fontWeight: 700,
+            background: "rgba(98,197,209,0.15)", border: "1px solid rgba(98,197,209,0.35)",
+            borderRadius: 10, cursor: "pointer", color: "#62c5d1", letterSpacing: 0.3,
+            fontFamily: "inherit", opacity: magicBusy ? 0.6 : 1,
+          }}
+        >
+          {magicBusy ? "Sending…" : "Email me a sign-in link"}
+        </button>
+        <p style={{ marginTop: 18, textAlign: "center", fontSize: 12, color: "rgba(131,153,192,0.5)" }}>
+          Prefer your password?{" "}
+          <button type="button" onClick={() => setView("login")} style={linkBtnStyle}>Sign in with password</button>
+        </p>
+      </form>
     );
   }
 
@@ -221,6 +312,19 @@ export default function LoginForm({
           Forgot password?
         </a>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setView("magic")}
+        style={{
+          width: "100%", marginTop: 16, padding: "11px",
+          fontSize: 13, fontWeight: 600, background: "transparent",
+          border: "1px solid rgba(98,197,209,0.2)", borderRadius: 10,
+          cursor: "pointer", color: "rgba(98,197,209,0.8)", fontFamily: "inherit",
+        }}
+      >
+        ✉ Email me a sign-in link
+      </button>
 
       <p style={{ marginTop: 14, textAlign: "center", fontSize: 12, color: "rgba(131,153,192,0.5)" }}>
         Need access?{" "}

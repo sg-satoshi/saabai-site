@@ -301,6 +301,16 @@ function buildNavSections(products: ProductInfo[], activePath: string): NavSecti
         href: "/dashboard",
         icon: <DashboardIcon />,
       },
+      {
+        label: "Requests",
+        href: "/dashboard/requests",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        ),
+      },
     ],
   };
 

@@ -21,6 +21,7 @@ interface User {
   source?: string;
   dashboardUrl?: string;
   products?: string[];
+  siteId?: string;
   createdAt?: string | number;
   lastActive?: string | number;
   status?: string;
@@ -458,7 +459,7 @@ function Modal({ open, onClose, title, subtitle, width = 480, children, danger }
 // ── User form (Add / Edit) ───────────────────────────────────────────────
 function UserForm({ initial, mode, onSubmit, onCancel }: {
   initial?: User; mode: "add" | "edit";
-  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; sendInvite: boolean }) => void | Promise<void>;
+  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean }) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initial?.name || "");
@@ -469,6 +470,15 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   const [selectedProducts, setSelectedProducts] = useState<string[]>(initial?.products || []);
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [siteId, setSiteId] = useState(initial?.siteId || "");
+  const [sites, setSites] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/client-sites")
+      .then(r => (r.ok ? r.json() : { sites: [] }))
+      .then(d => setSites(Array.isArray(d.sites) ? d.sites : []))
+      .catch(() => setSites([]));
+  }, []);
 
   const isEdit = mode === "edit";
   const valid = name.trim() && email.includes("@") && (isEdit || password.length >= 8);
@@ -478,7 +488,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
     if (!valid || submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit({ name, email, password, role, dashboardUrl, products: selectedProducts, sendInvite });
+      await onSubmit({ name, email, password, role, dashboardUrl, products: selectedProducts, siteId, sendInvite });
     } finally {
       setSubmitting(false);
     }
@@ -514,6 +524,22 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
 
       <Field label="Dashboard route" hint="Which surface this user lands on after signing in.">
         <DashboardPicker value={dashboardUrl} onChange={setDashboardUrl} />
+      </Field>
+
+      <Field label="Linked website" hint="Links this client to their website, so their portal requests and plan show the right site.">
+        <select
+          value={siteId}
+          onChange={e => setSiteId(e.target.value)}
+          style={{
+            width: "100%", padding: "10px 12px", borderRadius: 8,
+            border: `1px solid ${C.border2}`, background: "#ffffff",
+            color: C.text, fontSize: 14, outline: "none",
+          }}
+        >
+          <option value="">No website linked</option>
+          {siteId && !sites.some(x => x.id === siteId) && <option value={siteId}>{siteId}</option>}
+          {sites.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select>
       </Field>
 
       <Field label="Product access" hint="Toggle which products this user can access. Changes take effect immediately.">
@@ -1230,7 +1256,7 @@ export default function UsersClient() {
     setLoading(false);
   }
 
-  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; sendInvite: boolean }) {
+  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean }) {
     try {
       const res = await fetch("/api/user-directory", {
         method: "POST",
@@ -1239,6 +1265,7 @@ export default function UsersClient() {
           name: data.name, email: data.email, password: data.password,
           role: data.role, dashboardUrl: data.dashboardUrl,
           products: data.products,
+          siteId: data.siteId,
         }),
       });
       const out = await res.json();
@@ -1264,6 +1291,7 @@ export default function UsersClient() {
         role: updated.role,
         dashboardUrl: updated.dashboardUrl,
         products: updated.products || [],
+        siteId: updated.siteId ?? "",
       };
       if (updated.password && updated.password.trim()) body.password = updated.password;
       const res = await fetch("/api/user-directory", {

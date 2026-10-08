@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { loadClients, findClientByCredentials } from "../../../../lib/clients";
 import { createSessionToken, sessionCookieHeader } from "../../../../lib/auth";
 import { getDirectoryUser } from "../../../../lib/user-directory";
+import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const email    = formData.get("email")?.toString()    ?? "";
   const password = formData.get("password")?.toString() ?? "";
-  const redirect = formData.get("redirect")?.toString() ?? "";
+  const redirect = safeRedirect(formData.get("redirect")?.toString(), "");
 
   // Check env-var clients first, then Redis-backed users
   const clients     = loadClients();
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   // If there's an explicit redirect (user came from a protected page), honour it.
   // Otherwise send to the unified /dashboard hub.
-  const destination = redirect && redirect.startsWith("/") ? redirect : "/dashboard";
+  const destination = redirect || "/dashboard";
   const destUrl     = new URL(destination, req.url).toString();
 
   return new Response(null, {

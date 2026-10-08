@@ -12,7 +12,9 @@
     "atlas": "tsx ./atlas/atlas.ts",
     "atlas:dev": "tsx watch ./atlas/atlas.ts",
     "lint": "next lint",
-    "predeploy": "npx tsc --noEmit && npm run build"
+    "predeploy": "npx tsc --noEmit && npm run build",
+    "test:portal": "tsx --test tests/client-portal.test.ts",
+    "dev:mock-redis": "node scripts/dev/mock-upstash.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
