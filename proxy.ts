@@ -63,7 +63,8 @@ const PUBLIC_API = [
   "/api/subscribe",
   "/api/onboarding",
   "/api/wholesale-auth",
-  "/api/wholesale-admin-auth", // credential check only (returns success/fail)
+  "/api/wholesale-admin-auth", // Wholesale admin sign-in (issues its own signed cookie)
+  "/api/wholesale-admin",      // Wholesale admin data; each route checks the Wholesale admin session
   "/api/cycle-repair/lead",    // Stu's Cycle Repairs contact form
   // Public lead-gen tool (top of funnel)
   "/api/analyze-document",

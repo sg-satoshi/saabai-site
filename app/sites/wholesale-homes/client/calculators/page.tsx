@@ -5,6 +5,7 @@ import { ClientPortalShell } from "../../_components/ClientPortalShell";
 import { Calculator, TrendingUp, DollarSign, Home, ArrowRight } from "lucide-react";
 import { UI, FONT_DISPLAY } from "../_ui/primitives";
 import { PageWrap, Masthead, Card } from "../_ui/tearsheet";
+import { useWhBase } from "../../_lib/base-context";
 
 const CALCULATORS = [
   {
@@ -35,6 +36,7 @@ const CALCULATORS = [
 ];
 
 export default function CalculatorsHub() {
+  const base = useWhBase();
   const featured = CALCULATORS.find(c => c.featured)!;
   const rest = CALCULATORS.filter(c => !c.featured);
 
@@ -55,7 +57,7 @@ export default function CalculatorsHub() {
         </div>
 
         {/* Featured */}
-        <Link href={`/client/calculators/${featured.slug}`} className="wh-rise" style={{ animationDelay: "120ms", display: "block", textDecoration: "none", marginBottom: 20 }}>
+        <Link href={`${base}/client/calculators/${featured.slug}`} className="wh-rise" style={{ animationDelay: "120ms", display: "block", textDecoration: "none", marginBottom: 20 }}>
           <Card className="group" style={{ display: "flex", alignItems: "center", gap: 22, transition: "transform .18s, box-shadow .18s" }}>
             <div style={{ display: "flex", height: 56, width: 56, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 16, background: `${UI.teal}14`, color: UI.teal }}>
               <featured.icon style={{ height: 26, width: 26 }} />
@@ -72,7 +74,7 @@ export default function CalculatorsHub() {
         {/* Rest */}
         <div className="wh-rise" style={{ animationDelay: "180ms", display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           {rest.map((c) => (
-            <Link key={c.slug} href={`/client/calculators/${c.slug}`} className="group" style={{ textDecoration: "none" }}>
+            <Link key={c.slug} href={`${base}/client/calculators/${c.slug}`} className="group" style={{ textDecoration: "none" }}>
               <Card style={{ height: "100%", transition: "transform .18s, box-shadow .18s" }}>
                 <div style={{ display: "flex", height: 44, width: 44, alignItems: "center", justifyContent: "center", borderRadius: 12, background: `${UI.teal}14`, color: UI.teal, marginBottom: 14 }}>
                   <c.icon style={{ height: 20, width: 20 }} />

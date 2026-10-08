@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bed, Bath, Car, Maximize } from "lucide-react";
 import type { Package } from "../_data/packages";
-import { formatPrice } from "../_data/packages";
+import { formatPrice } from "../_lib/format";
 
 export function PackageCard({ pkg }: { pkg: Package }) {
   const savings = pkg.retailPrice - pkg.wholesalePrice;

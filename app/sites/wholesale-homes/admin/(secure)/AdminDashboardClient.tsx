@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AdminShell from "./AdminShell";
+import { WH_ADMIN_BASE } from "../../../../../lib/wholesale-paths";
 
 interface Lead {
   name: string; email: string; phone: string; buyer_type?: string;
@@ -12,30 +13,30 @@ interface User {
   name: string; email: string; role: string; createdAt: string;
 }
 
-export default function AdminDashboard() {
+export default function AdminDashboardClient({ packageCount }: { packageCount: number }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [stats, setStats] = useState({ pending: 0, users: 0, packages: 0 });
+  const [stats, setStats] = useState({ pending: 0, users: 0, packages: packageCount });
 
   useEffect(() => {
     async function load() {
       try {
         const [leadRes, userRes] = await Promise.all([
-          fetch("/api/site-factory/lead?siteSlug=wholesale-homes"),
-          fetch("/api/user-directory"),
+          fetch("/api/wholesale-admin/leads"),
+          fetch("/api/wholesale-admin/users"),
         ]);
         const leadData = await leadRes.json();
         const userData = await userRes.json();
 
         const pending = leadData.success ? leadData.leads.length : 0;
         const totalUsers = userData.success ? userData.users.length : 0;
-        setStats({ pending, users: totalUsers, packages: 26 });
+        setStats({ pending, users: totalUsers, packages: packageCount });
         setLeads(leadData.success ? leadData.leads : []);
         setUsers(userData.success ? userData.users : []);
       } catch {}
     }
     load();
-  }, []);
+  }, [packageCount]);
 
   const recentLeads = leads.slice(-5).reverse();
 
@@ -68,10 +69,10 @@ export default function AdminDashboard() {
           </div>
           <div style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.08)", padding: 20 }}>
             <p style={{ margin: "0 0 12px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: "#9ca3af" }}>Quick Actions</p>
-            <a href="/admin/leads" style={{ display: "block", padding: "10px 14px", marginBottom: 8, borderRadius: 8, background: "rgba(8,145,178,0.08)", color: "#0891b2", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            <a href={`${WH_ADMIN_BASE}/leads`} style={{ display: "block", padding: "10px 14px", marginBottom: 8, borderRadius: 8, background: "rgba(8,145,178,0.08)", color: "#0891b2", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
               Approve pending leads &rarr;
             </a>
-            <a href="/admin/users" style={{ display: "block", padding: "10px 14px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: "#16a34a", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            <a href={`${WH_ADMIN_BASE}/users`} style={{ display: "block", padding: "10px 14px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: "#16a34a", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
               Manage users &rarr;
             </a>
           </div>

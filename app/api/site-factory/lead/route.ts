@@ -1,6 +1,8 @@
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 import { getSiteBySlug } from "../../../../lib/site-registry";
+import { listSiteLeads } from "../../../../lib/site-leads";
+import { verifySessionToken, isAdminSession, COOKIE_NAME } from "../../../../lib/auth";
 
 const redis = Redis.fromEnv();
 // Created lazily: constructing Resend at module load throws when
@@ -50,7 +52,10 @@ function corsJson(data: unknown, status = 200, origin?: string | null): Response
   return Response.json(data, { status, headers: { ...CORS_HEADERS, "Access-Control-Allow-Origin": corsOrigin(o) } });
 }
 
-export const runtime = "edge";
+// Node runtime: the admin check on GET verifies the Saabai session with
+// WebCrypto, which the edge sandbox rejected (cross-realm ArrayBuffer) in
+// local testing. Lead capture (POST) behaves the same on Node.
+export const runtime = "nodejs";
 
 function buildLeadEmail(lead: {
   name: string;
@@ -213,17 +218,21 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
+  // Lead lists are personal information: Saabai admins only. (The route is
+  // public in proxy.ts so sites can POST leads, so the check lives here.)
+  // The Wholesale admin reads its own leads via /api/wholesale-admin/leads.
+  if (!(await isSaabaiAdmin(req))) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const url = new URL(req.url);
     const siteSlug = url.searchParams.get("siteSlug");
 
-    if (!siteSlug) {
+    if (!siteSlug || !/^[a-z0-9-]{1,80}$/.test(siteSlug)) {
       return Response.json({ error: "siteSlug is required" }, { status: 400 });
     }
 
-    const leadsRaw = await redis.lrange(`saabai:leads:${siteSlug}`, 0, 99);
-    const leads = leadsRaw.map((l: string) => JSON.parse(l));
-
+    const leads = await listSiteLeads(siteSlug);
     return Response.json({ success: true, leads });
   } catch (error) {
     console.error("Lead fetch error:", error);
@@ -232,4 +241,12 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+async function isSaabaiAdmin(req: Request): Promise<boolean> {
+  const cookie = req.headers.get("cookie") ?? "";
+  const m = new RegExp(`(?:^|;\\s*)${COOKIE_NAME}=([^;]+)`).exec(cookie);
+  if (!m) return false;
+  const session = await verifySessionToken(decodeURIComponent(m[1]));
+  return !!session && (await isAdminSession(session.clientId));
 }

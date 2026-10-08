@@ -5,7 +5,6 @@ import AdminShell from "../AdminShell";
 
 interface User {
   name: string; email: string; role: string; createdAt: string; lastActive?: string;
-  source?: string; dashboardUrl?: string;
 }
 
 export default function AdminUsers() {
@@ -13,18 +12,15 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/user-directory")
+    fetch("/api/wholesale-admin/users")
       .then((r) => r.json())
       .then((d) => { if (d.success) setUsers(d.users); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const whUsers = users.filter((u) => {
-    if (u.source === "env") return true;
-    if (u.dashboardUrl?.includes("wholesale")) return true;
-    return false;
-  });
+  // The API only returns Wholesale Homes accounts.
+  const whUsers = users;
 
   return (
     <AdminShell>

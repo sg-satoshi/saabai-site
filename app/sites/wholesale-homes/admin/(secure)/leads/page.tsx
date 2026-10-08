@@ -17,7 +17,7 @@ export default function AdminLeads() {
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/site-factory/lead?siteSlug=wholesale-homes");
+      const res = await fetch("/api/wholesale-admin/leads");
       const data = await res.json();
       if (data.success && Array.isArray(data.leads)) setLeads(data.leads.reverse());
     } catch {} finally { setLoading(false); }
@@ -28,7 +28,7 @@ export default function AdminLeads() {
   async function approve(lead: Lead) {
     setApproving(lead.email);
     try {
-      const res = await fetch("/api/site-factory/approve-lead", {
+      const res = await fetch("/api/wholesale-admin/approve-lead", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: lead.name, email: lead.email, phone: lead.phone, buyer_type: lead.buyer_type }),
       });
