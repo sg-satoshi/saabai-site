@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
+import { runAfterResponse } from "../../../lib/run-after";
 import { listDirectoryUsers, saveDirectoryUser, deleteDirectoryUser, getDirectoryUser } from "../../../lib/user-directory";
 import { loadClients } from "../../../lib/clients";
 import { getRedis } from "../../../lib/redis";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { hashPassword, generateRandomPassword, validateNewPassword, withoutPassword } from "../../../lib/password";
+import { sendWelcomeEmail } from "../../../lib/account-emails";
 
-export const runtime = "edge";
+// Node runtime: password hashing uses Node's crypto.scrypt.
+export const runtime = "nodejs";
 
 const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
@@ -24,11 +28,7 @@ export async function GET(req: NextRequest) {
   try {
     const redisUsers = await listDirectoryUsers();
     // Never expose stored passwords in the directory listing.
-    const safeUsers = redisUsers.map((u) => {
-      const rest = { ...u } as Record<string, unknown>;
-      delete rest.password;
-      return rest;
-    });
+    const safeUsers = redisUsers.map((u) => withoutPassword(u));
     const envClients = loadClients().map(c => ({
       id: c.id,
       name: c.name,
@@ -49,10 +49,16 @@ export async function POST(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId } = body;
+    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId, sendInvite } = body;
 
-    if (!name || !email || !password) {
-      return Response.json({ error: "Name, email, and password required" }, { status: 400 });
+    if (!name || !email || typeof email !== "string") {
+      return Response.json({ error: "Name and email required" }, { status: 400 });
+    }
+    // Password is optional: leave it blank and the welcome email lets the user
+    // choose their own via a single-use set-password link.
+    if (password) {
+      const invalid = validateNewPassword(password);
+      if (invalid) return Response.json({ error: invalid }, { status: 400 });
     }
 
     const existing = await getDirectoryUser(email);
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
       id: email.toLowerCase().replace(/[^a-z0-9]/g, "-"),
       name,
       email: email.toLowerCase(),
-      password,
+      password: await hashPassword(password || generateRandomPassword()),
       role,
       dashboardUrl,
       ...(Array.isArray(products) ? { products } : {}),
@@ -74,7 +80,13 @@ export async function POST(req: NextRequest) {
     };
 
     await saveDirectoryUser(user);
-    return Response.json({ success: true, user });
+
+    // Welcome email never contains a password, only a set-password link.
+    const inviteQueued = sendInvite === true || !password;
+    if (inviteQueued) {
+      runAfterResponse(() => sendWelcomeEmail({ name: user.name, email: user.email, mentionMagicLink: user.role !== "admin" }));
+    }
+    return Response.json({ success: true, inviteQueued, user: withoutPassword(user) });
   } catch (error) {
     console.error("Create user error:", error);
     return Response.json({ error: "Failed to create user" }, { status: 500 });
@@ -91,6 +103,11 @@ export async function PATCH(req: NextRequest) {
     const existing = await getDirectoryUser(originalEmail);
     if (!existing) return Response.json({ error: "User not found" }, { status: 404 });
 
+    if (password) {
+      const invalid = validateNewPassword(password);
+      if (invalid) return Response.json({ error: invalid }, { status: 400 });
+    }
+
     const newEmail = (email || originalEmail).toLowerCase();
     const updated = {
       ...existing,
@@ -99,7 +116,7 @@ export async function PATCH(req: NextRequest) {
       role: role ?? existing.role,
       dashboardUrl: dashboardUrl ?? existing.dashboardUrl,
       ...(Array.isArray(products) ? { products } : {}),
-      ...(password ? { password } : {}),
+      ...(password ? { password: await hashPassword(password) } : {}),
     };
     // siteId: string links the client to a website; "" unlinks; undefined leaves it.
     if (typeof siteId === "string") {
@@ -114,7 +131,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     await saveDirectoryUser(updated);
-    return Response.json({ success: true, user: { ...updated, password: undefined } });
+    return Response.json({ success: true, user: withoutPassword(updated) });
   } catch (error) {
     console.error("Update user error:", error);
     return Response.json({ error: "Failed to update user" }, { status: 500 });

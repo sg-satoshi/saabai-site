@@ -8,7 +8,9 @@
  *   SAABAI_CLIENT_N_ID          — Unique slug, no spaces (e.g. "plasticonline")
  *   SAABAI_CLIENT_N_NAME        — Display name (e.g. "PlasticOnline")
  *   SAABAI_CLIENT_N_EMAIL       — Login email (e.g. "admin@plasticonline.com.au")
- *   SAABAI_CLIENT_N_PASSWORD    — Plain-text password (store securely in Vercel)
+ *   SAABAI_CLIENT_N_PASSWORD    — Password. Plain text or (preferred) a scrypt hash
+ *                                 from `npx tsx scripts/hash-password.ts`. Verified
+ *                                 in constant time by lib/password-auth.ts.
  *   SAABAI_CLIENT_N_DASHBOARD   — Dashboard path (e.g. "/rex-dashboard")
  *
  * Example for PlasticOnline:
@@ -47,17 +49,4 @@ export function loadClients(): ClientConfig[] {
   }
 
   return clients;
-}
-
-export function findClientByCredentials(
-  clients: ClientConfig[],
-  email: string,
-  password: string
-): ClientConfig | null {
-  const normalised = email.trim().toLowerCase();
-  return (
-    clients.find(
-      c => c.email.toLowerCase() === normalised && c.password === password
-    ) ?? null
-  );
 }

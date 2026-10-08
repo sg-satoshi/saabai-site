@@ -29,6 +29,7 @@ const labelStyle: React.CSSProperties = {
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
+  const isWelcome = searchParams.get("welcome") === "1";
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -82,7 +83,7 @@ function ResetPasswordForm() {
             textAlign: "center",
           }}>
             <p style={{ margin: "0 0 4px", fontSize: 14, color: "#86efac", fontWeight: 700 }}>
-              Password reset successful
+              {isWelcome ? "Password set" : "Password reset successful"}
             </p>
             <p style={{ margin: 0, fontSize: 13, color: "rgba(134,239,172,0.75)" }}>
               You can now sign in with your new password.
@@ -116,7 +117,7 @@ function ResetPasswordForm() {
             </span>
           </a>
           <h1 style={{ fontSize: 14, fontWeight: 700, color: "rgba(240,244,255,0.5)", marginTop: 8, letterSpacing: 1, textTransform: "uppercase" }}>
-            Set new password
+            {isWelcome ? "Choose your password" : "Set new password"}
           </h1>
         </div>
 
@@ -195,7 +196,7 @@ function ResetPasswordForm() {
                 letterSpacing: 0.3, fontFamily: "inherit",
               }}
             >
-              {loading ? "Resetting..." : "Reset password"}
+              {loading ? "Saving..." : isWelcome ? "Set password" : "Reset password"}
             </button>
           </form>
         )}

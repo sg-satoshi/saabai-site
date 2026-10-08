@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ClientConfig } from "../../lib/clients";
+import type { ClientConfig as FullClientConfig } from "../../lib/clients";
+
+// Passwords never reach the browser.
+type ClientConfig = Omit<FullClientConfig, "password">;
 import type { RexStats, LeadEvent } from "../../lib/rex-stats";
 import type { PendingRequest } from "../../lib/portal-users";
 import AdminShell from "./AdminSidebar";
@@ -1088,7 +1091,8 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
         setMessage({ email: req.email, text: `Approved and welcome email sent to ${req.name}.`, ok: true });
         setTimeout(() => setMessage(null), 5000);
       } else {
-        setMessage({ email: req.email, text: "Something went wrong.", ok: false });
+        const data = await res.json().catch(() => ({}));
+        setMessage({ email: req.email, text: data.error || "Something went wrong.", ok: false });
       }
     } finally { setBusy(null); }
   }

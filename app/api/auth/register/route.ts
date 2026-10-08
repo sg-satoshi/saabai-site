@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { Resend } from "resend";
 import { savePendingRequest, getPortalUser } from "../../../../lib/portal-users";
-import { loadClients, findClientByCredentials } from "../../../../lib/clients";
+import { loadClients } from "../../../../lib/clients";
 
 export const runtime = "nodejs";
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Also block if they already have an env-var account
-  const envClient = findClientByCredentials(loadClients(), email, "");
+  const envClient = loadClients().find((c) => c.email.toLowerCase() === email.toLowerCase());
   if (envClient) {
     failUrl.searchParams.set("reg_error", "exists");
     return Response.redirect(failUrl.toString(), 303);

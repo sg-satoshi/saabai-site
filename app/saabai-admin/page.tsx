@@ -29,7 +29,8 @@ export default async function SaabaiAdminPage() {
   }
 
   const [clients, rexStats, pendingRequests] = await Promise.all([
-    Promise.resolve(loadClients()),
+    // Strip passwords: this list is serialised into the page for the browser.
+    Promise.resolve(loadClients().map(({ password: _password, ...c }) => c)),
     fetchRexStats(),
     listPendingRequests(),
   ]);

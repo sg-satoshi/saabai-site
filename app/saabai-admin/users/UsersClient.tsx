@@ -5,7 +5,7 @@
    Drop-in replacement for app/saabai-admin/users/UsersClient.tsx
    Keeps the same /api/user-directory contract:
      GET    → { users: User[] }
-     POST   { name, email, password, role, dashboardUrl }
+     POST   { name, email, password?, role, dashboardUrl, sendInvite? }
      PATCH  { originalEmail, name, email, role, dashboardUrl, password? }
      DELETE { email }
    ───────────────────────────────────────────────────────────────────────── */
@@ -481,7 +481,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   }, []);
 
   const isEdit = mode === "edit";
-  const valid = name.trim() && email.includes("@") && (isEdit || password.length >= 8);
+  const valid = name.trim() && email.includes("@") && (password.length === 0 || password.length >= 8);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -505,15 +505,14 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
       </Field>
 
       <Field
-        label={isEdit ? "Reset password (optional)" : "Password"}
-        required={!isEdit}
+        label={isEdit ? "Reset password (optional)" : "Password (optional)"}
         hint={isEdit
           ? "Leave blank to keep the existing password. Minimum 8 characters when set."
-          : "Minimum 8 characters. The user will be prompted to change it on first sign-in."}
+          : "Leave blank and the welcome email lets them choose their own. Minimum 8 characters when set. Passwords are never emailed."}
       >
         <TextInput
           value={password} onChange={setPassword}
-          placeholder={isEdit ? "Leave blank to keep current" : "••••••••"}
+          placeholder={isEdit ? "Leave blank to keep current" : "Leave blank to let them choose"}
           type="password"
         />
       </Field>
@@ -604,8 +603,8 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
               style={{ accentColor: C.teal, width: 15, height: 15 }}
             />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, color: C.text }}>Send welcome email with sign-in link</div>
-              <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>Uses Resend · sender: hello@saabai.ai</div>
+              <div style={{ fontSize: 13, color: C.text }}>Send welcome email with a set-password link</div>
+              <div style={{ fontSize: 11, color: C.textDim, marginTop: 1 }}>Uses Resend · sender: noreply@saabai.ai · always sent when password is blank</div>
             </div>
           </label>
         </Field>
@@ -1266,13 +1265,14 @@ export default function UsersClient() {
           role: data.role, dashboardUrl: data.dashboardUrl,
           products: data.products,
           siteId: data.siteId,
+          sendInvite: data.sendInvite,
         }),
       });
       const out = await res.json();
       if (out.success) {
         setAddOpen(false);
         fetchUsers();
-        showToast(`Created ${data.name}${data.sendInvite ? " · welcome email queued" : ""}`);
+        showToast(`Created ${data.name}${out.inviteQueued ? " · welcome email queued" : ""}`);
       } else {
         showToast(out.error || "Failed to create user", false);
       }

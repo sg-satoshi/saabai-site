@@ -7,6 +7,8 @@ import {
   deletePendingRequest,
   savePortalUser,
 } from "../../../../lib/portal-users";
+import { hashPassword, validateNewPassword } from "../../../../lib/password";
+import { escapeHtml } from "../../../../lib/account-emails";
 
 export const runtime = "nodejs";
 
@@ -46,10 +48,13 @@ export async function POST(req: NextRequest) {
     const { email, name = "", password, dashboardUrl = "/rex-dashboard" } = body;
 
     if (!password) return Response.json({ error: "Password required" }, { status: 400 });
+    const invalid = validateNewPassword(password);
+    if (invalid) return Response.json({ error: invalid }, { status: 400 });
 
+    // Stored as a scrypt hash, never in plain text.
     await savePortalUser({
       id:           email.split("@")[0].replace(/[^a-z0-9]/gi, "-").toLowerCase(),
-      name, email, password, dashboardUrl,
+      name, email, password: await hashPassword(password), dashboardUrl,
       approvedAt:   new Date().toISOString(),
     });
     await deletePendingRequest(email);
@@ -61,7 +66,7 @@ export async function POST(req: NextRequest) {
         from: "Saabai Portal <noreply@saabai.ai>",
         to:   email,
         subject: "Your Saabai portal access is ready",
-        html: `<p>Hi ${name},</p><p>Your access has been approved. Log in at <a href="https://saabai.ai/login">saabai.ai/login</a> with this email address and the password provided to you.</p><p>Questions? Reply to this email.</p>`,
+        html: `<p>Hi ${escapeHtml(name)},</p><p>Your access has been approved. Log in at <a href="https://saabai.ai/login">saabai.ai/login</a> with this email address and the password provided to you.</p><p>Questions? Reply to this email.</p>`,
       }).catch(() => {});
     }
 
