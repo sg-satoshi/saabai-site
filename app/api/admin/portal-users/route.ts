@@ -1,35 +1,33 @@
-import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
-import { Resend } from "resend";
 import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
 import {
   listPendingRequests,
   deletePendingRequest,
-  savePortalUser,
 } from "../../../../lib/portal-users";
-import { hashPassword, validateNewPassword } from "../../../../lib/password";
-import { escapeHtml } from "../../../../lib/account-emails";
+import { getDirectoryUser, saveDirectoryUser } from "../../../../lib/user-directory";
+import { hashPassword, generateRandomPassword, validateNewPassword } from "../../../../lib/password";
+import { sendWelcomeEmail } from "../../../../lib/account-emails";
+import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
 
 const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
-async function requireAdmin(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
+async function requireAdmin(req: NextRequest): Promise<boolean> {
+  const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
   return session?.clientId === ADMIN_ID;
 }
 
-export async function GET() {
-  if (!await requireAdmin()) return Response.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(req: NextRequest) {
+  if (!await requireAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const pending = await listPendingRequests();
   return Response.json({ pending });
 }
 
 export async function POST(req: NextRequest) {
-  if (!await requireAdmin()) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await requireAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json() as {
     action: "approve" | "deny";
@@ -45,30 +43,44 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "approve") {
-    const { email, name = "", password, dashboardUrl = "/rex-dashboard" } = body;
+    const email = (body.email || "").trim().toLowerCase();
+    const { name = "", password } = body;
+    if (!email || !email.includes("@")) return Response.json({ error: "Email required" }, { status: 400 });
+    const dashboardUrl = safeRedirect(body.dashboardUrl, "/dashboard");
 
-    if (!password) return Response.json({ error: "Password required" }, { status: 400 });
-    const invalid = validateNewPassword(password);
-    if (invalid) return Response.json({ error: invalid }, { status: 400 });
+    // Password is optional: blank means they choose their own from the
+    // welcome email's single-use set-password link.
+    if (password) {
+      const invalid = validateNewPassword(password);
+      if (invalid) return Response.json({ error: invalid }, { status: 400 });
+    }
 
-    // Stored as a scrypt hash, never in plain text.
-    await savePortalUser({
-      id:           email.split("@")[0].replace(/[^a-z0-9]/gi, "-").toLowerCase(),
-      name, email, password: await hashPassword(password), dashboardUrl,
-      approvedAt:   new Date().toISOString(),
+    if (await getDirectoryUser(email)) {
+      await deletePendingRequest(email);
+      return Response.json({ error: "This email already has an account. Request cleared." }, { status: 409 });
+    }
+
+    // Approved people go into the same user store /login reads, with a hashed
+    // password, so they can actually sign in.
+    const now = new Date().toISOString();
+    await saveDirectoryUser({
+      id: email.replace(/[^a-z0-9]/g, "-"),
+      name: name || email,
+      email,
+      password: await hashPassword(password || generateRandomPassword()),
+      role: "user",
+      dashboardUrl,
+      approvedAt: now,
+      createdAt: now,
     });
     await deletePendingRequest(email);
 
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      const resend = new Resend(resendKey);
-      await resend.emails.send({
-        from: "Saabai Portal <noreply@saabai.ai>",
-        to:   email,
-        subject: "Your Saabai portal access is ready",
-        html: `<p>Hi ${escapeHtml(name)},</p><p>Your access has been approved. Log in at <a href="https://saabai.ai/login">saabai.ai/login</a> with this email address and the password provided to you.</p><p>Questions? Reply to this email.</p>`,
-      }).catch(() => {});
-    }
+    await sendWelcomeEmail({
+      name: name || "there",
+      email,
+      subject: "Your Saabai portal access is ready",
+      intro: "Your access request has been approved.",
+    });
 
     return Response.json({ ok: true });
   }

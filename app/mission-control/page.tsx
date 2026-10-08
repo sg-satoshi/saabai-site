@@ -83,62 +83,8 @@ const BLANK_TOOL: Omit<Tool, "id" | "createdAt" | "updatedAt"> = {
 };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
-
-const MC_KEY = "mc_unlocked_v1";
-const MC_PASSWORD = (process.env.NEXT_PUBLIC_MC_PASSWORD ?? "saabai2026").trim();
-
-function AuthGate({ onUnlock }: { onUnlock: () => void }) {
-  const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
-
-  function attempt() {
-    if (pin.trim() === MC_PASSWORD) {
-      sessionStorage.setItem(MC_KEY, "1");
-      onUnlock();
-    } else {
-      setError(true);
-      setPin("");
-    }
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center font-[family-name:var(--font-geist-sans)]" style={{ backgroundColor: "#07091a", color: "#eef0ff" }}>
-      <div className="w-full max-w-sm px-6">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6" style={{ backgroundColor: "#0e1128", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="11" width="18" height="11" rx="2" stroke="#25D366" strokeWidth="1.5" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#25D366" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="12" cy="16" r="1.5" fill="#25D366" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#eef0ff" }}>Mission Control</h1>
-          <p className="text-sm mt-2" style={{ color: "#727899" }}>Enter your access code</p>
-        </div>
-        <div className="flex flex-col gap-3">
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => { setPin(e.target.value); setError(false); }}
-            onKeyDown={(e) => e.key === "Enter" && attempt()}
-            placeholder="Access code"
-            autoFocus
-            className="w-full border rounded-xl px-4 py-3.5 text-sm focus:outline-none transition-colors text-center tracking-widest"
-            style={{ backgroundColor: "#131729", borderColor: error ? "#ef4444" : "rgba(255,255,255,0.12)", color: "#eef0ff" }}
-          />
-          {error && <p className="text-xs text-center" style={{ color: "#9aa0b8" }}>Incorrect — try again</p>}
-          <button
-            onClick={attempt}
-            className="w-full bg-cyan-600 hover:bg-cyan-600 text-white py-3.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ boxShadow: "0 1px 3px rgba(6, 182, 212, 0.12)" }}
-          >
-            Unlock
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Access is enforced server-side in ./layout.tsx (admin session required).
+// There is no client-side PIN any more.
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
@@ -2399,7 +2345,6 @@ function EdgeView() {
 type Tab = "dashboard" | "agents" | "growth" | "tools" | "builder" | "settings" | "coach";
 
 export default function MissionControl() {
-  const [authed, setAuthed] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [tools, setTools] = useState<Tool[]>(DEFAULT_TOOLS);
@@ -2409,7 +2354,6 @@ export default function MissionControl() {
 
   // Check session + default to Edge on mobile + restore nav state
   useEffect(() => {
-    if (sessionStorage.getItem(MC_KEY) === "1") setAuthed(true);
     if (window.innerWidth < 768) setActiveTab("coach");
     if (localStorage.getItem("mc_nav_collapsed") === "1") setNavCollapsed(true);
   }, []);
@@ -2422,7 +2366,6 @@ export default function MissionControl() {
 
   // Load saved tools from localStorage
   useEffect(() => {
-    if (!authed) return;
     try {
       const stored = localStorage.getItem("mc_tools_v1");
       if (stored) {
@@ -2436,7 +2379,7 @@ export default function MissionControl() {
         setTools(merged);
       }
     } catch {}
-  }, [authed]);
+  }, []);
 
   const persistTools = useCallback((updated: Tool[]) => {
     setTools(updated);
@@ -2504,7 +2447,6 @@ export default function MissionControl() {
   const activeTool = (t: Tool) => t.status === "active";
   const activeCount = tools.filter(activeTool).length;
 
-  if (!authed) return <AuthGate onUnlock={() => setAuthed(true)} />;
 
   return (
     <>
@@ -2883,7 +2825,7 @@ export default function MissionControl() {
                 { label: "ElevenLabs API Key", key: "ELEVENLABS_API_KEY", desc: "Text-to-speech · Set in Vercel env vars" },
                 { label: "ElevenLabs Voice ID (Mia)", key: "ELEVENLABS_VOICE_ID", desc: "Default voice for Mia · Override per-tool with voiceId" },
                 { label: "HeyGen API Key", key: "HEYGEN_API_KEY", desc: "Video avatar streaming · Set in Vercel env vars" },
-                { label: "Mission Control Password", key: "NEXT_PUBLIC_MC_PASSWORD", desc: "Change in Vercel env vars and redeploy" },
+                { label: "Mission Control Access", key: "Admin login", desc: "Sign in at saabai.ai/login with your admin account" },
                 { label: "Chat Model (Default)", key: "CHAT_MODEL", desc: "Defaults to claude-sonnet-4-6" },
               ].map((item) => (
                 <div key={item.key} className="bg-white border border-slate-300 rounded-2xl p-5 flex items-center justify-between gap-4">

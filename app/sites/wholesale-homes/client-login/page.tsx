@@ -116,6 +116,7 @@ export default function ClientLogin() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
+                        autoComplete="current-password"
                         required
                         className="w-full rounded-xl bg-white py-2.5 pl-10 pr-10 text-sm text-[#1A2B3C] outline-none transition-colors focus:border-[#0891b2]"
                         style={{ border: `1px solid ${UI.hair}`, color: UI.ink }}
@@ -130,6 +131,9 @@ export default function ClientLogin() {
                       </button>
                     </div>
                   </div>
+                  <p className="-mt-2 text-right text-xs">
+                    <a href="/set-password" style={{ color: UI.teal }} className="hover:underline">Forgot password?</a>
+                  </p>
 
                   {error && (
                     <p className="rounded-xl px-4 py-2.5 text-sm" style={{ background: "#fdecec", color: UI.red }}>{error}</p>

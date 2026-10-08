@@ -6,7 +6,7 @@
  * on the login page. Reset requests get a 1-hour single-use reset link.
  */
 import { Resend } from "resend";
-import { createPasswordToken, setPasswordUrl, siteBaseUrl } from "./password-tokens";
+import { createPasswordToken, setPasswordUrl, siteBaseUrl, WHOLESALE_SITE_URL } from "./password-tokens";
 
 export type EmailBrand = "saabai" | "wholesale-homes";
 
@@ -29,7 +29,7 @@ function brandConfig(brand: EmailBrand): BrandConfig {
       accent: "#0891b2",
       footerName: "Wholesale Homes Australia",
       footerUrl: "https://wholesalehomes.com.au",
-      signInUrl: "https://wholesalehomes.com.au/client-login",
+      signInUrl: `${WHOLESALE_SITE_URL}/client-login`,
     };
   }
   return {
@@ -95,12 +95,12 @@ export function buildWelcomeEmail(opts: {
         <p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.6;">If the link has expired, use "Forgot password" on the sign-in page to get a fresh one.</p>`);
 }
 
-export function buildPasswordResetEmail(opts: { name: string; resetLink: string }): string {
-  const b = brandConfig("saabai");
+export function buildPasswordResetEmail(opts: { name: string; resetLink: string; brand?: EmailBrand }): string {
+  const b = brandConfig(opts.brand ?? "saabai");
   const first = escapeHtml((opts.name || "").split(" ")[0] || "there");
   return shell(b, "Reset your password", `
         <p style="margin:0;font-size:15px;color:#111827;line-height:1.6;">Hi ${first},</p>
-        <p style="margin:14px 0 0;font-size:14px;color:#5C6670;line-height:1.6;">We received a request to reset the password for your Saabai account. The link below works once and expires in 1 hour.</p>
+        <p style="margin:14px 0 0;font-size:14px;color:#5C6670;line-height:1.6;">We received a request to reset the password for your ${escapeHtml(b.footerName)} account. The link below works once and expires in 1 hour.</p>
         ${button(b, opts.resetLink, "Choose a new password")}
         <p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.6;">If you didn't ask for this, you can safely ignore this email. Your password won't change.</p>`);
 }
@@ -133,7 +133,7 @@ export async function sendWelcomeEmail(opts: {
   try {
     const token = await createPasswordToken(opts.email, "welcome");
     if (!token) return false;
-    const link = setPasswordUrl(token, "welcome");
+    const link = setPasswordUrl(token, "welcome", opts.brand ?? "saabai");
     const b = brandConfig(opts.brand ?? "saabai");
     const html = buildWelcomeEmail({ name: opts.name, email: opts.email, setPasswordLink: link, brand: opts.brand, intro: opts.intro, mentionMagicLink: opts.mentionMagicLink });
     return await send(opts.email, opts.subject ?? "Your Saabai account is ready", html, b.from, link);
@@ -144,13 +144,15 @@ export async function sendWelcomeEmail(opts: {
 }
 
 /** Create a 1-hour reset link and email it. Never throws. */
-export async function sendPasswordResetEmail(opts: { name: string; email: string }): Promise<boolean> {
+export async function sendPasswordResetEmail(opts: { name: string; email: string; brand?: EmailBrand }): Promise<boolean> {
   try {
     const token = await createPasswordToken(opts.email, "reset");
     if (!token) return false;
-    const link = setPasswordUrl(token, "reset");
-    const html = buildPasswordResetEmail({ name: opts.name, resetLink: link });
-    return await send(opts.email, "Reset your Saabai password", html, brandConfig("saabai").from, link);
+    const brand = opts.brand ?? "saabai";
+    const link = setPasswordUrl(token, "reset", brand);
+    const html = buildPasswordResetEmail({ name: opts.name, resetLink: link, brand });
+    const b = brandConfig(brand);
+    return await send(opts.email, `Reset your ${b.footerName} password`, html, b.from, link);
   } catch (err) {
     console.error("[account-emails] reset failed", err instanceof Error ? err.message : err);
     return false;

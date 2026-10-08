@@ -1,26 +1,44 @@
-import { NextResponse } from "next/server";
-import { verifyPassword } from "../../../lib/password";
+import { NextResponse, type NextRequest } from "next/server";
+import {
+  authenticateWholesale,
+  createWholesaleSessionToken,
+  getWholesaleSession,
+  wholesaleSessionCookie,
+  clearWholesaleSessionCookie,
+  WH_COOKIE,
+} from "../../../lib/wholesale-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
+/**
+ * Wholesale Homes client sign-in. Checks the per-user accounts approve-lead
+ * creates, then the shared WHOLESALE_CLIENT_EMAIL / _PASS fallback, and sets
+ * a signed HttpOnly session cookie on success.
+ */
 export async function POST(req: Request) {
   const { email, password } = await req.json().catch(() => ({}));
 
-  const validEmail = process.env.WHOLESALE_CLIENT_EMAIL;
-  const validPass = process.env.WHOLESALE_CLIENT_PASS;
-
-  if (!validEmail || !validPass) {
-    return NextResponse.json({ success: false, error: "Auth not configured" }, { status: 500 });
+  const auth = await authenticateWholesale(email, password);
+  if (!auth) {
+    return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
   }
 
-  // Constant-time check. The env value may be plain text or a scrypt hash
-  // (see scripts/hash-password.ts). Always run the password check so a wrong
-  // email and a wrong password take the same time.
-  const emailOk = typeof email === "string" && email.trim().toLowerCase() === validEmail.toLowerCase();
-  const { ok: passOk } = await verifyPassword(typeof password === "string" ? password : "", validPass);
-  if (emailOk && passOk) {
-    return NextResponse.json({ success: true });
-  }
+  const res = NextResponse.json({ success: true, name: auth.session.name });
+  res.headers.append("Set-Cookie", wholesaleSessionCookie(createWholesaleSessionToken(auth)));
+  return res;
+}
 
-  return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
+/** Who is signed in (used by the portal UI). */
+export async function GET(req: NextRequest) {
+  const session = await getWholesaleSession(req.cookies.get(WH_COOKIE)?.value);
+  if (!session) return NextResponse.json({ authenticated: false }, { status: 401 });
+  return NextResponse.json({ authenticated: true, email: session.email, name: session.name });
+}
+
+/** Sign out. */
+export async function DELETE() {
+  const res = NextResponse.json({ success: true });
+  res.headers.append("Set-Cookie", clearWholesaleSessionCookie());
+  return res;
 }

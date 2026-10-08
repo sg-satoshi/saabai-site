@@ -28,6 +28,7 @@ export async function POST(req: Request) {
       password: await hashPassword(generateRandomPassword()),
       role: "user" as const,
       dashboardUrl: "/sites/wholesale-homes/client/dashboard",
+      siteId: "wholesale-homes",
       approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     };

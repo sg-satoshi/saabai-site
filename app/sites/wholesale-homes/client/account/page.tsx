@@ -10,6 +10,11 @@ export default function AccountPage() {
 
   useEffect(() => {
     setUserEmail(loadJSON<ClientAuth>(AUTH_KEY, {}).email || "");
+    // The signed session is the source of truth for who is signed in.
+    fetch("/api/wholesale-auth")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.email) setUserEmail(d.email); })
+      .catch(() => {});
   }, []);
 
   return (

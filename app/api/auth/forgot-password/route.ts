@@ -3,6 +3,7 @@ import { runAfterResponse } from "../../../../lib/run-after";
 import { getDirectoryUser } from "../../../../lib/user-directory";
 import { underResetRateLimit } from "../../../../lib/password-tokens";
 import { sendPasswordResetEmail } from "../../../../lib/account-emails";
+import { isWholesaleAccount } from "../../../../lib/wholesale-auth";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,12 @@ export async function POST(req: NextRequest) {
       const dirUser = await getDirectoryUser(normalized);
       if (!dirUser) return;
       if (!(await underResetRateLimit(normalized))) return;
-      await sendPasswordResetEmail({ name: dirUser.name, email: dirUser.email });
+      await sendPasswordResetEmail({
+        name: dirUser.name,
+        email: dirUser.email,
+        // Wholesale Homes clients get a Wholesale-branded email and page.
+        brand: isWholesaleAccount(dirUser) ? "wholesale-homes" : "saabai",
+      });
     } catch (err) {
       console.error("[forgot-password] failed", err instanceof Error ? err.message : err);
     }

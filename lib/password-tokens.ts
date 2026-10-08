@@ -62,9 +62,13 @@ export async function consumePasswordToken(token: unknown): Promise<PasswordToke
   return { email: rec.email, purpose: rec.purpose };
 }
 
-export function setPasswordUrl(token: string, purpose: PasswordTokenPurpose): string {
+/** Public URL of the Wholesale Homes site (its set-password page lives there). */
+export const WHOLESALE_SITE_URL = "https://www.wholesalehomes.com.au";
+
+export function setPasswordUrl(token: string, purpose: PasswordTokenPurpose, site: "saabai" | "wholesale-homes" = "saabai"): string {
   const q = new URLSearchParams({ token });
   if (purpose === "welcome") q.set("welcome", "1");
+  if (site === "wholesale-homes") return `${WHOLESALE_SITE_URL}/set-password?${q.toString()}`;
   return `${siteBaseUrl()}/reset-password?${q.toString()}`;
 }
 

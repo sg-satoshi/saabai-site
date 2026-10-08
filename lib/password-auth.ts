@@ -9,6 +9,7 @@
 import { loadClients } from "./clients";
 import { getDirectoryUser, saveDirectoryUser } from "./user-directory";
 import { hashPassword, verifyPassword } from "./password";
+import { getPortalUser } from "./portal-users";
 
 export interface AuthResult {
   clientId: string;
@@ -36,6 +37,12 @@ export async function authenticateWithPassword(rawEmail: string, password: strin
 
   // 2. Redis directory users.
   const dirUser = await getDirectoryUser(email);
+  if (!dirUser && !envClient) {
+    // 3. Legacy portal approvals (portal:users) that were never written to the
+    //    directory, so these people could not sign in. Migrate on success.
+    const migrated = await tryLegacyPortalUser(email, password);
+    if (migrated) return migrated;
+  }
   const res = await verifyPassword(password, dirUser?.password);
   if (!dirUser || !res.ok) return null;
 
@@ -56,7 +63,7 @@ export async function authenticateWithPassword(rawEmail: string, password: strin
  * only writes if the stored value is unchanged, so a concurrent password change
  * is never overwritten. Never throws.
  */
-async function upgradeStoredPassword(email: string, previousStored: string, password: string): Promise<boolean> {
+export async function upgradeStoredPassword(email: string, previousStored: string, password: string): Promise<boolean> {
   try {
     const hashed = await hashPassword(password);
     const fresh = await getDirectoryUser(email);
@@ -68,5 +75,35 @@ async function upgradeStoredPassword(email: string, previousStored: string, pass
     // include the new hash.
     console.error("[password-auth] could not upgrade stored password for a directory user", err instanceof Error ? err.name : "unknown error");
     return false;
+  }
+}
+
+/**
+ * Older portal-access approvals were saved to portal:users, which login never
+ * read. If this email only exists there and the password matches, move the
+ * person into the directory (hashed) and sign them in. Never throws.
+ */
+async function tryLegacyPortalUser(email: string, password: string): Promise<AuthResult | null> {
+  try {
+    const legacy = await getPortalUser(email);
+    if (!legacy?.password) return null;
+    const res = await verifyPassword(password, legacy.password);
+    if (!res.ok) return null;
+    const now = new Date().toISOString();
+    const user = {
+      id: email.replace(/[^a-z0-9]/g, "-"),
+      name: legacy.name || email,
+      email,
+      password: await hashPassword(password),
+      role: "user" as const,
+      dashboardUrl: legacy.dashboardUrl || "/dashboard",
+      approvedAt: legacy.approvedAt || now,
+      createdAt: now,
+    };
+    await saveDirectoryUser(user);
+    return { clientId: user.id, dashboardUrl: user.dashboardUrl, source: "directory", upgraded: true };
+  } catch (err) {
+    console.error("[password-auth] legacy portal user check failed", err instanceof Error ? err.name : "unknown error");
+    return null;
   }
 }
