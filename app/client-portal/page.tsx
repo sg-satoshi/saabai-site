@@ -328,8 +328,8 @@ function ClientPortalInner() {
                 </div>
                 <h2 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 700, color: C.text }}>Check your inbox</h2>
                 <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
-                  We&apos;ve sent a sign-in link to <strong style={{ color: C.text }}>{loginEmail}</strong>.
-                  <br />Click the link in the email to access your portal.
+                  If <strong style={{ color: C.text }}>{loginEmail}</strong> is registered for the portal, a sign-in link is on its way.
+                  <br />Click the link in the email to access your portal. Not arriving? Contact hello@saabai.ai.
                 </p>
                 <button onClick={() => { setAuthView("login"); setLoginEmail(""); }}
                   style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 13 }}>

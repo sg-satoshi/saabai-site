@@ -13,7 +13,7 @@
     "atlas:dev": "tsx watch ./atlas/atlas.ts",
     "lint": "next lint",
     "predeploy": "npx tsc --noEmit && npm run build",
-    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts",
+    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts tests/security-lex-redirect.test.ts",
     "dev:mock-redis": "node scripts/dev/mock-upstash.mjs"
   },
   "dependencies": {

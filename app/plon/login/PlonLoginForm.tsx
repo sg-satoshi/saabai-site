@@ -92,8 +92,8 @@ export default function PlonLoginForm({
           Check your inbox
         </h2>
         <p style={{ margin: "0 0 24px", fontSize: 14, color: "#666", lineHeight: 1.6 }}>
-          We sent a magic link to <strong style={{ color: "#1a1a1a" }}>{email}</strong>.<br />
-          Click it to sign in — valid for 15 minutes.
+          If <strong style={{ color: "#1a1a1a" }}>{email}</strong> has access, a magic link is on its way.<br />
+          Click it to sign in. It&apos;s valid for 15 minutes.
         </p>
         <button
           onClick={() => { setSent(false); setEmail(""); }}
