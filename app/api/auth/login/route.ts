@@ -1,7 +1,6 @@
 import { type NextRequest } from "next/server";
-import { loadClients, findClientByCredentials } from "../../../../lib/clients";
 import { createSessionToken, sessionCookieHeader } from "../../../../lib/auth";
-import { getDirectoryUser } from "../../../../lib/user-directory";
+import { authenticateWithPassword } from "../../../../lib/password-auth";
 import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
@@ -12,23 +11,18 @@ export async function POST(req: NextRequest) {
   const password = formData.get("password")?.toString() ?? "";
   const redirect = safeRedirect(formData.get("redirect")?.toString(), "");
 
-  // Check env-var clients first, then Redis-backed users
-  const clients     = loadClients();
-  const envClient   = findClientByCredentials(clients, email, password);
-  const dirUser     = await getDirectoryUser(email);
-  const isDirAuth   = !envClient && dirUser?.password === password;
+  // Env-var clients first, then Redis directory users. Legacy plaintext
+  // passwords are verified in constant time and upgraded to a hash here.
+  const auth = await authenticateWithPassword(email, password);
 
-  if (!envClient && !isDirAuth) {
+  if (!auth) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("error", "invalid");
     if (redirect) loginUrl.searchParams.set("redirect", redirect);
     return Response.redirect(loginUrl.toString(), 303);
   }
 
-  const clientId     = envClient ? envClient.id : dirUser!.id;
-  const dashboardUrl = envClient ? envClient.dashboardUrl : (dirUser!.dashboardUrl || "/rex-dashboard");
-
-  const token = await createSessionToken(clientId);
+  const token = await createSessionToken(auth.clientId);
 
   // If there's an explicit redirect (user came from a protected page), honour it.
   // Otherwise send to the unified /dashboard hub.

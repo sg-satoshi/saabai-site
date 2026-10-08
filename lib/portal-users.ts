@@ -35,7 +35,13 @@ export async function getPortalUser(email: string): Promise<PortalUser | null> {
 export async function savePortalUser(user: PortalUser): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
-  await redis.hset(USERS_KEY, { [user.email.toLowerCase()]: JSON.stringify(user) });
+  try {
+    await redis.hset(USERS_KEY, { [user.email.toLowerCase()]: JSON.stringify(user) });
+  } catch (err) {
+    // Redis client errors echo the full command (which includes the password
+    // hash). Re-throw a clean error so it can't end up in logs or responses.
+    throw new Error(`Failed to save portal user (${err instanceof Error ? err.name : "unknown error"})`);
+  }
 }
 
 export async function listPendingRequests(): Promise<PendingRequest[]> {

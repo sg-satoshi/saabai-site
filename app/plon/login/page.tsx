@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { safeRedirect } from "../../../lib/safe-redirect";
 import PlonLoginForm from "./PlonLoginForm";
 
 export const metadata = { title: "Sign in — Plastic Online" };
@@ -11,17 +12,18 @@ export default async function PlonLoginPage({
   searchParams: Promise<{ redirect?: string; error?: string }>;
 }) {
   const params = await searchParams;
+  // Only same-origin relative paths (blocks open redirects like ?redirect=https://evil.com).
+  const redirectTo = safeRedirect(params.redirect, "/rex-dashboard");
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
   // Skip login if already authenticated
   if (token) {
     const session = await verifySessionToken(token);
-    if (session) redirect(params.redirect ?? "/rex-dashboard");
+    if (session) redirect(redirectTo);
   }
 
   const isInvalid = params.error === "invalid";
-  const redirectTo = params.redirect ?? "/rex-dashboard";
 
   return (
     <div style={{

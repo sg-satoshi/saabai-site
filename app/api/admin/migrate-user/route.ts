@@ -56,7 +56,8 @@ export async function POST() {
     return Response.json({
       success: true,
       message: "Admin user migrated from shane@saabai.ai to hello@saabai.ai",
-      user: newUser,
+      // Never return the stored password (or its hash) to the client.
+      user: { ...newUser, password: undefined },
     });
   } catch (err) {
     console.error("[migrate-user]", err);

@@ -57,7 +57,13 @@ export async function getDirectoryUser(email: string): Promise<DirectoryUser | n
 export async function saveDirectoryUser(user: DirectoryUser): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
-  await redis.hset(USERS_KEY, { [user.email.toLowerCase()]: JSON.stringify(user) });
+  try {
+    await redis.hset(USERS_KEY, { [user.email.toLowerCase()]: JSON.stringify(user) });
+  } catch (err) {
+    // Redis client errors echo the full command (which includes the password
+    // hash). Re-throw a clean error so it can't end up in logs or responses.
+    throw new Error(`Failed to save directory user (${err instanceof Error ? err.name : "unknown error"})`);
+  }
 }
 
 export async function listDirectoryUsers(): Promise<DirectoryUser[]> {

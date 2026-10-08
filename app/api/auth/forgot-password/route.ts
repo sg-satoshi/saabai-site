@@ -1,47 +1,41 @@
 import { type NextRequest } from "next/server";
-import { loadClients } from "../../../../lib/clients";
+import { runAfterResponse } from "../../../../lib/run-after";
 import { getDirectoryUser } from "../../../../lib/user-directory";
-import { getRedis } from "../../../../lib/redis";
-import { createHash, randomBytes } from "crypto";
+import { underResetRateLimit } from "../../../../lib/password-tokens";
+import { sendPasswordResetEmail } from "../../../../lib/account-emails";
 
 export const runtime = "nodejs";
 
-const RESET_PREFIX = "saabai:reset:";
-
+/**
+ * Request a password reset. The link is only ever sent by email (never returned
+ * in the response), and the response is identical whether or not the account
+ * exists. Work happens after the response is sent so timing doesn't leak either.
+ *
+ * Only Redis directory accounts can reset here. Env-var accounts are managed in
+ * Vercel, and anyone can use "Email me a sign-in link" instead.
+ */
 export async function POST(req: NextRequest) {
+  let email: unknown;
   try {
-    const { email } = await req.json();
-    if (!email || typeof email !== "string") {
-      return Response.json({ error: "Email is required." }, { status: 400 });
-    }
-
-    const normalized = email.trim().toLowerCase();
-
-    // Check if the email exists — don't reveal whether it does or not
-    const envClient = loadClients().find((c) => c.email.toLowerCase() === normalized);
-    const dirUser = await getDirectoryUser(normalized);
-
-    // Create a reset token regardless (don't reveal if user exists)
-    const token = randomBytes(32).toString("hex");
-    const redis = getRedis();
-
-    if (envClient || dirUser) {
-      // Store the reset token for 1 hour
-      if (redis) {
-        await redis.set(`${RESET_PREFIX}${token}`, normalized, { ex: 3600 });
-      }
-    }
-
-    // In production, you'd send an email here via Resend
-    // For now, return the reset link directly (dev mode)
-    const origin = new URL(req.url).origin;
-    const resetLink = `${origin}/reset-password?token=${token}`;
-
-    return Response.json({
-      ok: true,
-      resetLink: redis ? resetLink : null, // only provide link if Redis is available
-    });
+    ({ email } = await req.json());
   } catch {
-    return Response.json({ error: "Something went wrong." }, { status: 500 });
+    return Response.json({ error: "Email is required." }, { status: 400 });
   }
+  if (!email || typeof email !== "string" || email.length > 254) {
+    return Response.json({ error: "Email is required." }, { status: 400 });
+  }
+
+  const normalized = email.trim().toLowerCase();
+  runAfterResponse(async () => {
+    try {
+      const dirUser = await getDirectoryUser(normalized);
+      if (!dirUser) return;
+      if (!(await underResetRateLimit(normalized))) return;
+      await sendPasswordResetEmail({ name: dirUser.name, email: dirUser.email });
+    } catch (err) {
+      console.error("[forgot-password] failed", err instanceof Error ? err.message : err);
+    }
+  });
+
+  return Response.json({ ok: true });
 }

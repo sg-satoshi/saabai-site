@@ -4,7 +4,9 @@
  */
 import { NextRequest } from "next/server";
 import { createClient, getClientBySlug, getClient, listClients } from "../../../../lib/leadgen-config";
-import { saveDirectoryUser } from "../../../../lib/user-directory";
+import { saveDirectoryUser, getDirectoryUser } from "../../../../lib/user-directory";
+import { hashPassword, generateRandomPassword } from "../../../../lib/password";
+import { sendWelcomeEmail } from "../../../../lib/account-emails";
 import { applyTopup } from "../../../../lib/leadgen-notify";
 
 function getStripe() {
@@ -126,19 +128,28 @@ export async function POST(req: NextRequest) {
         try {
           const allClients = await listClients();
           const existingUser = allClients.find((c) => c.email === email);
-          if (existingUser) {
-            const genPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+          // Never overwrite an existing login (it may be an admin or another product's client).
+          const alreadyHasLogin = existingUser ? await getDirectoryUser(email) : null;
+          if (existingUser && !alreadyHasLogin) {
             await saveDirectoryUser({
               id: `leadgen_${existingUser.id}`,
               name: existingUser.businessName,
               email: email.toLowerCase(),
-              password: genPassword,
+              // Random password, hashed, never sent or logged. They set their
+              // own via the welcome email's single-use link.
+              password: await hashPassword(generateRandomPassword()),
               role: "user",
               dashboardUrl: "/leadgen/portal",
               approvedAt: new Date().toISOString(),
               createdAt: new Date().toISOString(),
             });
-            console.log(`[LeadGen Webhook] Login user created for ${email} — initial password: ${genPassword}`);
+            await sendWelcomeEmail({
+              name: existingUser.businessName,
+              email: email.toLowerCase(),
+              subject: "Your Saabai LeadGen portal is ready",
+              intro: "Thanks for signing up for Saabai LeadGen. Your portal account is ready.",
+            });
+            console.log(`[LeadGen Webhook] Login user created for ${email}; welcome email queued`);
           }
         } catch (userErr) {
           console.error("[LeadGen Webhook] Failed to create user:", userErr);

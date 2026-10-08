@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { safeRedirect } from "../../../lib/safe-redirect";
 import AdminLoginForm from "./AdminLoginForm";
 
 export const metadata = { title: "Admin Login — Saabai" };
@@ -11,17 +12,18 @@ export default async function AdminLoginPage({
   searchParams: Promise<{ redirect?: string; error?: string }>;
 }) {
   const params = await searchParams;
+  // Only same-origin relative paths (blocks open redirects like ?redirect=https://evil.com).
+  const redirectTo = safeRedirect(params.redirect, "/saabai-admin");
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
   // Already authenticated → go to admin
   if (token) {
     const session = await verifySessionToken(token);
-    if (session) redirect(params.redirect ?? "/saabai-admin");
+    if (session) redirect(redirectTo);
   }
 
   const isInvalid = params.error === "invalid";
-  const redirectTo = params.redirect ?? "/saabai-admin";
 
   return (
     <div style={{

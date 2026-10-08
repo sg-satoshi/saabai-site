@@ -1,7 +1,8 @@
 import { type NextRequest } from "next/server";
 import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
 import { loadClients } from "../../../../lib/clients";
-import { getDirectoryUser, saveDirectoryUser, listDirectoryUsers } from "../../../../lib/user-directory";
+import { saveDirectoryUser, listDirectoryUsers } from "../../../../lib/user-directory";
+import { hashPassword, verifyPassword, validateNewPassword } from "../../../../lib/password";
 
 export const runtime = "nodejs";
 
@@ -20,17 +21,16 @@ export async function POST(req: NextRequest) {
     const { clientId } = session;
     const { currentPassword, newPassword } = await req.json();
 
-    if (!newPassword || newPassword.length < 8) {
-      return Response.json(
-        { error: "New password must be at least 8 characters." },
-        { status: 400 }
-      );
+    const invalid = validateNewPassword(newPassword);
+    if (invalid) {
+      return Response.json({ error: invalid.replace(/^Password/, "New password") }, { status: 400 });
     }
 
     // Check env-var clients first
     const envClient = loadClients().find((c) => c.id === clientId);
     if (envClient) {
-      if (envClient.password !== currentPassword) {
+      const { ok } = await verifyPassword(String(currentPassword ?? ""), envClient.password);
+      if (!ok) {
         return Response.json({ error: "Current password is incorrect." }, { status: 403 });
       }
       // Env-var clients can't be updated via the API — they need Vercel env var changes
@@ -47,11 +47,12 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "Account not found." }, { status: 404 });
     }
 
-    if (dirUser.password !== currentPassword) {
+    const { ok } = await verifyPassword(String(currentPassword ?? ""), dirUser.password);
+    if (!ok) {
       return Response.json({ error: "Current password is incorrect." }, { status: 403 });
     }
 
-    dirUser.password = newPassword;
+    dirUser.password = await hashPassword(newPassword);
     await saveDirectoryUser(dirUser);
 
     return Response.json({ ok: true });
