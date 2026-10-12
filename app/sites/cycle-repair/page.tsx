@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
+import { ReviewsCarousel } from "./ReviewsCarousel";
+import { googleRating, googleReviewCount } from "./reviews";
 
 const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
 const mechanicImg = "/sites/cycle-repair/stu.jpg";
@@ -13,7 +15,13 @@ const jsonLd = {
     "Mobile bicycle repairs, servicing, wheel builds and E-Bike work across the Gold Coast and Tweed Coast.",
   telephone: "+61405225721",
   email: "stuscyclerepairs@gmail.com",
-  url: "https://stuscyclerepairs.lovable.app/",
+  url: "https://stuscyclerepairs.com",
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: googleRating,
+    reviewCount: googleReviewCount,
+    bestRating: 5,
+  },
   areaServed: [
     { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
     { "@type": "Place", name: "Tweed Coast, New South Wales, Australia" },
@@ -159,6 +167,9 @@ export default function Index() {
             </div>
           </div>
         </section>
+
+        {/* Google Reviews */}
+        <ReviewsCarousel />
 
         {/* Marquee */}
         <div className="overflow-hidden py-4 border-b border-muted-line bg-surface/30">
