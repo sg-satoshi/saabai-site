@@ -19,14 +19,14 @@ const ibmPlexSans = IBM_Plex_Sans({
 export const metadata: Metadata = {
   title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic, Gold Coast",
   description:
-    "Mobile bike repairs across the Gold Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.",
+    "Mobile bike repairs across the Gold Coast and Tweed Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.",
   authors: [{ name: "Stu's Cycle Repairs" }],
   icons: { icon: "/sites/cycle-repair/favicon.png" },
   openGraph: {
     type: "website",
     title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic",
     description:
-      "Mobile bicycle repairs, servicing and upgrades across the Gold Coast. 37+ years of mechanical experience delivered to your driveway.",
+      "Mobile bicycle repairs, servicing and upgrades across the Gold Coast and Tweed Coast. 37+ years of mechanical experience delivered to your driveway.",
   },
   twitter: {
     card: "summary_large_image",

@@ -10,11 +10,14 @@ const jsonLd = {
   "@type": "LocalBusiness",
   name: "Stu's Cycle Repairs",
   description:
-    "Mobile bicycle repairs, servicing, wheel builds and E-Bike work across the Gold Coast.",
+    "Mobile bicycle repairs, servicing, wheel builds and E-Bike work across the Gold Coast and Tweed Coast.",
   telephone: "+61405225721",
   email: "stuscyclerepairs@gmail.com",
   url: "https://stuscyclerepairs.lovable.app/",
-  areaServed: { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
+  areaServed: [
+    { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
+    { "@type": "Place", name: "Tweed Coast, New South Wales, Australia" },
+  ],
   address: { "@type": "PostalAddress", addressRegion: "QLD", addressCountry: "AU" },
   priceRange: "$$",
   makesOffer: [
@@ -31,7 +34,10 @@ const jsonLd = {
       name: o.name,
       serviceType: "Bicycle repair and servicing",
       provider: { "@type": "LocalBusiness", name: "Stu's Cycle Repairs" },
-      areaServed: { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
+      areaServed: [
+        { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
+        { "@type": "Place", name: "Tweed Coast, New South Wales, Australia" },
+      ],
     },
   })),
 };
@@ -100,7 +106,7 @@ export default function Index() {
                 Gold Coast Mobile Workshop
               </div>
               <h1 className="text-5xl lg:text-7xl font-display font-semibold tracking-tighter leading-[0.95] text-balance mb-8">
-                Pro-level mobile bicycle repairs, delivered to your Gold Coast driveway.
+                Expert-level mobile bicycle repairs, delivered to your Gold Coast driveway.
               </h1>
               <p className="text-muted-foreground text-lg max-w-[48ch] text-pretty mb-10">
                 Stu brings 37 years of elite mechanical experience directly to your home or
@@ -312,11 +318,11 @@ export default function Index() {
                 {
                   n: "03",
                   title: "Gold Coast Native",
-                  body: "Servicing riders from Coolangatta to Paradise Point. Local knowledge of the terrain means your setup is dialled for GC conditions.",
+                  body: "Servicing riders both professional and recreational from all over the Gold Coast and now including the Tweed Coast, with local knowledge of terrain, means your set-up is dialled for GC and Tweed conditions.",
                 },
                 {
                   n: "04",
-                  title: "E-Bike Certified",
+                  title: "E-Bike",
                   body: "Diagnostics and servicing for modern high-torque E-Bike systems. Motors, drivetrains, brakes and firmware checks.",
                 },
               ].map((c) => (
@@ -410,7 +416,7 @@ export default function Index() {
                     <span className="text-[11px] text-muted-foreground uppercase tracking-[0.22em]">
                       Service area
                     </span>
-                    <p className="text-lg font-medium mt-1">Gold Coast, QLD (Coolangatta to Paradise Point)</p>
+                    <p className="text-lg font-medium mt-1">Gold Coast, QLD (all of the Gold Coast)<br />Tweed Coast, NSW</p>
                   </div>
                 </div>
               </div>
