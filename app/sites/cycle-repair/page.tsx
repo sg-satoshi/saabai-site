@@ -3,7 +3,7 @@ import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
 
 const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
-const mechanicImg = "/sites/cycle-repair/mechanic.jpg";
+const mechanicImg = "/sites/cycle-repair/stu.jpg";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -349,7 +349,7 @@ export default function Index() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={mechanicImg}
-                  alt="Portrait of Stu, veteran bicycle mechanic"
+                  alt="Stu working on a Trek time trial bike in his workshop"
                   loading="lazy"
                   width={800}
                   height={1000}
