@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // Tributum Law (Mathew): friendly URL for the Site Factory site "tributum-law".
+      { source: "/sites/tributumlaw", destination: "/sites/tributum-law" },
+      { source: "/sites/tributumlaw/:path*", destination: "/sites/tributum-law/:path*" },
       { source: "/clients/lmm-site", destination: "/clients/lmm-site/index.html" },
     ];
   },
