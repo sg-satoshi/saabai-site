@@ -5,6 +5,7 @@ import { safeRedirect } from "../../../../lib/safe-redirect";
 import { isAdminSession } from "../../../../lib/auth";
 import { getRedis } from "../../../../lib/redis";
 import { createHash } from "crypto";
+import { isTwoFactorEnabled, createPendingToken, pendingCookieHeader } from "../../../../lib/admin-2fa";
 
 const MAX_ATTEMPTS = 10;
 const WINDOW_SECONDS = 15 * 60;
@@ -61,6 +62,18 @@ export async function POST(req: NextRequest) {
     loginUrl.searchParams.set("error", "invalid");
     if (redirect) loginUrl.searchParams.set("redirect", redirect);
     return Response.redirect(loginUrl.toString(), 303);
+  }
+
+  // Admins with 2FA turned on get a short-lived pending cookie and a code step.
+  if ((await isAdminSession(auth.clientId)) && (await isTwoFactorEnabled(auth.clientId))) {
+    const verifyUrl = new URL("/saabai-admin/login/verify", req.url);
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: verifyUrl.toString(),
+        "Set-Cookie": pendingCookieHeader(createPendingToken(auth.clientId, redirect || "/saabai-admin")),
+      },
+    });
   }
 
   const token = await createSessionToken(auth.clientId);

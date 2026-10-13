@@ -13,7 +13,7 @@
     "atlas:dev": "tsx watch ./atlas/atlas.ts",
     "lint": "next lint",
     "predeploy": "npx tsc --noEmit && npm run build",
-    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts tests/security-lex-redirect.test.ts tests/wholesale-portal-mc.test.ts tests/wholesale-admin-data.test.ts tests/wholesale-public-files.test.ts",
+    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts tests/security-lex-redirect.test.ts tests/wholesale-portal-mc.test.ts tests/wholesale-admin-data.test.ts tests/wholesale-public-files.test.ts tests/admin-2fa.test.ts",
     "dev:mock-redis": "node scripts/dev/mock-upstash.mjs"
   },
   "dependencies": {
@@ -35,9 +35,11 @@
     "lucide-react": "^1.8.0",
     "mammoth": "^1.12.0",
     "next": "16.1.6",
+    "otpauth": "^9.5.2",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
     "puppeteer": "^24.43.1",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.9.1",
@@ -48,6 +50,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

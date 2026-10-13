@@ -34,7 +34,8 @@ const PUBLIC_API = [
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
-  "/api/auth/magic-link",    // client magic-link request + verify (self-validating)
+  "/api/auth/magic-link",
+  "/api/auth/2fa",            // admin 2FA code step (checks its own signed pending cookie)    // client magic-link request + verify (self-validating)
   "/api/portal/login",
   "/api/portal/auth",        // magic-link handler — sets the session cookie
   "/api/rex-dashboard-auth", // dashboard password login — issues the cookie
@@ -247,7 +248,7 @@ export async function proxy(req: NextRequest) {
 
   // ── Page routes: redirect to login when protected ────────────────────
   // The admin login page itself must stay reachable while signed out.
-  if (pathname === "/saabai-admin/login") return NextResponse.next();
+  if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
 
   const session = await getSession(req);
