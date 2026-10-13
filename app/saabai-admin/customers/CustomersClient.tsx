@@ -128,10 +128,14 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
   const [notesLoading, setNotesLoading] = useState(true);
   const [inviteState, setInviteState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [inviteMsg, setInviteMsg] = useState("");
+  const [viewAsState, setViewAsState] = useState<"idle" | "starting" | "error">("idle");
+  const [viewAsMsg, setViewAsMsg] = useState("");
 
   useEffect(() => {
     setInviteState("idle");
     setInviteMsg("");
+    setViewAsState("idle");
+    setViewAsMsg("");
     setNotesLoading(true);
     fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/notes`)
       .then(r => r.json())
@@ -202,6 +206,39 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
       setInviteMsg("Network error sending invite.");
     }
   }
+
+  async function viewAsClient() {
+    if (!customer.email) {
+      setViewAsState("error");
+      setViewAsMsg("This customer has no email.");
+      return;
+    }
+    setViewAsState("starting");
+    setViewAsMsg("");
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customer.email,
+          name: customer.name,
+          clientId: customer.id,
+          returnTo: "/saabai-admin/customers",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setViewAsState("error");
+        setViewAsMsg(data.error || "Could not start View as client.");
+        return;
+      }
+      window.location.href = data.redirect || "/client-portal";
+    } catch {
+      setViewAsState("error");
+      setViewAsMsg("Network error starting View as client.");
+    }
+  }
+
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }} onClick={onClose}>
@@ -312,6 +349,23 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
                 </button>
                 {inviteMsg && (
                   <p style={{ margin: 0, fontSize: 11, color: inviteState === "error" ? C.red : C.muted }}>{inviteMsg}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={viewAsClient}
+                  disabled={viewAsState === "starting"}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    padding: "10px 0", borderRadius: 8, cursor: viewAsState === "starting" ? "not-allowed" : "pointer",
+                    background: "rgba(201,162,39,0.12)", border: "1px solid rgba(201,162,39,0.45)",
+                    color: C.gold, fontSize: 13, fontWeight: 700,
+                    opacity: viewAsState === "starting" ? 0.6 : 1,
+                  }}
+                >
+                  {viewAsState === "starting" ? "Opening portal..." : "View as client"}
+                </button>
+                {viewAsMsg && (
+                  <p style={{ margin: 0, fontSize: 11, color: viewAsState === "error" ? C.red : C.muted }}>{viewAsMsg}</p>
                 )}
               </>
             )}

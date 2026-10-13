@@ -6,11 +6,14 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getClientSession } from "../../../../../lib/client-session";
+import { rejectIfImpersonatingReadOnlyCookies } from "../../../../../lib/impersonation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  const blocked = await rejectIfImpersonatingReadOnlyCookies();
+  if (blocked) return blocked;
   const client = await getClientSession();
   if (!client) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   if (!client.email) return NextResponse.json({ error: "No billing account found yet" }, { status: 400 });

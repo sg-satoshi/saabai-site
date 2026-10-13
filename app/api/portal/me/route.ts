@@ -9,6 +9,7 @@
 
 import { getLexClients } from "../../../../lib/lex-config";
 import { verifySession } from "../../../../lib/portal-session";
+import { rejectIfImpersonatingReadOnly } from "../../../../lib/impersonation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +61,8 @@ export async function GET(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const blocked = rejectIfImpersonatingReadOnly(req);
+  if (blocked) return blocked;
   const isProd = process.env.NODE_ENV === "production";
   const clearCookie = [
     "portal_session=",

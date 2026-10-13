@@ -18,6 +18,9 @@ function parseCookie(header: string | null, name: string): string | undefined {
 }
 
 export async function POST(req: NextRequest) {
+  const { rejectIfImpersonatingReadOnly } = await import("../../../../lib/impersonation");
+  const blocked = rejectIfImpersonatingReadOnly(req);
+  if (blocked) return blocked;
   const cookieHeader = req.headers.get("cookie");
   const token = parseCookie(cookieHeader, "portal_session");
   if (!token) {

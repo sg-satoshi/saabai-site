@@ -85,6 +85,8 @@ export function PortalShell({
   onNavigate,
   children,
   title,
+  impersonating,
+  onExitImpersonation,
 }: {
   business: string;
   personName: string;
@@ -95,6 +97,8 @@ export function PortalShell({
   onNavigate: (id: string) => void;
   children: React.ReactNode;
   title?: string;
+  impersonating?: { name: string } | null;
+  onExitImpersonation?: () => void;
 }) {
   const [drawer, setDrawer] = useState(false);
   useEffect(() => {
@@ -136,6 +140,45 @@ export function PortalShell({
 
   return (
     <div className="app">
+      {impersonating ? (
+        <div
+          role="status"
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 80,
+            gridColumn: "1 / -1",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "10px 16px",
+            background: "#c9a227",
+            color: "#0b092e",
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: "Inter, system-ui, sans-serif",
+          }}
+        >
+          <span>Viewing as {impersonating.name}. Read-only.</span>
+          <button
+            type="button"
+            onClick={onExitImpersonation}
+            style={{
+              background: "#0b092e",
+              color: "#c9a227",
+              border: 0,
+              borderRadius: 8,
+              padding: "6px 12px",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            Exit
+          </button>
+        </div>
+      ) : null}
       <aside className="side dt">{side}</aside>
       <div className="main">
         <div className="top dt">

@@ -55,6 +55,7 @@ type Workspace = {
   blueprints: { id: string; tier: string; status: string; createdAt: string; businessName: string; score: number | null }[];
   requests: { id: string; title: string; status: string; createdAt: string; updatedAt: string }[];
   openRequestCount: number;
+  impersonating?: { name: string; email: string; clientId: string; returnTo: string; expiresAt: string; readOnly: true } | null;
 };
 
 const PRODUCT_ICON_PATHS: Record<string, React.ReactNode> = {
@@ -494,6 +495,12 @@ function ClientPortalInner() {
   const firstName = workspace.name.split(/\s+/)[0] || "there";
   const canPay = workspace.role === "Owner" || workspace.role === "Billing";
 
+  async function exitImpersonation() {
+    const res = await fetch("/api/admin/impersonate", { method: "DELETE", credentials: "include" });
+    const data = await res.json().catch(() => ({}));
+    window.location.href = data.redirect || "/saabai-admin/customers";
+  }
+
   return (
     <PortalShell
       business={workspace.business || "Your business"}
@@ -504,6 +511,8 @@ function ClientPortalInner() {
       active={page === "manage-agent" ? "lex-agent" : page}
       onNavigate={(id) => setPage(id as PageId)}
       title={page === "manage-agent" ? "Manage agent" : undefined}
+      impersonating={workspace.impersonating || null}
+      onExitImpersonation={exitImpersonation}
     >
       {page === "overview" && (
         <>
