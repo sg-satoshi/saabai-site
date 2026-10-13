@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
+import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
 
 export const runtime = "nodejs";
 
@@ -44,7 +45,8 @@ export async function GET(
     try {
       const { blobs } = await list({ prefix: `sites/${slug}/${page}` });
       const blob = blobs.find((b) => b.pathname === `sites/${slug}/${page}`);
-      if (!blob) return new Response("Not found", { status: 404 });
+      // No exact match: use whatever favicon the site uploaded, else Saabai's.
+      if (!blob) return Response.redirect((await findSiteFavicon(slug)) ?? SAABAI_FAVICON, 302);
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
       const buffer = await res.arrayBuffer();
       return new Response(buffer, {
@@ -93,7 +95,7 @@ export async function GET(
     if (!blob) return new Response("Page not found", { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-    const html = await res.text();
+    const html = await ensureFavicon(slug, await res.text());
     return new Response(html, {
       status: 200,
       headers: {

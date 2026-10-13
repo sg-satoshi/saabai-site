@@ -233,7 +233,13 @@ export async function proxy(req: NextRequest) {
       // Rewrite _next/static assets to the real deployment domain so
       // CSS, JS, and fonts load properly (the custom domain isn't a
       // registered Vercel domain, so Vercel 404s on static chunks there).
-      if (pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
+      // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
+      if (pathname === "/favicon.ico") {
+        url.hostname = "www.saabai.ai";
+        url.pathname = `/sites/${slug}/favicon.ico`;
+        return NextResponse.rewrite(url);
+      }
+      if (pathname.startsWith("/_next/")) {
         url.hostname = "www.saabai.ai";
         return NextResponse.rewrite(url);
       }
