@@ -4,6 +4,7 @@
  */
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
+import { isLiveBlueprintEngagement } from "../../../../lib/live-revenue";
 import { listEngagements } from "../../../../lib/audit-store";
 import { TIERS } from "../../../../lib/blueprint";
 
@@ -32,7 +33,8 @@ export async function GET() {
   }
 
   const engagements = await listEngagements();
-  const paid = engagements.filter((e) => e.stripeRef || e.amountTotal);
+  // Only live Stripe Checkout payments count (no test-mode or manual drafts).
+  const paid = engagements.filter(isLiveBlueprintEngagement);
 
   const today = bneDateString();
   const weekDates = new Set<string>();
@@ -44,7 +46,7 @@ export async function GET() {
   let todayRevenue = 0;
   let weekCount = 0;
   let weekRevenue = 0;
-  let allCount = paid.length;
+  const allCount = paid.length;
   let allRevenue = 0;
 
   for (const e of paid) {

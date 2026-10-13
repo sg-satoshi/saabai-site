@@ -12,6 +12,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib
 import { listEngagements } from "../../../../lib/audit-store";
 import { AUDIT_STATUS_LABELS, type AuditStatus } from "../../../../lib/audit-types";
 import { TIERS, isTier } from "../../../../lib/blueprint";
+import { isLiveBlueprintEngagement } from "../../../../lib/live-revenue";
 import { classifySubscription, subscriptionOrderKind, subscriptionProductLabel } from "../../../../lib/subscription-classify";
 
 export const runtime = "nodejs";
@@ -55,6 +56,8 @@ export interface OrderRecord {
   currentPeriodEnd: number | null;
   invoices: InvoiceRecord[];
   engagementId: string | null;
+  /** Money actually collected in Stripe live mode for this order (cents). 0 if unpaid, test or manual. */
+  revenueCents: number;
 }
 
 function derivePlan(amount: number | null): string {
@@ -129,6 +132,7 @@ export async function GET() {
         currentPeriodEnd: null,
         invoices: [],
         engagementId: e.id,
+        revenueCents: isLiveBlueprintEngagement(e) ? (e.amountTotal ?? 0) : 0,
       });
     }
   } catch (err) {
@@ -173,6 +177,7 @@ export async function GET() {
         currentPeriodEnd: null,
         invoices: [],
         engagementId: null,
+        revenueCents: s.livemode ? (s.amount_total ?? 0) : 0,
       });
     }
   } catch (err) {
@@ -209,6 +214,8 @@ export async function GET() {
     }
 
     const invoicesByCustomer: Record<string, InvoiceRecord[]> = {};
+    // Paid live invoices keyed by subscription, so each subscription only counts its own payments.
+    const liveInvoicesBySub: Record<string, InvoiceRecord[]> = {};
     for (const inv of invoicesRes?.data ?? []) {
       if (inv.status !== "paid") continue;
       const custId =
@@ -223,15 +230,31 @@ export async function GET() {
         description: inv.lines?.data?.[0]?.description ?? "Payment",
         hostedUrl: inv.hosted_invoice_url ?? null,
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawSub = (inv as any).subscription ?? (inv as any).parent?.subscription_details?.subscription ?? null;
+      const subId = typeof rawSub === "string" ? rawSub : rawSub?.id ?? null;
+      if (subId && inv.livemode) {
+        (liveInvoicesBySub[subId] ??= []).push({
+        id: inv.id,
+        amount: inv.amount_paid,
+        status: "paid",
+        date: inv.created,
+        description: inv.lines?.data?.[0]?.description ?? "Payment",
+        hostedUrl: inv.hosted_invoice_url ?? null,
+        });
+      }
     }
 
     for (const sub of subscriptionsRes.data) {
+      const subInvoices = (liveInvoicesBySub[sub.id] ?? []).slice().sort((a, b) => b.date - a.date);
+      // Never-paid checkouts that expired are not orders.
+      if ((sub.status === "incomplete_expired" || sub.status === "incomplete") && subInvoices.length === 0) continue;
       const customerId =
         typeof sub.customer === "string" ? sub.customer : (sub.customer as Stripe.Customer | null)?.id ?? "";
       const customer = customerMap[customerId] ?? null;
       const monthlyItem = sub.items.data.find((item) => item.price?.recurring?.interval === "month");
       const monthlyAmount = monthlyItem?.price?.unit_amount ?? null;
-      const invs = (invoicesByCustomer[customerId] ?? []).sort((a, b) => b.date - a.date);
+      const invs = (subInvoices.length ? subInvoices : (invoicesByCustomer[customerId] ?? [])).sort((a, b) => b.date - a.date);
       const totalPaid = invs.reduce((sum, i) => sum + i.amount, 0);
       const plan = derivePlan(monthlyAmount);
       let currentPeriodEnd: number | null = null;
@@ -272,6 +295,7 @@ export async function GET() {
         currentPeriodEnd,
         invoices: invs,
         engagementId: null,
+        revenueCents: sub.livemode ? subInvoices.reduce((sum, i) => sum + i.amount, 0) : 0,
       });
     }
   } catch (err) {
