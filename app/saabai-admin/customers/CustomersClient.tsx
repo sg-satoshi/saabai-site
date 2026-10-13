@@ -127,8 +127,12 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
   const [noteText, setNoteText] = useState("");
   const [saving, setSaving] = useState(false);
   const [notesLoading, setNotesLoading] = useState(true);
+  const [inviteState, setInviteState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [inviteMsg, setInviteMsg] = useState("");
 
   useEffect(() => {
+    setInviteState("idle");
+    setInviteMsg("");
     setNotesLoading(true);
     fetch(`/api/admin/customers/${encodeURIComponent(customer.id)}/notes`)
       .then(r => r.json())
@@ -166,6 +170,38 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
     const d = new Date(iso);
     return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) + " at " +
            d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function sendPortalInvite() {
+    if (!customer.email) {
+      setInviteState("error");
+      setInviteMsg("This customer has no email.");
+      return;
+    }
+    setInviteState("sending");
+    setInviteMsg("");
+    try {
+      const res = await fetch("/api/admin/portal-invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customer.email,
+          name: customer.name,
+          business: customer.name,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setInviteState("error");
+        setInviteMsg(data.error || "Invite failed.");
+        return;
+      }
+      setInviteState("sent");
+      setInviteMsg(`Invite sent to ${data.to || customer.email}.`);
+    } catch {
+      setInviteState("error");
+      setInviteMsg("Network error sending invite.");
+    }
   }
 
   return (
@@ -259,6 +295,27 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
           )}
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {!!customer.email && (
+              <>
+                <button
+                  type="button"
+                  onClick={sendPortalInvite}
+                  disabled={inviteState === "sending" || inviteState === "sent"}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    padding: "10px 0", borderRadius: 8, cursor: inviteState === "sending" || inviteState === "sent" ? "not-allowed" : "pointer",
+                    background: "rgba(98,197,209,0.12)", border: "1px solid rgba(98,197,209,0.45)",
+                    color: "#62c5d1", fontSize: 13, fontWeight: 700,
+                    opacity: inviteState === "sending" ? 0.6 : 1,
+                  }}
+                >
+                  {inviteState === "sending" ? "Sending invite..." : inviteState === "sent" ? "Invite sent" : "Send portal invite"}
+                </button>
+                {inviteMsg && (
+                  <p style={{ margin: 0, fontSize: 11, color: inviteState === "error" ? C.red : C.muted }}>{inviteMsg}</p>
+                )}
+              </>
+            )}
             {customer.detailUrl && (
               <a
                 href={customer.detailUrl}

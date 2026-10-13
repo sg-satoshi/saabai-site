@@ -1,12 +1,12 @@
 import Stripe from "stripe";
-import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureClientAccount } from "../../../../lib/client-account";
+import { EMAIL_BRAND, sendBrandedEmail } from "../../../../lib/email/branded-layout";
+import { adminSaleNotificationEmail } from "../../../../lib/email/templates";
 
 // Stripe requires the raw request body to verify signatures — do NOT parse as JSON first.
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-  const resend  = new Resend(process.env.RESEND_API_KEY!);
   const body = await req.text();
   const sig  = req.headers.get("stripe-signature");
 
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     const customerName  = session.customer_details?.name  ?? "New client";
 
     if (session.metadata?.source === "saabai-sell") {
-      // Product sale via the admin Sell flow — create the client login + notify.
       const productName = session.metadata?.product_name ?? "your purchase";
       if (customerEmail) {
         try {
@@ -38,43 +37,34 @@ export async function POST(req: NextRequest) {
         }
       }
       try {
-        await resend.emails.send({
-          from:    "Saabai <noreply@saabai.ai>",
-          to:      "hello@saabai.ai",
-          subject: `New sale — ${productName}`,
-          html: `
-            <h2>New product sale</h2>
-            <table>
-              <tr><td><strong>Name</strong></td><td>${customerName}</td></tr>
-              <tr><td><strong>Email</strong></td><td>${customerEmail || "—"}</td></tr>
-              <tr><td><strong>Product</strong></td><td>${productName}</td></tr>
-              <tr><td><strong>Session</strong></td><td>${session.id}</td></tr>
-            </table>
-            <p>Client login created and welcome email sent. View payment in the <a href="https://dashboard.stripe.com">Stripe dashboard</a>.</p>
-          `,
+        await sendBrandedEmail({
+          to: "hello@saabai.ai",
+          from: EMAIL_BRAND.from,
+          email: adminSaleNotificationEmail({
+            productName,
+            customerName,
+            customerEmail: customerEmail || null,
+            detailLines: [`Session: ${session.id}`, "Client login created and welcome email sent."],
+            adminUrl: "https://dashboard.stripe.com",
+          }),
         });
       } catch (err) {
         console.error("[stripe webhook] failed to send sale notification email", err);
       }
     } else {
-      // Existing Lex signup flow.
       const plan  = session.metadata?.plan ?? "unknown";
       const label = session.metadata?.label ?? plan;
       try {
-        await resend.emails.send({
-          from:    "Saabai <noreply@saabai.ai>",
-          to:      "hello@saabai.ai",
-          subject: `New Lex signup — ${label} plan`,
-          html: `
-            <h2>New Lex client signed up</h2>
-            <table>
-              <tr><td><strong>Name</strong></td><td>${customerName}</td></tr>
-              <tr><td><strong>Email</strong></td><td>${customerEmail || "—"}</td></tr>
-              <tr><td><strong>Plan</strong></td><td>${label}</td></tr>
-              <tr><td><strong>Session</strong></td><td>${session.id}</td></tr>
-            </table>
-            <p>Head to the <a href="https://dashboard.stripe.com">Stripe dashboard</a> to view payment details.</p>
-          `,
+        await sendBrandedEmail({
+          to: "hello@saabai.ai",
+          from: EMAIL_BRAND.from,
+          email: adminSaleNotificationEmail({
+            productName: `Lex ${label}`,
+            customerName,
+            customerEmail: customerEmail || null,
+            detailLines: [`Plan: ${label}`, `Session: ${session.id}`],
+            adminUrl: "https://dashboard.stripe.com",
+          }),
         });
       } catch (err) {
         console.error("[stripe webhook] failed to send notification email", err);
