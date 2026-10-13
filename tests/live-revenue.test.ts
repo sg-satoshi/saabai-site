@@ -26,3 +26,10 @@ test("empty state is honest", () => {
   assert.equal(s.revenueCents, 0);
   assert.equal(revenueBreakdownLabel(s.byKind), "No sales yet");
 });
+
+test("unclassified subscriptions are never labelled Lex", async () => {
+  const { subscriptionOrderKind, classifySubscription } = await import("../lib/subscription-classify");
+  assert.equal(subscriptionOrderKind(classifySubscription({ description: "Monthly retainer" })), "subscription");
+  assert.equal(subscriptionOrderKind("lex"), "lex_subscription");
+  assert.equal(subscriptionOrderKind("website_care"), "website_care");
+});
