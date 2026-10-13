@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "../../ui/Feedback";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../../AdminSidebar";
@@ -658,7 +659,7 @@ function QueuePanel({ refresh }: { refresh: number }) {
   useEffect(() => { load(); }, [refresh]);
 
   async function cancelPost(id: string) {
-    if (!confirm("Remove this post from the queue?")) return;
+    if (!(await confirmDialog("Remove this post from the queue?"))) return;
     await fetch("/api/instagram/queue", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -668,7 +669,7 @@ function QueuePanel({ refresh }: { refresh: number }) {
   }
 
   async function postNow(post: Post) {
-    if (!confirm("Post this to Instagram right now?")) return;
+    if (!(await confirmDialog("Post this to Instagram right now?"))) return;
     await fetch("/api/instagram/post", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

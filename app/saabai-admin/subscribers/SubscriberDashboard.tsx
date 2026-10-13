@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "../ui/Feedback";
 import { escapeHtml } from "../../../lib/html-escape";
 
 import { useState, useEffect } from "react";
@@ -471,7 +472,7 @@ export default function SubscriberDashboard() {
   async function deleteSelected() {
     const emails = Array.from(selected);
     if (!emails.length) return;
-    if (!confirm(`Permanently delete ${emails.length} subscriber${emails.length !== 1 ? "s" : ""}? This cannot be undone.`)) return;
+    if (!(await confirmDialog(`Permanently delete ${emails.length} subscriber${emails.length !== 1 ? "s" : ""}? This cannot be undone.`))) return;
     setDeleting(true);
     try {
       const res = await fetch("/api/subscribers", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ emails }) });

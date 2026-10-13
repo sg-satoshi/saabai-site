@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "./ui/Feedback";
 import { BNE_TZ } from "../../lib/brisbane-time";
 import { summariseRevenue, revenueBreakdownLabel } from "../../lib/live-revenue";
 
@@ -198,13 +199,13 @@ function LinkedInQueue() {
   }
 
   async function cancelPost(id: string) {
-    if (!confirm("Remove this post from the queue?")) return;
+    if (!(await confirmDialog("Remove this post from the queue?"))) return;
     await fetch("/api/linkedin/queue", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
     load();
   }
 
   async function postNow(post: QueuedPost) {
-    if (!confirm("Post this to LinkedIn right now?")) return;
+    if (!(await confirmDialog("Post this to LinkedIn right now?"))) return;
     await fetch("/api/linkedin/post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: post.content }) });
     await fetch("/api/linkedin/queue", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: post.id }) });
     setViewingPost(null);
@@ -638,7 +639,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
   }
 
   async function deny(req: PendingRequest) {
-    if (!confirm(`Deny access request from ${req.name}?`)) return;
+    if (!(await confirmDialog(`Deny access request from ${req.name}?`))) return;
     setBusy(req.email);
     try {
       await fetch("/api/admin/portal-users", {
@@ -782,18 +783,21 @@ export default function AdminClient({
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const today = todayLabel;
+  const [loadFailed, setLoadFailed] = useState<Record<string, boolean>>({});
+  const markFailed = (k: string) => setLoadFailed(f => ({ ...f, [k]: true }));
+  const okJson = (r: Response) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); };
 
   useEffect(() => {
     fetch("/api/admin/lex-clients")
-      .then(r => r.json())
+      .then(okJson)
       .then(data => { if (data.stats) setLexStats(data.stats); })
-      .catch(() => {});
+      .catch(() => markFailed("lex"));
     fetch("/api/admin/blueprint-stats")
-      .then(r => r.json())
+      .then(okJson)
       .then(data => { if (typeof data.todayCount === "number") setBpStats(data); })
-      .catch(() => {});
+      .catch(() => markFailed("bp"));
     fetch("/api/admin/orders")
-      .then(r => r.json())
+      .then(okJson)
       .then(data => {
         const orders = (data.orders || []) as { kind: string; revenueCents?: number }[];
         const lex = orders.filter(o => o.kind === "lex_subscription").length;
@@ -808,7 +812,7 @@ export default function AdminClient({
           countsLabel: sum.byKind.length ? sum.byKind.map(k => `${k.count} ${k.label}`).join(" · ") : "No paid orders yet",
         });
       })
-      .catch(() => {});
+      .catch(() => markFailed("orders"));
   }, []);
 
   return (
@@ -828,22 +832,22 @@ export default function AdminClient({
         <div className="card kpi">
           <div className="l">Paid orders (all time)</div>
           <div className="v num">{orderStats ? String(orderStats.paidCount) : "-"}</div>
-          <div className="d muted">{orderStats ? orderStats.countsLabel : "Loading..."}</div>
+          <div className="d muted">{orderStats ? orderStats.countsLabel : loadFailed.orders ? "Couldn't load orders" : "Loading..."}</div>
         </div>
         <div className="card kpi">
           <div className="l">Revenue (Stripe live)</div>
           <div className="v num">{orderStats ? `$${(orderStats.revenueCents / 100).toLocaleString("en-AU")}` : "-"}</div>
-          <div className="d muted">{orderStats ? orderStats.breakdown : "Loading..."}</div>
+          <div className="d muted">{orderStats ? orderStats.breakdown : loadFailed.orders ? "Couldn't load orders" : "Loading..."}</div>
         </div>
         <div className="card kpi">
           <div className="l">Blueprints, all paid</div>
           <div className="v num">{bpStats ? String(bpStats.allCount) : "-"}</div>
-          <div className="d muted">{bpStats ? (bpStats.allCount ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "No sales yet") : "Loading..."}</div>
+          <div className="d muted">{bpStats ? (bpStats.allCount ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "No sales yet") : loadFailed.bp ? "Couldn't load Blueprint sales" : "Loading..."}</div>
         </div>
         <div className="card kpi">
           <div className="l">Lex firms</div>
           <div className="v num">{lexStats ? String(lexStats.total) : "-"}</div>
-          <div className="d muted">{lexStats ? `${lexStats.configured} configured` : "Loading..."}</div>
+          <div className="d muted">{lexStats ? `${lexStats.configured} configured` : loadFailed.lex ? "Couldn't load Lex firms" : "Loading..."}</div>
         </div>
       </div>
 

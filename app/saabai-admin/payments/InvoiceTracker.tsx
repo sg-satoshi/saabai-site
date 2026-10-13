@@ -1,4 +1,5 @@
 "use client";
+import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback } from "react";
 import type { Invoice, InvoiceLineItem, InvoiceClient } from "../../../lib/invoice-store";
@@ -304,13 +305,13 @@ export default function InvoiceTracker() {
 
       if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Failed to save invoice");
+        notify.error(data.error || "Failed to save invoice");
         return;
       }
       setShowModal(false);
       loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to save");
+      notify.error(err instanceof Error ? err.message : "Failed to save");
     }
   }
 
@@ -329,7 +330,7 @@ export default function InvoiceTracker() {
   // ── Delete ────────────────────────────────────────────────────────────────
 
   async function deleteInvoice(id: string) {
-    if (!confirm("Delete this invoice?")) return;
+    if (!(await confirmDialog("Delete this invoice?"))) return;
     try {
       await fetch(`/api/admin/invoices/${id}`, { method: "DELETE" });
       loadData();
@@ -353,7 +354,7 @@ export default function InvoiceTracker() {
         setNcName("");
         setNcAddress("");
       } else {
-        alert(data.error);
+        notify.error(data.error);
       }
     } catch { /* ignore */ }
   }

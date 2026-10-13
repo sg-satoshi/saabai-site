@@ -1,4 +1,5 @@
 "use client";
+import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -646,7 +647,7 @@ export default function SiteFactoryClient() {
     fetch("/api/admin/billing/sites")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.records) setBillingRecords(Object.fromEntries(d.records.map((r: BillingRecordSummary) => [r.siteId, r]))); })
-      .catch(() => {});
+      .catch(() => notify.error("Couldn't load billing status for sites."));
   }
 
   async function deleteSiteConfirmed() {
@@ -737,7 +738,7 @@ export default function SiteFactoryClient() {
         if (d.html) { setPreviewHtml(d.html); versions.current = [d.html]; }
         setHasDraft(!!d.hasDraft);
       })
-      .catch(() => {});
+      .catch(() => notify.error("Couldn't load the site preview. Try reopening the site."));
 
     setPhase("editing");
     // On mobile: keep sidebar closed so preview is visible first
@@ -756,9 +757,9 @@ export default function SiteFactoryClient() {
       if (data.url) {
         setPendingImage({ url: data.url, name: file.name });
       } else {
-        alert("Upload failed: " + (data.error || "unknown"));
+        notify.error("Upload failed: " + (data.error || "unknown"));
       }
-    } catch (e) { alert("Upload error: " + String(e)); }
+    } catch (e) { notify.error("Upload error: " + String(e)); }
     setUploading(false);
   }
 
@@ -865,7 +866,7 @@ export default function SiteFactoryClient() {
           }
           return updated;
         });
-      }).catch(() => {});
+      }).catch(() => { /* suggestions are optional */ });
 
     } catch (err) {
       setMessages(prev => {
@@ -1042,7 +1043,7 @@ export default function SiteFactoryClient() {
             }
             return updated;
           });
-        }).catch(() => {});
+        }).catch(() => { /* suggestions are optional */ });
       }
     } catch (e) {
       setMessages(prev => {
@@ -1114,9 +1115,9 @@ export default function SiteFactoryClient() {
           ...(resolvedAvatarUrl ? { imageUrl: resolvedAvatarUrl } : {}),
         }]);
       } else {
-        alert("Failed: " + (data.error || "unknown error"));
+        notify.error("Failed: " + (data.error || "unknown error"));
       }
-    } catch (e) { alert(String(e)); }
+    } catch (e) { notify.error(String(e)); }
     setInjectingBot(false);
   }
 
@@ -1142,9 +1143,9 @@ export default function SiteFactoryClient() {
         setGalleryImgs(prev => [newImg, ...prev]);
         setImgPrompt("");
       } else {
-        alert(data.error || "Image generation failed");
+        notify.error(data.error || "Image generation failed");
       }
-    } catch (e) { alert(String(e)); }
+    } catch (e) { notify.error(String(e)); }
     setGeneratingImg(false);
   }
 
@@ -1299,9 +1300,9 @@ export default function SiteFactoryClient() {
       if (data.ok && data.url) {
         setBotSetupAvatarUrl(data.url);
       } else {
-        alert(data.error || "Image generation failed");
+        notify.error(data.error || "Image generation failed");
       }
-    } catch (e) { alert(String(e)); }
+    } catch (e) { notify.error(String(e)); }
     setBotAvatarGenerating(false);
   }
 
@@ -1336,7 +1337,7 @@ export default function SiteFactoryClient() {
   async function injectReviewsToSite() {
     if (!activeSite) return;
     const allReviews = [...fetchedReviews, ...manualReviews].filter(r => r.text?.trim());
-    if (allReviews.length === 0) { alert("Add at least one review first."); return; }
+    if (allReviews.length === 0) { notify.error("Add at least one review first."); return; }
     setInjectingReviews(true);
     try {
       const res = await fetch("/api/site-factory/inject-reviews", {
@@ -1374,9 +1375,9 @@ export default function SiteFactoryClient() {
           ts: Date.now(),
         }]);
       } else {
-        alert("Failed: " + (data.error || "unknown error"));
+        notify.error("Failed: " + (data.error || "unknown error"));
       }
-    } catch (e) { alert(String(e)); }
+    } catch (e) { notify.error(String(e)); }
     setInjectingReviews(false);
   }
 
@@ -1393,9 +1394,9 @@ export default function SiteFactoryClient() {
         // Re-inject immediately so the live site reflects the new avatar
         await injectChatbot(data.url);
       } else {
-        alert("Upload failed: " + (data.error || "unknown"));
+        notify.error("Upload failed: " + (data.error || "unknown"));
       }
-    } catch (e) { alert("Upload error: " + String(e)); }
+    } catch (e) { notify.error("Upload error: " + String(e)); }
   }
 
   async function extractBrief() {
@@ -1517,7 +1518,7 @@ export default function SiteFactoryClient() {
 
         if (res.status === 409) {
           const { error } = await res.json();
-          const confirmed = window.confirm(`${error}\n\nCreate another site for this business?`);
+          const confirmed = await confirmDialog(`${error}\n\nCreate another site for this business?`);
           if (!confirmed) { setMultiPageProgress([]); setPhase("new"); return; }
           res = await fetch("/api/site-factory/generate-multi", {
             method: "POST",
@@ -1558,7 +1559,7 @@ export default function SiteFactoryClient() {
         }
       } catch (e) {
         setMultiPageProgress([]);
-        alert("Error: " + String(e));
+        notify.error("Error: " + String(e));
         setPhase("list");
       }
       return;
@@ -1582,7 +1583,7 @@ export default function SiteFactoryClient() {
 
       if (res.status === 409) {
         const { error } = await res.json();
-        const confirmed = window.confirm(`${error}\n\nCreate another site for this business?`);
+        const confirmed = await confirmDialog(`${error}\n\nCreate another site for this business?`);
         if (!confirmed) { stopPreviewUpdater(); setPhase("new"); return; }
         res = await fetch("/api/site-factory/generate", {
           method: "POST",
@@ -1612,7 +1613,7 @@ export default function SiteFactoryClient() {
       setTimeout(() => openEditor(fakeSite), 800);
     } catch (e) {
       stopPreviewUpdater();
-      alert("Error: " + String(e));
+      notify.error("Error: " + String(e));
       setPhase("list");
     }
   }
@@ -1630,7 +1631,7 @@ export default function SiteFactoryClient() {
       const data = await res.json();
       setDnsResult(data);
       if (data.ok) { setDomains(prev => prev.includes(data.domain) ? prev : [...prev, data.domain]); setNewDomain(""); }
-    } catch (e) { alert(String(e)); }
+    } catch (e) { notify.error(String(e)); }
     setDnsLoading(false);
   }
 
@@ -1668,7 +1669,7 @@ export default function SiteFactoryClient() {
 
   async function restoreVersion(v: number) {
     if (!activeSite || restoringVersion !== null) return;
-    if (!confirm(`Restore v${v}? The current live site will be saved as a snapshot first.`)) return;
+    if (!(await confirmDialog(`Restore v${v}? The current live site will be saved as a snapshot first.`))) return;
     setRestoringVersion(v);
     try {
       const res = await fetch("/api/site-factory/restore-version", {
@@ -2214,7 +2215,7 @@ export default function SiteFactoryClient() {
                                   style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(168,85,247,0.9)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
                                 >Custom use →</button>
                                 <button
-                                  onClick={() => { if (confirm("Delete this image?")) deleteGalleryImage(img.url); }}
+                                  onClick={() => { void confirmDialog("Delete this image?").then((ok) => { if (ok) deleteGalleryImage(img.url); }); }}
                                   style={{ padding: "3px 7px", borderRadius: 4, border: "none", background: "rgba(220,38,38,0.85)", color: "#fff", fontSize: 10, cursor: "pointer", fontWeight: 600, textAlign: "left" }}
                                 >Delete</button>
                               </div>
