@@ -81,7 +81,7 @@ export default function BOChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages.map((m) => ({ role: m.role, content: getText(m) })) }),
       });
-      if (res.ok) {
+      if (res.ok || res.status === 429 || res.status === 413) {
         const data = await res.json();
         const replyText = data.content || "Sorry, I didn't catch that. Try again or call us on info@boconsulting.com.au.";
         setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", parts: [{ type: "text", text: replyText }] }]);

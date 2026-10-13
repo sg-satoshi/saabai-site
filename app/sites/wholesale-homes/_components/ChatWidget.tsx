@@ -95,7 +95,7 @@ export function ChatWidget() {
           messages: newMessages.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content })),
         }),
       });
-      if (res.ok) {
+      if (res.ok || res.status === 429 || res.status === 413) {
         const data = await res.json();
         const reply = data.content || "I'm not sure about that. Could you rephrase?";
         setMessages((prev) => [...prev, { role: "assistant", content: reply }]);

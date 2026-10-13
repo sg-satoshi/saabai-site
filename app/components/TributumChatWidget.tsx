@@ -78,7 +78,7 @@ export default function TributumChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: getText(m) })) }),
       });
-      if (res.ok) {
+      if (res.ok || res.status === 429 || res.status === 413) {
         const data = await res.json();
         const replyText = data.content || "I apologise, I didn't catch that. Could you rephrase?";
         const botMsg: UIMessage = { id: crypto.randomUUID(), role: "assistant", parts: [{ type: "text", text: replyText }] };

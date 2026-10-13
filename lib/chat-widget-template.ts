@@ -215,7 +215,7 @@ async function send(){
     var res=await fetch(CFG.api,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({slug:CFG.slug,messages:msgs.filter(function(m){return m.text!==CFG.greeting;}).slice(-10).map(function(m){return{role:m.role==='bot'?'assistant':'user',content:m.text};})})});
     hideTyping();
-    if(res.ok){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that — could you rephrase?");}
+    if(res.ok||res.status===429||res.status===413){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that — could you rephrase?");}
     else{addMsg('bot',"Something went wrong. Please try again shortly.");}
   }catch(e){hideTyping();addMsg('bot',"Connection error. Please try again.");}
   sendBtn.disabled=inp.value.trim()==='';

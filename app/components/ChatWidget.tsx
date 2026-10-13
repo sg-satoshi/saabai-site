@@ -930,7 +930,7 @@ export default function ChatWidget() {
             {error && (
               <div className="flex justify-start">
                 <div className="max-w-[82%] px-4 py-3 rounded-xl text-sm bg-saabai-surface-raised text-saabai-text-dim leading-relaxed">
-                  Something went wrong. Please try again.
+                  {(() => { try { return (JSON.parse(error.message) as { content?: string }).content; } catch { return undefined; } })() || "Something went wrong. Please try again."}
                 </div>
               </div>
             )}
