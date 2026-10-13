@@ -26,7 +26,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
     price: 497,
     priceLabel: "$497",
     who: "For small businesses that want a fast, practical plan.",
-    short: "Async, no call",
+    short: "No call needed",
     delivery: "48 hours",
     includesCall: false,
     features: [
@@ -34,7 +34,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
       "Top opportunities ranked by hours and $ saved",
       "Branded PDF plus web version in your portal",
       "Delivered within 48 hours",
-      "Async fact-find, no call needed",
+      "Fact-find online, no call needed",
     ],
     priceEnv: "STRIPE_BLUEPRINT_STARTER_PRICE_ID",
     engineTier: "essential",
