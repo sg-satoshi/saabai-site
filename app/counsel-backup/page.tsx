@@ -264,7 +264,14 @@ export default function CounselPage() {
   }
 
   return (
-    <div style={{ background: bg, minHeight: "100vh", color: textPrimary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
+    <div style={{ background: bg, minHeight: "100vh", color: textPrimary, fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }} className="lf-root">
+      <style>{`
+        .lf-root { overflow-x: clip; }
+        @media (max-width: 768px) {
+          .lf-stack { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .lf-root [style*="padding: 0 32px"], .lf-root [style*="32px 32px"], .lf-root [style*="80px 32px"] { padding-left: 20px !important; padding-right: 20px !important; }
+        }
+      `}</style>
 
       {/* Nav */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 32px", position: "sticky", top: 0, background: "#0b092e", backdropFilter: "blur(12px)", zIndex: 50 }}>
@@ -346,7 +353,7 @@ export default function CounselPage() {
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 24 }}>
           {PILLARS.map((p, i) => (
             <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 20, padding: "32px 28px", position: "relative" as const, overflow: "hidden" as const }}>
               <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${gold}, transparent)` }} />
@@ -365,7 +372,7 @@ export default function CounselPage() {
       {/* Live Demo */}
       <div id="demo" style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 64, alignItems: "start" }}>
+          <div className="lf-stack" style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 64, alignItems: "start" }}>
 
             {/* Left: copy */}
             <div>
@@ -408,7 +415,7 @@ export default function CounselPage() {
 
             {/* Right: phone */}
             <div style={{ display: "flex", flexDirection: "column" as const, alignItems: "center" }}>
-              <div style={{ width: 340, height: 620, background: "#0a0c10", border: `2px solid #222530`, borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)", position: "relative" as const }}>
+              <div style={{ width: 340, maxWidth: "100%", height: 620, background: "#0a0c10", border: `2px solid #222530`, borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)", position: "relative" as const }}>
                 <div style={{ position: "absolute" as const, top: 0, left: "50%", transform: "translateX(-50%)", width: 100, height: 26, background: "#080a0f", borderRadius: "0 0 16px 16px", zIndex: 10 }} />
                 <iframe
                   src="/lex-widget?client=tributumlaw"
@@ -430,7 +437,7 @@ export default function CounselPage() {
           <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.1 }}>Where Lex earns its keep</h2>
           <p style={{ fontSize: 16, color: textSecondary, maxWidth: 500, margin: 0, lineHeight: 1.7 }}>Lex works across practice areas — the intake process is the same whether it&apos;s tax, property, estates, or commercial work.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", gap: 20 }}>
           {USECASES.map((u, i) => (
             <div key={i} style={{ background: card, border: `1px solid ${border}`, borderRadius: 16, padding: "26px 24px" }}>
               <div style={{ display: "inline-block", background: goldDim, border: `1px solid ${goldBorder}`, borderRadius: 6, padding: "3px 10px", marginBottom: 16 }}>
@@ -454,7 +461,7 @@ export default function CounselPage() {
             Lex pays for itself<br />in the first month.
           </h2>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 20 }}>
           {[
             {
               quote: "We were losing at least two quality enquiries a week to after-hours voicemails. Lex captured a $12,000 commercial matter at 10pm on a Sunday. That one matter paid for the year.",
@@ -531,7 +538,7 @@ export default function CounselPage() {
       {/* What's included */}
       <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 32px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }}>
+          <div className="lf-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }}>
             <div>
               <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>What&apos;s included</p>
               <h2 style={{ fontSize: "clamp(26px, 3.5vw, 40px)", fontWeight: 900, letterSpacing: "-1px", margin: "0 0 20px", color: textPrimary, lineHeight: 1.1 }}>
@@ -790,7 +797,7 @@ export default function CounselPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+        <div className="lf-stack" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
           {PRICING.map((plan, i) => (
             <div
               key={i}
@@ -932,7 +939,7 @@ export default function CounselPage() {
 
       {/* About Saabai */}
       <div style={{ background: surface, borderTop: `1px solid ${border}`, borderBottom: `1px solid ${border}` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 32px", display: "grid", gridTemplateColumns: "1fr auto", gap: 64, alignItems: "center" }}>
+        <div className="lf-stack" style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 32px", display: "grid", gridTemplateColumns: "1fr auto", gap: 64, alignItems: "center" }}>
           <div style={{ maxWidth: 580 }}>
             <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>About Saabai</p>
             <h2 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.8px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.2 }}>We build AI agents for professional services firms.</h2>
