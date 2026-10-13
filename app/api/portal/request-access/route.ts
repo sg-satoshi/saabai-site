@@ -3,12 +3,16 @@
  * Creates a Client Request for admin review. Auto-approves portal user when
  * the email matches a paid Blueprint or Lex order. Always returns the same ok.
  */
-import { Resend } from "resend";
 import { savePendingRequest, getPortalUser, savePortalUser } from "../../../../lib/portal-users";
 import { getDirectoryUser } from "../../../../lib/user-directory";
 import { loadClients } from "../../../../lib/clients";
 import { listEngagements } from "../../../../lib/audit-store";
 import { runAfterResponse } from "../../../../lib/run-after";
+import { EMAIL_BRAND, sendBrandedEmail } from "../../../../lib/email/branded-layout";
+import {
+  accessRequestAdminEmail,
+  accessRequestConfirmationEmail,
+} from "../../../../lib/email/templates";
 
 export const runtime = "nodejs";
 
@@ -22,7 +26,6 @@ async function emailMatchesOrder(email: string): Promise<boolean> {
   } catch {
     /* ignore */
   }
-  // Lex / Stripe: best-effort via env is not enough; engagements cover Blueprints.
   return false;
 }
 
@@ -70,19 +73,23 @@ export async function POST(req: Request) {
         });
       }
 
-      const key = process.env.RESEND_API_KEY;
-      if (key) {
-        await new Resend(key).emails.send({
-          from: "Saabai Portal <noreply@saabai.ai>",
-          to: "hello@saabai.ai",
-          subject: match
-            ? `Portal auto-approved: ${name.slice(0, 80)}`
-            : `Portal access request: ${name.slice(0, 80)}`,
-          html: `<p><strong>${name}</strong> (${email}${company ? `, ${company}` : ""}) ${
-            match ? "was auto-approved (email matched an order)." : "requested portal access."
-          }</p><p>${about ? `About: ${about}<br/>` : ""}${note ? `Note: ${note}` : ""}</p><p><a href="https://saabai.ai/saabai-admin/requests">Open Client Requests</a></p>`,
-        });
-      }
+      await sendBrandedEmail({
+        to: email,
+        email: accessRequestConfirmationEmail({ name, autoApproved: match }),
+        from: EMAIL_BRAND.fromPortal,
+      });
+      await sendBrandedEmail({
+        to: "hello@saabai.ai",
+        email: accessRequestAdminEmail({
+          name,
+          email,
+          company,
+          about,
+          note,
+          autoApproved: match,
+        }),
+        from: EMAIL_BRAND.fromPortal,
+      });
     } catch (err) {
       console.error("[portal/request-access]", err instanceof Error ? err.message : err);
     }

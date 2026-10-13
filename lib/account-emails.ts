@@ -6,6 +6,8 @@
  * on the login page. Reset requests get a 1-hour single-use reset link.
  */
 import { Resend } from "resend";
+import { EMAIL_BRAND, sendBrandedEmail } from "./email/branded-layout";
+import { accountReadyEmail, passwordResetEmail } from "./email/templates";
 import { createPasswordToken, setPasswordUrl, siteBaseUrl, WHOLESALE_SITE_URL } from "./password-tokens";
 
 export type EmailBrand = "saabai" | "wholesale-homes";
@@ -133,9 +135,15 @@ export async function sendWelcomeEmail(opts: {
   try {
     const token = await createPasswordToken(opts.email, "welcome");
     if (!token) return false;
-    const link = setPasswordUrl(token, "welcome", opts.brand ?? "saabai");
-    const b = brandConfig(opts.brand ?? "saabai");
-    const html = buildWelcomeEmail({ name: opts.name, email: opts.email, setPasswordLink: link, brand: opts.brand, intro: opts.intro, mentionMagicLink: opts.mentionMagicLink });
+    const brand = opts.brand ?? "saabai";
+    const link = setPasswordUrl(token, "welcome", brand);
+    if (brand === "saabai") {
+      const email = accountReadyEmail({ name: opts.name, email: opts.email, setPasswordLink: link });
+      const payload = opts.subject ? { ...email, subject: opts.subject } : email;
+      return await sendBrandedEmail({ to: opts.email, email: payload, from: EMAIL_BRAND.from });
+    }
+    const b = brandConfig(brand);
+    const html = buildWelcomeEmail({ name: opts.name, email: opts.email, setPasswordLink: link, brand, intro: opts.intro, mentionMagicLink: opts.mentionMagicLink });
     return await send(opts.email, opts.subject ?? "Your Saabai account is ready", html, b.from, link);
   } catch (err) {
     console.error("[account-emails] welcome failed", err instanceof Error ? err.message : err);
@@ -150,6 +158,13 @@ export async function sendPasswordResetEmail(opts: { name: string; email: string
     if (!token) return false;
     const brand = opts.brand ?? "saabai";
     const link = setPasswordUrl(token, "reset", brand);
+    if (brand === "saabai") {
+      return await sendBrandedEmail({
+        to: opts.email,
+        email: passwordResetEmail({ name: opts.name, resetLink: link }),
+        from: EMAIL_BRAND.from,
+      });
+    }
     const html = buildPasswordResetEmail({ name: opts.name, resetLink: link, brand });
     const b = brandConfig(brand);
     return await send(opts.email, `Reset your ${b.footerName} password`, html, b.from, link);
