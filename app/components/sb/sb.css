@@ -47,6 +47,10 @@ background:var(--bg);color:var(--text);font-family:var(--font-geist-sans),system
 .sb footer .cols div a{display:flex;align-items:center;min-height:44px;color:var(--dim);text-decoration:none}
 .sb .legal{margin-top:40px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:12px}
 .sb .legal a{text-decoration:none;color:var(--dim);display:inline-flex;align-items:center;min-height:44px}
+.sb footer .areas{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.sb footer .areas h4{color:#fff;font-size:13px;margin:0 0 8px;font-weight:600}
+.sb footer .areas nav{display:flex;flex-wrap:wrap;gap:4px 20px}
+.sb footer .areas nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;color:var(--dim);text-decoration:none}
 /* forms */
 .sb input,.sb select{width:100%;min-height:48px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:#fff;font:inherit;font-size:16px}
 .sb input:focus,.sb select:focus{outline:2px solid var(--teal);outline-offset:1px}

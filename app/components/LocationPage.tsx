@@ -2,7 +2,7 @@
 
 import Nav from "./Nav";
 import Footer from "./Footer";
-import { ALL_LOCATIONS, type LocationConfig } from "../../lib/location-data";
+import { type LocationConfig } from "../../lib/location-data";
 
 interface Props {
   config: LocationConfig;
@@ -104,8 +104,6 @@ export default function LocationPage({ config }: Props) {
       },
     ],
   };
-
-  const otherLocations = ALL_LOCATIONS.filter((loc) => loc.slug !== slug);
 
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -503,24 +501,6 @@ export default function LocationPage({ config }: Props) {
           <p className="text-xs text-saabai-text-dim mt-6">
             Blueprint from $497, credited if you build with us within 30 days.
           </p>
-
-          {/* Also serving */}
-          <div className="mt-14 pt-10 border-t border-saabai-border">
-            <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-4">
-              Also serving
-            </p>
-            <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-              {otherLocations.map((loc) => (
-                <a
-                  key={loc.slug}
-                  href={`/${loc.slug}`}
-                  className="inline-flex items-center min-h-[44px] px-1 text-saabai-text-muted hover:text-saabai-teal transition-colors"
-                >
-                  {loc.city}
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

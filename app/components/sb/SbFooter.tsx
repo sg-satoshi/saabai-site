@@ -1,3 +1,15 @@
+const serviceAreaLinks = [
+  { label: "Gold Coast", href: "/gold-coast" },
+  { label: "Brisbane", href: "/brisbane" },
+  { label: "Sydney", href: "/sydney" },
+  { label: "Melbourne", href: "/melbourne" },
+  { label: "Perth", href: "/perth" },
+  { label: "Adelaide", href: "/adelaide" },
+  { label: "Canberra", href: "/canberra" },
+  { label: "Hobart", href: "/hobart" },
+  { label: "Darwin", href: "/darwin" },
+];
+
 export default function SbFooter() {
   return (
     <footer>
@@ -28,6 +40,16 @@ export default function SbFooter() {
             <a href="/case-studies">Rex</a>
             <a href="/pulse">Pulse</a>
           </div>
+        </div>
+        <div className="areas">
+          <h4>Service areas</h4>
+          <nav>
+            {serviceAreaLinks.map(({ label, href }) => (
+              <a key={href} href={href}>
+                {label}
+              </a>
+            ))}
+          </nav>
         </div>
         <div className="legal">
           <span>© 2026 Saabai. All prices in AUD and include GST.</span>
