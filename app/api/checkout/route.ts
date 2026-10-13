@@ -43,7 +43,9 @@ export async function POST(req: NextRequest) {
       cancel_url:  `${origin}/counsel#pricing`,
       allow_promotion_codes: true,
       billing_address_collection: "required",
-      metadata: { plan, label: config.label },
+      name_collection: { individual: { enabled: true, optional: false } },
+      phone_number_collection: { enabled: true },
+      metadata: { plan, label: config.label, product: "lex" },
     });
 
     return NextResponse.json({ url: session.url });

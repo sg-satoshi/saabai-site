@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Online checkout is not available yet", fallback: true }, { status: 503 });
   }
 
-  // Optional prefill fields (legacy hosted form). Embedded mode does not require them.
+  // Optional prefill (legacy hosted form). Embedded collects name/phone in Stripe.
   const name = clean(body.name, 120);
   const email = clean(body.email, 200);
   const business = clean(body.business, 160);
@@ -64,10 +64,14 @@ export async function POST(req: NextRequest) {
         invoice_data: { description: `Saabai ${TIERS[tier].name} Blueprint`, metadata },
       },
       billing_address_collection: "auto" as const,
+      // Required full name on every Blueprint order (Shane).
+      name_collection: {
+        individual: { enabled: true, optional: false },
+      },
+      phone_number_collection: { enabled: true },
       allow_promotion_codes: true,
       metadata,
       payment_intent_data: { metadata, description: `Saabai ${TIERS[tier].name} Blueprint` },
-      // Optional extras inside Stripe Checkout so payment is never blocked by our form.
       custom_fields: [
         {
           key: "business_name",

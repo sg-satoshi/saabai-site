@@ -72,6 +72,7 @@ function buildWelcomeEmail(firstName: string | null, planName: string): { subjec
 function buildNotificationEmail(
   customerName: string | null,
   customerEmail: string | null,
+  customerPhone: string | null,
   plan: { name: string; setup: string; monthly: string },
   amountTotal: number | null,
 ): string {
@@ -85,8 +86,9 @@ function buildNotificationEmail(
       <div style="background: #f8f8f8; padding: 28px 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
         <p style="font-size: 14px; color: #555; line-height: 1.7; margin: 0 0 20px;">Payment confirmed. Welcome email and onboarding call link already sent to the client. Here's who just joined:</p>
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 7px 0; color: #888; font-size: 13px; width: 160px;">Name</td><td style="padding: 7px 0; font-size: 14px; font-weight: 600;">${customerName || "—"}</td></tr>
-          <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Email</td><td style="padding: 7px 0; font-size: 14px;"><a href="mailto:${customerEmail}" style="color: #0b092e;">${customerEmail || "—"}</a></td></tr>
+          <tr><td style="padding: 7px 0; color: #888; font-size: 13px; width: 160px;">Full name</td><td style="padding: 7px 0; font-size: 14px; font-weight: 600;">${customerName || "MISSING"}</td></tr>
+          <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Email</td><td style="padding: 7px 0; font-size: 14px;"><a href="mailto:${customerEmail}" style="color: #0b092e;">${customerEmail || "-"}</a></td></tr>
+          <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Phone</td><td style="padding: 7px 0; font-size: 14px;">${customerPhone || "-"}</td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Plan</td><td style="padding: 7px 0; font-size: 14px; font-weight: 600;">Lex ${plan.name}</td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Pricing</td><td style="padding: 7px 0; font-size: 14px;">${plan.setup} setup + ${plan.monthly}</td></tr>
           <tr><td style="padding: 7px 0; color: #888; font-size: 13px;">Charged today</td><td style="padding: 7px 0; font-size: 15px; font-weight: 700; color: #0b092e;">${amount}</td></tr>
@@ -136,6 +138,7 @@ export async function POST(req: Request) {
   }
   const customerName = session.customer_details?.name ?? null;
   const customerEmail = session.customer_details?.email ?? null;
+  const customerPhone = session.customer_details?.phone ?? null;
   const amountTotal = session.amount_total ?? null;
   const plan = getPlanLabel(amountTotal);
   const firstName = customerName?.split(" ")[0] ?? null;
@@ -166,7 +169,7 @@ export async function POST(req: Request) {
       from: "Saabai Payments <hello@saabai.ai>",
       to: [SAABAI_EMAIL],
       subject: `New Lex ${plan.name} signup — ${customerName || customerEmail || "Unknown"}`,
-      html: buildNotificationEmail(customerName, customerEmail, plan, amountTotal),
+      html: buildNotificationEmail(customerName, customerEmail, customerPhone, plan, amountTotal),
     }),
   ]);
 

@@ -122,7 +122,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
             <div className="card" id="blueprint-pay" style={{ marginTop: 20 }}>
               <h3 style={{ margin: 0 }}>Pay {t.priceLabel}</h3>
               <p className="dim" style={{ marginTop: 10, fontSize: 14 }}>
-                Business name and website are optional in the form below. We can also collect anything else after payment.
+                Enter your full name and email below to pay. Phone, business name and website are optional. Anything else we can collect after payment.
               </p>
 
               {enabled === null || loadingPay ? (
