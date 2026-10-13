@@ -388,9 +388,9 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div>
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+      <h2 className="pay-h">
         {mode === "onetime" ? "Charge a Card" : "Create a Subscription"}
-      </p>
+      </h2>
 
       {/* Mode toggle */}
       <div className="pay-seg" style={{ display: "flex", gap: 4, marginBottom: 16, background: C.surface, borderRadius: 8, padding: 3 }}>
@@ -683,9 +683,9 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div>
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 18 }}>
+      <h2 className="pay-h">
         Send an Invoice
-      </p>
+      </h2>
 
       <Field label="Amount (AUD)">
         <div style={{ position: "relative" }}>
