@@ -6,6 +6,10 @@ import { getDirectoryUser } from "../../../../lib/user-directory";
 
 export const runtime = "nodejs";
 
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const name     = formData.get("name")?.toString().trim()    ?? "";
@@ -43,8 +47,8 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: "Saabai Portal <noreply@saabai.ai>",
       to:   "hello@saabai.ai",
-      subject: `Portal access request: ${name}`,
-      html: `<p><strong>${name}</strong> (<a href="mailto:${email}">${email}</a>${company ? `, ${company}` : ""}) has requested portal access.</p><p><a href="https://saabai.ai/saabai-admin">Review and approve in admin &rarr;</a></p>`,
+      subject: `Portal access request: ${name.slice(0, 100)}`,
+      html: `<p><strong>${esc(name)}</strong> (<a href="mailto:${esc(email)}">${esc(email)}</a>${company ? `, ${esc(company)}` : ""}) has requested portal access.</p><p><a href="https://saabai.ai/saabai-admin">Review and approve in admin &rarr;</a></p>`,
     }).catch(() => {});
   }
 

@@ -13,10 +13,10 @@ export default async function SiteFactoryPage() {
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
   // Any authenticated user can access Site Factory
-  if (!token) redirect("/login?redirect=/saabai-admin/site-factory");
+  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin/site-factory");
 
   const session = await verifySessionToken(token);
-  if (!session) redirect("/login?redirect=/saabai-admin/site-factory");
+  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin/site-factory");
 
   return (
     <AdminShell activePath="/saabai-admin/site-factory">

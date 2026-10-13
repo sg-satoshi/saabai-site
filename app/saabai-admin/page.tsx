@@ -15,10 +15,10 @@ export default async function SaabaiAdminPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
 
-  if (!token) redirect("/login?redirect=/saabai-admin");
+  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin");
 
   const session = await verifySessionToken(token);
-  if (!session) redirect("/login?redirect=/saabai-admin");
+  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin");
 
   // Non-admin clients should not see this page — redirect them to their dashboard
   const isAdmin = await isAdminSession(session.clientId);

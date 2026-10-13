@@ -25,7 +25,7 @@ export default function AdminLoginForm({
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ email, password, redirect: redirectTo }),
+        body: new URLSearchParams({ email, password, redirect: redirectTo, admin: "1" }),
       });
 
       if (res.redirected) {

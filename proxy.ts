@@ -246,12 +246,16 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/api/")) return apiAuth(req, pathname);
 
   // ── Page routes: redirect to login when protected ────────────────────
+  // The admin login page itself must stay reachable while signed out.
+  if (pathname === "/saabai-admin/login") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
 
   const session = await getSession(req);
   if (session) return NextResponse.next();
 
-  const login = new URL("/login", req.url);
+  // Admin areas use the separate admin sign-in; everything else uses /login.
+  const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);
+  const login = new URL(isAdminArea ? "/saabai-admin/login" : "/login", req.url);
   login.searchParams.set("redirect", pathname);
   return NextResponse.redirect(login);
 }

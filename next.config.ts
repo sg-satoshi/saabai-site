@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/wholesale-files/[file]": ["./private/wholesale-homes/**/*"],
   },
+  async headers() {
+    const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    return ["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal"].map(
+      (source) => ({ source, headers: noindex })
+    );
+  },
   async redirects() {
     return [
       { source: "/counsel", destination: "/for-law-firms", permanent: true },

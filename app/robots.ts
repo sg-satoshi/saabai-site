@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/api/",
+      disallow: ["/api/", "/saabai-admin", "/admin", "/dashboard"],
     },
     sitemap: "https://www.saabai.ai/sitemap.xml",
   };

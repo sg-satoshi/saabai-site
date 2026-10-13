@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
 import { safeRedirect } from "../../../lib/safe-redirect";
 import AdminLoginForm from "./AdminLoginForm";
 
-export const metadata = { title: "Admin Login — Saabai" };
+export const metadata = { title: "Admin Login | Saabai", robots: { index: false, follow: false } };
 
 export default async function AdminLoginPage({
   searchParams,
@@ -20,10 +20,11 @@ export default async function AdminLoginPage({
   // Already authenticated → go to admin
   if (token) {
     const session = await verifySessionToken(token);
-    if (session) redirect(redirectTo);
+    // Only admins skip the form; a signed-in client goes to their own dashboard.
+    if (session) redirect((await isAdminSession(session.clientId)) ? redirectTo : "/dashboard");
   }
 
-  const isInvalid = params.error === "invalid";
+  const isInvalid = params.error === "invalid" || params.error === "locked";
 
   return (
     <div style={{
