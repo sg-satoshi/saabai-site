@@ -40,7 +40,8 @@ function fmtAud(cents: number | null | undefined) {
 function KindBadge({ kind }: { kind: OrderRecord["kind"] }) {
   if (kind === "blueprint") return <ProductTag kind="bp">Blueprint</ProductTag>;
   if (kind === "website_care") return <ProductTag kind="ws">Web/Care</ProductTag>;
-  return <ProductTag kind="cr">Lex</ProductTag>;
+  if (kind === "lex_subscription") return <ProductTag kind="cr">Lex</ProductTag>;
+  return <ProductTag kind="ws">Subscription</ProductTag>;
 }
 
 function StatusBadge({ label }: { label: string }) {
@@ -88,7 +89,7 @@ function DetailDrawer({ order, onClose }: { order: OrderRecord; onClose: () => v
                 ["Business", order.business || "-"],
                 ["Website", order.website || "-"],
                 ["Address", order.billingAddress || "-"],
-                ["Amount", order.kind === "lex_subscription" || order.kind === "website_care" ? `${fmtAud(order.amountTotal)} total · ${fmtAud(order.monthlyAmount)}/mo` : fmtAud(order.amountTotal)],
+                ["Amount", order.kind !== "blueprint" ? `${fmtAud(order.amountTotal)} total · ${fmtAud(order.monthlyAmount)}/mo` : fmtAud(order.amountTotal)],
                 ["Status", order.statusLabel],
                 ["Intake", order.intakeStatus || "-"],
                 ["Stripe session", order.stripeSessionId || "-"],
@@ -203,7 +204,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewing, setViewing] = useState<OrderRecord | null>(null);
-  const [filter, setFilter] = useState<"all" | "blueprint" | "lex_subscription" | "website_care">("all");
+  const [filter, setFilter] = useState<"all" | "blueprint" | "lex_subscription" | "website_care" | "subscription">("all");
 
   async function load() {
     setLoading(true);
@@ -228,6 +229,7 @@ export default function OrdersPage() {
   const blueprintCount = orders.filter((o) => o.kind === "blueprint").length;
   const lexCount = orders.filter((o) => o.kind === "lex_subscription").length;
   const careCount = orders.filter((o) => o.kind === "website_care").length;
+  const otherSubCount = orders.filter((o) => o.kind === "subscription").length;
   const blueprintRevenue = orders
     .filter((o) => o.kind === "blueprint")
     .reduce((sum, o) => sum + (o.amountTotal ?? 0), 0);
@@ -285,7 +287,8 @@ export default function OrdersPage() {
           ["blueprint", "Blueprints", blueprintCount],
           ["lex_subscription", "Lex", lexCount],
           ["website_care", "Web/Care", careCount],
-        ] as const).map(([v, l, n]) => (
+          ...(otherSubCount ? ([["subscription", "Other", otherSubCount]] as const) : []),
+        ] as ReadonlyArray<readonly [typeof filter, string, number]>).map(([v, l, n]) => (
           <button key={v} type="button" className={filter === v ? "on" : ""} onClick={() => setFilter(v)}>
             {l}<span className="num">{n}</span>
           </button>
@@ -337,7 +340,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="r">
                         <Num>
-                          {order.kind === "lex_subscription" || order.kind === "website_care" ? (
+                          {order.kind !== "blueprint" ? (
                             <>
                               {fmtAud(order.monthlyAmount)}
                               <span className="muted" style={{ display: "block", fontSize: 11 }}>total {fmtAud(order.amountTotal)}</span>
@@ -368,7 +371,7 @@ export default function OrdersPage() {
                       <div className="muted num" style={{ fontSize: 12 }}>{fmtDate(order.createdAt)}</div>
                     </div>
                     <div className="num" style={{ fontWeight: 500 }}>
-                      {order.kind === "lex_subscription" || order.kind === "website_care" ? fmtAud(order.monthlyAmount) : fmtAud(order.amountTotal)}
+                      {order.kind !== "blueprint" ? fmtAud(order.monthlyAmount) : fmtAud(order.amountTotal)}
                     </div>
                   </div>
                   <div className="r2">
