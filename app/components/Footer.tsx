@@ -11,15 +11,15 @@ const footerLinks = [
 ];
 
 const serviceAreaLinks = [
-  { label: "Brisbane", href: "/brisbane" },
   { label: "Gold Coast", href: "/gold-coast" },
+  { label: "Brisbane", href: "/brisbane" },
   { label: "Sydney", href: "/sydney" },
   { label: "Melbourne", href: "/melbourne" },
   { label: "Perth", href: "/perth" },
   { label: "Adelaide", href: "/adelaide" },
   { label: "Canberra", href: "/canberra" },
-  { label: "Darwin", href: "/darwin" },
   { label: "Hobart", href: "/hobart" },
+  { label: "Darwin", href: "/darwin" },
 ];
 
 export default function Footer() {
@@ -41,7 +41,7 @@ export default function Footer() {
               <a
                 key={label}
                 href={href}
-                className="text-xs text-saabai-text-dim hover:text-saabai-text transition-colors tracking-wide"
+                className="inline-flex items-center min-h-[44px] text-xs text-saabai-text-dim hover:text-saabai-text transition-colors tracking-wide"
               >
                 {label}
               </a>
@@ -53,15 +53,15 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-saabai-border pt-6">
-          <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-3 text-center sm:text-left">
+          <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-3 text-center">
             Service Areas
           </p>
-          <nav className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-2">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
             {serviceAreaLinks.map(({ label, href }) => (
               <a
                 key={label}
                 href={href}
-                className="text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-1 text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
               >
                 {label}
               </a>
