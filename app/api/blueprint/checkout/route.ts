@@ -13,8 +13,6 @@ function enabled(tier: BlueprintTier): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY && priceIdFor(tier));
 }
 
-// GET: which tiers can be bought online right now. Used by the checkout page
-// to show an enquire fallback instead of erroring when env vars are missing.
 export async function GET() {
   return NextResponse.json({
     tiers: { starter: enabled("starter"), pro: enabled("pro"), business: enabled("business") },
@@ -40,19 +38,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Online checkout is not available yet", fallback: true }, { status: 503 });
   }
 
+  // Optional prefill fields (legacy hosted form). Embedded mode does not require them.
   const name = clean(body.name, 120);
   const email = clean(body.email, 200);
   const business = clean(body.business, 160);
   const phone = clean(body.phone, 40);
   const website = clean(body.website, 200);
   const abn = clean(body.abn, 20);
-  if (!name || !email || !business || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Please add your name, email and business name" }, { status: 400 });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "Please use a valid email" }, { status: 400 });
   }
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
   const metadata = { product: "blueprint", tier, name, business, phone, website, abn };
-  // Default to embedded one-page checkout. Hosted redirect remains available if requested.
   const embedded = body.ui_mode !== "hosted";
 
   try {
@@ -60,7 +58,6 @@ export async function POST(req: NextRequest) {
     const common = {
       mode: "payment" as const,
       line_items: [{ price, quantity: 1 }],
-      customer_email: email,
       customer_creation: "always" as const,
       invoice_creation: {
         enabled: true,
@@ -70,14 +67,29 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
       metadata,
       payment_intent_data: { metadata, description: `Saabai ${TIERS[tier].name} Blueprint` },
+      // Optional extras inside Stripe Checkout so payment is never blocked by our form.
+      custom_fields: [
+        {
+          key: "business_name",
+          label: { type: "custom" as const, custom: "Business name" },
+          type: "text" as const,
+          optional: true,
+        },
+        {
+          key: "website",
+          label: { type: "custom" as const, custom: "Website (optional)" },
+          type: "text" as const,
+          optional: true,
+        },
+      ],
     };
 
     if (embedded) {
       const session = await stripe.checkout.sessions.create({
         ...common,
+        ...(email ? { customer_email: email } : {}),
         ui_mode: "embedded_page",
         return_url: `${origin}/blueprint/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-        // Keep wallets (Apple Pay / Google Pay) available when Stripe and the domain support them.
         redirect_on_completion: "always",
       });
       if (!session.client_secret) {
@@ -86,8 +98,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ clientSecret: session.client_secret, sessionId: session.id });
     }
 
+    if (!name || !email || !business) {
+      return NextResponse.json({ error: "Please add your name, email and business name" }, { status: 400 });
+    }
     const session = await stripe.checkout.sessions.create({
       ...common,
+      customer_email: email,
       ui_mode: "hosted_page",
       success_url: `${origin}/blueprint/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/blueprint/checkout?tier=${tier}&cancelled=1`,
