@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AI Audits — engagement pipeline list + create new engagement.
+ * Blueprints - engagement pipeline list + create new engagement.
  */
 
 import { useEffect, useState } from "react";
@@ -146,9 +146,9 @@ export default function AuditsClient() {
       <div style={{ padding: "32px 36px", maxWidth: 1100 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>AI Audits</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>Blueprints</h1>
             <p style={{ fontSize: 13, color: C.muted, margin: "4px 0 0" }}>
-              Engagement pipeline — fact-find, discovery, assessment, report.
+              Blueprint intake pipeline - fact-find, discovery, assessment, report.
             </p>
           </div>
           <button
@@ -210,7 +210,7 @@ export default function AuditsClient() {
             }}
           >
             <div style={{ gridColumn: "1 / -1", fontWeight: 600, fontSize: 14, color: C.text }}>
-              New Audit Engagement
+              New Blueprint engagement
             </div>
             <input
               style={input}
@@ -234,9 +234,9 @@ export default function AuditsClient() {
               value={form.tier}
               onChange={(e) => setForm({ ...form, tier: e.target.value })}
             >
-              <option value="essential">Essential — $3,500</option>
-              <option value="professional">Professional — $7,500</option>
-              <option value="enterprise">Enterprise — $15,000</option>
+              <option value="essential">Essential - $3,500</option>
+              <option value="professional">Professional - $7,500</option>
+              <option value="enterprise">Enterprise - $15,000</option>
             </select>
             <input
               style={input}

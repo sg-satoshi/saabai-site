@@ -37,13 +37,23 @@ const NAV: {
         ),
       },
       {
-        label: "AI Agents",
-        href: "/ai-agent/portal",
+        label: "Orders",
+        href: "/saabai-admin/orders",
         icon: (
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 7h5M4.5 9.5h2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            <path d="M4.5 3V2a1 1 0 011-1h3a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.3"/>
+            <rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M4.5 5.5h5M4.5 8h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        ),
+      },
+      {
+        label: "Blueprints",
+        href: "/saabai-admin/audits",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M4.5 6h3M6 4.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
         ),
       },
@@ -68,16 +78,6 @@ const NAV: {
         ),
       },
       {
-        label: "Subscribers",
-        href: "/saabai-admin/subscribers",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M1.5 4L7 8l5.5-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-          </svg>
-        ),
-      },
-      {
         label: "Customers",
         href: "/saabai-admin/customers",
         icon: (
@@ -86,17 +86,6 @@ const NAV: {
             <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
             <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "AI Audits",
-        href: "/saabai-admin/audits",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M4.5 6h3M6 4.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
         ),
       },
@@ -120,14 +109,12 @@ const NAV: {
         ),
       },
       {
-        label: "Wholesale Leads",
-        href: "/saabai-admin/wholesale-leads",
+        label: "Products",
+        href: "/saabai-admin/products",
         icon: (
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M2 2h10v10H2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M2 6h10M6 2v10" stroke="currentColor" strokeWidth="1.3"/>
-            <circle cx="5" cy="9" r="0.5" fill="currentColor"/>
-            <circle cx="9" cy="9" r="0.5" fill="currentColor"/>
+            <path d="M7 1.2l5 2.6v6.4L7 12.8 2 10.2V3.8l5-2.6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M2 3.8l5 2.6 5-2.6M7 6.4v6.4" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
           </svg>
         ),
       },
@@ -142,22 +129,22 @@ const NAV: {
             <circle cx="10" cy="10.5" r="0.5" fill="currentColor"/>
           </svg>
         ),
-      },
-      {
-        label: "Products",
-        href: "/saabai-admin/products",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1.2l5 2.6v6.4L7 12.8 2 10.2V3.8l5-2.6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M2 3.8l5 2.6 5-2.6M7 6.4v6.4" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-          </svg>
-        ),
-      },
+      }
     ],
   },
   {
     section: "Marketing",
     items: [
+      {
+        label: "Subscribers",
+        href: "/saabai-admin/subscribers",
+        icon: (
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+            <path d="M1.5 4L7 8l5.5-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+          </svg>
+        ),
+      },
       {
         label: "LinkedIn",
         href: "/saabai-admin/social/linkedin",
@@ -179,7 +166,7 @@ const NAV: {
             <circle cx="10.5" cy="3.5" r="0.75" fill="currentColor"/>
           </svg>
         ),
-      },
+      }
     ],
   },
   {
@@ -197,16 +184,6 @@ const NAV: {
         ),
       },
       {
-        label: "Orders",
-        href: "/saabai-admin/orders",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 5.5h5M4.5 8h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
         label: "LLM Config",
         href: "/saabai-admin/lex-settings",
         icon: (
@@ -219,41 +196,47 @@ const NAV: {
       {
         label: "Client Portal",
         href: "/client-portal",
-        external: true,
         icon: (
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
             <path d="M7 1.5H3a1.5 1.5 0 00-1.5 1.5v8A1.5 1.5 0 003 12.5h8a1.5 1.5 0 001.5-1.5V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
             <path d="M9 1.5h3.5V5M12.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ),
-      },
+        external: true,
+      }
     ],
   },
+
   {
-    section: "Rex",
+    section: "Other",
     items: [
       {
-        label: "Analytics",
-        href: "/rex-analytics",
+        label: "AI Agents",
+        href: "/ai-agent/portal",
         icon: (
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M1.5 10.5l3-3.5 3 2 3.5-5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M1.5 12.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="M4.5 7h5M4.5 9.5h2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            <path d="M4.5 3V2a1 1 0 011-1h3a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.3"/>
           </svg>
         ),
       },
       {
-        label: "Changelog",
-        href: "/rex-changelog",
+        label: "Wholesale Leads",
+        href: "/saabai-admin/wholesale-leads",
         icon: (
           <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M2 3.5h10M2 7h7M2 10.5h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M2 2h10v10H2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M2 6h10M6 2v10" stroke="currentColor" strokeWidth="1.3"/>
+            <circle cx="5" cy="9" r="0.5" fill="currentColor"/>
+            <circle cx="9" cy="9" r="0.5" fill="currentColor"/>
           </svg>
         ),
-      },
+      }
     ],
   },
 ];
+
 
 
 function CollapseIcon({ collapsed }: { collapsed: boolean }) {

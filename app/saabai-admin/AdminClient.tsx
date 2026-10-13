@@ -5,9 +5,14 @@ import type { ClientConfig as FullClientConfig } from "../../lib/clients";
 
 // Passwords never reach the browser.
 type ClientConfig = Omit<FullClientConfig, "password">;
-import type { RexStats, LeadEvent } from "../../lib/rex-stats";
 import type { PendingRequest } from "../../lib/portal-users";
 import AdminShell from "./AdminSidebar";
+
+/** Known self-test portal requests - keep in Redis, hide from the default dashboard. */
+const TEST_PORTAL_EMAILS = new Set(["shanegoldberg@pm.me"]);
+function isTestPortalRequest(email: string) {
+  return TEST_PORTAL_EMAILS.has(email.trim().toLowerCase());
+}
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
@@ -49,13 +54,6 @@ function getGreeting() {
   return "Good evening";
 }
 
-function fmtLeadTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return iso;
-  }
-}
 
 // ── Sparkline ─────────────────────────────────────────────────────────────────
 
@@ -106,224 +104,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-
-const NAV_WORKSPACE = [
-  { label: "Dashboard", href: "/saabai-admin",  active: true },
-  { label: "Agents",    href: "/mission-control", active: false },
-  { label: "Growth",    href: "/rex-analytics",  active: false },
-  { label: "Changelog", href: "/rex-changelog",  active: false },
-];
-
-const NAV_BUILD = [
-  { label: "Social",       href: "/saabai-admin/social/linkedin" },
-  { label: "Subscribers",  href: "/saabai-admin/subscribers" },
-  { label: "LLM Settings", href: "/saabai-admin/lex-settings" },
-  { label: "Actions",      href: "#actions" },
-];
-
-function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: string) => void }) {
-  return (
-    <div style={{
-      width: 220,
-      minHeight: "100vh",
-      background: C.sidebar,
-      borderRight: `1px solid ${C.border}`,
-      position: "fixed",
-      left: 0, top: 0, bottom: 0,
-      display: "flex",
-      flexDirection: "column",
-      zIndex: 100,
-    }}>
-      {/* Logo */}
-      <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${C.border}` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <a href="/saabai-admin" style={{ display: "inline-block" }}>
-          <img src="/brand/saabai-logo.png" alt="Saabai" style={{ width: 110, height: "auto", opacity: 0.9 }} />
-        </a>
-      </div>
-
-      {/* Venture switcher */}
-      <div style={{ padding: "16px 14px 10px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Ventures</p>
-        {([
-          { label: "All", href: null },
-          { label: "Rex", href: "/rex-dashboard" },
-          { label: "Lex", href: "/lex" },
-        ] as const).map(v => {
-          const dot = v.label === "Rex" ? C.orange : v.label === "Lex" ? C.blue : C.teal;
-          const active = venture === v.label;
-          const inner = (
-            <>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
-              {v.label}
-              {v.href && <span style={{ marginLeft: "auto", fontSize: 10, color: C.muted, opacity: 0.7 }}>↗</span>}
-            </>
-          );
-          if (v.href) {
-            return (
-              <div key={v.label} style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
-                <button
-                  onClick={() => onVenture(v.label)}
-                  style={{
-                    flex: 1, display: "flex", alignItems: "center",
-                    padding: "7px 10px",
-                    background: active ? "rgba(37,211,102,0.1)" : "transparent",
-                    border: "none", borderRadius: 8,
-                    cursor: "pointer", textAlign: "left" as const,
-                    fontSize: 13, fontWeight: active ? 700 : 500,
-                    color: active ? C.teal : "#ffffff",
-                  }}
-                >
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
-                  {v.label}
-                </button>
-                <a href={v.href} title={`Open ${v.label}`} style={{ color: C.muted, fontSize: 12, padding: "4px 6px", textDecoration: "none", lineHeight: 1 }}>↗</a>
-              </div>
-            );
-          }
-          return (
-            <button
-              key={v.label}
-              onClick={() => onVenture(v.label)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                padding: "7px 10px", marginBottom: 2,
-                background: active ? "rgba(37,211,102,0.1)" : "transparent",
-                border: "none", borderRadius: 8,
-                cursor: "pointer", textAlign: "left" as const,
-                fontSize: 13, fontWeight: active ? 700 : 500,
-                color: active ? C.teal : "#ffffff",
-              }}
-            >
-              {inner}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Workspace nav */}
-      <div style={{ padding: "12px 14px 8px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Workspace</p>
-        {NAV_WORKSPACE.map(item => (
-          <a
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex", alignItems: "center",
-              padding: "7px 10px", marginBottom: 2,
-              background: item.active ? "#0891b2" : "transparent",
-              border: item.active ? "1px solid #0891b2" : "1px solid transparent",
-              borderRadius: 8, textDecoration: "none",
-              fontSize: 13, fontWeight: item.active ? 600 : 400,
-              color: "#ffffff",
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </div>
-
-      {/* Build nav */}
-      <div style={{ padding: "10px 14px 8px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Build</p>
-        {NAV_BUILD.map(item => (
-          <a
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex", alignItems: "center",
-              padding: "7px 10px", marginBottom: 2,
-              background: "transparent",
-              borderRadius: 8, textDecoration: "none",
-              fontSize: 13, fontWeight: 400,
-              color: "#ffffff",
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      {/* New venture CTA */}
-      <div style={{ padding: "0 14px 14px" }}>
-        <button style={{
-          width: "100%", padding: "9px 14px",
-          background: "rgba(37,211,102,0.1)",
-          border: `1px solid rgba(37,211,102,0.22)`,
-          borderRadius: 8, cursor: "pointer",
-          color: C.teal, fontSize: 11, fontWeight: 700,
-          letterSpacing: 0.3, textAlign: "center" as const,
-        }}>
-          + New venture
-        </button>
-      </div>
-
-      {/* Profile + sign out */}
-      <div style={{ padding: "14px 18px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%",
-          background: "linear-gradient(135deg, #25D366, #1aab52)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 12, fontWeight: 800, color: "#fff", flexShrink: 0,
-        }}>
-          S
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#eef0ff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>Shane Pearl</p>
-          <p style={{ margin: 0, fontSize: 11, color: "#9aa0b8" }}>Admin</p>
-        </div>
-        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
-          <button
-            type="submit"
-            title="Sign out"
-            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 11, padding: "2px 4px", lineHeight: 1 }}
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ── Atlas notification bar ─────────────────────────────────────────────────────
 
-function AtlasBar({ rexStats }: { rexStats: RexStats }) {
-  const todayStr = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
-  const todayCount = rexStats.dailyCounts.find(d => d.date === todayStr)?.count ?? 0;
-  const weekCount = rexStats.dailyCounts.slice(-7).reduce((s, d) => s + d.count, 0);
-
-  let msg = "No Rex leads today yet. Widget is live and listening.";
-  if (todayCount === 1) msg = `Rex captured 1 lead today.${rexStats.avgPrice ? ` Avg quote ${fmtPrice(rexStats.avgPrice)}.` : ""}`;
-  if (todayCount > 1)  msg = `Rex captured ${todayCount} leads today, ${weekCount} this week.${rexStats.avgPrice ? ` Avg quote ${fmtPrice(rexStats.avgPrice)}.` : ""}`;
-
-  return (
-    <div style={{
-      background: "rgba(37,211,102,0.06)",
-      border: `1px solid rgba(37,211,102,0.14)`,
-      borderRadius: 10,
-      padding: "13px 18px",
-      display: "flex", alignItems: "center", gap: 13,
-      marginBottom: 32,
-    }}>
-      <div style={{
-        width: 30, height: 30, borderRadius: 8,
-        background: "rgba(37,211,102,0.15)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 13, flexShrink: 0,
-      }}>
-        ⚡
-      </div>
-      <div>
-        <p style={{ margin: "0 0 2px", fontSize: 11, fontWeight: 700, color: C.teal, letterSpacing: 0.4 }}>Atlas</p>
-        <p style={{ margin: 0, fontSize: 12, color: C.muted, lineHeight: 1.5 }}>{msg}</p>
-      </div>
-    </div>
-  );
-}
 
 // ── Product cards ──────────────────────────────────────────────────────────────
 
@@ -402,153 +184,36 @@ function ProductCard({
 
 // ── Recent leads table ─────────────────────────────────────────────────────────
 
-type LeadTab = "All" | "Rex" | "Lex" | "Web";
-
-const SRC_LABEL: Record<string, string> = {
-  rex_quote_email: "Quote form",
-  rex_mid_chat:    "Mid-chat",
-  pete_ended:      "End panel",
-  rex_quick_reply: "Quick reply",
-};
-
-function LeadsTable({ rexStats }: { rexStats: RexStats }) {
-  const [tab, setTab] = useState<LeadTab>("All");
-  const leads = rexStats.recentLeads ?? [];
-  const filtered: LeadEvent[] = tab === "Lex" || tab === "Web" ? [] : leads;
-
-  return (
-    <DCard style={{ overflow: "hidden" }}>
-      <div style={{ padding: "18px 22px 0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 10 }}>
-        <div>
-          <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: C.text }}>Recent Leads</p>
-          <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{leads.length} most recent</p>
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {(["All", "Rex", "Lex", "Web"] as LeadTab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                padding: "5px 12px", borderRadius: 20,
-                border: `1px solid ${tab === t ? C.borderBright : C.border}`,
-                background: tab === t ? "rgba(0,0,0,0.08)" : "transparent",
-                color: tab === t ? C.text : C.muted,
-                fontSize: 11, fontWeight: tab === t ? 700 : 500,
-                cursor: "pointer",
-              }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ marginTop: 14 }}>
-        {/* Header */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 0.9fr 1.2fr", gap: 10, padding: "8px 22px", borderBottom: `1px solid ${C.border}` }}>
-          {["Name / Email", "Source", "Material", "Quote", "Time"].map(h => (
-            <p key={h} style={{ margin: 0, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: "uppercase" as const }}>{h}</p>
-          ))}
-        </div>
-
-        {filtered.length === 0 ? (
-          <div style={{ padding: "32px 22px", textAlign: "center" }}>
-            <p style={{ margin: 0, fontSize: 13, color: C.muted }}>No leads in this category yet.</p>
-          </div>
-        ) : (
-          filtered.map((lead, i) => (
-            <div
-              key={i}
-              style={{
-                display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 0.9fr 1.2fr",
-                gap: 10, padding: "11px 22px",
-                borderBottom: `1px solid ${C.border}`,
-                background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                  {lead.name ?? "Anonymous"}
-                </p>
-                {lead.email && (
-                  <p style={{ margin: 0, fontSize: 10, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{lead.email}</p>
-                )}
-              </div>
-              <p style={{ margin: 0, fontSize: 11, color: C.muted, alignSelf: "center" as const }}>
-                {SRC_LABEL[lead.source] ?? lead.source}
-              </p>
-              <p style={{ margin: 0, fontSize: 11, color: C.muted, alignSelf: "center" as const }}>
-                {lead.material ?? "-"}
-              </p>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: lead.price ? C.orange : C.muted, alignSelf: "center" as const }}>
-                {lead.price ?? "-"}
-              </p>
-              <p style={{ margin: 0, fontSize: 10, color: C.muted, alignSelf: "center" as const }}>
-                {fmtLeadTime(lead.timestamp)}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
-    </DCard>
-  );
-}
 
 // ── Client account cards ──────────────────────────────────────────────────────
 
-function ClientCard({ client, rexStats }: { client: ClientConfig; rexStats: RexStats }) {
-  const isRex = client.dashboardUrl === "/rex-dashboard";
-  const todayStr = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
-  const todayCount = isRex ? (rexStats.dailyCounts.find(d => d.date === todayStr)?.count ?? 0) : 0;
-  const isLive = isRex && rexStats.total > 0;
-
+function ClientCard({ client }: { client: ClientConfig }) {
   return (
-    <DCard style={{ padding: 0, overflow: "hidden" }}>
-      <div style={{ padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: isRex ? "linear-gradient(135deg, #e13f00, #ff6b35)" : C.surface,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, fontWeight: 900, color: isRex ? "#fff" : C.muted,
-          }}>
-            {client.name.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: C.text }}>{client.name}</p>
-            <p style={{ margin: 0, fontSize: 11, color: C.muted }}>
-              {isRex ? `Rex AI Sales Agent · ${rexStats.total} leads · ${todayCount} today` : client.email}
-            </p>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{
-            display: "flex", alignItems: "center", gap: 5,
-            padding: "3px 9px", borderRadius: 20,
-            background: isLive ? "rgba(34,197,94,0.12)" : C.surface,
-            color: isLive ? C.green : C.muted,
-            fontSize: 10, fontWeight: 700,
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: "50%", background: isLive ? C.green : C.muted, display: "inline-block" }} />
-            {isLive ? "Live" : "Pending"}
-          </span>
-          {client.dashboardUrl !== "/saabai-admin" && (
-            <a
-              href={client.dashboardUrl}
-              style={{
-                padding: "6px 14px", borderRadius: 7,
-                background: isRex ? C.orange : C.surface,
-                border: isRex ? "none" : `1px solid ${C.border}`,
-                color: isRex ? "#fff" : C.text,
-                fontSize: 11, fontWeight: 700, textDecoration: "none",
-              }}
-            >
-              Open &rarr;
-            </a>
-          )}
-        </div>
+    <div style={{
+      background: C.card, border: `1px solid ${C.border}`, borderRadius: 14,
+      padding: "16px 18px", display: "flex", alignItems: "center", gap: 14,
+    }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: 10, background: C.surface,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 16, fontWeight: 900, color: C.muted, flexShrink: 0,
+      }}>
+        {client.name.charAt(0).toUpperCase()}
       </div>
-    </DCard>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: C.text }}>{client.name}</p>
+        <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{client.email}</p>
+      </div>
+      <a
+        href={client.dashboardUrl || "/dashboard"}
+        style={{
+          padding: "7px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+          textDecoration: "none", background: C.surface, border: `1px solid ${C.border}`, color: C.text,
+        }}
+      >
+        Open
+      </a>
+    </div>
   );
 }
 
@@ -556,53 +221,6 @@ function ClientCard({ client, rexStats }: { client: ClientConfig; rexStats: RexS
 
 type DigestState = "idle" | "sending" | "sent" | "error";
 
-function DigestTrigger() {
-  const [state, setState] = useState<DigestState>("idle");
-  const [result, setResult] = useState<{ leads?: number; emailCaptureRate?: string } | null>(null);
-
-  async function fire() {
-    setState("sending");
-    setResult(null);
-    try {
-      const res = await fetch("/api/rex-weekly-digest");
-      const data = await res.json();
-      if (data.ok) { setState("sent"); setResult(data.thisWeek); }
-      else setState("error");
-    } catch { setState("error"); }
-    setTimeout(() => { setState("idle"); setResult(null); }, 8000);
-  }
-
-  const bg    = state === "sent" ? "rgba(34,197,94,0.08)"  : state === "error" ? "rgba(239,68,68,0.08)" : C.card;
-  const bdr   = state === "sent" ? "rgba(34,197,94,0.2)"   : state === "error" ? "rgba(239,68,68,0.2)"  : C.border;
-  const color = state === "sent" ? C.green : state === "error" ? C.red : C.text;
-
-  return (
-    <div style={{ background: bg, border: `1px solid ${bdr}`, borderRadius: 12, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div>
-        <p style={{ margin: "0 0 3px", fontSize: 13, fontWeight: 600, color }}>
-          {state === "idle"    && "Weekly Performance Digest"}
-          {state === "sending" && "Sending digest emails..."}
-          {state === "sent"    && `Sent. ${result?.leads ?? 0} leads, ${result?.emailCaptureRate ?? "-"} capture rate this week.`}
-          {state === "error"   && "Send failed. Check Resend and env vars."}
-        </p>
-        {state === "idle" && <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Fires automatically every Monday 9am AEST via Vercel Cron</p>}
-      </div>
-      <button
-        onClick={fire}
-        disabled={state === "sending"}
-        style={{
-          padding: "8px 18px", borderRadius: 7, border: "none",
-          cursor: state === "sending" ? "not-allowed" : "pointer",
-          background: state === "sending" ? C.surface : C.teal,
-          color: state === "sending" ? C.muted : "#fff",
-          fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" as const,
-        }}
-      >
-        {state === "sending" ? "Sending..." : "Send Now"}
-      </button>
-    </div>
-  );
-}
 
 // ── LinkedIn Queue ─────────────────────────────────────────────────────────────
 
@@ -1056,7 +674,9 @@ function LinkedInPanel() {
 // ── Access Requests ────────────────────────────────────────────────────────────
 
 function AccessRequests({ initial }: { initial: PendingRequest[] }) {
-  const [requests, setRequests]       = useState<PendingRequest[]>(initial);
+  const [requests, setRequests]       = useState<PendingRequest[]>(() => initial.filter((r) => !isTestPortalRequest(r.email)));
+  const [showTests, setShowTests]     = useState(false);
+  const hiddenTests = initial.filter((r) => isTestPortalRequest(r.email));
   const [approving, setApproving]     = useState<string | null>(null);
   const [passwords, setPasswords]     = useState<Record<string, string>>({});
   const [dashUrls, setDashUrls]       = useState<Record<string, string>>({});
@@ -1119,6 +739,21 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
           background: `${C.amber}18`, color: C.amber,
           fontSize: 10, fontWeight: 700,
         }}>{requests.length}</span>
+        {hiddenTests.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowTests((v) => {
+                const next = !v;
+                setRequests(next ? [...initial] : initial.filter((r) => !isTestPortalRequest(r.email)));
+                return next;
+              });
+            }}
+            style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: C.muted, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}
+          >
+            {showTests ? "Hide test requests" : `Show ${hiddenTests.length} test`}
+          </button>
+        )}
       </div>
 
       {message && (
@@ -1209,23 +844,16 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
 
 export default function AdminClient({
   clients,
-  rexStats,
   adminId,
   pendingRequests,
 }: {
   clients: ClientConfig[];
-  rexStats: RexStats;
   adminId: string;
   pendingRequests: PendingRequest[];
 }) {
-  const [venture, setVenture] = useState("All");
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
+  const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
-
-  const todayStr   = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
-  const todayCount = rexStats.dailyCounts.find(d => d.date === todayStr)?.count ?? 0;
-  const weekCount  = rexStats.dailyCounts.slice(-7).reduce((s, d) => s + d.count, 0);
-  const sparkData  = rexStats.dailyCounts.slice(-14).map(d => d.count);
 
   const today = new Date().toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
@@ -1233,6 +861,10 @@ export default function AdminClient({
     fetch("/api/admin/lex-clients")
       .then(r => r.json())
       .then(data => { if (data.stats) setLexStats(data.stats); })
+      .catch(() => {});
+    fetch("/api/admin/blueprint-stats")
+      .then(r => r.json())
+      .then(data => { if (typeof data.todayCount === "number") setBpStats(data); })
       .catch(() => {});
   }, []);
 
@@ -1253,18 +885,7 @@ export default function AdminClient({
         }}>
           <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{today}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 12, color: C.muted }}>
-              {rexStats.total > 0 ? `${rexStats.total} total leads` : "No data yet"}
-            </span>
-            <span style={{ width: 1, height: 16, background: C.border }} />
-            <span style={{
-              padding: "5px 12px", borderRadius: 7,
-              background: "rgba(37,211,102,0.12)",
-              border: `1px solid rgba(37,211,102,0.2)`,
-              color: C.teal, fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
-            }}>
-              LIVE
-            </span>
+            <span style={{ fontSize: 12, color: C.muted }}>Saabai Admin</span>
           </div>
         </div>
 
@@ -1286,6 +907,53 @@ export default function AdminClient({
               <AccessRequests initial={pendingRequests} />
             </div>
           )}
+
+
+          {/* Blueprint sales */}
+          <div style={{ marginBottom: 24 }}>
+            <SectionLabel>Blueprint sales</SectionLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
+              {[
+                {
+                  label: "Today",
+                  value: bpStats ? String(bpStats.todayCount) : "-",
+                  sub: bpStats ? `$${(bpStats.todayRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
+                },
+                {
+                  label: "This week",
+                  value: bpStats ? String(bpStats.weekCount) : "-",
+                  sub: bpStats ? `$${(bpStats.weekRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
+                },
+                {
+                  label: "All paid",
+                  value: bpStats ? String(bpStats.allCount) : "-",
+                  sub: bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "Loading...",
+                },
+                {
+                  label: "Open Orders",
+                  value: "View",
+                  sub: "Blueprint + Lex in one place",
+                },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href="/saabai-admin/orders"
+                  style={{
+                    background: "rgba(15,118,110,0.06)",
+                    border: "1px solid rgba(15,118,110,0.18)",
+                    borderRadius: 12,
+                    padding: "18px 20px",
+                    textDecoration: "none",
+                    display: "block",
+                  }}
+                >
+                  <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#0f766e" }}>{s.value}</p>
+                  <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{s.label}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
+                </a>
+              ))}
+            </div>
+          </div>
 
           {/* ── Lex Platform metrics ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
@@ -1318,13 +986,13 @@ export default function AdminClient({
                 href: "/saabai-admin/lex-settings",
               },
               {
-                label: "Rex Leads (Today)",
-                value: String(todayCount),
-                sub: `${weekCount} this week`,
+                label: "Orders",
+                value: "Open",
+                sub: "Blueprint + Lex sales",
                 color: C.orange,
                 bg: "rgba(255,102,53,0.08)",
                 bdr: "rgba(255,102,53,0.20)",
-                href: "/rex-analytics",
+                href: "/saabai-admin/orders",
               },
             ].map(s => (
               <a
@@ -1343,26 +1011,8 @@ export default function AdminClient({
             ))}
           </div>
 
-          {/* Atlas bar */}
-          <AtlasBar rexStats={rexStats} />
-
           {/* Product cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 36 }}>
-            <ProductCard
-              name="Rex"
-              status="ACTIVE"
-              statusColor={C.orange}
-              accent={C.orange}
-              description="AI Sales Agent"
-              stats={[
-                { label: "Leads",    value: String(rexStats.total) },
-                { label: "Today",    value: String(todayCount) },
-                { label: "Avg quote", value: fmtPrice(rexStats.avgPrice) },
-              ]}
-              sparkData={sparkData}
-              linkHref="/rex-dashboard"
-              linkLabel="Open Dashboard"
-            />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginBottom: 36 }}>
             <ProductCard
               name="Lex"
               status="BETA"
@@ -1370,35 +1020,28 @@ export default function AdminClient({
               accent={C.blue}
               description="AI Legal Assistant"
               stats={[
-                { label: "Threads", value: "-" },
-                { label: "Firms",   value: "-" },
-                { label: "Docs",    value: "-" },
+                { label: "Firms", value: lexStats ? String(lexStats.total) : "-" },
+                { label: "Configured", value: lexStats ? String(lexStats.configured) : "-" },
+                { label: "LLM keys", value: lexStats ? String(lexStats.withLlmKey) : "-" },
               ]}
-              linkHref="/lex"
-              linkLabel="Open Lex"
+              linkHref="/saabai-admin/lex-clients"
+              linkLabel="Open Lex clients"
             />
             <ProductCard
-              name="LocalSearch"
-              status="SOON"
-              statusColor={C.amber}
-              accent={C.amber}
-              description="Google Business Dashboard"
+              name="Blueprints"
+              status="LIVE"
+              statusColor={C.teal}
+              accent={C.teal}
+              description="Paid Blueprint engagements"
               stats={[
-                { label: "Clients",  value: "-" },
-                { label: "Reviews",  value: "-" },
-                { label: "Rating",   value: "-" },
+                { label: "Today", value: bpStats ? String(bpStats.todayCount) : "-" },
+                { label: "Week", value: bpStats ? String(bpStats.weekCount) : "-" },
+                { label: "All", value: bpStats ? String(bpStats.allCount) : "-" },
               ]}
-              disabled
+              linkHref="/saabai-admin/audits"
+              linkLabel="Open Blueprints"
             />
           </div>
-
-          {/* Recent leads — Rex / All only */}
-          {venture !== "Lex" && (
-            <div style={{ marginBottom: 40 }}>
-              <SectionLabel>Recent Leads</SectionLabel>
-              <LeadsTable rexStats={rexStats} />
-            </div>
-          )}
 
           {/* Client accounts */}
           {visibleClients.length > 0 && (
@@ -1406,14 +1049,14 @@ export default function AdminClient({
               <SectionLabel>Client Accounts</SectionLabel>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {visibleClients.map(client => (
-                  <ClientCard key={client.id} client={client} rexStats={rexStats} />
+                  <ClientCard key={client.id} client={client} />
                 ))}
               </div>
             </div>
           )}
 
           {/* Settings — Lex / All */}
-          {venture !== "Rex" && (
+          {true && (
             <div style={{ marginBottom: 40 }}>
               <SectionLabel>Settings</SectionLabel>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
@@ -1443,8 +1086,7 @@ export default function AdminClient({
             </div>
           )}
 
-          {/* Social / Subscribers / LinkedIn — Rex / All only */}
-          {venture !== "Lex" && (<>
+          {/* Social / Subscribers / LinkedIn */}
           <div id="social" style={{ marginBottom: 40 }}>
             <SectionLabel>Social Media</SectionLabel>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
@@ -1523,12 +1165,10 @@ export default function AdminClient({
               <LinkedInPanel />
             </div>
           </div>
-          </>)}
 
           {/* Actions */}
           <div id="actions">
             <SectionLabel>Actions</SectionLabel>
-            <DigestTrigger />
           </div>
 
           {/* Footer */}
