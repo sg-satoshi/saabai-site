@@ -4,7 +4,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../lib/auth"
 import { loadClients } from "../../lib/clients";
 import { listPendingRequests } from "../../lib/portal-users";
 import AdminClient from "./AdminClient";
-import { isTwoFactorEnabled } from "../../lib/admin-2fa";
+import { twoFactorStatus } from "../../lib/admin-2fa";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,7 +20,7 @@ export default async function SaabaiAdminPage() {
   const session = await verifySessionToken(token);
   if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin");
 
-  // Non-admin clients should not see this page — redirect them to their dashboard
+  // Non-admin clients should not see this page - redirect them to their dashboard
   const isAdmin = await isAdminSession(session.clientId);
   if (!isAdmin) {
     const clients = loadClients();
@@ -34,14 +34,15 @@ export default async function SaabaiAdminPage() {
     listPendingRequests(),
   ]);
 
-  const twoFactorOn = await isTwoFactorEnabled(session.clientId).catch(() => true);
+  // Banner tracks enrolment in Redis, not the env break-glass flag.
+  const twoFactorOn = await twoFactorStatus(session.clientId).then((s) => s.enabled).catch(() => true);
 
   return (
     <>
       {!twoFactorOn && (
-        <div role="status" style={{ padding: "12px 16px", background: "#3a2f10", color: "#f5e3a8", fontSize: 14, textAlign: "center", lineHeight: 1.5 }}>
+        <div role="status" className="banner-2fa">
           Protect your admin sign in with 2FA.{" "}
-          <a href="/saabai-admin/security" style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", display: "inline-block", padding: "8px 4px" }}>Set it up now</a>
+          <a href="/saabai-admin/security">Set it up now</a>
         </div>
       )}
       <AdminClient clients={clients} adminId={process.env.SAABAI_ADMIN_ID ?? "saabai"} pendingRequests={pendingRequests} />
