@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   creator: "Wholesale Homes Australia",
   publisher: "Wholesale Homes Australia",
   icons: {
-    icon: "/sites/wholesale-homes/favicon.png",
-    apple: "/sites/wholesale-homes/favicon.png",
+    icon: "/sites/wholesale-homes/favicon.svg",
+    apple: "/sites/wholesale-homes/favicon.svg",
   },
   openGraph: {
     type: "website",
