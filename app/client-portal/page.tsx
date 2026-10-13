@@ -1,2596 +1,889 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import "./portal-auth.css";
+import { PortalShell } from "./components/PortalShell";
+import { LexWorkspace } from "./LexWorkspace";
 
-const C = {
-  bg:      "#0d1b2a",
-  surface: "#162236",
-  raised:  "#1e3050",
-  border:  "#243550",
-  gold:    "#C9A84C",
-  goldB:   "#E0BC6A",
-  goldBg:  "rgba(201,168,76,0.08)",
-  goldBdr: "rgba(201,168,76,0.2)",
-  text:    "#e8edf5",
-  muted:   "#8fa3c0",
-  dim:     "#4a6080",
-  green:   "#22c55e",
-  greenBg: "rgba(34,197,94,0.12)",
-  greenBdr:"rgba(34,197,94,0.3)",
+type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
+type PageId =
+  | "overview"
+  | "projects"
+  | "blueprint"
+  | "lex-agent"
+  | "leads"
+  | "review-queue"
+  | "invoices"
+  | "requests"
+  | "account"
+  | "manage-agent";
+
+type PortalProduct = {
+  id: string;
+  kind: "lex" | "blueprint" | "website" | "care";
+  name: string;
+  detail: string;
+  status: string;
+  statusTone: "ok" | "info" | "warn" | "n";
+  stat: string;
+  openPage: string;
+  icon: "lx" | "bp" | "ws" | "cr";
 };
 
-// ── Mock / demo data (replace with real API calls) ─────────────────────────────
-const MOCK = {
-  firmName:       "Smith & Partners",
-  clientId:       "demo-client-001",
-  agentName:      "Lex",
-  plan:           "Professional",
-  conversations:  847,
-  leadsThisMonth: 23,
-  topQuestions: [
-    "How do I contest a Will?",
-    "What are my rights if I'm made redundant?",
-    "How does a property settlement work?",
-    "I've received a letter of demand — what do I do?",
-    "Can I take my employer to Fair Work?",
-  ],
-  recentLeads: [
-    { name: "Michael T.", email: "m.t@example.com", matter: "Unfair dismissal",    time: "2h ago",     status: "New" },
-    { name: "Sarah J.",   email: "s.j@example.com", matter: "Property settlement", time: "5h ago",     status: "New" },
-    { name: "David K.",   email: "d.k@example.com", matter: "Will dispute",        time: "Yesterday",  status: "Viewed" },
-    { name: "Emma L.",    email: "e.l@example.com", matter: "Business contract",   time: "2 days ago", status: "Viewed" },
-    { name: "James R.",   email: "j.r@example.com", matter: "Family law advice",   time: "3 days ago", status: "Viewed" },
-  ],
-};
-
-type Tab = "overview" | "leads" | "review-queue" | "customize" | "test" | "embed" | "settings";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "overview",     label: "Overview"      },
-  { id: "leads",        label: "Leads"         },
-  { id: "review-queue", label: "Review Queue"  },
-  { id: "customize",    label: "Customise"     },
-  { id: "test",         label: "Test Agent"    },
-  { id: "embed",        label: "Embed Code"    },
-  { id: "settings",     label: "Settings"      },
-];
-
-type AuthView = "checking" | "login" | "sent" | "dashboard";
-type FirmSession = { email: string; firmName: string; clientId: string; agentName: string; plan: string };
-type TestMsg = { role: "user" | "assistant"; content: string };
-
-function ClientPortalInner() {
-  const searchParams = useSearchParams();
-
-  // ── All hooks must be declared before any early returns (Rules of Hooks) ──────
-  const [authView,  setAuthView]  = useState<AuthView>("checking");
-  const [loginEmail, setLoginEmail] = useState("");
-  const [sending,    setSending]    = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [firm,       setFirm]       = useState<FirmSession | null>(null);
-  // Dashboard state (declared here even when not yet on dashboard)
-  const [tab,      setTab]      = useState<Tab>("overview");
-  const [copied,   setCopied]   = useState<string | null>(null);
-  const [savedOk,  setSavedOk]  = useState(false);
-  const [saving,    setSaving]    = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [savedAt,   setSavedAt]   = useState<string | null>(null);
-  const [settings, setSettings] = useState({
-    agentName:          MOCK.agentName,
-    agentIconUrl:       "",
-    welcomeMessage:     "Hi there! I'm Lex, an AI legal assistant. How can I help you today?",
-    formalityLevel:     75,
-    warmthLevel:        60,
-    humorLevel:         20,
-    responseLength:     "balanced" as "concise" | "balanced" | "detailed",
-    personalityTraits:  [] as string[],
-    alwaysSay:          [] as string[],
-    neverSay:           [] as string[],
-    instructionLog:      [] as { text: string; ts: string }[],
-    leadCaptureEnabled:  true,
-    // Goals & Strategy
-    primaryGoal:         "",
-    successDefinition:   "",
-    targetClient:        "",
-    desiredOutcomes:     [] as string[],
-    skillPacks:          [] as string[],
-    // Style Coach
-    writingPersona:    "",
-    clientAddress:     "first-name" as "first-name" | "mr-ms" | "formal",
-    contractions:      "sometimes" as "always" | "sometimes" | "never",
-    sentenceLength:    "medium" as "short" | "medium" | "long",
-    legalLatin:        "sometimes" as "never" | "sometimes" | "often",
-    openingStyle:      "",
-    badNewsStyle:      "",
-    signOff:           "",
-    writingSamples:    [] as { label: string; text: string }[],
-    // The Lawyer Behind the Agent
-    birthYear:            "",
-    practiceFocus:        "",
-    careerBackground:     "",
-    educationBackground:  "",
-    formativeInfluences:  "",
-    legalPhilosophy:      "",
-  });
-  const [urlIngestDraft,   setUrlIngestDraft]   = useState("");
-  const [urlIngestLoading, setUrlIngestLoading] = useState(false);
-  const [pdfIngestLoading, setPdfIngestLoading] = useState(false);
-  const [alwaysSayDraft,    setAlwaysSayDraft]    = useState("");
-  const [neverSayDraft,     setNeverSayDraft]      = useState("");
-  const [instructionDraft,  setInstructionDraft]   = useState("");
-  const [outcomeDraft,      setOutcomeDraft]        = useState("");
-  const [sampleLabelDraft,  setSampleLabelDraft]    = useState("");
-  const [sampleTextDraft,   setSampleTextDraft]     = useState("");
-  // LLM / API key settings state
-  const [llmProvider,     setLlmProvider]     = useState("anthropic");
-  const [llmModel,        setLlmModel]        = useState("claude-sonnet-4-6");
-  const [llmApiKey,       setLlmApiKey]       = useState("");
-  const [llmShowKey,      setLlmShowKey]      = useState(false);
-  const [llmCurrentCfg,   setLlmCurrentCfg]   = useState<{ provider: string; model: string; keyHint: string } | null>(null);
-  const [llmTestStatus,   setLlmTestStatus]   = useState<"idle" | "testing" | "ok" | "fail">("idle");
-  const [llmTestMsg,      setLlmTestMsg]      = useState("");
-  const [llmSaving,       setLlmSaving]       = useState(false);
-  const [llmSaveMsg,      setLlmSaveMsg]      = useState("");
-  // Test Agent tab state
-  const [testMessages, setTestMessages] = useState<TestMsg[]>([]);
-  const [testInput,    setTestInput]    = useState("");
-  const [testLoading,  setTestLoading]  = useState(false);
-  const [testError,    setTestError]    = useState<string | null>(null);
-  // Setup Chat (AI Customise assistant) state
-  const [setupMessages,    setSetupMessages]    = useState<TestMsg[]>([]);
-  const [setupInput,       setSetupInput]       = useState("");
-  const [setupLoading,     setSetupLoading]     = useState(false);
-  const [setupOpen,        setSetupOpen]        = useState(false);
-  const [setupStarted,     setSetupStarted]     = useState(false);
-  const [setupUpdates,     setSetupUpdates]     = useState<string[]>([]);
-  const [setupUpdateFlash, setSetupUpdateFlash] = useState(false);
-  // Review Queue tab state
-  type StoredReview = {
-    id: string; firmId: string; submittedBy: string; matterNo: string; clientName: string;
-    documentName: string; submittedAt: number; reviewedAt?: number; reportJson: string;
-    riskLevel: string; overallScore: number; documentType: string; direction: string;
-    jurisdiction: string; status: "pending" | "approved" | "needs_changes";
-    supervisorNotes: string; reviewedBy: string;
+type Workspace = {
+  email: string;
+  name: string;
+  business: string;
+  role: string;
+  clientId: string;
+  agentName: string | null;
+  plan: string | null;
+  modules: {
+    lex: boolean;
+    blueprint: boolean;
+    projects: boolean;
+    care?: boolean;
+    invoices: boolean;
+    requests: boolean;
+    account: boolean;
   };
-  const [queue,        setQueue]        = useState<StoredReview[]>([]);
-  const [queueLoading, setQueueLoading] = useState(false);
-  const [queueError,   setQueueError]   = useState<string | null>(null);
-  const [expandedId,   setExpandedId]   = useState<string | null>(null);
-  const [signOffId,    setSignOffId]    = useState<string | null>(null);
-  const [signOffNotes, setSignOffNotes] = useState("");
-  const [signOffBy,    setSignOffBy]    = useState("");
-  const [signOffLoading, setSignOffLoading] = useState(false);
+  products: PortalProduct[];
+  blueprints: { id: string; tier: string; status: string; createdAt: string; businessName: string; score: number | null }[];
+  requests: { id: string; title: string; status: string; createdAt: string; updatedAt: string }[];
+  openRequestCount: number;
+};
 
-  // Sync tab from URL param
-  useEffect(() => {
-    const t = searchParams.get("tab") as Tab | null;
-    if (t && TABS.some(x => x.id === t)) setTab(t);
-  }, [searchParams]);
+const PRODUCT_ICON_PATHS: Record<string, React.ReactNode> = {
+  lx: <path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z" />,
+  ws: <><path d="M12 3L2 8l10 5 10-5z" /><path d="M2 13l10 5 10-5" /></>,
+  bp: <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h4" /></>,
+  cr: <><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="M9 12l2 2 4-4" /></>,
+};
 
-  // Load LLM config when settings tab is opened
-  useEffect(() => {
-    if (tab !== "settings" || !firm?.clientId) return;
-    fetch(`/api/lex-settings?clientId=${firm.clientId}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.configured) {
-          setLlmCurrentCfg({ provider: data.provider, model: data.model, keyHint: data.keyHint });
-          setLlmProvider(data.provider);
-          setLlmModel(data.model);
-        }
-      })
-      .catch(() => {});
-  }, [tab, firm?.clientId]);
-
-  // Load review queue when that tab is active
-  useEffect(() => {
-    if (tab !== "review-queue") return;
-    setQueueLoading(true);
-    setQueueError(null);
-    fetch("/api/lex-review-queue?firmId=lex-internal&limit=50")
-      .then(r => r.json())
-      .then(data => { setQueue(data.reviews ?? []); })
-      .catch(() => setQueueError("Failed to load review queue."))
-      .finally(() => setQueueLoading(false));
-  }, [tab]);
-
-  // Check for existing session on mount + handle ?error= from magic link
-  useEffect(() => {
-    const err = searchParams.get("error");
-    if (err === "invalid_token") setLoginError("That sign-in link has expired or already been used. Request a new one.");
-    if (err === "missing_token")  setLoginError("Invalid sign-in link. Please request a new one.");
-
-    fetch("/api/portal/me", { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.authenticated) {
-          setFirm({ email: data.email, firmName: data.firmName, clientId: data.clientId, agentName: data.agentName, plan: data.plan });
-          setSettings(prev => ({ ...prev, agentName: data.agentName }));
-          setAuthView("dashboard");
-          // Load saved settings from server
-          fetch("/api/portal/settings", { credentials: "include" })
-            .then(r => r.ok ? r.json() : null)
-            .then(saved => {
-              if (saved?.settings) {
-                setSettings(prev => ({ ...prev, ...saved.settings }));
-              }
-            })
-            .catch(() => {});
-        } else {
-          setAuthView("login");
-        }
-      })
-      .catch(() => setAuthView("login"));
-  }, [searchParams]);
-
-  async function requestMagicLink() {
-    if (!loginEmail.trim() || sending) return;
-    setLoginError(null);
-    setSending(true);
-    try {
-      const res = await fetch("/api/portal/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail.trim() }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      setAuthView("sent");
-    } catch {
-      setLoginError("Something went wrong. Please try again.");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function signOut() {
-    await fetch("/api/portal/me", { method: "DELETE" }).catch(() => {});
-    setFirm(null);
-    setAuthView("login");
-  }
-
-  // ── Checking spinner ────────────────────────────────────────────────────────
-  if (authView === "checking") {
-    return (
-      <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", border: `3px solid ${C.border}`,
-            borderTopColor: C.gold, margin: "0 auto 14px", animation: "spin 0.8s linear infinite" }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Checking session…</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Login / Sent ─────────────────────────────────────────────────────────────
-  if (authView === "login" || authView === "sent") {
-    return (
-      <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center",
-        justifyContent: "center", padding: 24, fontFamily: "system-ui, sans-serif" }}>
-        <div style={{ width: "100%", maxWidth: 400 }}>
-          {/* Brand */}
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 44, width: "auto", marginBottom: 14 }} />
-            <h1 style={{ margin: "0 0 4px", fontSize: 21, fontWeight: 800, color: C.text }}>Client Portal</h1>
-            <p style={{ margin: 0, fontSize: 13, color: C.muted }}>Manage your Lex agent and view firm stats</p>
-          </div>
-
-          {/* Card */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28 }}>
-            {authView === "login" ? (
-              <>
-                <h2 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, color: C.text }}>Sign in</h2>
-                <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted }}>
-                  Enter your firm email — we&apos;ll send a secure sign-in link.
-                </p>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.muted,
-                  letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 6 }}>
-                  Firm Email Address
-                </label>
-                <input type="email" value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") requestMagicLink(); }}
-                  placeholder="partner@yourfirm.com.au"
-                  style={{ width: "100%", padding: "11px 14px", borderRadius: 10,
-                    background: C.raised, border: `1px solid ${C.border}`,
-                    color: C.text, fontSize: 14, outline: "none", boxSizing: "border-box" }} />
-                {loginError && (
-                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171",
-                    background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)",
-                    borderRadius: 8, padding: "8px 12px", lineHeight: 1.5 }}>
-                    {loginError}
-                  </p>
-                )}
-                <button onClick={requestMagicLink} disabled={!loginEmail.trim() || sending} style={{
-                  width: "100%", marginTop: 12, padding: 12, borderRadius: 10, border: "none",
-                  background: loginEmail.trim() && !sending ? C.gold : C.goldBg,
-                  color: loginEmail.trim() && !sending ? C.bg : C.muted,
-                  fontSize: 14, fontWeight: 800,
-                  cursor: loginEmail.trim() && !sending ? "pointer" : "not-allowed",
-                }}>
-                  {sending ? "Sending…" : "Send sign-in link"}
-                </button>
-                <p style={{ margin: "16px 0 0", fontSize: 11, color: C.dim, textAlign: "center" }}>
-                  Don&apos;t have an account?{" "}
-                  <a href="https://saabai.ai/contact" style={{ color: C.gold, textDecoration: "none" }}>Contact Saabai</a>
-                </p>
-              </>
-            ) : (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%",
-                  background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)",
-                  margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M3 10l5 5 9-9" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h2 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 700, color: C.text }}>Check your inbox</h2>
-                <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
-                  If <strong style={{ color: C.text }}>{loginEmail}</strong> is registered for the portal, a sign-in link is on its way.
-                  <br />Click the link in the email to access your portal. Not arriving? Contact hello@saabai.ai.
-                </p>
-                <button onClick={() => { setAuthView("login"); setLoginEmail(""); }}
-                  style={{ background: "none", border: "none", color: C.gold, cursor: "pointer", fontSize: 13 }}>
-                  Use a different email
-                </button>
-              </div>
-            )}
-          </div>
-          <p style={{ textAlign: "center", fontSize: 11, color: C.dim, marginTop: 16 }}>
-            <a href="https://saabai.ai" style={{ color: C.dim }}>saabai.ai</a>
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Dashboard ─────────────────────────────────────────────────────────────────
-  // Real firm data from session, falling back to MOCK until analytics API is wired
-  const firmName  = firm?.firmName  ?? MOCK.firmName;
-  const clientId  = firm?.clientId  ?? MOCK.clientId;
-  const agentName = firm?.agentName ?? MOCK.agentName;
-  const plan      = firm?.plan      ?? MOCK.plan;
-
-  function copy(text: string, key: string) {
-    navigator.clipboard.writeText(text).catch(() => {});
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  }
-
-  async function testLlmConnection() {
-    if (!llmApiKey.trim()) { setLlmTestMsg("Enter your API key first."); setLlmTestStatus("fail"); return; }
-    setLlmTestStatus("testing"); setLlmTestMsg("");
-    const res = await fetch("/api/lex-settings", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "test", clientId, provider: llmProvider, model: llmModel, apiKey: llmApiKey }),
-    }).then(r => r.json());
-    setLlmTestStatus(res.ok ? "ok" : "fail");
-    setLlmTestMsg(res.ok ? `Connected — model replied: "${res.response}"` : (res.error ?? "Connection failed"));
-  }
-
-  async function saveLlmConfig() {
-    if (!llmApiKey.trim()) { setLlmSaveMsg("Enter your API key before saving."); return; }
-    setLlmSaving(true); setLlmSaveMsg("");
-    const res = await fetch("/api/lex-settings", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save", clientId, provider: llmProvider, model: llmModel, apiKey: llmApiKey }),
-    }).then(r => r.json());
-    setLlmSaving(false);
-    if (res.ok) {
-      setLlmSaveMsg("Saved. Your Lex agent will use this model going forward.");
-      setLlmCurrentCfg({ provider: llmProvider, model: llmModel, keyHint: `****${llmApiKey.slice(-4)}` });
-      setLlmApiKey("");
-      setLlmTestStatus("idle");
-    } else {
-      setLlmSaveMsg(`Error: ${res.error ?? "Unknown error"}`);
-    }
-  }
-
-  async function saveSettings() {
-    if (saving) return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const res = await fetch("/api/portal/settings", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...settings, firmName }),
-      });
-      if (!res.ok) throw new Error("Save failed");
-      const data = await res.json();
-      setSavedOk(true);
-      setSavedAt(data.savedAt);
-      setTimeout(() => setSavedOk(false), 4000);
-    } catch {
-      setSaveError("Failed to save. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function startSetup() {
-    setSetupOpen(true);
-    setSetupStarted(true);
-    setSetupLoading(true);
-    try {
-      const res = await fetch("/api/portal/setup-chat", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [] }),
-      });
-      if (!res.body) throw new Error("No stream");
-      await readSetupStream(res, []);
-    } catch { /* ignore */ } finally {
-      setSetupLoading(false);
-    }
-  }
-
-  async function sendSetupMessage() {
-    const text = setupInput.trim();
-    if (!text || setupLoading) return;
-    const updated: TestMsg[] = [...setupMessages, { role: "user", content: text }];
-    setSetupMessages(updated);
-    setSetupInput("");
-    setSetupLoading(true);
-    try {
-      const res = await fetch("/api/portal/setup-chat", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated }),
-      });
-      if (!res.body) throw new Error("No stream");
-      await readSetupStream(res, updated);
-    } catch { /* ignore */ } finally {
-      setSetupLoading(false);
-    }
-  }
-
-  async function readSetupStream(res: Response, priorMessages: TestMsg[]) {
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let assistantText = "";
-    let started = false;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const parsed = JSON.parse(line.slice(6));
-
-          if (parsed.type === "text-delta" && parsed.delta) {
-            assistantText += parsed.delta;
-            if (!started) {
-              started = true;
-              setSetupMessages([...priorMessages, { role: "assistant", content: assistantText }]);
-            } else {
-              setSetupMessages(prev => {
-                const copy = [...prev];
-                copy[copy.length - 1] = { role: "assistant", content: assistantText };
-                return copy;
-              });
-            }
-          }
-
-          if (parsed.type === "config-update" && parsed.config) {
-            const cfg = parsed.config as Record<string, unknown>;
-            const updatedFields: string[] = [];
-
-            setSettings(prev => {
-              const next = { ...prev };
-              if (cfg.firmName)          { (next as Record<string,unknown>).firmName = cfg.firmName; updatedFields.push("Firm Name"); }
-              if (cfg.agentName)         { next.agentName = cfg.agentName as string; updatedFields.push("Agent Name"); }
-              if (cfg.welcomeMessage)    { next.welcomeMessage = cfg.welcomeMessage as string; updatedFields.push("Welcome Message"); }
-              if (cfg.primaryGoal)       { next.primaryGoal = cfg.primaryGoal as string; updatedFields.push("Primary Goal"); }
-              if (cfg.successDefinition) { next.successDefinition = cfg.successDefinition as string; updatedFields.push("Success Definition"); }
-              if (cfg.targetClient)      { next.targetClient = cfg.targetClient as string; updatedFields.push("Ideal Client"); }
-              if (Array.isArray(cfg.desiredOutcomes) && cfg.desiredOutcomes.length) { next.desiredOutcomes = cfg.desiredOutcomes as string[]; updatedFields.push("Desired Outcomes"); }
-              if (typeof cfg.formalityLevel === "number") { next.formalityLevel = cfg.formalityLevel; updatedFields.push("Formality"); }
-              if (typeof cfg.warmthLevel === "number")    { next.warmthLevel = cfg.warmthLevel; updatedFields.push("Warmth"); }
-              if (typeof cfg.humorLevel === "number")     { next.humorLevel = cfg.humorLevel; updatedFields.push("Humour"); }
-              if (cfg.responseLength)    { next.responseLength = cfg.responseLength as typeof next.responseLength; updatedFields.push("Response Length"); }
-              if (Array.isArray(cfg.personalityTraits) && cfg.personalityTraits.length) { next.personalityTraits = cfg.personalityTraits as string[]; updatedFields.push("Personality Traits"); }
-              if (Array.isArray(cfg.alwaysSay) && cfg.alwaysSay.length)   { next.alwaysSay = cfg.alwaysSay as string[]; updatedFields.push("Always Say"); }
-              if (Array.isArray(cfg.neverSay) && cfg.neverSay.length)     { next.neverSay = cfg.neverSay as string[]; updatedFields.push("Never Say"); }
-              if (cfg.practiceFocus)     { next.practiceFocus = cfg.practiceFocus as string; updatedFields.push("Practice Focus"); }
-              if (cfg.careerBackground)  { next.careerBackground = cfg.careerBackground as string; updatedFields.push("Career Background"); }
-              if (cfg.birthYear)         { next.birthYear = cfg.birthYear as string; updatedFields.push("Birth Year"); }
-              if (cfg.legalPhilosophy)   { next.legalPhilosophy = cfg.legalPhilosophy as string; updatedFields.push("Legal Philosophy"); }
-              if (cfg.formativeInfluences) { next.formativeInfluences = cfg.formativeInfluences as string; updatedFields.push("Influences"); }
-              if (Array.isArray(cfg.skillPacks) && cfg.skillPacks.length) { next.skillPacks = cfg.skillPacks as string[]; updatedFields.push("Skill Packs"); }
-              return next;
-            });
-
-            if (updatedFields.length) {
-              setSetupUpdates(prev => [...new Set([...prev, ...updatedFields])]);
-              setSetupUpdateFlash(true);
-              setTimeout(() => setSetupUpdateFlash(false), 2000);
-            }
-          }
-        } catch { /* skip */ }
-      }
-    }
-  }
-
-  async function sendTestMessage() {
-    const text = testInput.trim();
-    if (!text || testLoading) return;
-
-    const newMessages: TestMsg[] = [...testMessages, { role: "user", content: text }];
-    setTestMessages(newMessages);
-    setTestInput("");
-    setTestLoading(true);
-    setTestError(null);
-
-    try {
-      const res = await fetch("/api/lex-chat", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          clientId,
-        }),
-      });
-
-      if (!res.ok || !res.body) throw new Error("No response");
-
-      // Stream SSE response
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assistantText = "";
-      let started = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const parsed = JSON.parse(line.slice(6));
-            if (parsed.type === "text-delta" && parsed.delta) {
-              assistantText += parsed.delta;
-              if (!started) {
-                started = true;
-                setTestMessages(prev => [...prev, { role: "assistant", content: assistantText }]);
-              } else {
-                setTestMessages(prev => {
-                  const copy = [...prev];
-                  copy[copy.length - 1] = { role: "assistant", content: assistantText };
-                  return copy;
-                });
-              }
-            }
-          } catch { /* skip malformed lines */ }
-        }
-      }
-
-      if (!started) throw new Error("Empty response");
-    } catch {
-      setTestError("Something went wrong. Please try again.");
-      setTestMessages(prev => prev.filter(m => !(m.role === "assistant" && m.content === "")));
-    } finally {
-      setTestLoading(false);
-    }
-  }
-
-  const embedCode = [
-    "<!-- Lex Widget by Saabai -->",
-    `<iframe id="lex-widget"`,
-    `  src="https://saabai.ai/lex-widget?client=${clientId}"`,
-    `  style="position:fixed;bottom:0;right:0;width:88px;height:88px;border:none;z-index:9999;"`,
-    `  title="Lex Legal Assistant"></iframe>`,
-  ].join("\n");
-
-  const wordpressCode = [
-    "// Add to functions.php:",
-    "add_action('wp_footer', function() { ?>",
-    `  <iframe id="lex-widget"`,
-    `    src="https://saabai.ai/lex-widget?client=${clientId}"`,
-    `    style="position:fixed;bottom:0;right:0;width:88px;height:88px;border:none;z-index:9999;"`,
-    `    title="Lex Legal Assistant"></iframe>`,
-    "<?php });",
-  ].join("\n");
-
+function ProductIcon({ kind }: { kind: string }) {
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, sans-serif" }}>
-      {/* Nav */}
-      <nav style={{ background: "#0b092e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "0 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/saabai-logo.png" alt="Saabai" style={{ height: 40, width: "auto" }} />
-            <span style={{ color: C.gold, fontSize: 11, fontWeight: 700, background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 4, padding: "2px 8px" }}>
-              Client Portal
-            </span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.green, display: "inline-block" }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: C.goldB }}>{agentName} is live</span>
-            <a
-              href={`/lex-widget?client=${clientId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                background: C.gold, color: C.bg, fontSize: 13, fontWeight: 800,
-                padding: "7px 16px", borderRadius: 8, textDecoration: "none",
-                letterSpacing: "-0.1px", display: "flex", alignItems: "center", gap: 6,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <path d="M6.5 1.5h-5v10h10v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M9 1.5h2.5v2.5M11.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Open {agentName}
-            </a>
-            <button onClick={signOut} style={{ background: "none", border: `1px solid ${C.border}`,
-              borderRadius: 6, color: C.muted, fontSize: 12, cursor: "pointer", padding: "5px 12px" }}>
-              Sign out
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Tabs */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "0 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", gap: 4 }}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              style={{
-                background: "none", border: "none", cursor: "pointer",
-                padding: "14px 18px",
-                fontSize: 14, fontWeight: 600,
-                color: tab === t.id ? C.gold : C.muted,
-                borderBottom: tab === t.id ? `2px solid ${C.gold}` : "2px solid transparent",
-                transition: "color 0.15s",
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }}>
-
-        {/* Overview */}
-        {tab === "overview" && (
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>
-              Welcome back, {firmName}
-            </h2>
-
-            {/* Hero CTA card */}
-            <div style={{
-              background: "linear-gradient(135deg, #0f0d35 0%, #131040 100%)",
-              border: `1px solid ${C.goldBdr}`,
-              borderRadius: 16, padding: "28px 32px", marginBottom: 32,
-              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20,
-            }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.green, display: "inline-block" }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: C.green, letterSpacing: "0.8px", textTransform: "uppercase" }}>Live</span>
-                </div>
-                <h3 style={{ margin: "0 0 6px", fontSize: 20, fontWeight: 800, color: C.text }}>
-                  {agentName} is ready for clients
-                </h3>
-                <p style={{ margin: 0, fontSize: 14, color: C.muted, maxWidth: 420 }}>
-                  Your agent is active and capturing leads. Open it to have a live conversation or test it right here in the portal.
-                </p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                <button
-                  onClick={() => setTab("test")}
-                  style={{
-                    background: "none", border: `1px solid ${C.goldBdr}`, color: C.goldB,
-                    fontSize: 14, fontWeight: 700, padding: "10px 20px", borderRadius: 10,
-                    cursor: "pointer",
-                  }}
-                >
-                  Test in portal
-                </button>
-                <a
-                  href={`/lex-widget?client=${clientId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    background: C.gold, color: C.bg, fontSize: 14, fontWeight: 800,
-                    padding: "10px 24px", borderRadius: 10, textDecoration: "none",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1.5H2.5a1 1 0 00-1 1v9a1 1 0 001 1H11a1 1 0 001-1V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M9.5 1.5H12.5V4.5M12.5 1.5l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Open {agentName}
-                </a>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
-              {[
-                { label: "Total Conversations", value: MOCK.conversations.toLocaleString(), color: C.gold },
-                { label: "Leads This Month",    value: String(MOCK.leadsThisMonth),         color: C.green },
-                { label: "Response Time",       value: "< 1s",                              color: C.goldB },
-                { label: "Satisfaction",        value: "98%",                               color: C.gold },
-              ].map(stat => (
-                <div key={stat.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "24px 20px" }}>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: stat.color, marginBottom: 6 }}>{stat.value}</div>
-                  <div style={{ fontSize: 13, color: C.muted }}>{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>Top Questions This Month</h3>
-              {MOCK.topQuestions.map((q, i) => (
-                <a
-                  key={i}
-                  href={`/lex?q=${encodeURIComponent(q)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "10px 0", borderBottom: i < MOCK.topQuestions.length - 1 ? `1px solid ${C.border}` : "none",
-                    fontSize: 14, color: C.muted, textDecoration: "none", gap: 8,
-                    transition: "color 0.15s",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-                  onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-                >
-                  <span>{i + 1}. {q}</span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}>
-                    <path d="M2.5 9.5l7-7M4 2.5h5.5v5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                  </svg>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Leads */}
-        {tab === "leads" && (
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 24px" }}>Recent Leads</h2>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: C.raised }}>
-                    {["Name", "Email", "Matter", "Time", "Status"].map(h => (
-                      <th key={h} style={{ padding: "12px 18px", textAlign: "left", fontSize: 12, color: C.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK.recentLeads.map((lead, i) => (
-                    <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                      <td style={{ padding: "12px 18px", fontSize: 13, color: C.text, fontWeight: 600 }}>{lead.name}</td>
-                      <td style={{ padding: "12px 18px", fontSize: 12, color: C.muted }}>{lead.email}</td>
-                      <td style={{ padding: "12px 18px", fontSize: 13, color: C.text }}>{lead.matter}</td>
-                      <td style={{ padding: "12px 18px", fontSize: 12, color: C.dim }}>{lead.time}</td>
-                      <td style={{ padding: "12px 18px" }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700,
-                          color:      lead.status === "New" ? C.green   : C.dim,
-                          background: lead.status === "New" ? C.greenBg : C.raised,
-                          border:    `1px solid ${lead.status === "New" ? C.greenBdr : C.border}`,
-                          borderRadius: 4, padding: "2px 8px",
-                        }}>
-                          {lead.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ── Review Queue ─────────────────────────────────────────────────── */}
-        {tab === "review-queue" && (
-          <div style={{ padding: "28px 32px", maxWidth: 900 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>Doc Review Queue</h2>
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: C.muted }}>Reviews submitted by lawyers for supervisor sign-off.</p>
-              </div>
-              <button onClick={() => {
-                setQueueLoading(true);
-                fetch("/api/lex-review-queue?firmId=lex-internal&limit=50")
-                  .then(r => r.json()).then(d => setQueue(d.reviews ?? []))
-                  .finally(() => setQueueLoading(false));
-              }} style={{ padding: "8px 14px", borderRadius: 8, background: C.raised, border: `1px solid ${C.border}`, color: C.muted, fontSize: 12, cursor: "pointer" }}>
-                ↻ Refresh
-              </button>
-            </div>
-
-            {queueLoading && <p style={{ color: C.muted, fontSize: 13 }}>Loading…</p>}
-            {queueError  && <p style={{ color: "#f87171", fontSize: 13 }}>{queueError}</p>}
-            {!queueLoading && queue.length === 0 && (
-              <div style={{ padding: "48px 0", textAlign: "center" }}>
-                <p style={{ fontSize: 28, marginBottom: 12 }}>📋</p>
-                <p style={{ color: C.muted, fontSize: 14 }}>No reviews submitted yet.</p>
-                <p style={{ color: C.dim, fontSize: 12, marginTop: 4 }}>When a lawyer submits a Doc Review for sign-off, it will appear here.</p>
-              </div>
-            )}
-
-            {queue.map(review => {
-              const isExpanded = expandedId === review.id;
-              const isSignOff  = signOffId === review.id;
-              const statusColour = review.status === "approved" ? C.green : review.status === "needs_changes" ? "#f97316" : C.gold;
-              const statusLabel  = review.status === "approved" ? "Approved" : review.status === "needs_changes" ? "Needs Changes" : "Pending";
-              const riskColour   = review.riskLevel === "critical" ? "#ef4444" : review.riskLevel === "high" ? "#f97316" : review.riskLevel === "medium" ? "#eab308" : C.green;
-              let report: Record<string, unknown> | null = null;
-              try { report = JSON.parse(review.reportJson); } catch {}
-
-              return (
-                <div key={review.id} style={{ marginBottom: 12, borderRadius: 12, background: C.surface, border: `1px solid ${isExpanded ? C.border : C.border}`, overflow: "hidden" }}>
-                  {/* Row header */}
-                  <div onClick={() => setExpandedId(isExpanded ? null : review.id)}
-                    style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", flexWrap: "wrap" }}>
-                    {/* Risk badge */}
-                    <div style={{ padding: "3px 10px", borderRadius: 20, background: `${riskColour}18`, border: `1px solid ${riskColour}40`, fontSize: 10, fontWeight: 700, color: riskColour, textTransform: "uppercase", letterSpacing: 0.5, flexShrink: 0 }}>
-                      {review.riskLevel}
-                    </div>
-                    {/* Doc info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {review.documentName || review.documentType || "Document"}
-                      </p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>
-                        {review.submittedBy && <span>{review.submittedBy}</span>}
-                        {review.matterNo    && <span style={{ marginLeft: 8 }}>· Matter {review.matterNo}</span>}
-                        {review.clientName  && <span style={{ marginLeft: 4 }}>· {review.clientName}</span>}
-                        <span style={{ marginLeft: 8, color: C.dim }}>
-                          {new Date(review.submittedAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </p>
-                    </div>
-                    {/* Score */}
-                    <div style={{ textAlign: "center", flexShrink: 0 }}>
-                      <p style={{ margin: 0, fontSize: 16, fontWeight: 900, color: riskColour }}>{review.overallScore}</p>
-                      <p style={{ margin: 0, fontSize: 9, color: C.dim, textTransform: "uppercase" }}>Score</p>
-                    </div>
-                    {/* Status badge */}
-                    <div style={{ padding: "4px 10px", borderRadius: 20, background: `${statusColour}18`, border: `1px solid ${statusColour}40`, fontSize: 11, fontWeight: 700, color: statusColour, flexShrink: 0 }}>
-                      {statusLabel}
-                    </div>
-                    <span style={{ color: C.dim, fontSize: 14 }}>{isExpanded ? "▲" : "▼"}</span>
-                  </div>
-
-                  {/* Expanded detail */}
-                  {isExpanded && (
-                    <div style={{ borderTop: `1px solid ${C.border}`, padding: "20px 18px" }}>
-                      {/* Summary */}
-                      {report && (report.summary as string) && (
-                        <div style={{ marginBottom: 16 }}>
-                          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Lex Summary</p>
-                          <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.6 }}>{report.summary as string}</p>
-                        </div>
-                      )}
-                      {/* Key findings */}
-                      {report && Array.isArray(report.findings) && (report.findings as unknown[]).length > 0 && (
-                        <div style={{ marginBottom: 16 }}>
-                          <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Key Findings</p>
-                          {(report.findings as {severity:string;title:string;issue:string}[]).slice(0, 4).map((f, i) => (
-                            <div key={i} style={{ padding: "10px 12px", borderRadius: 8, marginBottom: 6, background: C.raised, border: `1px solid ${C.border}`, display: "flex", gap: 10 }}>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: f.severity === "critical" ? "#ef4444" : f.severity === "moderate" ? "#f97316" : C.muted, textTransform: "uppercase", letterSpacing: 0.4, flexShrink: 0, paddingTop: 1 }}>{f.severity}</span>
-                              <div>
-                                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text }}>{f.title}</p>
-                                <p style={{ margin: "3px 0 0", fontSize: 11, color: C.muted }}>{f.issue}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Existing supervisor notes */}
-                      {review.supervisorNotes && (
-                        <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 8, background: C.raised, border: `1px solid ${C.border}` }}>
-                          <p style={{ margin: "0 0 4px", fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>Supervisor Notes</p>
-                          <p style={{ margin: 0, fontSize: 13, color: C.text }}>{review.supervisorNotes}</p>
-                          {review.reviewedBy && <p style={{ margin: "6px 0 0", fontSize: 11, color: C.dim }}>— {review.reviewedBy}</p>}
-                        </div>
-                      )}
-
-                      {/* Sign-off form */}
-                      {review.status === "pending" && (
-                        isSignOff ? (
-                          <div style={{ padding: "16px", borderRadius: 10, background: C.raised, border: `1px solid ${C.border}` }}>
-                            <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, color: C.text }}>Sign Off</p>
-                            <input value={signOffBy} onChange={e => setSignOffBy(e.target.value)}
-                              placeholder="Your name" style={{ width: "100%", marginBottom: 8, padding: "8px 12px", borderRadius: 7, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-                            <textarea value={signOffNotes} onChange={e => setSignOffNotes(e.target.value)}
-                              placeholder="Add notes for the lawyer (optional)" rows={3}
-                              style={{ width: "100%", marginBottom: 12, padding: "8px 12px", borderRadius: 7, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }} />
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <button disabled={signOffLoading} onClick={async () => {
-                                setSignOffLoading(true);
-                                await fetch("/api/lex-review-queue", { method: "PATCH", headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ id: review.id, status: "approved", supervisorNotes: signOffNotes, reviewedBy: signOffBy }) });
-                                setQueue(q => q.map(r => r.id === review.id ? { ...r, status: "approved", supervisorNotes: signOffNotes, reviewedBy: signOffBy } : r));
-                                setSignOffId(null); setSignOffNotes(""); setSignOffBy(""); setSignOffLoading(false);
-                              }} style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", background: "rgba(34,197,94,0.15)", color: C.green, fontWeight: 700, fontSize: 12, cursor: signOffLoading ? "wait" : "pointer" }}>
-                                {signOffLoading ? "Saving…" : "✓ Approve"}
-                              </button>
-                              <button disabled={signOffLoading} onClick={async () => {
-                                setSignOffLoading(true);
-                                await fetch("/api/lex-review-queue", { method: "PATCH", headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ id: review.id, status: "needs_changes", supervisorNotes: signOffNotes, reviewedBy: signOffBy }) });
-                                setQueue(q => q.map(r => r.id === review.id ? { ...r, status: "needs_changes", supervisorNotes: signOffNotes, reviewedBy: signOffBy } : r));
-                                setSignOffId(null); setSignOffNotes(""); setSignOffBy(""); setSignOffLoading(false);
-                              }} style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", background: "rgba(249,115,22,0.12)", color: "#f97316", fontWeight: 700, fontSize: 12, cursor: signOffLoading ? "wait" : "pointer" }}>
-                                ↩ Request Changes
-                              </button>
-                              <button onClick={() => { setSignOffId(null); setSignOffNotes(""); }} style={{ padding: "9px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "none", color: C.muted, fontSize: 12, cursor: "pointer" }}>Cancel</button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button onClick={() => { setSignOffId(review.id); setSignOffNotes(review.supervisorNotes || ""); }} style={{
-                            padding: "9px 18px", borderRadius: 8, background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                          }}>Sign Off →</button>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Customise */}
-        {tab === "customize" && (() => {
-          const TRAITS = [
-            "Professional", "Empathetic", "Direct", "Concise", "Thorough",
-            "Approachable", "Reassuring", "Formal", "Plain English", "Proactive",
-            "Cautious", "Confident", "Conversational", "Detail-oriented", "Warm", "Authoritative",
-          ];
-          const inputStyle: React.CSSProperties = {
-            width: "100%", background: C.raised, border: `1px solid ${C.border}`,
-            borderRadius: 8, padding: "10px 12px", color: C.text, fontSize: 14,
-            outline: "none", boxSizing: "border-box",
-          };
-          const sectionStyle: React.CSSProperties = {
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 28,
-          };
-          const labelStyle: React.CSSProperties = {
-            fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: "0.8px",
-            textTransform: "uppercase", display: "block", marginBottom: 8,
-          };
-          let sectionCounter = 0;
-          function SectionNumber() {
-            sectionCounter += 1;
-            const n = String(sectionCounter).padStart(2, "0");
-            return (
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.gold, letterSpacing: "0.1em", marginBottom: 4 }}>
-                {n}
-              </div>
-            );
-          }
-
-          function addTag(field: "alwaysSay" | "neverSay", draft: string, setDraft: (v: string) => void) {
-            const val = draft.trim().replace(/,+$/, "");
-            if (!val) return;
-            setSettings(p => ({ ...p, [field]: [...p[field], val] }));
-            setDraft("");
-          }
-          function removeTag(field: "alwaysSay" | "neverSay", idx: number) {
-            setSettings(p => ({ ...p, [field]: p[field].filter((_, i) => i !== idx) }));
-          }
-
-          return (
-            <div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Agent Configuration</h2>
-              <p style={{ color: C.muted, margin: "0 0 24px", fontSize: 14, lineHeight: 1.6 }}>
-                Every setting here becomes a guiding principle for {agentName} — shaping how it thinks, speaks, and drives your firm&apos;s goals across every conversation.
-              </p>
-
-              {/* ── AI Setup Chat ── */}
-              <div style={{ marginBottom: 28 }}>
-                {!setupStarted ? (
-                  /* Entry card */
-                  <div style={{
-                    background: "linear-gradient(135deg, #0a1628 0%, #0d1f3a 50%, #0a1628 100%)",
-                    border: `1px solid ${C.goldBdr}`,
-                    borderRadius: 16, padding: "28px 32px",
-                    position: "relative", overflow: "hidden",
-                  }}>
-                    <div style={{
-                      position: "absolute", top: 0, left: 0, right: 0, height: 2,
-                      background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`,
-                    }} />
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
-                      <div style={{
-                        width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-                        background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.15))`,
-                        border: `1px solid ${C.goldBdr}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                          <path d="M11 2a9 9 0 100 18A9 9 0 0011 2z" stroke={C.gold} strokeWidth="1.5"/>
-                          <path d="M8 9c0-1.657 1.343-3 3-3s3 1.343 3 3c0 1.5-1 2.5-3 3v1.5" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round"/>
-                          <circle cx="11" cy="16.5" r="0.75" fill={C.gold}/>
-                        </svg>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <span style={{ fontSize: 16, fontWeight: 800, color: C.text }}>Set up with AI</span>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 4, padding: "2px 7px", letterSpacing: "0.8px", textTransform: "uppercase" }}>Recommended</span>
-                        </div>
-                        <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                          Skip the form. Have a 5-minute conversation and our AI will configure your entire agent from your answers — capturing your voice, your goals, and how you think about law.
-                        </p>
-                        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                          <button
-                            onClick={startSetup}
-                            style={{
-                              background: `linear-gradient(135deg, ${C.gold}, #b8922a)`,
-                              color: C.bg, fontSize: 14, fontWeight: 800,
-                              padding: "11px 24px", borderRadius: 10, border: "none",
-                              cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-                              boxShadow: `0 4px 20px rgba(201,168,76,0.25)`,
-                            }}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                              <path d="M7.5 1L9.5 5.5H14L10.5 8.5L12 13L7.5 10L3 13L4.5 8.5L1 5.5H5.5L7.5 1Z" fill="currentColor"/>
-                            </svg>
-                            Start AI setup
-                          </button>
-                          <span style={{ fontSize: 12, color: C.dim }}>5 minutes · fills everything automatically</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Chat panel */
-                  <div style={{
-                    background: "linear-gradient(180deg, #08111f 0%, #0a1628 100%)",
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 16, overflow: "hidden",
-                    boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-                  }}>
-                    {/* Chat header */}
-                    <div style={{
-                      padding: "16px 20px",
-                      borderBottom: `1px solid ${C.border}`,
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      background: "rgba(0,0,0,0.2)",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{
-                          width: 32, height: 32, borderRadius: 10,
-                          background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
-                          border: `1px solid ${C.goldBdr}`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 1L8.5 4.5H12L9.5 6.5L10.5 10L7 8L3.5 10L4.5 6.5L2 4.5H5.5L7 1Z" fill={C.gold}/>
-                          </svg>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>AI Setup Assistant</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, display: "inline-block" }} />
-                            <span style={{ fontSize: 11, color: C.green }}>Active</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Updated fields flash */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {setupUpdates.length > 0 && (
-                          <div style={{
-                            display: "flex", alignItems: "center", gap: 6,
-                            background: setupUpdateFlash ? "rgba(34,197,94,0.12)" : C.goldBg,
-                            border: `1px solid ${setupUpdateFlash ? C.greenBdr : C.goldBdr}`,
-                            borderRadius: 8, padding: "4px 10px",
-                            transition: "all 0.3s ease",
-                          }}>
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                              <path d="M1.5 5L4 7.5L8.5 2.5" stroke={setupUpdateFlash ? C.green : C.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: setupUpdateFlash ? C.green : C.goldB }}>
-                              {setupUpdates.length} field{setupUpdates.length !== 1 ? "s" : ""} updated
-                            </span>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => setSetupOpen(o => !o)}
-                          style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.muted, fontSize: 11, fontWeight: 600, padding: "4px 10px", cursor: "pointer" }}
-                        >
-                          {setupOpen ? "Collapse" : "Expand"}
-                        </button>
-                      </div>
-                    </div>
-
-                    {setupOpen && (
-                      <>
-                        {/* Messages */}
-                        <div style={{ height: 380, overflowY: "auto", padding: "20px 20px 8px", display: "flex", flexDirection: "column", gap: 16 }}>
-                          {setupMessages.map((msg, i) => (
-                            <div key={i} style={{
-                              display: "flex",
-                              flexDirection: msg.role === "user" ? "row-reverse" : "row",
-                              alignItems: "flex-end", gap: 10,
-                            }}>
-                              {msg.role === "assistant" && (
-                                <div style={{
-                                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                                  background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
-                                  border: `1px solid ${C.goldBdr}`,
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                }}>
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                    <path d="M6 1L7.2 4H10.5L7.9 5.8L8.9 9L6 7.2L3.1 9L4.1 5.8L1.5 4H4.8L6 1Z" fill={C.gold}/>
-                                  </svg>
-                                </div>
-                              )}
-                              <div style={{
-                                maxWidth: "75%",
-                                background: msg.role === "user"
-                                  ? `linear-gradient(135deg, ${C.gold}, #b8922a)`
-                                  : "rgba(255,255,255,0.05)",
-                                border: msg.role === "user" ? "none" : `1px solid ${C.border}`,
-                                borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                                padding: "11px 15px",
-                                color: msg.role === "user" ? C.bg : C.text,
-                                fontSize: 14, lineHeight: 1.65,
-                              }}>
-                                {msg.content}
-                              </div>
-                            </div>
-                          ))}
-                          {setupLoading && (
-                            <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-                              <div style={{
-                                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                                background: `linear-gradient(135deg, ${C.goldBg}, rgba(201,168,76,0.2))`,
-                                border: `1px solid ${C.goldBdr}`,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                              }}>
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                  <path d="M6 1L7.2 4H10.5L7.9 5.8L8.9 9L6 7.2L3.1 9L4.1 5.8L1.5 4H4.8L6 1Z" fill={C.gold}/>
-                                </svg>
-                              </div>
-                              <div style={{
-                                background: "rgba(255,255,255,0.05)", border: `1px solid ${C.border}`,
-                                borderRadius: "14px 14px 14px 4px", padding: "12px 16px",
-                                display: "flex", gap: 5, alignItems: "center",
-                              }}>
-                                {[0,1,2].map(i => (
-                                  <div key={i} style={{
-                                    width: 6, height: 6, borderRadius: "50%", background: C.gold,
-                                    animation: `setupPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
-                                    opacity: 0.6,
-                                  }} />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Input bar */}
-                        <div style={{
-                          padding: "12px 16px", borderTop: `1px solid ${C.border}`,
-                          background: "rgba(0,0,0,0.15)",
-                          display: "flex", gap: 10, alignItems: "flex-end",
-                        }}>
-                          <textarea
-                            value={setupInput}
-                            onChange={e => setSetupInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendSetupMessage(); }}}
-                            placeholder="Type your answer…"
-                            rows={1}
-                            style={{
-                              flex: 1, background: "rgba(255,255,255,0.05)",
-                              border: `1px solid ${C.border}`, borderRadius: 10,
-                              padding: "10px 14px", color: C.text, fontSize: 14,
-                              outline: "none", resize: "none", fontFamily: "system-ui, sans-serif",
-                              lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
-                            }}
-                          />
-                          <button
-                            onClick={sendSetupMessage}
-                            disabled={!setupInput.trim() || setupLoading}
-                            style={{
-                              width: 40, height: 40, borderRadius: 10, border: "none",
-                              background: setupInput.trim() && !setupLoading
-                                ? `linear-gradient(135deg, ${C.gold}, #b8922a)`
-                                : C.raised,
-                              color: setupInput.trim() && !setupLoading ? C.bg : C.dim,
-                              cursor: setupInput.trim() && !setupLoading ? "pointer" : "not-allowed",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              flexShrink: 0, transition: "all 0.2s ease",
-                              boxShadow: setupInput.trim() && !setupLoading ? `0 2px 12px rgba(201,168,76,0.3)` : "none",
-                            }}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M13.5 8L3 13.5V9.5L10 8L3 6.5V2.5L13.5 8Z" fill="currentColor"/>
-                            </svg>
-                          </button>
-                        </div>
-                        <style>{`
-                          @keyframes setupPulse {
-                            0%, 100% { transform: scale(1); opacity: 0.4; }
-                            50% { transform: scale(1.3); opacity: 1; }
-                          }
-                        `}</style>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ── Configuration Health Score ── */}
-              {(() => {
-                const checks = [
-                  { label: "Goals & Strategy", done: !!(settings.primaryGoal.trim() && settings.desiredOutcomes.length > 0), pts: 25 },
-                  { label: "Identity",          done: settings.agentName !== MOCK.agentName || settings.welcomeMessage !== "Hi there! I'm Lex, an AI legal assistant. How can I help you today?", pts: 10 },
-                  { label: "Voice & Tone",      done: settings.personalityTraits.length > 0 || settings.responseLength !== "balanced", pts: 15 },
-                  { label: "Personality",       done: settings.personalityTraits.length >= 3, pts: 15 },
-                  { label: "Language Rules",    done: settings.alwaysSay.length > 0 || settings.neverSay.length > 0, pts: 15 },
-                  { label: "Skill Packs",       done: settings.skillPacks.length > 0, pts: 10 },
-                  { label: "Instructions",      done: settings.instructionLog.length > 0, pts: 10 },
-                ];
-                const score = checks.reduce((acc, c) => acc + (c.done ? c.pts : 0), 0);
-                const complete = checks.filter(c => c.done).length;
-                const scoreColor = score >= 80 ? C.green : score >= 50 ? C.gold : "#f87171";
-                return (
-                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 24px", marginBottom: 28 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, marginBottom: 2 }}>Agent Readiness</div>
-                        <div style={{ fontSize: 28, fontWeight: 900, color: scoreColor }}>{score}<span style={{ fontSize: 16, fontWeight: 600 }}>%</span></div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 12, color: C.dim }}>{complete} of {checks.length} sections complete</div>
-                        {score < 80 && <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Fully configured agents get 3× more qualified leads</div>}
-                        {score >= 80 && <div style={{ fontSize: 11, color: C.green, marginTop: 2 }}>Your agent is well-configured — great work</div>}
-                      </div>
-                    </div>
-                    <div style={{ background: C.raised, borderRadius: 99, height: 6, marginBottom: 14, overflow: "hidden" }}>
-                      <div style={{ height: "100%", borderRadius: 99, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}cc)`, width: `${score}%`, transition: "width 0.4s ease" }} />
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
-                      {checks.map(c => (
-                        <span key={c.label} style={{ fontSize: 12, color: c.done ? C.green : C.dim, display: "flex", alignItems: "center", gap: 5 }}>
-                          <span style={{ fontSize: 10 }}>{c.done ? "●" : "○"}</span>{c.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 720 }}>
-
-                {/* ── The Lawyer Behind the Agent ── */}
-                <div style={{ ...sectionStyle, background: "#0a1628", borderColor: C.border, borderLeft: `4px solid ${C.gold}` }}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.text, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>The Lawyer Behind the Agent</h3>
-                  <p style={{ margin: "0 0 24px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                    The more Lex understands who you are — not just how you write, but how you think — the more precisely it can represent you. This section is the deepest form of cloning available.
-                  </p>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-                    <div>
-                      <label style={labelStyle}>Birth Year</label>
-                      <p style={{ margin: "0 0 8px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>
-                        Used to understand your formative era — the ideas, events, and cultural context that shaped how you think about law and life.
-                      </p>
-                      <input
-                        value={settings.birthYear}
-                        onChange={e => setSettings(p => ({ ...p, birthYear: e.target.value }))}
-                        placeholder="e.g. 1968"
-                        style={{ ...inputStyle, maxWidth: 160 }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Practice Focus & Specialties</label>
-                      <textarea
-                        value={settings.practiceFocus}
-                        onChange={e => setSettings(p => ({ ...p, practiceFocus: e.target.value }))}
-                        rows={3}
-                        placeholder="e.g. Tax and trust law, 28 years. Specialist in ATO disputes, family trust structuring, and business succession. Former ATO officer."
-                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Career Background</label>
-                      <textarea
-                        value={settings.careerBackground}
-                        onChange={e => setSettings(p => ({ ...p, careerBackground: e.target.value }))}
-                        rows={3}
-                        placeholder="e.g. Admitted 1994, NSW Bar 2001. 12 years at Clayton Utz, then founded own practice. Former ATO officer 1990-1994."
-                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Education</label>
-                      <textarea
-                        value={settings.educationBackground}
-                        onChange={e => setSettings(p => ({ ...p, educationBackground: e.target.value }))}
-                        rows={3}
-                        placeholder="e.g. LLB (Hons) UNSW 1993. Commerce degree UQ. Attended Sydney Grammar School. Also studied philosophy, which heavily influences my approach to legal reasoning."
-                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Formative Influences</label>
-                      <p style={{ margin: "0 0 8px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>Books, mentors, cases, and ideas that shaped how you think.</p>
-                      <textarea
-                        value={settings.formativeInfluences}
-                        onChange={e => setSettings(p => ({ ...p, formativeInfluences: e.target.value }))}
-                        rows={4}
-                        placeholder="e.g. Books: The Art of Advocacy (Morley Safer), Thinking Fast and Slow (Kahneman), Letters to a Young Lawyer (Dershowitz). Mentors: Sir Garfield Barwick's written judgments. Cases that shaped me: FCT v Spotless Services."
-                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={labelStyle}>Legal Philosophy & Worldview</label>
-                      <textarea
-                        value={settings.legalPhilosophy}
-                        onChange={e => setSettings(p => ({ ...p, legalPhilosophy: e.target.value }))}
-                        rows={4}
-                        placeholder="e.g. I believe the law is a tool for clarity, not a weapon. Plain English is more powerful than jargon. The best advice is the one the client can actually act on."
-                        style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                      />
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* ── Goals & Strategy ── */}
-                <div style={{ ...sectionStyle, borderColor: C.goldBdr, background: `linear-gradient(135deg, ${C.surface} 0%, rgba(201,168,76,0.04) 100%)` }}>
-                  <SectionNumber />
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontSize: 18 }}>🎯</span>
-                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Goals & Strategy</h3>
-                  </div>
-                  <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                    Define what success looks like for your firm. {agentName} will use these goals to actively steer every conversation toward your desired outcomes — not just answer questions, but drive results.
-                  </p>
-
-                  {/* Goal templates */}
-                  <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.dim, letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: 10 }}>Quick Start Templates</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      {([
-                        { icon: "🎯", label: "Lead Conversion", goal: "Convert every website enquiry into a booked consultation. Target 40% of widget conversations becoming qualified leads who book a free 15-minute call.", success: "The client feels heard, understands their legal position, and books a consultation. They leave the conversation with clear next steps and confidence in the firm.", client: "People actively searching for legal help — typically stressed, time-poor, and uncertain about their situation. They need clarity and a trusted professional to guide them.", outcomes: ["Book a free consultation", "Capture contact details (name, email, phone)", "Qualify the matter type and urgency"] },
-                        { icon: "🤝", label: "Trust & Education", goal: "Position the firm as the most trusted and knowledgeable legal resource in our practice areas. Build long-term relationships by genuinely helping people understand their options before asking for anything.", success: "The client feels genuinely informed and grateful. They see the firm as the expert they want to work with. They either book a consultation or come back when they're ready.", client: "People in the research phase — they have a legal concern but aren't sure if they need a lawyer yet. They need clear, jargon-free information before they'll trust anyone enough to engage.", outcomes: ["Educate the client clearly on their options", "Build trust and demonstrate expertise", "Capture details when the client is ready"] },
-                        { icon: "👑", label: "Premium Acquisition", goal: "Attract and convert high-value clients who have complex, multi-faceted matters. Every interaction should communicate exceptional expertise and justify a premium fee structure.", success: "The prospect feels they've already received more value in this conversation than from other firms. They're eager to engage and have no hesitation about fees because the quality is self-evident.", client: "High-net-worth individuals and business owners with significant legal matters. They've likely worked with lawyers before and know the difference between average and exceptional. They value results over cost.", outcomes: ["Book a senior partner consultation", "Qualify the matter complexity and budget", "Convey firm expertise and track record"] },
-                        { icon: "⏰", label: "After-Hours Intake", goal: "Capture every after-hours enquiry so no lead goes cold overnight. Ensure prospective clients feel supported 24/7 and are automatically queued for follow-up the next business day.", success: "The client feels they've been heard even outside business hours. Their details are captured, their matter is understood, and they receive a response first thing the next morning.", client: "People who need legal help urgently but contact the firm outside office hours. They're often stressed or facing a deadline and need immediate reassurance that someone will help them.", outcomes: ["Capture full contact details and matter description", "Set clear expectations on response time", "Triage urgency level for next-day follow-up"] },
-                      ] as { icon: string; label: string; goal: string; success: string; client: string; outcomes: string[] }[]).map(tpl => (
-                        <button key={tpl.label} onClick={() => setSettings(p => ({
-                          ...p,
-                          primaryGoal: tpl.goal,
-                          successDefinition: tpl.success,
-                          targetClient: tpl.client,
-                          desiredOutcomes: tpl.outcomes,
-                        }))}
-                          style={{ textAlign: "left", padding: "12px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.raised, cursor: "pointer", transition: "border-color 0.15s" }}
-                          onMouseEnter={e => (e.currentTarget.style.borderColor = C.gold)}
-                          onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
-                          <div style={{ fontSize: 18, marginBottom: 4 }}>{tpl.icon}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{tpl.label}</div>
-                          <div style={{ fontSize: 11, color: C.dim, marginTop: 2 }}>Click to pre-fill</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: 20 }}>
-                    <label style={labelStyle}>Primary Business Goal</label>
-                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>What is the single most important thing you want Lex to achieve for your business?</p>
-                    <textarea
-                      value={settings.primaryGoal}
-                      onChange={e => setSettings(p => ({ ...p, primaryGoal: e.target.value }))}
-                      rows={3}
-                      placeholder="e.g. Convert every website enquiry into a booked consultation. Our goal is to turn 40% of widget conversations into qualified leads who book a free 15-minute call."
-                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: 20 }}>
-                    <label style={labelStyle}>What does a successful conversation look like?</label>
-                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>Describe the ideal outcome — how should the client feel, and what action should they take?</p>
-                    <textarea
-                      value={settings.successDefinition}
-                      onChange={e => setSettings(p => ({ ...p, successDefinition: e.target.value }))}
-                      rows={3}
-                      placeholder="e.g. The client feels genuinely heard and reassured. They understand their options and are confident in taking the next step. They have either booked a consultation or left their contact details."
-                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: 20 }}>
-                    <label style={labelStyle}>Your Ideal Client</label>
-                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>Who are you trying to attract and serve? The more specific, the better {agentName} can qualify and connect with the right people.</p>
-                    <textarea
-                      value={settings.targetClient}
-                      onChange={e => setSettings(p => ({ ...p, targetClient: e.target.value }))}
-                      rows={3}
-                      placeholder="e.g. Small business owners (10–50 staff) facing employment disputes or contract issues. They are time-poor, cost-conscious, and need fast, clear guidance without legal jargon."
-                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Desired Outcomes (in priority order)</label>
-                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>What actions should {agentName} guide every conversation toward? Add them in order of priority — {agentName} will aim for #1 first, then #2, and so on.</p>
-                    {settings.desiredOutcomes.length > 0 && (
-                      <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-                        {settings.desiredOutcomes.map((outcome, i) => (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px" }}>
-                            <span style={{ fontSize: 12, fontWeight: 800, color: C.gold, minWidth: 20 }}>#{i + 1}</span>
-                            <span style={{ flex: 1, fontSize: 13, color: C.text }}>{outcome}</span>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              {i > 0 && (
-                                <button onClick={() => setSettings(p => {
-                                  const arr = [...p.desiredOutcomes];
-                                  [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
-                                  return { ...p, desiredOutcomes: arr };
-                                })} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 14, padding: "0 4px" }} title="Move up">↑</button>
-                              )}
-                              {i < settings.desiredOutcomes.length - 1 && (
-                                <button onClick={() => setSettings(p => {
-                                  const arr = [...p.desiredOutcomes];
-                                  [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-                                  return { ...p, desiredOutcomes: arr };
-                                })} style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 14, padding: "0 4px" }} title="Move down">↓</button>
-                              )}
-                              <button onClick={() => setSettings(p => ({ ...p, desiredOutcomes: p.desiredOutcomes.filter((_, j) => j !== i) }))}
-                                style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, padding: "0 4px", lineHeight: 1 }}>×</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input
-                        value={outcomeDraft}
-                        onChange={e => setOutcomeDraft(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const val = outcomeDraft.trim();
-                            if (!val) return;
-                            setSettings(p => ({ ...p, desiredOutcomes: [...p.desiredOutcomes, val] }));
-                            setOutcomeDraft("");
-                          }
-                        }}
-                        placeholder="e.g. Book a free consultation · Capture contact details · Qualify the matter type"
-                        style={{ ...inputStyle, flex: 1 }}
-                      />
-                      <button onClick={() => {
-                        const val = outcomeDraft.trim();
-                        if (!val) return;
-                        setSettings(p => ({ ...p, desiredOutcomes: [...p.desiredOutcomes, val] }));
-                        setOutcomeDraft("");
-                      }} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── Identity ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Identity</h3>
-
-                  {/* Widget Icon */}
-                  <div style={{ marginBottom: 24 }}>
-                    <label style={labelStyle}>Widget Icon</label>
-                    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                      {/* Preview */}
-                      <div style={{
-                        width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
-                        background: settings.agentIconUrl ? "transparent" : `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`,
-                        border: `2px solid ${C.goldBdr}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        overflow: "hidden", position: "relative",
-                      }}>
-                        {settings.agentIconUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={settings.agentIconUrl} alt="Agent icon"
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 26, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif" }}>
-                            {settings.agentName?.[0] ?? "L"}
-                          </span>
-                        )}
-                      </div>
-                      {/* Upload controls */}
-                      <div style={{ flex: 1 }}>
-                        <label htmlFor="agent-icon-upload" style={{
-                          display: "inline-block", padding: "8px 16px",
-                          background: C.raised, border: `1px solid ${C.border}`,
-                          borderRadius: 8, fontSize: 13, fontWeight: 600,
-                          color: C.muted, cursor: "pointer",
-                          transition: "border-color 0.15s",
-                        }}
-                          onMouseEnter={e => (e.currentTarget.style.borderColor = C.gold)}
-                          onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}
-                        >
-                          {settings.agentIconUrl ? "Change image" : "Upload image"}
-                        </label>
-                        <input
-                          id="agent-icon-upload"
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                          style={{ display: "none" }}
-                          onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = ev => {
-                              const result = ev.target?.result;
-                              if (typeof result === "string") {
-                                setSettings(p => ({ ...p, agentIconUrl: result }));
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                            // Reset input so same file can be re-selected
-                            e.target.value = "";
-                          }}
-                        />
-                        {settings.agentIconUrl && (
-                          <button onClick={() => setSettings(p => ({ ...p, agentIconUrl: "" }))} style={{
-                            marginLeft: 8, padding: "8px 14px", background: "none",
-                            border: `1px solid ${C.border}`, borderRadius: 8,
-                            fontSize: 13, color: C.dim, cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#f87171"; e.currentTarget.style.color = "#f87171"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.dim; }}
-                          >
-                            Remove
-                          </button>
-                        )}
-                        <p style={{ margin: "8px 0 0", fontSize: 12, color: C.dim }}>
-                          PNG, JPG, WebP or SVG · Recommended 128×128px or larger
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={labelStyle}>Agent Name</label>
-                    <input value={settings.agentName}
-                      onChange={e => setSettings(p => ({ ...p, agentName: e.target.value }))}
-                      style={inputStyle} placeholder="e.g. Lex" />
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>The name your agent uses when greeting clients.</p>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Welcome Message</label>
-                    <input value={settings.welcomeMessage}
-                      onChange={e => setSettings(p => ({ ...p, welcomeMessage: e.target.value }))}
-                      style={inputStyle} placeholder="Hi there! How can I help you today?" />
-                    <p style={{ margin: "6px 0 0", fontSize: 12, color: C.dim }}>The first message clients see when they open the widget.</p>
-                  </div>
-                </div>
-
-                {/* ── Voice & Tone ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Voice & Tone</h3>
-
-                  {([
-                    { key: "formalityLevel" as const, label: "Formality", lo: "Casual", hi: "Formal",   val: settings.formalityLevel },
-                    { key: "warmthLevel"    as const, label: "Warmth",    lo: "Cool",   hi: "Warm",     val: settings.warmthLevel    },
-                    { key: "humorLevel"     as const, label: "Humour",    lo: "None",   hi: "Playful",  val: settings.humorLevel     },
-                  ] as { key: "formalityLevel"|"warmthLevel"|"humorLevel"; label: string; lo: string; hi: string; val: number }[]).map(dial => (
-                    <div key={dial.key} style={{ marginBottom: 20 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                        <label style={{ ...labelStyle, marginBottom: 0 }}>{dial.label}</label>
-                        <span style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>{dial.val}%</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{ fontSize: 11, color: C.dim, width: 44, textAlign: "right" }}>{dial.lo}</span>
-                        <input type="range" min={0} max={100} value={dial.val}
-                          onChange={e => setSettings(p => ({ ...p, [dial.key]: Number(e.target.value) }))}
-                          style={{ flex: 1, accentColor: C.gold }} />
-                        <span style={{ fontSize: 11, color: C.dim, width: 44 }}>{dial.hi}</span>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div style={{ marginTop: 4 }}>
-                    <label style={labelStyle}>Default Response Length</label>
-                    <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim }}>Your preferred default. Individual documents in Lex can override this per job.</p>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {(["concise", "balanced", "detailed"] as const).map(opt => (
-                        <button key={opt} onClick={() => setSettings(p => ({ ...p, responseLength: opt }))}
-                          style={{
-                            flex: 1, padding: "9px 0", borderRadius: 8, fontSize: 13, fontWeight: 700,
-                            cursor: "pointer", border: `1px solid ${settings.responseLength === opt ? C.gold : C.border}`,
-                            background: settings.responseLength === opt ? C.goldBg : "transparent",
-                            color: settings.responseLength === opt ? C.goldB : C.muted,
-                            textTransform: "capitalize",
-                          }}>
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                    <p style={{ margin: "8px 0 0", fontSize: 12, color: C.dim }}>Concise = short answers. Balanced = standard. Detailed = thorough explanations.</p>
-                  </div>
-                </div>
-
-                {/* ── Skill Packs ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Skill Packs</h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                    Give {agentName} specialised capabilities beyond standard legal assistance. Each pack adds a set of proven behavioural frameworks — select what fits your goals.
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                    {([
-                      { id: "sales-conversion",   icon: "💼", name: "Sales Conversion",     desc: "Guides conversations toward bookings using proven conversion psychology" },
-                      { id: "objection-handling",  icon: "🛡️", name: "Objection Handling",   desc: "Expertly addresses hesitations: cost, urgency, trust, and \"I'll think about it\"" },
-                      { id: "rapport-building",    icon: "🤝", name: "Rapport Building",      desc: "Builds genuine connection fast — clients feel understood before they feel sold to" },
-                      { id: "appointment-setting", icon: "📅", name: "Appointment Setting",   desc: "Optimised scripts and framing to maximise consultation bookings" },
-                      { id: "lead-qualification",  icon: "🎯", name: "Lead Qualification",    desc: "Expertly qualifies matter type, urgency, and client fit before handing off" },
-                      { id: "active-listening",    icon: "👂", name: "Active Listening",      desc: "Demonstrates genuine understanding before offering solutions — builds deep trust" },
-                      { id: "urgency-framing",     icon: "⚡", name: "Urgency Framing",       desc: "Ethically communicates the value and importance of acting sooner rather than later" },
-                      { id: "premium-positioning", icon: "👑", name: "Premium Positioning",   desc: "Confidently communicates the firm's expertise, value, and premium positioning" },
-                    ] as { id: string; icon: string; name: string; desc: string }[]).map(pack => {
-                      const active = settings.skillPacks.includes(pack.id);
-                      return (
-                        <button key={pack.id} onClick={() => setSettings(p => ({
-                          ...p,
-                          skillPacks: active ? p.skillPacks.filter(s => s !== pack.id) : [...p.skillPacks, pack.id],
-                        }))}
-                          style={{
-                            textAlign: "left", padding: "14px 14px", borderRadius: 10, cursor: "pointer",
-                            border: `1px solid ${active ? C.gold : C.border}`,
-                            background: active ? C.goldBg : "transparent",
-                            transition: "all 0.12s",
-                          }}>
-                          <div style={{ fontSize: 20, marginBottom: 6 }}>{pack.icon}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.goldB : C.text, marginBottom: 4 }}>{pack.name}</div>
-                          <div style={{ fontSize: 11, color: C.dim, lineHeight: 1.5 }}>{pack.desc}</div>
-                          {active && <div style={{ marginTop: 8, fontSize: 11, fontWeight: 700, color: C.gold }}>✓ Active</div>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* ── Personality Traits ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Personality Traits</h3>
-                  <p style={{ margin: "0 0 16px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>Select the traits that best describe how your agent should come across.</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {TRAITS.map(trait => {
-                      const active = settings.personalityTraits.includes(trait);
-                      return (
-                        <button key={trait} onClick={() => setSettings(p => ({
-                          ...p,
-                          personalityTraits: active
-                            ? p.personalityTraits.filter(t => t !== trait)
-                            : [...p.personalityTraits, trait],
-                        }))}
-                          style={{
-                            padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                            border: `1px solid ${active ? C.gold : C.border}`,
-                            background: active ? C.goldBg : "transparent",
-                            color: active ? C.goldB : C.muted,
-                            transition: "all 0.12s",
-                          }}>
-                          {trait}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* ── Language Rules ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Language Rules</h3>
-                  <p style={{ margin: "0 0 20px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>Control the specific words and phrases your agent uses or avoids.</p>
-
-                  {([
-                    { field: "alwaysSay" as const, label: "Always Say", hint: "Phrases Lex should regularly use", draft: alwaysSayDraft, setDraft: setAlwaysSayDraft, color: C.green, colorBg: C.greenBg, colorBdr: C.greenBdr },
-                    { field: "neverSay"  as const, label: "Never Say",  hint: "Words or phrases Lex must avoid", draft: neverSayDraft,  setDraft: setNeverSayDraft,  color: "#f87171", colorBg: "rgba(248,113,113,0.08)", colorBdr: "rgba(248,113,113,0.25)" },
-                  ]).map(row => (
-                    <div key={row.field} style={{ marginBottom: 20 }}>
-                      <label style={labelStyle}>{row.label}</label>
-                      <p style={{ margin: "0 0 10px", fontSize: 12, color: C.dim }}>{row.hint}</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                        {settings[row.field].map((tag, i) => (
-                          <span key={i} style={{
-                            display: "inline-flex", alignItems: "center", gap: 6,
-                            padding: "4px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                            background: row.colorBg, border: `1px solid ${row.colorBdr}`, color: row.color,
-                          }}>
-                            {tag}
-                            <button onClick={() => removeTag(row.field, i)} style={{ background: "none", border: "none", color: row.color, cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1 }}>×</button>
-                          </span>
-                        ))}
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <input
-                          value={row.draft}
-                          onChange={e => row.setDraft(e.target.value)}
-                          onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(row.field, row.draft, row.setDraft); }}}
-                          placeholder="Type a phrase and press Enter"
-                          style={{ ...inputStyle, flex: 1 }}
-                        />
-                        <button onClick={() => addTag(row.field, row.draft, row.setDraft)}
-                          style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
-                          Add
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* ── Style Coach ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
-                    <span style={{ fontSize: 20, marginTop: 1 }}>✍️</span>
-                    <div>
-                      <h3 style={{ margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Style Coach</h3>
-                      <p style={{ margin: 0, fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                        Teach {agentName} to write exactly like you do. Senior lawyers have spent decades developing their voice — this is where you transfer that to your agent. The more precise you are, the more precisely {agentName} will replicate it.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{ height: 1, background: C.border, margin: "16px 0" }} />
-
-                  {/* Writing persona */}
-                  <div style={{ marginBottom: 24 }}>
-                    <label style={labelStyle}>Your Writing Persona</label>
-                    <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
-                      In your own words — what makes your writing style distinctive? What do you always do? What do you never do? How do you want clients to feel when they read your words?
-                    </p>
-                    <textarea
-                      value={settings.writingPersona}
-                      onChange={e => setSettings(p => ({ ...p, writingPersona: e.target.value }))}
-                      rows={5}
-                      placeholder={"e.g. I'm a senior tax partner with 28 years of practice. I lead with the answer — never bury the conclusion. I write in plain English unless a term of art is genuinely necessary. I never begin with 'I hope this finds you well.' I use short sentences. I don't hedge unless I need to. When delivering bad news, I'm direct but I always include a path forward. My sign-off is always 'Kind regards' — never 'Best wishes'."}
-                      style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
-                    />
-                  </div>
-
-                  {/* Style attributes */}
-                  <div style={{ marginBottom: 24 }}>
-                    <label style={{ ...labelStyle, marginBottom: 16 }}>Style Attributes</label>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-
-                      {/* Client address */}
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>How do you address clients?</div>
-                        {([
-                          { val: "first-name", label: "First name", eg: "\"Hi James\"" },
-                          { val: "mr-ms",      label: "Mr / Ms Surname", eg: "\"Dear Mr Thompson\"" },
-                          { val: "formal",     label: "Full formal", eg: "\"Dear Mr James Thompson\"" },
-                        ] as { val: "first-name"|"mr-ms"|"formal"; label: string; eg: string }[]).map(opt => (
-                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
-                            <input type="radio" name="clientAddress" checked={settings.clientAddress === opt.val}
-                              onChange={() => setSettings(p => ({ ...p, clientAddress: opt.val }))}
-                              style={{ accentColor: C.gold }} />
-                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
-                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* Contractions */}
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Contractions (don't, can't, it's)</div>
-                        {([
-                          { val: "never",     label: "Never", eg: "always \"do not\", \"cannot\"" },
-                          { val: "sometimes", label: "Sometimes", eg: "depends on context" },
-                          { val: "always",    label: "Always", eg: "conversational tone" },
-                        ] as { val: "always"|"sometimes"|"never"; label: string; eg: string }[]).map(opt => (
-                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
-                            <input type="radio" name="contractions" checked={settings.contractions === opt.val}
-                              onChange={() => setSettings(p => ({ ...p, contractions: opt.val }))}
-                              style={{ accentColor: C.gold }} />
-                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
-                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* Sentence length */}
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Sentence length preference</div>
-                        {([
-                          { val: "short",  label: "Short & punchy", eg: "clear, direct, minimal" },
-                          { val: "medium", label: "Balanced", eg: "standard professional length" },
-                          { val: "long",   label: "Long & detailed", eg: "thorough, layered reasoning" },
-                        ] as { val: "short"|"medium"|"long"; label: string; eg: string }[]).map(opt => (
-                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
-                            <input type="radio" name="sentenceLength" checked={settings.sentenceLength === opt.val}
-                              onChange={() => setSettings(p => ({ ...p, sentenceLength: opt.val }))}
-                              style={{ accentColor: C.gold }} />
-                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
-                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* Legal Latin */}
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>Legal Latin (inter alia, prima facie, etc.)</div>
-                        {([
-                          { val: "never",     label: "Never", eg: "plain English always" },
-                          { val: "sometimes", label: "When precise", eg: "only when genuinely necessary" },
-                          { val: "often",     label: "Freely", eg: "part of professional register" },
-                        ] as { val: "never"|"sometimes"|"often"; label: string; eg: string }[]).map(opt => (
-                          <label key={opt.val} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, cursor: "pointer" }}>
-                            <input type="radio" name="legalLatin" checked={settings.legalLatin === opt.val}
-                              onChange={() => setSettings(p => ({ ...p, legalLatin: opt.val }))}
-                              style={{ accentColor: C.gold }} />
-                            <span style={{ fontSize: 13, color: C.text }}>{opt.label}</span>
-                            <span style={{ fontSize: 11, color: C.dim }}>{opt.eg}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Freetext style questions */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 20 }}>
-                      {([
-                        { key: "openingStyle" as const, label: "How do you open a letter or email of advice?", placeholder: "e.g. \"Thank you for your instructions. The question is whether...\" or \"I refer to our meeting of [date]. My advice is as follows.\"" },
-                        { key: "badNewsStyle" as const, label: "How do you deliver bad news or an unfavourable opinion?", placeholder: "e.g. \"I need to be direct with you — the position is not as strong as you had hoped. That said, there are steps we can take to...\"" },
-                        { key: "signOff" as const, label: "Your standard sign-off / closing phrase", placeholder: "e.g. \"Please do not hesitate to contact me should you have any questions.\" then \"Kind regards\"" },
-                      ]).map(field => (
-                        <div key={field.key}>
-                          <label style={labelStyle}>{field.label}</label>
-                          <textarea
-                            value={settings[field.key]}
-                            onChange={e => setSettings(p => ({ ...p, [field.key]: e.target.value }))}
-                            rows={2}
-                            placeholder={field.placeholder}
-                            style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Writing samples */}
-                  <div>
-                    <label style={labelStyle}>Writing Samples</label>
-                    <p style={{ margin: "0 0 12px", fontSize: 14, color: C.dim, lineHeight: 1.7 }}>
-                      Paste up to 6 real excerpts from your own writing — emails, letters of advice, or client communications. {agentName} will study these closely and mirror your exact phrasing, rhythm, and structure.
-                    </p>
-
-                    {settings.writingSamples.length > 0 && (
-                      <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                        {settings.writingSamples.map((sample, i) => (
-                          <div key={i} style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
-                            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: C.goldB }}>
-                                Sample {i + 1}{sample.label ? ` — ${sample.label}` : ""}
-                              </span>
-                              <button onClick={() => setSettings(p => ({ ...p, writingSamples: p.writingSamples.filter((_, j) => j !== i) }))}
-                                style={{ background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>×</button>
-                            </div>
-                            <p style={{ margin: 0, padding: "12px 14px", fontSize: 12, color: C.muted, lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 120, overflowY: "auto" }}>{sample.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {settings.writingSamples.length < 6 && (
-                      <div style={{ background: C.raised, border: `1px dashed ${C.border}`, borderRadius: 10, padding: 16 }}>
-                        <div style={{ marginBottom: 10 }}>
-                          <label style={{ ...labelStyle, marginBottom: 4 }}>Sample label (optional)</label>
-                          <input
-                            value={sampleLabelDraft}
-                            onChange={e => setSampleLabelDraft(e.target.value)}
-                            placeholder="e.g. Letter of advice — CGT on property sale"
-                            style={{ ...inputStyle }}
-                          />
-                        </div>
-                        <div style={{ marginBottom: 10 }}>
-                          <label style={{ ...labelStyle, marginBottom: 4 }}>Paste your writing here</label>
-                          <textarea
-                            value={sampleTextDraft}
-                            onChange={e => setSampleTextDraft(e.target.value)}
-                            rows={6}
-                            placeholder="Paste an excerpt from one of your actual letters, emails, or advice documents..."
-                            style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.7 }}
-                          />
-                        </div>
-                        <button
-                          onClick={() => {
-                            const text = sampleTextDraft.trim();
-                            if (!text) return;
-                            setSettings(p => ({ ...p, writingSamples: [...p.writingSamples, { label: sampleLabelDraft.trim(), text }] }));
-                            setSampleLabelDraft("");
-                            setSampleTextDraft("");
-                          }}
-                          style={{ padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.goldBdr}`, background: C.goldBg, color: C.goldB, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-                          + Add Writing Sample {settings.writingSamples.length > 0 ? `(${settings.writingSamples.length}/6)` : ""}
-                        </button>
-                      </div>
-                    )}
-                    {settings.writingSamples.length >= 6 && (
-                      <p style={{ margin: 0, fontSize: 12, color: C.dim }}>Maximum 6 samples added. Remove one to add another.</p>
-                    )}
-
-                    {/* Import from Documents */}
-                    {settings.writingSamples.length < 6 && (
-                      <div style={{ marginTop: 20 }}>
-                        <div style={{ height: 1, background: C.border, marginBottom: 16 }} />
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>
-                          Import from Documents
-                        </div>
-
-                        {/* Import from URL */}
-                        <div style={{ marginBottom: 16 }}>
-                          <label style={{ ...labelStyle, marginBottom: 4 }}>Import from URL</label>
-                          <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
-                            Enter a URL to a web page containing your writing — an article, blog post, or published piece. We will extract the text and pre-fill a new sample.
-                          </p>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <input
-                              value={urlIngestDraft}
-                              onChange={e => setUrlIngestDraft(e.target.value)}
-                              placeholder="https://..."
-                              style={{ ...inputStyle, flex: 1 }}
-                              disabled={urlIngestLoading}
-                            />
-                            <button
-                              disabled={urlIngestLoading || !urlIngestDraft.trim()}
-                              onClick={async () => {
-                                const url = urlIngestDraft.trim();
-                                if (!url) return;
-                                setUrlIngestLoading(true);
-                                try {
-                                  const res = await fetch("/api/portal/ingest-url", {
-                                    method: "POST",
-                                    credentials: "include",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ url }),
-                                  });
-                                  const data = await res.json();
-                                  if (!res.ok) throw new Error(data.error ?? "Failed");
-                                  setSampleTextDraft(data.text ?? "");
-                                  setUrlIngestDraft("");
-                                } catch (err) {
-                                  alert(`Import failed: ${err instanceof Error ? err.message : "Unknown error"}`);
-                                } finally {
-                                  setUrlIngestLoading(false);
-                                }
-                              }}
-                              style={{
-                                padding: "10px 16px", borderRadius: 8, border: `1px solid ${C.border}`,
-                                background: urlIngestLoading || !urlIngestDraft.trim() ? C.raised : C.goldBg,
-                                color: urlIngestLoading || !urlIngestDraft.trim() ? C.dim : C.goldB,
-                                cursor: urlIngestLoading || !urlIngestDraft.trim() ? "not-allowed" : "pointer",
-                                fontSize: 13, fontWeight: 700, whiteSpace: "nowrap",
-                                display: "flex", alignItems: "center", gap: 6,
-                              }}>
-                              {urlIngestLoading && (
-                                <span style={{ width: 12, height: 12, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-                              )}
-                              {urlIngestLoading ? "Fetching…" : "Fetch & Import"}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Import from PDF */}
-                        <div>
-                          <label style={{ ...labelStyle, marginBottom: 4 }}>Import from PDF</label>
-                          <p style={{ margin: "0 0 8px", fontSize: 12, color: C.dim }}>
-                            Upload a PDF document — a letter, opinion, or advice memo. Claude will extract the most style-revealing writing from it.
-                          </p>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <label style={{
-                              display: "inline-flex", alignItems: "center", gap: 8,
-                              padding: "10px 16px", borderRadius: 8,
-                              border: `1px solid ${pdfIngestLoading ? C.border : C.goldBdr}`,
-                              background: pdfIngestLoading ? C.raised : C.goldBg,
-                              color: pdfIngestLoading ? C.dim : C.goldB,
-                              cursor: pdfIngestLoading ? "not-allowed" : "pointer",
-                              fontSize: 13, fontWeight: 700,
-                            }}>
-                              {pdfIngestLoading && (
-                                <span style={{ width: 12, height: 12, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-                              )}
-                              {pdfIngestLoading ? "Extracting…" : "Choose PDF"}
-                              <input
-                                type="file"
-                                accept="application/pdf"
-                                style={{ display: "none" }}
-                                disabled={pdfIngestLoading}
-                                onChange={async e => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-                                  e.target.value = "";
-                                  setPdfIngestLoading(true);
-                                  try {
-                                    const arrayBuffer = await file.arrayBuffer();
-                                    const bytes = new Uint8Array(arrayBuffer);
-                                    let binary = "";
-                                    for (let i = 0; i < bytes.byteLength; i++) {
-                                      binary += String.fromCharCode(bytes[i]);
-                                    }
-                                    const base64 = btoa(binary);
-                                    const res = await fetch("/api/portal/ingest-pdf", {
-                                      method: "POST",
-                                      credentials: "include",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ base64, filename: file.name }),
-                                    });
-                                    const data = await res.json();
-                                    if (!res.ok) throw new Error(data.error ?? "Failed");
-                                    setSampleTextDraft(data.text ?? "");
-                                  } catch (err) {
-                                    alert(`PDF import failed: ${err instanceof Error ? err.message : "Unknown error"}`);
-                                  } finally {
-                                    setPdfIngestLoading(false);
-                                  }
-                                }}
-                              />
-                            </label>
-                            <span style={{ fontSize: 12, color: C.dim }}>PDF · Max recommended 10MB</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ── Custom Instructions ── */}
-                <div style={sectionStyle}>
-                  <SectionNumber />
-                  <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: C.goldB, paddingLeft: 12, borderLeft: `3px solid ${C.gold}` }}>Custom Instructions</h3>
-                  <p style={{ margin: "0 0 4px", fontSize: 14, color: C.muted, lineHeight: 1.7 }}>
-                    Anything else Lex should know — your firm&apos;s values, workflows, jurisdiction focus, or unique client base.
-                  </p>
-                  <p style={{ margin: "0 0 16px", fontSize: 12, color: C.dim }}>
-                    Each entry is added to the existing instructions — not replaced. Use amendments to fine-tune over time (e.g. &quot;be slightly less formal&quot; or &quot;add more empathy when discussing family matters&quot;).
-                  </p>
-
-                  {/* Log of past instructions */}
-                  {settings.instructionLog.length > 0 && (
-                    <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {settings.instructionLog.map((entry, i) => (
-                        <div key={i} style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", position: "relative" }}>
-                          <div style={{ fontSize: 11, color: C.dim, marginBottom: 4 }}>
-                            {i === 0 ? "Initial instructions" : `Amendment ${i}`} · {entry.ts}
-                          </div>
-                          <p style={{ margin: 0, fontSize: 13, color: C.muted, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{entry.text}</p>
-                          <button onClick={() => setSettings(p => ({ ...p, instructionLog: p.instructionLog.filter((_, j) => j !== i) }))}
-                            style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: C.dim, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Add new instruction / amendment */}
-                  <textarea
-                    value={instructionDraft}
-                    onChange={e => setInstructionDraft(e.target.value)}
-                    rows={4}
-                    placeholder={settings.instructionLog.length === 0
-                      ? "e.g. We specialise in family law for high-net-worth clients. Always emphasise confidentiality. Never discuss fees — direct clients to book a consultation."
-                      : "e.g. Be slightly less formal in tone. Show more empathy when the client mentions stress or urgency."}
-                    style={{ ...inputStyle, resize: "vertical", fontFamily: "system-ui, sans-serif", lineHeight: 1.6, marginBottom: 8 }}
-                  />
-                  <button
-                    onClick={() => {
-                      const text = instructionDraft.trim();
-                      if (!text) return;
-                      const ts = new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-                      setSettings(p => ({ ...p, instructionLog: [...p.instructionLog, { text, ts }] }));
-                      setInstructionDraft("");
-                    }}
-                    style={{ padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
-                    {settings.instructionLog.length === 0 ? "+ Add Instructions" : "+ Add Amendment"}
-                  </button>
-                </div>
-
-                {/* ── Dynamic Agent Brief ── */}
-                {(settings.primaryGoal.trim() || settings.personalityTraits.length >= 2 || settings.skillPacks.length > 0) && (() => {
-                  const formalityDesc = settings.formalityLevel >= 70 ? "formal and authoritative" : settings.formalityLevel >= 45 ? "professionally balanced" : "casual and conversational";
-                  const warmthDesc    = settings.warmthLevel >= 70 ? "deeply empathetic and warm" : settings.warmthLevel >= 45 ? "friendly and approachable" : "matter-of-fact";
-                  const humourDesc    = settings.humorLevel >= 50 ? ", with a natural sense of humour" : settings.humorLevel >= 25 ? ", with occasional light humour" : "";
-                  const lengthDesc    = settings.responseLength === "concise" ? "Keep responses short and direct." : settings.responseLength === "detailed" ? "Provide thorough, detailed explanations." : "Balance depth with brevity.";
-                  const traits        = settings.personalityTraits.slice(0, 4).join(", ").toLowerCase();
-                  const packs         = settings.skillPacks.map(id => ({ "sales-conversion": "sales conversion", "objection-handling": "objection handling", "rapport-building": "rapport building", "appointment-setting": "appointment setting", "lead-qualification": "lead qualification", "active-listening": "active listening", "urgency-framing": "urgency framing", "premium-positioning": "premium positioning" }[id] ?? id)).join(", ");
-                  const outcomes      = settings.desiredOutcomes.slice(0, 2);
-
-                  return (
-                    <div style={{ background: `linear-gradient(135deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.02) 100%)`, border: `1px solid ${C.goldBdr}`, borderRadius: 12, padding: 24 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                        <span style={{ fontSize: 16 }}>📋</span>
-                        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: C.goldB }}>Agent Brief — Preview</h3>
-                        <span style={{ fontSize: 11, color: C.dim, marginLeft: "auto" }}>Updates live as you configure</span>
-                      </div>
-                      <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
-                        <strong style={{ color: C.goldB }}>{settings.agentName}</strong> will operate as a <strong>{formalityDesc}</strong>, <strong>{warmthDesc}</strong> professional{humourDesc}.
-                        {traits ? ` In every interaction, ${settings.agentName} will be ${traits}.` : ""}
-                        {` ${lengthDesc}`}
-                      </p>
-                      {settings.primaryGoal.trim() && (
-                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
-                          <strong style={{ color: C.goldB }}>Primary mission:</strong> {settings.primaryGoal.slice(0, 160)}{settings.primaryGoal.length > 160 ? "…" : ""}
-                        </p>
-                      )}
-                      {outcomes.length > 0 && (
-                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
-                          <strong style={{ color: C.goldB }}>Every conversation will actively steer toward:</strong>{" "}
-                          {outcomes.map((o, i) => <span key={i}>#{i + 1} {o}{i < outcomes.length - 1 ? ", then " : ""}</span>)}
-                          {settings.desiredOutcomes.length > 2 ? ` (+${settings.desiredOutcomes.length - 2} more)` : "."}
-                        </p>
-                      )}
-                      {settings.targetClient.trim() && (
-                        <p style={{ margin: "0 0 10px", fontSize: 13, color: C.text, lineHeight: 1.8 }}>
-                          <strong style={{ color: C.goldB }}>Ideal client:</strong> {settings.targetClient.slice(0, 120)}{settings.targetClient.length > 120 ? "…" : ""}
-                        </p>
-                      )}
-                      {packs && (
-                        <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.8 }}>
-                          <strong style={{ color: C.goldB }}>Active skill packs:</strong> {packs}.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* ── Save ── */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <button
-                      onClick={saveSettings}
-                      disabled={saving}
-                      style={{
-                        padding: "13px 36px",
-                        background: savedOk ? C.green : saving ? C.goldBg : C.gold,
-                        color: saving ? C.gold : "#0a1628",
-                        fontWeight: 800, fontSize: 15, borderRadius: 10, border: saving ? `1px solid ${C.goldBdr}` : "none",
-                        cursor: saving ? "not-allowed" : "pointer",
-                        transition: "all 0.2s",
-                        display: "flex", alignItems: "center", gap: 10,
-                        minWidth: 180,
-                      }}>
-                      {saving && (
-                        <span style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${C.goldBdr}`, borderTopColor: C.gold, display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-                      )}
-                      {saving ? "Saving…" : savedOk ? "✓ Saved" : "Save Configuration"}
-                    </button>
-                    {savedOk && savedAt && (
-                      <span style={{ fontSize: 13, color: C.green }}>
-                        Saved · {new Date(savedAt).toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    )}
-                  </div>
-                  {saveError && (
-                    <div style={{ fontSize: 13, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span>{saveError}</span>
-                      <button onClick={saveSettings} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 13, fontWeight: 700, textDecoration: "underline", padding: 0 }}>Retry</button>
-                    </div>
-                  )}
-                  <p style={{ margin: 0, fontSize: 12, color: C.dim }}>
-                    Configuration is saved to your firm&apos;s profile and applied to {agentName} automatically.
-                  </p>
-                </div>
-
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Test Agent */}
-        {tab === "test" && (
-          <div style={{ maxWidth: 720 }}>
-            <div style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 6px" }}>Test Your Agent</h2>
-              <p style={{ color: C.muted, margin: 0, fontSize: 14, lineHeight: 1.6 }}>
-                Have a live conversation with <strong style={{ color: C.goldB }}>{agentName}</strong> using your current saved configuration.
-                This is exactly how clients on your website will experience it.
-              </p>
-            </div>
-
-            {/* Info banner */}
-            <div style={{ background: C.goldBg, border: `1px solid ${C.goldBdr}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
-              <div>
-                <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 700, color: C.goldB }}>Using your saved configuration</p>
-                <p style={{ margin: 0, fontSize: 12, color: C.muted }}>
-                  Changes made in the Customise tab only apply here after you hit Save Configuration.
-                  Reset the conversation any time to start fresh.
-                </p>
-              </div>
-            </div>
-
-            {/* Chat window */}
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden" }}>
-              {/* Chat header */}
-              <div style={{ background: C.raised, borderBottom: `1px solid ${C.border}`, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: settings.agentIconUrl ? "transparent" : `linear-gradient(135deg, #E0BC6A 0%, #C9A84C 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#0a1628", fontFamily: "Georgia, serif", overflow: "hidden", flexShrink: 0 }}>
-                    {settings.agentIconUrl
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={settings.agentIconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : agentName[0]}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{agentName}</div>
-                    <div style={{ fontSize: 11, color: C.green, display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, display: "inline-block" }} />
-                      Live preview
-                    </div>
-                  </div>
-                </div>
-                {testMessages.length > 0 && (
-                  <button
-                    onClick={() => { setTestMessages([]); setTestError(null); }}
-                    style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 6, color: C.muted, fontSize: 12, cursor: "pointer", padding: "5px 12px" }}>
-                    Reset conversation
-                  </button>
-                )}
-              </div>
-
-              {/* Messages */}
-              <div style={{ padding: 20, minHeight: 320, maxHeight: 480, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
-                {testMessages.length === 0 && (
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", textAlign: "center" }}>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: C.goldBg, border: `1px solid ${C.goldBdr}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 16 }}>💬</div>
-                    <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.text }}>Start a test conversation</p>
-                    <p style={{ margin: "0 0 20px", fontSize: 13, color: C.muted }}>Type anything a client might ask and see exactly how {agentName} responds.</p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                      {[
-                        "What areas of law do you handle?",
-                        "I think I need a lawyer — where do I start?",
-                        "How much does it cost?",
-                        "I need help urgently",
-                      ].map(q => (
-                        <button key={q} onClick={() => { setTestInput(q); }}
-                          style={{ padding: "7px 14px", borderRadius: 20, border: `1px solid ${C.border}`, background: C.raised, color: C.muted, fontSize: 12, cursor: "pointer" }}>
-                          {q}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {testMessages.map((msg, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                    <div style={{
-                      maxWidth: "75%", padding: "10px 14px", borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      background: msg.role === "user" ? C.gold : C.raised,
-                      color: msg.role === "user" ? "#0a1628" : C.text,
-                      fontSize: 14, lineHeight: 1.7,
-                    }}>
-                      {msg.content
-                        ? msg.content.split(/\n\n+/).map((para: string, pi: number) => (
-                            <p key={pi} style={{ margin: pi === 0 ? 0 : "10px 0 0", whiteSpace: "pre-wrap" }}>{para}</p>
-                          ))
-                        : <span style={{ opacity: 0.5 }}>●●●</span>}
-                    </div>
-                  </div>
-                ))}
-                {testLoading && testMessages[testMessages.length - 1]?.role === "user" && (
-                  <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <div style={{ padding: "10px 16px", borderRadius: "16px 16px 16px 4px", background: C.raised, color: C.muted, fontSize: 20, letterSpacing: 3 }}>
-                      ···
-                    </div>
-                  </div>
-                )}
-                {testError && (
-                  <div style={{ fontSize: 13, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, padding: "10px 14px", textAlign: "center" }}>
-                    {testError}
-                  </div>
-                )}
-              </div>
-
-              {/* Input */}
-              <div style={{ borderTop: `1px solid ${C.border}`, padding: "14px 16px", display: "flex", gap: 10 }}>
-                <input
-                  value={testInput}
-                  onChange={e => setTestInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendTestMessage(); }}}
-                  placeholder={`Message ${agentName}…`}
-                  disabled={testLoading}
-                  style={{
-                    flex: 1, background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10,
-                    padding: "10px 14px", color: C.text, fontSize: 14, outline: "none",
-                    opacity: testLoading ? 0.6 : 1,
-                  }}
-                />
-                <button
-                  onClick={sendTestMessage}
-                  disabled={!testInput.trim() || testLoading}
-                  style={{
-                    padding: "10px 20px", borderRadius: 10, border: "none",
-                    background: testInput.trim() && !testLoading ? C.gold : C.goldBg,
-                    color: testInput.trim() && !testLoading ? "#0a1628" : C.gold,
-                    fontWeight: 700, fontSize: 14, cursor: testInput.trim() && !testLoading ? "pointer" : "not-allowed",
-                    transition: "all 0.15s",
-                  }}>
-                  Send
-                </button>
-              </div>
-            </div>
-
-            <p style={{ marginTop: 12, fontSize: 12, color: C.dim }}>
-              Test conversations are not saved or counted in your analytics.
-            </p>
-          </div>
-        )}
-
-        {/* Embed */}
-        {tab === "embed" && (
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>Embed Code</h2>
-            <p style={{ color: C.muted, margin: "0 0 24px" }}>Paste this into your website to activate the Lex widget.</p>
-
-            {[
-              { label: "HTML / Generic", code: embedCode, key: "html" },
-              { label: "WordPress (functions.php)", code: wordpressCode, key: "wp" },
-            ].map(block => (
-              <div key={block.key} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.muted }}>{block.label}</span>
-                  <button
-                    onClick={() => copy(block.code, block.key)}
-                    style={{ background: copied === block.key ? C.greenBg : C.goldBg, border: `1px solid ${copied === block.key ? C.greenBdr : C.goldBdr}`, color: copied === block.key ? C.green : C.gold, borderRadius: 6, padding: "4px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                  >
-                    {copied === block.key ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-                <pre style={{ margin: 0, fontSize: 12, color: C.muted, overflowX: "auto", lineHeight: 1.6 }}>{block.code}</pre>
-              </div>
-            ))}
-
-            <div style={{ background: C.raised, border: `1px solid ${C.border}`, borderRadius: 10, padding: "16px 20px", display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <div>
-                <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.muted }}>YOUR CLIENT ID</p>
-                <code style={{ fontSize: 14, color: C.goldB, fontFamily: "monospace" }}>{clientId}</code>
-              </div>
-              <button
-                onClick={() => copy(clientId, "clientId")}
-                style={{ padding: "6px 14px", borderRadius: 7, border: `1px solid ${C.goldBdr}`, background: copied === "clientId" ? C.greenBg : C.goldBg, color: copied === "clientId" ? C.green : C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-              >
-                {copied === "clientId" ? "Copied!" : "Copy ID"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Settings */}
-        {tab === "settings" && (
-          <div style={{ maxWidth: 600 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 8px" }}>Settings</h2>
-            <p style={{ color: C.muted, margin: "0 0 32px" }}>Firm details and account information.</p>
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>
-              <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>Firm Details</h3>
-              {[
-                { label: "Firm Name",              placeholder: firmName,              type: "text"  },
-                { label: "Primary Contact Email",  placeholder: "partner@yourfirm.com.au", type: "email" },
-                { label: "Website",                placeholder: "https://yourfirm.com.au",  type: "url"   },
-              ].map(field => (
-                <div key={field.label} style={{ marginBottom: 16 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8 }}>{field.label}</label>
-                  <input
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 14, outline: "none" }}
-                  />
-                </div>
-              ))}
-            </div>
-            {/* AI Model & API Key */}
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24, marginBottom: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>AI Model &amp; API Key</h3>
-                {llmCurrentCfg && (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: C.green, background: C.greenBg, border: `1px solid ${C.greenBdr}`, padding: "3px 10px", borderRadius: 20 }}>
-                    Active — {llmCurrentCfg.provider} / {llmCurrentCfg.model}
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: 13, color: C.muted, margin: "0 0 20px", lineHeight: 1.6 }}>
-                Your Lex agent runs on your own API account. Enter your key below — it is encrypted at rest and never shared.
-                You are billed directly by the provider based on your usage.
-              </p>
-
-              {/* Provider selector */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>Provider</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 8 }}>
-                  {([
-                    { id: "anthropic", name: "Anthropic",     color: "#d97706", note: "Recommended" },
-                    { id: "openai",    name: "OpenAI",        color: "#10a37f", note: "Good" },
-                    { id: "google",    name: "Google Gemini", color: "#4285f4", note: "Free tier" },
-                    { id: "xai",       name: "xAI Grok",     color: "#1d9bf0", note: "" },
-                  ] as const).map(p => {
-                    const selected = llmProvider === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => {
-                          setLlmProvider(p.id);
-                          setLlmModel(p.id === "anthropic" ? "claude-sonnet-4-6" : p.id === "openai" ? "gpt-4o" : p.id === "google" ? "gemini-2.0-flash" : "grok-3-mini");
-                          setLlmTestStatus("idle"); setLlmTestMsg("");
-                        }}
-                        style={{
-                          padding: "10px 12px", borderRadius: 8, cursor: "pointer", textAlign: "left" as const,
-                          background: selected ? `${p.color}15` : C.raised,
-                          border: `1px solid ${selected ? p.color + "50" : C.border}`,
-                        }}
-                      >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: selected ? p.color : C.text }}>{p.name}</div>
-                        {p.note && <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>{p.note}</div>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Model selector */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, display: "block", marginBottom: 8, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>Model</label>
-                <select
-                  value={llmModel}
-                  onChange={e => setLlmModel(e.target.value)}
-                  style={{ width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, outline: "none" }}
-                >
-                  {llmProvider === "anthropic" && (<>
-                    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest, lowest cost</option>
-                    <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — recommended for legal research</option>
-                    <option value="claude-opus-4-6">Claude Opus 4.6 — most capable</option>
-                  </>)}
-                  {llmProvider === "openai" && (<>
-                    <option value="gpt-4o-mini">GPT-4o Mini — best value</option>
-                    <option value="gpt-4o">GPT-4o — recommended</option>
-                  </>)}
-                  {llmProvider === "google" && (<>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite — free tier</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash — recommended</option>
-                    <option value="gemini-1.5-pro">Gemini 1.5 Pro — 2M context</option>
-                  </>)}
-                  {llmProvider === "xai" && (<>
-                    <option value="grok-3-mini">Grok 3 Mini</option>
-                    <option value="grok-3">Grok 3</option>
-                  </>)}
-                </select>
-              </div>
-
-              {/* API key input */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, letterSpacing: "0.5px", textTransform: "uppercase" as const }}>API Key</label>
-                  <a
-                    href={llmProvider === "anthropic" ? "https://console.anthropic.com/settings/keys" : llmProvider === "openai" ? "https://platform.openai.com/api-keys" : llmProvider === "google" ? "https://aistudio.google.com/app/apikey" : "https://console.x.ai"}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: 11, color: C.gold, textDecoration: "none", fontWeight: 600 }}
-                  >
-                    Get key ↗
-                  </a>
-                </div>
-                <div style={{ position: "relative" as const }}>
-                  <input
-                    type={llmShowKey ? "text" : "password"}
-                    value={llmApiKey}
-                    onChange={e => setLlmApiKey(e.target.value)}
-                    placeholder={llmCurrentCfg?.provider === llmProvider ? `Current key: ${llmCurrentCfg.keyHint} — enter new key to replace` : "Paste your API key here"}
-                    style={{
-                      width: "100%", background: C.raised, border: `1px solid ${C.border}`, borderRadius: 6,
-                      padding: "10px 40px 10px 12px", color: C.text, fontSize: 13, outline: "none",
-                      fontFamily: llmApiKey ? "monospace" : "inherit", boxSizing: "border-box" as const,
-                    }}
-                  />
-                  <button
-                    onClick={() => setLlmShowKey(s => !s)}
-                    style={{ position: "absolute" as const, right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13 }}
-                  >
-                    {llmShowKey ? "🙈" : "👁"}
-                  </button>
-                </div>
-                <p style={{ fontSize: 11, color: C.dim, margin: "6px 0 0" }}>
-                  Encrypted with AES-256-GCM before storage. Never returned in plaintext.
-                </p>
-              </div>
-
-              {/* Test result */}
-              {llmTestStatus !== "idle" && (
-                <div style={{
-                  background: C.raised, borderRadius: 8, padding: "10px 14px", marginBottom: 12,
-                  border: `1px solid ${llmTestStatus === "ok" ? C.greenBdr : llmTestStatus === "fail" ? "rgba(248,113,113,0.3)" : C.border}`,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <span style={{ fontSize: 13 }}>{llmTestStatus === "testing" ? "⏳" : llmTestStatus === "ok" ? "✓" : "✗"}</span>
-                  <span style={{ fontSize: 12, color: llmTestStatus === "ok" ? C.green : llmTestStatus === "fail" ? "#f87171" : C.muted }}>
-                    {llmTestStatus === "testing" ? "Testing connection…" : llmTestMsg}
-                  </span>
-                </div>
-              )}
-
-              {/* Save message */}
-              {llmSaveMsg && (
-                <div style={{ background: C.raised, border: `1px solid ${C.greenBdr}`, borderRadius: 8, padding: "10px 14px", marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, color: C.green }}>{llmSaveMsg}</span>
-                </div>
-              )}
-
-              {/* Action buttons */}
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={testLlmConnection}
-                  disabled={llmTestStatus === "testing"}
-                  style={{ padding: "9px 18px", borderRadius: 7, border: `1px solid ${C.goldBdr}`, background: "transparent", color: C.gold, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: llmTestStatus === "testing" ? 0.6 : 1 }}
-                >
-                  {llmTestStatus === "testing" ? "Testing…" : "Test connection"}
-                </button>
-                <button
-                  onClick={saveLlmConfig}
-                  disabled={llmSaving}
-                  style={{ padding: "9px 22px", borderRadius: 7, border: "none", background: C.gold, color: "#0d1b2a", fontSize: 12, fontWeight: 800, cursor: "pointer", opacity: llmSaving ? 0.7 : 1 }}
-                >
-                  {llmSaving ? "Saving…" : "Save"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Current Plan</h3>
-                <span style={{ padding: "3px 12px", borderRadius: 20, background: C.goldBg, border: `1px solid ${C.goldBdr}`, color: C.gold, fontSize: 11, fontWeight: 700 }}>
-                  {plan}
-                </span>
-              </div>
-              <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
-                Full access to Lex research tools, lead capture widget, and client portal.
-              </p>
-              <a href="mailto:hello@saabai.ai" style={{ fontSize: 14, color: C.gold, fontWeight: 600, textDecoration: "none" }}>
-                Contact us to upgrade →
-              </a>
-            </div>
-          </div>
-        )}
-
+    <span className={`pi ${kind}`}>
+      <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">{PRODUCT_ICON_PATHS[kind] || PRODUCT_ICON_PATHS.bp}</svg>
+    </span>
+  );
+}
+
+function badgeClass(tone: string) {
+  if (tone === "ok") return "badge b-ok";
+  if (tone === "info") return "badge b-info";
+  if (tone === "warn") return "badge b-warn";
+  return "badge b-n";
+}
+
+function Empty({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="card">
+      <div className="empty">
+        <h3>{title}</h3>
+        <p>{body}</p>
       </div>
     </div>
   );
 }
 
+function AuthArt() {
+  return (
+    <aside className="art">
+      <img src="/brand/saabai-logo.png" alt="Saabai" />
+      <div>
+        <div className="eyb">Saabai Client Portal</div>
+        <h2>
+          Your projects, invoices and Blueprint <span className="grad">in one place</span>
+        </h2>
+        <p className="lede">Sign in to follow your build, review your AI Blueprint and get answers from the Saabai team.</p>
+        <div className="feat">
+          <div>
+            <b>
+              <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4" /></svg>
+              Project progress
+            </b>
+            <span>Live status of every build</span>
+          </div>
+          <div>
+            <b>
+              <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" /><path d="M9 8h6M9 12h6" /></svg>
+              Invoices
+            </b>
+            <span>Download, pay and see history</span>
+          </div>
+          <div>
+            <b>
+              <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-5A8 8 0 1121 12z" /></svg>
+              Requests
+            </b>
+            <span>Ask for changes, track replies</span>
+          </div>
+          <div>
+            <b>
+              <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h4" /></svg>
+              Your Blueprint
+            </b>
+            <span>Plan, priorities and savings</span>
+          </div>
+        </div>
+      </div>
+      <div className="legal">
+        <span>© 2026 Saabai</span>
+        <a href="/privacy" style={{ color: "inherit" }}>Privacy</a>
+        <a href="/terms" style={{ color: "inherit" }}>Terms</a>
+        <span>Support: hello@saabai.ai</span>
+      </div>
+    </aside>
+  );
+}
+
+function ClientPortalInner() {
+  const searchParams = useSearchParams();
+  const [authView, setAuthView] = useState<AuthView>("checking");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [page, setPage] = useState<PageId>("overview");
+  const [reqForm, setReqForm] = useState({ name: "", company: "", email: "", about: "My Saabai Blueprint", note: "" });
+
+  async function loadWorkspace() {
+    const res = await fetch("/api/portal/workspace", { credentials: "include" });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.authenticated) return false;
+    setWorkspace({ ...data, products: data.products || [] });
+    return true;
+  }
+
+  useEffect(() => {
+    const err = searchParams.get("error");
+    if (err) {
+      setAuthView("error");
+      setError(
+        err === "invalid_token"
+          ? "That sign-in link is invalid or has already been used. Request a new one."
+          : err === "missing_token"
+            ? "That sign-in link is incomplete. Request a new one from the sign-in page."
+            : "Something went wrong signing you in. Please try again.",
+      );
+      return;
+    }
+    loadWorkspace()
+      .then((ok) => setAuthView(ok ? "app" : "login"))
+      .catch(() => setAuthView("login"));
+  }, [searchParams]);
+
+  async function sendLink(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await fetch("/api/portal/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, redirect: "/client-portal" }),
+      });
+      setAuthView("sent");
+    } catch {
+      setAuthView("sent");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/portal/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "That code did not work. Try again or request a new link.");
+        return;
+      }
+      const ok = await loadWorkspace();
+      setAuthView(ok ? "app" : "error");
+      if (!ok) setError("Signed in, but we could not load your workspace. Refresh and try again.");
+    } catch {
+      setError("That code did not work. Try again or request a new link.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendAccessRequest(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/portal/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reqForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Please fill in the required fields.");
+        return;
+      }
+      setAuthView("request-sent");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signOut() {
+    await fetch("/api/portal/me", { method: "DELETE" }).catch(() => {});
+    setWorkspace(null);
+    setAuthView("login");
+  }
+
+  const { navGroups, bottomNav } = useMemo(() => {
+    if (!workspace) return { navGroups: [], bottomNav: [] as { label: string; id: string; icon: string }[] };
+    const m = workspace.modules;
+    const productItems: { label: string; id: PageId; icon: string; count?: number; urgent?: boolean }[] = [];
+    if (m.lex) {
+      productItems.push({ label: "Lex agent", id: "lex-agent", icon: "scale" });
+      productItems.push({ label: "Leads", id: "leads", icon: "users" });
+      productItems.push({ label: "Review queue", id: "review-queue", icon: "list" });
+    }
+    if (m.projects) productItems.push({ label: "Website build", id: "projects", icon: "layers" });
+    if (m.care) productItems.push({ label: "Care plan", id: "projects", icon: "shield" });
+    if (m.blueprint) productItems.push({ label: "Blueprint", id: "blueprint", icon: "doc" });
+
+    const accountItems = [
+      { label: "Invoices", id: "invoices" as PageId, icon: "card" },
+      { label: "Requests", id: "requests" as PageId, icon: "inbox", count: workspace.openRequestCount || undefined },
+      { label: "Account", id: "account" as PageId, icon: "gear" },
+    ];
+
+    const navGroups = [
+      { items: [{ label: "Overview", id: "overview" as PageId, icon: "grid" }] },
+      ...(productItems.length ? [{ label: "Your products", items: productItems }] : []),
+      { label: "Account", items: accountItems },
+    ];
+
+    // Mobile bar adapts per client mix (design 10g / 10b / 10)
+    let bottomNav: { label: string; id: string; icon: string }[];
+    if (m.lex && m.projects) {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: "Lex", id: "lex-agent", icon: "scale" },
+        { label: "Website", id: "projects", icon: "layers" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+      ];
+    } else if (m.lex) {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: "Leads", id: "leads", icon: "users" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+        { label: "Requests", id: "requests", icon: "inbox" },
+      ];
+    } else {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: m.projects ? "Projects" : m.blueprint ? "Blueprint" : "Home", id: m.projects ? "projects" : m.blueprint ? "blueprint" : "overview", icon: m.projects ? "layers" : "doc" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+        { label: "Requests", id: "requests", icon: "inbox" },
+      ];
+    }
+    return { navGroups, bottomNav };
+  }, [workspace]);
+
+  if (authView === "checking") {
+    return (
+      <div className="portal-auth" style={{ display: "grid", placeItems: "center", color: "#9aa0c8" }}>
+        Checking your session…
+      </div>
+    );
+  }
+
+  if (authView !== "app") {
+    return (
+      <div className="portal-auth">
+        <AuthArt />
+        <div className="panel">
+          <div className="box">
+            <div className="mlogo">
+              <img src="/brand/saabai-logo.png" alt="Saabai" />
+            </div>
+
+            {authView === "login" && (
+              <>
+                <div className="tagl">Client Portal</div>
+                <h1>Sign in</h1>
+                <p className="lead">Enter your work email and we will send you a secure sign-in link. You can also use the 6-digit code from the email.</p>
+                <form className="f" onSubmit={sendLink}>
+                  <label htmlFor="email">Work email</label>
+                  <input id="email" className="fi-real" type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com.au" />
+                  <button type="submit" className="tbtn" disabled={busy}>
+                    {busy ? "Sending…" : "Email me a sign in link"}
+                  </button>
+                </form>
+                <p className="alt">
+                  Have a code?{" "}
+                  <a href="#" onClick={(e) => { e.preventDefault(); setAuthView("code"); }}>
+                    Enter 6-digit code
+                  </a>
+                </p>
+                <p className="alt">
+                  New to Saabai?{" "}
+                  <a href="#" onClick={(e) => { e.preventDefault(); setAuthView("request"); setReqForm((f) => ({ ...f, email })); }}>
+                    Request access
+                  </a>
+                </p>
+                <div className="sec">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="M9 12l2 2 4-4" /></svg>
+                  <span>Passwordless sign in. Links expire after 15 minutes and work once. We never say whether an email has an account.</span>
+                </div>
+              </>
+            )}
+
+            {authView === "sent" && (
+              <>
+                <div className="icon">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+                </div>
+                <div className="tagl">Check your email</div>
+                <h1>Your sign in link is on its way</h1>
+                <p className="lead">
+                  If <b style={{ color: "#fff", fontWeight: 500 }}>{email}</b> has a portal account, a link and a 6-digit code will arrive in a minute or two.
+                </p>
+                <div className="note ok" style={{ marginTop: 22 }}>
+                  <div>
+                    <b>Link expires in 15 minutes</b>
+                    It works once. Check spam or promotions if you cannot see it.
+                  </div>
+                </div>
+                <button type="button" className="obtn" style={{ marginTop: 22 }} onClick={() => setAuthView("code")}>
+                  Enter 6-digit code
+                </button>
+                <button type="button" className="obtn" onClick={() => setAuthView("login")}>
+                  Use a different email
+                </button>
+                <p className="alt">
+                  No account yet?{" "}
+                  <a href="#" onClick={(e) => { e.preventDefault(); setAuthView("request"); }}>
+                    Request access
+                  </a>
+                </p>
+              </>
+            )}
+
+            {authView === "code" && (
+              <>
+                <div className="tagl">Client Portal</div>
+                <h1>Enter your code</h1>
+                <p className="lead">Type the 6-digit code from your email. Or open the sign-in link instead.</p>
+                {error && <div className="note bad" style={{ marginTop: 14 }} role="alert">{error}</div>}
+                <form className="f" onSubmit={verifyCode}>
+                  <label htmlFor="code-email">Work email</label>
+                  <input id="code-email" className="fi-real" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <label htmlFor="code" style={{ marginTop: 14 }}>
+                    6-digit code
+                  </label>
+                  <input
+                    id="code"
+                    className="fi-real"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    required
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    style={{ letterSpacing: 6, textAlign: "center", fontSize: 20 }}
+                  />
+                  <button type="submit" className="tbtn" disabled={busy || code.length !== 6}>
+                    {busy ? "Checking…" : "Verify and continue"}
+                  </button>
+                </form>
+                <button type="button" className="obtn" onClick={() => setAuthView("login")}>
+                  Back to sign in
+                </button>
+              </>
+            )}
+
+            {authView === "request" && (
+              <>
+                <div className="tagl">Client Portal</div>
+                <h1>Request access</h1>
+                <p className="lead">Tell us who you are. We will confirm your account within one business day.</p>
+                {error && <div className="note bad" style={{ marginTop: 14 }} role="alert">{error}</div>}
+                <form className="f" onSubmit={sendAccessRequest}>
+                  <label htmlFor="rname">Full name</label>
+                  <input id="rname" className="fi-real" required value={reqForm.name} onChange={(e) => setReqForm({ ...reqForm, name: e.target.value })} />
+                  <label htmlFor="rco" style={{ marginTop: 12 }}>Business</label>
+                  <input id="rco" className="fi-real" value={reqForm.company} onChange={(e) => setReqForm({ ...reqForm, company: e.target.value })} />
+                  <label htmlFor="remail" style={{ marginTop: 12 }}>Work email</label>
+                  <input id="remail" className="fi-real" type="email" required value={reqForm.email} onChange={(e) => setReqForm({ ...reqForm, email: e.target.value })} />
+                  <label htmlFor="rabout" style={{ marginTop: 12 }}>What is it about?</label>
+                  <select id="rabout" className="fi-real" value={reqForm.about} onChange={(e) => setReqForm({ ...reqForm, about: e.target.value })}>
+                    <option>My Saabai Blueprint</option>
+                    <option>Website or care plan</option>
+                    <option>Lex agent</option>
+                    <option>Billing or invoices</option>
+                    <option>Something else</option>
+                  </select>
+                  <label htmlFor="rnote" style={{ marginTop: 12 }}>
+                    Anything we should know? <span style={{ color: "#8f95c0", fontWeight: 400 }}>Optional</span>
+                  </label>
+                  <textarea id="rnote" className="fi-real" value={reqForm.note} onChange={(e) => setReqForm({ ...reqForm, note: e.target.value })} />
+                  <button type="submit" className="tbtn" disabled={busy}>
+                    {busy ? "Sending…" : "Send request"}
+                  </button>
+                </form>
+                <p className="alt">
+                  Already have access?{" "}
+                  <a href="#" onClick={(e) => { e.preventDefault(); setAuthView("login"); }}>
+                    Sign in
+                  </a>
+                </p>
+              </>
+            )}
+
+            {authView === "request-sent" && (
+              <>
+                <div className="icon">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                </div>
+                <div className="tagl">Request sent</div>
+                <h1>Thanks. We have your request.</h1>
+                <p className="lead">We will confirm your access within one business day. If your email matches an order, access may be ready sooner.</p>
+                <button type="button" className="tbtn" onClick={() => setAuthView("login")}>
+                  Back to sign in
+                </button>
+              </>
+            )}
+
+            {authView === "error" && (
+              <>
+                <div className="note bad" role="alert">
+                  <div>
+                    <b>Could not sign you in</b>
+                    {error || "Please request a new sign-in link."}
+                  </div>
+                </div>
+                <button type="button" className="tbtn" onClick={() => { setError(null); setAuthView("login"); }}>
+                  Request a new link
+                </button>
+              </>
+            )}
+          </div>
+          <p className="foot2">saabai.ai/client-portal</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!workspace) return null;
+
+  const firstName = workspace.name.split(/\s+/)[0] || "there";
+  const canPay = workspace.role === "Owner" || workspace.role === "Billing";
+
+  return (
+    <PortalShell
+      business={workspace.business || "Your business"}
+      personName={workspace.name || workspace.email}
+      role={workspace.role}
+      navGroups={navGroups}
+      bottomNav={bottomNav}
+      active={page === "manage-agent" ? "lex-agent" : page}
+      onNavigate={(id) => setPage(id as PageId)}
+      title={page === "manage-agent" ? "Manage agent" : undefined}
+    >
+      {page === "overview" && (
+        <>
+          <div className="ph">
+            <div>
+              <h1>Welcome back, {firstName}</h1>
+              <div className="sub">
+                {workspace.business || workspace.email}
+                {workspace.products?.length
+                  ? ` · ${workspace.products.length} product${workspace.products.length === 1 ? "" : "s"} with Saabai`
+                  : workspace.modules.lex && workspace.agentName
+                    ? ` · Lex agent "${workspace.agentName}"`
+                    : ""}
+              </div>
+            </div>
+            <a className="btn dt" href="mailto:hello@saabai.ai">Book a call with Shane</a>
+          </div>
+
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="hd">
+              <div>
+                <h2>Your products</h2>
+                <div className="sub">
+                  {(workspace.products?.length || 0) === 0
+                    ? "Purchases with Saabai will appear here"
+                    : workspace.products.length === 1
+                      ? "1 product"
+                      : `${workspace.products.length} purchases with Saabai`}
+                </div>
+              </div>
+              <a className="btn sm" href="mailto:hello@saabai.ai?subject=Add%20a%20product">
+                Add a product
+              </a>
+            </div>
+            {(workspace.products?.length || 0) === 0 ? (
+              <Empty title="No products linked yet" body="When you buy Lex, a Blueprint or a website build, each purchase will show as a row here." />
+            ) : (
+              workspace.products.map((prod) => (
+                <div className="prod" key={prod.id}>
+                  <ProductIcon kind={prod.icon} />
+                  <div className="nm">
+                    {prod.name}
+                    <small>{prod.detail}</small>
+                  </div>
+                  <span className={badgeClass(prod.statusTone)}>{prod.status}</span>
+                  <div className="st">{prod.stat}</div>
+                  <button type="button" className="op" onClick={() => setPage(prod.openPage as PageId)}>
+                    Open →
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {workspace.modules.lex && (
+            <>
+              <div className="sec-h">
+                <h2>Lex agent</h2>
+                <button type="button" className="op" onClick={() => setPage("manage-agent")}>
+                  Manage agent →
+                </button>
+              </div>
+              <div className="card" style={{ marginBottom: 16 }}>
+                <div className="hd">
+                  <div>
+                    <h2>{workspace.agentName || "Lex"}</h2>
+                    <div className="sub">{workspace.plan || "Plan"} · Active on your site</div>
+                  </div>
+                  <span className="badge b-ok">Active</span>
+                </div>
+                <div className="bd">
+                  <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--n-600)" }}>
+                    Customise, test, embed, review leads and the review queue from Manage agent. Live stats stay on that page so this overview never shows placeholder numbers.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="button" className="btn pri sm" onClick={() => setPage("manage-agent")}>
+                      Manage agent
+                    </button>
+                    <button type="button" className="btn sm" onClick={() => setPage("leads")}>
+                      Leads
+                    </button>
+                    <button type="button" className="btn sm" onClick={() => setPage("review-queue")}>
+                      Review queue
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {workspace.modules.projects && (
+            <>
+              <div className="sec-h">
+                <h2>Website build</h2>
+                <button type="button" className="op" onClick={() => setPage("projects")}>
+                  Open project →
+                </button>
+              </div>
+              <div className="card" style={{ marginBottom: 16 }}>
+                <div className="bd">
+                  <p className="muted" style={{ margin: 0 }}>Your website build progress will show here when linked.</p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {workspace.modules.blueprint && (
+            <>
+              <div className="sec-h">
+                <h2>Your Blueprint</h2>
+                <button type="button" className="op" onClick={() => setPage("blueprint")}>
+                  Open report →
+                </button>
+              </div>
+              <div className="g2">
+                {workspace.blueprints.slice(0, 2).map((b) => (
+                  <div className="card" key={b.id}>
+                    <div className="hd">
+                      <div>
+                        <h2>{b.businessName || "Blueprint"}</h2>
+                        <div className="sub">{b.tier} · {b.status}</div>
+                      </div>
+                      <span className="tag bp">{b.tier}</span>
+                    </div>
+                    <div className="bd">
+                      <p style={{ margin: "0 0 12px", fontSize: 14 }}>
+                        {b.score != null ? `${b.score} ranked opportunities in your report.` : "Open the full opportunities table."}
+                      </p>
+                      <button type="button" className="btn sm" onClick={() => setPage("blueprint")}>
+                        Open full report
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {!workspace.modules.lex && !workspace.modules.blueprint && !workspace.modules.projects && (
+            <Empty title="Nothing to show yet" body="Once a Lex agent, Blueprint or website build is linked to this email, sections will appear below Your products." />
+          )}
+
+          <div className="g2" style={{ marginTop: 16 }}>
+            <div className="card">
+              <div className="hd">
+                <h2>Invoices</h2>
+                {canPay && <span className="muted" style={{ fontSize: 12.5 }}>Owner and Billing can pay</span>}
+              </div>
+              {workspace.modules.invoices ? (
+                <div className="bd"><p className="muted">Your invoices will list here.</p></div>
+              ) : (
+                <Empty title="No invoices yet" body="Paid orders and care plan invoices will show here when linked to your account." />
+              )}
+            </div>
+            <div className="card">
+              <div className="hd">
+                <h2>Open requests</h2>
+                <button type="button" className="btn sm" onClick={() => setPage("requests")}>
+                  New request
+                </button>
+              </div>
+              {workspace.requests.length === 0 ? (
+                <Empty title="No requests yet" body="Ask for a change, question or idea. We reply in the portal." />
+              ) : (
+                <div className="bd" style={{ paddingTop: 4, paddingBottom: 4 }}>
+                  {workspace.requests.slice(0, 5).map((r) => (
+                    <div className="row" key={r.id}>
+                      <div>
+                        <b style={{ fontWeight: 500 }}>{r.title}</b>
+                        <div className="muted" style={{ fontSize: 12.5 }}>
+                          {r.id.slice(0, 12)} · {new Date(r.updatedAt || r.createdAt).toLocaleDateString("en-AU")}
+                        </div>
+                      </div>
+                      <span className={`badge ${r.status === "done" ? "b-ok" : r.status === "in_progress" ? "b-info" : "b-n"}`}>
+                        {r.status === "in_progress" ? "In progress" : r.status === "done" ? "Done" : "Received"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+{page === "blueprint" && (
+        <>
+          <div className="ph">
+            <div>
+              <h1>Blueprint</h1>
+              <div className="sub">Full report from your Saabai engagement</div>
+            </div>
+            <button type="button" className="btn pri" onClick={() => setPage("requests")}>
+              Get a build quote
+            </button>
+          </div>
+          {workspace.blueprints.length === 0 ? (
+            <Empty title="No Blueprint on file" body="Purchase a Blueprint to see your full opportunities table here." />
+          ) : (
+            <div className="card">
+              <div className="hd">
+                <h2>Ranked opportunities</h2>
+                <span className="muted" style={{ fontSize: 12.5 }}>From your delivered report</span>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Blueprint</th>
+                      <th>Status</th>
+                      <th>Created</th>
+                      <th className="r">Items</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {workspace.blueprints.map((b) => (
+                      <tr key={b.id}>
+                        <td>
+                          <b style={{ fontWeight: 500 }}>{b.businessName || "Blueprint"}</b>
+                          <div className="muted" style={{ fontSize: 12 }}>{b.tier}</div>
+                        </td>
+                        <td>
+                          <span className="badge b-info">{b.status}</span>
+                        </td>
+                        <td className="muted">{new Date(b.createdAt).toLocaleDateString("en-AU")}</td>
+                        <td className="r num">{b.score ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="bd">
+                <p className="muted" style={{ fontSize: 13.5, margin: 0 }}>
+                  Need the build next? Use Get a build quote to create a request for the Saabai team.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {page === "projects" && (
+        <>
+          <div className="ph"><div><h1>Projects</h1><div className="sub">Website and care plan delivery</div></div></div>
+          <Empty title="No project data yet" body="When your build is underway, milestones and staging links will show here." />
+        </>
+      )}
+
+      {(page === "lex-agent" || page === "leads" || page === "review-queue" || page === "manage-agent") && workspace.modules.lex && (
+        <>
+          {page === "lex-agent" && (
+            <div className="ph">
+              <div>
+                <h1>Lex agent</h1>
+                <div className="sub">Quick view. Full settings live under Manage agent.</div>
+              </div>
+              <button type="button" className="btn pri" onClick={() => setPage("manage-agent")}>
+                Manage agent
+              </button>
+            </div>
+          )}
+          {(page === "manage-agent" || page === "leads" || page === "review-queue") && (
+            <div style={{ margin: page === "manage-agent" ? "-8px -8px 0" : undefined }}>
+              <LexWorkspace embedded />
+            </div>
+          )}
+          {page === "lex-agent" && (
+            <div className="card">
+              <div className="bd">
+                <p style={{ margin: 0, fontSize: 14, color: "var(--n-600)" }}>
+                  Agent <b>{workspace.agentName || "Lex"}</b> on your Lex plan. Use Manage agent for customise, test, embed, review queue and leads.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {page === "invoices" && (
+        <>
+          <div className="ph">
+            <div>
+              <h1>Invoices</h1>
+              <div className="sub">{canPay ? "You can pay open invoices from this account." : "Ask an Owner or Billing user to pay invoices."}</div>
+            </div>
+          </div>
+          <Empty title="No invoices linked yet" body="When Stripe invoices are connected to your portal account, they will list here with pay links for Owner and Billing roles." />
+        </>
+      )}
+
+      {page === "requests" && (
+        <>
+          <div className="ph">
+            <div>
+              <h1>Requests</h1>
+              <div className="sub">Changes, questions and build quote requests</div>
+            </div>
+          </div>
+          {workspace.requests.length === 0 ? (
+            <Empty title="No requests yet" body="Create a request for a change, question, or a build quote. Promise: we respond within one business day for access requests." />
+          ) : (
+            <div className="card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workspace.requests.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <b style={{ fontWeight: 500 }}>{r.title}</b>
+                      </td>
+                      <td>
+                        <span className={`badge ${r.status === "done" ? "b-ok" : r.status === "in_progress" ? "b-info" : "b-n"}`}>
+                          {r.status === "in_progress" ? "In progress" : r.status === "done" ? "Done" : "Received"}
+                        </span>
+                      </td>
+                      <td className="muted">{new Date(r.updatedAt || r.createdAt).toLocaleDateString("en-AU")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="hd"><h2>New request</h2></div>
+            <div className="bd">
+              <p className="muted" style={{ marginTop: 0 }}>
+                To file a detailed request with screenshots, email hello@saabai.ai for now, or use Get a build quote from your Blueprint.
+                Full in-portal compose will use your existing request APIs next.
+              </p>
+              <a className="btn pri" href="mailto:hello@saabai.ai?subject=Client%20portal%20request">
+                Email a request
+              </a>
+            </div>
+          </div>
+        </>
+      )}
+
+      {page === "account" && (
+        <>
+          <div className="ph">
+            <div>
+              <h1>Account</h1>
+              <div className="sub">Your portal profile</div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="bd">
+              <div className="row" style={{ paddingTop: 0 }}>
+                <span>Name</span>
+                <span>{workspace.name || "-"}</span>
+              </div>
+              <div className="row">
+                <span>Email</span>
+                <span>{workspace.email}</span>
+              </div>
+              <div className="row">
+                <span>Business</span>
+                <span>{workspace.business || "-"}</span>
+              </div>
+              <div className="row">
+                <span>Role</span>
+                <span>{workspace.role}</span>
+              </div>
+              <button type="button" className="btn" style={{ marginTop: 16 }} onClick={signOut}>
+                Sign out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </PortalShell>
+  );
+}
+
 export default function ClientPortalPage() {
   return (
-    <Suspense fallback={<div style={{ background: "#0d1b2a", minHeight: "100vh" }} />}>
+    <Suspense fallback={<div className="portal-auth" style={{ display: "grid", placeItems: "center", color: "#9aa0c8" }}>Loading…</div>}>
       <ClientPortalInner />
     </Suspense>
   );

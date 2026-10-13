@@ -38,6 +38,8 @@ const PUBLIC_API = [
   "/api/auth/2fa",            // admin 2FA code step (checks its own signed pending cookie)    // client magic-link request + verify (self-validating)
   "/api/portal/login",
   "/api/portal/auth",        // magic-link handler — sets the session cookie
+  "/api/portal/verify-code", // 6-digit email code exchange (opaque errors)
+  "/api/portal/request-access", // access request + auto-approve (opaque ok)
   "/api/rex-dashboard-auth", // dashboard password login — issues the cookie
   // Public chat widgets (embedded on client + marketing sites)
   "/api/chat",

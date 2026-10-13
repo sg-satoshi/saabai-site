@@ -26,7 +26,7 @@ before(async () => {
   mock.seed({
     hashes: {
       "saabai:users": {
-        "stu@cycle.test": { id: "stu-cycle-test", name: "Stu Smith", email: "stu@cycle.test", password: "p", role: "user", dashboardUrl: "/dashboard", approvedAt: "", createdAt: "" },
+        "stu@cycle.test": { id: "stu-cycle-test", name: "Stu Smith", email: "stu@cycle.test", password: "p", role: "user", dashboardUrl: "/client-portal", approvedAt: "", createdAt: "" },
         "boss@saabai.test": { id: "boss-saabai-test", name: "Boss", email: "boss@saabai.test", password: "p", role: "admin", dashboardUrl: "/saabai-admin", approvedAt: "", createdAt: "" },
       },
     },
@@ -132,7 +132,7 @@ test("magic link tokens are random, hashed at rest, single-use, 15-minute expiry
 
   const r1 = await consumeMagicLink(t1);
   assert.equal(r1?.clientId, "stu-cycle-test");
-  assert.equal(r1?.redirect, "/dashboard", "unsafe redirect replaced");
+  assert.equal(r1?.redirect, "/client-portal", "unsafe redirect replaced");
   assert.equal(await consumeMagicLink(t1), null, "second use rejected");
   assert.equal((await consumeMagicLink(t2))?.redirect, "/dashboard/requests");
   assert.equal(await consumeMagicLink("garbage-token-that-does-not-exist"), null);
@@ -146,10 +146,10 @@ test("processMagicLinkRequest issues tokens only for eligible emails and rate-li
   const origLog = console.log;
   console.log = () => {};
   try {
-    await processMagicLinkRequest("nobody@nowhere.test", "/dashboard");
+    await processMagicLinkRequest("nobody@nowhere.test", "/client-portal");
     await processMagicLinkRequest("boss@saabai.test", "/saabai-admin");
     assert.equal(count(), 0, "no tokens for unknown/admin emails");
-    for (let i = 0; i < 7; i++) await processMagicLinkRequest("stu@cycle.test", "/dashboard");
+    for (let i = 0; i < 7; i++) await processMagicLinkRequest("stu@cycle.test", "/client-portal");
     assert.equal(count(), 5, "max 5 links per 15 minutes");
   } finally {
     console.log = origLog;

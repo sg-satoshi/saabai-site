@@ -15,6 +15,7 @@ import { getRedis } from "./redis";
 import { getDirectoryUser } from "./user-directory";
 import { loadClients } from "./clients";
 import { safeRedirect } from "./safe-redirect";
+import { generateEmailCode, storeEmailCode, underCodeRateLimit } from "./portal-email-code";
 
 export const MAGIC_LINK_TTL_SECONDS = 15 * 60;
 const MAX_LINKS_PER_WINDOW = 5;
@@ -74,7 +75,7 @@ export async function createMagicLink(client: EligibleClient, redirect: unknown)
   const record: MagicLinkRecord = {
     clientId: client.clientId,
     email: client.email,
-    redirect: safeRedirect(redirect, "/dashboard"),
+    redirect: safeRedirect(redirect, "/client-portal"),
   };
   await redis.set(`${TOKEN_PREFIX}${hashToken(token)}`, JSON.stringify(record), { ex: MAGIC_LINK_TTL_SECONDS });
   return token;
@@ -111,7 +112,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 
-export function buildMagicLinkEmail(name: string, link: string): string {
+export function buildMagicLinkEmail(name: string, link: string, code?: string | null): string {
   const first = escapeHtml((name || "").split(" ")[0] || "there");
   const href = escapeHtml(link);
   return `<!DOCTYPE html>
@@ -136,6 +137,7 @@ export function buildMagicLinkEmail(name: string, link: string): string {
       </td></tr>
     </table>
   </td></tr></table>
+${code ? `<p style="margin:16px 0 0;font-size:14px;color:#374151;">Or enter this code in the portal: <strong style="font-size:20px;letter-spacing:4px;font-family:ui-monospace,monospace;">${code}</strong></p>` : ""}
 </body></html>`;
 }
 
@@ -151,18 +153,25 @@ export async function processMagicLinkRequest(email: unknown, redirect: unknown)
     if (!(await underRateLimit(client.email))) return;
     const token = await createMagicLink(client, redirect);
     if (!token) return;
-    const link = `${baseUrl()}/login/magic?token=${encodeURIComponent(token)}`;
+    const link = `${baseUrl()}/client-portal/auth?token=${encodeURIComponent(token)}`;
+    let code: string | null = null;
+    if (await underCodeRateLimit(client.email)) {
+      code = generateEmailCode();
+      await storeEmailCode(client.email, code, { clientId: client.clientId, redirect: safeRedirect(redirect, "/client-portal") });
+    }
 
     const key = process.env.RESEND_API_KEY;
     if (!key) {
-      if (process.env.NODE_ENV !== "production") console.log("[client-magic-link] (dev, no RESEND_API_KEY) link:", link);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[client-magic-link] (dev, no RESEND_API_KEY) link:", link, "code:", code);
+      }
       return;
     }
     await new Resend(key).emails.send({
       from: "Saabai <noreply@saabai.ai>",
       to: client.email,
       subject: "Your Saabai sign-in link",
-      html: buildMagicLinkEmail(client.name, link),
+      html: buildMagicLinkEmail(client.name, link, code),
     });
   } catch (err) {
     console.error("[client-magic-link] request failed", err instanceof Error ? err.message : err);
