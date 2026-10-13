@@ -18,6 +18,7 @@ function enabled(tier: BlueprintTier): boolean {
 export async function GET() {
   return NextResponse.json({
     tiers: { starter: enabled("starter"), pro: enabled("pro"), business: enabled("business") },
+    publishableKeyConfigured: Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
   });
 }
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!isTier(tier)) return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
 
   const price = priceIdFor(tier);
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (!price || !key) {
     return NextResponse.json({ error: "Online checkout is not available yet", fallback: true }, { status: 503 });
   }
@@ -51,19 +52,43 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
   const metadata = { product: "blueprint", tier, name, business, phone, website, abn };
+  // Default to embedded one-page checkout. Hosted redirect remains available if requested.
+  const embedded = body.ui_mode !== "hosted";
 
   try {
     const stripe = new Stripe(key);
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+    const common = {
+      mode: "payment" as const,
       line_items: [{ price, quantity: 1 }],
       customer_email: email,
-      customer_creation: "always",
-      invoice_creation: { enabled: true, invoice_data: { description: `Saabai ${TIERS[tier].name} Blueprint`, metadata } },
-      billing_address_collection: "auto",
+      customer_creation: "always" as const,
+      invoice_creation: {
+        enabled: true,
+        invoice_data: { description: `Saabai ${TIERS[tier].name} Blueprint`, metadata },
+      },
+      billing_address_collection: "auto" as const,
       allow_promotion_codes: true,
       metadata,
       payment_intent_data: { metadata, description: `Saabai ${TIERS[tier].name} Blueprint` },
+    };
+
+    if (embedded) {
+      const session = await stripe.checkout.sessions.create({
+        ...common,
+        ui_mode: "embedded_page",
+        return_url: `${origin}/blueprint/confirmation?session_id={CHECKOUT_SESSION_ID}`,
+        // Keep wallets (Apple Pay / Google Pay) available when Stripe and the domain support them.
+        redirect_on_completion: "always",
+      });
+      if (!session.client_secret) {
+        return NextResponse.json({ error: "Could not start checkout", fallback: true }, { status: 502 });
+      }
+      return NextResponse.json({ clientSecret: session.client_secret, sessionId: session.id });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      ...common,
+      ui_mode: "hosted_page",
       success_url: `${origin}/blueprint/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/blueprint/checkout?tier=${tier}&cancelled=1`,
     });

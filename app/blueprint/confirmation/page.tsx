@@ -73,7 +73,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
                     <b>Book your intake call (Pro and Business)</b>
                     <p>A 30 minute call with Shane to walk through your Blueprint. Times shown in Brisbane time (AEST).</p>
                     <a className="btn ghost sm" href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ marginTop: 12 }}>Pick a time →</a>
-                    <p className="dim" style={{ fontSize: 13, marginTop: 10 }}>Starter orders skip this step: async fact-find, no call.</p>
+                    <p className="dim" style={{ fontSize: 13, marginTop: 10 }}>Starter orders skip this step: fact-find online, no call.</p>
                   </div>
                 </div>
               )}
