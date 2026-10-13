@@ -10,15 +10,16 @@ import type { PaymentRecord } from "../../api/admin/payments/history/route";
 // ── Theme ───────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:       "#f5f5f7",
+  // Mission Control tokens (see admin.css)
+  bg:       "#f4f5f9",
   card:     "#ffffff",
-  surface:  "#f3f4f6",
-  surfaceHi:"#e9eaec",
-  border:   "rgba(0,0,0,0.08)",
-  borderHi: "rgba(0,0,0,0.12)",
-  text:     "#111827",
-  muted:    "#9ca3af",
-  dim:      "#e5e7eb",
+  surface:  "#eceef4",
+  surfaceHi:"#dfe2ea",
+  border:   "#dfe2ea",
+  borderHi: "#c6cad6",
+  text:     "#13152a",
+  muted:    "#5f6580",
+  dim:      "#eceef4",
   gold:     "#b45309",
   goldBg:   "rgba(180,83,9,0.08)",
   goldBdr:  "rgba(180,83,9,0.25)",
@@ -37,7 +38,7 @@ const C = {
 const CARD_STYLE: Record<string, Record<string, string | Record<string, string>>> = {
   base: {
     fontSize: "14px",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamily: "Inter, system-ui, sans-serif",
     color: C.text,
     "::placeholder": { color: C.muted },
   },
@@ -392,7 +393,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       </p>
 
       {/* Mode toggle */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, background: C.surface, borderRadius: 8, padding: 3 }}>
+      <div className="pay-seg" style={{ display: "flex", gap: 4, marginBottom: 16, background: C.surface, borderRadius: 8, padding: 3 }}>
         {[
           { id: "onetime" as const, label: "One-time" },
           { id: "recurring" as const, label: "Recurring" },
@@ -401,10 +402,10 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
             key={m.id}
             onClick={() => setMode(m.id)}
             style={{
-              flex: 1, padding: "6px 12px", borderRadius: 6, border: "none",
+              flex: 1, padding: "8px 12px", minHeight: 36, borderRadius: 6, border: "none",
               background: mode === m.id ? C.card : "transparent",
               color: mode === m.id ? C.text : C.muted,
-              fontSize: 11, fontWeight: mode === m.id ? 700 : 500,
+              fontSize: 13, fontWeight: mode === m.id ? 700 : 500,
               cursor: "pointer", boxShadow: mode === m.id ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
             }}
           >
@@ -872,7 +873,8 @@ function PaymentHistory() {
       )}
 
       {records.length > 0 && (
-        <div style={{ borderRadius: 10, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div className="tbl-scroll" style={{ borderRadius: 10, border: `1px solid ${C.border}` }}>
+          <div style={{ minWidth: 480 }}>
           {/* Header */}
           <div style={{
             display: "grid", gridTemplateColumns: "100px 1fr 100px 80px 60px",
@@ -902,11 +904,12 @@ function PaymentHistory() {
               }}>
                 {r.description || "-"}
               </p>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>{fmtDollar(r.amount)}</p>
+              <p className="num" style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text }}>{fmtDollar(r.amount)}</p>
               <StatusBadge status={r.status} />
               <TypeBadge type={r.type} />
             </div>
           ))}
+          </div>
         </div>
       )}
     </div>
@@ -950,30 +953,28 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
 
   return (
     <AdminShell activePath="/saabai-admin/payments">
-      <div style={{ padding: "32px 40px", maxWidth: 1040, margin: "0 auto" }}>
-        {/* Page header */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>Payments</h1>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: C.muted }}>Charge cards, send invoices, and manage your bookkeeping</p>
+      <div style={{ maxWidth: 1040 }}>
+        <div className="ph">
+          <div>
+            <h1>Payments</h1>
+            <div className="sub">Charge cards, send invoices, and manage your bookkeeping</div>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
+        <div className="seg pay-tabs" role="tablist" style={{ marginBottom: 20 }}>
           {([
-            { id: "payments" as const, label: "Payments", desc: "Card charges & Stripe invoices" },
-            { id: "invoices" as const, label: "Invoices", desc: "Bookkeeping tracker" },
+            { id: "payments" as const, label: "Payments" },
+            { id: "invoices" as const, label: "Invoices" },
           ]).map(t => (
             <button
               key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              style={{
-                padding: "10px 18px", border: "none", borderBottom: tab === t.id ? `2px solid ${C.blue}` : "2px solid transparent",
-                background: "transparent", cursor: "pointer", textAlign: "left",
-                opacity: tab === t.id ? 1 : 0.6, transition: "all 0.12s",
-              }}
+              className={tab === t.id ? "on" : ""}
             >
-              <p style={{ margin: 0, fontSize: 13, fontWeight: tab === t.id ? 700 : 500, color: C.text }}>{t.label}</p>
-              <p style={{ margin: "2px 0 0", fontSize: 10, color: C.muted }}>{t.desc}</p>
+              {t.label}
             </button>
           ))}
         </div>
@@ -981,16 +982,13 @@ export default function PaymentsClient({ publishableKey }: { publishableKey: str
         {tab === "payments" ? (
           <>
             {/* Two-panel form */}
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20,
-              marginBottom: 36,
-            }}>
-              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+            <div className="pay-grid">
+              <div className="card pay-card">
                 <Elements stripe={stripePromise}>
                   <ChargeCardForm onSuccess={() => setRefreshKey(k => k + 1)} />
                 </Elements>
               </div>
-              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 22 }}>
+              <div className="card pay-card">
                 <SendInvoiceForm onSuccess={() => setRefreshKey(k => k + 1)} />
               </div>
             </div>

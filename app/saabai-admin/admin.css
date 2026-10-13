@@ -133,3 +133,17 @@ a.btn{text-decoration:none}
  .m-grid-2{grid-template-columns:1fr 1fr!important}
  .m-pad{padding-left:16px!important;padding-right:16px!important}
 }
+
+/* Payments */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px}
+.pay-card{padding:22px;overflow:visible}
+.pay-card input,.pay-card select,.pay-card textarea{max-width:100%;box-sizing:border-box}
+.seg.pay-tabs button{border:0;background:transparent;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;color:var(--n-600);cursor:pointer;font-family:inherit}
+.seg.pay-tabs button.on{background:#fff;color:var(--n-900);box-shadow:var(--sh-1)}
+@media (max-width:760px){
+ .pay-grid{grid-template-columns:1fr;gap:16px;margin-bottom:24px}
+ .pay-card{padding:18px 16px}
+ .pay-card button[type="submit"],.pay-card .pay-full{width:100%}
+ .seg.pay-tabs{display:flex}.seg.pay-tabs button{flex:1;min-height:36px}
+ .pay-seg button{min-height:40px!important}
+}
