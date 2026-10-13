@@ -102,14 +102,14 @@ export function ReviewsCarousel() {
             if (e.key === "ArrowRight") { e.preventDefault(); scroll(1); }
             if (e.key === "ArrowLeft") { e.preventDefault(); scroll(-1); }
           }}
-          className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1a73e8] rounded-xl"
+          className="relative flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1a73e8] rounded-xl"
         >
           {reviews.map((r, i) => (
             <li
               key={i}
               aria-roledescription="slide"
               aria-label={`Review ${i + 1} of ${reviews.length}, by ${r.name}`}
-              className="stu-review-card snap-start shrink-0 bg-[#f8f9fa] ring-1 ring-[#dadce0] shadow-sm rounded-2xl p-6 flex flex-col"
+              className="stu-review-card relative overflow-hidden snap-start shrink-0 bg-[#f8f9fa] ring-1 ring-[#dadce0] shadow-sm rounded-2xl p-6 flex flex-col"
             >
               <Stars n={r.stars} />
               <span className="sr-only">{r.stars} out of 5 stars</span>
