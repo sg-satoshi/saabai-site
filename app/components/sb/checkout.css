@@ -15,3 +15,11 @@
 .sb .st b{font-weight:600}.sb .st p{font-size:15px}
 @media (max-width:900px){.sb .lay{grid-template-columns:1fr;padding:28px 0 64px;gap:24px}.sb .sum{order:-1}}
 @media (max-width:760px){.sb .f2{grid-template-columns:1fr;gap:0}.sb .tiers{gap:8px}.sb .tiers button{padding:10px;font-size:12px}.sb .tiers button b{font-size:14px}.sb .lay h2{font-size:28px!important}.sb .cbox{padding:44px 0 64px}.sb .cbox h1{font-size:34px!important}.sb .cbox .btn{width:100%}}
+
+.sb .trust{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 16px}
+.sb .trust li{font-size:13px;color:var(--dim);display:inline-flex;align-items:center;min-height:44px;padding:0 2px}
+.sb .trust li:before{content:"✓";color:var(--teal);margin-right:8px;font-weight:600}
+.sb .embed{min-height:420px;border-radius:12px;overflow:hidden}
+.sb .embed iframe{max-width:100%}
+.sb .steps .dim{color:var(--dim);font-weight:500}
+@media (max-width:760px){.sb .trust{flex-direction:column;gap:0}.sb .embed{min-height:480px}}
