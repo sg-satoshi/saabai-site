@@ -1,7 +1,8 @@
+import { getDefaultModel } from "../../../../lib/chat-config";
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const openai = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const { text } = await generateText({
-      model: openai("anthropic/claude-3.5-haiku"),
+      model: getDefaultModel(),
       system: systemPrompt || `You are a helpful assistant for ${businessName || "this business"}.`,
       messages: [{ role: "user", content: message }],
     });
