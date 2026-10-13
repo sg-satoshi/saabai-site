@@ -12,6 +12,15 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
  * order engine (Redis) and emails the client their fact-find link, plus an
  * internal alert to Shane. Safe to call when Redis or Resend are missing.
  */
+function customField(session: Stripe.Checkout.Session, key: string): string {
+  const field = session.custom_fields?.find((f) => f.key === key);
+  if (!field) return "";
+  if (field.type === "text") return field.text?.value?.trim() || "";
+  if (field.type === "numeric") return field.numeric?.value?.trim() || "";
+  if (field.type === "dropdown") return field.dropdown?.value?.trim() || "";
+  return "";
+}
+
 export async function handleBlueprintCheckout(session: Stripe.Checkout.Session) {
   const md = session.metadata ?? {};
   const tierId = isTier(md.tier) ? md.tier : "starter";
@@ -19,7 +28,8 @@ export async function handleBlueprintCheckout(session: Stripe.Checkout.Session) 
   const email = session.customer_details?.email ?? session.customer_email ?? "";
   const name = md.name || session.customer_details?.name || "";
   const firstName = name.split(" ")[0] || "";
-  const business = md.business || name || email;
+  const business = md.business || customField(session, "business_name") || name || email;
+  const website = md.website || customField(session, "website") || undefined;
 
   const engagement = await createEngagement({
     tier: tier.engineTier,
@@ -28,7 +38,7 @@ export async function handleBlueprintCheckout(session: Stripe.Checkout.Session) 
     contactName: name,
     contactEmail: email,
     contactPhone: md.phone || undefined,
-    website: md.website || undefined,
+    website,
     stripeRef: session.id,
   });
 
@@ -64,7 +74,7 @@ ${callBlock}
       from,
       to: [SAABAI_EMAIL],
       subject: `New ${tier.name} Blueprint order: ${business}`,
-      html: `<p><b>${esc(business)}</b><br>${esc(name)} &lt;${esc(email)}&gt;<br>Phone: ${esc(md.phone || "")}<br>Website: ${esc(md.website || "")}<br>ABN: ${esc(md.abn || "")}</p><p>Paid: $${((session.amount_total ?? 0) / 100).toLocaleString("en-AU")} · Stripe ${esc(session.id)}</p><p>Engagement: ${engagement?.id ?? "NOT CREATED (Redis unavailable)"}</p>`,
+      html: `<p><b>${esc(business)}</b><br>${esc(name)} &lt;${esc(email)}&gt;<br>Phone: ${esc(md.phone || "")}<br>Website: ${esc(website || "")}<br>ABN: ${esc(md.abn || "")}</p><p>Paid: $${((session.amount_total ?? 0) / 100).toLocaleString("en-AU")} · Stripe ${esc(session.id)}</p><p>Engagement: ${engagement?.id ?? "NOT CREATED (Redis unavailable)"}</p>`,
     }),
   ]);
   results.forEach((r, i) => {
