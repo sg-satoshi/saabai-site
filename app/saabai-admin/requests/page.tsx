@@ -10,9 +10,9 @@ export const metadata = { title: "Client Requests — Saabai" };
 
 export default async function AdminRequestsPage() {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
-  if (!token) redirect("/login?redirect=/saabai-admin/requests");
+  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin/requests");
   const session = await verifySessionToken(token);
-  if (!session) redirect("/login?redirect=/saabai-admin/requests");
+  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin/requests");
   if (!(await isAdminSession(session.clientId))) redirect("/saabai-admin");
 
   return (

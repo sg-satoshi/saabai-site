@@ -11,14 +11,14 @@ export const metadata = { title: "Lex Clients — Saabai Admin" };
 export default async function LexClientsPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) redirect("/login?redirect=/saabai-admin/lex-clients");
+  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin/lex-clients");
 
   const session = await verifySessionToken(token);
-  if (!session) redirect("/login?redirect=/saabai-admin/lex-clients");
+  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin/lex-clients");
 
   const isAdmin = await isAdminSession(session.clientId);
   if (!isAdmin) {
-    redirect("/login?redirect=/saabai-admin/lex-clients");
+    redirect("/saabai-admin/login?redirect=/saabai-admin/lex-clients");
   }
 
   return (
