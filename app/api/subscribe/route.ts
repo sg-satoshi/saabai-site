@@ -1,3 +1,4 @@
+import { escapeHtml, sanitizeName, sanitizeShortText } from "../../../lib/html-escape";
 import { NextRequest, NextResponse } from "next/server";
 import { saveSubscriber } from "../../../lib/subscribers";
 
@@ -181,8 +182,12 @@ export async function POST(req: NextRequest) {
       source?: string;
     };
 
+    const cleanName = sanitizeName(firstName);
+    const cleanIndustry = sanitizeShortText(industry) || "Other";
+    const cleanSource = sanitizeShortText(source) || "website";
+
     // 1. Validate required fields
-    if (!email || !firstName) {
+    if (!email || !cleanName || typeof email !== "string" || email.length > 254 || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email.trim())) {
       return NextResponse.json(
         { ok: false, error: "email and firstName are required" },
         { status: 400 }
@@ -203,9 +208,9 @@ export async function POST(req: NextRequest) {
     // 2 & 4. Save to Redis (handles duplicate check internally)
     const { isNew } = await saveSubscriber({
       email: normalisedEmail,
-      firstName: firstName.trim(),
-      industry: industry?.trim() || "Other",
-      source: source?.trim() || "website",
+      firstName: cleanName,
+      industry: cleanIndustry,
+      source: cleanSource,
       ip: ip || undefined,
       ...geo,
     });
@@ -229,7 +234,7 @@ export async function POST(req: NextRequest) {
           from: "Shane at Saabai <hello@saabai.ai>",
           to: normalisedEmail,
           subject: "Your AI Readiness checklist from Saabai",
-          html: WELCOME_EMAIL_HTML(firstName.trim()),
+          html: WELCOME_EMAIL_HTML(escapeHtml(cleanName)),
         }),
       });
 
@@ -243,13 +248,13 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "Shane at Saabai <hello@saabai.ai>",
           to: "hello@saabai.ai",
-          subject: `New subscriber: ${firstName.trim()} (${normalisedEmail})`,
+          subject: `New subscriber: ${cleanName} (${normalisedEmail})`,
           html: `<p><strong>New subscriber</strong></p>
 <ul>
-  <li><strong>Name:</strong> ${firstName.trim()}</li>
-  <li><strong>Email:</strong> ${normalisedEmail}</li>
-  <li><strong>Industry:</strong> ${industry?.trim() || "Other"}</li>
-  <li><strong>Source:</strong> ${source?.trim() || "website"}</li>
+  <li><strong>Name:</strong> ${escapeHtml(cleanName)}</li>
+  <li><strong>Email:</strong> ${escapeHtml(normalisedEmail)}</li>
+  <li><strong>Industry:</strong> ${escapeHtml(cleanIndustry)}</li>
+  <li><strong>Source:</strong> ${escapeHtml(cleanSource)}</li>
   <li><strong>IP:</strong> ${ip || "unknown"}</li>
   <li><strong>Location:</strong> ${[geo.city, geo.region, geo.country].filter(Boolean).join(", ") || "unknown"}</li>
 </ul>`,

@@ -6,18 +6,17 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import { createSite } from "../../../../lib/site-registry";
 import { createInvoice, nextInvoiceNumber } from "../../../../lib/invoice-store";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  if (!session || !(await isAdminSession(session.clientId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

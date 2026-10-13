@@ -5,13 +5,12 @@
  */
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../../lib/auth";
 import { getStripe } from "../../../../../lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 export type PaymentRecordType = "charge" | "invoice" | "subscription";
 
@@ -45,7 +44,7 @@ export async function GET() {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  if (!session || !(await isAdminSession(session.clientId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

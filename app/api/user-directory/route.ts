@@ -3,14 +3,13 @@ import { runAfterResponse } from "../../../lib/run-after";
 import { listDirectoryUsers, saveDirectoryUser, deleteDirectoryUser, getDirectoryUser } from "../../../lib/user-directory";
 import { loadClients } from "../../../lib/clients";
 import { getRedis } from "../../../lib/redis";
-import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
 import { hashPassword, generateRandomPassword, validateNewPassword, withoutPassword } from "../../../lib/password";
 import { sendWelcomeEmail } from "../../../lib/account-emails";
 
 // Node runtime: password hashing uses Node's crypto.scrypt.
 export const runtime = "nodejs";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 // Defense-in-depth: middleware already gates /api/user-directory to admins,
 // but this directory controls who can log in, so the handler verifies too.
@@ -18,7 +17,7 @@ async function requireAdmin(req: NextRequest): Promise<boolean> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
-  return session?.clientId === ADMIN_ID;
+  return session ? isAdminSession(session.clientId) : false;
 }
 
 const FORBIDDEN = () => Response.json({ error: "Forbidden" }, { status: 403 });

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import {
   listPendingRequests,
   deletePendingRequest,
@@ -11,13 +11,12 @@ import { safeRedirect } from "../../../../lib/safe-redirect";
 
 export const runtime = "nodejs";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 async function requireAdmin(req: NextRequest): Promise<boolean> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
-  return session?.clientId === ADMIN_ID;
+  return session ? isAdminSession(session.clientId) : false;
 }
 
 export async function GET(req: NextRequest) {

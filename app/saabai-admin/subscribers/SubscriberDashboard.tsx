@@ -1,4 +1,5 @@
 "use client";
+import { escapeHtml } from "../../../lib/html-escape";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
@@ -167,8 +168,7 @@ function BroadcastPanel({
 
   const previewSub = recipients[0];
   const previewHtml = body
-    .replace(/\{\{firstName\}\}/g, previewSub?.firstName || "there")
-    .split("\n").map(l => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${l || "&nbsp;"}</p>`).join("");
+    .split("\n").map(l => escapeHtml(l).replace(/\{\{firstName\}\}/g, escapeHtml(previewSub?.firstName || "there"))).map(l => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${l || "&nbsp;"}</p>`).join("");
 
   async function send() {
     setSending(true);
@@ -192,6 +192,7 @@ function BroadcastPanel({
   function buildHtml(rawBody: string) {
     const paragraphs = rawBody
       .split("\n")
+      .map(l => escapeHtml(l))
       .map(l => `<p style="margin:0 0 14px;font-size:15px;color:#374151;line-height:1.75;">${l || "&nbsp;"}</p>`)
       .join("");
     return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">

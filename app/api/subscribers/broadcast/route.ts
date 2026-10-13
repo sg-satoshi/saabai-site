@@ -1,3 +1,4 @@
+import { escapeHtml } from "../../../../lib/html-escape";
 import { getSubscribers } from "../../../../lib/subscribers";
 
 export const runtime = "nodejs";
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
       to: [s.email],
       subject,
       // Personalise the greeting using firstName
-      html: html.replace(/\{\{firstName\}\}/g, s.firstName || "there"),
+      html: html.replace(/\{\{firstName\}\}/g, escapeHtml(s.firstName || "there")),
     }));
 
     try {

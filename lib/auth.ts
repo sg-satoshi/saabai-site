@@ -107,9 +107,12 @@ export { COOKIE_NAME };
  * Supports both env-var admins (SAABAI_ADMIN_ID) and Redis directory admins.
  */
 export async function isAdminSession(clientId: string): Promise<boolean> {
+  if (!clientId) return false;
   // Check env-var admin first
   const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
   if (clientId === ADMIN_ID) return true;
+  // Namespaced or legacy sessions (portal:*, rex-dashboard) are never admin.
+  if (clientId.includes(":") || clientId === "rex-dashboard") return false;
 
   // Check Redis directory for admin role
   try {

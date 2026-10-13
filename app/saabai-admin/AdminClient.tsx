@@ -1,4 +1,5 @@
 "use client";
+import { BNE_TZ } from "../../lib/brisbane-time";
 
 import { useState, useEffect } from "react";
 import type { ClientConfig as FullClientConfig } from "../../lib/clients";
@@ -45,13 +46,6 @@ function fmtPrice(v: number) {
 function pct(a: number, b: number) {
   if (!b) return "-";
   return `${Math.round((a / b) * 100)}%`;
-}
-
-function getGreeting() {
-  const h = new Date(Date.now() + 10 * 3600 * 1000).getUTCHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
 }
 
 
@@ -217,7 +211,7 @@ function LinkedInQueue() {
   }
 
   function fmtDate(d: string) {
-    return new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+    return new Date(d + "T00:00:00+10:00").toLocaleDateString("en-AU", { timeZone: BNE_TZ, weekday: "short", day: "numeric", month: "short" });
   }
 
   const today = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
@@ -356,7 +350,7 @@ function LinkedInQueue() {
               {history.map((post, i) => {
                 const preview = (post.content ?? "").split("\n").find(l => l.trim()) ?? "";
                 const sentDate = post.sentAt
-                  ? new Date(post.sentAt).toLocaleString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                  ? new Date(post.sentAt).toLocaleString("en-AU", { timeZone: BNE_TZ, day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                   : fmtDate(post.scheduledFor);
                 return (
                   <div key={post.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 22px", background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)" }}>
@@ -403,7 +397,7 @@ function SubscriberPanel() {
   }, []);
 
   function fmtDate(iso: string) {
-    return new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(iso).toLocaleDateString("en-AU", { timeZone: BNE_TZ, day: "numeric", month: "short", year: "numeric" });
   }
 
   const INDUSTRY_COLOURS: Record<string, string> = {
@@ -612,7 +606,7 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
   if (requests.length === 0) return null;
 
   function fmtDate(iso: string) {
-    return new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    return new Date(iso).toLocaleString("en-AU", { timeZone: BNE_TZ, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
 
   async function approve(req: PendingRequest) {
@@ -772,17 +766,21 @@ export default function AdminClient({
   clients,
   adminId,
   pendingRequests,
+  todayLabel,
+  greeting,
 }: {
   clients: ClientConfig[];
   adminId: string;
   pendingRequests: PendingRequest[];
+  todayLabel: string;
+  greeting: string;
 }) {
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
   const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
   const [orderStats, setOrderStats] = useState<{ total: number; lex: number; care: number; blueprint: number; revenueCents: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
-  const today = new Date().toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const today = todayLabel;
 
   useEffect(() => {
     fetch("/api/admin/lex-clients")
@@ -810,7 +808,7 @@ export default function AdminClient({
     <AdminShell activePath="/saabai-admin">
       <div className="ph">
         <div>
-          <h1>{getGreeting()}, Shane</h1>
+          <h1>{greeting}, Shane</h1>
           <div className="sub">{today} · All figures AUD, incl. GST</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

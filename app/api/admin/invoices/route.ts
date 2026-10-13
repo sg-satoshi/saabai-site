@@ -5,20 +5,19 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import { listInvoices, createInvoice } from "../../../../lib/invoice-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 async function checkAuth() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
-  return session?.clientId === ADMIN_ID;
+  return session ? isAdminSession(session.clientId) : false;
 }
 
 export async function GET() {
