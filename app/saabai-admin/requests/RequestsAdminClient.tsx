@@ -198,9 +198,9 @@ export default function RequestsAdminClient() {
   }, [requests, status]);
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1200, fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, color: "#13152a" }}>Client Requests</h1>
-      <p style={{ margin: "0 0 20px", fontSize: 13, color: "#5f6580" }}>
+    <div style={{ maxWidth: 1200 }}>
+      <h1 className="mc-h1">Client Requests</h1>
+      <p className="mc-sub" style={{ marginBottom: 20 }}>
         Inbox for change and support tickets. Clarifier messages and Critical alerts show here.
       </p>
 

@@ -1325,10 +1325,16 @@ export default function LinkedInAdminPage() {
     <AdminShell activePath="/saabai-admin/social/linkedin">
 
       {/* Page header */}
-      <div className="m-pad" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
+      <div className="mc-head" style={{ marginBottom: 12 }}>
+        <div>
+          <h1 className="mc-h1">Social Media</h1>
+          <p className="mc-sub">Generate, schedule and publish posts</p>
+        </div>
+      </div>
+      <div style={{ borderBottom: "1px solid var(--n-200)" }}>
         {/* Platform tabs */}
         <div className="chip-row" style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginRight: 16 }}>Social Media</span>
+          
           {PLATFORMS.map(p => {
             const activeColour = p.label === "Instagram" ? "#dc2743" : p.label === "Facebook" ? "#1877f2" : "#0077b5";
             return (
@@ -1356,7 +1362,7 @@ export default function LinkedInAdminPage() {
       </div>
 
       {/* Content */}
-      <div style={{ padding: "32px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ padding: "20px 0 48px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Section jump nav */}
         <div className="chip-row" style={{ display: "flex", gap: 8 }}>

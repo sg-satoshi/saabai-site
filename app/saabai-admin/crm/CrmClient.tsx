@@ -984,12 +984,12 @@ export default function CrmClient() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ padding: "24px 28px" }}>
+    <div>
       {/* Top bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+      <div className="mc-head">
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: "-0.02em" }}>CRM</h1>
-          <p style={{ margin: "3px 0 0", fontSize: 13, color: C.textDim }}>
+          <h1 className="mc-h1">CRM</h1>
+          <p className="mc-sub num">
             {stats.total} lead{stats.total !== 1 ? "s" : ""} · {stats.active} active · {stats.won} won · {stats.lost} lost
           </p>
         </div>

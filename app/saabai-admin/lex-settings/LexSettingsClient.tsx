@@ -434,16 +434,18 @@ export default function LexSettingsClient() {
 
   return (
     <AdminShell activePath="/saabai-admin/lex-settings">
-      <div style={{ padding: "40px 40px 80px", maxWidth: 920 }}>
+      <div style={{ maxWidth: 920, paddingBottom: 40 }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: "-0.5px", margin: "0 0 8px" }}>
+        <div className="mc-head">
+          <div>
+          <h1 className="mc-h1">
             LLM Configuration
           </h1>
-          <p style={{ fontSize: 14, color: C.sub, margin: 0, lineHeight: 1.6 }}>
+          <p className="mc-sub">
             Each client can use their own API key and preferred model. Keys are encrypted at rest — never stored in plaintext.
           </p>
+          </div>
         </div>
 
         {/* Stakes callout */}

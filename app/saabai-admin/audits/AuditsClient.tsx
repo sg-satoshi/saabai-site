@@ -143,11 +143,11 @@ export default function AuditsClient() {
 
   return (
     <AdminShell activePath="/saabai-admin/audits">
-      <div style={{ padding: "32px 36px", maxWidth: 1100 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div style={{ maxWidth: 1100 }}>
+        <div className="mc-head">
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>Blueprints</h1>
-            <p style={{ fontSize: 13, color: C.muted, margin: "4px 0 0" }}>
+            <h1 className="mc-h1">Blueprints</h1>
+            <p className="mc-sub">
               Blueprint intake pipeline - fact-find, discovery, assessment, report.
             </p>
           </div>

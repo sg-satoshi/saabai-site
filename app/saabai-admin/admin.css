@@ -149,3 +149,11 @@ a.btn{text-decoration:none}
 }
 .pay-h{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.25;color:var(--n-900);margin:0 0 16px}
 @media (max-width:600px){.pay-h{font-size:20px;margin-bottom:14px}}
+
+/* Standard Mission Control page header for older admin pages */
+.mc-h1{font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.25;color:var(--n-900);margin:0}
+.mc-sub{color:var(--n-500);font-size:13.5px;line-height:1.5;margin:2px 0 0}
+.mc-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-700);margin:0 0 4px}
+.mc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.pg [style*="Segoe UI"],.pg [style*="-apple-system"]{font-family:inherit!important}
+@media (max-width:600px){.mc-h1{font-size:21px}.mc-head{flex-direction:column;align-items:flex-start}}

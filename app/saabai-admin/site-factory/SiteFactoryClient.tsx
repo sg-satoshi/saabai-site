@@ -2953,11 +2953,11 @@ export default function SiteFactoryClient() {
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: isMobile ? "16px 16px 0" : "20px 28px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+      <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12, marginBottom: 18 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>Site Factory</h1>
-            <p style={{ margin: "3px 0 0", color: C.textDim, fontSize: 12 }}>AI-generated client websites</p>
+            <h1 className="mc-h1">Site Factory</h1>
+            <p className="mc-sub">AI-generated client websites</p>
           </div>
           <button
             onClick={() => setPhase("new")}

@@ -789,17 +789,17 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
 
   return (
     <AdminShell activePath="/saabai-admin/products">
-      <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <div style={{ maxWidth: 1100 }}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.text }}>Products</h1>
+        <div className="mc-head" style={{ marginBottom: 6, alignItems: "center" }}>
+          <h1 className="mc-h1">Products</h1>
           {tab === "products" && (
             <button style={btnPrimary} onClick={() => { setFormError(null); setForm(blankForm()); }}>
               + Add product
             </button>
           )}
         </div>
-        <p style={{ margin: "0 0 18px", fontSize: 13, color: C.dim }}>
+        <p className="mc-sub" style={{ marginBottom: 18 }}>
           Create the products you sell, set discounts, and manage coupon codes. Everything syncs to Stripe.
         </p>
 
