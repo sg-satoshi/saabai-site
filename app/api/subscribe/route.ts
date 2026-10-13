@@ -20,7 +20,7 @@ const WELCOME_EMAIL_HTML = (firstName: string) => `<!DOCTYPE html>
   <!-- Body -->
   <tr><td style="padding:40px 40px 32px;">
     <p style="margin:0 0 8px;font-size:15px;color:#6b7280;">Hi ${firstName},</p>
-    <h1 style="margin:0 0 20px;font-size:26px;font-weight:800;color:#0e0c2e;line-height:1.25;">Your AI Readiness Audit</h1>
+    <h1 style="margin:0 0 20px;font-size:26px;font-weight:800;color:#0e0c2e;line-height:1.25;">Your AI Readiness Checklist</h1>
     <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">Answer these 12 questions honestly. Each "No" or "Not sure" is an automation opportunity. Add them up at the end.</p>
 
     <!-- Section 1 -->
@@ -42,7 +42,7 @@ const WELCOME_EMAIL_HTML = (firstName: string) => `<!DOCTYPE html>
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
       <tr><td style="padding:12px 16px;background:#f9fafb;border-radius:10px;">
         <p style="margin:0;font-size:14px;color:#111827;font-weight:600;">3. Do you know your after-hours enquiry rate?</p>
-        <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Most firms don't. Across 12+ audits, 30–45% of enquiries arrive outside business hours.</p>
+        <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">Most firms don't. Across 12+ firms we've reviewed, 30–45% of enquiries arrive outside business hours.</p>
       </td></tr>
     </table>
 
@@ -124,16 +124,16 @@ const WELCOME_EMAIL_HTML = (firstName: string) => `<!DOCTYPE html>
         <p style="margin:0 0 16px;font-size:13px;font-weight:700;color:#00bfa5;letter-spacing:0.8px;text-transform:uppercase;">What your score means</p>
         <p style="margin:0 0 10px;font-size:13px;color:#e5e7eb;"><strong style="color:#fff;">10–12 Yes:</strong> Your systems are solid. You're ready for more sophisticated AI — agents, predictive tools, client-facing automation.</p>
         <p style="margin:0 0 10px;font-size:13px;color:#e5e7eb;"><strong style="color:#fff;">6–9 Yes:</strong> Real opportunity. 2–3 high-impact automations would meaningfully recover capacity. Good place to start.</p>
-        <p style="margin:0 0 10px;font-size:13px;color:#e5e7eb;"><strong style="color:#fff;">3–5 Yes:</strong> Significant friction in your current setup. The audit would quickly surface where the biggest gains are.</p>
+        <p style="margin:0 0 10px;font-size:13px;color:#e5e7eb;"><strong style="color:#fff;">3–5 Yes:</strong> Significant friction in your current setup. A Saabai Blueprint would quickly surface where the biggest gains are.</p>
         <p style="margin:0;font-size:13px;color:#e5e7eb;"><strong style="color:#fff;">0–2 Yes:</strong> High opportunity, some foundational work first. Start with one process — pick the most painful one.</p>
       </td></tr>
     </table>
 
     <!-- CTA -->
-    <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">If you want to walk through your specific results — I'm happy to do a 30-minute audit call. No obligation, no pitch. Just a clear picture of where your biggest gains are.</p>
+    <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">If you want to walk through your specific results — I'm happy to do a 30-minute call. No obligation, no pitch. Just a clear picture of where your biggest gains are.</p>
     <table cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
       <tr><td style="background:#00bfa5;border-radius:10px;padding:14px 28px;">
-        <a href="https://calendly.com/shanegoldberg/30min" style="color:#0e0c2e;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:0.3px;">Book a Free 30-Minute Audit Call →</a>
+        <a href="https://www.saabai.ai/blueprint" style="color:#0e0c2e;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:0.3px;">See the Saabai Blueprint →</a>
       </td></tr>
     </table>
 
@@ -142,7 +142,7 @@ const WELCOME_EMAIL_HTML = (firstName: string) => `<!DOCTYPE html>
 
   <!-- Footer -->
   <tr><td style="padding:24px 40px;border-top:1px solid #f3f4f6;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this because you requested the AI Readiness Audit from saabai.ai<br>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this because you requested the AI Readiness checklist from saabai.ai<br>
     <a href="https://saabai.ai" style="color:#00bfa5;text-decoration:none;">saabai.ai</a></p>
   </td></tr>
 
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "Shane at Saabai <hello@saabai.ai>",
           to: normalisedEmail,
-          subject: "Your AI Readiness Audit — here's the checklist",
+          subject: "Your AI Readiness checklist from Saabai",
           html: WELCOME_EMAIL_HTML(firstName.trim()),
         }),
       });

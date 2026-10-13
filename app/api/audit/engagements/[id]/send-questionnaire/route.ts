@@ -43,12 +43,12 @@ export async function POST(_req: Request, { params }: Params) {
     from: "Shane at Saabai <hello@saabai.ai>",
     to: engagement.contactEmail,
     replyTo: "hello@saabai.ai",
-    subject: `Your AI Audit questionnaire — ${engagement.firmName}`,
+    subject: `Your Saabai Blueprint questionnaire: ${engagement.firmName}`,
     html: `
       <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
         <p>Hi ${firstName},</p>
-        <p>Thanks for choosing the <strong>${AUDIT_TIER_LABELS[engagement.tier].split(" (")[0]} AI Audit</strong> for ${engagement.firmName}.</p>
-        <p>The first step is a short questionnaire (${minutes}). Your answers shape the discovery session, so the more specific you are — especially about the workflows that eat your week — the sharper the audit.</p>
+        <p>Thanks for choosing the <strong>${AUDIT_TIER_LABELS[engagement.tier].split(" (")[0]} Saabai Blueprint</strong> for ${engagement.firmName}.</p>
+        <p>The first step is a short questionnaire (${minutes}). Your answers shape the discovery session, so the more specific you are, especially about the workflows that eat your week, the sharper your Blueprint.</p>
         <p style="margin: 28px 0;">
           <a href="${link}" style="background: #0e0c2e; color: #ffffff; padding: 13px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">Start the questionnaire →</a>
         </p>
