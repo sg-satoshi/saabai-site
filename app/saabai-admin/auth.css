@@ -27,7 +27,14 @@
 .fine svg{width:15px;height:15px;stroke:var(--gold-400);fill:none;stroke-width:1.8;flex:none;margin-top:2px}
 .foot2{position:absolute;bottom:24px;right:40px;font-size:12px;color:#7d83b3}
 .mlogo{display:none}
-@media(max-width:600px){body{display:block}.art{display:none}.panel{padding:56px 22px 32px;align-items:flex-start;min-height:844px}.mlogo{display:block;height:30px;margin-bottom:36px}.foot2{left:22px;right:auto}}
+@media(max-width:900px){
+  .auth-screen{display:block;grid-template-columns:1fr}
+  .art{display:none}
+  .panel{display:block;width:100%;box-sizing:border-box;padding:48px 22px 40px;align-items:flex-start;min-height:100vh}
+  .box{max-width:none;width:100%}
+  .mlogo{display:block;height:30px;margin-bottom:36px}
+  .foot2{position:static;margin-top:28px;left:auto;right:auto}
+}
 
 .auth-screen{font-family:var(--font-admin-sans),Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01"}
 .auth-screen .num{font-family:var(--font-admin-mono),var(--mono);font-variant-numeric:tabular-nums}
