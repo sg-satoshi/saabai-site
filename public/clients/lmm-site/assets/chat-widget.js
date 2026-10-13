@@ -243,7 +243,7 @@
       });
 
       hideTyping();
-      if (response.ok) {
+      if (response.ok || response.status === 429 || response.status === 413) {
         const data = await response.json();
         const reply = data.content || data.text || data.message?.content || "I'm sorry, I didn't catch that. Could you rephrase?";
         addMessage('bot', reply);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
+import { CHAT_API, chatGuard } from "./lib/chat-guard";
 
 const redis = Redis.fromEnv();
 
@@ -180,6 +181,15 @@ async function getSession(req: NextRequest): Promise<{ clientId: string } | null
 }
 
 async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse> {
+  const res = await apiAuthCheck(req, pathname);
+  if (res.status === 200 && matches(pathname, CHAT_API)) {
+    const blocked = await chatGuard(req, redis);
+    if (blocked) return blocked;
+  }
+  return res;
+}
+
+async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextResponse> {
   if (matches(pathname, PUBLIC_API)) return NextResponse.next();
 
   const session = await getSession(req);
