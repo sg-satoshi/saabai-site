@@ -44,13 +44,15 @@ export function buildNewRequestEmail(r: ClientRequest) {
 
 export function buildStatusEmail(r: ClientRequest) {
   const first = escapeHtml((r.clientName || "").split(" ")[0] || "there");
-  const status = STATUS_LABELS[r.status];
+  const status = STATUS_LABELS[r.status] || r.status || "updated";
   const lead =
     r.status === "done"
       ? `Good news, your request <strong>“${escapeHtml(r.title)}”</strong> is done.`
       : r.status === "in_progress"
         ? `Quick update: work has started on <strong>“${escapeHtml(r.title)}”</strong>.`
-        : `Your request <strong>“${escapeHtml(r.title)}”</strong> is now marked as ${escapeHtml(status.toLowerCase())}.`;
+        : r.status === "awaiting_client"
+          ? `We need a quick detail from you on <strong>“${escapeHtml(r.title)}”</strong>.`
+          : `Your request <strong>“${escapeHtml(r.title)}”</strong> is now marked as ${escapeHtml((status || r.status).toLowerCase())}.`;
   const note = r.adminNote
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;background:#f4f5f9;border-radius:12px;border:1px solid #dfe2ea;"><tr><td style="padding:16px 18px;">
         <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#0e7482;">Note</p>

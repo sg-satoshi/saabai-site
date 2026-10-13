@@ -56,7 +56,7 @@ test("validateNewRequest enforces fields, priority and screenshot rules", async 
   assert.equal(validateNewRequest({ title: "", description: "long enough text" }, id).ok, false);
   assert.equal(validateNewRequest({ title: "Fix it", description: "short" }, id).ok, false);
   assert.equal(validateNewRequest({ title: "Fix it", description: "long enough text", priority: "asap" }, id).ok, false);
-  assert.equal(validateNewRequest({ title: "Fix it", description: "long enough text", screenshots: [own(1), own(2), own(3), own(4)] }, id).ok, false);
+  assert.equal(validateNewRequest({ title: "Fix it", description: "long enough text", screenshots: [own(1), own(2), own(3), own(4), own(5), own(6)] }, id).ok, false);
   assert.equal(validateNewRequest({ title: "Fix it", description: "long enough text", screenshots: ["https://evil.com/x.png"] }, id).ok, false);
   // another client's folder is rejected
   assert.equal(validateNewRequest({ title: "Fix it", description: "long enough text", screenshots: [`${BLOB}/${blobFolderFor("other")}/x.png`] }, id).ok, false);
@@ -71,18 +71,21 @@ test("validateNewRequest enforces fields, priority and screenshot rules", async 
   }
   const def = validateNewRequest({ title: "Update hours", description: "Please change Saturday hours." }, id);
   assert.ok(def.ok && def.value.priority === "normal");
+  const typed = validateNewRequest({ title: "Update hours", description: "Please change Saturday hours.", type: "text_change", priority: "critical" }, id);
+  assert.ok(typed.ok && typed.value.type === "text_change" && typed.value.priority === "critical");
+  assert.equal(validateNewRequest({ title: "Update hours", description: "Please change Saturday hours.", type: "nope" }, id).ok, false);
 });
 
 // ── requests store ────────────────────────────────────────────────────────
 test("requests are scoped per client and status updates are tracked", async () => {
   const { createRequest, listRequests, updateRequest, getRequest } = await import("../lib/client-requests");
-  const base = { description: "Please do the thing on the site.", priority: "normal" as const, screenshots: [] };
+  const base = { description: "Please do the thing on the site.", priority: "normal" as const, type: "other" as const, screenshots: [] };
   const a1 = await createRequest({ ...base, clientId: "client-a", clientName: "A", clientEmail: "a@a.test", title: "A one" });
   await new Promise((r) => setTimeout(r, 5));
   const a2 = await createRequest({ ...base, clientId: "client-a", clientName: "A", clientEmail: "a@a.test", title: "A two" });
   const b1 = await createRequest({ ...base, clientId: "client-b", clientName: "B", clientEmail: "b@b.test", title: "B one" });
 
-  assert.equal(a1.status, "received");
+  assert.equal(a1.status, "new");
   const mine = await listRequests({ clientId: "client-a" });
   assert.deepEqual(mine.map((r) => r.id), [a2.id, a1.id], "newest first, only client A");
   assert.ok(!(await listRequests({ clientId: "client-b" })).some((r) => r.clientId !== "client-b"));
@@ -102,7 +105,7 @@ test("requests are scoped per client and status updates are tracked", async () =
   assert.ok("error" in bad && bad.code === 400);
   const missing = await updateRequest("nope", { status: "done" });
   assert.ok("error" in missing && missing.code === 404);
-  assert.equal((await getRequest(b1.id))?.status, "received", "invalid update leaves record untouched");
+  assert.equal((await getRequest(b1.id))?.status, "new", "invalid update leaves record untouched");
 });
 
 // ── magic link ────────────────────────────────────────────────────────────
@@ -162,8 +165,9 @@ test("request emails escape client-supplied content and stay polite", async () =
   const r = {
     id: "1", clientId: "c", clientName: "Stu <b>Smith</b>", clientEmail: "stu@cycle.test",
     title: "<script>alert(1)</script>", description: "line1\n<img src=x onerror=alert(1)>",
-    priority: "high" as const, screenshots: [], status: "done" as const, adminNote: "All done <3",
-    createdAt: "", updatedAt: "",
+    type: "other" as const, priority: "high" as const, screenshots: [], status: "done" as const,
+    autoHandle: true, discussWithShane: false, clarifierRounds: 0, timeline: [],
+    adminNote: "All done <3", createdAt: "", updatedAt: "",
   };
   const n = buildNewRequestEmail(r);
   assert.ok(!n.html.includes("<script>") && n.html.includes("&lt;script&gt;"));
