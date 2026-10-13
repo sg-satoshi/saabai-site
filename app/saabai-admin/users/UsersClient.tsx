@@ -466,7 +466,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   const [email, setEmail] = useState(initial?.email || "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(initial?.role || "user");
-  const [dashboardUrl, setDashboardUrl] = useState(initial?.dashboardUrl || "/rex-dashboard");
+  const [dashboardUrl, setDashboardUrl] = useState(initial?.dashboardUrl || "/dashboard");
   const [selectedProducts, setSelectedProducts] = useState<string[]>(initial?.products || []);
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);

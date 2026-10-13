@@ -206,30 +206,7 @@ const NAV: {
       }
     ],
   },
-  {
-    section: "Rex",
-    items: [
-      {
-        label: "Analytics",
-        href: "/rex-analytics",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M1.5 10.5l3-3.5 3 2 3.5-5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M1.5 12.5h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Changelog",
-        href: "/rex-changelog",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M2 3.5h10M2 7h7M2 10.5h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-        ),
-      }
-    ],
-  },
+
   {
     section: "Other",
     items: [

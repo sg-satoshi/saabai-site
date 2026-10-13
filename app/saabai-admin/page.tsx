@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../lib/auth";
 import { loadClients } from "../../lib/clients";
-import { fetchRexStats } from "../../lib/rex-stats";
 import { listPendingRequests } from "../../lib/portal-users";
 import AdminClient from "./AdminClient";
 
@@ -25,15 +24,14 @@ export default async function SaabaiAdminPage() {
   if (!isAdmin) {
     const clients = loadClients();
     const client = clients.find(c => c.id === session.clientId);
-    redirect(client?.dashboardUrl ?? "/rex-dashboard");
+    redirect(client?.dashboardUrl ?? "/dashboard");
   }
 
-  const [clients, rexStats, pendingRequests] = await Promise.all([
+  const [clients, pendingRequests] = await Promise.all([
     // Strip passwords: this list is serialised into the page for the browser.
     Promise.resolve(loadClients().map(({ password: _password, ...c }) => c)),
-    fetchRexStats(),
     listPendingRequests(),
   ]);
 
-  return <AdminClient clients={clients} rexStats={rexStats} adminId={process.env.SAABAI_ADMIN_ID ?? "saabai"} pendingRequests={pendingRequests} />;
+  return <AdminClient clients={clients} adminId={process.env.SAABAI_ADMIN_ID ?? "saabai"} pendingRequests={pendingRequests} />;
 }
