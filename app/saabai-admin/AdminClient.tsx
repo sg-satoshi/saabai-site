@@ -1,5 +1,6 @@
 "use client";
 import { BNE_TZ } from "../../lib/brisbane-time";
+import { summariseRevenue, revenueBreakdownLabel } from "../../lib/live-revenue";
 
 import { useState, useEffect } from "react";
 import type { ClientConfig as FullClientConfig } from "../../lib/clients";
@@ -777,7 +778,7 @@ export default function AdminClient({
 }) {
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
   const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
-  const [orderStats, setOrderStats] = useState<{ total: number; lex: number; care: number; blueprint: number; revenueCents: number } | null>(null);
+  const [orderStats, setOrderStats] = useState<{ total: number; lex: number; care: number; blueprint: number; revenueCents: number; paidCount: number; breakdown: string; countsLabel: string } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const today = todayLabel;
@@ -794,12 +795,18 @@ export default function AdminClient({
     fetch("/api/admin/orders")
       .then(r => r.json())
       .then(data => {
-        const orders = (data.orders || []) as { kind: string; amountTotal: number | null }[];
+        const orders = (data.orders || []) as { kind: string; revenueCents?: number }[];
         const lex = orders.filter(o => o.kind === "lex_subscription").length;
         const care = orders.filter(o => o.kind === "website_care").length;
         const blueprint = orders.filter(o => o.kind === "blueprint").length;
-        const revenueCents = orders.reduce((s, o) => s + (o.amountTotal || 0), 0);
-        setOrderStats({ total: orders.length, lex, care, blueprint, revenueCents });
+        const sum = summariseRevenue(orders);
+        setOrderStats({
+          total: orders.length, lex, care, blueprint,
+          revenueCents: sum.revenueCents,
+          paidCount: sum.paidCount,
+          breakdown: revenueBreakdownLabel(sum.byKind),
+          countsLabel: sum.byKind.length ? sum.byKind.map(k => `${k.count} ${k.label}`).join(" · ") : "No paid orders yet",
+        });
       })
       .catch(() => {});
   }, []);
@@ -819,21 +826,19 @@ export default function AdminClient({
 
       <div className="kpis">
         <div className="card kpi">
-          <div className="l">Orders (all time)</div>
-          <div className="v num">{orderStats ? String(orderStats.total) : "-"}</div>
-          <div className="d muted">
-            {orderStats ? `${orderStats.blueprint} Blueprint · ${orderStats.lex} Lex · ${orderStats.care} Web/Care` : "Loading..."}
-          </div>
+          <div className="l">Paid orders (all time)</div>
+          <div className="v num">{orderStats ? String(orderStats.paidCount) : "-"}</div>
+          <div className="d muted">{orderStats ? orderStats.countsLabel : "Loading..."}</div>
         </div>
         <div className="card kpi">
-          <div className="l">Order revenue</div>
+          <div className="l">Revenue (Stripe live)</div>
           <div className="v num">{orderStats ? `$${(orderStats.revenueCents / 100).toLocaleString("en-AU")}` : "-"}</div>
-          <div className="d muted">Blueprint + Lex sales</div>
+          <div className="d muted">{orderStats ? orderStats.breakdown : "Loading..."}</div>
         </div>
         <div className="card kpi">
           <div className="l">Blueprints, all paid</div>
           <div className="v num">{bpStats ? String(bpStats.allCount) : "-"}</div>
-          <div className="d muted">{bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "Loading..."}</div>
+          <div className="d muted">{bpStats ? (bpStats.allCount ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "No sales yet") : "Loading..."}</div>
         </div>
         <div className="card kpi">
           <div className="l">Lex firms</div>
