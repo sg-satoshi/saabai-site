@@ -1,3 +1,4 @@
+import Script from "next/script";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -161,7 +162,7 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
         }}
       />
       {children}
-      <script dangerouslySetInnerHTML={{ __html: `(function() {
+      <Script id="bo-site-scripts" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `(function() {
   function init() {
     if (document.getElementById('bo-widget-root')) return;
     var NAVY='#123B5D',ORANGE='#F58220',AVATAR='/sites/bo-consultancy/christina-avatar.jpg';
