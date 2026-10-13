@@ -530,7 +530,7 @@ export default function SubscriberDashboard() {
       <div style={{ padding: "32px 40px" }}>
 
         {/* KPI row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+        <div className="m-grid-2" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
           {[
             { label: "Total Subscribers", value: count,                   sub: "All time",        accent: D.teal },
             { label: "This Month",        value: thisMonth,               sub: "Last 30 days",    accent: "#818cf8" },
@@ -546,7 +546,7 @@ export default function SubscriberDashboard() {
         </div>
 
         {/* Charts row */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 24 }}>
+        <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 24 }}>
 
           {/* Growth chart */}
           <div style={{ ...cardStyle, padding: "24px 28px" }}>
@@ -607,7 +607,7 @@ export default function SubscriberDashboard() {
         </div>
 
         {/* Subscriber table */}
-        <div style={{ ...cardStyle, overflow: "hidden" }}>
+        <div style={{ ...cardStyle, overflowX: "auto" }}>
 
           {/* Table controls */}
           <div style={{ padding: "20px 24px", borderBottom: `1px solid ${D.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const }}>
@@ -632,7 +632,7 @@ export default function SubscriberDashboard() {
           </div>
 
           {/* Column headers */}
-          <div style={{ display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px", padding: "10px 24px", background: D.surface, borderBottom: `1px solid ${D.border}`, alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px", minWidth: 1040, padding: "10px 24px", background: D.surface, borderBottom: `1px solid ${D.border}`, alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
               <input
                 type="checkbox"
@@ -674,7 +674,7 @@ export default function SubscriberDashboard() {
                 key={s.email}
                 onClick={() => toggleRow(s.email)}
                 style={{
-                  display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px",
+                  display: "grid", gridTemplateColumns: "48px 40px 1fr 200px 130px 160px 160px 100px", minWidth: 1040,
                   padding: "13px 24px", alignItems: "center",
                   borderBottom: i < filtered.length - 1 ? `1px solid ${D.border}` : "none",
                   background: selected.has(s.email) ? "rgba(8,145,178,0.07)" : i % 2 === 0 ? D.card : "rgba(0,0,0,0.02)",

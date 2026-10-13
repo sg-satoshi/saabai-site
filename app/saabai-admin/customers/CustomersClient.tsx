@@ -42,7 +42,6 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
 const PROJECT_META: Record<string, { color: string; bg: string }> = {
   "Lex":          { color: C.blue,   bg: C.blueBg },
   "Site Factory": { color: C.gold,   bg: C.goldBg },
-  "Rex":          { color: C.orange, bg: C.orangeBg },
   "Portal":       { color: C.teal,   bg: C.tealBg },
   "LeadGen":      { color: C.green,  bg: C.greenBg },
   "Blueprint":     { color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
@@ -206,7 +205,7 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }} onClick={onClose}>
-      <div style={{ width: 480, height: "100vh", background: C.card, borderLeft: `1px solid ${C.borderHi}`, display: "flex", flexDirection: "column", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+      <div style={{ width: "min(100vw, 480px)", height: "100vh", background: C.card, borderLeft: `1px solid ${C.borderHi}`, display: "flex", flexDirection: "column", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: "20px 24px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
             <p style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 800, color: C.text }}>{customer.name}</p>
@@ -372,13 +371,13 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
                   <div key={note.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 12px" }}>
                     <p style={{ margin: "0 0 6px", fontSize: 12, color: C.text, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{note.text}</p>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: 10, color: C.muted }}>{note.author} \u00b7 {fmtNoteDate(note.createdAt)}</span>
+                      <span style={{ fontSize: 10, color: C.muted }}>{note.author} · {fmtNoteDate(note.createdAt)}</span>
                       <button
                         onClick={() => deleteNote(note.id)}
                         style={{ background: "none", border: "none", cursor: "pointer", color: C.red, fontSize: 10, opacity: 0.6, padding: 2 }}
                         title="Delete note"
                       >
-                        \u2715
+                        ✕
                       </button>
                     </div>
                   </div>
@@ -443,7 +442,7 @@ function ExportButton({ customers }: { customers: Customer[] }) {
         opacity: customers.length === 0 ? 0.5 : 1,
       }}
     >
-      \u2193 Export CSV
+      ↓ Export CSV
     </button>
   );
 }
@@ -535,8 +534,8 @@ function CustomersInner() {
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 320 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", minWidth: 0 }}>
+          <div style={{ position: "relative", flex: "1 1 200px", minWidth: 0, maxWidth: 320 }}>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -547,10 +546,10 @@ function CustomersInner() {
                 fontSize: 13, outline: "none",
               }}
             />
-            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.muted }}>\ud83d\udd0d</span>
+            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: C.muted }}>🔍</span>
           </div>
 
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="chip-row">
             {types.map(t => (
               <button
                 key={t}
@@ -569,7 +568,7 @@ function CustomersInner() {
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: 6 }}>
+          <div className="chip-row">
             {projects.map(p => (
               <button
                 key={p}
@@ -595,6 +594,7 @@ function CustomersInner() {
           ) : filtered.length === 0 ? (
             <p style={{ margin: 0, padding: "32px", textAlign: "center", color: C.muted, fontSize: 13 }}>No customers found.</p>
           ) : (
+            <div className="tbl-scroll">
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
@@ -622,12 +622,13 @@ function CustomersInner() {
                     <td style={{ ...td, fontWeight: 700, color: c.revenue > 0 ? C.gold : C.muted }}>{c.revenue > 0 ? fmtAud(c.revenue) : "-"}</td>
                     <td style={{ ...td, color: C.muted }}>{fmtDate(c.createdAt)}</td>
                     <td style={{ ...td, textAlign: "right" as const }}>
-                      <span style={{ fontSize: 11, color: C.gold, fontWeight: 600 }}>View \u2192</span>
+                      <span style={{ fontSize: 11, color: C.gold, fontWeight: 600 }}>View →</span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

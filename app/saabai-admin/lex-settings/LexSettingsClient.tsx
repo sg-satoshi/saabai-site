@@ -288,11 +288,11 @@ function LegalFitPanel({ providerId }: { providerId: string }) {
           const scoreColor = row.score >= 4 ? "#0891b2" : row.score >= 3 ? "#d97706" : "#dc2626";
           const scoreLabel = row.score === 5 ? "Excellent" : row.score === 4 ? "Good" : row.score === 3 ? "Moderate" : "Poor";
           return (
-            <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 14, padding: "9px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-              <div style={{ width: 190, fontSize: 12, color: C.sub, flexShrink: 0 }}>{row.label}</div>
+            <div key={row.label} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 14, rowGap: 4, padding: "9px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ width: 190, maxWidth: "100%", fontSize: 12, color: C.sub, flexShrink: 0 }}>{row.label}</div>
               <ScoreDots score={row.score} color={scoreColor} />
               <span style={{ fontSize: 11, color: scoreColor, fontWeight: 600, width: 68, flexShrink: 0 }}>{scoreLabel}</span>
-              <span style={{ fontSize: 11, color: C.muted }}>{row.help}</span>
+              <span style={{ fontSize: 11, color: C.muted, flex: "1 1 220px", minWidth: 0 }}>{row.help}</span>
             </div>
           );
         })}
