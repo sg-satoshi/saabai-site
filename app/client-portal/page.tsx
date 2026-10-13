@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import "./portal-auth.css";
 import { PortalShell } from "./components/PortalShell";
@@ -19,6 +19,18 @@ type PageId =
   | "account"
   | "manage-agent";
 
+type PortalProduct = {
+  id: string;
+  kind: "lex" | "blueprint" | "website" | "care";
+  name: string;
+  detail: string;
+  status: string;
+  statusTone: "ok" | "info" | "warn" | "n";
+  stat: string;
+  openPage: string;
+  icon: "lx" | "bp" | "ws" | "cr";
+};
+
 type Workspace = {
   email: string;
   name: string;
@@ -31,14 +43,38 @@ type Workspace = {
     lex: boolean;
     blueprint: boolean;
     projects: boolean;
+    care?: boolean;
     invoices: boolean;
     requests: boolean;
     account: boolean;
   };
+  products: PortalProduct[];
   blueprints: { id: string; tier: string; status: string; createdAt: string; businessName: string; score: number | null }[];
   requests: { id: string; title: string; status: string; createdAt: string; updatedAt: string }[];
   openRequestCount: number;
 };
+
+const PRODUCT_ICON_PATHS: Record<string, React.ReactNode> = {
+  lx: <path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z" />,
+  ws: <><path d="M12 3L2 8l10 5 10-5z" /><path d="M2 13l10 5 10-5" /></>,
+  bp: <><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h4" /></>,
+  cr: <><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="M9 12l2 2 4-4" /></>,
+};
+
+function ProductIcon({ kind }: { kind: string }) {
+  return (
+    <span className={`pi ${kind}`}>
+      <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">{PRODUCT_ICON_PATHS[kind] || PRODUCT_ICON_PATHS.bp}</svg>
+    </span>
+  );
+}
+
+function badgeClass(tone: string) {
+  if (tone === "ok") return "badge b-ok";
+  if (tone === "info") return "badge b-info";
+  if (tone === "warn") return "badge b-warn";
+  return "badge b-n";
+}
 
 function Empty({ title, body }: { title: string; body: string }) {
   return (
@@ -118,7 +154,7 @@ function ClientPortalInner() {
     if (!res.ok) return false;
     const data = await res.json();
     if (!data.authenticated) return false;
-    setWorkspace(data);
+    setWorkspace({ ...data, products: data.products || [] });
     return true;
   }
 
@@ -212,23 +248,56 @@ function ClientPortalInner() {
     setAuthView("login");
   }
 
-  const nav = useMemo(() => {
-    if (!workspace) return [];
+  const { navGroups, bottomNav } = useMemo(() => {
+    if (!workspace) return { navGroups: [], bottomNav: [] as { label: string; id: string; icon: string }[] };
     const m = workspace.modules;
-    const items: { label: string; id: PageId; icon: string; count?: number; urgent?: boolean }[] = [
-      { label: "Overview", id: "overview", icon: "grid" },
-    ];
-    if (m.projects) items.push({ label: "Projects", id: "projects", icon: "layers" });
-    if (m.blueprint) items.push({ label: "Blueprint", id: "blueprint", icon: "doc" });
+    const productItems: { label: string; id: PageId; icon: string; count?: number; urgent?: boolean }[] = [];
     if (m.lex) {
-      items.push({ label: "Lex agent", id: "lex-agent", icon: "scale" });
-      items.push({ label: "Leads", id: "leads", icon: "users" });
-      items.push({ label: "Review queue", id: "review-queue", icon: "list" });
+      productItems.push({ label: "Lex agent", id: "lex-agent", icon: "scale" });
+      productItems.push({ label: "Leads", id: "leads", icon: "users" });
+      productItems.push({ label: "Review queue", id: "review-queue", icon: "list" });
     }
-    items.push({ label: "Invoices", id: "invoices", icon: "card" });
-    items.push({ label: "Requests", id: "requests", icon: "inbox", count: workspace.openRequestCount || undefined });
-    items.push({ label: "Account", id: "account", icon: "gear" });
-    return items;
+    if (m.projects) productItems.push({ label: "Website build", id: "projects", icon: "layers" });
+    if (m.care) productItems.push({ label: "Care plan", id: "projects", icon: "shield" });
+    if (m.blueprint) productItems.push({ label: "Blueprint", id: "blueprint", icon: "doc" });
+
+    const accountItems = [
+      { label: "Invoices", id: "invoices" as PageId, icon: "card" },
+      { label: "Requests", id: "requests" as PageId, icon: "inbox", count: workspace.openRequestCount || undefined },
+      { label: "Account", id: "account" as PageId, icon: "gear" },
+    ];
+
+    const navGroups = [
+      { items: [{ label: "Overview", id: "overview" as PageId, icon: "grid" }] },
+      ...(productItems.length ? [{ label: "Your products", items: productItems }] : []),
+      { label: "Account", items: accountItems },
+    ];
+
+    // Mobile bar adapts per client mix (design 10g / 10b / 10)
+    let bottomNav: { label: string; id: string; icon: string }[];
+    if (m.lex && m.projects) {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: "Lex", id: "lex-agent", icon: "scale" },
+        { label: "Website", id: "projects", icon: "layers" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+      ];
+    } else if (m.lex) {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: "Leads", id: "leads", icon: "users" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+        { label: "Requests", id: "requests", icon: "inbox" },
+      ];
+    } else {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: m.projects ? "Projects" : m.blueprint ? "Blueprint" : "Home", id: m.projects ? "projects" : m.blueprint ? "blueprint" : "overview", icon: m.projects ? "layers" : "doc" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+        { label: "Requests", id: "requests", icon: "inbox" },
+      ];
+    }
+    return { navGroups, bottomNav };
   }, [workspace]);
 
   if (authView === "checking") {
@@ -427,7 +496,8 @@ function ClientPortalInner() {
       business={workspace.business || "Your business"}
       personName={workspace.name || workspace.email}
       role={workspace.role}
-      nav={nav}
+      navGroups={navGroups}
+      bottomNav={bottomNav}
       active={page === "manage-agent" ? "lex-agent" : page}
       onNavigate={(id) => setPage(id as PageId)}
       title={page === "manage-agent" ? "Manage agent" : undefined}
@@ -439,115 +509,141 @@ function ClientPortalInner() {
               <h1>Welcome back, {firstName}</h1>
               <div className="sub">
                 {workspace.business || workspace.email}
-                {workspace.modules.lex && workspace.agentName ? ` · Lex agent "${workspace.agentName}"` : ""}
-                {workspace.modules.blueprint ? ` · ${workspace.blueprints.length} Blueprint${workspace.blueprints.length === 1 ? "" : "s"}` : ""}
+                {workspace.products?.length
+                  ? ` · ${workspace.products.length} product${workspace.products.length === 1 ? "" : "s"} with Saabai`
+                  : workspace.modules.lex && workspace.agentName
+                    ? ` · Lex agent "${workspace.agentName}"`
+                    : ""}
               </div>
             </div>
             <a className="btn dt" href="mailto:hello@saabai.ai">Book a call with Shane</a>
           </div>
 
-          <div className="qa">
-            <button type="button" onClick={() => setPage("requests")} style={{ all: "unset", cursor: "pointer" }}>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div className="hd">
               <div>
-                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-                <span>
-                  New request<small>Change, question or idea</small>
-                </span>
-              </div>
-            </button>
-            {workspace.modules.invoices ? (
-              <button type="button" onClick={() => setPage("invoices")} style={{ all: "unset", cursor: "pointer" }}>
-                <div>
-                  <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
-                  <span>
-                    Pay invoice<small>Open billing</small>
-                  </span>
+                <h2>Your products</h2>
+                <div className="sub">
+                  {(workspace.products?.length || 0) === 0
+                    ? "Purchases with Saabai will appear here"
+                    : workspace.products.length === 1
+                      ? "1 product"
+                      : `${workspace.products.length} purchases with Saabai`}
                 </div>
-              </button>
+              </div>
+              <a className="btn sm" href="mailto:hello@saabai.ai?subject=Add%20a%20product">
+                Add a product
+              </a>
+            </div>
+            {(workspace.products?.length || 0) === 0 ? (
+              <Empty title="No products linked yet" body="When you buy Lex, a Blueprint or a website build, each purchase will show as a row here." />
             ) : (
-              <div>
-                <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>
-                <span>
-                  Invoices<small>None due right now</small>
-                </span>
-              </div>
-            )}
-            {workspace.modules.blueprint && (
-              <button type="button" onClick={() => setPage("blueprint")} style={{ all: "unset", cursor: "pointer" }}>
-                <div>
-                  <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5" /></svg>
-                  <span>
-                    Open Blueprint<small>{workspace.blueprints[0]?.tier || "Report"}</small>
-                  </span>
+              workspace.products.map((prod) => (
+                <div className="prod" key={prod.id}>
+                  <ProductIcon kind={prod.icon} />
+                  <div className="nm">
+                    {prod.name}
+                    <small>{prod.detail}</small>
+                  </div>
+                  <span className={badgeClass(prod.statusTone)}>{prod.status}</span>
+                  <div className="st">{prod.stat}</div>
+                  <button type="button" className="op" onClick={() => setPage(prod.openPage as PageId)}>
+                    Open →
+                  </button>
                 </div>
-              </button>
-            )}
-            {workspace.modules.lex && (
-              <button type="button" onClick={() => setPage("manage-agent")} style={{ all: "unset", cursor: "pointer" }}>
-                <div>
-                  <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3" /><path d="M12 3v4" /></svg>
-                  <span>
-                    Manage agent<small>Settings and test</small>
-                  </span>
-                </div>
-              </button>
+              ))
             )}
           </div>
 
-          <div className="g2">
-            {workspace.modules.lex ? (
-              <div className="card">
+          {workspace.modules.lex && (
+            <>
+              <div className="sec-h">
+                <h2>Lex agent</h2>
+                <button type="button" className="op" onClick={() => setPage("manage-agent")}>
+                  Manage agent →
+                </button>
+              </div>
+              <div className="card" style={{ marginBottom: 16 }}>
                 <div className="hd">
                   <div>
-                    <h2>Lex agent</h2>
-                    <div className="sub">{workspace.plan || "Plan"} · {workspace.agentName || "Lex"}</div>
+                    <h2>{workspace.agentName || "Lex"}</h2>
+                    <div className="sub">{workspace.plan || "Plan"} · Active on your site</div>
                   </div>
                   <span className="badge b-ok">Active</span>
                 </div>
                 <div className="bd">
                   <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--n-600)" }}>
-                    Your agent is active. Open Manage agent to customise, test, or get your embed code.
+                    Customise, test, embed, review leads and the review queue from Manage agent. Live stats stay on that page so this overview never shows placeholder numbers.
                   </p>
-                  <button type="button" className="btn pri sm" onClick={() => setPage("manage-agent")}>
-                    Manage agent
-                  </button>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="button" className="btn pri sm" onClick={() => setPage("manage-agent")}>
+                      Manage agent
+                    </button>
+                    <button type="button" className="btn sm" onClick={() => setPage("leads")}>
+                      Leads
+                    </button>
+                    <button type="button" className="btn sm" onClick={() => setPage("review-queue")}>
+                      Review queue
+                    </button>
+                  </div>
                 </div>
               </div>
-            ) : workspace.modules.projects ? (
-              <div className="card">
-                <div className="hd">
-                  <h2>Projects</h2>
-                  <span className="badge b-info">In build</span>
-                </div>
-                <div className="bd">
-                  <p className="muted">Your website build progress will show here.</p>
-                </div>
-              </div>
-            ) : (
-              <Empty title="No active project yet" body="When your website or care plan starts, progress will show here." />
-            )}
+            </>
+          )}
 
-            {workspace.modules.blueprint ? (
-              <div className="card">
-                <div className="hd">
-                  <h2>Your Blueprint</h2>
-                  <span className="tag bp">{workspace.blueprints[0]?.tier}</span>
-                </div>
+          {workspace.modules.projects && (
+            <>
+              <div className="sec-h">
+                <h2>Website build</h2>
+                <button type="button" className="op" onClick={() => setPage("projects")}>
+                  Open project →
+                </button>
+              </div>
+              <div className="card" style={{ marginBottom: 16 }}>
                 <div className="bd">
-                  <p style={{ margin: "0 0 12px", fontSize: 14 }}>
-                    {workspace.blueprints[0]?.businessName || "Your Blueprint"} · status {workspace.blueprints[0]?.status}
-                  </p>
-                  <button type="button" className="btn sm" onClick={() => setPage("blueprint")}>
-                    Open full report
-                  </button>
+                  <p className="muted" style={{ margin: 0 }}>Your website build progress will show here when linked.</p>
                 </div>
               </div>
-            ) : (
-              <Empty title="No Blueprint yet" body="When you purchase a Blueprint, the full report will appear here." />
-            )}
-          </div>
+            </>
+          )}
 
-          <div className="g2">
+          {workspace.modules.blueprint && (
+            <>
+              <div className="sec-h">
+                <h2>Your Blueprint</h2>
+                <button type="button" className="op" onClick={() => setPage("blueprint")}>
+                  Open report →
+                </button>
+              </div>
+              <div className="g2">
+                {workspace.blueprints.slice(0, 2).map((b) => (
+                  <div className="card" key={b.id}>
+                    <div className="hd">
+                      <div>
+                        <h2>{b.businessName || "Blueprint"}</h2>
+                        <div className="sub">{b.tier} · {b.status}</div>
+                      </div>
+                      <span className="tag bp">{b.tier}</span>
+                    </div>
+                    <div className="bd">
+                      <p style={{ margin: "0 0 12px", fontSize: 14 }}>
+                        {b.score != null ? `${b.score} ranked opportunities in your report.` : "Open the full opportunities table."}
+                      </p>
+                      <button type="button" className="btn sm" onClick={() => setPage("blueprint")}>
+                        Open full report
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {!workspace.modules.lex && !workspace.modules.blueprint && !workspace.modules.projects && (
+            <Empty title="Nothing to show yet" body="Once a Lex agent, Blueprint or website build is linked to this email, sections will appear below Your products." />
+          )}
+
+          <div className="g2" style={{ marginTop: 16 }}>
             <div className="card">
               <div className="hd">
                 <h2>Invoices</h2>
@@ -590,7 +686,7 @@ function ClientPortalInner() {
         </>
       )}
 
-      {page === "blueprint" && (
+{page === "blueprint" && (
         <>
           <div className="ph">
             <div>

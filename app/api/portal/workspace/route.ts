@@ -23,6 +23,18 @@ function parseCookie(header: string | null, name: string): string | undefined {
   return undefined;
 }
 
+export type PortalProduct = {
+  id: string;
+  kind: "lex" | "blueprint" | "website" | "care";
+  name: string;
+  detail: string;
+  status: string;
+  statusTone: "ok" | "info" | "warn" | "n";
+  stat: string;
+  openPage: string;
+  icon: "lx" | "bp" | "ws" | "cr";
+};
+
 export async function GET(req: Request) {
   const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
   if (!sessionToken) return Response.json({ authenticated: false }, { status: 401 });
@@ -59,10 +71,45 @@ export async function GET(req: Request) {
     lex: !!lexFirm,
     blueprint: blueprints.length > 0,
     projects: false, // wire when Site Factory / build data is available for this client
+    care: false, // wire when care plan subscription is linked
     invoices: false, // wire when Stripe customer invoices are linked
-    requests: true, // authenticated clients can always open requests (empty state ok)
+    requests: true,
     account: true,
   };
+
+  const products: PortalProduct[] = [];
+  if (lexFirm) {
+    const site = (lexFirm as { website?: string }).website || "";
+    products.push({
+      id: `lex-${lexFirm.id}`,
+      kind: "lex",
+      name: "Lex agent",
+      detail: `Lex ${lexFirm.agentName ? "Professional" : "plan"}${site ? ` · ${site.replace(/^https?:\/\//, "")}` : lexFirm.agentName ? ` · Agent "${lexFirm.agentName}"` : ""}`,
+      status: "Active",
+      statusTone: "ok",
+      stat: "Open Manage agent for settings and test",
+      openPage: "lex-agent",
+      icon: "lx",
+    });
+  }
+  for (const b of blueprints) {
+    const delivered = /deliver|complete|done/i.test(b.status || "");
+    const items = b.assessment?.opportunities?.length;
+    products.push({
+      id: `bp-${b.id}`,
+      kind: "blueprint",
+      name: `${b.tier || "Blueprint"} Blueprint`,
+      detail: delivered
+        ? `Delivered ${new Date(b.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`
+        : `${b.status || "In progress"} · ${b.firmName || "Your Blueprint"}`,
+      status: delivered ? "Delivered" : b.status || "In progress",
+      statusTone: delivered ? "ok" : "info",
+      stat: items != null ? `${items} opportunities in your report` : "Open full report",
+      openPage: "blueprint",
+      icon: "bp",
+    });
+  }
+  // Website / care rows only when real data exists (modules.projects / modules.care).
 
   return Response.json({
     authenticated: true,
@@ -74,6 +121,7 @@ export async function GET(req: Request) {
     agentName: lexFirm?.agentName ?? null,
     plan: lexFirm ? "Professional" : null,
     modules,
+    products,
     blueprints: blueprints.map((b) => ({
       id: b.id,
       tier: b.tier,
@@ -81,6 +129,7 @@ export async function GET(req: Request) {
       createdAt: b.createdAt,
       businessName: b.firmName,
       score: b.assessment?.opportunities?.length ?? null,
+      opportunityCount: b.assessment?.opportunities?.length ?? null,
     })),
     requests: requests.slice(0, 20).map((r) => ({
       id: r.id,
