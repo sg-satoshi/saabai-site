@@ -5,6 +5,19 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+// Per-site CSS patches applied at serve time (small layout fixes to stored HTML).
+const SITE_CSS_PATCHES: Record<string, string> = {
+  // Tributum Law: stack contact cards on phones so they don't overflow.
+  "tributum-law":
+    "@media(max-width:600px){.contact-grid{grid-template-columns:1fr}.contact-card{padding:22px;min-width:0}.contact-value,.contact-value a{overflow-wrap:anywhere}}",
+};
+
+function applyCssPatch(slug: string, html: string): string {
+  const css = SITE_CSS_PATCHES[slug];
+  if (!css || !html.includes("</head>")) return html;
+  return html.replace("</head>", `<style data-saabai-patch>${css}</style></head>`);
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -18,7 +31,7 @@ export async function GET(
 
     if (blob) {
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-      const html = await res.text();
+      const html = applyCssPatch(slug, await res.text());
       return new Response(html, {
         status: 200,
         headers: {
