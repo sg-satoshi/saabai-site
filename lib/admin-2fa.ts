@@ -13,7 +13,9 @@ import * as OTPAuth from "otpauth";
 import { getRedis } from "./redis";
 
 export const PENDING_COOKIE = "saabai_2fa_pending";
+export const TRUST_COOKIE = "saabai_2fa_trust";
 const PENDING_SECONDS = 5 * 60;
+const TRUST_SECONDS = 30 * 24 * 60 * 60;
 const SETUP_TTL = 15 * 60;
 const MAX_FAILS = 5;
 const FAIL_WINDOW = 10 * 60;
@@ -193,4 +195,43 @@ export function pendingCookieHeader(token: string): string {
 export function clearPendingCookieHeader(): string {
   const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
   return `${PENDING_COOKIE}=; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=0`;
+}
+
+
+// ── Trusted device: skip code step for 30 days on this browser ───────────
+function trustSign(payload: string): string {
+  return createHmac("sha256", secretKey()).update(`trust:${payload}`).digest("base64url");
+}
+
+export function createTrustToken(clientId: string): string {
+  const exp = Math.floor(Date.now() / 1000) + TRUST_SECONDS;
+  const payload = `${Buffer.from(clientId).toString("base64url")}.${exp}`;
+  return `${payload}.${trustSign(payload)}`;
+}
+
+export function verifyTrustToken(token: string | undefined, clientId: string): boolean {
+  if (!token) return false;
+  const i = token.lastIndexOf(".");
+  if (i < 0) return false;
+  const payload = token.slice(0, i);
+  const sig = Buffer.from(token.slice(i + 1));
+  const want = Buffer.from(trustSign(payload));
+  if (sig.length !== want.length || !timingSafeEqual(sig, want)) return false;
+  const [id, exp] = payload.split(".");
+  if (!id || Number(exp) < Date.now() / 1000) return false;
+  const decoded = Buffer.from(id, "base64url").toString();
+  const a = Buffer.from(decoded);
+  const b = Buffer.from(clientId);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+  return true;
+}
+
+export function trustCookieHeader(token: string): string {
+  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  return `${TRUST_COOKIE}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${TRUST_SECONDS}`;
+}
+
+export function clearTrustCookieHeader(): string {
+  const secure = process.env.NODE_ENV === "production" ? " Secure;" : "";
+  return `${TRUST_COOKIE}=; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=0`;
 }

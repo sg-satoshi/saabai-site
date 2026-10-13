@@ -1,491 +1,331 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-const C = {
-  bg:      "#f5f5f7",
-  sidebar: "#06081a",
-  border:  "rgba(255,255,255,0.07)",
-  gold:    "#C9A84C",
-  goldBg:  "rgba(201,168,76,0.10)",
-  goldBdr: "rgba(201,168,76,0.22)",
-  text:    "#e2e4f0",
-  muted:   "#505570",
-  dim:     "#2a2d47",
+type NavItem = { label: string; href: string; icon: string; external?: boolean; count?: number; urgent?: boolean };
+type NavGroup = { section: string; items: NavItem[]; collapsible?: boolean };
+
+const ICONS: Record<string, React.ReactNode> = {
+  grid: <><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></>,
+  chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></>,
+  bag: <><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></>,
+  doc: <><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></>,
+  card: <><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></>,
+  box: <><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></>,
+  users: <><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 010 8M22 21c0-3-2-5-4-5.5"/></>,
+  flow: <><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7 7l4 9M17 7l-4 9"/></>,
+  inbox: <><path d="M3 13l3-9h12l3 9v7H3z"/><path d="M3 13h5l1 3h6l1-3h5"/></>,
+  portal: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></>,
+  layers: <><path d="M12 3L2 8l10 5 10-5z"/><path d="M2 13l10 5 10-5M2 18l10 5 10-5"/></>,
+  bot: <><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M9 13h.01M15 13h.01"/></>,
+  mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></>,
+  home: <><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></>,
+  in: <><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 014 0v4M12 10v7"/></>,
+  ig: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></>,
+  scale: <><path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z"/></>,
+  list: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></>,
+  cpu: <><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></>,
+  gear: <><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></>,
+  menu: <><path d="M3 6h18M3 12h18M3 18h18"/></>,
+  bell: <><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></>,
+  plus: <><path d="M12 5v14M5 12h14"/></>,
+  more: <><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>,
+  search: <><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></>,
 };
 
-const EXPANDED_W = 228;
-const COLLAPSED_W = 56;
-
-const NAV: {
-  section: string;
-  items: { label: string; href: string; icon: React.ReactNode; external?: boolean }[];
-}[] = [
-  {
-    section: "Saabai",
-    items: [
-      {
-        label: "Dashboard",
-        href: "/saabai-admin",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1" y="1" width="5" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <rect x="8" y="1" width="5" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <rect x="1" y="8" width="5" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <rect x="8" y="8" width="5" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Orders",
-        href: "/saabai-admin/orders",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1.5" y="2" width="11" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 5.5h5M4.5 8h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Blueprints",
-        href: "/saabai-admin/audits",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M4.5 6h3M6 4.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Site Factory",
-        href: "/saabai-admin/site-factory",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1.5L1.5 5l5.5 3.5 5.5-3.5-5.5-3.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M1.5 9l5.5 3.5 5.5-3.5M1.5 7l5.5 3.5 5.5-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Client Requests",
-        href: "/saabai-admin/requests",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Customers",
-        href: "/saabai-admin/customers",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M1.5 11.5c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            <circle cx="10.5" cy="4.5" r="1.5" stroke="currentColor" strokeWidth="1.3"/>
-            <path d="M12.5 11c0-1.38-.895-2.5-2-2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "CRM",
-        href: "/saabai-admin/crm",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Users",
-        href: "/saabai-admin/users",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M1.5 12c0-3.038 2.462-5.5 5.5-5.5s5.5 2.462 5.5 5.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Products",
-        href: "/saabai-admin/products",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1.2l5 2.6v6.4L7 12.8 2 10.2V3.8l5-2.6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M2 3.8l5 2.6 5-2.6M7 6.4v6.4" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Payments",
-        href: "/saabai-admin/payments",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 7h5M7 5.5v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            <circle cx="4" cy="10.5" r="0.5" fill="currentColor"/>
-            <circle cx="10" cy="10.5" r="0.5" fill="currentColor"/>
-          </svg>
-        ),
-      }
-    ],
-  },
-  {
-    section: "Marketing",
-    items: [
-      {
-        label: "Subscribers",
-        href: "/saabai-admin/subscribers",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M1.5 4L7 8l5.5-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-          </svg>
-        ),
-      },
-      {
-        label: "LinkedIn",
-        href: "/saabai-admin/social/linkedin",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4 5.5V10M4 3.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M7 10V7.5c0-.83.67-1.5 1.5-1.5S10 6.67 10 7.5V10M7 5.5V10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Instagram",
-        href: "/saabai-admin/social/instagram",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1" y="1" width="12" height="12" rx="3" stroke="currentColor" strokeWidth="1.4"/>
-            <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.4"/>
-            <circle cx="10.5" cy="3.5" r="0.75" fill="currentColor"/>
-          </svg>
-        ),
-      }
-    ],
-  },
-  {
-    section: "Lex",
-    items: [
-      {
-        label: "Clients",
-        href: "/saabai-admin/lex-clients",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 7h5M4.5 9.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            <path d="M4.5 3V2.5a1 1 0 011-1h3a1 1 0 011 1V3" stroke="currentColor" strokeWidth="1.3"/>
-          </svg>
-        ),
-      },
-      {
-        label: "LLM Config",
-        href: "/saabai-admin/lex-settings",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.93 2.93l1.06 1.06M10.01 10.01l1.06 1.06M2.93 11.07l1.06-1.06M10.01 3.99l1.06-1.06" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Client Portal",
-        href: "/client-portal",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1.5H3a1.5 1.5 0 00-1.5 1.5v8A1.5 1.5 0 003 12.5h8a1.5 1.5 0 001.5-1.5V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M9 1.5h3.5V5M12.5 1.5l-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        ),
-        external: true,
-      }
-    ],
-  },
-
-  {
-    section: "Other",
-    items: [
-      {
-        label: "AI Agents",
-        href: "/ai-agent/portal",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-            <path d="M4.5 7h5M4.5 9.5h2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            <path d="M4.5 3V2a1 1 0 011-1h3a1 1 0 011 1v1" stroke="currentColor" strokeWidth="1.3"/>
-          </svg>
-        ),
-      },
-      {
-        label: "Wholesale Leads",
-        href: "/saabai-admin/wholesale-leads",
-        icon: (
-          <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-            <path d="M2 2h10v10H2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-            <path d="M2 6h10M6 2v10" stroke="currentColor" strokeWidth="1.3"/>
-            <circle cx="5" cy="9" r="0.5" fill="currentColor"/>
-            <circle cx="9" cy="9" r="0.5" fill="currentColor"/>
-          </svg>
-        ),
-      }
-    ],
-  },
-];
-
-
-
-function CollapseIcon({ collapsed }: { collapsed: boolean }) {
+function Icon({ name }: { name: string }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      {collapsed
-        ? <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-        : <path d="M9 2.5L4.5 7 9 11.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      }
+    <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.6">
+      {ICONS[name]}
     </svg>
   );
 }
 
-function Sidebar({ activePath, collapsed, onToggle }: {
-  activePath: string;
-  collapsed: boolean;
-  onToggle: () => void;
+const NAV: NavGroup[] = [
+  {
+    section: "Overview",
+    items: [
+      { label: "Dashboard", href: "/saabai-admin", icon: "grid" },
+      { label: "Analytics", href: "/saabai-admin/analytics", icon: "chart" },
+    ],
+  },
+  {
+    section: "Sales",
+    items: [
+      { label: "Orders", href: "/saabai-admin/orders", icon: "bag" },
+      { label: "Blueprints", href: "/saabai-admin/audits", icon: "doc" },
+      { label: "Payments", href: "/saabai-admin/payments", icon: "card" },
+      { label: "Products", href: "/saabai-admin/products", icon: "box" },
+    ],
+  },
+  {
+    section: "Clients",
+    items: [
+      { label: "Customers", href: "/saabai-admin/customers", icon: "users" },
+      { label: "CRM", href: "/saabai-admin/crm", icon: "flow" },
+      { label: "Client Requests", href: "/saabai-admin/requests", icon: "inbox" },
+      { label: "Client Portal", href: "/client-portal", icon: "portal", external: true },
+    ],
+  },
+  {
+    section: "Build",
+    items: [
+      { label: "Site Factory", href: "/saabai-admin/site-factory", icon: "layers" },
+      { label: "AI Agents", href: "/ai-agent/portal", icon: "bot", external: true },
+    ],
+  },
+  {
+    section: "Growth",
+    collapsible: true,
+    items: [
+      { label: "Subscribers", href: "/saabai-admin/subscribers", icon: "mail" },
+      { label: "Wholesale Leads", href: "/saabai-admin/wholesale-leads", icon: "home" },
+      { label: "LinkedIn", href: "/saabai-admin/social/linkedin", icon: "in" },
+      { label: "Instagram", href: "/saabai-admin/social/instagram", icon: "ig" },
+    ],
+  },
+  {
+    section: "Lex",
+    collapsible: true,
+    items: [
+      { label: "Lex Clients", href: "/saabai-admin/lex-clients", icon: "scale" },
+      { label: "Lex Orders", href: "/saabai-admin/orders?kind=lex", icon: "list" },
+      { label: "LLM Config", href: "/saabai-admin/lex-settings", icon: "cpu" },
+    ],
+  },
+  {
+    section: "Settings",
+    collapsible: true,
+    items: [
+      { label: "Users", href: "/saabai-admin/users", icon: "users" },
+      { label: "Security", href: "/saabai-admin/security", icon: "gear" },
+      { label: "Changelog", href: "/saabai-changelog", icon: "doc", external: true },
+    ],
+  },
+];
+
+function isActive(pathname: string, href: string) {
+  const path = href.split("?")[0];
+  if (path === "/saabai-admin") return pathname === "/saabai-admin";
+  return pathname === path || pathname.startsWith(path + "/");
+}
+
+function NavLinks({
+  pathname,
+  onNavigate,
+  collapsedGroups,
+  toggleGroup,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  collapsedGroups: Record<string, boolean>;
+  toggleGroup: (s: string) => void;
 }) {
-  const w = collapsed ? COLLAPSED_W : EXPANDED_W;
-
   return (
-    <div style={{
-      width: w,
-      minHeight: "100vh",
-      background: C.sidebar,
-      borderRight: `1px solid ${C.border}`,
-      position: "fixed",
-      left: 0, top: 0, bottom: 0,
-      display: "flex",
-      flexDirection: "column",
-      zIndex: 100,
-      overflowY: "auto",
-      overflowX: "hidden",
-      transition: "width 0.22s cubic-bezier(.4,0,.2,1)",
-    }}>
-
-      {/* Logo */}
-      <div style={{
-        height: 60,
-        padding: collapsed ? "0 12px" : "0 20px",
-        borderBottom: `1px solid ${C.border}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: collapsed ? "center" : "space-between",
-        flexShrink: 0,
-      }}>
-        {collapsed ? (
-          <a href="/saabai-admin" title="Saabai Admin" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, background: C.goldBg, border: `1px solid ${C.goldBdr}`, textDecoration: "none" }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: C.gold, letterSpacing: "-0.02em" }}>S</span>
-          </a>
-        ) : (
-          <>
-            <a href="/saabai-admin" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/saabai-logo-full.png" alt="Saabai" style={{ height: 26, width: "auto", opacity: 0.92 }} />
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: C.gold, background: C.goldBg, border: `1px solid ${C.goldBdr}`, padding: "2px 7px", borderRadius: 4 }}>
-                Admin
-              </span>
-            </a>
-          </>
-        )}
-      </div>
-
-      {/* Nav */}
-      <div style={{ flex: 1, padding: collapsed ? "10px 8px" : "12px 10px", overflowY: "auto" }}>
-        {NAV.map((section, si) => (
-          <div key={section.section} style={{ marginBottom: collapsed ? 4 : 20 }}>
-            {!collapsed ? (
-              <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 6px 5px" }}>
-                {section.section}
-              </p>
-            ) : si > 0 ? (
-              <div style={{ height: 1, background: C.border, margin: "6px 4px 8px" }} />
-            ) : null}
-
-            {section.items.map(item => {
-              const active = activePath === item.href || (item.href !== "/saabai-admin" && activePath.startsWith(item.href));
-              return (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target={item.external ? "_blank" : undefined}
-                  rel={item.external ? "noopener noreferrer" : undefined}
-                  title={collapsed ? item.label : undefined}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 9,
-                    padding: collapsed ? "9px 0" : "7px 10px",
-                    marginBottom: 1,
-                    borderRadius: 8,
-                    textDecoration: "none",
-                    background: active ? C.goldBg : "transparent",
-                    border: `1px solid ${active ? C.goldBdr : "transparent"}`,
-                    color: active ? C.gold : "#8a90b0",
-                    fontSize: 13,
-                    fontWeight: active ? 600 : 400,
-                    transition: "all 0.12s ease",
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                  }}
-                  onMouseEnter={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                      e.currentTarget.style.color = C.text;
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!active) {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#8a90b0";
-                    }
-                  }}
-                >
-                  <span style={{ opacity: active ? 1 : 0.6, flexShrink: 0, display: "flex", alignItems: "center" }}>{item.icon}</span>
-                  {!collapsed && (
-                    <>
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>
-                      {item.external && (
-                        <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ opacity: 0.35, flexShrink: 0 }}>
-                          <path d="M1 8L8 1M5 1h3v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </>
-                  )}
-                </a>
-              );
-            })}
+    <>
+      {NAV.map((g) => {
+        const collapsed = g.collapsible && collapsedGroups[g.section];
+        return (
+          <div key={g.section}>
+            <button
+              type="button"
+              className="grp"
+              style={{
+                width: "100%",
+                background: "none",
+                border: 0,
+                textAlign: "left",
+                cursor: g.collapsible ? "pointer" : "default",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+              onClick={() => g.collapsible && toggleGroup(g.section)}
+            >
+              <span>{g.section}</span>
+              {g.collapsible && (
+                <span className="num" style={{ fontSize: 11, color: "#8f95c0" }}>
+                  {g.items.length} {collapsed ? ">" : "v"}
+                </span>
+              )}
+            </button>
+            {!collapsed &&
+              g.items.map((item) => {
+                const on = isActive(pathname, item.href);
+                const inner = (
+                  <>
+                    <Icon name={item.icon} />
+                    {item.label}
+                    {item.count != null && (
+                      <span className={`ct ${item.urgent ? "t" : ""}`}>{item.count}</span>
+                    )}
+                  </>
+                );
+                if (item.external) {
+                  return (
+                    <a key={item.href + item.label} className={`it ${on ? "on" : ""}`} href={item.href} onClick={onNavigate}>
+                      {inner}
+                    </a>
+                  );
+                }
+                return (
+                  <Link key={item.href + item.label} className={`it ${on ? "on" : ""}`} href={item.href} onClick={onNavigate}>
+                    {inner}
+                  </Link>
+                );
+              })}
           </div>
-        ))}
-      </div>
-
-      {/* Collapse toggle */}
-      <div style={{ padding: collapsed ? "10px 8px" : "10px 10px", borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
-        <button
-          onClick={onToggle}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          style={{
-            width: "100%",
-            padding: collapsed ? "8px 0" : "7px 10px",
-            borderRadius: 8,
-            border: `1px solid ${C.border}`,
-            background: "transparent",
-            color: C.muted,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: collapsed ? "center" : "flex-start",
-            gap: 9,
-            fontSize: 12,
-            transition: "all 0.12s",
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLElement).style.color = C.text; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = C.muted; }}
-        >
-          <CollapseIcon collapsed={collapsed} />
-          {!collapsed && <span>Collapse</span>}
-        </button>
-      </div>
-
-      {/* Profile footer */}
-      <div style={{
-        padding: collapsed ? "10px 8px" : "12px 14px",
-        borderTop: `1px solid ${C.border}`,
-        display: "flex",
-        flexDirection: collapsed ? "column" : "row",
-        alignItems: "center",
-        gap: collapsed ? 6 : 10,
-        justifyContent: collapsed ? "center" : "flex-start",
-        flexShrink: 0,
-      }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%",
-          background: `linear-gradient(135deg, ${C.gold}, #9a6f1e)`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 12, fontWeight: 800, color: "#07091a", flexShrink: 0,
-        }}>
-          S
-        </div>
-        {!collapsed && (
-          <>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Saabai Admin</p>
-              <p style={{ margin: 0, fontSize: 10, color: C.muted }}>hello@saabai.ai</p>
-            </div>
-          </>
-        )}
-        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
-          <button
-            type="submit"
-            title="Sign out"
-            style={{
-              background: "none", border: collapsed ? `1px solid ${C.border}` : "none",
-              cursor: "pointer", color: C.muted,
-              fontSize: collapsed ? 11 : 10,
-              padding: collapsed ? "6px 4px" : "2px 4px",
-              lineHeight: 1, borderRadius: 6,
-              display: "flex", alignItems: "center", gap: 4,
-            }}
-          >
-            {collapsed ? "Logout" : "Sign out"}
-          </button>
-        </form>
-      </div>
-    </div>
+        );
+      })}
+    </>
   );
 }
 
+const BOTTOM: { label: string; href: string; icon: string; more?: boolean }[] = [
+  { label: "Home", href: "/saabai-admin", icon: "grid" },
+  { label: "Orders", href: "/saabai-admin/orders", icon: "bag" },
+  { label: "Clients", href: "/saabai-admin/customers", icon: "users" },
+  { label: "Build", href: "/saabai-admin/site-factory", icon: "layers" },
+  { label: "More", href: "#more", icon: "more", more: true },
+];
+
 export default function AdminShell({
-  children,
   activePath,
+  children,
+  title,
 }: {
+  activePath?: string;
   children: React.ReactNode;
-  activePath: string;
+  title?: string;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname() || activePath || "/saabai-admin";
+  const [drawer, setDrawer] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
+    Growth: true,
+    Lex: true,
+    Settings: true,
+  });
 
   useEffect(() => {
-    setMounted(true);
-    try {
-      if (localStorage.getItem("admin:sidebar:collapsed") === "1") setCollapsed(true);
-    } catch { /* ignore */ }
-  }, []);
+    setDrawer(false);
+  }, [pathname]);
 
-  function toggle() {
-    const next = !collapsed;
-    setCollapsed(next);
-    try { localStorage.setItem("admin:sidebar:collapsed", next ? "1" : "0"); } catch { /* ignore */ }
+  const crumb =
+    title ||
+    NAV.flatMap((g) => g.items).find((i) => isActive(pathname, i.href))?.label ||
+    "Dashboard";
+
+  function toggleGroup(s: string) {
+    setCollapsedGroups((c) => ({ ...c, [s]: !c[s] }));
   }
 
-  const sidebarW = collapsed ? COLLAPSED_W : EXPANDED_W;
+  const sideInner = (
+    <>
+      <div className="brand">
+        <img src="/brand/saabai-logo.png" alt="Saabai" />
+      </div>
+      <div className="mc">Mission Control</div>
+      <div className="search">
+        <span>Search orders, clients</span>
+        <kbd className="num">⌘K</kbd>
+      </div>
+      <NavLinks
+        pathname={pathname}
+        onNavigate={() => setDrawer(false)}
+        collapsedGroups={collapsedGroups}
+        toggleGroup={toggleGroup}
+      />
+      <div className="me">
+        <div className="av">SG</div>
+        <div style={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}>
+          <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>Shane Goldberg</div>
+          <div style={{ fontSize: 12, color: "#8f95c0" }}>Owner · 2FA on</div>
+        </div>
+        <a href="/api/auth/logout" style={{ color: "#8f95c0", fontSize: 12, textDecoration: "none" }}>
+          Sign out
+        </a>
+      </div>
+    </>
+  );
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: C.bg,
-      display: "flex",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    }}>
-      <Sidebar activePath={activePath} collapsed={collapsed} onToggle={toggle} />
-      <div style={{
-        marginLeft: mounted ? sidebarW : EXPANDED_W,
-        flex: 1,
-        minWidth: 0,
-        transition: mounted ? "margin-left 0.22s cubic-bezier(.4,0,.2,1)" : "none",
-      }}>
-        {children}
+    <div className="app">
+      <aside className="side dt">{sideInner}</aside>
+
+      <div className="main">
+        <div className="top dt">
+          <div className="crumb">
+            <b>{crumb}</b>
+          </div>
+          <div className="tools">
+            <div className="inp" style={{ width: 260 }}>
+              <Icon name="search" />
+              Search
+              <span className="num" style={{ marginLeft: "auto", fontSize: 11 }}>
+                ⌘K
+              </span>
+            </div>
+            <button type="button" className="btn gh" style={{ padding: "0 8px" }} aria-label="Notifications">
+              <Icon name="bell" />
+            </button>
+            <Link href="/saabai-admin/orders" className="btn pri" style={{ textDecoration: "none" }}>
+              <Icon name="plus" />
+              New order
+            </Link>
+          </div>
+        </div>
+
+        <div className="mtop mo">
+          <button type="button" aria-label="Open menu" onClick={() => setDrawer(true)} style={{ background: "none", border: 0, color: "#fff", padding: 4 }}>
+            <Icon name="menu" />
+          </button>
+          <img src="/brand/saabai-logo.png" alt="Saabai" />
+          <button type="button" aria-label="Notifications" style={{ background: "none", border: 0, color: "#fff", padding: 4 }}>
+            <Icon name="bell" />
+          </button>
+        </div>
+
+        <div className="pg">{children}</div>
+      </div>
+
+      <nav className="bbar mo" aria-label="Mobile primary">
+        {BOTTOM.map((b) =>
+          b.more ? (
+            <button
+              key={b.label}
+              type="button"
+              onClick={() => setDrawer(true)}
+              style={{ background: "none", border: 0, padding: 0, font: "inherit", cursor: "pointer" }}
+            >
+              <div>
+                <Icon name={b.icon} />
+                {b.label}
+              </div>
+            </button>
+          ) : (
+            <Link key={b.label} href={b.href} className={isActive(pathname, b.href) ? "on" : ""}>
+              <Icon name={b.icon} />
+              {b.label}
+            </Link>
+          ),
+        )}
+      </nav>
+
+      <div className={`mc-drawer mo ${drawer ? "open" : ""}`} role="dialog" aria-modal={drawer} aria-label="Menu">
+        <div className="mc-drawer-backdrop" onClick={() => setDrawer(false)} />
+        <div className="mc-drawer-panel">
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+            <div className="mc" style={{ paddingBottom: 0, flex: 1 }}>
+              Mission Control
+            </div>
+            <button type="button" className="mc-drawer-close" aria-label="Close menu" onClick={() => setDrawer(false)}>
+              ×
+            </button>
+          </div>
+          {sideInner}
+        </div>
       </div>
     </div>
   );

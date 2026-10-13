@@ -5,29 +5,29 @@ import { useSearchParams } from "next/navigation";
 import AdminShell from "../AdminSidebar";
 
 const C = {
-  bg:       "#f5f5f7",
-  card:     "#ffffff",
-  surface:  "#f3f4f6",
-  surfaceHi:"#e9eaec",
-  border:   "rgba(0,0,0,0.08)",
-  borderHi: "rgba(0,0,0,0.12)",
-  text:     "#111827",
-  muted:    "#9ca3af",
-  dim:      "#e5e7eb",
-  gold:     "#b45309",
-  goldBg:   "rgba(180,83,9,0.08)",
-  goldBdr:  "rgba(180,83,9,0.25)",
-  goldHi:   "#d97706",
-  green:    "#16a34a",
-  greenBg:  "rgba(22,163,74,0.08)",
-  blue:     "#2563eb",
-  blueBg:   "rgba(37,99,235,0.08)",
-  orange:   "#ea580c",
-  orangeBg: "rgba(234,88,12,0.08)",
-  teal:     "#0891b2",
-  tealBg:   "rgba(8,145,178,0.08)",
-  amber:    "#d97706",
-  red:      "#dc2626",
+  bg:       "var(--n-50)",
+  card:     "var(--n-0)",
+  surface:  "var(--n-50)",
+  surfaceHi:"var(--n-100)",
+  border:   "var(--n-200)",
+  borderHi: "var(--n-300)",
+  text:     "var(--n-900)",
+  muted:    "var(--n-500)",
+  dim:      "var(--n-100)",
+  gold:     "var(--gold-700)",
+  goldBg:   "var(--gold-50)",
+  goldBdr:  "#ecdcae",
+  goldHi:   "var(--warn)",
+  green:    "var(--ok)",
+  greenBg:  "var(--ok-bg)",
+  blue:     "var(--info)",
+  blueBg:   "var(--info-bg)",
+  orange:   "var(--warn)",
+  orangeBg: "var(--warn-bg)",
+  teal:     "var(--teal-700)",
+  tealBg:   "var(--teal-50)",
+  amber:    "var(--warn)",
+  red:      "var(--bad)",
 };
 
 const TYPE_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -70,12 +70,12 @@ interface CustomerNote {
 }
 
 function fmtAud(cents: number) {
-  if (!cents) return "\u2014";
+  if (!cents) return "-";
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
 function fmtDate(ts: number) {
-  if (!ts) return "\u2014";
+  if (!ts) return "-";
   return new Date(ts).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -447,36 +447,33 @@ function CustomersInner() {
 
   return (
     <AdminShell activePath="/saabai-admin/customers">
-      <div style={{ borderBottom: `1px solid ${C.border}`, padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="ph">
         <div>
-          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>
-            {filterType !== "all" ? `${TYPE_LABEL[filterType] ?? filterType} Customers` : "Customers"}
-          </h1>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: C.muted }}>
+          <h1>{filterType !== "all" ? `${TYPE_LABEL[filterType] ?? filterType} Customers` : "Customers"}</h1>
+          <div className="sub">
             {filterType !== "all"
-              ? `Showing ${TYPE_LABEL[filterType] ?? filterType} customers only \u00b7 `
-              : "Unified directory \u2014 all clients across Lex, Site Factory, LeadGen, Rex, and Stripe"}
+              ? `Showing ${TYPE_LABEL[filterType] ?? filterType} customers only · `
+              : "Unified directory of clients across Lex, Site Factory, LeadGen and Stripe"}
             {filterType !== "all" && (
-              <a href="/saabai-admin/customers" style={{ color: C.teal, textDecoration: "none", fontWeight: 600 }}>View all</a>
+              <a href="/saabai-admin/customers" style={{ color: "var(--teal-700)", fontWeight: 600 }}>View all</a>
             )}
-          </p>
+          </div>
         </div>
         <ExportButton customers={filtered} />
       </div>
 
-      <div style={{ padding: "28px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="kpis">
           {[
             { label: "Total customers", value: customers.length.toString(), sub: "across all projects" },
             { label: "Active", value: activeCount.toString(), sub: "live subscriptions" },
-            { label: "MRR", value: fmtAud(totalMrr), sub: "monthly recurring", highlight: true },
+            { label: "MRR", value: fmtAud(totalMrr), sub: "monthly recurring" },
             { label: "Total revenue", value: fmtAud(totalRevenue), sub: "all time" },
           ].map(s => (
-            <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "18px 20px" }}>
-              <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, letterSpacing: 1, color: C.muted, textTransform: "uppercase" as const }}>{s.label}</p>
-              <p style={{ margin: "0 0 2px", fontSize: 22, fontWeight: 800, color: s.highlight ? C.gold : C.text, letterSpacing: -0.5 }}>{s.value}</p>
-              <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
+            <div key={s.label} className="card kpi">
+              <div className="l">{s.label}</div>
+              <div className="v num">{s.value}</div>
+              <div className="d muted">{s.sub}</div>
             </div>
           ))}
         </div>
@@ -533,7 +530,7 @@ function CustomersInner() {
           </div>
         </div>
 
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+        <div className="card">
           {loading ? (
             <p style={{ margin: 0, padding: "32px", textAlign: "center", color: C.muted, fontSize: 13 }}>Loading customers\u2026</p>
           ) : error ? (
@@ -559,13 +556,13 @@ function CustomersInner() {
                   <tr key={c.id} style={{ background: i % 2 === 0 ? "transparent" : "rgba(0,0,0,0.02)", cursor: "pointer" }} onClick={() => setSelected(c)}>
                     <td style={td}>
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.text }}>{c.name}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>{c.email || "\u2014"}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: C.muted }}>{c.email || "-"}</p>
                     </td>
                     <td style={td}><TypeBadge type={c.type} /></td>
                     <td style={td}><ProjectBadge project={c.project} /></td>
                     <td style={td}><StatusBadge status={c.status} /></td>
-                    <td style={{ ...td, fontWeight: 600, color: c.mrr > 0 ? C.green : C.muted }}>{c.mrr > 0 ? fmtAud(c.mrr) : "\u2014"}</td>
-                    <td style={{ ...td, fontWeight: 700, color: c.revenue > 0 ? C.gold : C.muted }}>{c.revenue > 0 ? fmtAud(c.revenue) : "\u2014"}</td>
+                    <td style={{ ...td, fontWeight: 600, color: c.mrr > 0 ? C.green : C.muted }}>{c.mrr > 0 ? fmtAud(c.mrr) : "-"}</td>
+                    <td style={{ ...td, fontWeight: 700, color: c.revenue > 0 ? C.gold : C.muted }}>{c.revenue > 0 ? fmtAud(c.revenue) : "-"}</td>
                     <td style={{ ...td, color: C.muted }}>{fmtDate(c.createdAt)}</td>
                     <td style={{ ...td, textAlign: "right" as const }}>
                       <span style={{ fontSize: 11, color: C.gold, fontWeight: 600 }}>View \u2192</span>

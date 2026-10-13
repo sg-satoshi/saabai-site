@@ -17,22 +17,22 @@ function isTestPortalRequest(email: string) {
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 const C = {
-  bg:           "#f5f5f7",
-  sidebar:      "#08062a",
-  card:         "#ffffff",
-  surface:      "#f3f4f6",
-  surfaceHi:    "#e9eaec",
-  border:       "rgba(0,0,0,0.08)",
-  borderBright: "rgba(0,0,0,0.12)",
-  text:         "#111827",
-  muted:        "#9ca3af",
-  dim:          "#e5e7eb",
-  teal:         "#0891b2",
-  orange:       "#ea580c",
-  blue:         "#2563eb",
-  amber:        "#d97706",
-  green:        "#16a34a",
-  red:          "#dc2626",
+  bg:           "var(--n-50)",
+  sidebar:      "var(--navy-900)",
+  card:         "var(--n-0)",
+  surface:      "var(--n-50)",
+  surfaceHi:    "var(--n-100)",
+  border:       "var(--n-200)",
+  borderBright: "var(--n-300)",
+  text:         "var(--n-900)",
+  muted:        "var(--n-500)",
+  dim:          "var(--n-100)",
+  teal:         "var(--teal-700)",
+  orange:       "#a15c07",
+  blue:         "var(--info)",
+  amber:        "var(--warn)",
+  green:        "var(--ok)",
+  red:          "var(--bad)",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -853,6 +853,7 @@ export default function AdminClient({
 }) {
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
   const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
+  const [orderStats, setOrderStats] = useState<{ total: number; lex: number; blueprint: number; revenueCents: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const today = new Date().toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -866,317 +867,192 @@ export default function AdminClient({
       .then(r => r.json())
       .then(data => { if (typeof data.todayCount === "number") setBpStats(data); })
       .catch(() => {});
+    fetch("/api/admin/orders")
+      .then(r => r.json())
+      .then(data => {
+        const orders = (data.orders || []) as { kind: string; amountTotal: number | null }[];
+        const lex = orders.filter(o => o.kind === "lex_subscription").length;
+        const blueprint = orders.filter(o => o.kind === "blueprint").length;
+        const revenueCents = orders.reduce((s, o) => s + (o.amountTotal || 0), 0);
+        setOrderStats({ total: orders.length, lex, blueprint, revenueCents });
+      })
+      .catch(() => {});
   }, []);
 
   return (
     <AdminShell activePath="/saabai-admin">
-      {/* Main */}
-      <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <div className="ph">
+        <div>
+          <h1>{getGreeting()}, Shane</h1>
+          <div className="sub">{today} · All figures AUD, incl. GST</div>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <a className="btn" href="/saabai-admin/orders">View orders</a>
+          <a className="btn pri" href="/saabai-admin/payments">Take payment</a>
+        </div>
+      </div>
 
-        {/* Top bar */}
-        <div style={{
-          position: "sticky", top: 0, zIndex: 50,
-          background: "rgba(245,245,247,0.92)",
-          backdropFilter: "blur(12px)",
-          borderBottom: `1px solid ${C.border}`,
-          padding: "0 40px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          height: 56,
-        }}>
-          <p style={{ margin: 0, fontSize: 12, color: C.muted }}>{today}</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 12, color: C.muted }}>Saabai Admin</span>
+      <div className="kpis">
+        <div className="card kpi">
+          <div className="l">Orders (all time)</div>
+          <div className="v num">{orderStats ? String(orderStats.total) : "-"}</div>
+          <div className="d muted">
+            {orderStats ? `${orderStats.blueprint} Blueprint · ${orderStats.lex} Lex` : "Loading..."}
           </div>
         </div>
+        <div className="card kpi">
+          <div className="l">Order revenue</div>
+          <div className="v num">{orderStats ? `$${(orderStats.revenueCents / 100).toLocaleString("en-AU")}` : "-"}</div>
+          <div className="d muted">Blueprint + Lex sales</div>
+        </div>
+        <div className="card kpi">
+          <div className="l">Blueprints, all paid</div>
+          <div className="v num">{bpStats ? String(bpStats.allCount) : "-"}</div>
+          <div className="d muted">{bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "Loading..."}</div>
+        </div>
+        <div className="card kpi">
+          <div className="l">Lex firms</div>
+          <div className="v num">{lexStats ? String(lexStats.total) : "-"}</div>
+          <div className="d muted">{lexStats ? `${lexStats.configured} configured` : "Loading..."}</div>
+        </div>
+      </div>
 
-        {/* Content */}
-        <div style={{ padding: "36px 40px 80px", maxWidth: 1160, width: "100%", boxSizing: "border-box" }}>
+      {pendingRequests.filter(r => !isTestPortalRequest(r.email)).length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <SectionLabel>Access Requests</SectionLabel>
+          <AccessRequests initial={pendingRequests} />
+        </div>
+      )}
 
-          {/* Greeting */}
-          <div style={{ marginBottom: 24 }}>
-            <h1 style={{ margin: "0 0 6px", fontSize: 36, fontWeight: 800, color: C.text, letterSpacing: -1 }}>
-              {getGreeting()}, Shane.
-            </h1>
-            <p style={{ margin: 0, fontSize: 14, color: C.muted }}>Here&rsquo;s what&rsquo;s happening across your ventures.</p>
-          </div>
-
-          {/* Access requests */}
-          {pendingRequests.length > 0 && (
-            <div style={{ marginBottom: 40 }}>
-              <SectionLabel>Access Requests</SectionLabel>
-              <AccessRequests initial={pendingRequests} />
+      <div className="g2">
+        <div className="card">
+          <div className="hd">
+            <div>
+              <h2>Blueprint sales</h2>
+              <div className="sub">Today · week · lifetime</div>
             </div>
-          )}
-
-
-          {/* Blueprint sales */}
-          <div style={{ marginBottom: 24 }}>
-            <SectionLabel>Blueprint sales</SectionLabel>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
-              {[
-                {
-                  label: "Today",
-                  value: bpStats ? String(bpStats.todayCount) : "-",
-                  sub: bpStats ? `$${(bpStats.todayRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
-                },
-                {
-                  label: "This week",
-                  value: bpStats ? String(bpStats.weekCount) : "-",
-                  sub: bpStats ? `$${(bpStats.weekRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
-                },
-                {
-                  label: "All paid",
-                  value: bpStats ? String(bpStats.allCount) : "-",
-                  sub: bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "Loading...",
-                },
-                {
-                  label: "Open Orders",
-                  value: "View",
-                  sub: "Blueprint + Lex in one place",
-                },
-              ].map((s) => (
-                <a
-                  key={s.label}
-                  href="/saabai-admin/orders"
-                  style={{
-                    background: "rgba(15,118,110,0.06)",
-                    border: "1px solid rgba(15,118,110,0.18)",
-                    borderRadius: 12,
-                    padding: "18px 20px",
-                    textDecoration: "none",
-                    display: "block",
-                  }}
-                >
-                  <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#0f766e" }}>{s.value}</p>
-                  <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{s.label}</p>
-                  <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
-                </a>
-              ))}
-            </div>
+            <a className="btn sm" href="/saabai-admin/orders">Open Orders</a>
           </div>
-
-          {/* ── Lex Platform metrics ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+          <div className="bd" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
             {[
-              {
-                label: "Lex Firms",
-                value: lexStats ? String(lexStats.total) : "—",
-                sub: "Connected to platform",
-                color: "#C9A84C",
-                bg: "rgba(201,168,76,0.08)",
-                bdr: "rgba(201,168,76,0.20)",
-                href: "/saabai-admin/lex-clients",
-              },
-              {
-                label: "Configured",
-                value: lexStats ? String(lexStats.configured) : "—",
-                sub: "Agent setup complete",
-                color: C.green,
-                bg: "rgba(34,197,94,0.08)",
-                bdr: "rgba(34,197,94,0.22)",
-                href: "/saabai-admin/lex-clients",
-              },
-              {
-                label: "Custom LLM Keys",
-                value: lexStats ? String(lexStats.withLlmKey) : "—",
-                sub: "Using own API key",
-                color: C.blue,
-                bg: "rgba(77,142,246,0.08)",
-                bdr: "rgba(77,142,246,0.22)",
-                href: "/saabai-admin/lex-settings",
-              },
-              {
-                label: "Orders",
-                value: "Open",
-                sub: "Blueprint + Lex sales",
-                color: C.orange,
-                bg: "rgba(255,102,53,0.08)",
-                bdr: "rgba(255,102,53,0.20)",
-                href: "/saabai-admin/orders",
-              },
+              { label: "Today", value: bpStats ? String(bpStats.todayCount) : "-", sub: bpStats ? `$${(bpStats.todayRevenue / 100).toLocaleString("en-AU")}` : "" },
+              { label: "This week", value: bpStats ? String(bpStats.weekCount) : "-", sub: bpStats ? `$${(bpStats.weekRevenue / 100).toLocaleString("en-AU")}` : "" },
+              { label: "All paid", value: bpStats ? String(bpStats.allCount) : "-", sub: bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")}` : "" },
             ].map(s => (
-              <a
-                key={s.label}
-                href={s.href}
-                style={{
-                  background: s.bg, border: `1px solid ${s.bdr}`,
-                  borderRadius: 12, padding: "18px 20px",
-                  textDecoration: "none", display: "block",
-                }}
-              >
-                <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</p>
-                <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{s.label}</p>
-                <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
-              </a>
+              <div key={s.label}>
+                <div className="muted" style={{ fontSize: 12 }}>{s.label}</div>
+                <div className="num" style={{ fontSize: 22, fontWeight: 500 }}>{s.value}</div>
+                <div className="muted" style={{ fontSize: 12 }}>{s.sub}</div>
+              </div>
             ))}
           </div>
-
-          {/* Product cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginBottom: 36 }}>
-            <ProductCard
-              name="Lex"
-              status="BETA"
-              statusColor={C.blue}
-              accent={C.blue}
-              description="AI Legal Assistant"
-              stats={[
-                { label: "Firms", value: lexStats ? String(lexStats.total) : "-" },
-                { label: "Configured", value: lexStats ? String(lexStats.configured) : "-" },
-                { label: "LLM keys", value: lexStats ? String(lexStats.withLlmKey) : "-" },
-              ]}
-              linkHref="/saabai-admin/lex-clients"
-              linkLabel="Open Lex clients"
-            />
-            <ProductCard
-              name="Blueprints"
-              status="LIVE"
-              statusColor={C.teal}
-              accent={C.teal}
-              description="Paid Blueprint engagements"
-              stats={[
-                { label: "Today", value: bpStats ? String(bpStats.todayCount) : "-" },
-                { label: "Week", value: bpStats ? String(bpStats.weekCount) : "-" },
-                { label: "All", value: bpStats ? String(bpStats.allCount) : "-" },
-              ]}
-              linkHref="/saabai-admin/audits"
-              linkLabel="Open Blueprints"
-            />
-          </div>
-
-          {/* Client accounts */}
-          {visibleClients.length > 0 && (
-            <div style={{ marginBottom: 40 }}>
-              <SectionLabel>Client Accounts</SectionLabel>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {visibleClients.map(client => (
-                  <ClientCard key={client.id} client={client} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Settings — Lex / All */}
-          {true && (
-            <div style={{ marginBottom: 40 }}>
-              <SectionLabel>Settings</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
-                <a
-                  href="/saabai-admin/lex-settings"
-                  style={{
-                    background: C.card, border: `1px solid ${C.border}`,
-                    borderLeft: "3px solid #4d8ef6",
-                    borderRadius: 14, padding: "20px 22px",
-                    textDecoration: "none", display: "block",
-                    transition: "border-left-color 0.2s",
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#93bbfc"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#4d8ef6"; }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,142,246,0.12)", border: "1px solid rgba(77,142,246,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                      ⚙
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: "#4d8ef6", background: "rgba(77,142,246,0.1)", border: "1px solid rgba(77,142,246,0.25)", padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LEX</span>
-                  </div>
-                  <p style={{ margin: "0 0 5px", fontSize: 14, fontWeight: 800, color: C.text }}>LLM Configuration</p>
-                  <p style={{ margin: "0 0 14px", fontSize: 11, color: C.muted, lineHeight: 1.5 }}>Configure which AI model and API key powers each Lex client. Supports Anthropic, OpenAI, Google Gemini and xAI.</p>
-                  <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#4d8ef6" }}>Open Settings &rarr;</p>
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Social / Subscribers / LinkedIn */}
-          <div id="social" style={{ marginBottom: 40 }}>
-            <SectionLabel>Social Media</SectionLabel>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-              <a
-                href="/saabai-admin/social/linkedin"
-                style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid transparent`, borderRadius: 14, padding: "20px 22px", textDecoration: "none", display: "block", transition: "border-left-color 0.2s, box-shadow 0.2s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#0077b5"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "transparent"; }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: "#0077b5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff" }}>in</div>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: C.green, background: `${C.green}18`, padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LIVE</span>
-                </div>
-                <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: C.text }}>LinkedIn</p>
-                <p style={{ margin: "0 0 16px", fontSize: 11, color: C.muted, lineHeight: 1.5 }}>Post generator, scheduled queue, history</p>
-                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#4da6d4" }}>Open Hub &rarr;</p>
-              </a>
-
-              <a
-                href="/saabai-admin/social/instagram"
-                style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid transparent`, borderRadius: 14, padding: "20px 22px", textDecoration: "none", display: "block", transition: "border-left-color 0.2s, box-shadow 0.2s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#dc2743"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "transparent"; }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: "linear-gradient(135deg, #f09433, #dc2743 50%, #bc1888)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#fff" }}>Ig</div>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: C.teal, background: `${C.teal}18`, padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>LIVE</span>
-                </div>
-                <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: C.text }}>Instagram</p>
-                <p style={{ margin: "0 0 16px", fontSize: 11, color: C.muted, lineHeight: 1.5 }}>Caption AI, queue, scheduled posts</p>
-                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#e86080" }}>Open Hub &rarr;</p>
-              </a>
-
-              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px", opacity: 0.5 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 8, background: "#1877f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#fff", fontFamily: "Georgia, serif" }}>f</div>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: C.muted, background: C.surface, padding: "3px 8px", borderRadius: 20, letterSpacing: 1 }}>SOON</span>
-                </div>
-                <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 800, color: C.text }}>Facebook</p>
-                <p style={{ margin: "0 0 16px", fontSize: 11, color: C.muted, lineHeight: 1.5 }}>Page posts, ad creative, schedule</p>
-                <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Coming soon</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Subscribers */}
-          <div id="subs-hub" style={{ marginBottom: 40 }}>
-            <SectionLabel>Email &amp; Subscribers</SectionLabel>
-            <a
-              href="/saabai-admin/subscribers"
-              style={{ background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid transparent`, borderRadius: 14, padding: "20px 24px", textDecoration: "none", display: "block", transition: "border-left-color 0.2s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "#0891b2"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderLeftColor = "transparent"; }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #00bfa5, #009688)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "#fff" }}>SI</div>
-                  <div>
-                    <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 700, color: C.text }}>Subscriber Intelligence</p>
-                    <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Growth charts, industry breakdown, IP geolocation, CSV export</p>
-                  </div>
-                </div>
-                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: C.teal, whiteSpace: "nowrap" as const }}>Open Dashboard &rarr;</p>
-              </div>
-            </a>
-            <div style={{ marginTop: 14 }}>
-              <SubscriberPanel />
-            </div>
-          </div>
-
-          {/* LinkedIn queue + post */}
-          <div id="linkedin" style={{ marginBottom: 40 }}>
-            <SectionLabel>LinkedIn</SectionLabel>
-            <LinkedInQueue />
-            <div style={{ marginTop: 14 }}>
-              <LinkedInPanel />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div id="actions">
-            <SectionLabel>Actions</SectionLabel>
-          </div>
-
-          {/* Footer */}
-          <p style={{ marginTop: 48, textAlign: "center", fontSize: 11, color: C.muted }}>
-            Saabai Admin &middot; <a href="mailto:hello@saabai.ai" style={{ color: C.teal, textDecoration: "none" }}>hello@saabai.ai</a>
-          </p>
         </div>
-      </main>
+        <div className="card">
+          <div className="hd">
+            <h2>Lex platform</h2>
+            <span className="tag bp">Live</span>
+          </div>
+          <div className="bd">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Firms</div>
+                <div className="num" style={{ fontSize: 22, fontWeight: 500 }}>{lexStats ? lexStats.total : "-"}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Configured</div>
+                <div className="num" style={{ fontSize: 22, fontWeight: 500 }}>{lexStats ? lexStats.configured : "-"}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Custom LLM keys</div>
+                <div className="num" style={{ fontSize: 22, fontWeight: 500 }}>{lexStats ? lexStats.withLlmKey : "-"}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>Lex sales in totals</div>
+                <div className="num" style={{ fontSize: 22, fontWeight: 500 }}>{orderStats ? orderStats.lex : "-"}</div>
+              </div>
+            </div>
+            <a className="btn sm" style={{ marginTop: 14 }} href="/saabai-admin/lex-clients">Open Lex clients</a>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginBottom: 16 }}>
+        <ProductCard
+          name="Lex"
+          status="BETA"
+          statusColor={C.blue}
+          accent={C.blue}
+          description="AI Legal Assistant"
+          stats={[
+            { label: "Firms", value: lexStats ? String(lexStats.total) : "-" },
+            { label: "Configured", value: lexStats ? String(lexStats.configured) : "-" },
+            { label: "LLM keys", value: lexStats ? String(lexStats.withLlmKey) : "-" },
+          ]}
+          linkHref="/saabai-admin/lex-clients"
+          linkLabel="Open Lex clients"
+        />
+        <ProductCard
+          name="Blueprints"
+          status="LIVE"
+          statusColor={C.teal}
+          accent={C.teal}
+          description="Paid Blueprint engagements"
+          stats={[
+            { label: "Today", value: bpStats ? String(bpStats.todayCount) : "-" },
+            { label: "Week", value: bpStats ? String(bpStats.weekCount) : "-" },
+            { label: "All", value: bpStats ? String(bpStats.allCount) : "-" },
+          ]}
+          linkHref="/saabai-admin/audits"
+          linkLabel="Open Blueprints"
+        />
+      </div>
+
+      {visibleClients.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <SectionLabel>Client Accounts</SectionLabel>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {visibleClients.map(client => (
+              <ClientCard key={client.id} client={client} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div id="social" style={{ marginBottom: 24 }}>
+        <SectionLabel>Social Media</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+          <a className="card" href="/saabai-admin/social/linkedin" style={{ textDecoration: "none", padding: 20, display: "block" }}>
+            <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--n-900)" }}>LinkedIn</p>
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>Post generator, scheduled queue, history</p>
+          </a>
+          <a className="card" href="/saabai-admin/social/instagram" style={{ textDecoration: "none", padding: 20, display: "block" }}>
+            <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--n-900)" }}>Instagram</p>
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>Caption AI, queue, scheduled posts</p>
+          </a>
+          <a className="card" href="/saabai-admin/subscribers" style={{ textDecoration: "none", padding: 20, display: "block" }}>
+            <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--n-900)" }}>Subscribers</p>
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>Growth charts, industry breakdown, CSV</p>
+          </a>
+        </div>
+      </div>
+
+      <div id="subs-hub" style={{ marginBottom: 24 }}>
+        <SectionLabel>Email and Subscribers</SectionLabel>
+        <SubscriberPanel />
+      </div>
+
+      <div id="linkedin" style={{ marginBottom: 24 }}>
+        <SectionLabel>LinkedIn</SectionLabel>
+        <LinkedInQueue />
+        <div style={{ marginTop: 14 }}>
+          <LinkedInPanel />
+        </div>
+      </div>
+
+      <p style={{ marginTop: 32, textAlign: "center", fontSize: 12, color: "var(--n-500)" }}>
+        Saabai Mission Control · <a href="mailto:hello@saabai.ai" style={{ color: "var(--teal-700)" }}>hello@saabai.ai</a>
+      </p>
     </AdminShell>
   );
 }
+

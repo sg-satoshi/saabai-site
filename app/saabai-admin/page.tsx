@@ -39,9 +39,9 @@ export default async function SaabaiAdminPage() {
   return (
     <>
       {!twoFactorOn && (
-        <div role="status" style={{ padding: "12px 16px", background: "#3a2f10", color: "#f5e3a8", fontSize: 14, textAlign: "center", lineHeight: 1.5 }}>
+        <div role="status" className="banner-2fa">
           Protect your admin sign in with 2FA.{" "}
-          <a href="/saabai-admin/security" style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", display: "inline-block", padding: "8px 4px" }}>Set it up now</a>
+          <a href="/saabai-admin/security">Set it up now</a>
         </div>
       )}
       <AdminClient clients={clients} adminId={process.env.SAABAI_ADMIN_ID ?? "saabai"} pendingRequests={pendingRequests} />
