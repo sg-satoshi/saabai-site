@@ -35,7 +35,14 @@ export function Footer() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 py-6 text-xs text-white/75 sm:flex-row sm:items-center sm:justify-between lg:px-10">
-          <p>&copy; {new Date().getFullYear()} Wholesale Homes Australia. All rights reserved.</p>
+          <div className="space-y-1">
+            <p>&copy; {new Date().getFullYear()} Wholesale Homes Australia. All rights reserved.</p>
+            <p className="text-white/60">
+              <a href="https://www.saabai.ai" target="_blank" rel="noopener" className="hover:text-white">
+                Powered by Saabai.ai
+              </a>
+            </p>
+          </div>
           <p className="max-w-2xl">
             This website provides general information only and does not constitute financial advice. You should seek independent professional advice.
           </p>
