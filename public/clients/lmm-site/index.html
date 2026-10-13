@@ -520,10 +520,13 @@
     .form-footer {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      flex-wrap: wrap;
       gap: 16px;
       margin-top: 16px;
     }
+
+    .form-footer button[type="submit"] { order: -1; }
 
     .status {
       color: var(--green);
