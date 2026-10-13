@@ -318,8 +318,10 @@ test("Custom domains no longer bypass API auth; site-facing public endpoints sti
   // Pages are still rewritten to the site.
   assert.match((await proxyCall("www.wholesalehomes.com.au", "/client/dashboard")).rewrite, /\/sites\/wholesale-homes\/client\/dashboard$/);
   assert.match((await proxyCall("www.wholesalehomes.com.au", "/set-password")).rewrite, /\/sites\/wholesale-homes\/set-password$/);
-  // Same rules on saabai.ai.
+  // Same rules on saabai.ai. /api/site-factory-chat is deliberately public everywhere since #31
+  // (read-only site chatbot used by client widgets, rate-limited by chatGuard), so it must pass.
   assert.equal((await proxyCall("www.saabai.ai", "/api/user-directory")).status, 401);
-  assert.equal((await proxyCall("www.saabai.ai", "/api/site-factory-chat")).status, 401);
+  assert.equal((await proxyCall("www.saabai.ai", "/api/admin/portal-users")).status, 401);
+  assert.equal((await proxyCall("www.saabai.ai", "/api/site-factory-chat")).next, true);
   assert.equal((await proxyCall("www.saabai.ai", "/api/wholesale-auth")).next, true);
 });

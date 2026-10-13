@@ -331,8 +331,11 @@ export function accountReadyEmail(opts: {
   name: string;
   email: string;
   setPasswordLink: string;
+  /** Optional lead sentence, e.g. "Thanks for signing up for Website Care. ..." (plain text, escaped). */
+  intro?: string;
 }): BrandedEmail {
   const first = escapeHtml(firstName(opts.name));
+  const intro = opts.intro ? escapeHtml(opts.intro) : "Your client account is ready.";
   return renderBrandedEmail({
     subject: "Your Saabai account is ready",
     preheader: "Set your password (or use a magic link next time).",
@@ -340,14 +343,14 @@ export function accountReadyEmail(opts: {
     title: "Your account is ready",
     bodyHtml: [
       p(`Hi ${first},`),
-      p(`Your client account is ready. Login email: <strong>${escapeHtml(opts.email)}</strong>. Choose a password with the button below. The link works once and expires in 72 hours.`),
+      p(`${intro} Login email: <strong>${escapeHtml(opts.email)}</strong>. Choose a password with the button below. The link works once and expires in 72 hours.`),
       muted('Prefer not to use a password? On the sign-in page you can choose "Email me a sign-in link" any time.'),
     ].join(""),
     cta: { href: opts.setPasswordLink, label: "Set your password" },
     textBody: [
       `Hi ${firstName(opts.name)},`,
       "",
-      `Your Saabai account is ready. Login: ${opts.email}`,
+      `${opts.intro ?? "Your Saabai account is ready."} Login: ${opts.email}`,
       `Set your password: ${opts.setPasswordLink}`,
       "",
       "Or use Email me a sign-in link on the sign-in page.",
