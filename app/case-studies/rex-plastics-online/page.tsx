@@ -343,7 +343,7 @@ export default function RexPlasticsCaseStudy() {
         </blockquote>
       </section>
 
-      {/* ── Bridge to Audit CTA ────────────────────────────────────────────── */}
+      {/* ── Bridge to Blueprint CTA ────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
@@ -371,8 +371,7 @@ export default function RexPlasticsCaseStudy() {
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           The same approach that recovered 60% of a sales team&apos;s day can
-          work for your business. Start with an AI Efficiency Audit
-          — $2,500, one week, guaranteed $50K/yr recoverable capacity or free.
+          work for your business. Start with a Saabai Blueprint. Plans start at $497, credited if you book a build within 30 days.
         </p>
 
         <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -385,10 +384,10 @@ export default function RexPlasticsCaseStudy() {
             Book Your Free Strategy Call
           </a>
           <a
-            href="/audit"
-            className="text-sm text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
+            href="/blueprint"
+            className="inline-flex items-center min-h-[44px] text-sm text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
           >
-            Learn more about the audit →
+            Learn more about the Blueprint →
           </a>
         </div>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">

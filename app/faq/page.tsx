@@ -48,7 +48,7 @@ const faqSchema = {
       name: "How much does AI automation typically cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Every Saabai engagement starts with a fixed-price AI Audit: $3,500 for firms with 1–5 staff, $7,500 for firms with 6–20 staff, $15,000 for firms with 20+ staff. The audit produces a written roadmap of automation opportunities ranked by ROI. Full build engagements are quoted after the audit and typically range from $15,000 to $60,000 depending on scope. Most clients recover the investment inside the first few months through time and operational cost savings.",
+        text: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes.",
       },
     },
     {
@@ -119,7 +119,7 @@ const faqs = [
     items: [
       {
         q: "How much does it typically cost?",
-        a: "Every Saabai engagement starts with a fixed-price AI Audit. Three tiers based on firm size: $3,500 for 1–5 staff, $7,500 for 6–20 staff, $15,000 for 20+ staff. The audit produces a written roadmap of your highest-ROI automation opportunities, with projected time savings and build cost estimates for each. Full build engagements are quoted separately after the audit and typically range from $15,000 to $60,000 depending on scope. See our AI Audit page for what's included at each tier.",
+        a: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes. See the Blueprint page for what is included at each tier.",
       },
       {
         q: "How do we measure the ROI?",
@@ -134,14 +134,10 @@ const faqs = [
         a: "Yes, most automation systems have ongoing running costs (software subscriptions, API usage, hosting) and we offer optional monthly optimisation retainers to keep systems performing well. We'll give you a full picture of ongoing costs upfront so there are no surprises.",
       },
       {
-        q: "What if I buy an AI Audit and decide it's not for me?",
-        a: "You have 7 days from purchase to cancel for a full refund, no questions asked, provided the discovery session hasn't started yet. Once the discovery session begins, the engagement is non-refundable. We don't pressure anyone into proceeding to a build after the audit. If the audit shows there's nothing high-impact worth automating, we'll tell you.",
+        q: "What if I buy a Saabai Blueprint and decide it's not for me?",
+        a: "You have 7 days from purchase to cancel for a full refund, no questions asked, provided the discovery session hasn't started yet. Once the discovery session begins, the engagement is non-refundable. We don't pressure anyone into proceeding to a build after the Blueprint. If the Blueprint shows there's nothing high-impact worth automating, we'll tell you.",
       },
-      {
-        q: "Why is there a deposit option for the Enterprise audit?",
-        a: "Enterprise buyers typically want a kickoff conversation before committing the full amount. The $1,500 deposit secures your engagement slot, funds the initial discovery phase, and is fully credited toward the $15,000 total. The $13,500 balance is invoiced after the kickoff call once scope is confirmed.",
-      },
-    ],
+          ],
   },
   {
     id: "technical-integration",
@@ -267,7 +263,7 @@ export default function FAQ() {
             <a
               key={id}
               href={`#${id}`}
-              className="text-xs font-medium tracking-wide text-saabai-text-dim hover:text-saabai-teal border border-saabai-border hover:border-saabai-teal/40 px-4 py-2 rounded-full transition-colors"
+              className="inline-flex items-center min-h-[44px] text-xs font-medium tracking-wide text-saabai-text-dim hover:text-saabai-teal border border-saabai-border hover:border-saabai-teal/40 px-4 py-2 rounded-full transition-colors"
             >
               {category}
             </a>

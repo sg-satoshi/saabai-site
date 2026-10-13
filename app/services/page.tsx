@@ -77,7 +77,7 @@ const services: { title: string; description: string; benefits: string[]; wide?:
 const steps = [
   {
     step: "01",
-    title: "AI Audit",
+    title: "Saabai Blueprint",
     body: "We analyse your current operations to identify where automation can create the biggest impact.",
   },
   {
@@ -250,25 +250,25 @@ export default function Services() {
         </div>
       </section>
 
-      {/* ── AI Audit Pricing Preview ─────────────────────────────────────── */}
+      {/* ── Saabai Blueprint Pricing Preview ─────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          Start Here: Fixed-Price AI Audit
+          Start Here: Saabai Blueprint
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
           Know exactly what to automate, before you spend a dollar building it.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
-          Every Saabai engagement starts with an AI Audit, a fixed-price,
-          fixed-deliverable audit that produces a written roadmap of your
-          highest-ROI automation opportunities. Three tiers, sized to your firm.
+          Every Saabai engagement starts with a Saabai Blueprint, a fixed-price
+          plan that ranks your highest-ROI automation opportunities. Three tiers,
+          with the fee credited if you book a build within 30 days.
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { name: "Essential", staff: "1–5 staff", price: "$3,500", duration: "1 week" },
-            { name: "Professional", staff: "6–20 staff", price: "$7,500", duration: "2 weeks", highlight: true },
-            { name: "Enterprise", staff: "20+ staff", price: "$15,000", duration: "3 weeks" },
+            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "a few days" },
+            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "3 business days", highlight: true },
+            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "2 to 3 weeks" },
           ].map((t) => (
             <div
               key={t.name}
