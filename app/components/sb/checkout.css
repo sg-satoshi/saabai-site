@@ -1,0 +1,17 @@
+.sb .lay{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:40px;padding:56px 0 110px;align-items:start}
+.sb .f2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.sb .fld{margin-top:18px}
+.sb .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sb .tiers button{border:1px solid var(--border);border-radius:12px;padding:14px;font-size:14px;background:var(--card);color:var(--muted);text-align:left;font-family:inherit;cursor:pointer;min-height:44px}
+.sb .tiers button b{display:block;font-size:16px;color:#fff}.sb .tiers button.on{border-color:var(--teal);background:#16254f}
+.sb .sum .li{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:15px;color:var(--muted)}.sb .sum .li b{color:#fff;font-weight:500}
+.sb .sum .tot{display:flex;justify-content:space-between;padding-top:16px;font-size:20px;font-weight:600}
+.sb .note{margin-top:20px;padding:16px;border-radius:12px;background:rgba(98,197,209,.1);border:1px solid var(--border);font-size:14px;color:var(--muted)}
+.sb .steps{display:flex;gap:10px;font-size:14px;color:var(--dim);align-items:center;flex-wrap:wrap}.sb .steps b{color:var(--teal)}
+.sb .err{margin-top:14px;padding:12px 14px;border-radius:10px;border:1px solid rgba(252,165,165,.4);background:rgba(252,165,165,.08);color:#fecaca;font-size:14px}
+.sb .ok{width:84px;height:84px;border-radius:50%;margin:0 auto 28px;background:rgba(98,197,209,.15);border:1px solid var(--teal);display:grid;place-items:center;font-size:38px;color:var(--teal);box-shadow:0 0 60px var(--glow)}
+.sb .cbox{max-width:820px;margin:0 auto;padding:80px 0 110px;text-align:center;position:relative}
+.sb .tl{text-align:left;margin-top:40px}.sb .st{display:flex;gap:18px;padding:20px 0;border-bottom:1px solid var(--border)}.sb .st:last-child{border:0}
+.sb .st .d{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:14px;border:1px solid var(--border-a);color:var(--teal)}.sb .st.done .d{background:var(--teal);color:var(--bg)}
+.sb .st b{font-weight:600}.sb .st p{font-size:15px}
+@media (max-width:900px){.sb .lay{grid-template-columns:1fr;padding:28px 0 64px;gap:24px}.sb .sum{order:-1}}
+@media (max-width:760px){.sb .f2{grid-template-columns:1fr;gap:0}.sb .tiers{gap:8px}.sb .tiers button{padding:10px;font-size:12px}.sb .tiers button b{font-size:14px}.sb .lay h2{font-size:28px!important}.sb .cbox{padding:44px 0 64px}.sb .cbox h1{font-size:34px!important}.sb .cbox .btn{width:100%}}

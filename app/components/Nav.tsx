@@ -10,7 +10,8 @@ const navSections: NavSection[] = [
   {
     section: "Work With Us",
     links: [
-      { label: "AI Audit", href: "/ai-audit", isNew: true },
+      { label: "Saabai Blueprint", href: "/blueprint", isNew: true },
+      { label: "Free AI Score", href: "/score", isNew: true },
       { label: "Services", href: "/services" },
       { label: "Websites", href: "/websites", isNew: true },
       { label: "Advisory", href: "/advisory" },

@@ -73,6 +73,8 @@ const PUBLIC_API = [
   "/api/audit/factfind",
   // Payments (Stripe verifies its own webhook signatures)
   "/api/checkout",
+  "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
+  "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
   "/api/rex-checkout",
   "/api/rex-cart",
   "/api/rex-pay",

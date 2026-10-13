@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
+import { handleBlueprintCheckout } from "@/lib/blueprint-order";
 
 export const runtime = "nodejs";
 
@@ -126,6 +127,13 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
+
+  // Saabai Blueprint one-off orders: create engagement + send fact-find.
+  if (session.metadata?.product === "blueprint") {
+    if (session.payment_status !== "paid") return Response.json({ received: true, skipped: "unpaid blueprint" });
+    const result = await handleBlueprintCheckout(session);
+    return Response.json({ received: true, blueprint: result });
+  }
   const customerName = session.customer_details?.name ?? null;
   const customerEmail = session.customer_details?.email ?? null;
   const amountTotal = session.amount_total ?? null;
