@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { verifySessionToken, COOKIE_NAME } from "./lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 
 const redis = Redis.fromEnv();
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 // Page routes that require a logged-in session.
 const PROTECTED_PAGES = [
@@ -59,7 +58,6 @@ const PUBLIC_API = [
   "/api/leadgen/chat",
   // Public Lex tools on the /lex page (no session check in handlers today)
   "/api/lex-extract",
-  "/api/lex-send",
   "/api/lex-compare",
   // Public lead / contact capture
   "/api/rex-leads",
@@ -117,7 +115,7 @@ const PUBLIC_API = [
 ];
 
 // Admin-only endpoints (destructive, PII, or operator tooling). Require a
-// session whose clientId matches SAABAI_ADMIN_ID.
+// admin session (isAdminSession: SAABAI_ADMIN_ID or a directory user with role=admin).
 const ADMIN_API = [
   "/api/admin",
   "/api/user-directory",
@@ -205,7 +203,7 @@ async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextRes
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (matches(pathname, ADMIN_API) && session.clientId !== ADMIN_ID) {
+  if (matches(pathname, ADMIN_API) && !(await isAdminSession(session.clientId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return NextResponse.next();

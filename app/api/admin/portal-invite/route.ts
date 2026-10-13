@@ -4,7 +4,7 @@
  * magic link to a customer. Never emails the client unless an admin asks.
  */
 import { NextRequest } from "next/server";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import {
   createMagicLink,
   findEligibleClient,
@@ -16,13 +16,12 @@ import { getDirectoryUser } from "../../../../lib/user-directory";
 
 export const runtime = "nodejs";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 async function requireAdmin(req: NextRequest): Promise<boolean> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
-  return session?.clientId === ADMIN_ID;
+  return session ? isAdminSession(session.clientId) : false;
 }
 
 function baseUrl(): string {

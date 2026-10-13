@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
+import { requireAdmin } from "../../../../lib/require-admin";
 import EngagementClient from "./EngagementClient";
 
 export const dynamic = "force-dynamic";
@@ -11,15 +9,7 @@ export default async function EngagementPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin/audits");
-
-  const session = await verifySessionToken(token);
-  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin/audits");
-
-  const isAdmin = await isAdminSession(session.clientId);
-  if (!isAdmin) redirect("/saabai-admin");
+  await requireAdmin("/saabai-admin/audits");
 
   const { id } = await params;
   return <EngagementClient id={id} />;

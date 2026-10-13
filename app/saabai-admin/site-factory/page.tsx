@@ -1,7 +1,5 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { requireAdmin } from "../../../lib/require-admin";
 import SiteFactoryClient from "./SiteFactoryClient";
 import AdminShell from "../AdminSidebar";
 
@@ -10,13 +8,7 @@ export const revalidate = 0;
 export const metadata = { title: "Site Factory - Saabai" };
 
 export default async function SiteFactoryPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-
-  if (!token) redirect("/saabai-admin/login?redirect=/saabai-admin/site-factory");
-
-  const session = await verifySessionToken(token);
-  if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin/site-factory");
+  await requireAdmin("/saabai-admin/site-factory");
 
   return (
     <AdminShell activePath="/saabai-admin/site-factory">

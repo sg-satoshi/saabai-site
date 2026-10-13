@@ -1,29 +1,93 @@
+import { cookies } from "next/headers";
+import { verifySessionToken, COOKIE_NAME } from "../../../lib/auth";
+import { verifySession } from "../../../lib/portal-session";
+import { getRedis } from "../../../lib/redis";
+import { escapeHtml } from "../../../lib/html-escape";
+
 export const runtime = "nodejs";
 
+// Signed-in Lex users (Saabai session or client portal session) only. The proxy
+// also enforces a session; this is defence in depth. Previously this route was
+// public and could email anything to anyone from hello@saabai.ai.
+const MAX_PER_HOUR = 10;
+const MAX_PER_DAY = 30;
+const EMAIL_RE = /^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/;
+
+async function senderIdentity(): Promise<string | null> {
+  const store = await cookies();
+  const token = store.get(COOKIE_NAME)?.value;
+  if (token) {
+    const s = await verifySessionToken(token).catch(() => null);
+    if (s?.clientId) return `s:${s.clientId}`;
+  }
+  const portal = store.get("portal_session")?.value;
+  if (portal) {
+    const p = verifySession(portal);
+    if (p?.email) return `p:${p.email.toLowerCase()}`;
+  }
+  return null;
+}
+
+/** Returns true when the sender is within limits. Fails closed if Redis is unavailable. */
+async function underRateLimit(id: string): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  const hourKey = `lex-send:h:${id}`;
+  const dayKey = `lex-send:d:${id}`;
+  const h = await redis.incr(hourKey);
+  if (h === 1) await redis.expire(hourKey, 3600);
+  const d = await redis.incr(dayKey);
+  if (d === 1) await redis.expire(dayKey, 86400);
+  return h <= MAX_PER_HOUR && d <= MAX_PER_DAY;
+}
+
 export async function POST(req: Request) {
+  const id = await senderIdentity();
+  if (!id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  let payload: { to?: unknown; subject?: unknown; body?: unknown; documentText?: unknown; type?: unknown };
   try {
-    const { to, subject, body, documentText, type } = await req.json();
-    if (!to || !subject || !documentText) {
-      return Response.json({ error: "Missing required fields" }, { status: 400 });
+    payload = await req.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const to = typeof payload.to === "string" ? payload.to.trim() : "";
+  const subject = typeof payload.subject === "string" ? payload.subject.replace(/[\r\n]+/g, " ").trim().slice(0, 200) : "";
+  const body = typeof payload.body === "string" ? payload.body.slice(0, 5000) : "";
+  const documentText = typeof payload.documentText === "string" ? payload.documentText.slice(0, 100_000) : "";
+
+  // Exactly one well-formed recipient: no lists, no header injection.
+  if (!to || to.length > 254 || !EMAIL_RE.test(to) || !subject || !documentText) {
+    return Response.json({ error: "Missing or invalid fields" }, { status: 400 });
+  }
+
+  try {
+    if (!(await underRateLimit(id))) {
+      return Response.json({ error: "Too many emails sent. Try again later." }, { status: 429 });
     }
+  } catch {
+    return Response.json({ error: "Rate limit unavailable" }, { status: 503 });
+  }
 
-    const resendKey = (process.env.RESEND_API_KEY ?? "").trim();
-    if (!resendKey) {
-      return Response.json({ error: "Email not configured" }, { status: 500 });
-    }
+  const resendKey = (process.env.RESEND_API_KEY ?? "").trim();
+  if (!resendKey) {
+    return Response.json({ error: "Email not configured" }, { status: 500 });
+  }
 
-    const typeLabel = type === "draft" ? "Document" : "Document Review";
+  const typeLabel = payload.type === "draft" ? "Document" : "Document Review";
+  const nl2br = (s: string) => escapeHtml(s).replace(/\n/g, "<br>");
 
-    const html = `
+  const html = `
       <div style="font-family:Georgia,serif;max-width:640px;margin:0 auto;padding:40px 24px;background:#f5f5f0;">
         <div style="background:#08111f;padding:28px 24px;text-align:center;border-radius:10px 10px 0 0;">
           <h1 style="color:#C9A84C;margin:0;font-size:22px;letter-spacing:2px;">LEX</h1>
           <p style="color:#8fa3c0;margin:6px 0 0;font-size:12px;letter-spacing:1px;">Legal Intelligence</p>
         </div>
         <div style="background:white;padding:36px 28px;border-radius:0 0 10px 10px;">
-          ${body ? `<p style="color:#1a1a2e;font-size:14px;line-height:1.7;margin:0 0 28px;font-family:Georgia,serif;">${body.replace(/\n/g, '<br>')}</p>` : ''}
+          ${body ? `<p style="color:#1a1a2e;font-size:14px;line-height:1.7;margin:0 0 28px;font-family:Georgia,serif;">${nl2br(body)}</p>` : ""}
           <div style="background:#f8f9fa;padding:24px 20px;border-radius:8px;border-left:3px solid #C9A84C;">
-            <p style="color:#1a1a2e;font-size:13px;line-height:1.8;margin:0;white-space:pre-wrap;font-family:Georgia,serif;">${documentText.replace(/\n/g, '<br>').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            <p style="color:#1a1a2e;font-size:13px;line-height:1.8;margin:0;white-space:pre-wrap;font-family:Georgia,serif;">${nl2br(documentText)}</p>
           </div>
           <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;">
             <p style="color:#8fa3c0;font-size:11px;margin:0;">${typeLabel} generated by Lex AI</p>
@@ -33,24 +97,18 @@ export async function POST(req: Request) {
       </div>
     `;
 
+  try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: "Lex AI <hello@saabai.ai>",
-        to: [to],
-        subject,
-        html,
-      }),
+      body: JSON.stringify({ from: "Lex AI <hello@saabai.ai>", to: [to], subject, html }),
     });
-
     if (!response.ok) {
-      const err = await response.text();
-      return Response.json({ error: "Email failed", details: err }, { status: 500 });
+      // Don't echo provider error bodies to the browser.
+      return Response.json({ error: "Email failed" }, { status: 502 });
     }
-
     return Response.json({ ok: true });
-  } catch (err) {
-    return Response.json({ error: String(err) }, { status: 500 });
+  } catch {
+    return Response.json({ error: "Email failed" }, { status: 502 });
   }
 }

@@ -5,7 +5,7 @@
  */
 
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import { getLexClients } from "../../../../lib/lex-config";
 import { getRedis } from "../../../../lib/redis";
 
@@ -44,7 +44,7 @@ export async function GET() {
   if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  if (!session || !(await isAdminSession(session.clientId))) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 

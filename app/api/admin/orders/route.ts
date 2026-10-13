@@ -8,7 +8,7 @@
 
 import Stripe from "stripe";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
 import { listEngagements } from "../../../../lib/audit-store";
 import { AUDIT_STATUS_LABELS, type AuditStatus } from "../../../../lib/audit-types";
 import { TIERS, isTier } from "../../../../lib/blueprint";
@@ -17,7 +17,6 @@ import { classifySubscription, subscriptionOrderKind, subscriptionProductLabel }
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
 
 export interface InvoiceRecord {
   id: string;
@@ -80,7 +79,7 @@ export async function GET() {
   if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const session = await verifySessionToken(token);
-  if (!session || session.clientId !== ADMIN_ID) {
+  if (!session || !(await isAdminSession(session.clientId))) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
