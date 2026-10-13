@@ -79,9 +79,11 @@ test("Lex /api/portal/login: unknown email gets the identical response and no em
   assert.deepEqual(rexOnly, known);
   assert.equal(known.status, 200);
   assert.deepEqual(JSON.parse(known.body), { ok: true });
-  await settle(1);
-  assert.deepEqual(sentEmails.map((m) => m.to), ["hello@saabai.ai"], "only the known client is emailed");
-  assert.equal(tokenKeys().length, 1, "no token created for unknown emails");
+  await settle(2);
+  // Unified client portal: Lex clients and other eligible directory/env clients both get mail.
+  // Unknown emails still get the same JSON body and no message.
+  assert.deepEqual(sentEmails.map((m) => m.to).sort(), ["hello@saabai.ai", "rexonly@shop.test"].sort(), "eligible clients are emailed; strangers are not");
+  assert.equal(tokenKeys().length, 1, "Lex Redis token only for Lex clients (directory clients use client:magic keys)");
   // Malformed input is rejected the same way regardless of who it is.
   assert.equal((await requestLink("not-an-email")).status, 400);
   assert.equal((await requestLink(42)).status, 400);

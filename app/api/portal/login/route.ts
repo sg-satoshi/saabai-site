@@ -14,6 +14,9 @@ import { randomBytes } from "crypto";
 import { safeRedirect } from "../../../../lib/safe-redirect";
 import { runAfterResponse } from "../../../../lib/run-after";
 import { isKnownLexPortalClient, underLexLinkRateLimit, LEX_LINK_TTL_SECONDS } from "../../../../lib/lex-portal-access";
+import { findEligibleClient, processMagicLinkRequest } from "../../../../lib/client-magic-link";
+import { generateEmailCode, storeEmailCode, underCodeRateLimit } from "../../../../lib/portal-email-code";
+import { getLexClients } from "../../../../lib/lex-config";
 
 export const runtime = "nodejs";
 
@@ -24,7 +27,7 @@ function generateToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
-function magicLinkEmail(email: string, link: string): string {
+function magicLinkEmail(email: string, link: string, code?: string | null): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,6 +103,7 @@ function magicLinkEmail(email: string, link: string): string {
       </td>
     </tr>
   </table>
+${code ? `<p style="margin:16px 0;font-size:14px;color:#374151;text-align:center;">Or enter this code in the portal:<br/><strong style="font-size:22px;letter-spacing:6px;font-family:ui-monospace,monospace;">${code}</strong></p>` : ""}
 </body>
 </html>`;
 }
@@ -124,7 +128,16 @@ export async function POST(req: Request) {
 
 async function sendLinkIfKnown(normalised: string, redirectParam: unknown): Promise<void> {
   try {
-    if (!(await isKnownLexPortalClient(normalised))) return;
+    const isLex = await isKnownLexPortalClient(normalised);
+    const eligible = await findEligibleClient(normalised);
+    if (!isLex && !eligible) return;
+
+    // Directory / env clients (non-Lex) use the shared magic-link + code helper.
+    if (!isLex && eligible) {
+      await processMagicLinkRequest(normalised, redirectParam || "/client-portal");
+      return;
+    }
+
     if (!(await underLexLinkRateLimit(normalised))) return;
 
     const redis = getRedis();
@@ -136,13 +149,20 @@ async function sendLinkIfKnown(normalised: string, redirectParam: unknown): Prom
     const token = generateToken();
     await redis.set(`portal:token:${token}`, normalised, { ex: LEX_LINK_TTL_SECONDS });
 
-    // Only same-origin relative paths are kept (blocks open redirects).
+    // Only persist a redirect when the caller sent a safe same-origin path.
+    // Missing/unsafe values fall back to /client-portal in /api/portal/auth.
     const safe = safeRedirect(redirectParam, "");
     if (safe) {
       await redis.set(`portal:redirect:${token}`, safe, { ex: LEX_LINK_TTL_SECONDS });
     }
 
     const link = `${BASE_URL}/api/portal/auth?token=${token}`;
+    let code: string | null = null;
+    if (await underCodeRateLimit(normalised)) {
+      code = generateEmailCode();
+      const firm = getLexClients().find((c) => c.email.teamEmail.toLowerCase() === normalised);
+      await storeEmailCode(normalised, code, { clientId: firm?.id ?? "lex-external", redirect: safe });
+    }
 
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
@@ -151,10 +171,10 @@ async function sendLinkIfKnown(normalised: string, redirectParam: unknown): Prom
         from: "Saabai Portal <portal@saabai.ai>",
         to: normalised,
         subject: "Your Saabai Client Portal sign-in link",
-        html: magicLinkEmail(normalised, link),
+        html: magicLinkEmail(normalised, link, code),
       });
     } else if (process.env.NODE_ENV !== "production") {
-      console.log("[portal/login] (dev, no RESEND_API_KEY) magic link:", link);
+      console.log("[portal/login] (dev, no RESEND_API_KEY) magic link:", link, "code:", code);
     }
   } catch (err) {
     console.error("[portal/login]", err instanceof Error ? err.message : err);
