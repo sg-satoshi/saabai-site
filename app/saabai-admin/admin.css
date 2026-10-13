@@ -147,3 +147,5 @@ a.btn{text-decoration:none}
  .seg.pay-tabs{display:flex}.seg.pay-tabs button{flex:1;min-height:36px}
  .pay-seg button{min-height:40px!important}
 }
+.pay-h{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.25;color:var(--n-900);margin:0 0 16px}
+@media (max-width:600px){.pay-h{font-size:20px;margin-bottom:14px}}
