@@ -3,6 +3,7 @@ import { Resend } from "resend";
 export const runtime = "edge";
 
 const TO = ["nick@lifestylemoneymanagement.com.au"];
+const STAGES = ["Purchase my First Property", "Purchase my Next Property", "Portfolio & Finance Review"];
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Record<string, string | undefined>;
     const f = (k: string, max = 200) => (body[k] || "").toString().trim().slice(0, max);
-    const name = f("name"), email = f("email"), phone = f("phone", 50), stage = f("stage"), message = f("message", 5000);
+    const name = f("name"), email = f("email"), phone = f("phone", 50), stage = STAGES.includes(f("stage")) ? f("stage") : "", message = f("message", 5000);
     if (f("website")) return Response.json({ ok: true }); // honeypot
     if (!name || !email || !message) return Response.json({ ok: false, error: "Missing required fields" }, { status: 400 });
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return Response.json({ ok: false, error: "Invalid email" }, { status: 400 });
