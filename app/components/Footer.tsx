@@ -53,10 +53,10 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-saabai-border pt-6">
-          <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-3 text-center sm:text-left">
+          <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-3 text-center">
             Service Areas
           </p>
-          <nav className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-1">
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
             {serviceAreaLinks.map(({ label, href }) => (
               <a
                 key={label}
