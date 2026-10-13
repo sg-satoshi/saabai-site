@@ -22,8 +22,9 @@ const C = {
   redBg: "rgba(220,38,38,0.08)",
 };
 
-type Status = "received" | "in_progress" | "done";
-type Priority = "low" | "normal" | "high";
+type Status = "new" | "received" | "awaiting_client" | "triaged" | "in_progress" | "qa" | "blocked" | "done";
+type Priority = "low" | "normal" | "high" | "critical";
+type RequestType = "text_change" | "new_feature" | "bug" | "other";
 
 interface ClientRequest {
   id: string;
@@ -38,9 +39,14 @@ interface ClientRequest {
   updatedAt: string;
 }
 
-const STATUS: Record<Status, { label: string; color: string; bg: string }> = {
-  received: { label: "Received", color: C.blue, bg: C.blueBg },
+const STATUS: Record<string, { label: string; color: string; bg: string }> = {
+  new: { label: "New", color: C.blue, bg: C.blueBg },
+  received: { label: "New", color: C.blue, bg: C.blueBg },
+  awaiting_client: { label: "Awaiting you", color: C.amber, bg: C.amberBg },
+  triaged: { label: "Triaged", color: C.blue, bg: C.blueBg },
   in_progress: { label: "In progress", color: C.amber, bg: C.amberBg },
+  qa: { label: "QA / Review", color: C.blue, bg: C.blueBg },
+  blocked: { label: "Blocked", color: C.red, bg: C.redBg },
   done: { label: "Done", color: C.green, bg: C.greenBg },
 };
 
@@ -48,7 +54,14 @@ const PRIORITY: Record<Priority, { label: string; color: string }> = {
   low: { label: "Low", color: C.dim },
   normal: { label: "Normal", color: C.dim },
   high: { label: "High", color: C.red },
+  critical: { label: "Critical", color: C.red },
 };
+const TYPE_OPTS: { id: RequestType; label: string }[] = [
+  { id: "text_change", label: "Text change" },
+  { id: "new_feature", label: "New feature" },
+  { id: "bug", label: "Bug / broken" },
+  { id: "other", label: "Other" },
+];
 
 const MAX_FILES = 3;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -85,6 +98,7 @@ function NewRequestForm({ uploadFolder, onCreated, onCancel }: {
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [type, setType] = useState<RequestType>("text_change");
   const [priority, setPriority] = useState<Priority>("normal");
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -131,7 +145,7 @@ function NewRequestForm({ uploadFolder, onCreated, onCancel }: {
       const res = await fetch("/api/dashboard/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, priority, screenshots }),
+        body: JSON.stringify({ title, description, priority, type, screenshots }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not send your request");
@@ -159,9 +173,16 @@ function NewRequestForm({ uploadFolder, onCreated, onCancel }: {
       </div>
 
       <div style={{ marginBottom: 14 }}>
+        <label htmlFor="req-type" style={labelStyle}>Type</label>
+        <select id="req-type" value={type} onChange={(e) => setType(e.target.value as RequestType)} style={inputStyle}>
+          {TYPE_OPTS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
         <span style={labelStyle}>Priority</span>
-        <div style={{ display: "flex", gap: 8 }}>
-          {(["low", "normal", "high"] as Priority[]).map((p) => (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {(["low", "normal", "high", "critical"] as Priority[]).map((p) => (
             <button key={p} type="button" onClick={() => setPriority(p)} style={{
               padding: "8px 16px", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer",
               border: `1px solid ${priority === p ? C.goldBdr : "rgba(0,0,0,0.12)"}`,
@@ -172,6 +193,11 @@ function NewRequestForm({ uploadFolder, onCreated, onCancel }: {
             </button>
           ))}
         </div>
+        {priority === "critical" && (
+          <p style={{ margin: "10px 0 0", fontSize: 12, color: C.red, lineHeight: 1.5 }}>
+            <strong>This alerts the Saabai team, Chief included, immediately, day or night.</strong> Use Critical only when your site is down or customers can&apos;t book, pay or contact you.
+          </p>
+        )}
       </div>
 
       <div style={{ marginBottom: 18 }}>

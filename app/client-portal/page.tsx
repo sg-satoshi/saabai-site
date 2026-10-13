@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import "./portal-auth.css";
 import { PortalShell } from "./components/PortalShell";
 import { LexWorkspace } from "./LexWorkspace";
+import { RequestsPanel } from "./requests/RequestsPanel";
 
 type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
 type PageId =
@@ -865,56 +866,7 @@ function ClientPortalInner() {
       )}
 
       {page === "requests" && (
-        <>
-          <div className="ph">
-            <div>
-              <h1>Requests</h1>
-              <div className="sub">Changes, questions and build quote requests</div>
-            </div>
-          </div>
-          {workspace.requests.length === 0 ? (
-            <Empty title="No requests yet" body="Create a request for a change, question, or a build quote. Promise: we respond within one business day for access requests." />
-          ) : (
-            <div className="card">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Request</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workspace.requests.map((r) => (
-                    <tr key={r.id}>
-                      <td>
-                        <b style={{ fontWeight: 500 }}>{r.title}</b>
-                      </td>
-                      <td>
-                        <span className={`badge ${r.status === "done" ? "b-ok" : r.status === "in_progress" ? "b-info" : "b-n"}`}>
-                          {r.status === "in_progress" ? "In progress" : r.status === "done" ? "Done" : "Received"}
-                        </span>
-                      </td>
-                      <td className="muted">{new Date(r.updatedAt || r.createdAt).toLocaleDateString("en-AU")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div className="card" style={{ marginTop: 16 }}>
-            <div className="hd"><h2>New request</h2></div>
-            <div className="bd">
-              <p className="muted" style={{ marginTop: 0 }}>
-                To file a detailed request with screenshots, email hello@saabai.ai for now, or use Get a build quote from your Blueprint.
-                Full in-portal compose will use your existing request APIs next.
-              </p>
-              <a className="btn pri" href="mailto:hello@saabai.ai?subject=Client%20portal%20request">
-                Email a request
-              </a>
-            </div>
-          </div>
-        </>
+        <RequestsPanel />
       )}
 
       {page === "account" && (

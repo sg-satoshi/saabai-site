@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
@@ -17,7 +18,9 @@ export default async function AdminRequestsPage() {
 
   return (
     <AdminShell activePath="/saabai-admin/requests">
-      <RequestsAdminClient />
+      <Suspense fallback={<div style={{ padding: 32 }}>Loading…</div>}>
+        <RequestsAdminClient />
+      </Suspense>
     </AdminShell>
   );
 }

@@ -18,9 +18,9 @@ function getSecret(): string {
 }
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export function signSession(email: string): string {
+export function signSession(email: string, ttlMs: number = SESSION_TTL_MS): string {
   const payload = Buffer.from(
-    JSON.stringify({ email, exp: Date.now() + SESSION_TTL_MS })
+    JSON.stringify({ email, exp: Date.now() + ttlMs })
   ).toString("base64url");
   const sig = createHmac("sha256", getSecret()).update(payload).digest("base64url");
   return `${payload}.${sig}`;

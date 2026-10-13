@@ -8,6 +8,9 @@ import { after } from "next/server";
 import { getClientContext } from "../../../../lib/client-context";
 import { blobFolderFor, createRequest, listRequests, validateNewRequest } from "../../../../lib/client-requests";
 import { sendNewRequestNotification } from "../../../../lib/client-request-emails";
+import { sendCriticalAlerts } from "../../../../lib/request-alerts";
+import { maybeClarifyRequest } from "../../../../lib/request-clarifier";
+import { addChangeLogEntry } from "../../../../lib/change-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,7 +50,26 @@ export async function POST(req: Request) {
       ...(ctx.site?.name ? { siteName: ctx.site.name } : {}),
       ...v.value,
     });
-    after(() => sendNewRequestNotification(created));
+    after(async () => {
+      try {
+        await sendNewRequestNotification(created);
+        if (created.priority === "critical") {
+          await sendCriticalAlerts(created);
+        } else {
+          await maybeClarifyRequest(created, ctx.site?.name ? `Site ${ctx.site.name}` : "");
+        }
+        await addChangeLogEntry({
+          siteId: created.siteId || created.clientId,
+          siteName: created.siteName || created.clientName || created.clientId,
+          summary: `Request opened: ${created.title} (${created.priority})`,
+          source: "request",
+          requestId: created.id,
+          authorName: created.clientName || created.clientEmail,
+        });
+      } catch (err) {
+        console.error("[dashboard/requests] after", err);
+      }
+    });
     return Response.json({ request: created }, { status: 201 });
   } catch (err) {
     console.error("[dashboard/requests] create", err);

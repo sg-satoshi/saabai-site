@@ -41,6 +41,7 @@ const PUBLIC_API = [
   "/api/portal/auth",        // magic-link handler — sets the session cookie
   "/api/portal/verify-code", // 6-digit email code exchange (opaque errors)
   "/api/portal/request-access", // access request + auto-approve (opaque ok)
+  "/api/portal/requests", // client change requests (portal_session inside)
   "/api/rex-dashboard-auth", // dashboard password login — issues the cookie
   // Public chat widgets (embedded on client + marketing sites)
   "/api/chat",
