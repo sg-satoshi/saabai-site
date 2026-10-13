@@ -270,13 +270,13 @@ export default function EngagementClient({ id }: { id: string }) {
 
   return (
     <AdminShell activePath="/saabai-admin/audits">
-      <div style={{ padding: "32px 36px", maxWidth: 1000 }}>
+      <div style={{ maxWidth: 1000 }}>
         {/* Header */}
         <Link href="/saabai-admin/audits" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}>
           ← Blueprints
         </Link>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", margin: "10px 0 6px" }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>{eng.firmName}</h1>
+        <div className="mc-head" style={{ margin: "10px 0 6px" }}>
+          <h1 className="mc-h1">{eng.firmName}</h1>
           <select
             value={eng.status}
             onChange={(e) => patch({ status: e.target.value }, "status")}

@@ -1454,18 +1454,13 @@ export default function UsersClient() {
       display: "flex", flexDirection: "column",
     }}>
       {/* Page header */}
-      <header style={{
-        padding: "22px 28px 22px",
+      <header className="mc-head" style={{
+        paddingBottom: 18,
         borderBottom: `1px solid ${C.border}`,
         display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
       }}>
         <div>
-          <h1 style={{
-            margin: "0 0 4px",
-            fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em",
-            whiteSpace: "nowrap",
-            display: "flex", alignItems: "center", gap: 10,
-          }}>
+          <h1 className="mc-h1" style={{ display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" }}>
             <span>User Directory</span>
             <span style={{
               fontSize: 11, color: C.textDim,
@@ -1474,7 +1469,7 @@ export default function UsersClient() {
               padding: "2px 8px", borderRadius: 4, fontWeight: 600,
             }}>{counts.all}</span>
           </h1>
-          <p style={{ margin: 0, fontSize: 13, color: C.textDim }}>
+          <p className="mc-sub">
             Manage portal users, roles, and dashboard access.
           </p>
         </div>

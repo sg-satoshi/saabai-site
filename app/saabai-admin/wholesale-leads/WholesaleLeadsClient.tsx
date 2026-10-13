@@ -99,16 +99,16 @@ export default function WholesaleLeadsClient() {
   };
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 960 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+    <div style={{ maxWidth: 960 }}>
+      <div className="mc-head">
         <div>
-          <p style={{ margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: C.teal }}>
+          <p className="mc-eyebrow">
             Wholesale Homes
           </p>
-          <h1 style={{ margin: "4px 0 0", fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-0.3px" }}>
+          <h1 className="mc-h1">
             Pending Registrations
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: C.textDim }}>
+          <p className="mc-sub">
             {leads.length} lead{leads.length !== 1 ? "s" : ""} awaiting approval
           </p>
         </div>

@@ -501,13 +501,13 @@ export default function SubscriberDashboard() {
     <AdminShell activePath="/saabai-admin/subscribers">
 
       {/* Page header */}
-      <div style={{ borderBottom: `1px solid ${D.border}`, padding: "0 40px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: D.teal }} />
-            <span style={{ fontSize: 22, fontWeight: 800, color: D.text, letterSpacing: -0.5 }}>Subscriber Intelligence</span>
+      <div>
+        <div className="mc-head">
+          <div>
+            <h1 className="mc-h1">Subscriber Intelligence</h1>
+            <p className="mc-sub">Newsletter subscribers, segments and broadcasts</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {someSelected && <span style={{ fontSize: 12, color: D.teal, fontWeight: 600 }}>{selected.size} selected</span>}
             {exportMsg && <span style={{ fontSize: 12, color: D.teal }}>{exportMsg}</span>}
             {someSelected && (
@@ -527,7 +527,7 @@ export default function SubscriberDashboard() {
         </div>
       </div>
 
-      <div style={{ padding: "32px 40px" }}>
+      <div>
 
         {/* KPI row */}
         <div className="m-grid-2" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
