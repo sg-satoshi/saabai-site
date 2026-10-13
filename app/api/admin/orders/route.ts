@@ -12,6 +12,7 @@ import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
 import { listEngagements } from "../../../../lib/audit-store";
 import { AUDIT_STATUS_LABELS, type AuditStatus } from "../../../../lib/audit-types";
 import { TIERS, isTier } from "../../../../lib/blueprint";
+import { classifySubscription, subscriptionOrderKind, subscriptionProductLabel } from "../../../../lib/subscription-classify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export interface InvoiceRecord {
   hostedUrl: string | null;
 }
 
-export type OrderKind = "blueprint" | "lex_subscription";
+export type OrderKind = "blueprint" | "lex_subscription" | "website_care";
 
 export interface OrderRecord {
   id: string;
@@ -237,15 +238,24 @@ export async function GET() {
       let currentPeriodEnd: number | null = null;
       if (invs[0] && sub.status === "active") currentPeriodEnd = invs[0].date + 30 * 86400;
 
+      const productType = classifySubscription((sub.metadata || {}) as Record<string, string>);
+      const kind = subscriptionOrderKind(productType);
+      const websiteFromMeta =
+        typeof sub.metadata?.website === "string" && sub.metadata.website
+          ? sub.metadata.website
+          : productType === "website_care" && sub.metadata?.description
+            ? String(sub.metadata.description)
+            : null;
+
       orders.push({
         id: sub.id,
-        kind: "lex_subscription",
-        productLabel: `Lex ${plan}`,
+        kind,
+        productLabel: subscriptionProductLabel(productType, plan),
         name: customer?.name ?? null,
         email: customer?.email ?? null,
         phone: customer?.phone ?? null,
         business: customer?.name ?? null,
-        website: null,
+        website: websiteFromMeta,
         amountTotal: totalPaid,
         currency: "AUD",
         status: sub.status,

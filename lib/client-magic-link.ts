@@ -13,6 +13,9 @@ import { createHash, randomBytes } from "crypto";
 import { Resend } from "resend";
 import { getRedis } from "./redis";
 import { getDirectoryUser } from "./user-directory";
+import { listSites } from "./site-registry";
+import { classifySubscription } from "./subscription-classify";
+import Stripe from "stripe";
 import { loadClients } from "./clients";
 import { safeRedirect } from "./safe-redirect";
 import { generateEmailCode, storeEmailCode, underCodeRateLimit } from "./portal-email-code";
@@ -64,6 +67,48 @@ export async function findEligibleClient(rawEmail: string): Promise<EligibleClie
   if (envClient && envClient.id !== adminId) {
     return { clientId: envClient.id, name: envClient.name, email };
   }
+
+  // Hosted website / care clients (Site Factory + Stripe care plan)
+  try {
+    const sites = await listSites();
+    const site = sites.find((s) => (s.business?.email || "").toLowerCase() === email);
+    if (site) {
+      return {
+        clientId: site.id,
+        name: site.business?.name || site.name,
+        email,
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeKey) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" as any });
+      const customers = await stripe.customers.list({ email, limit: 5 });
+      for (const customer of customers.data) {
+        const subs = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: "active",
+          limit: 10,
+        });
+        for (const sub of subs.data) {
+          if (classifySubscription(sub.metadata || {}) !== "website_care") continue;
+          return {
+            clientId: sub.metadata?.siteId || `care-${customer.id}`,
+            name: customer.name || email,
+            email,
+          };
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   return null;
 }
 

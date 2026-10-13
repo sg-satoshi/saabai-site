@@ -779,7 +779,7 @@ export default function AdminClient({
 }) {
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
   const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
-  const [orderStats, setOrderStats] = useState<{ total: number; lex: number; blueprint: number; revenueCents: number } | null>(null);
+  const [orderStats, setOrderStats] = useState<{ total: number; lex: number; care: number; blueprint: number; revenueCents: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const today = new Date().toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -798,9 +798,10 @@ export default function AdminClient({
       .then(data => {
         const orders = (data.orders || []) as { kind: string; amountTotal: number | null }[];
         const lex = orders.filter(o => o.kind === "lex_subscription").length;
+        const care = orders.filter(o => o.kind === "website_care").length;
         const blueprint = orders.filter(o => o.kind === "blueprint").length;
         const revenueCents = orders.reduce((s, o) => s + (o.amountTotal || 0), 0);
-        setOrderStats({ total: orders.length, lex, blueprint, revenueCents });
+        setOrderStats({ total: orders.length, lex, care, blueprint, revenueCents });
       })
       .catch(() => {});
   }, []);
@@ -823,7 +824,7 @@ export default function AdminClient({
           <div className="l">Orders (all time)</div>
           <div className="v num">{orderStats ? String(orderStats.total) : "-"}</div>
           <div className="d muted">
-            {orderStats ? `${orderStats.blueprint} Blueprint · ${orderStats.lex} Lex` : "Loading..."}
+            {orderStats ? `${orderStats.blueprint} Blueprint · ${orderStats.lex} Lex · ${orderStats.care} Web/Care` : "Loading..."}
           </div>
         </div>
         <div className="card kpi">

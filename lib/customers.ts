@@ -12,6 +12,10 @@ import { listClients as listLeadGenClients } from "./leadgen-config";
 import { listEngagements } from "./audit-store";
 import { AUDIT_STATUS_LABELS } from "./audit-types";
 import Stripe from "stripe";
+import {
+  classifySubscription,
+  subscriptionProjectLabel,
+} from "./subscription-classify";
 
 export interface UnifiedCustomer {
   id: string;
@@ -78,13 +82,16 @@ async function fetchStripeCustomers(): Promise<UnifiedCustomer[]> {
         (item) => item.price?.recurring?.interval === "month"
       );
       const monthlyAmount = monthlyItem?.price?.unit_amount ?? 0;
+      const meta = (sub.metadata || {}) as Record<string, string>;
+      const productType = classifySubscription(meta);
+      const project = subscriptionProjectLabel(productType);
 
       return {
-        id: `stripe_${cid}`,
+        id: `stripe_${cid}_${sub.id}`,
         name: customer?.name ?? customer?.email ?? "Unknown",
         email: customer?.email ?? "",
         type: "stripe" as const,
-        project: "Lex",
+        project,
         status: sub.status,
         revenue: paidByCustomer[cid] ?? 0,
         mrr: sub.status === "active" ? monthlyAmount : 0,
@@ -92,8 +99,16 @@ async function fetchStripeCustomers(): Promise<UnifiedCustomer[]> {
         detailUrl: `/saabai-admin/orders`,
         metadata: {
           customerId: cid,
-          plan: monthlyAmount >= 49900 ? "Growth" : "Starter",
-          currentPeriodEnd: (sub as any).current_period_end ?? null,
+          subscriptionId: sub.id,
+          productType,
+          description: meta.description || "",
+          plan:
+            productType === "website_care"
+              ? "Care"
+              : monthlyAmount >= 49900
+                ? "Growth"
+                : "Starter",
+          currentPeriodEnd: (sub as { current_period_end?: number }).current_period_end ?? null,
         },
       };
     });
@@ -141,7 +156,7 @@ export async function listUnifiedCustomers(): Promise<UnifiedCustomer[]> {
         name: s.name,
         email: s.business?.email ?? "",
         type: "site-factory",
-        project: "Site Factory",
+        project: s.domains && s.domains.length > 0 ? "Web/Care" : "Site Factory",
         status: s.status,
         revenue: 0,
         mrr: 0,

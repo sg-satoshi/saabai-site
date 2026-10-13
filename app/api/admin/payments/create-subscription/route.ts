@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { isAdminRequest } from "../../../../../lib/product-stripe";
 import { resolveCouponForManual } from "../../../../../lib/sell";
+import { classifySubscription } from "../../../../../lib/subscription-classify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
 
   try {
-    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode, setupFee, startDate } = await req.json();
+    const body = await req.json();
+    const { amount, description, customerName, customerEmail, interval, customDays, promotionCode, setupFee, startDate, productType: productTypeIn } = body || {};
 
     // Validate
     if (!amount || typeof amount !== "number" || amount < 50) {
@@ -158,6 +160,10 @@ export async function POST(req: NextRequest) {
         description,
         interval,
         coupon_code: appliedCode || "",
+        productType:
+          typeof productTypeIn === "string" && productTypeIn.trim()
+            ? String(productTypeIn).trim()
+            : classifySubscription({ description }),
       },
       expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
     };
