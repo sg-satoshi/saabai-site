@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { computeSiteBilling, BILLING_LABELS, type BillingState, type BillingSubSummary } from "../../../lib/site-billing-status";
 
 interface Site {
   id: string;
@@ -289,6 +290,7 @@ export default function SiteFactoryClient() {
   const [listNiche, setListNiche] = useState(() => searchParams.get("niche") || "all");
   const [listStatus, setListStatus] = useState(() => searchParams.get("status") || "all");
   const [listDomain, setListDomain] = useState(() => searchParams.get("domain") || "all");
+  const [billingSubs, setBillingSubs] = useState<BillingSubSummary[]>([]);
   const [listBilling, setListBilling] = useState(() => searchParams.get("billing") || "all");
   const [listCare, setListCare] = useState(() => searchParams.get("care") || "all");
   const [listChatbot, setListChatbot] = useState(() => searchParams.get("chatbot") || "all");
@@ -627,6 +629,10 @@ export default function SiteFactoryClient() {
       const data = await res.json();
       if (data.sites) setSites(data.sites);
     } catch { console.error("Failed to fetch sites"); }
+    fetch("/api/site-factory/billing-status")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.subs) setBillingSubs(d.subs); })
+      .catch(() => { /* billing column falls back to care-plan data */ });
     setLoadingSites(false);
   }
 
@@ -2879,6 +2885,8 @@ export default function SiteFactoryClient() {
 
   // ─── LIST VIEW ──────────────────────────────────────────────────────
   const dedupedSites = deduplicateSites(sites);
+  const billingBySite = new Map(dedupedSites.map(s => [s.id, computeSiteBilling(s, billingSubs)]));
+  const billingOf = (s: { id: string }) => billingBySite.get(s.id) ?? { state: "none" as BillingState, source: null };
 
   // Derived stats
   const statLive    = dedupedSites.filter(s => s.status === "live").length;
@@ -2905,15 +2913,12 @@ export default function SiteFactoryClient() {
         (listDomain === "custom" && hasCustom) ||
         (listDomain === "subpath" && !hasCustom);
       const hasCare = !!(s.billing?.amount && s.billing.amount > 0);
-      const billingStatus = (s.billing?.status || "").toLowerCase();
+      const bState = billingOf(s).state;
       const matchBilling =
         listBilling === "all" ||
         (listBilling === "care" && hasCare) ||
-        (listBilling === "none" && !hasCare) ||
-        (listBilling === "active" && billingStatus === "active") ||
-        (listBilling === "paused" && billingStatus === "paused") ||
-        (listBilling === "cancelled" && billingStatus === "cancelled") ||
-        (listBilling === "monthly" && hasCare);
+        (listBilling === "monthly" && hasCare) ||
+        listBilling === bState;
       const matchCare =
         listCare === "all" ||
         (listCare === "yes" && hasCare) ||
@@ -2942,7 +2947,7 @@ export default function SiteFactoryClient() {
 
   const COL = isMobile
     ? "36px 1fr auto"
-    : "36px minmax(160px,2fr) minmax(140px,2fr) 100px 90px 80px 80px 72px 100px";
+    : "36px minmax(160px,2fr) minmax(140px,2fr) 124px 132px 72px 80px 100px";
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -3012,11 +3017,12 @@ export default function SiteFactoryClient() {
               {!isMobile && (
                 <select value={listBilling} onChange={e => setListBilling(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listBilling === "all" ? C.textDim : C.text }}>
                   <option value="all">All billing</option>
-                  <option value="care">Care plan / monthly</option>
-                  <option value="none">No billing</option>
                   <option value="active">Active</option>
+                  <option value="past_due">Past due</option>
                   <option value="paused">Paused</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="none">No billing</option>
+                  <option value="care">Care plan / monthly</option>
                 </select>
               )}
               {!isMobile && (
@@ -3074,11 +3080,12 @@ export default function SiteFactoryClient() {
                       <label style={{ fontSize: 11, color: C.textDim }}>Billing
                         <select value={listBilling} onChange={e => setListBilling(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
                           <option value="all">All billing</option>
-                          <option value="care">Care plan / monthly</option>
-                          <option value="none">No billing</option>
                           <option value="active">Active</option>
+                          <option value="past_due">Past due</option>
                           <option value="paused">Paused</option>
                           <option value="cancelled">Cancelled</option>
+                          <option value="none">No billing</option>
+                          <option value="care">Care plan / monthly</option>
                         </select>
                       </label>
                       <label style={{ fontSize: 11, color: C.textDim }}>Care plan
@@ -3186,7 +3193,7 @@ export default function SiteFactoryClient() {
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Name</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Domain</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Niche</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Billing</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Billing Status</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Status</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>Created</span>
                 <span />
@@ -3227,7 +3234,8 @@ export default function SiteFactoryClient() {
                         </span>
                       )}
                     </div>
-                    {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted }}>{customDomain || `/sites/${site.slug}/`}</span>}
+                    {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{customDomain || `/sites/${site.slug}/`}</span>}
+                    {isMobile && <div style={{ marginTop: 4 }}><BillingBadge b={billingOf(site)} /></div>}
                   </div>
 
                   {/* Domain — desktop only */}
@@ -3248,17 +3256,10 @@ export default function SiteFactoryClient() {
                     </div>
                   )}
 
-                  {/* Billing — desktop only */}
-                  {!isMobile && site.billing?.amount && (
+                  {/* Billing status — desktop only (mobile shows it under the name) */}
+                  {!isMobile && (
                     <div style={{ paddingRight: 8 }}>
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4,
-                        background: site.billing.status === "active" ? "rgba(22,163,74,0.10)" : site.billing.status === "paused" ? "rgba(217,119,6,0.10)" : "rgba(0,0,0,0.04)",
-                        color: site.billing.status === "active" ? "#16a34a" : site.billing.status === "paused" ? "#d97706" : "#9ca3af",
-                        whiteSpace: "nowrap",
-                      }}>
-                        ${(site.billing.amount / 100).toLocaleString("en-AU")}/mo
-                      </span>
+                      <BillingBadge b={billingOf(site)} />
                     </div>
                   )}
 
@@ -3662,5 +3663,29 @@ export default function SiteFactoryClient() {
         </div>
       )}
     </div>
+  );
+}
+
+const BILLING_BADGE_STYLE: Record<BillingState, { bg: string; fg: string }> = {
+  active:    { bg: "rgba(22,163,74,0.12)",  fg: "#16a34a" },
+  past_due:  { bg: "rgba(220,38,38,0.12)",  fg: "#dc2626" },
+  paused:    { bg: "rgba(217,119,6,0.12)",  fg: "#d97706" },
+  cancelled: { bg: "rgba(148,163,184,0.16)", fg: "#94a3b8" },
+  none:      { bg: "rgba(245,158,11,0.14)", fg: "#f59e0b" },
+};
+
+function BillingBadge({ b }: { b: { state: BillingState; source: string | null; amount?: number; interval?: string } }) {
+  const st = BILLING_BADGE_STYLE[b.state];
+  const amt = b.amount && b.state !== "none" && b.state !== "cancelled"
+    ? ` · $${(b.amount / 100).toLocaleString("en-AU")}${b.interval === "year" ? "/yr" : "/mo"}`
+    : "";
+  return (
+    <span
+      title={b.source === "stripe" ? "From Stripe subscription" : b.source === "care-plan" ? "From site care plan" : "No subscription or care plan found"}
+      style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.fg, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}
+    >
+      <span style={{ width: 5, height: 5, borderRadius: "50%", background: st.fg, flexShrink: 0 }} />
+      {BILLING_LABELS[b.state]}{amt}
+    </span>
   );
 }
