@@ -8,6 +8,9 @@ import { listEngagements } from "../../../../lib/audit-store";
 import { listRequests } from "../../../../lib/client-requests";
 import { getPortalUser } from "../../../../lib/portal-users";
 import { getDirectoryUser } from "../../../../lib/user-directory";
+import { listSites } from "../../../../lib/site-registry";
+import { classifySubscription } from "../../../../lib/subscription-classify";
+import Stripe from "stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +38,59 @@ export type PortalProduct = {
   icon: "lx" | "bp" | "ws" | "cr";
 };
 
+async function findWebsiteCareForEmail(email: string): Promise<{
+  site: Awaited<ReturnType<typeof listSites>>[number] | null;
+  care: { amountCents: number; status: string; description: string } | null;
+}> {
+  let site: Awaited<ReturnType<typeof listSites>>[number] | null = null;
+  try {
+    const sites = await listSites();
+    site =
+      sites.find((s) => (s.business?.email || "").toLowerCase() === email) ||
+      null;
+  } catch {
+    site = null;
+  }
+
+  let care: { amountCents: number; status: string; description: string } | null = null;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeKey) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-18.acacia" as any });
+      const customers = await stripe.customers.list({ email, limit: 5 });
+      for (const customer of customers.data) {
+        const subs = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: "all",
+          limit: 20,
+        });
+        for (const sub of subs.data) {
+          const productType = classifySubscription(sub.metadata || {});
+          if (productType !== "website_care") continue;
+          if (sub.status !== "active" && sub.status !== "trialing" && sub.status !== "past_due") {
+            continue;
+          }
+          const monthlyItem = sub.items.data.find(
+            (item) => item.price?.recurring?.interval === "month",
+          );
+          care = {
+            amountCents: monthlyItem?.price?.unit_amount ?? 0,
+            status: sub.status,
+            description: sub.metadata?.description || "Care plan",
+          };
+          break;
+        }
+        if (care) break;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return { site, care };
+}
+
 export async function GET(req: Request) {
   const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
   if (!sessionToken) return Response.json({ authenticated: false }, { status: 401 });
@@ -45,6 +101,7 @@ export async function GET(req: Request) {
   const lexFirm = getLexClients().find((c) => c.email.teamEmail.toLowerCase() === email);
   const portalUser = await getPortalUser(email);
   const dirUser = await getDirectoryUser(email);
+  const { site, care } = await findWebsiteCareForEmail(email);
 
   let blueprints: Awaited<ReturnType<typeof listEngagements>> = [];
   try {
@@ -55,7 +112,7 @@ export async function GET(req: Request) {
     blueprints = [];
   }
 
-  const clientId = lexFirm?.id || dirUser?.id || portalUser?.id || "";
+  const clientId = lexFirm?.id || site?.id || dirUser?.id || portalUser?.id || "";
   let requests: Awaited<ReturnType<typeof listRequests>> = [];
   try {
     if (clientId) requests = await listRequests({ clientId });
@@ -63,33 +120,70 @@ export async function GET(req: Request) {
     requests = [];
   }
 
-  const name = dirUser?.name || portalUser?.name || lexFirm?.firmName || email.split("@")[0];
-  const business = lexFirm?.firmName || dirUser?.name || portalUser?.name || "";
+  const name =
+    dirUser?.name ||
+    portalUser?.name ||
+    site?.business?.name ||
+    lexFirm?.firmName ||
+    email.split("@")[0];
+  const business =
+    site?.business?.name || lexFirm?.firmName || dirUser?.name || portalUser?.name || "";
   const role = (dirUser as { role?: string } | null)?.role === "billing" ? "Billing" : "Owner";
 
   const modules = {
     lex: !!lexFirm,
     blueprint: blueprints.length > 0,
-    projects: false, // wire when Site Factory / build data is available for this client
-    care: false, // wire when care plan subscription is linked
-    invoices: false, // wire when Stripe customer invoices are linked
+    projects: !!site,
+    care: !!care,
+    invoices: !!care,
     requests: true,
     account: true,
   };
 
   const products: PortalProduct[] = [];
   if (lexFirm) {
-    const site = (lexFirm as { website?: string }).website || "";
+    const lexSite = (lexFirm as { website?: string }).website || "";
     products.push({
       id: `lex-${lexFirm.id}`,
       kind: "lex",
       name: "Lex agent",
-      detail: `Lex ${lexFirm.agentName ? "Professional" : "plan"}${site ? ` · ${site.replace(/^https?:\/\//, "")}` : lexFirm.agentName ? ` · Agent "${lexFirm.agentName}"` : ""}`,
+      detail: `Lex ${lexFirm.agentName ? "Professional" : "plan"}${lexSite ? ` · ${lexSite.replace(/^https?:\/\//, "")}` : lexFirm.agentName ? ` · Agent "${lexFirm.agentName}"` : ""}`,
       status: "Active",
       statusTone: "ok",
       stat: "Open Manage agent for settings and test",
       openPage: "lex-agent",
       icon: "lx",
+    });
+  }
+  if (site) {
+    const domain = site.domains?.[0] || site.url.replace(/^https?:\/\//, "");
+    products.push({
+      id: `site-${site.id}`,
+      kind: "website",
+      name: "Website",
+      detail: `${site.name} · ${domain}`,
+      status: site.status === "live" ? "Live" : site.status,
+      statusTone: site.status === "live" ? "ok" : "info",
+      stat: site.url ? `Open ${domain}` : "Hosted with Saabai",
+      openPage: "projects",
+      icon: "ws",
+    });
+  }
+  if (care) {
+    const dollars = (care.amountCents / 100).toLocaleString("en-AU", {
+      style: "currency",
+      currency: "AUD",
+    });
+    products.push({
+      id: `care-${email}`,
+      kind: "care",
+      name: "Care plan",
+      detail: `${dollars}/mo · hosting and updates`,
+      status: care.status === "active" || care.status === "trialing" ? "Active" : care.status,
+      statusTone: care.status === "active" || care.status === "trialing" ? "ok" : "warn",
+      stat: care.description || "Monthly care plan",
+      openPage: "invoices",
+      icon: "cr",
     });
   }
   for (const b of blueprints) {
@@ -109,7 +203,6 @@ export async function GET(req: Request) {
       icon: "bp",
     });
   }
-  // Website / care rows only when real data exists (modules.projects / modules.care).
 
   return Response.json({
     authenticated: true,
@@ -122,6 +215,16 @@ export async function GET(req: Request) {
     plan: lexFirm ? "Professional" : null,
     modules,
     products,
+    site: site
+      ? {
+          id: site.id,
+          name: site.name,
+          url: site.url,
+          status: site.status,
+          domains: site.domains || [],
+        }
+      : null,
+    care,
     blueprints: blueprints.map((b) => ({
       id: b.id,
       tier: b.tier,

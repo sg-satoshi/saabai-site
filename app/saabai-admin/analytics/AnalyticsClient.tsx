@@ -17,6 +17,7 @@ export default function AnalyticsClient() {
   }, []);
 
   const lex = orders.filter(o => o.kind === "lex_subscription");
+  const care = orders.filter(o => o.kind === "website_care");
   const blueprints = orders.filter(o => o.kind === "blueprint");
   const revenue = orders.reduce((s, o) => s + (o.amountTotal || 0), 0);
   const mrr = lex.reduce((s, o) => s + (o.monthlyAmount || 0), 0);
@@ -34,7 +35,7 @@ export default function AnalyticsClient() {
         <div className="card kpi">
           <div className="l">Total orders</div>
           <div className="v num">{orders.length || "-"}</div>
-          <div className="d muted">{blueprints.length} Blueprint · {lex.length} Lex</div>
+          <div className="d muted">{blueprints.length} Blueprint · {lex.length} Lex · {care.length} Web/Care</div>
         </div>
         <div className="card kpi">
           <div className="l">Collected revenue</div>

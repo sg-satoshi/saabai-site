@@ -49,6 +49,8 @@ type Workspace = {
     account: boolean;
   };
   products: PortalProduct[];
+  site: { id: string; name: string; url: string; status: string; domains: string[] } | null;
+  care: { amountCents: number; status: string; description: string } | null;
   blueprints: { id: string; tier: string; status: string; createdAt: string; businessName: string; score: number | null }[];
   requests: { id: string; title: string; status: string; createdAt: string; updatedAt: string }[];
   openRequestCount: number;
@@ -154,7 +156,7 @@ function ClientPortalInner() {
     if (!res.ok) return false;
     const data = await res.json();
     if (!data.authenticated) return false;
-    setWorkspace({ ...data, products: data.products || [] });
+    setWorkspace({ ...data, products: data.products || [], site: data.site || null, care: data.care || null });
     return true;
   }
 
@@ -591,17 +593,31 @@ function ClientPortalInner() {
             </>
           )}
 
-          {workspace.modules.projects && (
+          {workspace.modules.projects && workspace.site && (
             <>
               <div className="sec-h">
-                <h2>Website build</h2>
+                <h2>Website</h2>
                 <button type="button" className="op" onClick={() => setPage("projects")}>
-                  Open project →
+                  Open site →
                 </button>
               </div>
               <div className="card" style={{ marginBottom: 16 }}>
+                <div className="hd">
+                  <div>
+                    <h2>{workspace.site.name}</h2>
+                    <div className="sub">{workspace.site.domains?.[0] || workspace.site.url}</div>
+                  </div>
+                  <span className={`badge ${workspace.site.status === "live" ? "b-ok" : "b-info"}`}>
+                    {workspace.site.status === "live" ? "Live" : workspace.site.status}
+                  </span>
+                </div>
                 <div className="bd">
-                  <p className="muted" style={{ margin: 0 }}>Your website build progress will show here when linked.</p>
+                  <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--n-600)" }}>
+                    Hosted with Saabai{workspace.care ? " on a monthly care plan" : ""}.
+                  </p>
+                  <a className="btn pri sm" href={workspace.site.url} target="_blank" rel="noopener noreferrer">
+                    Open website
+                  </a>
                 </div>
               </div>
             </>
@@ -744,8 +760,52 @@ function ClientPortalInner() {
 
       {page === "projects" && (
         <>
-          <div className="ph"><div><h1>Projects</h1><div className="sub">Website and care plan delivery</div></div></div>
-          <Empty title="No project data yet" body="When your build is underway, milestones and staging links will show here." />
+          <div className="ph"><div><h1>Website</h1><div className="sub">Hosted site and care plan</div></div></div>
+          {workspace.site ? (
+            <div className="card">
+              <div className="hd">
+                <div>
+                  <h2>{workspace.site.name}</h2>
+                  <div className="sub">{workspace.site.domains?.[0] || workspace.site.url}</div>
+                </div>
+                <span className={`badge ${workspace.site.status === "live" ? "b-ok" : "b-info"}`}>
+                  {workspace.site.status === "live" ? "Live" : workspace.site.status}
+                </span>
+              </div>
+              <div className="bd">
+                <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--n-600)" }}>
+                  Your site is hosted with Saabai. Open it any time, or create a request for a change.
+                </p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <a className="btn pri sm" href={workspace.site.url} target="_blank" rel="noopener noreferrer">
+                    Open website
+                  </a>
+                  <button type="button" className="btn sm" onClick={() => setPage("requests")}>
+                    Request a change
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Empty title="No project data yet" body="When your build is underway, milestones and staging links will show here." />
+          )}
+          {workspace.care && (
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="hd">
+                <div>
+                  <h2>Care plan</h2>
+                  <div className="sub">{workspace.care.description}</div>
+                </div>
+                <span className="badge b-ok">Active</span>
+              </div>
+              <div className="bd">
+                <p style={{ margin: 0, fontSize: 14, color: "var(--n-600)" }}>
+                  {(workspace.care.amountCents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD" })}/mo for hosting and updates.
+                  Owner and Billing can review invoices from the Invoices section.
+                </p>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -787,7 +847,20 @@ function ClientPortalInner() {
               <div className="sub">{canPay ? "You can pay open invoices from this account." : "Ask an Owner or Billing user to pay invoices."}</div>
             </div>
           </div>
-          <Empty title="No invoices linked yet" body="When Stripe invoices are connected to your portal account, they will list here with pay links for Owner and Billing roles." />
+          {workspace.care ? (
+            <div className="card">
+              <div className="bd">
+                <p style={{ margin: "0 0 8px", fontSize: 14 }}>
+                  Care plan active at {(workspace.care.amountCents / 100).toLocaleString("en-AU", { style: "currency", currency: "AUD" })}/mo.
+                </p>
+                <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
+                  Individual invoice pay links will list here when Stripe invoice history is linked in the portal. Owner and Billing can pay.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <Empty title="No invoices linked yet" body="When Stripe invoices are connected to your portal account, they will list here with pay links for Owner and Billing roles." />
+          )}
         </>
       )}
 
