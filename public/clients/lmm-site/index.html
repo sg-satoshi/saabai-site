@@ -161,6 +161,10 @@
       padding: 88px 0 64px;
     }
 
+    /* Tighter gap between nav and hero badge (about half the original). */
+    .hero { align-items: start; }
+    .hero-inner { padding-top: 0; }
+
     .eyebrow {
       display: inline-flex;
       align-items: center;
@@ -553,7 +557,7 @@
           linear-gradient(180deg, rgba(8, 19, 20, 0.98) 0%, rgba(8, 19, 20, 0.84) 52%, rgba(8, 19, 20, 0.98) 100%),
           url("/clients/lmm-site/assets/lmm-brisbane-property-hero.png") center / cover no-repeat;
       }
-      .hero-inner { padding: 68px 0 44px; }
+      .hero-inner { padding: 0 0 44px; }
       .hero-proof,
       .services,
       .testimonials,
@@ -597,7 +601,7 @@
       <nav class="nav-links" aria-label="Primary navigation">
         <a href="#services">Services</a>
         <a href="#approach">Approach</a>
-        <a href="#testimonials">Testimonials</a>
+        <!-- Testimonials hidden for now: <a href="#testimonials">Testimonials</a> -->
         <a href="#contact">Contact</a>
         <button class="theme-toggle" type="button" aria-label="Toggle dark mode">DL</button>
       </nav>
@@ -710,7 +714,8 @@
       </div>
     </section>
 
-    <section id="testimonials">
+    <!-- Testimonials hidden for now: remove hidden + style to restore -->
+    <section id="testimonials" hidden style="display:none">
       <div class="container">
         <div class="section-head reveal">
           <h2>Trusted for property decisions that matter.</h2>
@@ -768,8 +773,9 @@
               <textarea name="message" required></textarea>
             </label>
           </div>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
           <div class="form-footer">
-            <span class="status" role="status" aria-live="polite">Enquiry captured for prototype review.</span>
+            <span class="status" role="status" aria-live="polite"></span>
             <button class="button button-primary" type="submit">Submit enquiry</button>
           </div>
         </form>
@@ -779,7 +785,7 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <span>(c) <span id="year"></span> Lifestyle Money Management. Prototype for lmm-website.com.au.</span>
+      <span>(c) <span id="year"></span> Lifestyle Money Management.</span>
       <span>General information only. Seek licensed advice before making investment decisions.</span>
     </div>
   </footer>
@@ -808,11 +814,31 @@
 
     document.querySelectorAll(".reveal").forEach((item) => observer.observe(item));
 
-    document.getElementById("leadForm").addEventListener("submit", (event) => {
+    document.getElementById("leadForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const status = event.currentTarget.querySelector(".status");
+      const form = event.currentTarget;
+      const status = form.querySelector(".status");
+      const button = form.querySelector('button[type="submit"]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      button.disabled = true;
+      button.textContent = "Sending...";
+      status.classList.remove("is-visible");
+      try {
+        const res = await fetch("/api/lmm-contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+        status.textContent = "Thanks! Your enquiry has been sent. We'll be in touch shortly.";
+        form.reset();
+      } catch (err) {
+        status.textContent = "Sorry, something went wrong. Please call or email us directly.";
+      }
       status.classList.add("is-visible");
-      event.currentTarget.reset();
+      button.disabled = false;
+      button.textContent = "Submit enquiry";
     });
   </script>
   <script src="/clients/lmm-site/assets/chat-widget.js?v=8" defer></script>
