@@ -191,14 +191,14 @@ export default function FactFindClient({ token }: { token: string }) {
     <Shell>
       <div className="max-w-2xl mx-auto px-6 py-12">
         <p className="text-xs uppercase tracking-widest mb-2" style={{ color: GOLD }}>
-          AI Audit · {data.firmName}
+          Saabai Blueprint · {data.firmName}
         </p>
         <h1 className="text-2xl md:text-3xl font-semibold mb-2" style={{ color: "#ffffff" }}>
-          Pre-Audit Questionnaire
+          Blueprint Questionnaire
         </h1>
         <p className="mb-8 text-sm" style={{ color: "#9aa0c3" }}>
           Your progress saves automatically each step. The more specific your
-          answers, the sharper your audit.
+          answers, the sharper your Blueprint.
         </p>
 
         {/* Progress */}

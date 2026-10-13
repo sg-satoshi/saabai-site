@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     "business process automation professional services",
     "AI systems professional services Australia",
     "automate repetitive work",
-    "AI audit Australia",
+    "AI automation plan Australia",
   ],
   authors: [{ name: "Shane Goldberg", url: BASE_URL }],
   creator: "Saabai",

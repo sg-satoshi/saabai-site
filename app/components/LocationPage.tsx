@@ -29,21 +29,47 @@ export default function LocationPage({ config }: Props) {
     seo,
   } = config;
 
+  const isHomeBase = slug === "gold-coast";
+  const areaServed = {
+    "@type": "City",
+    name: city,
+    containedInPlace: { "@type": "AdministrativeArea", name: `${config.state}, Australia` },
+  };
+
   // ── JSON-LD Schemas ──────────────────────────────────────────────────────
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
+    "@id": "https://www.saabai.ai/#business",
     name: "Saabai",
-    url: seo.canonical,
+    url: "https://www.saabai.ai",
     description: seo.description,
-    serviceType: "AI Automation",
-    areaServed: {
-      "@type": "City",
-      name: city,
-      containedInPlace: {
-        "@type": "AdministrativeArea",
-        name: stateCode,
-      },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Gold Coast",
+      addressRegion: "QLD",
+      addressCountry: "AU",
+    },
+    areaServed: areaServed,
+  };
+
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `Websites and AI automation in ${city}`,
+    url: seo.canonical,
+    provider: { "@id": "https://www.saabai.ai/#business" },
+    areaServed: areaServed,
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Saabai offers",
+      itemListElement: [
+        { "@type": "Offer", name: "Web Solutions", price: "2000", priceCurrency: "AUD", url: "https://www.saabai.ai/websites", description: "Website build, hosting and management from $2,000 plus $100 per month." },
+        { "@type": "Offer", name: "Saabai Blueprint Starter", price: "497", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
+        { "@type": "Offer", name: "Saabai Blueprint Pro", price: "1497", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
+        { "@type": "Offer", name: "Saabai Blueprint Business", price: "3500", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
+        { "@type": "Offer", name: "AI Readiness Score", price: "0", priceCurrency: "AUD", url: "https://www.saabai.ai/score" },
+      ],
     },
   };
 
@@ -73,7 +99,7 @@ export default function LocationPage({ config }: Props) {
       {
         "@type": "ListItem",
         position: 2,
-        name: `AI Automation ${city}`,
+        name: `Websites and AI ${city}`,
         item: seo.canonical,
       },
     ],
@@ -93,13 +119,17 @@ export default function LocationPage({ config }: Props) {
       />
       <script
         type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
+      <script
+        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
       <Nav />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
+      <section className="relative pt-36 pb-20 md:pt-52 md:pb-36 px-5 sm:px-6 text-center max-w-5xl mx-auto overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -120,20 +150,20 @@ export default function LocationPage({ config }: Props) {
           aria-label="Breadcrumb"
           className="relative text-xs text-saabai-text-dim mb-8"
         >
-          <a href="/" className="hover:text-saabai-text transition-colors">
+          <a href="/" className="inline-flex items-center min-h-[44px] hover:text-saabai-text transition-colors">
             Home
           </a>
           <span className="mx-2">&rsaquo;</span>
-          <span>AI Automation {city}</span>
+          <span>{city}</span>
         </nav>
 
         {/* Eyebrow */}
         <p className="relative text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-6">
-          AI Consulting · {city}, {stateCode}
+          {isHomeBase ? "Home base · Gold Coast, QLD" : `Small businesses · ${city}, ${stateCode}`}
         </p>
 
         {/* Headline */}
-        <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-8">
+        <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-8 text-balance">
           {heroHeadline}
         </h1>
 
@@ -143,12 +173,18 @@ export default function LocationPage({ config }: Props) {
         </p>
 
         {/* CTA */}
-        <div className="relative mb-10">
+        <div className="relative mb-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+          <a
+            href="/score"
+            className="inline-flex items-center justify-center min-h-[48px] bg-saabai-teal text-saabai-bg px-8 py-3 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
+          >
+            Get your free AI Readiness Score
+          </a>
           <a
             href="/blueprint"
-            className="inline-block bg-saabai-teal text-saabai-bg px-8 py-4 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
+            className="inline-flex items-center justify-center min-h-[48px] border border-saabai-border text-saabai-text px-8 py-3 rounded-lg font-semibold hover:border-saabai-teal transition-colors"
           >
-            Book an AI Strategy Session
+            See Saabai Blueprint
           </a>
         </div>
 
@@ -165,13 +201,64 @@ export default function LocationPage({ config }: Props) {
         </div>
       </section>
 
+      {/* ── Two offers ──────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
+            What we do in {city}
+          </p>
+          <h2 className="text-2xl sm:text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Two ways we help {city} businesses
+          </h2>
+          <p className="text-saabai-text-muted max-w-3xl mb-10 leading-relaxed">
+            {isHomeBase
+              ? "We are a Gold Coast team, so local clients can meet us in person. We build for small businesses first, and professional practices too."
+              : `Built for small businesses first, and professional practices too. We work with ${city} clients remotely, with calls and screen shares that fit your hours.`}
+          </p>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-2xl border border-saabai-border p-6 md:p-8 flex flex-col" style={{ background: "var(--saabai-surface)" }}>
+              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">Web Solutions</p>
+              <h3 className="text-xl font-bold mb-2">We build, host and manage your website</h3>
+              <p className="text-saabai-teal font-semibold mb-4">From $2,000 plus $100/mo</p>
+              <p className="text-saabai-text-muted text-sm leading-relaxed mb-6">
+                A fast, mobile-first site for your {city} business, with hosting, updates and changes handled for you. You run the business, we look after the website.
+              </p>
+              <a href="/websites" className="mt-auto inline-flex items-center justify-center min-h-[48px] border border-saabai-border rounded-lg px-6 font-semibold hover:border-saabai-teal transition-colors">
+                See Web Solutions
+              </a>
+            </div>
+            <div className="rounded-2xl border border-saabai-teal/40 p-6 md:p-8 flex flex-col" style={{ background: "var(--saabai-surface)" }}>
+              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">Saabai Blueprint</p>
+              <h3 className="text-xl font-bold mb-2">Your plan for AI that runs the busywork</h3>
+              <ul className="text-sm text-saabai-text-muted space-y-1 mb-4">
+                <li><span className="text-saabai-text font-semibold">Starter $497</span>, async fact-find, no call needed</li>
+                <li><span className="text-saabai-text font-semibold">Pro $1,497</span>, delivered in 3 business days</li>
+                <li><span className="text-saabai-text font-semibold">Business $3,500</span>, delivered in 2 to 3 weeks</li>
+              </ul>
+              <p className="text-saabai-text-muted text-sm leading-relaxed mb-6">
+                A ranked plan of what to automate first and what it will save. The fee is credited if you book a build within 30 days.
+              </p>
+              <a href="/blueprint" className="mt-auto inline-flex items-center justify-center min-h-[48px] bg-saabai-teal text-saabai-bg rounded-lg px-6 font-semibold hover:bg-saabai-teal-bright transition-colors">
+                Compare Blueprint tiers
+              </a>
+            </div>
+          </div>
+          <p className="text-sm text-saabai-text-muted mt-6">
+            Not sure where to start?{" "}
+            <a href="/score" className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright">
+              Take the free AI Readiness Score &rarr;
+            </a>
+          </p>
+        </div>
+      </section>
+
       {/* ── Local Market Context ────────────────────────────────────────── */}
-      <section className="py-24 px-6 border-t border-saabai-border">
+      <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             {city} Business Environment
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-10">
             Understanding the {city} Market
           </h2>
           <div className="text-saabai-text-muted text-lg leading-relaxed space-y-6 max-w-3xl">
@@ -184,14 +271,14 @@ export default function LocationPage({ config }: Props) {
 
       {/* ── Business Challenges ─────────────────────────────────────────── */}
       <section
-        className="py-24 px-6 border-t border-saabai-border"
+        className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border"
         style={{ background: "var(--saabai-surface)" }}
       >
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             Common Challenges
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
             What {city} Businesses Are Up Against
           </h2>
           <p className="text-saabai-text-muted max-w-3xl mb-12 leading-relaxed">
@@ -218,13 +305,13 @@ export default function LocationPage({ config }: Props) {
       </section>
 
       {/* ── How Saabai Helps ────────────────────────────────────────────── */}
-      <section className="py-24 px-6 border-t border-saabai-border">
+      <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             How We Help
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-            AI Systems for {city} Businesses
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
+            Websites and AI Systems for {city} Businesses
           </h2>
           <p className="text-saabai-text-muted max-w-3xl mb-12 leading-relaxed">
             {howWeHelpIntro}
@@ -251,14 +338,14 @@ export default function LocationPage({ config }: Props) {
 
       {/* ── Case Study ──────────────────────────────────────────────────── */}
       <section
-        className="py-24 px-6 border-t border-saabai-border"
+        className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border"
         style={{ background: "var(--saabai-surface)" }}
       >
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             Real Experience
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-10">
             Work We Have Done
           </h2>
           <div
@@ -289,7 +376,7 @@ export default function LocationPage({ config }: Props) {
           </div>
           <a
             href="/case-studies"
-            className="inline-block mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+            className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
           >
             See more case studies &rarr;
           </a>
@@ -297,12 +384,12 @@ export default function LocationPage({ config }: Props) {
       </section>
 
       {/* ── Industry Cross-Links ────────────────────────────────────────── */}
-      <section className="py-24 px-6 border-t border-saabai-border">
+      <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             {city} Businesses We Help
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
             Industries in {city}
           </h2>
           <p className="text-saabai-text-muted max-w-3xl mb-12 leading-relaxed">
@@ -329,19 +416,19 @@ export default function LocationPage({ config }: Props) {
           <div className="flex flex-wrap gap-x-8 gap-y-3 mt-10 text-sm font-medium">
             <a
               href="/case-studies"
-              className="text-saabai-teal hover:text-saabai-teal-bright transition-colors"
+              className="inline-flex items-center min-h-[44px] text-saabai-teal hover:text-saabai-teal-bright transition-colors"
             >
               View case studies &rarr;
             </a>
             <a
               href="/services"
-              className="text-saabai-teal hover:text-saabai-teal-bright transition-colors"
+              className="inline-flex items-center min-h-[44px] text-saabai-teal hover:text-saabai-teal-bright transition-colors"
             >
               All services &rarr;
             </a>
             <a
               href="/blueprint"
-              className="text-saabai-teal hover:text-saabai-teal-bright transition-colors"
+              className="inline-flex items-center min-h-[44px] text-saabai-teal hover:text-saabai-teal-bright transition-colors"
             >
               Get a Saabai Blueprint &rarr;
             </a>
@@ -350,12 +437,12 @@ export default function LocationPage({ config }: Props) {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 border-t border-saabai-border">
+      <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             Common Questions
           </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-10">
             FAQ: {city} Businesses
           </h2>
           <div className="space-y-4 max-w-3xl">
@@ -382,7 +469,7 @@ export default function LocationPage({ config }: Props) {
 
       {/* ── CTA ─────────────────────────────────────────────────────────── */}
       <section
-        className="relative py-24 px-6 border-t border-saabai-border text-center overflow-hidden"
+        className="relative py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border text-center overflow-hidden"
         style={{ background: "var(--saabai-surface)" }}
       >
         <div
@@ -393,20 +480,28 @@ export default function LocationPage({ config }: Props) {
           }}
         />
         <div className="relative max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
             {ctaHeadline}
           </h2>
           <p className="text-saabai-text-muted text-lg mb-10 leading-relaxed">
             {ctaSubtext}
           </p>
-          <a
-            href="/blueprint"
-            className="inline-block bg-saabai-teal text-saabai-bg px-8 py-4 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
-          >
-            Book an AI Strategy Session
-          </a>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+            <a
+              href="/blueprint"
+              className="inline-flex items-center justify-center min-h-[48px] bg-saabai-teal text-saabai-bg px-8 py-3 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
+            >
+              Get your Saabai Blueprint
+            </a>
+            <a
+              href="/score"
+              className="inline-flex items-center justify-center min-h-[48px] border border-saabai-border text-saabai-text px-8 py-3 rounded-lg font-semibold hover:border-saabai-teal transition-colors"
+            >
+              Free AI Readiness Score
+            </a>
+          </div>
           <p className="text-xs text-saabai-text-dim mt-6">
-            No obligation. 30 minutes. Genuine advice for your business.
+            Blueprint from $497, credited if you build with us within 30 days.
           </p>
 
           {/* Also serving */}
@@ -419,7 +514,7 @@ export default function LocationPage({ config }: Props) {
                 <a
                   key={loc.slug}
                   href={`/${loc.slug}`}
-                  className="text-saabai-text-muted hover:text-saabai-teal transition-colors"
+                  className="inline-flex items-center min-h-[44px] px-1 text-saabai-text-muted hover:text-saabai-teal transition-colors"
                 >
                   {loc.city}
                 </a>

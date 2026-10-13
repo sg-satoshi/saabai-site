@@ -88,7 +88,7 @@ export default function LawFirmIntakeAutomation() {
             voicemails, it&apos;s 11:15. She hasn&apos;t touched a single piece of billable work.
           </p>
           <p className="text-article-body">
-            This scenario isn&apos;t exceptional. Across the 12 law firms we&apos;ve audited in the
+            This scenario isn&apos;t exceptional. Across the 12 law firms we&apos;ve reviewed in the
             last 18 months, it&apos;s closer to Tuesday through Friday as well.
           </p>
 
@@ -154,7 +154,7 @@ export default function LawFirmIntakeAutomation() {
             We&apos;ve worked with firms ranging from sole practitioners to 20-lawyer practices
             across family law, commercial litigation, property, estate planning, and employment.
             Despite the differences in size and practice area, five patterns come up in almost
-            every audit.
+            every review.
           </p>
 
           <h3 className="text-article-h3">1. The 2-hour response window problem</h3>
@@ -165,7 +165,7 @@ export default function LawFirmIntakeAutomation() {
             rates drop sharply. After 48 hours, they approach zero.
           </p>
           <p className="text-article-body">
-            In every firm we audited, the average response time to a new web enquiry was between
+            In every firm we reviewed, the average response time to a new web enquiry was between
             6 and 18 hours. For after-hours enquiries, which make up a meaningful proportion of
             total volume, the wait was almost always overnight. Competitors who respond faster
             win the client before the firm even knows they lost them.
@@ -194,7 +194,7 @@ export default function LawFirmIntakeAutomation() {
 
           <h3 className="text-article-h3">3. After-hours enquiries going cold</h3>
           <p className="text-article-body">
-            Across the firms we audited, between 30% and 45% of web enquiries arrived outside
+            Across the firms we reviewed, between 30% and 45% of web enquiries arrived outside
             business hours. Most received no acknowledgement until the following morning. A
             significant proportion, in some firms, more than a third, never converted.
           </p>
@@ -292,7 +292,7 @@ export default function LawFirmIntakeAutomation() {
           <div className="my-8 flex flex-col gap-4">
             <TimelineItem
               week="Week 1"
-              label="Audit + design"
+              label="Blueprint + design"
               detail="We map your current intake process end-to-end, how enquiries arrive, who handles them, what questions are asked, where things slow down, and what your practice management system looks like. We design the automated flow against your existing tools and your firm's specific practice areas."
             />
             <TimelineItem
@@ -310,7 +310,7 @@ export default function LawFirmIntakeAutomation() {
           <p className="text-article-body">
             Post-launch, we stay involved. The first 30 days generate data you can&apos;t
             anticipate: enquiry patterns, common questions, edge cases that weren&apos;t in the
-            audit. We tune the system against what&apos;s actually happening rather than what we
+            Blueprint. We tune the system against what&apos;s actually happening rather than what we
             predicted.
           </p>
 
@@ -351,20 +351,18 @@ export default function LawFirmIntakeAutomation() {
           <span className="text-gradient">slow intake.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free 30-minute strategy call. We&apos;ll audit your current intake process,
+          Get a Saabai Blueprint. We&apos;ll review your current intake process,
           identify exactly where leads are dropping, and show you what automated intake looks like
           for your firm, no obligation.
         </p>
         <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+          href="/blueprint"
+          className="relative inline-flex items-center justify-center min-h-[48px] bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book Your Free Strategy Call
+          Get Your Saabai Blueprint
         </a>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
-          No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
+          Prefer to start free? Take the AI Readiness Score at saabai.ai/score. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>
       </section>
 

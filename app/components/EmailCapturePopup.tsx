@@ -134,7 +134,7 @@ export default function EmailCapturePopup() {
                 Checklist on its way
               </h2>
               <p style={{ margin: "0 0 24px", fontSize: 14, color: "#8b8fa8", lineHeight: 1.6 }}>
-                Check your inbox, the AI Readiness Audit is headed your way now.
+                Check your inbox, the AI Readiness checklist is headed your way now.
               </p>
               <button
                 onClick={() => setVisible(false)}
@@ -152,7 +152,7 @@ export default function EmailCapturePopup() {
             <>
               {/* Eyebrow */}
               <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, color: "#00bfa5", textTransform: "uppercase" }}>
-                Free, AI Readiness Audit
+                Free AI Readiness checklist
               </p>
 
               <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 800, color: "#fff", lineHeight: 1.25, letterSpacing: -0.5 }}>

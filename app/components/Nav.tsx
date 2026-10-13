@@ -178,9 +178,10 @@ export default function Nav({ activePage }: { activePage?: string }) {
           href="https://calendly.com/shanegoldberg/30min"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+          className="inline-flex items-center min-h-[44px] text-sm font-semibold bg-saabai-teal text-saabai-bg px-4 sm:px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap shrink-0"
         >
-          Book a Free 30-Min Call
+          <span className="sm:hidden">Book a call</span>
+          <span className="hidden sm:inline">Book a Free 30-Min Call</span>
         </a>
       </div>
     </nav>

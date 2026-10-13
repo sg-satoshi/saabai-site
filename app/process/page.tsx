@@ -3,26 +3,26 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Our AI Automation Process, Audit to Deployment",
+  title: "Our AI Automation Process, Blueprint to Deployment",
   description:
-    "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
+    "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
   alternates: { canonical: "https://www.saabai.ai/process" },
   openGraph: {
     url: "https://www.saabai.ai/process",
-    title: "Our AI Automation Process, Audit to Deployment | Saabai",
+    title: "Our AI Automation Process, Blueprint to Deployment | Saabai",
     description:
-      "Saabai's 4-step process: AI Audit, System Design, Build & Deploy, Ongoing Optimisation. Most professional firms have first automations live within 2–4 weeks.",
+      "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
   },
 };
 
 const steps = [
   {
     step: "01",
-    title: "AI Audit",
+    title: "Saabai Blueprint",
     description:
       "We map your workflows, tools, and team operations to identify exactly where automation will create the biggest impact.",
     detail:
-      "In a focused 90-minute session, we document your existing processes and bottlenecks. You receive a written report detailing every automation opportunity, ranked by business impact and ease of implementation, with projected time savings for each.",
+      "Through a fact-find (and a walkthrough call on Pro and Business), we document your existing processes and bottlenecks. You receive a written Blueprint detailing every automation opportunity, ranked by business impact and ease of implementation, with projected time savings for each.",
   },
   {
     step: "02",
@@ -68,13 +68,13 @@ export default function Process() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            How We Work · Audit to Deployment · Built for Professional Firms
+            How We Work · Blueprint to Deployment · Small Businesses and Practices
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          From audit to
+          From Blueprint to
           <br />
           <span className="text-gradient">operating advantage.</span>
         </h1>
@@ -148,10 +148,10 @@ export default function Process() {
             Typical Timeline
           </p>
           <p className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
-            Most firms have their first automations live within 2–4 weeks of the audit.
+            Most firms have their first automations live within 2–4 weeks of the Blueprint.
           </p>
           <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
-            The AI Audit is the starting point, a 90-minute session that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.
+            The Saabai Blueprint is the starting point, from $497, a fixed-price plan that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.
           </p>
         </div>
       </section>
@@ -170,23 +170,26 @@ export default function Process() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          The audit is where
+          The Blueprint is where
           <br />
           <span className="text-gradient">everything starts.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free 30-minute strategy call. We&apos;ll map your workflows and
-          identify exactly where automation will create the biggest impact in
-          your firm, no commitment required.
+          Get your Saabai Blueprint and we&apos;ll map your workflows and rank
+          exactly where automation will create the biggest impact in your
+          business. Not ready yet? Start with the free AI Readiness Score.
         </p>
         <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+          href="/blueprint"
+          className="relative inline-flex items-center justify-center min-h-[48px] bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
         >
-          Book Your Free Strategy Call
+          Get Your Saabai Blueprint
         </a>
+        <p className="relative mt-4">
+          <a href="/score" className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright">
+            Or take the free AI Readiness Score &rarr;
+          </a>
+        </p>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No obligation. No jargon. Just a clear picture of what&apos;s possible.
         </p>

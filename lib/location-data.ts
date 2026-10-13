@@ -71,9 +71,9 @@ export const BRISBANE: LocationConfig = {
   slug: "brisbane",
   state: "Queensland",
   stateCode: "QLD",
-  heroHeadline: "AI Automation Consulting for Brisbane Businesses",
+  heroHeadline: "Websites and AI systems for Brisbane small businesses",
   heroSubheading:
-    "We help Brisbane firms turn repetitive admin into automated workflows, so your team spends time on the work that actually grows the business, not on the busywork around it.",
+    "From growth-corridor trades in Logan and Moreton Bay to CBD practices, we build, host and manage websites that win work, and map exactly where AI can take the admin off your plate with a Saabai Blueprint.",
   industries: [
     "Professional Services",
     "Construction & Trades",
@@ -121,9 +121,9 @@ export const BRISBANE: LocationConfig = {
     "We start by mapping where time actually goes, then automate the highest-impact, lowest-risk tasks first. Every engagement is grounded in your existing tools, not a rip-and-replace.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Brisbane website that keeps up with the boom",
       detail:
-        "A structured review of your workflows that identifies exactly where automation will return the most time and money, ranked by effort. You get a clear, prioritised roadmap before any build work begins.",
+        "We build, host and manage a fast, mobile-first site from $2,000 plus $100 a month, set up to catch quote requests from across Ipswich, Logan, Moreton Bay and the inner suburbs.",
     },
     {
       title: "Automated quoting & estimating",
@@ -186,7 +186,7 @@ export const BRISBANE: LocationConfig = {
     },
     {
       q: "Is AI automation worth it for a small Brisbane trades or supply business?",
-      a: "Often yes. Small businesses tend to see the fastest payback because the owner is usually the one absorbing the admin. Automating quoting, enquiry handling and invoicing frees up the most expensive person in the business. We always start with an audit so you know the return before committing to a build.",
+      a: "Often yes. Small businesses tend to see the fastest payback because the owner is usually the one absorbing the admin. Automating quoting, enquiry handling and invoicing frees up the most expensive person in the business. We always start with a Saabai Blueprint so you know the return before committing to a build. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
     {
       q: "How does the 2032 Olympics build-up affect the case for automating now?",
@@ -202,23 +202,23 @@ export const BRISBANE: LocationConfig = {
     },
     {
       q: "How long before we see results?",
-      a: "The audit delivers a prioritised roadmap within a couple of weeks. First automations (typically quoting or enquiry handling) are often live within a few weeks after that. We sequence the highest-impact, lowest-risk wins first so you see returns early.",
+      a: "A Saabai Blueprint delivers a prioritised roadmap in days, not months. First automations (typically quoting or enquiry handling) are often live within a few weeks after that. We sequence the highest-impact, lowest-risk wins first so you see returns early.",
     },
     {
       q: "What does an engagement with Saabai.ai cost?",
-      a: "It depends on scope, which is why we start with a fixed-scope AI audit. That gives you a clear picture of opportunities and expected return before any build commitment, so you can make the decision on real numbers rather than a guess.",
+      a: "It depends on scope, which is why we start with a fixed-price Saabai Blueprint. That gives you a clear picture of opportunities and expected return before any build commitment, so you can make the decision on real numbers rather than a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Ready to free your Brisbane team from busywork?",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a clear, prioritised roadmap for where automation will save your business the most time and money.",
+    "Get your Saabai Blueprint and a ranked plan for where automation saves your Brisbane business the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Brisbane | Saabai.ai",
+    title: "Websites & AI Automation Brisbane",
     description:
-      "AI automation for Brisbane: quoting, intake and admin for professional services, trades and manufacturers. Book a free AI efficiency audit.",
-    ogTitle: "AI Automation Consulting for Brisbane Businesses | Saabai.ai",
+      "Brisbane websites from $2,000 plus $100/mo and AI automation plans from $497. Built for small businesses, trades and professional practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Brisbane | Saabai",
     ogDescription:
-      "Turn repetitive admin into automated workflows. Saabai.ai helps Brisbane firms automate quoting, client intake and document handling. Book an AI efficiency audit.",
+      "Brisbane small businesses: managed websites and a Saabai Blueprint for AI automation. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/brisbane`,
   },
 };
@@ -231,9 +231,9 @@ export const GOLD_COAST: LocationConfig = {
   slug: "gold-coast",
   state: "Queensland",
   stateCode: "QLD",
-  heroHeadline: "AI Automation Consulting for Gold Coast Businesses",
+  heroHeadline: "Gold Coast websites and AI systems, built by a local team",
   heroSubheading:
-    "From trades and property to tourism and retail, we help lean Gold Coast teams automate the admin that eats their evenings, so a small crew can run like a much bigger one.",
+    "Saabai is based on the Gold Coast. We build, host and manage websites for local small businesses, from Coomera to Coolangatta, and map where AI can take the admin off a lean team with a Saabai Blueprint.",
   industries: [
     "Trades & Construction",
     "Property Development",
@@ -281,9 +281,9 @@ export const GOLD_COAST: LocationConfig = {
     "We focus on getting the most leverage from small teams. That means automating the tasks that consume the owner's day first, using the tools you already run.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Gold Coast website we build and look after",
       detail:
-        "A focused review that pinpoints where automation will buy back the most time for a lean team, ranked by effort and impact. You get a clear roadmap before any build begins.",
+        "Mobile-first sites built, hosted and managed from $2,000 plus $100 a month, like the ones we run for local businesses such as Stu's Cycle Repairs. You get one local contact for changes, not a ticket queue.",
     },
     {
       title: "Automated quoting & estimating",
@@ -362,23 +362,23 @@ export const GOLD_COAST: LocationConfig = {
     },
     {
       q: "How quickly will we see a return?",
-      a: "The audit gives you a prioritised roadmap within a couple of weeks, and first automations are typically live a few weeks after that. We deliberately sequence quick, high-impact wins first so the value shows up early rather than at the end of a long project.",
+      a: "A Saabai Blueprint gives you a prioritised roadmap in days, and first automations are typically live a few weeks after that. We deliberately sequence quick, high-impact wins first so the value shows up early rather than at the end of a long project.",
     },
     {
       q: "What does it cost to get started?",
-      a: "We start with a fixed-scope AI audit so you see the opportunities and expected return before committing to any build. That keeps the entry point affordable for small businesses and means you decide based on real numbers, not a guess.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. That keeps the entry point affordable for small businesses and means you decide based on real numbers, not a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Make your lean Gold Coast team run like a bigger one",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and find out exactly where automation will buy back the most time in your business.",
+    "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "AI Automation Consulting Gold Coast | Saabai.ai",
+    title: "Websites & AI Automation Gold Coast | Local Team",
     description:
-      "AI automation for Gold Coast businesses. Automate quoting, bookings and admin for trades, tourism and professional services. Book a free AI audit.",
-    ogTitle: "AI Automation Consulting for Gold Coast Businesses | Saabai.ai",
+      "Gold Coast based. Websites built, hosted and managed from $2,000 plus $100/mo, and Saabai Blueprint AI plans from $497 for small businesses and practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Gold Coast | Local Team | Saabai",
     ogDescription:
-      "Help your lean Gold Coast team run like a bigger one. Saabai.ai automates quoting, bookings and admin for trades, tourism and professional services. Book an AI audit.",
+      "Saabai is a Gold Coast team building websites and AI systems for local small businesses. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/gold-coast`,
   },
 };
@@ -391,9 +391,9 @@ export const SYDNEY: LocationConfig = {
   slug: "sydney",
   state: "New South Wales",
   stateCode: "NSW",
-  heroHeadline: "AI Automation Consulting for Sydney Businesses",
+  heroHeadline: "Websites and AI systems for Sydney small businesses",
   heroSubheading:
-    "In Australia's highest-cost labour market, every hour of manual admin is expensive. We help Sydney firms automate the repetitive work so your people deliver more without the headcount.",
+    "At Sydney labour rates, every hour of admin costs more. We build and manage websites that convert, and use a Saabai Blueprint to show where AI pays back fastest for small businesses and professional practices.",
   industries: [
     "Law Firms",
     "Accounting & Advisory",
@@ -441,9 +441,9 @@ export const SYDNEY: LocationConfig = {
     "Our approach is built around return on the most expensive resource you have: your people's time. We automate the highest-cost manual work first, integrating with the systems you already run.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Sydney website that earns its keep",
       detail:
-        "A rigorous review that quantifies where automation returns the most against Sydney-level labour costs, ranked by effort. You get a prioritised, ROI-led roadmap before any build commitment.",
+        "A fast, mobile-first site built, hosted and managed from $2,000 plus $100 a month, designed to turn searches from the CBD to Parramatta and the Shire into booked enquiries.",
     },
     {
       title: "Client intake & response automation",
@@ -526,19 +526,19 @@ export const SYDNEY: LocationConfig = {
     },
     {
       q: "How do we know it'll pay off before we commit to a big build?",
-      a: "We start with a fixed-scope AI audit that quantifies the opportunities and expected return against your actual labour costs. You get a clear, ROI-led picture before any build commitment, so the decision rests on numbers rather than a guess.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear, ROI-led picture before any build commitment, so the decision rests on numbers rather than a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Get more from Sydney's most expensive resource: your team's time",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a prioritised, ROI-led roadmap for where automation pays off fastest at Sydney labour rates.",
+    "Get your Saabai Blueprint and an ROI-ranked plan priced against Sydney labour costs, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Sydney | Saabai.ai",
+    title: "Websites & AI Automation Sydney",
     description:
-      "AI automation for Sydney firms. Automate intake, documents and admin for law, accounting, financial services and property. Free AI efficiency audit.",
-    ogTitle: "AI Automation Consulting for Sydney Businesses | Saabai.ai",
+      "Sydney websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, law, accounting and property practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Sydney | Saabai",
     ogDescription:
-      "In Australia's highest-cost labour market, automation pays off fastest. Saabai.ai helps Sydney firms automate intake, documents and admin. Book an AI efficiency audit.",
+      "Sydney small businesses and practices: managed websites and an ROI-led Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/sydney`,
   },
 };
@@ -551,9 +551,9 @@ export const MELBOURNE: LocationConfig = {
   slug: "melbourne",
   state: "Victoria",
   stateCode: "VIC",
-  heroHeadline: "AI Automation Consulting for Melbourne Businesses",
+  heroHeadline: "Websites and AI systems for Melbourne small businesses",
   heroSubheading:
-    "Home to Australia's deepest concentration of professional services, healthcare and manufacturing, Melbourne runs on admin-heavy work. We help local firms automate it and reclaim their capacity.",
+    "From inner-north studios to suburban clinics and manufacturers, we build and manage websites that bring in enquiries, and use a Saabai Blueprint to find where AI frees up your team's week.",
   industries: [
     "Professional Services",
     "Healthcare & Allied Health",
@@ -601,9 +601,9 @@ export const MELBOURNE: LocationConfig = {
     "We map where time disappears and automate the highest-impact tasks first, always working with the systems your firm already relies on. Practical wins before grand plans.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Melbourne website, fully managed",
       detail:
-        "A structured review that identifies where automation returns the most time across your firm, ranked by effort and impact, delivered as a clear roadmap before any build begins.",
+        "Built, hosted and managed from $2,000 plus $100 a month, with booking and enquiry forms that work properly on a phone, so clinics, studios and practices stop losing leads.",
     },
     {
       title: "Patient & client intake automation",
@@ -666,7 +666,7 @@ export const MELBOURNE: LocationConfig = {
     },
     {
       q: "How do you handle privacy and sensitive data in healthcare or legal work?",
-      a: "Carefully and deliberately. We design automation with privacy in mind, keep humans in the loop for anything requiring professional sign-off, and scope data handling to your obligations. The audit stage covers exactly how sensitive information will and won't be used before any build starts.",
+      a: "Carefully and deliberately. We design automation with privacy in mind, keep humans in the loop for anything requiring professional sign-off, and scope data handling to your obligations. The Blueprint stage covers exactly how sensitive information will and won't be used before any build starts.",
     },
     {
       q: "We're a manufacturer with a modern factory but a dated back office. Can you close that gap?",
@@ -686,19 +686,19 @@ export const MELBOURNE: LocationConfig = {
     },
     {
       q: "How do we know it will be worth it before committing?",
-      a: "We start with a fixed-scope AI audit that identifies the opportunities and expected return for your specific business. You get a clear, prioritised roadmap before any build commitment, so the decision is based on real findings rather than a leap of faith.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear, prioritised roadmap before any build commitment, so the decision is based on real findings rather than a leap of faith. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Reclaim your Melbourne team's capacity from admin",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a clear, prioritised roadmap for where automation will free the most time across your firm.",
+    "Get your Saabai Blueprint and a clear plan for where automation frees the most capacity, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Melbourne | Saabai.ai",
+    title: "Websites & AI Automation Melbourne",
     description:
-      "AI automation for Melbourne: professional services, healthcare, manufacturing and legal firms. Automate admin and intake. Book a free AI audit.",
-    ogTitle: "AI Automation Consulting for Melbourne Businesses | Saabai.ai",
+      "Melbourne websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, clinics, manufacturers and professional practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Melbourne | Saabai",
     ogDescription:
-      "Reclaim your team's capacity from admin. Saabai.ai helps Melbourne professional services, healthcare and manufacturing firms automate routine work. Book an AI audit.",
+      "Melbourne small businesses and practices: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/melbourne`,
   },
 };
@@ -711,9 +711,9 @@ export const PERTH: LocationConfig = {
   slug: "perth",
   state: "Western Australia",
   stateCode: "WA",
-  heroHeadline: "AI Automation Consulting for Perth Businesses",
+  heroHeadline: "Websites and AI systems for Perth and WA businesses",
   heroSubheading:
-    "From mining and METS to engineering and industrial services, Perth runs on documentation and coordination. We help WA businesses automate it and scale without drowning in paperwork.",
+    "Whether you supply the resources sector or run a suburban small business, we build and manage websites that win work, and use a Saabai Blueprint to cut the paperwork that comes with WA growth.",
   industries: [
     "Mining & Resources",
     "Engineering & METS",
@@ -761,9 +761,9 @@ export const PERTH: LocationConfig = {
     "We focus on the documentation and coordination work that defines WA's resource economy, automating the highest-impact, lowest-risk tasks first and integrating with your existing systems.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Perth website that works on site and in the office",
       detail:
-        "A structured review that pinpoints where automation returns the most across your documentation and coordination load, ranked by effort, delivered as a clear roadmap before any build.",
+        "Built, hosted and managed from $2,000 plus $100 a month, mobile-first so crews, clients and suppliers can reach you from anywhere in WA.",
     },
     {
       title: "Compliance & documentation automation",
@@ -842,23 +842,23 @@ export const PERTH: LocationConfig = {
     },
     {
       q: "Do you work with Perth businesses given the time-zone difference?",
-      a: "Absolutely. We work with WA businesses remotely and structure communication around your hours. The time difference is a non-issue for how we run audits and build projects, and we're glad to meet in person in Perth for scoping where it helps.",
+      a: "Absolutely. We work with WA businesses remotely and structure communication around your hours. The time difference is a non-issue for how we plan and build projects, and we're glad to meet in person in Perth for scoping where it helps.",
     },
     {
       q: "How do we know automation will pay off before committing to a build?",
-      a: "We start with a fixed-scope AI audit that identifies the highest-value opportunities across your documentation and coordination load and the expected return. You get a clear roadmap before any build commitment, so the decision rests on real findings.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear roadmap before any build commitment, so the decision rests on real findings. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Scale into the resource sector without drowning in paperwork",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a prioritised roadmap for where automation will cut the most documentation and coordination load.",
+    "Get your Saabai Blueprint and a ranked plan for cutting documentation and coordination load, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Perth | Saabai.ai",
+    title: "Websites & AI Automation Perth",
     description:
-      "AI automation for Perth and WA. Mining, METS, engineering and industrial firms: automate compliance docs, tenders and coordination. Book an AI audit.",
-    ogTitle: "AI Automation Consulting for Perth Businesses | Saabai.ai",
+      "Perth and WA websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, METS suppliers and professional firms. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Perth | Saabai",
     ogDescription:
-      "Automate the documentation and coordination that defines WA's resource economy. Saabai.ai helps Perth mining, METS and engineering firms scale. Book an AI audit.",
+      "Perth small businesses and WA suppliers: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/perth`,
   },
 };
@@ -871,9 +871,9 @@ export const ADELAIDE: LocationConfig = {
   slug: "adelaide",
   state: "South Australia",
   stateCode: "SA",
-  heroHeadline: "AI Automation Consulting for Adelaide Businesses",
+  heroHeadline: "Websites and AI systems for Adelaide small businesses",
   heroSubheading:
-    "Adelaide's defence and advanced manufacturing economy runs on precision documentation and tender work. We help SA businesses automate it and push through capacity constraints as they grow.",
+    "From defence and manufacturing suppliers to local services and practices, we build and manage websites that bring in work, and use a Saabai Blueprint to clear your back-office bottleneck.",
   industries: [
     "Defence Industry",
     "Advanced Manufacturing",
@@ -921,9 +921,9 @@ export const ADELAIDE: LocationConfig = {
     "We target the documentation, tender and coordination work that defines SA's defence and manufacturing economy, automating the highest-impact tasks first and building around your existing systems.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "An Adelaide website, built and managed for you",
       detail:
-        "A structured review that identifies where automation returns the most across your documentation and tender load, ranked by effort, delivered as a clear roadmap before any build.",
+        "A mobile-first site built, hosted and managed from $2,000 plus $100 a month, with clear service pages that help SA buyers and primes find you.",
     },
     {
       title: "Compliance & traceability documentation automation",
@@ -1006,19 +1006,19 @@ export const ADELAIDE: LocationConfig = {
     },
     {
       q: "How do we know it'll be worth it before committing to a build?",
-      a: "We start with a fixed-scope AI audit that identifies the highest-value opportunities across your documentation and tender load and the expected return. You get a clear, prioritised roadmap before any build commitment, so the decision rests on real findings.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear, prioritised roadmap before any build commitment, so the decision rests on real findings. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Push through your back-office bottleneck and scale",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a prioritised roadmap for where automation will free the most capacity for tender, compliance and growth work.",
+    "Get your Saabai Blueprint and a ranked plan for freeing capacity for tenders, compliance and growth, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Adelaide | Saabai.ai",
+    title: "Websites & AI Automation Adelaide",
     description:
-      "AI automation for Adelaide and SA. Defence, advanced manufacturing and engineering: automate compliance docs, tenders and admin. Book an AI audit.",
-    ogTitle: "AI Automation Consulting for Adelaide Businesses | Saabai.ai",
+      "Adelaide and SA websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, manufacturers and practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Adelaide | Saabai",
     ogDescription:
-      "Automate the documentation and tender work that defines SA's defence and manufacturing economy. Saabai.ai helps Adelaide firms scale. Book an AI audit.",
+      "Adelaide small businesses and suppliers: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/adelaide`,
   },
 };
@@ -1031,9 +1031,9 @@ export const CANBERRA: LocationConfig = {
   slug: "canberra",
   state: "Australian Capital Territory",
   stateCode: "ACT",
-  heroHeadline: "AI Automation Consulting for Canberra Businesses",
+  heroHeadline: "Websites and AI systems for Canberra small businesses",
   heroSubheading:
-    "Canberra's government-adjacent economy runs on tenders, panel compliance and knowledge work. We help ACT firms automate the documentation and admin behind it without compromising rigour.",
+    "For ACT consultancies, contractors and local businesses, we build and manage credible websites, and use a Saabai Blueprint to take the manual effort out of tenders, panels and knowledge work.",
   industries: [
     "Government Consulting",
     "ICT Services",
@@ -1081,9 +1081,9 @@ export const CANBERRA: LocationConfig = {
     "We target the tender, compliance and knowledge work that defines Canberra's government-adjacent economy, automating the highest-impact tasks first while keeping rigour and human control intact.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Canberra website that looks the part",
       detail:
-        "A structured review that identifies where automation returns the most across your tender, compliance and knowledge load, ranked by effort, delivered as a clear roadmap before any build.",
+        "Built, hosted and managed from $2,000 plus $100 a month, accessible and mobile-first, so agency buyers and local customers see a business they can trust.",
     },
     {
       title: "Tender & proposal automation",
@@ -1158,7 +1158,7 @@ export const CANBERRA: LocationConfig = {
     },
     {
       q: "How do you handle security and sensitive government-related information?",
-      a: "Carefully and deliberately. We design automation with security and your obligations front of mind, scope data handling appropriately and keep humans in control of sensitive output. The audit stage covers exactly how information will and won't be used before any build begins.",
+      a: "Carefully and deliberately. We design automation with security and your obligations front of mind, scope data handling appropriately and keep humans in control of sensitive output. The Blueprint stage covers exactly how information will and won't be used before any build begins.",
     },
     {
       q: "Do you work with Canberra firms in person?",
@@ -1166,19 +1166,19 @@ export const CANBERRA: LocationConfig = {
     },
     {
       q: "How do we know it'll be worth it before committing to a build?",
-      a: "We start with a fixed-scope AI audit, much like the readiness assessments we run for complex businesses, that identifies the highest-value opportunities and expected return. You get a clear, prioritised roadmap before any build commitment, in keeping with the rigour government-adjacent firms expect.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear, prioritised roadmap before any build commitment, in keeping with the rigour government-adjacent firms expect. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Meet government-grade rigour with less manual effort",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a prioritised roadmap for where automation will free the most time across tender, panel and knowledge work.",
+    "Get your Saabai Blueprint and a rigorous, ranked plan for automating tender and knowledge work, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Canberra | Saabai.ai",
+    title: "Websites & AI Automation Canberra",
     description:
-      "AI automation for Canberra and ACT. Government, ICT, defence and legal firms: automate tenders, panel compliance and knowledge work. Free AI audit.",
-    ogTitle: "AI Automation Consulting for Canberra Businesses | Saabai.ai",
+      "Canberra and ACT websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, consultancies and practices. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Canberra | Saabai",
     ogDescription:
-      "Meet government-grade rigour with less manual effort. Saabai.ai helps Canberra firms automate tenders, panel compliance and knowledge management. Book an AI audit.",
+      "Canberra small businesses and consultancies: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/canberra`,
   },
 };
@@ -1191,9 +1191,9 @@ export const DARWIN: LocationConfig = {
   slug: "darwin",
   state: "Northern Territory",
   stateCode: "NT",
-  heroHeadline: "AI Automation Consulting for Darwin Businesses",
+  heroHeadline: "Websites and AI systems for Darwin and NT businesses",
   heroSubheading:
-    "Remote operations, seasonal swings and a gateway-to-Asia logistics role make Darwin's admin uniquely demanding. We help NT businesses automate it and run leaner across the distance.",
+    "Distance and the wet season make admin harder in the Top End. We build and manage websites that keep enquiries coming, and use a Saabai Blueprint to automate remote coordination and paperwork.",
   industries: [
     "Mining & Resources",
     "Construction & Infrastructure",
@@ -1241,9 +1241,9 @@ export const DARWIN: LocationConfig = {
     "We focus on the coordination and documentation work that distance and seasonality make hard in the Territory, automating the highest-impact tasks first and integrating with your existing systems.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Darwin website that works across the distance",
       detail:
-        "A structured review that pinpoints where automation returns the most across your coordination and documentation load, ranked by effort, delivered as a clear roadmap before any build.",
+        "Built, hosted and managed from $2,000 plus $100 a month, fast on patchy mobile connections so customers across the NT can reach you.",
     },
     {
       title: "Remote coordination automation",
@@ -1318,7 +1318,7 @@ export const DARWIN: LocationConfig = {
     },
     {
       q: "Do you work with Darwin businesses given the distance and time difference?",
-      a: "Absolutely. We work with NT businesses remotely as standard and structure communication around your hours. Distance is a non-issue for how we run audits and build projects, and remote operation is precisely the kind of challenge our automation is built to ease.",
+      a: "Absolutely. We work with NT businesses remotely as standard and structure communication around your hours. Distance is a non-issue for how we plan and build projects, and remote operation is precisely the kind of challenge our automation is built to ease.",
     },
     {
       q: "Distance makes small mistakes expensive for us. Does automation reduce errors?",
@@ -1326,19 +1326,19 @@ export const DARWIN: LocationConfig = {
     },
     {
       q: "How do we know automation will pay off before committing to a build?",
-      a: "We start with a fixed-scope AI audit that identifies the highest-value opportunities across your coordination and documentation load and the expected return. You get a clear roadmap before any build commitment, so the decision rests on real findings rather than a guess.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. You get a clear roadmap before any build commitment, so the decision rests on real findings rather than a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Run leaner across the distance and the seasons",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and get a prioritised roadmap for where automation will cut the most coordination and documentation load.",
+    "Get your Saabai Blueprint and a ranked plan for cutting coordination and documentation load, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Darwin | Saabai.ai",
+    title: "Websites & AI Automation Darwin",
     description:
-      "AI automation for Darwin and NT. Mining, construction and logistics: automate remote coordination, freight docs and admin. Book a free AI audit.",
-    ogTitle: "AI Automation Consulting for Darwin Businesses | Saabai.ai",
+      "Darwin and NT websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, contractors and logistics. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Darwin | Saabai",
     ogDescription:
-      "Run leaner across distance and the seasons. Saabai.ai helps Darwin and NT businesses automate remote coordination, logistics docs and admin. Book an AI audit.",
+      "Darwin and NT small businesses: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/darwin`,
   },
 };
@@ -1351,9 +1351,9 @@ export const HOBART: LocationConfig = {
   slug: "hobart",
   state: "Tasmania",
   stateCode: "TAS",
-  heroHeadline: "AI Automation Consulting for Hobart Businesses",
+  heroHeadline: "Websites and AI systems for Hobart small businesses",
   heroSubheading:
-    "A tourism boom and a tight labour market are stretching Hobart's small businesses. We help local owner-operators automate the admin so a small team can keep up with growing demand.",
+    "Tourism, hospitality and food and wine keep Hobart busy. We build and manage websites that take bookings, and use a Saabai Blueprint to show where AI handles the admin so you are not working every evening.",
   industries: [
     "Tourism & Hospitality",
     "Professional Services",
@@ -1401,9 +1401,9 @@ export const HOBART: LocationConfig = {
     "We focus on giving small Hobart teams the leverage of a larger one, automating the tasks that consume the owner's day first and working with the tools you already run.",
   services: [
     {
-      title: "AI Operational Efficiency Audit",
+      title: "A Hobart website that takes bookings while you work",
       detail:
-        "A focused review that pinpoints where automation will buy back the most time for a small team, ranked by effort and impact, delivered as a clear roadmap before any build begins.",
+        "Built, hosted and managed from $2,000 plus $100 a month, with booking and enquiry flows that hold up through the summer and festival peaks.",
     },
     {
       title: "Booking & enquiry automation",
@@ -1482,23 +1482,23 @@ export const HOBART: LocationConfig = {
     },
     {
       q: "Do you work with Hobart businesses remotely?",
-      a: "Yes, as standard. We work with Tasmanian businesses remotely and efficiently, structuring communication around your hours. Distance is a non-issue for running an audit and building automations, so being in Hobart is no barrier to working with us.",
+      a: "Yes, as standard. We work with Tasmanian businesses remotely and efficiently, structuring communication around your hours. Distance is a non-issue for planning and building automations, so being in Hobart is no barrier to working with us.",
     },
     {
       q: "How quickly will we see a return, and what does it cost to start?",
-      a: "We start with a fixed-scope AI audit that gives you a prioritised roadmap within a couple of weeks, with first automations often live a few weeks after. The audit keeps the entry point affordable for small businesses, so you decide based on real numbers rather than a guess.",
+      a: "We start with a Saabai Blueprint, a fixed-price plan that ranks the opportunities and expected return for your business. The Blueprint keeps the entry point affordable for small businesses, so you decide based on real numbers rather than a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
   ctaHeadline: "Keep up with demand without working every evening",
   ctaSubtext:
-    "Book an AI Operational Efficiency Audit and find out exactly where automation will buy back the most time in your Hobart business.",
+    "Get your Saabai Blueprint and find out exactly where automation buys back the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "AI Automation Consulting Hobart | Saabai.ai",
+    title: "Websites & AI Automation Hobart",
     description:
-      "AI automation for Hobart and Tasmania. Tourism, hospitality, food and wine: automate bookings, intake and admin. Book a free AI audit.",
-    ogTitle: "AI Automation Consulting for Hobart Businesses | Saabai.ai",
+      "Hobart and Tasmania websites from $2,000 plus $100/mo and AI automation plans from $497 for tourism, hospitality and small businesses. Free AI Readiness Score.",
+    ogTitle: "Websites & AI Automation Hobart | Saabai",
     ogDescription:
-      "Keep up with a tourism boom in a tight labour market. Saabai.ai helps Hobart small businesses automate bookings, intake and admin. Book an AI efficiency audit.",
+      "Hobart small businesses: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/hobart`,
   },
 };

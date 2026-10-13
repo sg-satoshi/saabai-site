@@ -139,7 +139,7 @@ export default function About() {
               Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a specialist tax and trust law firm in Adelaide.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
-              Neither client had to rip out their existing tools. Both were live within weeks of the initial audit.
+              Neither client had to rip out their existing tools. Both were live within weeks of the initial Blueprint.
             </p>
           </div>
         </div>
