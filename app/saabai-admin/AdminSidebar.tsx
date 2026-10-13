@@ -57,6 +57,7 @@ const NAV: NavGroup[] = [
       { label: "Orders", href: "/saabai-admin/orders", icon: "bag" },
       { label: "Blueprints", href: "/saabai-admin/audits", icon: "doc" },
       { label: "Payments", href: "/saabai-admin/payments", icon: "card" },
+      { label: "Plans & Add-ons", href: "/saabai-admin/plans", icon: "layers" },
       { label: "Products", href: "/saabai-admin/products", icon: "box" },
     ],
   },

@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { computeSiteBilling, BILLING_LABELS, type BillingState, type BillingSubSummary } from "../../../lib/site-billing-status";
+import { SetupBillingModal, type SetupSite } from "../../components/billing/SetupBillingModal";
+import { SiteBillingCell } from "../../components/billing/SiteBillingCell";
+import type { BillingRecordSummary } from "../../components/billing/status";
 
 interface Site {
   id: string;
@@ -291,6 +294,8 @@ export default function SiteFactoryClient() {
   const [listStatus, setListStatus] = useState(() => searchParams.get("status") || "all");
   const [listDomain, setListDomain] = useState(() => searchParams.get("domain") || "all");
   const [billingSubs, setBillingSubs] = useState<BillingSubSummary[]>([]);
+  const [billingRecords, setBillingRecords] = useState<Record<string, BillingRecordSummary>>({});
+  const [setupSite, setSetupSite] = useState<SetupSite | null>(null);
   const [listBilling, setListBilling] = useState(() => searchParams.get("billing") || "all");
   const [listCare, setListCare] = useState(() => searchParams.get("care") || "all");
   const [listChatbot, setListChatbot] = useState(() => searchParams.get("chatbot") || "all");
@@ -633,7 +638,15 @@ export default function SiteFactoryClient() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.subs) setBillingSubs(d.subs); })
       .catch(() => { /* billing column falls back to care-plan data */ });
+    fetchBillingRecords();
     setLoadingSites(false);
+  }
+
+  function fetchBillingRecords() {
+    fetch("/api/admin/billing/sites")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.records) setBillingRecords(Object.fromEntries(d.records.map((r: BillingRecordSummary) => [r.siteId, r]))); })
+      .catch(() => {});
   }
 
   async function deleteSiteConfirmed() {
@@ -2947,7 +2960,7 @@ export default function SiteFactoryClient() {
 
   const COL = isMobile
     ? "36px 1fr auto"
-    : "36px minmax(160px,2fr) minmax(140px,2fr) 124px 132px 72px 80px 100px";
+    : "36px minmax(160px,2fr) minmax(140px,2fr) 124px 168px 72px 80px 100px";
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -3235,7 +3248,7 @@ export default function SiteFactoryClient() {
                       )}
                     </div>
                     {isMobile && <span style={{ fontSize: 10, fontFamily: "monospace", color: customDomain ? C.teal : C.textMuted, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{customDomain || `/sites/${site.slug}/`}</span>}
-                    {isMobile && <div style={{ marginTop: 4 }}><BillingBadge b={billingOf(site)} /></div>}
+                    {isMobile && <div style={{ marginTop: 4 }}><SiteBillingCell record={billingRecords[site.id]} fallback={<BillingBadge b={billingOf(site)} />} hasExistingBilling={billingOf(site).state !== "none"} siteDomain={customDomain} onChanged={fetchBillingRecords} onSetup={() => setSetupSite({ id: site.id, name: site.name, domain: customDomain, contactEmail: (site as Site & { business?: { email?: string } }).business?.email })} /></div>}
                   </div>
 
                   {/* Domain — desktop only */}
@@ -3258,8 +3271,8 @@ export default function SiteFactoryClient() {
 
                   {/* Billing status — desktop only (mobile shows it under the name) */}
                   {!isMobile && (
-                    <div style={{ paddingRight: 8 }}>
-                      <BillingBadge b={billingOf(site)} />
+                    <div style={{ paddingRight: 8, padding: "8px 8px 8px 0" }}>
+                      <SiteBillingCell record={billingRecords[site.id]} fallback={<BillingBadge b={billingOf(site)} />} hasExistingBilling={billingOf(site).state !== "none"} siteDomain={customDomain} onChanged={fetchBillingRecords} onSetup={() => setSetupSite({ id: site.id, name: site.name, domain: customDomain, contactEmail: (site as Site & { business?: { email?: string } }).business?.email })} />
                     </div>
                   )}
 
@@ -3318,6 +3331,8 @@ export default function SiteFactoryClient() {
           </>
         )}
       </div>
+
+      {setupSite && <SetupBillingModal site={setupSite} onClose={() => setSetupSite(null)} onDone={fetchBillingRecords} />}
 
       {/* Delete Confirmation Modal */}
       {deletingSlug && (

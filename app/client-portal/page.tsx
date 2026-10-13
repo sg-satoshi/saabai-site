@@ -6,6 +6,7 @@ import "./portal-auth.css";
 import { PortalShell } from "./components/PortalShell";
 import { LexWorkspace } from "./LexWorkspace";
 import { RequestsPanel } from "./requests/RequestsPanel";
+import { UpgradesPanel } from "./upgrades/UpgradesPanel";
 
 type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
 type PageId =
@@ -17,6 +18,7 @@ type PageId =
   | "review-queue"
   | "invoices"
   | "requests"
+  | "upgrades"
   | "account"
   | "manage-agent";
 
@@ -150,7 +152,7 @@ function ClientPortalInner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [page, setPage] = useState<PageId>("overview");
+  const [page, setPage] = useState<PageId>(() => (searchParams.get("page") === "upgrades" ? "upgrades" : "overview"));
   const [reqForm, setReqForm] = useState({ name: "", company: "", email: "", about: "My Saabai Blueprint", note: "" });
 
   async function loadWorkspace() {
@@ -255,6 +257,7 @@ function ClientPortalInner() {
   const { navGroups, bottomNav } = useMemo(() => {
     if (!workspace) return { navGroups: [], bottomNav: [] as { label: string; id: string; icon: string }[] };
     const m = workspace.modules;
+    const hasWebsite = !!(workspace.site || m.care || m.projects);
     const productItems: { label: string; id: PageId; icon: string; count?: number; urgent?: boolean }[] = [];
     if (m.lex) {
       productItems.push({ label: "Lex agent", id: "lex-agent", icon: "scale" });
@@ -268,6 +271,7 @@ function ClientPortalInner() {
     const accountItems = [
       { label: "Invoices", id: "invoices" as PageId, icon: "card" },
       { label: "Requests", id: "requests" as PageId, icon: "inbox", count: workspace.openRequestCount || undefined },
+      ...(hasWebsite ? [{ label: "Upgrades", id: "upgrades" as PageId, icon: "bolt" }] : []),
       { label: "Account", id: "account" as PageId, icon: "gear" },
     ];
 
@@ -290,6 +294,13 @@ function ClientPortalInner() {
       bottomNav = [
         { label: "Home", id: "overview", icon: "grid" },
         { label: "Leads", id: "leads", icon: "users" },
+        { label: "Invoices", id: "invoices", icon: "card" },
+        { label: "Requests", id: "requests", icon: "inbox" },
+      ];
+    } else if (hasWebsite) {
+      bottomNav = [
+        { label: "Home", id: "overview", icon: "grid" },
+        { label: "Upgrades", id: "upgrades", icon: "bolt" },
         { label: "Invoices", id: "invoices", icon: "card" },
         { label: "Requests", id: "requests", icon: "inbox" },
       ];
@@ -877,6 +888,8 @@ function ClientPortalInner() {
       {page === "requests" && (
         <RequestsPanel />
       )}
+
+      {page === "upgrades" && <UpgradesPanel readOnly={!!workspace.impersonating} />}
 
       {page === "account" && (
         <>
