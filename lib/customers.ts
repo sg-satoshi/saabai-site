@@ -183,7 +183,7 @@ export async function listUnifiedCustomers(): Promise<UnifiedCustomer[]> {
     /* skip */
   }
 
-  // 4. Portal clients (Rex, etc.)
+  // 4. Portal clients
   try {
     const portalClients = loadClients();
     for (const c of portalClients) {
@@ -192,7 +192,7 @@ export async function listUnifiedCustomers(): Promise<UnifiedCustomer[]> {
         name: c.name,
         email: c.email,
         type: "portal",
-        project: c.id === "plasticonline" ? "Rex" : "Portal",
+        project: "Portal",
         status: "active",
         revenue: 0,
         mrr: 0,

@@ -367,7 +367,7 @@ function BulkGenerator({ onQueued }: { onQueued: () => void }) {
       {!collapsed && (
         <>
           {/* Config row */}
-          <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr 1fr auto", gap: 20, alignItems: "start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
+          <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "auto auto 1fr 1fr auto", gap: 20, alignItems: "start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #f3f4f6" }}>
             {/* Count */}
             <div>
               <p style={label}>Posts</p>
@@ -724,7 +724,7 @@ function PostGenerator({ onQueued }: { onQueued: () => void }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
+      <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
 
         {/* Left — inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1325,9 +1325,9 @@ export default function LinkedInAdminPage() {
     <AdminShell activePath="/saabai-admin/social/linkedin">
 
       {/* Page header */}
-      <div style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
+      <div className="m-pad" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
         {/* Platform tabs */}
-        <div style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
+        <div className="chip-row" style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginRight: 16 }}>Social Media</span>
           {PLATFORMS.map(p => {
             const activeColour = p.label === "Instagram" ? "#dc2743" : p.label === "Facebook" ? "#1877f2" : "#0077b5";
@@ -1359,7 +1359,7 @@ export default function LinkedInAdminPage() {
       <div style={{ padding: "32px 32px 64px", display: "flex", flexDirection: "column", gap: 20 }}>
 
         {/* Section jump nav */}
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="chip-row" style={{ display: "flex", gap: 8 }}>
           {[
             { label: "Post Generator", href: "#generator" },
             { label: "Bulk Generator", href: "#bulk" },

@@ -321,7 +321,7 @@ function CaptionGenerator({ onQueued }: { onQueued: () => void }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
+      <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>
 
         {/* Left — inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -848,8 +848,8 @@ export default function InstagramAdminPage() {
     <AdminShell activePath="/saabai-admin/social/instagram">
 
       {/* Page header */}
-      <div style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
-        <div style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
+      <div className="m-pad" style={{ borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "0 32px" }}>
+        <div className="chip-row" style={{ display: "flex", gap: 4, alignItems: "center", height: 52 }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginRight: 16 }}>Social Media</span>
           {PLATFORMS.map(p => (
             <a

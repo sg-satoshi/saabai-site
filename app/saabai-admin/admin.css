@@ -116,3 +116,20 @@ td.r,th.r,.r{text-align:right}
  .g2{grid-template-columns:1fr}
 }
 a.btn{text-decoration:none}
+
+
+/* Mobile overflow guards: the page itself never scrolls sideways; wide content scrolls in place. */
+.admin-root{max-width:100vw;overflow-x:clip}
+.pg{min-width:0}
+.chip-row{display:flex;gap:6px;min-width:0;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip-row>*{flex:none;white-space:nowrap}
+.tbl-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:600px){
+ .main,.pg{max-width:100vw}
+ .card{max-width:100%;overflow-x:auto}
+ .chip-row{flex:1 1 100%}
+ .m-stack{grid-template-columns:1fr!important}
+ .m-grid-2{grid-template-columns:1fr 1fr!important}
+ .m-pad{padding-left:16px!important;padding-right:16px!important}
+}
