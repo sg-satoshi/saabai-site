@@ -4,7 +4,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../lib/auth"
 import { loadClients } from "../../lib/clients";
 import { listPendingRequests } from "../../lib/portal-users";
 import AdminClient from "./AdminClient";
-import { isTwoFactorEnabled } from "../../lib/admin-2fa";
+import { twoFactorStatus } from "../../lib/admin-2fa";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,7 +20,7 @@ export default async function SaabaiAdminPage() {
   const session = await verifySessionToken(token);
   if (!session) redirect("/saabai-admin/login?redirect=/saabai-admin");
 
-  // Non-admin clients should not see this page — redirect them to their dashboard
+  // Non-admin clients should not see this page - redirect them to their dashboard
   const isAdmin = await isAdminSession(session.clientId);
   if (!isAdmin) {
     const clients = loadClients();
@@ -34,7 +34,8 @@ export default async function SaabaiAdminPage() {
     listPendingRequests(),
   ]);
 
-  const twoFactorOn = await isTwoFactorEnabled(session.clientId).catch(() => true);
+  // Banner tracks enrolment in Redis, not the env break-glass flag.
+  const twoFactorOn = await twoFactorStatus(session.clientId).then((s) => s.enabled).catch(() => true);
 
   return (
     <>

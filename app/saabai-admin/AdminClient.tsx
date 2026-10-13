@@ -107,80 +107,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── Atlas notification bar ─────────────────────────────────────────────────────
 
 
-// ── Product cards ──────────────────────────────────────────────────────────────
-
-function ProductCard({
-  name, status, statusColor, accent, description, stats, sparkData, linkHref, linkLabel, disabled,
-}: {
-  name: string;
-  status: string;
-  statusColor: string;
-  accent: string;
-  description: string;
-  stats: { label: string; value: string }[];
-  sparkData?: number[];
-  linkHref?: string;
-  linkLabel?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div style={{
-      background: disabled ? C.surface : C.card,
-      border: `1px solid ${C.border}`,
-      borderTop: `3px solid ${disabled ? C.dim : accent}`,
-      borderRadius: 14,
-      padding: "22px 22px 20px",
-      display: "flex", flexDirection: "column" as const, gap: 16,
-      opacity: disabled ? 0.65 : 1,
-    }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div>
-          <p style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 800, color: C.text, letterSpacing: -0.3 }}>{name}</p>
-          <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{description}</p>
-        </div>
-        <span style={{
-          fontSize: 9, fontWeight: 800, letterSpacing: 1.4,
-          color: statusColor,
-          background: `${statusColor}1a`,
-          border: `1px solid ${statusColor}40`,
-          padding: "3px 8px", borderRadius: 20,
-          whiteSpace: "nowrap" as const,
-        }}>
-          {status}
-        </span>
-      </div>
-
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-end" }}>
-        <div style={{ display: "flex", gap: 14, flex: 1 }}>
-          {stats.map(s => (
-            <div key={s.label} style={{ flex: 1 }}>
-              <p style={{ margin: "0 0 2px", fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 1.4, textTransform: "uppercase" as const }}>{s.label}</p>
-              <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text, letterSpacing: -0.5 }}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-        {sparkData && sparkData.length > 0 && (
-          <div style={{ flexShrink: 0, paddingBottom: 2 }}>
-            <Sparkline counts={sparkData} color={accent} />
-          </div>
-        )}
-      </div>
-
-      {linkHref && !disabled && (
-        <a href={linkHref} style={{
-          display: "inline-flex", alignItems: "center", gap: 4,
-          fontSize: 11, fontWeight: 700, color: accent,
-          textDecoration: "none", letterSpacing: 0.1, marginTop: -6,
-        }}>
-          {linkLabel ?? "Open"} &rarr;
-        </a>
-      )}
-      {disabled && (
-        <p style={{ margin: "-6px 0 0", fontSize: 11, color: C.muted }}>Coming soon</p>
-      )}
-    </div>
-  );
-}
 
 // ── Recent leads table ─────────────────────────────────────────────────────────
 
@@ -974,37 +900,6 @@ export default function AdminClient({
             <a className="btn sm" style={{ marginTop: 14 }} href="/saabai-admin/lex-clients">Open Lex clients</a>
           </div>
         </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, marginBottom: 16 }}>
-        <ProductCard
-          name="Lex"
-          status="BETA"
-          statusColor={C.blue}
-          accent={C.blue}
-          description="AI Legal Assistant"
-          stats={[
-            { label: "Firms", value: lexStats ? String(lexStats.total) : "-" },
-            { label: "Configured", value: lexStats ? String(lexStats.configured) : "-" },
-            { label: "LLM keys", value: lexStats ? String(lexStats.withLlmKey) : "-" },
-          ]}
-          linkHref="/saabai-admin/lex-clients"
-          linkLabel="Open Lex clients"
-        />
-        <ProductCard
-          name="Blueprints"
-          status="LIVE"
-          statusColor={C.teal}
-          accent={C.teal}
-          description="Paid Blueprint engagements"
-          stats={[
-            { label: "Today", value: bpStats ? String(bpStats.todayCount) : "-" },
-            { label: "Week", value: bpStats ? String(bpStats.weekCount) : "-" },
-            { label: "All", value: bpStats ? String(bpStats.allCount) : "-" },
-          ]}
-          linkHref="/saabai-admin/audits"
-          linkLabel="Open Blueprints"
-        />
       </div>
 
       {visibleClients.length > 0 && (
