@@ -53,6 +53,7 @@ const PUBLIC_API = [
   "/api/bo-chat",
   "/api/site-factory-chat",  // generic Site Factory widget (Wholesale Homes etc.)
   "/api/bo-contact",
+  "/api/lmm-contact",
   "/api/leadgen/chat",
   // Public Lex tools on the /lex page (no session check in handlers today)
   "/api/lex-extract",

@@ -768,8 +768,9 @@
               <textarea name="message" required></textarea>
             </label>
           </div>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
           <div class="form-footer">
-            <span class="status" role="status" aria-live="polite">Enquiry captured for prototype review.</span>
+            <span class="status" role="status" aria-live="polite"></span>
             <button class="button button-primary" type="submit">Submit enquiry</button>
           </div>
         </form>
@@ -808,11 +809,31 @@
 
     document.querySelectorAll(".reveal").forEach((item) => observer.observe(item));
 
-    document.getElementById("leadForm").addEventListener("submit", (event) => {
+    document.getElementById("leadForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const status = event.currentTarget.querySelector(".status");
+      const form = event.currentTarget;
+      const status = form.querySelector(".status");
+      const button = form.querySelector('button[type="submit"]');
+      const data = Object.fromEntries(new FormData(form).entries());
+      button.disabled = true;
+      button.textContent = "Sending...";
+      status.classList.remove("is-visible");
+      try {
+        const res = await fetch("/api/lmm-contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) throw new Error(json.error || "Failed");
+        status.textContent = "Thanks! Your enquiry has been sent. We'll be in touch shortly.";
+        form.reset();
+      } catch (err) {
+        status.textContent = "Sorry, something went wrong. Please call or email us directly.";
+      }
       status.classList.add("is-visible");
-      event.currentTarget.reset();
+      button.disabled = false;
+      button.textContent = "Submit enquiry";
     });
   </script>
   <script src="/clients/lmm-site/assets/chat-widget.js?v=8" defer></script>
