@@ -148,6 +148,12 @@ const ADMIN_API = [
 // Public endpoints that client websites on their own domains call today but
 // that stay session-protected on saabai.ai (e.g. the site chat widget, which
 // is also the Site Factory authoring chat). Only allowed on custom domains.
+// Custom domains mapped in code (used when not in the Redis domain map).
+// Keys are bare hosts without "www.".
+const STATIC_DOMAIN_MAP: Record<string, string> = {
+  "lifestylemoneymanagement.com.au": "lmm-site",
+};
+
 const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
 ];
@@ -215,7 +221,9 @@ export async function proxy(req: NextRequest) {
     !hostname.startsWith("127.")
   ) {
     const lookupHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
-    const slug = await redis.hget<string>("saabai:domain-map", lookupHost);
+    const slug =
+      STATIC_DOMAIN_MAP[lookupHost] ??
+      (await redis.hget<string>("saabai:domain-map", lookupHost));
     if (slug) {
       const url = req.nextUrl.clone();
       const pathname = url.pathname;
@@ -241,6 +249,11 @@ export async function proxy(req: NextRequest) {
       // Static assets under /sites/{slug}/* (images, fonts, etc.) — rewrite to saabai.ai.
       // Page routes under /sites/{slug}/* (packages, how-it-works, etc.) pass through
       // to the App Router. We distinguish by file extension.
+      // Legacy static sites reference assets under /clients/{slug}/.
+      if (pathname.startsWith(`/clients/${slug}/`)) {
+        url.hostname = "www.saabai.ai";
+        return NextResponse.rewrite(url);
+      }
       if (pathname.startsWith(siteBase)) {
         const isStatic = /\.\w+$/.test(pathname);
         if (isStatic) {
