@@ -79,7 +79,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const result = await addClientReply(id, clientId, text, name);
   if ("error" in result) return Response.json({ error: result.error }, { status: result.code });
 
-  after(async () => {
+  // Only continue an existing clarifier conversation; replies on older or
+  // non-clarified requests never start the clarifier.
+  if (result.clarifierRounds > 0) after(async () => {
     try {
       await maybeClarifyRequest(result, siteContext);
     } catch (err) {
