@@ -10,6 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
+    { url: `${BASE_URL}/blueprint`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.95 },
+    { url: `${BASE_URL}/score`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
     {
       url: `${BASE_URL}/services`,
       lastModified: new Date(),

@@ -11,6 +11,8 @@ const SUPPRESS_PATHS = [
   "/onboarding/plon", "/mission-control", "/plon", "/rex-widget", "/lex-widget",
   // Lex platform — has its own full-page experience
   "/lex", "/client-portal", "/legal",
+  // Focused Blueprint flows: no chat or sticky bars
+  "/score", "/blueprint/checkout", "/blueprint/confirmation",
   // Admin pages have their own nav
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
   // Client demo sites — their own experience

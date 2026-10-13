@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/counsel", destination: "/for-law-firms", permanent: true },
+      // Saabai Blueprint replaces the old audit offers
+      { source: "/ai-audit", destination: "/blueprint", permanent: true },
+      { source: "/ai-audit/:path*", destination: "/blueprint", permanent: true },
+      { source: "/offers", destination: "/blueprint", permanent: true },
     ];
   },
   async rewrites() {

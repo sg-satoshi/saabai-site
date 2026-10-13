@@ -1,0 +1,112 @@
+import type { Metadata } from "next";
+import SbNav from "../components/sb/SbNav";
+import SbFooter from "../components/sb/SbFooter";
+import "../components/sb/blueprint.css";
+import { TIERS, TIER_ORDER } from "@/lib/blueprint";
+
+export const metadata: Metadata = {
+  title: "Saabai Blueprint: your AI plan, ranked by dollars saved",
+  description: "A clear, ranked AI plan for small businesses and professional practices. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.",
+  alternates: { canonical: "/blueprint" },
+};
+
+const ROWS: [string, string, string, string][] = [
+  ["Ranked opportunities with $ saved", "✓", "✓", "✓"],
+  ["PDF and client portal version", "✓", "✓", "✓"],
+  ["Reviewed by Shane", "·", "✓", "✓"],
+  ["Walkthrough call", "Not included", "30 min", "Leadership session"],
+  ["Team discovery sessions", "·", "·", "✓"],
+  ["12 month roadmap", "·", "·", "✓"],
+  ["Delivery", "48 hours", "3 business days", "2 to 3 weeks"],
+];
+
+const FAQS = [
+  ["What do I need to provide?", "After checkout we email a short fact-find about your team, tools and busiest tasks. It takes about 15 minutes."],
+  ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build."],
+  ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
+  ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
+  ["Are prices in AUD?", "Yes. All prices are in Australian dollars and include GST. You get a tax invoice by email straight after payment."],
+  ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
+];
+
+export default function BlueprintPage() {
+  return (
+    <div className="sb">
+      <SbNav active="blueprint" />
+      <div className="bhero">
+        <div className="glow" />
+        <div className="wrap" style={{ position: "relative" }}>
+          <span className="eyebrow">Saabai Blueprint · for small businesses and professional practices</span>
+          <h1 style={{ marginTop: 18 }}>Know exactly what to<br /> <span className="grad">automate first</span></h1>
+          <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it saves and what it costs to build.</p>
+          <div style={{ marginTop: 32, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            <a className="btn" href="/score">Not sure which? Take the free score →</a>
+          </div>
+        </div>
+      </div>
+
+      <section style={{ paddingTop: 16 }} id="tiers">
+        <div className="wrap grid3">
+          {TIER_ORDER.map((id) => {
+            const t = TIERS[id];
+            const feat = id === "pro";
+            return (
+              <div className={`card tier${feat ? " feat" : ""}`} key={id}>
+                <div>
+                  {feat && <span className="pill" style={{ float: "right" }}>Recommended</span>}
+                  <h3>{t.name}</h3>
+                </div>
+                <div className="amt">{t.priceLabel} <small>one-off</small></div>
+                <p className="who">{t.who}</p>
+                <hr />
+                <ul className="tick">{t.features.map((f) => <li key={f}>{f}</li>)}</ul>
+                <a className={`btn full${feat ? "" : " ghost"}`} href={`/blueprint/checkout?tier=${id}`}>Choose {t.name}</a>
+              </div>
+            );
+          })}
+        </div>
+        <div className="wrap" style={{ marginTop: 28 }}>
+          <div className="credit">
+            <div className="big">100% credited</div>
+            <div>
+              <h3>Build within 30 days and your Blueprint is free</h3>
+              <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
+            </div>
+          </div>
+          <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>All prices in AUD and include GST.</p>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap" style={{ maxWidth: 960 }}>
+          <div className="head"><h2>Compare tiers</h2></div>
+          <div className="cmpwrap">
+            <table>
+              <thead><tr><th></th><th>Starter</th><th>Pro</th><th>Business</th></tr></thead>
+              <tbody>
+                {ROWS.map((r) => (
+                  <tr key={r[0]}>
+                    {r.map((c, i) => <td key={i} className={c === "✓" ? "yes" : ""}>{c}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap" style={{ maxWidth: 860 }}>
+          <div className="head"><h2>Questions</h2></div>
+          {FAQS.map(([q, a]) => (
+            <details className="faq" key={q}>
+              <summary>{q}<span aria-hidden>+</span></summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+      <SbFooter />
+    </div>
+  );
+}

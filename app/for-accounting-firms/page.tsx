@@ -376,10 +376,10 @@ export default function ForAccountingFirms() {
 
         <div className="text-center">
           <a
-            href="/ai-audit"
+            href="/blueprint"
             className="inline-block bg-saabai-teal text-saabai-bg px-9 py-[14px] rounded-xl font-semibold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)]"
           >
-            View AI Audit Details
+            View Saabai Blueprint
           </a>
           <p className="text-xs text-saabai-text-dim mt-5 tracking-wide">
             Or book a free call to discuss which tier fits your firm

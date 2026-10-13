@@ -1,0 +1,9 @@
+.sb .bhero{position:relative;padding:104px 0 72px;text-align:center}.sb .bhero p.lead{font-size:19px;max-width:660px;margin:22px auto 0}
+.sb .tier{display:flex;flex-direction:column}.sb .tier h3{font-size:22px}.sb .tier .amt{font-size:46px;font-weight:600;letter-spacing:-.03em;margin:14px 0 2px}.sb .tier .amt small{font-size:15px;color:var(--dim);font-weight:400;letter-spacing:0}
+.sb .tier .who{font-size:14px;min-height:44px}.sb .tier hr{border:0;border-top:1px solid var(--border);margin:22px 0 0}.sb .tier .btn{margin-top:auto}
+.sb .credit{display:flex;gap:28px;align-items:center;border-radius:20px;padding:32px 40px;border:1px solid var(--border-a);background:linear-gradient(90deg,rgba(98,197,209,.12),rgba(31,77,197,.12))}
+.sb .credit .big{font-size:44px;font-weight:600;color:var(--teal);white-space:nowrap}
+.sb .cmpwrap{overflow-x:auto}
+.sb table{width:100%;border-collapse:collapse;font-size:15px}.sb td,.sb th{padding:14px 16px;border-bottom:1px solid var(--border);text-align:center;color:var(--muted)}.sb th{color:#fff;font-weight:600}.sb td:first-child,.sb th:first-child{text-align:left;color:#fff}
+.sb .yes{color:var(--teal);font-weight:700}
+@media (max-width:760px){.sb .bhero{padding:56px 0 40px}.sb .bhero h1 br{display:none}.sb .bhero .btn{width:100%}.sb .credit{flex-direction:column;align-items:flex-start;gap:10px;padding:24px}.sb .credit .big{font-size:34px}.sb .tier .who{min-height:0}.sb td,.sb th{padding:12px 8px;font-size:13px}}

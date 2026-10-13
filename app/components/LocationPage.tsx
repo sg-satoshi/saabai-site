@@ -145,7 +145,7 @@ export default function LocationPage({ config }: Props) {
         {/* CTA */}
         <div className="relative mb-10">
           <a
-            href="/ai-audit"
+            href="/blueprint"
             className="inline-block bg-saabai-teal text-saabai-bg px-8 py-4 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
           >
             Book an AI Strategy Session
@@ -340,10 +340,10 @@ export default function LocationPage({ config }: Props) {
               All services &rarr;
             </a>
             <a
-              href="/ai-audit"
+              href="/blueprint"
               className="text-saabai-teal hover:text-saabai-teal-bright transition-colors"
             >
-              Book an AI audit &rarr;
+              Get a Saabai Blueprint &rarr;
             </a>
           </div>
         </div>
@@ -400,7 +400,7 @@ export default function LocationPage({ config }: Props) {
             {ctaSubtext}
           </p>
           <a
-            href="/ai-audit"
+            href="/blueprint"
             className="inline-block bg-saabai-teal text-saabai-bg px-8 py-4 rounded-lg font-semibold hover:bg-saabai-teal-bright transition-colors"
           >
             Book an AI Strategy Session
