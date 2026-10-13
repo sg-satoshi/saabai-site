@@ -180,6 +180,17 @@ export interface AuditEngagement {
   notes: AuditNote[];
 
   stripeRef?: string;
+  /** Stripe PaymentIntent id when paid via Checkout */
+  paymentIntentId?: string;
+  /** Stripe Customer id */
+  stripeCustomerId?: string;
+  /** Hosted invoice URL when Stripe created one */
+  invoiceUrl?: string;
+  /** Amount paid in the smallest currency unit (cents) */
+  amountTotal?: number;
+  currency?: string;
+  /** Billing address summary from Stripe customer_details */
+  billingAddress?: string;
   calendlyRef?: string;
 }
 
