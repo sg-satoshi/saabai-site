@@ -70,6 +70,9 @@ type ConfigInput = z.infer<typeof configSchema>;
 type Msg = { role: "user" | "assistant"; content: string };
 
 export async function POST(req: Request) {
+  const { rejectIfImpersonatingReadOnly } = await import("../../../../lib/impersonation");
+  const blocked = rejectIfImpersonatingReadOnly(req);
+  if (blocked) return blocked;
   const sessionToken = parseCookie(req.headers.get("cookie"), "portal_session");
   const session = sessionToken ? verifySession(sessionToken) : null;
   if (!session) {

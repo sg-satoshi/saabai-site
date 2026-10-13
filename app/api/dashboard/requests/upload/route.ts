@@ -7,12 +7,15 @@
  */
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { getClientSession } from "../../../../../lib/client-session";
+import { rejectIfImpersonatingReadOnlyCookies } from "../../../../../lib/impersonation";
 import { blobFolderFor, MAX_SCREENSHOT_BYTES, SCREENSHOT_TYPES } from "../../../../../lib/client-requests";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const blocked = await rejectIfImpersonatingReadOnlyCookies();
+  if (blocked) return blocked;
   const session = await getClientSession();
   if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

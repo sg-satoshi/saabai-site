@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "../../../../lib/portal-session";
+import { rejectIfImpersonatingReadOnly } from "../../../../lib/impersonation";
 import { getRedis } from "../../../../lib/redis";
 
 export const runtime = "nodejs";
@@ -130,6 +131,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = rejectIfImpersonatingReadOnly(req);
+  if (blocked) return blocked;
   const cookieHeader = req.headers.get("cookie");
   const token = parseCookie(cookieHeader, "portal_session");
   if (!token) {

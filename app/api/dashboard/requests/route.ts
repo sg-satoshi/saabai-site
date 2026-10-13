@@ -6,6 +6,7 @@
  */
 import { after } from "next/server";
 import { getClientContext } from "../../../../lib/client-context";
+import { rejectIfImpersonatingReadOnlyCookies } from "../../../../lib/impersonation";
 import { blobFolderFor, createRequest, listRequests, validateNewRequest } from "../../../../lib/client-requests";
 import { sendNewRequestNotification } from "../../../../lib/client-request-emails";
 import { sendCriticalAlerts } from "../../../../lib/request-alerts";
@@ -28,6 +29,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const blocked = await rejectIfImpersonatingReadOnlyCookies();
+  if (blocked) return blocked;
   const ctx = await getClientContext();
   if (!ctx) return Response.json({ error: "Not authenticated" }, { status: 401 });
 

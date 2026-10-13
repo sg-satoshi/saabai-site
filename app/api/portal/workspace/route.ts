@@ -3,6 +3,7 @@
  * Returns which portal modules have real data for the signed-in client.
  */
 import { verifySession } from "../../../../lib/portal-session";
+import { readImpersonationFromRequest } from "../../../../lib/impersonation";
 import { getLexClients } from "../../../../lib/lex-config";
 import { listEngagements } from "../../../../lib/audit-store";
 import { listRequests } from "../../../../lib/client-requests";
@@ -97,6 +98,7 @@ export async function GET(req: Request) {
   const session = verifySession(sessionToken);
   if (!session) return Response.json({ authenticated: false }, { status: 401 });
 
+  const impersonation = readImpersonationFromRequest(req);
   const email = session.email.toLowerCase();
   const lexFirm = getLexClients().find((c) => c.email.teamEmail.toLowerCase() === email);
   const portalUser = await getPortalUser(email);
@@ -242,5 +244,15 @@ export async function GET(req: Request) {
       updatedAt: r.updatedAt,
     })),
     openRequestCount: requests.filter((r) => r.status !== "done").length,
+    impersonating: impersonation
+      ? {
+          name: impersonation.clientName,
+          email: impersonation.clientEmail,
+          clientId: impersonation.clientId,
+          returnTo: impersonation.returnTo,
+          expiresAt: new Date(impersonation.exp).toISOString(),
+          readOnly: true as const,
+        }
+      : null,
   });
 }

@@ -992,6 +992,37 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             </svg>
           </IconBtn>
         )}
+        {user.role !== "admin" && (
+          <IconBtn
+            title="View as client"
+            onClick={() => {
+              fetch("/api/admin/impersonate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email: user.email,
+                  name: user.name,
+                  clientId: user.id,
+                  returnTo: "/saabai-admin/users",
+                }),
+              })
+                .then(async (res) => {
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    alert(data.error || "Could not start View as client.");
+                    return;
+                  }
+                  window.location.href = data.redirect || "/client-portal";
+                })
+                .catch(() => alert("Network error starting View as client."));
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 7s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.4" />
+              <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </IconBtn>
+        )}
         <IconBtn
           title="Copy email"
           onClick={() => {
