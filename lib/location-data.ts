@@ -213,10 +213,10 @@ export const BRISBANE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for where automation saves your Brisbane business the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Brisbane | Saabai Blueprint",
+    title: "Websites & AI Automation Brisbane",
     description:
       "Brisbane websites from $2,000 plus $100/mo and AI automation plans from $497. Built for small businesses, trades and professional practices. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Brisbane | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Brisbane | Saabai",
     ogDescription:
       "Brisbane small businesses: managed websites and a Saabai Blueprint for AI automation. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/brisbane`,
@@ -373,7 +373,7 @@ export const GOLD_COAST: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "Websites & AI Automation Gold Coast | Local Team | Saabai",
+    title: "Websites & AI Automation Gold Coast | Local Team",
     description:
       "Gold Coast based. Websites built, hosted and managed from $2,000 plus $100/mo, and Saabai Blueprint AI plans from $497 for small businesses and practices. Free AI Readiness Score.",
     ogTitle: "Websites & AI Automation Gold Coast | Local Team | Saabai",
@@ -533,10 +533,10 @@ export const SYDNEY: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and an ROI-ranked plan priced against Sydney labour costs, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Sydney | Saabai Blueprint",
+    title: "Websites & AI Automation Sydney",
     description:
       "Sydney websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, law, accounting and property practices. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Sydney | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Sydney | Saabai",
     ogDescription:
       "Sydney small businesses and practices: managed websites and an ROI-led Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/sydney`,
@@ -693,10 +693,10 @@ export const MELBOURNE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a clear plan for where automation frees the most capacity, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Melbourne | Saabai Blueprint",
+    title: "Websites & AI Automation Melbourne",
     description:
       "Melbourne websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, clinics, manufacturers and professional practices. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Melbourne | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Melbourne | Saabai",
     ogDescription:
       "Melbourne small businesses and practices: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/melbourne`,
@@ -853,10 +853,10 @@ export const PERTH: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for cutting documentation and coordination load, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Perth | Saabai Blueprint",
+    title: "Websites & AI Automation Perth",
     description:
       "Perth and WA websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, METS suppliers and professional firms. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Perth | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Perth | Saabai",
     ogDescription:
       "Perth small businesses and WA suppliers: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/perth`,
@@ -1013,10 +1013,10 @@ export const ADELAIDE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for freeing capacity for tenders, compliance and growth, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Adelaide | Saabai Blueprint",
+    title: "Websites & AI Automation Adelaide",
     description:
       "Adelaide and SA websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, manufacturers and practices. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Adelaide | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Adelaide | Saabai",
     ogDescription:
       "Adelaide small businesses and suppliers: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/adelaide`,
@@ -1173,10 +1173,10 @@ export const CANBERRA: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a rigorous, ranked plan for automating tender and knowledge work, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Canberra | Saabai Blueprint",
+    title: "Websites & AI Automation Canberra",
     description:
       "Canberra and ACT websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, consultancies and practices. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Canberra | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Canberra | Saabai",
     ogDescription:
       "Canberra small businesses and consultancies: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/canberra`,
@@ -1333,10 +1333,10 @@ export const DARWIN: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for cutting coordination and documentation load, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Darwin | Saabai Blueprint",
+    title: "Websites & AI Automation Darwin",
     description:
       "Darwin and NT websites from $2,000 plus $100/mo and AI automation plans from $497 for small businesses, contractors and logistics. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Darwin | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Darwin | Saabai",
     ogDescription:
       "Darwin and NT small businesses: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/darwin`,
@@ -1493,10 +1493,10 @@ export const HOBART: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and find out exactly where automation buys back the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Hobart | Saabai Blueprint",
+    title: "Websites & AI Automation Hobart",
     description:
       "Hobart and Tasmania websites from $2,000 plus $100/mo and AI automation plans from $497 for tourism, hospitality and small businesses. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Hobart | Saabai Blueprint",
+    ogTitle: "Websites & AI Automation Hobart | Saabai",
     ogDescription:
       "Hobart small businesses: managed websites and a Saabai Blueprint. Take the free AI Readiness Score.",
     canonical: `${BASE_URL}/hobart`,
