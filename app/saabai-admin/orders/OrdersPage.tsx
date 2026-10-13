@@ -490,7 +490,7 @@ export default function OrdersPage() {
 
         <p style={{ margin: 0, fontSize: 12, color: C.muted }}>
           Web Solutions website packages are still enquiry-only (Calendly). They will show here once a deposit checkout exists.
-          Blueprint intake workflow stays on AI Audits; use Details → Open intake.
+          Blueprint intake workflow stays under Blueprints; use Details then Open intake.
         </p>
       </div>
 

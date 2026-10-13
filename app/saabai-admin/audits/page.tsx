@@ -4,7 +4,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/au
 import AuditsClient from "./AuditsClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "AI Audits — Saabai" };
+export const metadata = { title: "Blueprints - Saabai" };
 
 export default async function AuditsPage() {
   const cookieStore = await cookies();

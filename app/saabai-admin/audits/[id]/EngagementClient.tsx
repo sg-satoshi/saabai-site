@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Audit engagement detail — profile, fact-find (with interview mode),
+ * Audit engagement detail - profile, fact-find (with interview mode),
  * AI assessment, notes.
  */
 
@@ -135,7 +135,7 @@ export default function EngagementClient({ id }: { id: string }) {
       const data = await res.json();
       if (res.ok) {
         setEng(data.engagement);
-        showFlash("Assessment generated — review and edit before delivery.");
+        showFlash("Assessment generated - review and edit before delivery.");
       } else {
         showFlash(data.error ?? "Generation failed.");
       }
@@ -173,7 +173,7 @@ export default function EngagementClient({ id }: { id: string }) {
       const data = await res.json();
       if (res.ok) {
         setEng(data.engagement);
-        showFlash("Marked delivered — engagement status updated.");
+        showFlash("Marked delivered - engagement status updated.");
       } else {
         showFlash(data.error ?? "Failed.");
       }
@@ -273,7 +273,7 @@ export default function EngagementClient({ id }: { id: string }) {
       <div style={{ padding: "32px 36px", maxWidth: 1000 }}>
         {/* Header */}
         <Link href="/saabai-admin/audits" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}>
-          ← All audits
+          ← Blueprints
         </Link>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", margin: "10px 0 6px" }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>{eng.firmName}</h1>
@@ -335,9 +335,9 @@ export default function EngagementClient({ id }: { id: string }) {
               <h3 style={{ margin: "0 0 12px", fontSize: 14.5, color: C.text }}>Fact-Find Questionnaire</h3>
               <p style={{ fontSize: 13, color: C.dim, margin: "0 0 12px" }}>
                 {eng.factFindCompletedAt
-                  ? `Completed ${new Date(eng.factFindCompletedAt).toLocaleString("en-AU")} — ${answeredCount} answers.`
+                  ? `Completed ${new Date(eng.factFindCompletedAt).toLocaleString("en-AU")} - ${answeredCount} answers.`
                   : eng.factFindSentAt
-                    ? `Sent ${new Date(eng.factFindSentAt).toLocaleString("en-AU")} — awaiting completion (${answeredCount} answers so far).`
+                    ? `Sent ${new Date(eng.factFindSentAt).toLocaleString("en-AU")} - awaiting completion (${answeredCount} answers so far).`
                     : "Not yet sent to the client."}
               </p>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -365,7 +365,7 @@ export default function EngagementClient({ id }: { id: string }) {
               <h3 style={{ margin: "0 0 14px", fontSize: 14.5, color: C.text }}>Client Timeline</h3>
               {(eng.timeline ?? []).length === 0 ? (
                 <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>
-                  No events yet — touchpoints are logged automatically (questionnaire sent, fact-find progress, sessions, assessment, report delivery).
+                  No events yet - touchpoints are logged automatically (questionnaire sent, fact-find progress, sessions, assessment, report delivery).
                 </p>
               ) : (
                 <div style={{ position: "relative", paddingLeft: 22 }}>
@@ -397,7 +397,7 @@ export default function EngagementClient({ id }: { id: string }) {
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text }}>
                           {ev.label}
                           {ev.detail && (
-                            <span style={{ fontWeight: 400, color: C.dim }}> — {ev.detail}</span>
+                            <span style={{ fontWeight: 400, color: C.dim }}> - {ev.detail}</span>
                           )}
                         </div>
                         <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>
@@ -423,7 +423,7 @@ export default function EngagementClient({ id }: { id: string }) {
           <div style={{ display: "grid", gap: 16 }}>
             <div style={{ ...card, background: C.goldBg, border: `1px solid rgba(180,83,9,0.2)` }}>
               <p style={{ margin: 0, fontSize: 13, color: C.gold, fontWeight: 500 }}>
-                Interview mode: gold prompts below each question are your discovery-session script — they never appear to clients.
+                Interview mode: gold prompts below each question are your discovery-session script - they never appear to clients.
                 Edit any answer live during the session, then save.
               </p>
             </div>
@@ -534,7 +534,7 @@ export default function EngagementClient({ id }: { id: string }) {
                   <div key={o.id} style={card}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                       <h4 style={{ margin: 0, fontSize: 14.5, color: C.text }}>
-                        #{o.rank} — {o.title}
+                        #{o.rank} - {o.title}
                       </h4>
                       <span style={{ fontSize: 12, color: C.muted }}>
                         {o.patternId && o.patternId !== "custom" ? `pattern: ${o.patternId}` : "custom"}
@@ -579,7 +579,7 @@ export default function EngagementClient({ id }: { id: string }) {
               </div>
               {!eng.assessment && (
                 <p style={{ margin: "12px 0 0", fontSize: 12.5, color: C.gold }}>
-                  Tip: generate the assessment first — the report pulls its summary, opportunities and roadmap from it.
+                  Tip: generate the assessment first - the report pulls its summary, opportunities and roadmap from it.
                 </p>
               )}
             </div>
@@ -593,7 +593,7 @@ export default function EngagementClient({ id }: { id: string }) {
                 <div key={r.id} style={{ ...card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text }}>
-                      v{r.version} — {r.filename}
+                      v{r.version} - {r.filename}
                       {r.deliveredAt && (
                         <span style={{ marginLeft: 8, background: C.greenBg, color: C.green, padding: "2px 9px", borderRadius: 99, fontSize: 11.5, fontWeight: 600 }}>
                           Delivered
@@ -627,7 +627,7 @@ export default function EngagementClient({ id }: { id: string }) {
             <div style={card}>
               <textarea
                 rows={3}
-                placeholder="Add a note — observations, commitments made, follow-ups…"
+                placeholder="Add a note - observations, commitments made, follow-ups…"
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 style={{ ...inputStyle, resize: "vertical", marginBottom: 10 }}

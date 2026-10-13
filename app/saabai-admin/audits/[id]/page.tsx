@@ -4,7 +4,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib
 import EngagementClient from "./EngagementClient";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Audit Engagement — Saabai" };
+export const metadata = { title: "Blueprint - Saabai" };
 
 export default async function EngagementPage({
   params,

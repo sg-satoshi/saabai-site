@@ -9,6 +9,12 @@ import type { RexStats, LeadEvent } from "../../lib/rex-stats";
 import type { PendingRequest } from "../../lib/portal-users";
 import AdminShell from "./AdminSidebar";
 
+/** Known self-test portal requests - keep in Redis, hide from the default dashboard. */
+const TEST_PORTAL_EMAILS = new Set(["shanegoldberg@pm.me"]);
+function isTestPortalRequest(email: string) {
+  return TEST_PORTAL_EMAILS.has(email.trim().toLowerCase());
+}
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 const C = {
@@ -102,189 +108,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
       <p style={{ margin: 0, fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const }}>{children}</p>
       <span style={{ flex: 1, height: 1, background: C.border }} />
-    </div>
-  );
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-
-const NAV_WORKSPACE = [
-  { label: "Dashboard", href: "/saabai-admin",  active: true },
-  { label: "Agents",    href: "/mission-control", active: false },
-  { label: "Growth",    href: "/rex-analytics",  active: false },
-  { label: "Changelog", href: "/rex-changelog",  active: false },
-];
-
-const NAV_BUILD = [
-  { label: "Social",       href: "/saabai-admin/social/linkedin" },
-  { label: "Subscribers",  href: "/saabai-admin/subscribers" },
-  { label: "LLM Settings", href: "/saabai-admin/lex-settings" },
-  { label: "Actions",      href: "#actions" },
-];
-
-function Sidebar({ venture, onVenture }: { venture: string; onVenture: (v: string) => void }) {
-  return (
-    <div style={{
-      width: 220,
-      minHeight: "100vh",
-      background: C.sidebar,
-      borderRight: `1px solid ${C.border}`,
-      position: "fixed",
-      left: 0, top: 0, bottom: 0,
-      display: "flex",
-      flexDirection: "column",
-      zIndex: 100,
-    }}>
-      {/* Logo */}
-      <div style={{ padding: "22px 20px 18px", borderBottom: `1px solid ${C.border}` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <a href="/saabai-admin" style={{ display: "inline-block" }}>
-          <img src="/brand/saabai-logo.png" alt="Saabai" style={{ width: 110, height: "auto", opacity: 0.9 }} />
-        </a>
-      </div>
-
-      {/* Venture switcher */}
-      <div style={{ padding: "16px 14px 10px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Ventures</p>
-        {([
-          { label: "All", href: null },
-          { label: "Rex", href: "/rex-dashboard" },
-          { label: "Lex", href: "/lex" },
-        ] as const).map(v => {
-          const dot = v.label === "Rex" ? C.orange : v.label === "Lex" ? C.blue : C.teal;
-          const active = venture === v.label;
-          const inner = (
-            <>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
-              {v.label}
-              {v.href && <span style={{ marginLeft: "auto", fontSize: 10, color: C.muted, opacity: 0.7 }}>↗</span>}
-            </>
-          );
-          if (v.href) {
-            return (
-              <div key={v.label} style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
-                <button
-                  onClick={() => onVenture(v.label)}
-                  style={{
-                    flex: 1, display: "flex", alignItems: "center",
-                    padding: "7px 10px",
-                    background: active ? "rgba(37,211,102,0.1)" : "transparent",
-                    border: "none", borderRadius: 8,
-                    cursor: "pointer", textAlign: "left" as const,
-                    fontSize: 13, fontWeight: active ? 700 : 500,
-                    color: active ? C.teal : "#ffffff",
-                  }}
-                >
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, marginRight: 9, flexShrink: 0 }} />
-                  {v.label}
-                </button>
-                <a href={v.href} title={`Open ${v.label}`} style={{ color: C.muted, fontSize: 12, padding: "4px 6px", textDecoration: "none", lineHeight: 1 }}>↗</a>
-              </div>
-            );
-          }
-          return (
-            <button
-              key={v.label}
-              onClick={() => onVenture(v.label)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                padding: "7px 10px", marginBottom: 2,
-                background: active ? "rgba(37,211,102,0.1)" : "transparent",
-                border: "none", borderRadius: 8,
-                cursor: "pointer", textAlign: "left" as const,
-                fontSize: 13, fontWeight: active ? 700 : 500,
-                color: active ? C.teal : "#ffffff",
-              }}
-            >
-              {inner}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Workspace nav */}
-      <div style={{ padding: "12px 14px 8px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Workspace</p>
-        {NAV_WORKSPACE.map(item => (
-          <a
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex", alignItems: "center",
-              padding: "7px 10px", marginBottom: 2,
-              background: item.active ? "#0891b2" : "transparent",
-              border: item.active ? "1px solid #0891b2" : "1px solid transparent",
-              borderRadius: 8, textDecoration: "none",
-              fontSize: 13, fontWeight: item.active ? 600 : 400,
-              color: "#ffffff",
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </div>
-
-      {/* Build nav */}
-      <div style={{ padding: "10px 14px 8px" }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: C.muted, letterSpacing: 2, textTransform: "uppercase" as const, margin: "0 6px 8px" }}>Build</p>
-        {NAV_BUILD.map(item => (
-          <a
-            key={item.href}
-            href={item.href}
-            style={{
-              display: "flex", alignItems: "center",
-              padding: "7px 10px", marginBottom: 2,
-              background: "transparent",
-              borderRadius: 8, textDecoration: "none",
-              fontSize: 13, fontWeight: 400,
-              color: "#ffffff",
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      {/* New venture CTA */}
-      <div style={{ padding: "0 14px 14px" }}>
-        <button style={{
-          width: "100%", padding: "9px 14px",
-          background: "rgba(37,211,102,0.1)",
-          border: `1px solid rgba(37,211,102,0.22)`,
-          borderRadius: 8, cursor: "pointer",
-          color: C.teal, fontSize: 11, fontWeight: 700,
-          letterSpacing: 0.3, textAlign: "center" as const,
-        }}>
-          + New venture
-        </button>
-      </div>
-
-      {/* Profile + sign out */}
-      <div style={{ padding: "14px 18px", borderTop: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: "50%",
-          background: "linear-gradient(135deg, #25D366, #1aab52)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 12, fontWeight: 800, color: "#fff", flexShrink: 0,
-        }}>
-          S
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#eef0ff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>Shane Pearl</p>
-          <p style={{ margin: 0, fontSize: 11, color: "#9aa0b8" }}>Admin</p>
-        </div>
-        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
-          <button
-            type="submit"
-            title="Sign out"
-            style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 11, padding: "2px 4px", lineHeight: 1 }}
-          >
-            Sign out
-          </button>
-        </form>
-      </div>
     </div>
   );
 }
@@ -1056,7 +879,9 @@ function LinkedInPanel() {
 // ── Access Requests ────────────────────────────────────────────────────────────
 
 function AccessRequests({ initial }: { initial: PendingRequest[] }) {
-  const [requests, setRequests]       = useState<PendingRequest[]>(initial);
+  const [requests, setRequests]       = useState<PendingRequest[]>(() => initial.filter((r) => !isTestPortalRequest(r.email)));
+  const [showTests, setShowTests]     = useState(false);
+  const hiddenTests = initial.filter((r) => isTestPortalRequest(r.email));
   const [approving, setApproving]     = useState<string | null>(null);
   const [passwords, setPasswords]     = useState<Record<string, string>>({});
   const [dashUrls, setDashUrls]       = useState<Record<string, string>>({});
@@ -1119,6 +944,21 @@ function AccessRequests({ initial }: { initial: PendingRequest[] }) {
           background: `${C.amber}18`, color: C.amber,
           fontSize: 10, fontWeight: 700,
         }}>{requests.length}</span>
+        {hiddenTests.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setShowTests((v) => {
+                const next = !v;
+                setRequests(next ? [...initial] : initial.filter((r) => !isTestPortalRequest(r.email)));
+                return next;
+              });
+            }}
+            style={{ marginLeft: "auto", fontSize: 11, fontWeight: 600, color: C.muted, background: "transparent", border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}
+          >
+            {showTests ? "Hide test requests" : `Show ${hiddenTests.length} test`}
+          </button>
+        )}
       </div>
 
       {message && (
@@ -1218,8 +1058,8 @@ export default function AdminClient({
   adminId: string;
   pendingRequests: PendingRequest[];
 }) {
-  const [venture, setVenture] = useState("All");
   const [lexStats, setLexStats] = useState<{ total: number; configured: number; withLlmKey: number } | null>(null);
+  const [bpStats, setBpStats] = useState<{ todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number } | null>(null);
   const visibleClients = clients.filter(c => c.id !== adminId);
 
   const todayStr   = new Date(Date.now() + 10 * 3600 * 1000).toISOString().slice(0, 10);
@@ -1233,6 +1073,10 @@ export default function AdminClient({
     fetch("/api/admin/lex-clients")
       .then(r => r.json())
       .then(data => { if (data.stats) setLexStats(data.stats); })
+      .catch(() => {});
+    fetch("/api/admin/blueprint-stats")
+      .then(r => r.json())
+      .then(data => { if (typeof data.todayCount === "number") setBpStats(data); })
       .catch(() => {});
   }, []);
 
@@ -1286,6 +1130,53 @@ export default function AdminClient({
               <AccessRequests initial={pendingRequests} />
             </div>
           )}
+
+
+          {/* Blueprint sales */}
+          <div style={{ marginBottom: 24 }}>
+            <SectionLabel>Blueprint sales</SectionLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 14 }}>
+              {[
+                {
+                  label: "Today",
+                  value: bpStats ? String(bpStats.todayCount) : "-",
+                  sub: bpStats ? `$${(bpStats.todayRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
+                },
+                {
+                  label: "This week",
+                  value: bpStats ? String(bpStats.weekCount) : "-",
+                  sub: bpStats ? `$${(bpStats.weekRevenue / 100).toLocaleString("en-AU")} revenue` : "Loading...",
+                },
+                {
+                  label: "All paid",
+                  value: bpStats ? String(bpStats.allCount) : "-",
+                  sub: bpStats ? `$${(bpStats.allRevenue / 100).toLocaleString("en-AU")} lifetime` : "Loading...",
+                },
+                {
+                  label: "Open Orders",
+                  value: "View",
+                  sub: "Blueprint + Lex in one place",
+                },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href="/saabai-admin/orders"
+                  style={{
+                    background: "rgba(15,118,110,0.06)",
+                    border: "1px solid rgba(15,118,110,0.18)",
+                    borderRadius: 12,
+                    padding: "18px 20px",
+                    textDecoration: "none",
+                    display: "block",
+                  }}
+                >
+                  <p style={{ margin: "0 0 4px", fontSize: 26, fontWeight: 800, color: "#0f766e" }}>{s.value}</p>
+                  <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{s.label}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{s.sub}</p>
+                </a>
+              ))}
+            </div>
+          </div>
 
           {/* ── Lex Platform metrics ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
@@ -1393,7 +1284,7 @@ export default function AdminClient({
           </div>
 
           {/* Recent leads — Rex / All only */}
-          {venture !== "Lex" && (
+          {true && (
             <div style={{ marginBottom: 40 }}>
               <SectionLabel>Recent Leads</SectionLabel>
               <LeadsTable rexStats={rexStats} />
@@ -1413,7 +1304,7 @@ export default function AdminClient({
           )}
 
           {/* Settings — Lex / All */}
-          {venture !== "Rex" && (
+          {true && (
             <div style={{ marginBottom: 40 }}>
               <SectionLabel>Settings</SectionLabel>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
@@ -1443,8 +1334,7 @@ export default function AdminClient({
             </div>
           )}
 
-          {/* Social / Subscribers / LinkedIn — Rex / All only */}
-          {venture !== "Lex" && (<>
+          {/* Social / Subscribers / LinkedIn */}
           <div id="social" style={{ marginBottom: 40 }}>
             <SectionLabel>Social Media</SectionLabel>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
@@ -1523,7 +1413,6 @@ export default function AdminClient({
               <LinkedInPanel />
             </div>
           </div>
-          </>)}
 
           {/* Actions */}
           <div id="actions">

@@ -1,7 +1,7 @@
 "use client";
 
 /* ────────────────────────────────────────────────────────────────────────────
-   CrmClient.tsx — CRM Pipeline View
+   CrmClient.tsx - CRM Pipeline View
    Kanban board, new lead form, lead detail panel, interaction logging.
    ──────────────────────────────────────────────────────────────────────────── */
 
@@ -85,8 +85,8 @@ const STAGES: { key: LeadStage; label: string; color: string; bg: string; bdr: s
   { key: "new",           label: "New",           color: C.blue,   bg: C.blueBg,   bdr: C.blueBdr },
   { key: "contacted",     label: "Contacted",     color: C.teal,  bg: C.tealBg,   bdr: C.tealBdr },
   { key: "discovery",     label: "Discovery",     color: C.amber, bg: C.amberBg,  bdr: C.amberBdr },
-  { key: "audit-booked",  label: "Audit Booked",  color: C.blue,  bg: C.blueBg,   bdr: C.blueBdr },
-  { key: "audit-done",    label: "Audit Done",    color: C.purple,bg: C.purpleBg, bdr: C.purpleBdr },
+  { key: "audit-booked",  label: "Blueprint booked",  color: C.blue,  bg: C.blueBg,   bdr: C.blueBdr },
+  { key: "audit-done",    label: "Blueprint done",    color: C.purple,bg: C.purpleBg, bdr: C.purpleBdr },
   { key: "proposal-sent", label: "Proposal Sent", color: C.teal,  bg: C.tealBg,   bdr: C.tealBdr },
   { key: "negotiation",   label: "Negotiation",   color: C.amber, bg: C.amberBg,  bdr: C.amberBdr },
   { key: "won",           label: "Won",           color: C.green, bg: C.greenBg,  bdr: C.greenBdr },
@@ -98,18 +98,18 @@ const SOURCES = ["Website", "Referral", "LinkedIn", "Google", "Phone", "Email", 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const pad = (n: number) => n < 10 ? "0" + n : "" + n;
   return `${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 function fmtDateTime(iso: string | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const pad = (n: number) => n < 10 ? "0" + n : "" + n;
   return `${pad(d.getDate())} ${months[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -615,15 +615,15 @@ function LeadDetail({ lead, onClose, onStageChange, onDelete, onAddInteraction }
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.muted, margin: "0 0 3px" }}>Phone</p>
-            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.phone || "—"}</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.phone || "-"}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.muted, margin: "0 0 3px" }}>Email</p>
-            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.email || "—"}</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.email || "-"}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.muted, margin: "0 0 3px" }}>Source</p>
-            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.source || "—"}</p>
+            <p style={{ margin: 0, fontSize: 13, color: C.text }}>{lead.source || "-"}</p>
           </div>
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: C.muted, margin: "0 0 3px" }}>Created</p>
@@ -808,7 +808,7 @@ function TableView({ leads, onLeadClick }: { leads: Lead[]; onLeadClick: (lead: 
                   <td style={{ padding: "10px 12px", color: C.textDim }}>{lead.email}</td>
                   <td style={{ padding: "10px 12px" }}><span style={{ fontSize: 11, color: C.textDim }}>{lead.source}</span></td>
                   <td style={{ padding: "10px 12px" }}><StageBadge stage={lead.stage} /></td>
-                  <td style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>{lead.lastContactedAt ? ago(lead.lastContactedAt) : "—"}</td>
+                  <td style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>{lead.lastContactedAt ? ago(lead.lastContactedAt) : "-"}</td>
                   <td style={{ padding: "10px 12px", color: C.textDim, fontSize: 12 }}>{fmtDate(lead.createdAt)}</td>
                 </tr>
               ))
