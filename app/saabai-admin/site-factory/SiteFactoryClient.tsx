@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface Site {
   id: string;
@@ -280,11 +281,59 @@ export default function SiteFactoryClient() {
   const [phase, setPhase] = useState<Phase>("list");
   const [isMobile, setIsMobile] = useState(false);
 
-  // List filter/search state
-  const [listSearch, setListSearch] = useState("");
-  const [listNiche, setListNiche] = useState("all");
-  const [listStatus, setListStatus] = useState("all");
-  const [listSort, setListSort] = useState<"newest"|"oldest"|"az"|"za">("newest");
+  // List filter/search state (synced to URL query)
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [listSearch, setListSearch] = useState(() => searchParams.get("q") || "");
+  const [listNiche, setListNiche] = useState(() => searchParams.get("niche") || "all");
+  const [listStatus, setListStatus] = useState(() => searchParams.get("status") || "all");
+  const [listDomain, setListDomain] = useState(() => searchParams.get("domain") || "all");
+  const [listBilling, setListBilling] = useState(() => searchParams.get("billing") || "all");
+  const [listCare, setListCare] = useState(() => searchParams.get("care") || "all");
+  const [listChatbot, setListChatbot] = useState(() => searchParams.get("chatbot") || "all");
+  const [listCreatedFrom, setListCreatedFrom] = useState(() => searchParams.get("from") || "");
+  const [listCreatedTo, setListCreatedTo] = useState(() => searchParams.get("to") || "");
+  const [listSort, setListSort] = useState<"newest"|"oldest"|"az"|"za"|"mrr">(() => {
+    const s = searchParams.get("sort") || "newest";
+    return (["newest","oldest","az","za","mrr"] as const).includes(s as "newest") ? (s as "newest"|"oldest"|"az"|"za"|"mrr") : "newest";
+  });
+  const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
+
+  // Keep URL query in sync with filter state
+  useEffect(() => {
+    if (phase !== "list") return;
+    const params = new URLSearchParams();
+    if (listSearch.trim()) params.set("q", listSearch.trim());
+    if (listNiche !== "all") params.set("niche", listNiche);
+    if (listStatus !== "all") params.set("status", listStatus);
+    if (listDomain !== "all") params.set("domain", listDomain);
+    if (listBilling !== "all") params.set("billing", listBilling);
+    if (listCare !== "all") params.set("care", listCare);
+    if (listChatbot !== "all") params.set("chatbot", listChatbot);
+    if (listCreatedFrom) params.set("from", listCreatedFrom);
+    if (listCreatedTo) params.set("to", listCreatedTo);
+    if (listSort !== "newest") params.set("sort", listSort);
+    const qs = params.toString();
+    const currentQs = searchParams.toString();
+    if (qs !== currentQs) {
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }, [phase, listSearch, listNiche, listStatus, listDomain, listBilling, listCare, listChatbot, listCreatedFrom, listCreatedTo, listSort, pathname, router, searchParams]);
+
+  function clearListFilters() {
+    setListSearch("");
+    setListNiche("all");
+    setListStatus("all");
+    setListDomain("all");
+    setListBilling("all");
+    setListCare("all");
+    setListChatbot("all");
+    setListCreatedFrom("");
+    setListCreatedTo("");
+    setListSort("newest");
+    setMoreFiltersOpen(false);
+  }
 
   // Toast notification
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -2842,21 +2891,54 @@ export default function SiteFactoryClient() {
   // Filter + sort
   const filteredSites = dedupedSites
     .filter(s => {
-      const q = listSearch.toLowerCase();
+      const q = listSearch.toLowerCase().trim();
       const matchSearch = !q || (s.name || "").toLowerCase().includes(q) || (s.domains || []).some(d => d.toLowerCase().includes(q)) || (s.slug || "").toLowerCase().includes(q);
       const matchNiche  = listNiche === "all" || s.niche === listNiche;
-      const matchStatus = listStatus === "all" || (listStatus === "custom-domain" ? (s.domains || []).length > 0 : s.status === listStatus);
-      return matchSearch && matchNiche && matchStatus;
+      const hasCustom = (s.domains || []).length > 0;
+      // Stat chips: live / draft / custom-domain / all
+      const statusOk =
+        listStatus === "all" ||
+        (listStatus === "custom-domain" && hasCustom) ||
+        (listStatus !== "custom-domain" && s.status === listStatus);
+      const domainOk =
+        listDomain === "all" ||
+        (listDomain === "custom" && hasCustom) ||
+        (listDomain === "subpath" && !hasCustom);
+      const hasCare = !!(s.billing?.amount && s.billing.amount > 0);
+      const billingStatus = (s.billing?.status || "").toLowerCase();
+      const matchBilling =
+        listBilling === "all" ||
+        (listBilling === "care" && hasCare) ||
+        (listBilling === "none" && !hasCare) ||
+        (listBilling === "active" && billingStatus === "active") ||
+        (listBilling === "paused" && billingStatus === "paused") ||
+        (listBilling === "cancelled" && billingStatus === "cancelled") ||
+        (listBilling === "monthly" && hasCare);
+      const matchCare =
+        listCare === "all" ||
+        (listCare === "yes" && hasCare) ||
+        (listCare === "no" && !hasCare);
+      const botOn = !!(s.chatbot?.enabled);
+      const matchChatbot =
+        listChatbot === "all" ||
+        (listChatbot === "yes" && botOn) ||
+        (listChatbot === "no" && !botOn);
+      const created = s.createdAt || 0;
+      const fromOk = !listCreatedFrom || created >= new Date(listCreatedFrom + "T00:00:00").getTime();
+      const toOk = !listCreatedTo || created <= new Date(listCreatedTo + "T23:59:59").getTime();
+      return matchSearch && matchNiche && statusOk && domainOk && matchBilling && matchCare && matchChatbot && fromOk && toOk;
     })
     .sort((a, b) => {
-      if (listSort === "newest") return b.createdAt - a.createdAt;
-      if (listSort === "oldest") return a.createdAt - b.createdAt;
+      if (listSort === "newest") return (b.createdAt || 0) - (a.createdAt || 0);
+      if (listSort === "oldest") return (a.createdAt || 0) - (b.createdAt || 0);
       if (listSort === "az")     return (a.name || "").localeCompare(b.name || "");
       if (listSort === "za")     return (b.name || "").localeCompare(a.name || "");
+      if (listSort === "mrr")    return (b.billing?.amount || 0) - (a.billing?.amount || 0);
       return 0;
     });
 
-  const hasFilters = listSearch || listNiche !== "all" || listStatus !== "all";
+  const hasFilters = !!(listSearch || listNiche !== "all" || listStatus !== "all" || listDomain !== "all" || listBilling !== "all" || listCare !== "all" || listChatbot !== "all" || listCreatedFrom || listCreatedTo || listSort !== "newest");
+  const moreFilterCount = [listDomain !== "all", listBilling !== "all", listCare !== "all", listChatbot !== "all", !!listCreatedFrom, !!listCreatedTo].filter(Boolean).length;
 
   const COL = isMobile
     ? "36px 1fr auto"
@@ -2903,32 +2985,174 @@ export default function SiteFactoryClient() {
 
         {/* ── Controls bar ── */}
         {!loadingSites && sites.length > 0 && (
-          <div style={{ display: "flex", gap: 8, paddingBottom: 14, flexWrap: "wrap" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
-              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.textMuted, fontSize: 13, pointerEvents: "none" }}>⌕</span>
-              <input
-                value={listSearch}
-                onChange={e => setListSearch(e.target.value)}
-                placeholder="Search by name or domain…"
-                style={{ width: "100%", boxSizing: "border-box", paddingLeft: 28, paddingRight: 10, paddingTop: 7, paddingBottom: 7, borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
-              />
-            </div>
-            {nicheOptions.length > 1 && (
-              <select value={listNiche} onChange={e => setListNiche(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: listNiche === "all" ? C.textDim : C.text, fontSize: 12, cursor: "pointer", outline: "none" }}>
-                <option value="all">All niches</option>
-                {nicheOptions.map(n => <option key={n} value={n}>{NICHE_META[n!]?.label ?? n}</option>)}
-              </select>
-            )}
-            <select value={listSort} onChange={e => setListSort(e.target.value as typeof listSort)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="az">A → Z</option>
-              <option value="za">Z → A</option>
-            </select>
-            {hasFilters && (
-              <button onClick={() => { setListSearch(""); setListNiche("all"); setListStatus("all"); }} style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
-                Clear
+          <div style={{ paddingBottom: 14 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ position: "relative", flex: 1, minWidth: isMobile ? 140 : 180 }}>
+                <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.textMuted, fontSize: 13, pointerEvents: "none" }}>⌕</span>
+                <input
+                  value={listSearch}
+                  onChange={e => setListSearch(e.target.value)}
+                  placeholder="Search by name or domain…"
+                  style={{ width: "100%", boxSizing: "border-box", paddingLeft: 28, paddingRight: 10, paddingTop: 7, paddingBottom: 7, borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.text, fontSize: 12, outline: "none" }}
+                />
+              </div>
+              {!isMobile && nicheOptions.length > 0 && (
+                <select value={listNiche} onChange={e => setListNiche(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listNiche === "all" ? C.textDim : C.text }}>
+                  <option value="all">All niches</option>
+                  {nicheOptions.map(n => <option key={n} value={n}>{NICHE_META[n!]?.label ?? n}</option>)}
+                </select>
+              )}
+              {!isMobile && (
+                <select value={listStatus} onChange={e => setListStatus(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listStatus === "all" ? C.textDim : C.text }}>
+                  <option value="all">All statuses</option>
+                  <option value="live">Live</option>
+                  <option value="draft">Draft</option>
+                </select>
+              )}
+              {!isMobile && (
+                <select value={listBilling} onChange={e => setListBilling(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listBilling === "all" ? C.textDim : C.text }}>
+                  <option value="all">All billing</option>
+                  <option value="care">Care plan / monthly</option>
+                  <option value="none">No billing</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              )}
+              {!isMobile && (
+                <select value={listSort} onChange={e => setListSort(e.target.value as typeof listSort)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="az">Name A → Z</option>
+                  <option value="za">Name Z → A</option>
+                  <option value="mrr">MRR high → low</option>
+                </select>
+              )}
+              <button
+                type="button"
+                onClick={() => setMoreFiltersOpen(v => !v)}
+                style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${moreFiltersOpen || moreFilterCount ? C.teal : C.border2}`, background: moreFiltersOpen || moreFilterCount ? "rgba(15,157,142,0.08)" : "none", color: moreFiltersOpen || moreFilterCount ? C.teal : C.textDim, fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {isMobile ? "Filters" : "More filters"}{moreFilterCount || (isMobile && hasFilters) ? ` (${isMobile ? [listNiche !== "all", listStatus !== "all", listBilling !== "all", listDomain !== "all", listCare !== "all", listChatbot !== "all", !!listCreatedFrom, !!listCreatedTo, listSort !== "newest"].filter(Boolean).length : moreFilterCount})` : ""}
               </button>
+              {hasFilters && (
+                <button type="button" onClick={clearListFilters} style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 11, cursor: "pointer" }}>
+                  Clear
+                </button>
+              )}
+              <span style={{ fontSize: 11, color: C.textMuted, marginLeft: "auto" }}>
+                {filteredSites.length} of {dedupedSites.length}
+              </span>
+            </div>
+
+            {/* More filters: drawer on mobile, inline panel on desktop */}
+            {moreFiltersOpen && (
+              isMobile ? (
+                <div style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(0,0,0,0.55)" }} onClick={() => setMoreFiltersOpen(false)}>
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{ position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "78vh", overflowY: "auto", background: C.surface, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: "18px 16px 28px", borderTop: `1px solid ${C.border}` }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>Filters</span>
+                      <button type="button" onClick={() => setMoreFiltersOpen(false)} style={{ background: "none", border: "none", color: C.textDim, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+                    </div>
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Niche
+                        <select value={listNiche} onChange={e => setListNiche(e.target.value)} style={{ ...{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" } }}>
+                          <option value="all">All niches</option>
+                          {nicheOptions.map(n => <option key={n} value={n}>{NICHE_META[n!]?.label ?? n}</option>)}
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Status
+                        <select value={listStatus === "custom-domain" ? "all" : listStatus} onChange={e => setListStatus(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="all">All statuses</option>
+                          <option value="live">Live</option>
+                          <option value="draft">Draft</option>
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Billing
+                        <select value={listBilling} onChange={e => setListBilling(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="all">All billing</option>
+                          <option value="care">Care plan / monthly</option>
+                          <option value="none">No billing</option>
+                          <option value="active">Active</option>
+                          <option value="paused">Paused</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Care plan
+                        <select value={listCare} onChange={e => setListCare(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="all">Any</option>
+                          <option value="yes">Has care plan</option>
+                          <option value="no">No care plan</option>
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Chatbot
+                        <select value={listChatbot} onChange={e => setListChatbot(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="all">Any</option>
+                          <option value="yes">Has chatbot</option>
+                          <option value="no">No chatbot</option>
+                        </select>
+                      </label>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Domain
+                        <select value={listDomain} onChange={e => setListDomain(e.target.value)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="all">Custom or subpath</option>
+                          <option value="custom">Custom domain</option>
+                          <option value="subpath">Subpath only</option>
+                        </select>
+                      </label>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <label style={{ fontSize: 11, color: C.textDim }}>Created from
+                          <input type="date" value={listCreatedFrom} onChange={e => setListCreatedFrom(e.target.value)} style={{ width: "100%", marginTop: 4, boxSizing: "border-box", padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }} />
+                        </label>
+                        <label style={{ fontSize: 11, color: C.textDim }}>Created to
+                          <input type="date" value={listCreatedTo} onChange={e => setListCreatedTo(e.target.value)} style={{ width: "100%", marginTop: 4, boxSizing: "border-box", padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }} />
+                        </label>
+                      </div>
+                      <label style={{ fontSize: 11, color: C.textDim }}>Sort
+                        <select value={listSort} onChange={e => setListSort(e.target.value as typeof listSort)} style={{ width: "100%", marginTop: 4, padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }}>
+                          <option value="newest">Newest</option>
+                          <option value="oldest">Oldest</option>
+                          <option value="az">Name A → Z</option>
+                          <option value="za">Name Z → A</option>
+                          <option value="mrr">MRR high → low</option>
+                        </select>
+                      </label>
+                      <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                        <button type="button" onClick={clearListFilters} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 13, cursor: "pointer" }}>Clear</button>
+                        <button type="button" onClick={() => setMoreFiltersOpen(false)} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", background: C.teal, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Show {filteredSites.length}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                  <select value={listDomain} onChange={e => setListDomain(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listDomain === "all" ? C.textDim : C.text }}>
+                    <option value="all">Domain: any</option>
+                    <option value="custom">Custom domain</option>
+                    <option value="subpath">Subpath only</option>
+                  </select>
+                  <select value={listCare} onChange={e => setListCare(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listCare === "all" ? C.textDim : C.text }}>
+                    <option value="all">Care plan: any</option>
+                    <option value="yes">Has care plan</option>
+                    <option value="no">No care plan</option>
+                  </select>
+                  <select value={listChatbot} onChange={e => setListChatbot(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, fontSize: 12, cursor: "pointer", outline: "none", color: listChatbot === "all" ? C.textDim : C.text }}>
+                    <option value="all">Chatbot: any</option>
+                    <option value="yes">Has chatbot</option>
+                    <option value="no">No chatbot</option>
+                  </select>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textDim }}>
+                    From
+                    <input type="date" value={listCreatedFrom} onChange={e => setListCreatedFrom(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }} />
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textDim }}>
+                    To
+                    <input type="date" value={listCreatedTo} onChange={e => setListCreatedTo(e.target.value)} style={{ padding: "7px 10px", borderRadius: 7, border: `1px solid ${C.border2}`, background: C.bg, color: C.textDim, fontSize: 12, cursor: "pointer", outline: "none" }} />
+                  </label>
+                </div>
+              )
             )}
           </div>
         )}
@@ -2951,7 +3175,7 @@ export default function SiteFactoryClient() {
         ) : filteredSites.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: C.textDim }}>
             <p style={{ fontSize: 14, margin: "0 0 10px", color: C.text }}>No sites match your filters</p>
-            <button onClick={() => { setListSearch(""); setListNiche("all"); setListStatus("all"); }} style={{ padding: "7px 16px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Clear filters</button>
+            <button onClick={clearListFilters} style={{ padding: "7px 16px", borderRadius: 6, border: `1px solid ${C.border2}`, background: "none", color: C.textDim, fontSize: 12, cursor: "pointer" }}>Clear filters</button>
           </div>
         ) : (
           <>

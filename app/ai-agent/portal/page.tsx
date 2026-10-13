@@ -5,7 +5,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/au
 import AdminShell from "../../saabai-admin/AdminSidebar";
 import PortalClient from "./portal-client";
 
-export const metadata = { title: "AI Agent Portal — Saabai" };
+export const metadata = { title: "AI Agent Portal - Saabai" };
 
 export default async function Page() {
   // ADMIN-gated: only an authenticated admin (or a directory admin) may use this.
