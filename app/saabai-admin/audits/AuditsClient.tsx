@@ -35,21 +35,21 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
 };
 
 const TIER_LABELS: Record<string, string> = {
-  essential: "Essential",
-  professional: "Professional",
-  enterprise: "Enterprise",
+  starter: "Starter",
+  pro: "Pro",
+  business: "Business",
 };
 
 const TIER_PRICE: Record<string, number> = {
-  essential: 3500,
-  professional: 7500,
-  enterprise: 15000,
+  starter: 497,
+  pro: 1497,
+  business: 3500,
 };
 
 const TIER_BADGE: Record<string, { color: string; bg: string }> = {
-  essential: { color: C.teal, bg: C.tealBg },
-  professional: { color: C.gold, bg: C.goldBg },
-  enterprise: { color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
+  starter: { color: C.teal, bg: C.tealBg },
+  pro: { color: C.gold, bg: C.goldBg },
+  business: { color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
 };
 
 // Pipeline order for the stage progress indicator
@@ -84,7 +84,7 @@ export default function AuditsClient() {
   const [form, setForm] = useState({
     firmName: "",
     firmType: "law",
-    tier: "professional",
+    tier: "pro",
     contactName: "",
     contactEmail: "",
   });
@@ -234,9 +234,9 @@ export default function AuditsClient() {
               value={form.tier}
               onChange={(e) => setForm({ ...form, tier: e.target.value })}
             >
-              <option value="essential">Essential - $3,500</option>
-              <option value="professional">Professional - $7,500</option>
-              <option value="enterprise">Enterprise - $15,000</option>
+              <option value="starter">Starter - $497</option>
+              <option value="pro">Pro - $1,497</option>
+              <option value="business">Business - $3,500</option>
             </select>
             <input
               style={input}
@@ -298,7 +298,7 @@ export default function AuditsClient() {
               <tbody>
                 {engagements.map((e) => {
                   const meta = STATUS_META[e.status] ?? STATUS_META.purchased;
-                  const tierBadge = TIER_BADGE[e.tier] ?? TIER_BADGE.essential;
+                  const tierBadge = TIER_BADGE[e.tier] ?? TIER_BADGE.starter;
                   const stageIdx = STAGE_ORDER.indexOf(e.status);
                   const answerCount = Object.keys(e.responses ?? {}).length;
                   return (

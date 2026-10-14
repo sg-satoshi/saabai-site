@@ -24,9 +24,9 @@ export const maxDuration = 120;
 type Params = { params: Promise<{ id: string }> };
 
 const TIER_OPPORTUNITY_COUNT: Record<string, string> = {
-  essential: "exactly 3",
-  professional: "6 to 8",
-  enterprise: "10 to 15",
+  starter: "exactly 3",
+  pro: "6 to 8",
+  business: "10 to 15",
 };
 
 export async function POST(_req: Request, { params }: Params) {

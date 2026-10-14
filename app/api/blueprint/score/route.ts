@@ -1,14 +1,29 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, scoreAnswers } from "@/lib/blueprint";
+import { upsertScoreLead } from "@/lib/saabai-crm";
 
 export const runtime = "nodejs";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** Accepts "example.com.au" or a full URL. Returns a clean https URL or undefined. */
+function normaliseWebsite(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.trim().slice(0, 200);
+  if (!t) return undefined;
+  try {
+    const u = new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`);
+    if (!/^https?:$/.test(u.protocol) || !u.hostname.includes(".")) return undefined;
+    return u.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 // Emails the visitor their AI Readiness Score and notifies Saabai of the lead.
 export async function POST(req: NextRequest) {
-  let body: { email?: string; name?: string; answers?: Record<string, number> };
+  let body: { email?: string; name?: string; website?: string; answers?: Record<string, number> };
   try {
     body = await req.json();
   } catch {
@@ -22,7 +37,15 @@ export async function POST(req: NextRequest) {
   for (const [k, v] of Object.entries(body.answers ?? {})) if (typeof v === "number") answers[k.slice(0, 40)] = v;
   const r = scoreAnswers(answers);
   const rec = TIERS[r.recommended];
-  console.log(`[blueprint score] ${email} scored ${r.total}, recommended ${rec.name}`);
+  const website = normaliseWebsite(body.website);
+
+  // Save every /score lead to the CRM (deduped by email). Never block the email on CRM failure.
+  try {
+    const id = await upsertScoreLead({ email, name, website, score: r.total, answers, recommendedTier: rec.name });
+    if (!id) console.error("[blueprint score] CRM unavailable, lead not saved");
+  } catch (err) {
+    console.error("[blueprint score] CRM save failed", err);
+  }
 
   const key = process.env.RESEND_API_KEY;
   if (!key) return NextResponse.json({ error: "Email not configured" }, { status: 503 });
@@ -44,7 +67,7 @@ export async function POST(req: NextRequest) {
       from,
       to: ["hello@saabai.ai"],
       subject: `New AI score lead: ${name || email} scored ${r.total}`,
-      html: `<p>${esc(name || "(no name)")} &lt;${esc(email)}&gt; scored ${r.total}. Recommended: ${rec.name}.</p><pre>${esc(JSON.stringify(answers))}</pre>`,
+      html: `<p>${esc(name || "(no name)")} &lt;${esc(email)}&gt; scored ${r.total}. Recommended: ${rec.name}.${website ? ` Website: ${esc(website)}` : ""} Saved to the CRM (source: score).</p><pre>${esc(JSON.stringify(answers))}</pre>`,
     }),
   ]);
   const first = results[0];

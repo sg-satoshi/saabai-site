@@ -14,9 +14,9 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const TIER_MINUTES: Record<string, string> = {
-  essential: "about 10 minutes",
-  professional: "about 15 minutes",
-  enterprise: "about 20 minutes",
+  starter: "about 10 minutes",
+  pro: "about 15 minutes",
+  business: "about 20 minutes",
 };
 
 export async function POST(_req: Request, { params }: Params) {

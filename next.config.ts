@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/counsel", destination: "/for-law-firms", permanent: true },
       // Saabai Blueprint replaces the old audit offers
-      { source: "/audit", destination: "/blueprint", permanent: true },
+      { source: "/audit", destination: "/blueprint", statusCode: 301 },
       { source: "/ai-audit", destination: "/blueprint", permanent: true },
       { source: "/ai-audit/:path*", destination: "/blueprint", permanent: true },
       { source: "/offers", destination: "/blueprint", permanent: true },
