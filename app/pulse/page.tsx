@@ -1,10 +1,6 @@
-import { requireAdmin } from "../../lib/require-admin";
-import PulseClient from "./PulseClient";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata = { robots: { index: false, follow: false } };
-
-export default async function PulsePage() {
-  await requireAdmin("/pulse");
-  return <PulseClient />;
+// Pulse now lives in Mission Control under Marketing > Pulse.
+export default function PulseRedirect() {
+  redirect("/saabai-admin/marketing/pulse");
 }

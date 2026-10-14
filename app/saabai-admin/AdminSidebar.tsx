@@ -80,6 +80,13 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    section: "Marketing",
+    items: [
+      { label: "Drafts", href: "/saabai-admin/marketing", icon: "mail" },
+      { label: "Pulse", href: "/saabai-admin/marketing/pulse", icon: "bell" },
+    ],
+  },
+  {
     section: "Growth",
     collapsible: true,
     items: [
@@ -111,7 +118,7 @@ const NAV: NavGroup[] = [
 
 function isActive(pathname: string, href: string) {
   const path = href.split("?")[0];
-  if (path === "/saabai-admin") return pathname === "/saabai-admin";
+  if (path === "/saabai-admin" || path === "/saabai-admin/marketing") return pathname === path;
   return pathname === path || pathname.startsWith(path + "/");
 }
 
