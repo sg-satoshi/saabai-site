@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import InShort from "../components/InShort";
 
 export const metadata: Metadata = {
   title: "About Saabai and Founder Shane Goldberg",
@@ -50,16 +51,13 @@ export default function About() {
           found, win more enquiries and get hours back. No jargon, no
           six-month projects, no mystery invoices.
         </p>
-        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
-          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
-            Saabai is a Gold Coast, Queensland AI business founded by{" "}
-            <strong className="text-saabai-text">Shane Goldberg</strong>. We build and
-            look after small business websites on care plans from $100 a month, and
-            run the Saabai Blueprint, an AI audit from $497 that includes SEO and AI
-            search visibility. Head office Merrimac QLD 4226, ABN 71 889 082 572.
-          </p>
-        </div>
+        <InShort>
+          Saabai is a Gold Coast, Queensland AI business founded by Shane Goldberg.
+          We build and look after small business websites on care plans from{" "}
+          <strong>$100 a month</strong>, and run the Saabai Blueprint, an AI audit
+          from <strong>$497</strong> that includes SEO and AI search visibility.
+          Head office Merrimac QLD 4226, ABN 71 889 082 572.
+        </InShort>
 
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
@@ -211,15 +209,17 @@ export default function About() {
           call with Shane. Either way you&apos;ll get a straight answer, no
           obligation.
         </p>
-        <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
-        >
-          Book Your Free Strategy Call
-        </a>
-        <p className="relative mt-5"><a href="/score" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">Or take the free AI score →</a></p>
+        <div className="relative flex flex-col items-center gap-4">
+          <a
+            href="https://calendly.com/shanegoldberg/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative inline-block max-sm:w-full bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+          >
+            Book Your Free Strategy Call
+          </a>
+          <a href="/score" className="btn-secondary max-sm:w-full">Or take the free AI score →</a>
+        </div>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>

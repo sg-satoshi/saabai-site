@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import InShort from "../components/InShort";
 
 export const metadata: Metadata = {
   title: "Websites, AI Audits and Automation for Small Businesses",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
   },
 };
 
-const services: { title: string; description: string; benefits: string[]; wide?: boolean; href?: string; price?: string }[] = [
+const services: { title: string; description: string; benefits: string[]; href?: string; price?: string }[] = [
   {
     title: "Website Care Plans",
     price: "$100, $200 or $300 a month",
@@ -57,6 +58,7 @@ const services: { title: string; description: string; benefits: string[]; wide?:
   },
   {
     title: "AI Chat Agents & Automations",
+    price: "Scoped from your Blueprint",
     href: "/blueprint",
     description:
       "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
@@ -66,15 +68,6 @@ const services: { title: string; description: string; benefits: string[]; wide?:
       "Follow-up, reminders and CRM handoff",
       "Scoped from your Blueprint, no surprise invoices",
     ],
-  },
-  {
-    title: "Not sure where to start? Take the free AI score.",
-    href: "/score",
-    price: "Free",
-    description:
-      "A few quick questions and you'll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.",
-    benefits: [],
-    wide: true,
   },
 ];
 
@@ -131,7 +124,7 @@ export default function Services() {
       <Nav activePage="/services" />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="relative pt-52 pb-36 px-6 text-center max-w-5xl mx-auto overflow-hidden">
+      <section className="relative pt-52 pb-24 md:pb-32 px-6 text-center max-w-5xl mx-auto overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{
           background: "radial-gradient(ellipse 90% 60% at 50% 30%, var(--saabai-glow-mid) 0%, transparent 65%)"
         }} />
@@ -147,9 +140,8 @@ export default function Services() {
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
-        <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          Get found. Win the enquiry.
-          <br />
+        <h1 className="relative text-[clamp(2rem,9vw,3.75rem)] md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
+          Get found.<br />Win the enquiry.<br />
           <span className="text-gradient">Get your week back.</span>
         </h1>
 
@@ -158,17 +150,15 @@ export default function Services() {
           tells you what&apos;s actually worth doing, and the automations to
           make it happen. Plain prices, no jargon.
         </p>
-        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
-          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
-            Saabai, founded by Shane Goldberg on the Gold Coast, offers website care
-            plans (<strong className="text-saabai-text">Presence $100, Growth $200,
-            Signature $300 a month</strong>), the Saabai Blueprint AI audit (
-            <strong className="text-saabai-text">Starter $497, Pro $1,497, Business
-            $3,500</strong>) with SEO and AI search visibility, and custom AI agents
-            and automations. Start free with the <a href="/score" className="text-saabai-teal">AI score</a>.
-          </p>
-        </div>
+        <InShort>
+          Saabai, founded by Shane Goldberg on the Gold Coast, offers website care
+          plans (<strong>Presence $100</strong>, <strong>Growth $200</strong>,{" "}
+          <strong>Signature $300</strong> a month), the Saabai Blueprint AI audit
+          (<strong>Starter $497</strong>, <strong>Pro $1,497</strong>,{" "}
+          <strong>Business $3,500</strong>) with SEO and AI search visibility, and
+          custom AI agents and automations. Start free with the{" "}
+          <a href="/score">AI score</a>.
+        </InShort>
 
 
         <div className="relative">
@@ -201,11 +191,11 @@ export default function Services() {
           fewer hours lost to admin. That&apos;s what we do.
         </p>
 
-        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {services.map(({ title, description, benefits, wide, href, price }) => (
+        <div className="grid md:grid-cols-2 md:auto-rows-fr gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
+          {services.map(({ title, description, benefits, href, price }) => (
             <div
               key={title}
-              className={`bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group${wide ? " md:col-span-2" : ""}`}
+              className="bg-saabai-surface p-8 md:p-12 hover:bg-saabai-surface-raised transition-colors relative group flex flex-col"
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-border to-transparent group-hover:via-saabai-teal/30 transition-all" />
               <h3 className="text-xl font-semibold mb-2 tracking-tight">{title}</h3>
@@ -222,12 +212,23 @@ export default function Services() {
                 ))}
               </ul>
               {href && (
-                <a href={href} className="inline-block mt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
-                  {href === "/score" ? "Take the free AI score →" : "Learn more →"}
+                <a href={href} className="mt-auto pt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
+                  Learn more →
                 </a>
               )}
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 flex flex-col md:flex-row md:items-center gap-6 md:gap-8 rounded-2xl border border-saabai-border-accent bg-saabai-surface p-7 md:px-10 md:py-9 shadow-[0_0_40px_var(--saabai-glow-mid)]" style={{ background: "radial-gradient(ellipse 60% 120% at 100% 0%, rgba(98,197,209,.16), transparent 60%), var(--saabai-surface)" }}>
+          <div className="flex-1">
+            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 5 MIN</span>
+            <h3 className="text-[22px] font-semibold tracking-tight mt-2 mb-2">Not sure where to start? Take the free AI score.</h3>
+            <p className="text-base text-saabai-text-muted leading-relaxed">
+              A few quick questions and you&apos;ll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.
+            </p>
+          </div>
+          <a href="/score" className="btn-secondary w-full md:w-auto">Take the free AI score →</a>
         </div>
       </section>
 
@@ -325,7 +326,7 @@ export default function Services() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {results.map(({ stat, label, detail }) => (
-            <div key={label} className="bg-saabai-surface p-10 relative">
+            <div key={label} className="bg-saabai-surface p-10 relative h-full">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
               <div className="text-5xl font-semibold tracking-tight text-saabai-teal stat-glow mb-2">
                 {stat}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
 
 export const metadata: Metadata = {
@@ -178,18 +179,6 @@ export default function WebsitesPage() {
           answers enquiries, qualifies leads and works around the clock, so your
           site does more than sit there looking pretty.
         </p>
-        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
-          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
-            Saabai builds and looks after small business websites on a monthly care
-            plan: <strong className="text-saabai-text">Presence $100</strong>,{" "}
-            <strong className="text-saabai-text">Growth $200</strong> or{" "}
-            <strong className="text-saabai-text">Signature $300</strong> a month
-            (AUD), with builds from $2,000. Hosting, security, updates and a trained
-            AI enquiry chatbot are included. Founded by Shane Goldberg on the Gold
-            Coast, Queensland.
-          </p>
-        </div>
 
         <a
           href={CALENDLY}
@@ -199,6 +188,14 @@ export default function WebsitesPage() {
         >
           Book a Free Website Consult
         </a>
+        <InShort>
+          Saabai builds and looks after small business websites on a monthly care
+          plan: <strong>Presence $100</strong>, <strong>Growth $200</strong> or{" "}
+          <strong>Signature $300</strong> a month (AUD), with builds from{" "}
+          <strong>$2,000</strong>. Hosting, security, updates and a trained AI
+          enquiry chatbot are included. Founded by Shane Goldberg on the Gold
+          Coast, Queensland.
+        </InShort>
       </section>
 
       {/* AI-native pitch */}

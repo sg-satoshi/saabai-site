@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import InShort from "../components/InShort";
 
 export const metadata: Metadata = {
   title: "Case Studies, AI Results for Australian Businesses",
@@ -49,16 +50,13 @@ export default function CaseStudies() {
           Saabai AI agents and measured the difference, in hours recovered, leads
           converted, and revenue captured after hours.
         </p>
-        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
-          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
-          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
-            Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
-            live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12 hours
-            a week recovered) and a national plastics supplier (instant quotes, 40% of
-            enquiries resolved without staff). Most projects start with a{" "}
-            <a href="/blueprint" className="text-saabai-teal">Saabai Blueprint from $497</a>.
-          </p>
-        </div>
+        <InShort>
+          Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
+          live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12
+          hours a week recovered) and a national plastics supplier (instant quotes,
+          40% of enquiries resolved without staff). Most projects start with a{" "}
+          <a href="/blueprint">Saabai Blueprint from $497</a>.
+        </InShort>
 
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
@@ -316,15 +314,17 @@ export default function CaseStudies() {
           (Starter $497, Pro $1,497, Business $3,500). Prefer a chat first? Book a
           free 30-minute call.
         </p>
-        <a
-          href="https://calendly.com/shanegoldberg/30min"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative inline-block bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
-        >
-          Book Your Free Strategy Call
-        </a>
-        <p className="relative mt-5"><a href="/score" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">Or take the free AI score →</a></p>
+        <div className="relative flex flex-col items-center gap-4">
+          <a
+            href="https://calendly.com/shanegoldberg/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative inline-block max-sm:w-full bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+          >
+            Book Your Free Strategy Call
+          </a>
+          <a href="/score" className="btn-secondary max-sm:w-full">Or take the free AI score →</a>
+        </div>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>
