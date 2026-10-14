@@ -40,7 +40,7 @@ export default function About() {
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
-        <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
+        <h1 className="relative text-[clamp(2.25rem,11.5vw,3.75rem)] md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           We built what
           <br />
           <span className="text-gradient">we couldn&apos;t find.</span>
