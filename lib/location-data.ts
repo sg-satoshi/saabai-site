@@ -173,10 +173,10 @@ export const BRISBANE: LocationConfig = {
         "Find out where AI saves your Brisbane business the most time, and whether Google, ChatGPT, Claude, Perplexity and Gemini can find you. Starter $497, Pro $1,497, Business $3,500.",
     },
     {
-      industry: "Real Estate",
-      href: "/for-real-estate",
+      industry: "Free AI Score",
+      href: "/score",
       context:
-        "With Brisbane property moving quickly, speed of response wins listings. See how we automate enquiry handling and admin for real estate agencies.",
+        "Not sure where to start? A few quick questions show how ready your Brisbane business is for AI and what to do first. Free, about 5 minutes.",
     },
   ],
   faqs: [
@@ -333,10 +333,10 @@ export const GOLD_COAST: LocationConfig = {
         "A fixed-price AI audit for Gold Coast businesses, with SEO and AI search visibility included. Starter $497, Pro $1,497, Business $3,500.",
     },
     {
-      industry: "Real Estate",
-      href: "/for-real-estate",
+      industry: "Free AI Score",
+      href: "/score",
       context:
-        "In the fast-moving Gold Coast property market, the quickest response wins. See how we automate enquiry handling and admin for real estate agencies.",
+        "Not sure where to start? A few quick questions show how ready your Gold Coast business is for AI and what to do first. Free, about 5 minutes.",
     },
   ],
   faqs: [
