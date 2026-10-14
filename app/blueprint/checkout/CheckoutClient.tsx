@@ -93,7 +93,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
             </div>
             <h2 style={{ marginTop: 14, fontSize: 34 }}>Get your Saabai Blueprint</h2>
             <p className="dim" style={{ marginTop: 10, fontSize: 15, maxWidth: 560 }}>
-              Pay on this page by card, Apple Pay or Google Pay. Your tax invoice is emailed the moment payment clears.
+              Pay on this page by card, Apple Pay or Google Pay. Your invoice is emailed the moment payment clears.
             </p>
 
             <div className="card" style={{ marginTop: 24 }}>
@@ -155,7 +155,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               <ul className="trust">
                 <li>Encrypted by Stripe</li>
                 <li>Card, Apple Pay, Google Pay</li>
-                <li>Tax invoice emailed instantly</li>
+                <li>Invoice emailed instantly</li>
               </ul>
               {error && (
                 <div className="err" role="alert">
