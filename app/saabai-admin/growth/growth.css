@@ -1,0 +1,20 @@
+.gr .tabs{margin-bottom:16px}
+.gr-range{margin-bottom:12px}
+.gr-range a{text-decoration:none;padding:5px 10px;font-size:12.5px}
+.gr-funnel{list-style:none;padding:8px 20px 16px}
+.gr-funnel li{padding:12px 0;border-bottom:1px solid var(--n-100)}
+.gr-funnel li:last-child{border-bottom:0}
+.gr-f1{display:flex;justify-content:space-between;margin-bottom:6px}
+.gr-bar{height:10px;border-radius:99px;background:var(--n-100);overflow:hidden}
+.gr-bar span{display:block;height:100%;background:var(--teal-400);border-radius:99px}
+.gr-f2,.gr-meta{font-size:12.5px;margin-top:4px;white-space:normal}
+.gr-preview{margin-top:8px;font-size:13px}
+.gr-preview summary{cursor:pointer;color:var(--teal-700);font-weight:500}
+.gr-preview pre{white-space:pre-wrap;font-family:inherit;background:var(--n-25);border:1px solid var(--n-100);border-radius:var(--r-md);padding:10px 12px;margin:8px 0}
+.gr-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start!important}
+.gr-quote{margin-top:6px;font-size:14px}
+.gr-stars{color:var(--gold-500);letter-spacing:1px}
+.gr-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.gr-form input{flex:1 1 180px;min-width:0;height:36px;border:1px solid var(--n-200);border-radius:var(--r-md);padding:0 12px;font:inherit;font-size:14px}
+.gr .oc .r1 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+@media (max-width:600px){.gr-funnel{padding:4px 16px 12px}.gr-acts .btn{flex:1;justify-content:center;min-height:40px}.gr-form .btn{width:100%;justify-content:center}}

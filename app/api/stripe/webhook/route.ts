@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { handleBlueprintCheckout } from "@/lib/blueprint-order";
 import { attrFromMetadata } from "@/lib/growth/attribution";
 import { recordEvent, touchContact } from "@/lib/growth/events";
+import { markUpsellConverted, recordReferralPurchase } from "@/lib/growth/growth2";
 
 export const runtime = "nodejs";
 
@@ -142,6 +143,10 @@ export async function POST(req: Request) {
       refId: session.id, amountCents: session.amount_total ?? undefined,
       meta: { tier: session.metadata?.tier, product: session.metadata?.product || "lex", source: attr?.l, firstTouch: attr?.f },
     });
+    try {
+      await recordReferralPurchase({ code: attr?.l?.ref || attr?.f?.ref, buyerEmail: buyer, purchaseId: session.id, amountCents: session.amount_total ?? undefined });
+      if (session.metadata?.product !== "blueprint") await markUpsellConverted(buyer);
+    } catch (err) { console.error("[growth] referral/upsell update failed", err); }
   }
 
   // Saabai Blueprint one-off orders: create engagement + send fact-find.

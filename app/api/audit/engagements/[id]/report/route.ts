@@ -1,3 +1,4 @@
+import { scheduleTestimonial, scheduleUpsell } from "@/lib/growth/growth2";
 import { recordEvent } from "@/lib/growth/events";
 /**
  * POST /api/audit/engagements/[id]/report — generate a .docx report draft
@@ -107,6 +108,11 @@ export async function PATCH(req: Request, { params }: Params) {
     contactId: engagement.contactEmail, type: "report_delivered", refId: id,
     meta: { tier: engagement.tier, version: deliveredReport?.version },
   });
+  // Growth: schedule the upsell and testimonial request. Both wait for Shane's approval before anything is sent.
+  try {
+    const who = { email: engagement.contactEmail, name: engagement.contactName, auditId: id, tier: engagement.tier, deliveredAt: deliveredReport?.deliveredAt };
+    await Promise.all([scheduleUpsell(who), scheduleTestimonial(who)]);
+  } catch (err) { console.error("[growth] schedule after delivery failed", err); }
 
   return Response.json({ engagement: updated });
 }

@@ -6,6 +6,7 @@ import type Stripe from "stripe";
 import { Resend } from "resend";
 import { recordEvent, type ContactEventType } from "./events";
 import { escapeHtml } from "../html-escape";
+import { markUpsellConverted } from "./growth2";
 
 export const ALERT_TO = () => process.env.GROWTH_ALERT_EMAIL || "hello@saabai.ai";
 
@@ -42,6 +43,7 @@ export async function recordBillingGrowthEvent(event: Stripe.Event): Promise<voi
     if (!type) return;
     const amountCents = (o.amount_paid ?? o.amount_due ?? o.amount_total) as number | undefined;
     await recordEvent({ id: `stripe_${event.id}`, contactId, type, refId: String(o.id ?? ""), amountCents, meta: { stripeType: event.type, attempt: o.attempt_count } });
+    if (type === "care_plan_started" && email) await markUpsellConverted(email);
     if (type === "payment_failed" && email && process.env.RESEND_API_KEY) {
       const pi = o.payment_intent as { last_payment_error?: { message?: string } } | undefined;
       const a = failedPaymentAlert({ email, name: (o.customer_name as string) || undefined, amountCents: o.amount_due as number, attempt: o.attempt_count as number, invoiceUrl: o.hosted_invoice_url as string, reason: pi?.last_payment_error?.message });

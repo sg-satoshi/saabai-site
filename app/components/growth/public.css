@@ -1,0 +1,18 @@
+.gp{min-height:70vh;display:flex;align-items:flex-start;justify-content:center;padding:48px 16px;background:#f4f5f9;font-family:Inter,system-ui,sans-serif;color:#13152a}
+.gp-card{background:#fff;border:1px solid #dfe2ea;border-radius:16px;max-width:520px;width:100%;padding:28px;box-shadow:0 4px 16px rgba(19,21,42,.08)}
+.gp-card h1{font-size:22px;font-weight:600;margin:0 0 8px;letter-spacing:-.02em}
+.gp-card p{color:#4e546c;font-size:15px;line-height:1.6;margin:0 0 16px}
+.gp-eyebrow{color:#0e7482;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+.gp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border-radius:10px;border:0;background:#0b092e;color:#fff;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.gp-btn.acc{background:#62c5d1;color:#0b092e}
+.gp-stars{display:flex;gap:8px;margin:8px 0 18px}
+.gp-stars button{width:48px;height:48px;border-radius:12px;border:1px solid #dfe2ea;background:#fff;font-size:22px;cursor:pointer;color:#c6cad6}
+.gp-stars button.on{background:#faf4e2;border-color:#ecdcae;color:#c9a227}
+.gp textarea{width:100%;border:1px solid #dfe2ea;border-radius:10px;padding:12px;font:inherit;font-size:15px;min-height:110px;margin-bottom:16px;box-sizing:border-box}
+.gp fieldset{border:0;padding:0;margin:0 0 18px}
+.gp legend{font-weight:600;font-size:14px;margin-bottom:8px}
+.gp label.gp-opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #dfe2ea;border-radius:10px;margin-bottom:8px;font-size:14px;cursor:pointer}
+.gp label.gp-opt input{margin-top:3px}
+.gp-err{color:#c2261d;font-size:14px;margin-bottom:12px}
+.gp-small{font-size:12.5px!important;color:#5f6580!important}
+@media (max-width:600px){.gp{padding:24px 12px}.gp-card{padding:22px 18px}.gp-btn{width:100%}}

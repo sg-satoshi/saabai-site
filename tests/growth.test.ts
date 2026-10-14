@@ -38,3 +38,22 @@ test("digest renders and escapes", () => {
   assert.match(html, /&lt;b&gt;x/);
   assert.match(html, /\$4,300/);
 });
+
+import { computeFunnel, computeAttribution, upsellCopy } from "../lib/growth/growth2";
+test("funnel counts and conversion", () => {
+  const ev = (c: string, type: string, d: number, meta = {}) => ({ id: c + type, contactId: c, type, occurredAt: new Date(Date.UTC(2026, 9, d)).toISOString(), meta } as never);
+  const rows = computeFunnel([ev("a", "score_taken", 1), ev("b", "score_taken", 1), ev("a", "blueprint_purchased", 4, { tier: "pro" })]);
+  assert.equal(rows[0].count, 2);
+  assert.equal(rows[1].count, 1);
+  assert.equal(rows[1].pctOfPrev, 50);
+  assert.equal(rows[1].medianDaysFromPrev, 3);
+  const at = computeAttribution([ev("a", "blueprint_purchased", 4, { source: { s: "fb", t: 1 } })]);
+  assert.equal(at[0].source, "fb");
+});
+test("upsell copy uses saabai.ai links and the credit", () => {
+  const c = upsellCopy("Tom Reilly", "Growth", 149700, "2026-11-13T00:00:00Z");
+  assert.match(c.body, /Hi Tom/);
+  assert.match(c.body, /\$1,497/);
+  assert.match(c.body, /https:\/\/saabai\.ai\//);
+  assert.doesNotMatch(c.body, /saab\.ai/);
+});

@@ -27,6 +27,10 @@
     {
       "path": "/api/cron/growth-digest",
       "schedule": "0 21 * * 0"
+    },
+    {
+      "path": "/api/cron/growth-daily",
+      "schedule": "30 20 * * *"
     }
   ]
 }
