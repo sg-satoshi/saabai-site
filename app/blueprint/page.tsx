@@ -26,7 +26,7 @@ const FAQS = [
   ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build."],
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
-  ["Are prices in AUD?", "Yes. All prices are in Australian dollars and include GST. You get a tax invoice by email straight after payment."],
+  ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST is not applicable. You get an invoice by email straight after payment."],
   ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
 ];
 
@@ -117,7 +117,7 @@ export default function BlueprintPage() {
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>
           </div>
-          <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>All prices in AUD and include GST.</p>
+          <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>All prices in AUD. GST not applicable.</p>
         </div>
       </section>
 

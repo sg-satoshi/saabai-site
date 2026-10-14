@@ -23,8 +23,8 @@ const tiers = [
   {
     name: "Presence",
     tagline: "Get online with an AI that answers",
-    price: "from $2,000",
-    priceNote: "one-off build",
+    price: "$2,000",
+    priceNote: "fixed price build, buy online",
     monthly: "then $100/mo care",
     description:
       "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures every lead.",
@@ -192,6 +192,7 @@ export default function WebsitesPage() {
           Saabai builds and looks after small business websites on a monthly care
           plan: <strong>Presence $100</strong>, <strong>Growth $200</strong> or{" "}
           <strong>Signature $300</strong> a month (AUD), with builds from{" "}
+          <strong>$2,000</strong>, or buy a Presence site online for a fixed{" "}
           <strong>$2,000</strong>. Hosting, security, updates and a trained AI
           enquiry chatbot are included. Founded by Shane Goldberg on the Gold
           Coast, Queensland.
@@ -259,6 +260,94 @@ export default function WebsitesPage() {
               it to the same standard and add the AI team member, so it finally
               earns its place.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Two paths: buy Presence now, or book a call for a custom build */}
+      <section id="buy" className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+        <div className="text-center mb-12">
+          <p className="text-xs tracking-[0.2em] uppercase text-saabai-text-dim mb-3">Website pricing</p>
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-4">
+            Buy Presence now, or book a call for a custom build
+          </h2>
+          <p className="text-saabai-text-muted max-w-2xl mx-auto leading-relaxed">
+            Two clear paths. Presence is a fixed price you can buy online today.
+            Growth and Signature are scoped with you on a free call.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div
+            className="relative flex flex-col bg-saabai-surface border border-saabai-teal/60 rounded-2xl p-8 sm:p-10"
+            style={{ boxShadow: "0 0 80px rgba(98,197,209,0.35), 0 0 32px rgba(98,197,209,0.2)" }}
+          >
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-saabai-teal text-saabai-bg text-[10px] font-bold tracking-[0.18em] uppercase px-4 py-1.5 rounded-full">
+              Buy now
+            </div>
+            <p className="text-xs tracking-[0.18em] uppercase text-saabai-teal mb-2">Fixed price</p>
+            <h3 className="text-2xl font-semibold tracking-tight mb-1">Presence, buy now</h3>
+            <p className="text-sm text-saabai-text-dim mb-6">A polished site with a trained enquiry chatbot. One path, one price.</p>
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow">$2,000</span>
+              <span className="text-sm text-saabai-text-dim">AUD</span>
+            </div>
+            <p className="text-xs text-saabai-text-dim">One-off build</p>
+            <p className="text-xs font-medium text-saabai-teal mt-1 mb-6">Then $100/mo care, starting at go-live</p>
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-6">
+              Custom site, mobile and search ready, a chatbot that answers FAQs and captures leads, with hosting and updates included.
+            </p>
+            <ul className="flex flex-col gap-3 mb-8 flex-1">
+              {[
+                "Pay a $1,000 deposit, fill in a short form, we start within 5 business days",
+                "Fixed scope with 2 rounds of revisions, no discovery call needed",
+                "$1,000 balance invoiced before go-live",
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-3 text-sm text-saabai-text-muted leading-relaxed">
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0 mt-2" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/websites/buy"
+              className="text-center min-h-12 flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold text-sm bg-saabai-teal text-saabai-bg hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)]"
+            >
+              Buy Presence · pay $1,000 deposit
+            </a>
+            <p className="text-center text-xs text-saabai-text-dim mt-3">
+              AUD. GST not applicable. Card via Stripe. Deposit refundable only before work starts.
+            </p>
+          </div>
+          <div className="flex flex-col bg-saabai-surface border border-saabai-border rounded-2xl p-8 sm:p-10">
+            <p className="text-xs tracking-[0.18em] uppercase text-saabai-teal mb-2">Custom build</p>
+            <h3 className="text-2xl font-semibold tracking-tight mb-1">Growth and Signature</h3>
+            <p className="text-sm text-saabai-text-dim mb-6">Larger sites, rebuilds, lead qualifying, CRM handoff, or a custom avatar.</p>
+            <div className="flex items-baseline gap-2 mb-1">
+              <span className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow">from $4,000</span>
+              <span className="text-sm text-saabai-text-dim">AUD</span>
+            </div>
+            <p className="text-xs text-saabai-text-dim">One-off build · Growth from $4,000 · Signature from $6,500</p>
+            <p className="text-xs font-medium text-saabai-teal mt-1 mb-6">Then $200 or $300/mo care</p>
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-6">
+              Scoped with you on a free 30-minute call. Same prices as the Growth and Signature cards below.
+            </p>
+            <ul className="flex flex-col gap-3 mb-8 flex-1">
+              {["Larger site or full rebuild", "Lead qualifying chatbot with booking", "CRM handoff and light automations", "Signature: custom avatar that sounds like your brand"].map((f) => (
+                <li key={f} className="flex items-start gap-3 text-sm text-saabai-text-muted leading-relaxed">
+                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0 mt-2" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={CALENDLY}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary text-center min-h-12 flex items-center justify-center px-6 py-3.5 rounded-xl font-semibold text-sm border border-saabai-teal/60 text-saabai-teal hover:bg-saabai-teal/10 transition-colors tracking-wide"
+            >
+              Book a Free 30-Min Call
+            </a>
+            <p className="text-center text-xs text-saabai-text-dim mt-3">No deposit until we agree a fixed quote.</p>
           </div>
         </div>
       </section>
@@ -336,16 +425,15 @@ export default function WebsitesPage() {
               </ul>
 
               <a
-                href={CALENDLY}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={tier.name === "Presence" ? "/websites/buy" : CALENDLY}
+                {...(tier.name === "Presence" ? {} : { target: "_blank", rel: "noopener noreferrer" })}
                 className={`text-center px-6 py-3.5 rounded-xl font-semibold text-sm transition-colors tracking-wide mb-3 ${
                   tier.highlight
                     ? "bg-saabai-teal text-saabai-bg hover:bg-saabai-teal-bright shadow-[0_0_30px_var(--saabai-glow-mid)]"
                     : "bg-saabai-teal text-saabai-bg hover:bg-saabai-teal-bright"
                 }`}
               >
-                Book a Consult
+                {tier.name === "Presence" ? "Buy now · pay deposit" : "Book a Free 30-Min Call"}
               </a>
               <a
                 href={CALENDLY}

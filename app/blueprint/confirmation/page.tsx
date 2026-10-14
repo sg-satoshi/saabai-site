@@ -52,7 +52,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
               You&apos;re in{o.name ? `, ${o.name}` : ""}. <span className="grad">Let&apos;s build your Blueprint.</span>
             </h1>
             <p style={{ fontSize: 18, marginTop: 16 }}>
-              We&apos;ve emailed your tax invoice and fact-find link{o.email ? ` to ${o.email}` : ""}.
+              We&apos;ve emailed your invoice and fact-find link{o.email ? ` to ${o.email}` : ""}.
             </p>
             <div className="card tl">
               <h3>What happens next</h3>
