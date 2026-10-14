@@ -91,6 +91,12 @@ const NAV: NavGroup[] = [
     section: "Growth",
     collapsible: true,
     items: [
+      { label: "Funnel", href: "/saabai-admin/growth/funnel", icon: "chart" },
+      { label: "Upsells", href: "/saabai-admin/growth/upsells", icon: "flow" },
+      { label: "Client health", href: "/saabai-admin/growth/health", icon: "bell" },
+      { label: "Testimonials", href: "/saabai-admin/growth/testimonials", icon: "doc" },
+      { label: "Referrals", href: "/saabai-admin/growth/referrals", icon: "users" },
+      { label: "Attribution", href: "/saabai-admin/growth/attribution", icon: "layers" },
       { label: "Subscribers", href: "/saabai-admin/subscribers", icon: "mail" },
       { label: "Wholesale Leads", href: "/saabai-admin/wholesale-leads", icon: "home" },
       { label: "LinkedIn", href: "/saabai-admin/social/linkedin", icon: "in" },

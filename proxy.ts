@@ -107,6 +107,8 @@ const PUBLIC_API = [
   "/api/og",
   // Scheduled jobs (each route checks Authorization: Bearer ${CRON_SECRET}
   "/api/cron",
+  "/api/unsubscribe",       // one-click marketing unsubscribe (signed token)
+  "/api/testimonial",       // client testimonial form (unguessable token)
   "/api/rex-weekly-digest",
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer
@@ -289,7 +291,7 @@ function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   try {
     const { pathname } = req.nextUrl;
     if (req.method !== "GET" || /\.\w+$/.test(pathname) || pathname.startsWith("/_next") || pathname.startsWith("/sites/") || matches(pathname, PROTECTED_PAGES)) return res;
-    const ref = pathname.match(/^\/r\/([A-Za-z0-9_-]{3,32})$/)?.[1];
+    const ref = pathname.match(/^\/r\/([A-Za-z0-9_-]{3,32})$/)?.[1] ?? (req.nextUrl.searchParams.get("ref")?.match(/^[A-Za-z0-9_-]{3,32}$/)?.[0]);
     const cur = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
     const next = mergeTouch(cur, touchFrom(req.nextUrl, req.headers.get("referer"), req.nextUrl.hostname, ref), pathname);
     if (next) res.cookies.set(ATTR_COOKIE, serialiseAttr(next), { maxAge: ATTR_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });

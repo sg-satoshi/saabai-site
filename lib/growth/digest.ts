@@ -7,6 +7,7 @@ import { touchLabel, type Touch } from "./attribution";
 import { listSiteBilling } from "../billing/store";
 import { listEngagements } from "../audit-store";
 import { escapeHtml } from "../html-escape";
+import { listDocs, type Doc } from "./store";
 
 const DAY = 864e5;
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -20,6 +21,7 @@ export type Digest = {
   blueprintsDue: { firm: string; tier: string; status: string; overdue: boolean }[];
   failedPayments: { email: string; cents: number }[];
   topSources: { label: string; count: number }[];
+  growth?: { upsellsAwaiting: number; creditsExpiring: number; testimonials: number; referrals: number };
 };
 
 export async function buildDigest(now = Date.now()): Promise<Digest> {
@@ -55,6 +57,14 @@ export async function buildDigest(now = Date.now()): Promise<Digest> {
     .filter((a) => a.due < now + 7 * DAY)
     .sort((a, b) => a.due - b.due)
     .map(({ due: _d, ...rest }) => rest);
+  type S = Doc & { status: string; creditExpiresAt?: string };
+  const [ups, tms, refs] = await Promise.all(["upsells", "testimonials", "referrals"].map((c) => listDocs<S>(c, 500).catch(() => [] as S[])));
+  const growth = {
+    upsellsAwaiting: ups.filter((u) => u.status === "awaiting_approval").length,
+    creditsExpiring: ups.filter((u) => ["awaiting_approval", "sent"].includes(u.status) && u.creditExpiresAt && Date.parse(u.creditExpiresAt) < now + 7 * DAY).length,
+    testimonials: tms.filter((t) => t.status === "received" && Date.parse(t.updatedAt) >= since).length,
+    referrals: refs.filter((r) => Date.parse(r.createdAt) >= since && r.status !== "void").length,
+  };
   const fmt = (t: number) => new Date(t).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short" });
   return {
     weekLabel: `${fmt(since)} to ${fmt(now)}`,
@@ -68,6 +78,7 @@ export async function buildDigest(now = Date.now()): Promise<Digest> {
     cancelledPlans: of("care_plan_cancelled").length,
     blueprintsDue,
     failedPayments: of("payment_failed").map((e) => ({ email: e.contactId, cents: e.amountCents ?? 0 })),
+    growth,
     topSources: [...srcMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([label, count]) => ({ label, count })),
   };
 }
@@ -86,7 +97,7 @@ ${sec("Sales by product", d.sales.length ? list(d.sales.map((s) => row(`${escape
 ${sec("Blueprints due this week", d.blueprintsDue.length ? list(d.blueprintsDue.map((b) => row(`${escapeHtml(b.firm)} · ${escapeHtml(b.tier)}`, b.overdue ? "Overdue" : escapeHtml(b.status), b.overdue))) : empty("Nothing due. Nice."))}
 ${sec("At-risk clients", d.failedPayments.length ? list(d.failedPayments.map((f) => row(`Payment failed: ${escapeHtml(f.email)}`, money(f.cents), true))) : empty("No failed payments this week."))}
 ${sec("Top sources", d.topSources.length ? list(d.topSources.map((s) => row(escapeHtml(s.label), String(s.count)))) : empty("Source tracking started recently, so this fills in as leads arrive."))}
-${sec("Upsells, testimonials and referrals", empty("These sections switch on with the Phase 2 growth features."))}
+${sec("Upsells, testimonials and referrals", d.growth ? list([row("Upsells waiting for your OK", String(d.growth.upsellsAwaiting)), row("Blueprint credits expiring this week", String(d.growth.creditsExpiring)), row("New testimonials", String(d.growth.testimonials)), row("New referrals", String(d.growth.referrals))]) : empty("Nothing yet."))}
 <p style="margin-top:24px"><a href="https://saabai.ai/saabai-admin" style="display:inline-block;background:#62c5d1;color:#0b092e;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:600">Open Mission Control</a></p>
 </div></div>`;
   return { subject: `Saabai week: ${d.leads} leads, ${money(d.salesCents)} sales, ${money(d.mrrCents)} MRR`, html };

@@ -13,6 +13,8 @@ const SUPPRESS_PATHS = [
   "/lex", "/client-portal", "/legal",
   // Focused Blueprint flows: no chat or sticky bars
   "/score", "/blueprint/checkout", "/blueprint/confirmation",
+  // Client feedback and unsubscribe: focused, no sales widgets
+  "/testimonial", "/unsubscribe",
   // Admin pages have their own nav
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
   // Client demo sites — their own experience
