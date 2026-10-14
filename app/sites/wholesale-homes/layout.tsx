@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   // Sub-page titles already carry "| Wholesale Homes Australia", so the template
   // is a pass-through (stops Saabai's "%s | Saabai" template leaking in).
   title: {
-    default: "House & Land Packages Below Market Price | Wholesale Homes Australia",
+    absolute: "House & Land Packages Below Market Price | Wholesale Homes Australia",
     template: "%s",
   },
   manifest: null,

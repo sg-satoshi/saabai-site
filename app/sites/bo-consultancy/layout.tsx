@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.boconsulting.com.au"),
   title: {
-    default: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
+    absolute: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
     template: "%s",
   },
   manifest: null,

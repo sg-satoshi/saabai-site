@@ -43,6 +43,8 @@ for (const site of appSites) {
     // Must override the root "%s | Saabai" template and Saabai canonical.
     assert.ok(/clientSiteMetadata\(/.test(layout) || /template:/.test(layout), "no title template override");
     assert.ok(/clientSiteMetadata\(/.test(layout) || /canonical:/.test(layout), "no canonical override");
+    // A plain string or title.default still gets the root "%s | Saabai" template; it must be absolute.
+    assert.ok(/clientSiteMetadata\(/.test(layout) || /title:\s*\{\s*absolute:/.test(layout), "root title must use title.absolute");
     assert.ok(/clientSiteMetadata\(/.test(layout) || /metadataBase:/.test(layout), "no metadataBase override");
   });
 
@@ -95,7 +97,7 @@ test("stored-HTML client sites don't claim a saabai.ai canonical", () => {
 test("clientSiteMetadata overrides every Saabai root field", () => {
   const m = clientSiteMetadata({ siteUrl: "https://example.com.au", name: "Example Co", title: "Example", description: "d" });
   assert.equal(String(m.metadataBase), "https://example.com.au/");
-  assert.deepEqual(m.title, { default: "Example", template: "%s | Example Co" });
+  assert.deepEqual(m.title, { absolute: "Example", template: "%s | Example Co" });
   assert.equal(m.keywords, null);
   assert.equal(m.manifest, null);
   assert.deepEqual(m.alternates, { canonical: "/" });

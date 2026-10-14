@@ -31,7 +31,7 @@ export function clientSiteMetadata(opts: {
   const { siteUrl, name, title, description } = opts;
   return {
     metadataBase: new URL(siteUrl),
-    title: { default: title, template: `%s | ${name}` },
+    title: { absolute: title, template: `%s | ${name}` },
     description,
     keywords: opts.keywords ?? null,
     authors: [{ name, url: siteUrl }],

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PoweredBySaabai from "../../../components/PoweredBySaabai";
 
 export const metadata: Metadata = {
   title: "Contact Stu",
@@ -8,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {children}
+      <footer className="bg-bg text-center pt-2 pb-28 md:pb-10">
+        <PoweredBySaabai
+          site="stuscyclerepairs"
+          className="inline-block py-2 text-[11px] tracking-[0.08em] text-muted-foreground/80 hover:text-brand transition-colors"
+        />
+      </footer>
+    </>
+  );
 }
