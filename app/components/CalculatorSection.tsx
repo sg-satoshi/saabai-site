@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { gaEvent } from "@/lib/ga";
 
 function formatHours(h: number) {
   return h.toLocaleString("en-AU", { maximumFractionDigits: 0 });
@@ -39,6 +40,7 @@ export default function CalculatorSection() {
         }),
       });
       setEmailSubmitted(true);
+      gaEvent("generate_lead", { form: "calculator_homepage" });
     } finally {
       setEmailSubmitting(false);
     }

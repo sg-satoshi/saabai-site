@@ -115,3 +115,41 @@ test("ensurePoweredBy tags an existing credit and adds one when missing", () => 
   assert.match(added, /data-saabai-credit[\s\S]*Powered by Saabai\.ai<\/a><\/div><\/body>/);
   assert.equal(ensurePoweredBy("x", added), added.replace("utm_source=x", "utm_source=x"));
 });
+
+// ── GA4 guard: Saabai's GA property must never load on factory client sites ──
+import { GA_ID, gaHostMode, gaPathAllowed } from "../lib/ga";
+
+const GA_PATTERN = /gtag|googletagmanager|G-9KVV3KKZZH/;
+
+test("GA4: no client site source references gtag or Saabai's measurement ID", () => {
+  const files = [...walk(SITES_DIR), ...(existsSync(CLIENTS_DIR) ? walk(CLIENTS_DIR) : [])];
+  const hits = files.filter((f) => GA_PATTERN.test(readFileSync(f, "utf8"))).map((f) => path.relative(ROOT, f));
+  assert.deepEqual(hits, [], `GA found in client site files: ${hits.join(", ")}`);
+});
+
+test("GA4: only saabai.ai hosts (and this project's previews) load GA", () => {
+  assert.equal(GA_ID, process.env.NEXT_PUBLIC_GA_ID || "G-9KVV3KKZZH");
+  assert.equal(gaHostMode("www.saabai.ai"), "prod");
+  assert.equal(gaHostMode("saabai.ai"), "prod");
+  assert.equal(gaHostMode("saabai-site-git-x-shanegoldbergs-projects.vercel.app"), "preview");
+  for (const h of [
+    "stuscyclerepairs.com", "www.stuscyclerepairs.com", "boconsulting.com.au", "www.boconsulting.com.au",
+    "wholesalehomes.com.au", "www.wholesalehomes.com.au", "lifestylemoneymanagement.com.au",
+    "client.saabai.ai", "other-project.vercel.app", "localhost", "evil-saabai.ai", "saabai.ai.evil.com",
+  ]) assert.equal(gaHostMode(h), null, h);
+});
+
+test("GA4: /sites/*, admin and portal paths are excluded on saabai.ai", () => {
+  for (const p of ["/sites/cycle-repair", "/sites/bo-consultancy/about", "/sites/wholesale-homes", "/sites/x", "/saabai-admin", "/saabai-admin/products", "/pulse", "/client-portal", "/dashboard/x", "/admin", "/login", "/mission-control"])
+    assert.equal(gaPathAllowed(p), false, p);
+  for (const p of ["/", "/score", "/blueprint", "/blueprint/checkout", "/blueprint/confirmation", "/websites", "/pay/done", "/privacy"])
+    assert.equal(gaPathAllowed(p), true, p);
+});
+
+test("GA4: the root layout mounts GA only through the guarded component", () => {
+  const layout = readFileSync(path.join(ROOT, "app", "layout.tsx"), "utf8");
+  assert.ok(!GA_PATTERN.test(layout), "root layout must not inline gtag");
+  const comp = readFileSync(path.join(ROOT, "app", "components", "GoogleAnalytics.tsx"), "utf8");
+  assert.match(comp, /gaHostMode\(/);
+  assert.match(comp, /gaPathAllowed\(/);
+});

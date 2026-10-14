@@ -4,6 +4,7 @@ import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
 import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -111,6 +112,7 @@ export default function RootLayout({
         {children}
         <ConditionalWidgets />
         <EmailCapturePopup />
+        <GoogleAnalytics />
       </body>
     </html>
   );

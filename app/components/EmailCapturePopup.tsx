@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { gaEvent } from "@/lib/ga";
 
 const COOKIE_KEY = "saabai_subscribed";
 const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes", "/sites/cycle-repair"];
@@ -70,6 +71,7 @@ export default function EmailCapturePopup() {
       });
       if (res.ok) {
         setStatus("done");
+        gaEvent("generate_lead", { form: "newsletter_popup" });
         setCookie(COOKIE_KEY, 30); // subscribed, don't show for 30 days
       } else {
         setStatus("error");

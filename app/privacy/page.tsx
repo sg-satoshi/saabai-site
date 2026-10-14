@@ -17,7 +17,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "3. Cookies and source tracking",
-    body: "We set a first-party cookie called sb_attr that lasts 90 days. It records the first and the most recent way you arrived at our site (for example a search, an ad or a campaign link) so we can see which marketing works. It is only used by Saabai and is never shared or sold. You can clear or block it in your browser settings at any time.",
+    body: "We set a first-party cookie called sb_attr that lasts 90 days. It records the first and the most recent way you arrived at our site (for example a search, an ad or a campaign link) so we can see which marketing works. It is only used by Saabai and is never shared or sold. You can clear or block it in your browser settings at any time. We also use Google Analytics on saabai.ai to understand how visitors use the site (pages viewed, quiz starts, checkouts and bookings). Google Analytics sets its own cookies (such as _ga) and Google processes this data, which may be stored outside Australia. We don't send your name, email or payment details to Google Analytics. You can opt out with Google's browser add-on at tools.google.com/dlpage/gaoptout or by blocking cookies. Google Analytics is not used on the client websites we host for other businesses.",
   },
   {
     heading: "4. How we use it",
@@ -25,7 +25,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "5. Who we share it with",
-    body: "Only the service providers that help us run Saabai, such as hosting, payments, email and SMS delivery, and only as needed to provide their service. We do not sell personal information.",
+    body: "Only the service providers that help us run Saabai, such as hosting, payments, analytics (Google Analytics), email and SMS delivery, and only as needed to provide their service. We do not sell personal information.",
   },
   {
     heading: "6. Access, correction and complaints",

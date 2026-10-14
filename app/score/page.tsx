@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SbNav from "../components/sb/SbNav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/score.css";
 import { CATEGORIES, QUESTIONS, TIERS, scoreAnswers } from "@/lib/blueprint";
+import { gaEvent } from "@/lib/ga";
 
 export default function ScorePage() {
   const [step, setStep] = useState(0);
@@ -55,7 +56,7 @@ export default function ScorePage() {
                 aria-checked={selected === i}
                 key={o.label}
                 className={`opt${selected === i ? " sel" : ""}`}
-                onClick={() => setAnswers({ ...answers, [q.id]: i })}
+                onClick={() => { if (Object.keys(answers).length === 0) gaEvent("score_quiz_start", { quiz: "ai_readiness" }); setAnswers({ ...answers, [q.id]: i }); }}
               >
                 <span className="r" />
                 <div>{o.label}<small>{o.hint}</small></div>
@@ -78,6 +79,9 @@ export default function ScorePage() {
 function Result({ answers, onRestart }: { answers: Record<string, number>; onRestart: () => void }) {
   const r = useMemo(() => scoreAnswers(answers), [answers]);
   const rec = TIERS[r.recommended];
+  useEffect(() => {
+    gaEvent("score_quiz_complete", { quiz: "ai_readiness", recommended_tier: r.recommended });
+  }, [r.recommended]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
@@ -93,6 +97,7 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
         body: JSON.stringify({ email, name, website, answers }),
       });
       setState(res.ok ? "sent" : "error");
+      if (res.ok) gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended });
     } catch {
       setState("error");
     }
