@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
+import { ensurePoweredBy } from "@/lib/client-site";
 import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
 
 export const runtime = "nodejs";
@@ -95,7 +96,7 @@ export async function GET(
     if (!blob) return new Response("Page not found", { status: 404 });
 
     const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-    const html = await ensureFavicon(slug, await res.text());
+    const html = ensurePoweredBy(slug, await ensureFavicon(slug, await res.text()));
     return new Response(html, {
       status: 200,
       headers: {

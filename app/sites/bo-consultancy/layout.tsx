@@ -1,8 +1,17 @@
 import Script from "next/script";
 import type { Metadata } from "next";
 
+// Overrides every Saabai root-layout field so nothing leaks onto the client site.
+// Sub-page titles already carry "| BO Consulting", so the template is a pass-through.
 export const metadata: Metadata = {
-  title: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
+  metadataBase: new URL("https://www.boconsulting.com.au"),
+  title: {
+    absolute: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
+    template: "%s",
+  },
+  manifest: null,
+  appleWebApp: { capable: false, title: "BO Consulting" },
+  icons: null,
   description:
     "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire, and workforce solutions across Construction, Mining, Manufacturing, Transport and more. 1,000+ placements, 95% retention rate.",
   keywords: [

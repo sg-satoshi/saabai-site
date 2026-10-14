@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, IBM_Plex_Sans } from "next/font/google";
 import "./cycle-repair.css";
+import { clientSiteMetadata } from "../../../lib/client-site";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -16,21 +17,26 @@ const ibmPlexSans = IBM_Plex_Sans({
   display: "swap",
 });
 
+const SITE_URL = "https://stuscyclerepairs.com";
+const DESCRIPTION =
+  "Mobile bike repairs across the Gold Coast and Tweed Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.";
+
 export const metadata: Metadata = {
-  title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic, Gold Coast",
-  description:
-    "Mobile bike repairs across the Gold Coast and Tweed Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.",
-  authors: [{ name: "Stu's Cycle Repairs" }],
-  icons: { icon: "/sites/cycle-repair/favicon.png" },
-  openGraph: {
-    type: "website",
-    title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic",
-    description:
-      "Mobile bicycle repairs, servicing and upgrades across the Gold Coast and Tweed Coast. 37+ years of mechanical experience delivered to your driveway.",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
+  ...clientSiteMetadata({
+    siteUrl: SITE_URL,
+    name: "Stu's Cycle Repairs",
+    title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic, Gold Coast",
+    description: DESCRIPTION,
+    keywords: [
+      "mobile bike mechanic Gold Coast",
+      "bike repairs Gold Coast",
+      "bicycle servicing Tweed Coast",
+      "e-bike repairs Gold Coast",
+      "mobile bicycle repair",
+    ],
+    icon: "/sites/cycle-repair/favicon.png",
+    ogImage: { url: "/sites/cycle-repair/stu.jpg", alt: "Stu, mobile bicycle mechanic" },
+  }),
 };
 
 export default function CycleRepairLayout({

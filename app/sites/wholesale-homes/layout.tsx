@@ -6,8 +6,14 @@ const SITE_URL = "https://www.wholesalehomes.com.au";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title:
-    "House & Land Packages Below Market Price | Wholesale Homes Australia",
+  // Sub-page titles already carry "| Wholesale Homes Australia", so the template
+  // is a pass-through (stops Saabai's "%s | Saabai" template leaking in).
+  title: {
+    absolute: "House & Land Packages Below Market Price | Wholesale Homes Australia",
+    template: "%s",
+  },
+  manifest: null,
+  appleWebApp: { capable: false, title: "Wholesale Homes Australia" },
   description:
     "Australia's exclusive pre-market access to house and land packages below bank valuation. Partnered with Metricon, Stockland, Mirvac & 12 leading builders. Speak with principal advisor Nick Foale.",
   keywords: [
@@ -71,9 +77,27 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "@id": `${SITE_URL}/#organization`,
+  name: "Wholesale Homes Australia",
+  url: SITE_URL,
+  logo: `${SITE_URL}/sites/wholesale-homes/favicon.svg`,
+  image: `${SITE_URL}/sites/wholesale-homes/og-image.jpg`,
+  telephone: "+61488165908",
+  email: "hello@wholesalehomes.com.au",
+  founder: { "@type": "Person", name: "Nick Foale" },
+  areaServed: { "@type": "Country", name: "Australia" },
+};
+
 export default function WholesaleHomesLayout({ children }: { children: ReactNode }) {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c") }}
+      />
       {children}
       <NewsletterPopup />
     </>

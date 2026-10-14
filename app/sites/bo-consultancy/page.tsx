@@ -1,4 +1,5 @@
 "use client";
+import PoweredBySaabai from "@/app/components/PoweredBySaabai";
 
 import { useState, useEffect } from "react";
 
@@ -962,6 +963,7 @@ export default function BOConsultancyPage() {
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 24, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
               © 2026 BO Consulting. All rights reserved.
+              &nbsp;·&nbsp; <PoweredBySaabai site="boconsulting" />
             </p>
             <div style={{ display: "flex", gap: 24 }}>
               <a href="/sites/bo-consultancy/privacy-policy" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>Privacy Policy</a>

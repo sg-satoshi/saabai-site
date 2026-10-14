@@ -2,6 +2,7 @@ import Link from "next/link";
 import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
 import { ReviewsCarousel } from "./ReviewsCarousel";
+import PoweredBySaabai from "../../components/PoweredBySaabai";
 import { googleRating, googleReviewCount } from "./reviews";
 
 const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
@@ -10,7 +11,11 @@ const mechanicImg = "/sites/cycle-repair/stu.jpg";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
+  "@id": "https://stuscyclerepairs.com/#business",
+  additionalType: "https://schema.org/BicycleStore",
   name: "Stu's Cycle Repairs",
+  image: "https://stuscyclerepairs.com/sites/cycle-repair/stu.jpg",
+  logo: "https://stuscyclerepairs.com/sites/cycle-repair/stus-logo-v2.png",
   description:
     "Mobile bicycle repairs, servicing, wheel builds and E-Bike work across the Gold Coast and Tweed Coast.",
   telephone: "+61405225721",
@@ -461,6 +466,10 @@ export default function Index() {
             <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
               Stu&apos;s Cycle Repairs © {new Date().getFullYear()}
             </span>
+            <PoweredBySaabai
+              site="stuscyclerepairs"
+              className="text-[11px] tracking-[0.08em] text-muted-foreground/80 hover:text-brand transition-colors py-2"
+            />
           </div>
           <div className="flex gap-8 text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
             <a href="#services" className="hover:text-brand transition-colors">Services</a>

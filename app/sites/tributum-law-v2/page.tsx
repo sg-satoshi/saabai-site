@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PoweredBySaabai from "@/app/components/PoweredBySaabai";
 import TributumChatWidget from "@/app/components/TributumChatWidget";
 
 const COLORS = {
@@ -551,6 +552,7 @@ export default function TributumLawPage() {
           <div className="pt-8 border-t text-xs" style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.35)" }}>
             <p className="mb-2">Liability limited by a scheme approved under Professional Standards Legislation.</p>
             <p>© 2024 Tributum Law. All Rights Reserved.</p>
+            <p className="mt-2"><PoweredBySaabai site="tributumlaw" /></p>
           </div>
         </div>
       </footer>

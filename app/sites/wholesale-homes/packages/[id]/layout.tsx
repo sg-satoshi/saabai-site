@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const pkg = getPublicPackage(id);
   if (!pkg) {
-    return { title: "Package Not Found" };
+    return { title: "Package Not Found | Wholesale Homes Australia" };
   }
 
   const title = `${pkg.name} in ${pkg.suburb}, ${pkg.state} | House & Land Package | Wholesale Homes`;

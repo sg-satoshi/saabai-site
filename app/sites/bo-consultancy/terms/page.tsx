@@ -1,3 +1,4 @@
+import PoweredBySaabai from "@/app/components/PoweredBySaabai";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -94,6 +95,8 @@ export default function TermsOfService() {
           <a href="/privacy-policy" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Privacy Policy</a>
           &nbsp;·&nbsp;
           <a href="/terms" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Terms of Service</a>
+          &nbsp;·&nbsp;
+          <PoweredBySaabai site="boconsulting" />
         </p>
       </footer>
     </main>

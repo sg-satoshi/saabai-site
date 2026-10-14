@@ -38,7 +38,7 @@ export function Footer() {
           <div className="space-y-1">
             <p>&copy; {new Date().getFullYear()} Wholesale Homes Australia. All rights reserved.</p>
             <p className="text-white/60">
-              <a href="https://www.saabai.ai" target="_blank" rel="noopener" className="hover:text-white">
+              <a href="https://www.saabai.ai/?utm_source=wholesalehomes&utm_medium=footer" data-saabai-credit target="_blank" rel="noopener" className="hover:text-white">
                 Powered by Saabai.ai
               </a>
             </p>
