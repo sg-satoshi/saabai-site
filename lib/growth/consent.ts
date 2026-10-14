@@ -26,6 +26,6 @@ export async function suppress(email: string, channel: "email" | "sms" | "all" =
 
 /** Footer for marketing email: identifies the sender and gives a working unsubscribe. */
 export function marketingFooterHtml(email: string): string {
-  return `<p style="font-size:12px;color:#5f6580;margin-top:28px;border-top:1px solid #eceef4;padding-top:14px">You're getting this because you bought a Saabai Blueprint. Sent by Saabai (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> from marketing emails. You'll still get receipts and service messages.</p>`;
+  return `<p style="font-size:12px;color:#5f6580;margin-top:28px;border-top:1px solid #eceef4;padding-top:14px">You're getting this because you bought a Saabai Blueprint. Sent by Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia (saabai.ai, hello@saabai.ai). <a href="${unsubUrl(email)}" style="color:#1595a6">Unsubscribe</a> from marketing emails. You'll still get receipts and service messages.</p>`;
 }
 export const SMS_STOP = "Reply STOP to opt out";
