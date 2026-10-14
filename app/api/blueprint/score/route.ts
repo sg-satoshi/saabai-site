@@ -2,6 +2,8 @@ import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, scoreAnswers } from "@/lib/blueprint";
 import { upsertScoreLead } from "@/lib/saabai-crm";
+import { ATTR_COOKIE, parseAttr } from "@/lib/growth/attribution";
+import { recordEvent, touchContact } from "@/lib/growth/events";
 
 export const runtime = "nodejs";
 
@@ -46,6 +48,13 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[blueprint score] CRM save failed", err);
   }
+
+  // Journey + source tracking (first-party sb_attr cookie). Never blocks the email.
+  const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
+  await Promise.all([
+    touchContact(email, attr, name),
+    recordEvent({ contactId: email, type: "score_taken", meta: { score: r.total, tier: rec.name, website, source: attr?.l, firstTouch: attr?.f } }),
+  ]);
 
   const key = process.env.RESEND_API_KEY;
   if (!key) return NextResponse.json({ error: "Email not configured" }, { status: 503 });

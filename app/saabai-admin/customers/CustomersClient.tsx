@@ -333,6 +333,7 @@ function DetailPanel({ customer, onClose }: { customer: Customer; onClose: () =>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {!!customer.email && (
               <>
+                <a href={`/saabai-admin/journey?email=${encodeURIComponent(customer.email)}`} className="btn" style={{ justifyContent: "center" }}>View journey</a>
                 <button
                   type="button"
                   onClick={sendPortalInvite}

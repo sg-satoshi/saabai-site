@@ -67,6 +67,7 @@ const NAV: NavGroup[] = [
     items: [
       { label: "Customers", href: "/saabai-admin/customers", icon: "users" },
       { label: "CRM", href: "/saabai-admin/crm", icon: "flow" },
+      { label: "Journeys", href: "/saabai-admin/journey", icon: "chart" },
       { label: "Client Requests", href: "/saabai-admin/requests", icon: "inbox" },
       { label: "Change log", href: "/saabai-admin/change-log", icon: "list" },
       { label: "Client Portal", href: "/client-portal", icon: "portal", external: true },

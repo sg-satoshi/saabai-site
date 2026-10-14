@@ -7,6 +7,7 @@
 import type Stripe from "stripe";
 import { getStripe } from "../../../../lib/stripe";
 import { handleBillingEvent } from "../../../../lib/billing/service";
+import { recordBillingGrowthEvent } from "../../../../lib/growth/billing-events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
       }
     }
     const result = await handleBillingEvent(event as unknown as { type: string; data: { object: unknown } } as never);
+    await recordBillingGrowthEvent(event); // journey + failed-payment alert to Shane; never throws
     return Response.json({ received: true, result });
   } catch (e) {
     console.error("[billing webhook]", event.type, e);
