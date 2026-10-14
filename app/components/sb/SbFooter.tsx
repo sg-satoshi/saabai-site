@@ -1,13 +1,6 @@
 const serviceAreaLinks = [
   { label: "Gold Coast", href: "/gold-coast" },
   { label: "Brisbane", href: "/brisbane" },
-  { label: "Sydney", href: "/sydney" },
-  { label: "Melbourne", href: "/melbourne" },
-  { label: "Perth", href: "/perth" },
-  { label: "Adelaide", href: "/adelaide" },
-  { label: "Canberra", href: "/canberra" },
-  { label: "Hobart", href: "/hobart" },
-  { label: "Darwin", href: "/darwin" },
 ];
 
 export default function SbFooter() {

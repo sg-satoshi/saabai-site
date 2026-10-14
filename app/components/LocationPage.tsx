@@ -385,14 +385,14 @@ export default function LocationPage({ config }: Props) {
       <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
         <div className="max-w-5xl mx-auto">
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
-            {city} Businesses We Help
+            Work With Us in {city}
           </p>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
-            Industries in {city}
+            How {city} businesses work with Saabai
           </h2>
           <p className="text-saabai-text-muted max-w-3xl mb-12 leading-relaxed">
-            Saabai works across {city}&apos;s major industry sectors, building
-            AI systems tailored to the way each one operates.
+            A website care plan from $100 a month, a Saabai Blueprint AI audit
+            from $497, or start with the free AI score at saabai.ai/score.
           </p>
           <div className="grid gap-5 md:grid-cols-3">
             {industryLinks.map((link) => (

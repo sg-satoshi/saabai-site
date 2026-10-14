@@ -3,33 +3,33 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Insights, AI Automation for Professional Firms",
+  title: "Insights, AI for Australian Small Businesses",
   description:
-    "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
+    "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
   alternates: { canonical: "https://www.saabai.ai/insights" },
   openGraph: {
     url: "https://www.saabai.ai/insights",
-    title: "Insights, AI Automation for Professional Firms | Saabai",
+    title: "Insights, AI for Australian Small Businesses | Saabai",
     description:
-      "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
+      "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
   },
 };
 
 const articles = [
   {
-    category: "Law Firms",
-    title: "The Hidden Cost of Manual Intake: What 12 Law Firms Told Us",
+    category: "AI Search",
+    title: "Does ChatGPT Recommend Your Business? How to Check in 5 Minutes",
     excerpt:
-      "Manual intake is costing law firms 8–15 hours per week per fee earner in non-billable admin. Here's what we found, and what they did about it.",
-    slug: "/insights/law-firm-intake-automation",
-    date: "April 2026",
-    published: true,
+      "More customers now ask ChatGPT, Claude, Perplexity and Gemini for a recommendation before they ever hit Google. Here's how to see whether you show up, and what to fix if you don't.",
+    slug: null,
+    date: "Coming soon",
+    published: false,
   },
   {
-    category: "Accounting Firms",
-    title: "How Accounting Firms Are Using AI to Win More Clients",
+    category: "Trades",
+    title: "The After-Hours Enquiry Problem: Why Tradies Lose Jobs at 9pm",
     excerpt:
-      "The firms growing fastest aren't spending more on marketing. They're responding faster, qualifying better, and following up automatically.",
+      "Most trade enquiries land after the tools go down. The business that replies first usually wins, and an AI agent can be first every time.",
     slug: null,
     date: "Coming soon",
     published: false,
@@ -44,10 +44,10 @@ const articles = [
     published: false,
   },
   {
-    category: "Professional Services",
-    title: "The 60-Day Automation Playbook for Professional Services",
+    category: "Small Business",
+    title: "The 60-Day AI Playbook for Small Businesses",
     excerpt:
-      "A practical week-by-week breakdown of how professional services firms move from fully manual to largely automated in under two months.",
+      "A practical week-by-week breakdown of how a small business goes from fully manual to largely automated in under two months, without a big budget.",
     slug: null,
     date: "Coming soon",
     published: false,
@@ -87,11 +87,11 @@ export default function InsightsPage() {
         <h1 className="relative text-6xl md:text-7xl lg:text-[80px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           What we&apos;re learning
           <br />
-          <span className="text-gradient">building AI for professional firms</span>
+          <span className="text-gradient">building AI for Australian businesses</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto leading-relaxed">
-          We work inside law firms, accounting practices, and real estate agencies every week.
+          We work with Australian tradies, clinics, retailers and agencies every week.
           These are the real patterns we&apos;re seeing, what breaks, what works, and what
           makes automation actually stick.
         </p>

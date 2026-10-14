@@ -15,7 +15,21 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/counsel", destination: "/for-law-firms", permanent: true },
+      { source: "/counsel", destination: "/blueprint", statusCode: 301 },
+      // Retired Oct 2026: advisory + law/accounting pages -> Blueprint; non-QLD city pages -> /websites
+      { source: "/advisory", destination: "/blueprint", statusCode: 301 },
+      { source: "/advisory/:path*", destination: "/blueprint", statusCode: 301 },
+      { source: "/for-law-firms", destination: "/blueprint", statusCode: 301 },
+      { source: "/for-law-firms/:path*", destination: "/blueprint", statusCode: 301 },
+      { source: "/for-accounting-firms", destination: "/blueprint", statusCode: 301 },
+      { source: "/for-accounting-firms/:path*", destination: "/blueprint", statusCode: 301 },
+      { source: "/sydney", destination: "/websites", statusCode: 301 },
+      { source: "/melbourne", destination: "/websites", statusCode: 301 },
+      { source: "/perth", destination: "/websites", statusCode: 301 },
+      { source: "/adelaide", destination: "/websites", statusCode: 301 },
+      { source: "/canberra", destination: "/websites", statusCode: 301 },
+      { source: "/hobart", destination: "/websites", statusCode: 301 },
+      { source: "/darwin", destination: "/websites", statusCode: 301 },
       // Saabai Blueprint replaces the old audit offers
       { source: "/audit", destination: "/blueprint", statusCode: 301 },
       { source: "/ai-audit", destination: "/blueprint", permanent: true },

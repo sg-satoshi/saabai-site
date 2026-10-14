@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation FAQ for Professional Firms",
+  title: "FAQ, Websites, AI Audits and Automation",
   description:
-    "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+    "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
   alternates: { canonical: "https://www.saabai.ai/faq" },
   openGraph: {
     url: "https://www.saabai.ai/faq",
-    title: "AI Automation FAQ for Professional Firms | Saabai",
+    title: "FAQ, Websites, AI Audits and Automation | Saabai",
     description:
-      "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+      "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
   },
 };
 
@@ -24,7 +24,7 @@ const faqSchema = {
       name: "We're not a tech company. Is AI automation actually for us?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        text: "This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
     },
     {
@@ -69,18 +69,18 @@ const faqSchema = {
     },
     {
       "@type": "Question",
-      name: "We're a law firm. What does AI automation look like for us?",
+      name: "I run a trade or local service business. What does AI actually do for us?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "AI-assisted client intake that qualifies matters before anyone on your team touches it. Automated follow-up for enquiries. Document templates that populate from intake data. Billing and deadline reminders that go out automatically. None of this requires changing how you practise law. It removes the admin wrapped around it.",
+        text: "Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.",
       },
     },
     {
       "@type": "Question",
-      name: "We're an accounting or financial services firm. What about compliance and data security?",
+      name: "What about privacy and data security?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "We design systems with data handling in mind from the start. Your compliance requirements are discussed upfront and the architecture is built around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing.",
+        text: "We design with data handling in mind from the start and only connect the tools you approve. Your requirements are discussed upfront and the setup is built around them. Most of what we automate is enquiries, follow-up and scheduling, not sensitive records.",
       },
     },
   ],
@@ -97,7 +97,7 @@ const faqs = [
       },
       {
         q: "We're not a tech company. Is this actually for us?",
-        a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        a: "This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
       {
         q: "Is this just another \"digital transformation\" project that takes forever and costs a fortune?",
@@ -109,7 +109,7 @@ const faqs = [
       },
       {
         q: "Will this replace our staff?",
-        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time, so your people can focus on the work that actually requires their expertise. Most firms that automate well find their team becomes more effective, not redundant.",
+        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time, so your people can focus on the work that actually requires their expertise. Most businesses that automate well find their team becomes more effective, not redundant.",
       },
     ],
   },
@@ -162,32 +162,32 @@ const faqs = [
     ],
   },
   {
-    id: "industry-specific",
-    category: "Industry-Specific",
+    id: "is-this-for-me",
+    category: "Is This for My Business?",
     items: [
       {
-        q: "We're a law firm. What does this actually look like for us?",
-        a: "Practically: AI-assisted client intake that qualifies matters and routes them correctly before anyone on your team touches it. Automated follow-up sequences for enquiries that went quiet. Document templates that populate from intake data. Billing and deadline reminders that go out without a principal chasing them. None of this requires changing how you practise law. It removes the admin wrapped around it.",
+        q: "I run a trade or local service business. What does AI actually do for us?",
+        a: "Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.",
+      },
+      {
+        q: "We run a clinic, studio or salon. Where does it help most?",
+        a: "Bookings and enquiries. An AI agent on your site answers the same ten questions you get every day, takes booking requests after hours and sends reminders, so fewer no-shows and less time on the phone. Pair it with a care plan so your site stays fast and found.",
       },
       {
         q: "We run a real estate agency. Where does automation have the biggest impact?",
-        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: automated inspection reminders, appraisal follow-up sequences, listing update comms, and vendor report workflows. Your agents focus on relationships and negotiations. The system handles everything else.",
+        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: inspection reminders, appraisal follow-up and listing update comms.",
       },
       {
-        q: "We're an accounting or financial services firm. What about compliance and data security?",
-        a: "Fair question and a serious one. We design systems with data handling in mind from the start. We're not connecting sensitive client data to random third-party tools. Your compliance requirements are discussed upfront and the architecture is built around them. Most of what we automate involves workflow orchestration and communications, not raw financial data processing. We're happy to walk through specifics on the call.",
+        q: "What about privacy and data security?",
+        a: "We design with data handling in mind from the start and only connect the tools you approve. Your requirements are discussed upfront and the setup is built around them. Most of what we automate is enquiries, follow-up and scheduling, not sensitive records. We're happy to walk through specifics on a call.",
       },
       {
-        q: "We're a financial advisory business. How does this apply to us?",
-        a: "Compliance documentation, review scheduling, and client communication are the usual starting points. Automating annual review reminders, pre-meeting data collection, post-meeting follow-up, and SOA preparation workflows can reclaim significant adviser time. We can also build client-facing tools that improve the experience without adding workload: things like automated portfolio update emails or onboarding portals.",
+        q: "We're a tiny business, just me and maybe one other person. Is this overkill?",
+        a: "Usually the opposite. When you're the one doing the admin, every hour saved is your hour. Start with the free AI score at saabai.ai/score, it takes a few minutes and tells you whether a Blueprint is worth it before you spend a cent.",
       },
       {
-        q: "We're a professional services or advisory business, not quite any of the above. Do you work with us?",
-        a: "Yes. The specifics vary but the pattern is the same: high-value people spending too much time on low-value operational work. If your business runs on expertise and relationships, there's almost always an automation opportunity that frees up time without compromising the quality of your output.",
-      },
-      {
-        q: "Do you work with e-commerce or product businesses, not just professional services?",
-        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups, and lead capture in real time, 24/7, without staff. A national plastics supplier is currently running one of these in production. If your business gets a lot of inbound enquiries that require a fast, accurate response, this is worth a conversation.",
+        q: "Do you work with e-commerce or product businesses?",
+        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups and lead capture 24/7. A national plastics supplier is currently running one of these in production.",
       },
     ],
   },
@@ -249,8 +249,9 @@ export default function FAQ() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
-          Everything you want to know about AI automation for professional
-          firms, answered plainly.
+          Everything you want to know about websites, AI and automation for
+          Australian small businesses, answered plainly. Care plans from $100
+          a month, Blueprint AI audits from $497, and a free AI score to start.
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-12 leading-relaxed">
           If your question isn&apos;t here, book a free strategy call. We&apos;re
@@ -327,7 +328,7 @@ export default function FAQ() {
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           A free 30-minute strategy call is the fastest way to understand
-          what automation could look like in your firm.
+          what automation could look like in your business.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"

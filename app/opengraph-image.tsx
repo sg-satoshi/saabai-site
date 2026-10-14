@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Saabai, AI Automation for Professional Firms";
+export const alt = "Saabai, Gold Coast AI for Australian small businesses";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -61,7 +61,7 @@ export default async function Image() {
           }}
         >
           <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#62c5d1" }} />
-          AI Automation for Professional Firms · Australia
+          Gold Coast · AI for Australian Small Businesses
           <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#62c5d1" }} />
         </div>
 
@@ -78,8 +78,8 @@ export default async function Image() {
             marginBottom: "24px",
           }}
         >
-          Your firm runs on expertise.{" "}
-          <span style={{ color: "#62c5d1" }}>Not admin.</span>
+          Get found. Win the enquiry.{" "}
+          <span style={{ color: "#62c5d1" }}>Get your week back.</span>
         </div>
 
         {/* Sub */}
@@ -93,7 +93,7 @@ export default async function Image() {
             marginBottom: "48px",
           }}
         >
-          AI systems that recover 20+ hours a week, without adding staff or changing how your team works.
+          Website care plans from $100/mo. The Saabai Blueprint AI audit from $497, with SEO and AI search visibility.
         </div>
 
         {/* Brand */}
