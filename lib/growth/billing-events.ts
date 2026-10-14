@@ -7,6 +7,8 @@ import { Resend } from "resend";
 import { recordEvent, type ContactEventType } from "./events";
 import { escapeHtml } from "../html-escape";
 import { markUpsellConverted } from "./growth2";
+import { redemptionFrom } from "../coupons/core";
+import { resolveRedemptionCode } from "../coupons/stripe";
 
 export const ALERT_TO = () => process.env.GROWTH_ALERT_EMAIL || "hello@saabai.ai";
 
@@ -42,7 +44,8 @@ export async function recordBillingGrowthEvent(event: Stripe.Event): Promise<voi
     const type = map[event.type];
     if (!type) return;
     const amountCents = (o.amount_paid ?? o.amount_due ?? o.amount_total) as number | undefined;
-    await recordEvent({ id: `stripe_${event.id}`, contactId, type, refId: String(o.id ?? ""), amountCents, meta: { stripeType: event.type, attempt: o.attempt_count } });
+    const red = event.type === "checkout.session.completed" ? await resolveRedemptionCode(redemptionFrom(o as never)) : null;
+    await recordEvent({ id: `stripe_${event.id}`, contactId, type, refId: String(o.id ?? ""), amountCents, meta: { stripeType: event.type, attempt: o.attempt_count, ...(red ? { coupon: red.code ?? red.promotionCodeId, discountCents: red.discountCents } : {}) } });
     if (type === "care_plan_started" && email) await markUpsellConverted(email);
     if (type === "payment_failed" && email && process.env.RESEND_API_KEY) {
       const pi = o.payment_intent as { last_payment_error?: { message?: string } } | undefined;

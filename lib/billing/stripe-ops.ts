@@ -6,6 +6,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
+import { careProductFor, findActivePromo } from "../coupons/stripe";
+import { normaliseCode } from "../coupons/core";
 
 export const BILLING_SOURCE = "saabai-billing";
 export const stripeConfigured = () => !!process.env.STRIPE_SECRET_KEY;
@@ -29,9 +31,16 @@ export async function ensureCustomer(rec: SiteBillingRecord): Promise<string> {
   return c.id;
 }
 
-/** Fresh Checkout Session each time the 7-day pay link is opened. */
-export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string): Promise<string> {
+/**
+ * Fresh Checkout Session each time the 7-day pay link is opened.
+ * Customers can type a promo code on Stripe's page, or a ?code= on the pay
+ * link pre-applies one (Stripe doesn't allow both on one session).
+ */
+export async function createSetupCheckout(rec: SiteBillingRecord, customerId: string, code?: string): Promise<string> {
   const stripe = getStripe();
+  // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
+  const fixedProduct = await careProductFor(rec.planId);
+  const promo = code ? await findActivePromo(normaliseCode(code)) : null;
   const line_items: any[] = [
     {
       quantity: 1,
@@ -39,7 +48,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
         currency: "aud",
         unit_amount: rec.monthlyCents,
         recurring: { interval: "month" },
-        product_data: { name: `${rec.planName} website care`, metadata: { planId: rec.planId } },
+        ...(fixedProduct ? { product: fixedProduct } : { product_data: { name: `${rec.planName} website care`, metadata: { planId: rec.planId } } }),
         tax_behavior: "exclusive",
       } as any,
     },
@@ -51,7 +60,8 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
     });
   }
   const anchor = monthAfter(rec.startDate);
-  const meta = { source: BILLING_SOURCE, kind: "setup", siteId: rec.siteId, planId: rec.planId };
+  const meta: Record<string, string> = { source: BILLING_SOURCE, kind: "setup", siteId: rec.siteId, planId: rec.planId };
+  if (promo) meta.coupon_code = promo.code;
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -62,6 +72,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
       ...(anchor > Date.now() / 1000 + 3600 ? { billing_cycle_anchor: anchor, proration_behavior: "none" as const } : {}),
     },
     metadata: meta,
+    ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
     payment_method_collection: "always",
     success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}`,
     cancel_url: `${siteUrl()}/pay/${rec.payToken}`,

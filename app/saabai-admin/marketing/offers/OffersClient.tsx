@@ -1,0 +1,245 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Card, CardBody, CardHeader } from "../../ui/Card";
+import { Badge } from "../../ui/Badge";
+import { Button } from "../../ui/Button";
+import { confirmDialog, notify } from "../../ui/Feedback";
+import { TARGETS, brisbaneLabel, normaliseCode, targetLabel } from "@/lib/coupons/core";
+
+interface Code {
+  id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null;
+  percentOff: number | null; amountOff: number | null; duration: string; durationMonths: number | null;
+  target: string; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
+}
+interface Target { id: string; label: string; productId: string | null; ready: boolean; note?: string }
+
+const money = (c: number) => `$${(c / 100).toLocaleString("en-AU", { minimumFractionDigits: c % 100 ? 2 : 0 })}`;
+const SITE = "https://www.saabai.ai";
+
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", target: "all", duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
+
+export default function OffersClient() {
+  const [codes, setCodes] = useState<Code[] | null>(null);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+  const [f, setF] = useState(blank);
+  const [saving, setSaving] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const [settingUp, setSettingUp] = useState(false);
+  const [filter, setFilter] = useState<"active" | "all">("active");
+
+  const load = useCallback(async () => {
+    setErr(null);
+    try {
+      const res = await fetch("/api/admin/coupons");
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Couldn't load codes");
+      setCodes(d.codes || []);
+      setTargets(d.targets || []);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const careMissing = targets.some((t) => t.id.startsWith("care_") && !t.ready);
+  const tStatus = (id: string) => targets.find((t) => t.id === id);
+  const shown = useMemo(() => (codes ?? []).filter((c) => filter === "all" || c.active), [codes, filter]);
+  const activeCount = (codes ?? []).filter((c) => c.active).length;
+  const redeemed = (codes ?? []).reduce((n, c) => n + c.timesRedeemed, 0);
+
+  async function create() {
+    setSaving(true); setFormErr(null);
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...f, value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Couldn't create the code");
+      notify.success(`${d.code} is live`);
+      setF(blank);
+      await load();
+    } catch (e) { setFormErr(e instanceof Error ? e.message : String(e)); } finally { setSaving(false); }
+  }
+
+  async function setupProducts() {
+    if (!(await confirmDialog("This creates three fixed products in Stripe (Presence, Growth and Signature website care) so codes can be limited to one care plan. Existing subscriptions aren't touched. Running it again changes nothing.", { confirmLabel: "Set up products" }))) return;
+    setSettingUp(true);
+    try {
+      const res = await fetch("/api/admin/coupons/setup-products", { method: "POST" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Setup failed");
+      notify.success("Care plan products are ready");
+      await load();
+    } catch (e) { notify.error(e instanceof Error ? e.message : String(e)); } finally { setSettingUp(false); }
+  }
+
+  async function deactivate(c: Code) {
+    if (!(await confirmDialog(`Turn off ${c.code}? Customers won't be able to use it any more. Past discounts stay as they are.`, { confirmLabel: "Turn off", danger: true }))) return;
+    try {
+      const res = await fetch(`/api/admin/coupons/${c.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      notify.success(`${c.code} turned off`);
+      await load();
+    } catch (e) { notify.error(e instanceof Error ? e.message : String(e)); }
+  }
+
+  async function copy(text: string) {
+    try { await navigator.clipboard.writeText(text); notify.success("Link copied"); } catch { notify.error("Couldn't copy"); }
+  }
+
+  const off = (c: Code) => (c.percentOff != null ? `${c.percentOff}% off` : c.amountOff != null ? `${money(c.amountOff)} off` : "");
+  const durationLabel = (c: Code) => (c.duration === "repeating" ? `first ${c.durationMonths} months` : c.duration === "forever" ? "every payment" : "first payment");
+  const status = (c: Code) => {
+    if (!c.active) return <Badge tone="neutral">Off</Badge>;
+    if (c.expiresAt && c.expiresAt * 1000 < Date.now()) return <Badge tone="neutral">Expired</Badge>;
+    if (c.maxRedemptions && c.timesRedeemed >= c.maxRedemptions) return <Badge tone="warn">Used up</Badge>;
+    return <Badge tone="ok">Active</Badge>;
+  };
+  const isBlueprintTarget = (t: string) => t === "all" || t.startsWith("blueprint");
+  const tierOf = (t: string) => (t.startsWith("blueprint_") ? t.slice(10) : "starter");
+
+  return (
+    <div className="pg">
+      <div className="ph">
+        <div>
+          <div className="crumb">Marketing / <b>Offers &amp; Coupons</b></div>
+          <h1>Offers &amp; Coupons</h1>
+          <p className="sub">Promo codes work on Blueprint checkout and care plan pay links. Customers type them on the Stripe page, or you send a link with the code already applied.</p>
+        </div>
+      </div>
+
+      <div className="kpis k3">
+        <div className="card kpi"><div className="l">Active codes</div><div className="v">{codes ? activeCount : "–"}</div></div>
+        <div className="card kpi"><div className="l">Times redeemed</div><div className="v">{codes ? redeemed : "–"}</div></div>
+        <div className="card kpi"><div className="l">Products ready</div><div className="v">{targets.length ? `${targets.filter((t) => t.id !== "all" && t.ready).length}/6` : "–"}</div></div>
+      </div>
+
+      {careMissing && (
+        <div style={{ marginBottom: 16 }}>
+          <Card>
+            <CardBody>
+              <div className="of-setup">
+                <div>
+                  <b>Care plan products aren&apos;t set up yet</b>
+                  <p className="muted of-meta">Codes for &quot;All products&quot; already work on care plans. To limit a code to one care plan, create the three fixed Stripe products first.</p>
+                </div>
+                <Button variant="acc" onClick={setupProducts} disabled={settingUp}>{settingUp ? "Setting up…" : "Set up coupon products"}</Button>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      <div className="of-grid">
+        <Card>
+          <CardHeader title="New code" />
+          <CardBody>
+            <div className="of-form">
+              <div className="of-f">
+                <label htmlFor="of-code">Code</label>
+                <input id="of-code" value={f.code} onChange={(e) => setF({ ...f, code: normaliseCode(e.target.value) })} placeholder="NEWCLIENT50" autoCapitalize="characters" />
+              </div>
+              <div className="of-f">
+                <span className="lb">Discount</span>
+                <div className="of-row">
+                  <div className="of-seg" role="group" aria-label="Discount type">
+                    <button type="button" className={f.kind === "percent" ? "on" : ""} onClick={() => setF({ ...f, kind: "percent" })}>% off</button>
+                    <button type="button" className={f.kind === "fixed" ? "on" : ""} onClick={() => setF({ ...f, kind: "fixed" })}>$ off</button>
+                  </div>
+                  <input aria-label="Discount amount" type="number" inputMode="decimal" min="0" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder={f.kind === "percent" ? "50" : "100"} />
+                </div>
+              </div>
+              <div className="of-f">
+                <label htmlFor="of-target">Works on</label>
+                <select id="of-target" value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })}>
+                  {["All", "Blueprint", "Website care"].map((g) => (
+                    <optgroup key={g} label={g}>
+                      {TARGETS.filter((t) => t.group === g).map((t) => {
+                        const s = tStatus(t.id);
+                        const ready = t.id === "all" || !!s?.ready;
+                        return <option key={t.id} value={t.id} disabled={!ready}>{t.label}{ready ? "" : " (not ready)"}</option>;
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
+                {f.target.startsWith("care_") && <p className="hint">Discounts the monthly fee. Setup fees aren&apos;t discounted by a care plan code.</p>}
+              </div>
+              <div className="of-f">
+                <label htmlFor="of-dur">How long (care plans)</label>
+                <select id="of-dur" value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as typeof f.duration })}>
+                  <option value="once">First payment only</option>
+                  <option value="repeating">First few months</option>
+                  <option value="forever">Every payment</option>
+                </select>
+                {f.duration === "repeating" && (
+                  <input aria-label="Number of months" style={{ marginTop: 8 }} type="number" min="1" value={f.durationMonths} onChange={(e) => setF({ ...f, durationMonths: e.target.value })} placeholder="3 months" />
+                )}
+                <p className="hint">Blueprint is a one-off payment, so this only matters for care plans.</p>
+              </div>
+              <label className="of-tog">
+                <input type="checkbox" checked={f.firstTimeOnly} onChange={(e) => setF({ ...f, firstTimeOnly: e.target.checked })} />
+                <span>First-time customers only<span className="muted of-meta" style={{ display: "block" }}>Stripe blocks it for anyone who has paid you before.</span></span>
+              </label>
+              <div className="of-row">
+                <div className="of-f">
+                  <label htmlFor="of-min">Minimum spend ($)</label>
+                  <input id="of-min" type="number" inputMode="decimal" min="0" value={f.minimumSpend} onChange={(e) => setF({ ...f, minimumSpend: e.target.value })} placeholder="None" />
+                </div>
+                <div className="of-f">
+                  <label htmlFor="of-max">Max uses</label>
+                  <input id="of-max" type="number" min="1" value={f.maxRedemptions} onChange={(e) => setF({ ...f, maxRedemptions: e.target.value })} placeholder="Unlimited" />
+                </div>
+              </div>
+              <div className="of-f">
+                <label htmlFor="of-exp">Expires</label>
+                <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
+                <p className="hint">Works until 11:59 pm Brisbane time on this day. Leave blank for no expiry.</p>
+              </div>
+              {formErr && <p className="of-err" role="alert">{formErr}</p>}
+              <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value}>{saving ? "Creating…" : "Create code"}</Button>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title={`Codes${codes ? ` (${shown.length})` : ""}`}
+            action={<div className="of-seg" style={{ width: 160 }}><button type="button" className={filter === "active" ? "on" : ""} onClick={() => setFilter("active")}>Active</button><button type="button" className={filter === "all" ? "on" : ""} onClick={() => setFilter("all")}>All</button></div>}
+          />
+          {err ? (
+            <CardBody><p className="of-err">{err}</p><div style={{ marginTop: 10 }}><Button size="sm" onClick={load}>Retry</Button></div></CardBody>
+          ) : codes == null ? (
+            <CardBody><div className="of-sk" style={{ width: "40%" }} /><div className="of-sk" style={{ width: "80%" }} /><div className="of-sk" style={{ width: "60%" }} /></CardBody>
+          ) : !shown.length ? (
+            <CardBody><p className="muted">{codes.length ? "No active codes. Switch to All to see old ones." : "No codes yet. Create one on the left, for example NEWCLIENT50 at 50% off for first-time customers."}</p></CardBody>
+          ) : (
+            shown.map((c) => (
+              <div className="oc" key={c.id} style={{ opacity: c.active ? 1 : 0.6 }}>
+                <div className="r1"><span className="of-code">{c.code}</span>{status(c)}</div>
+                <div className="of-tags">
+                  <span className="tag bp">{off(c)}</span>
+                  <span className="tag">{c.target === "product" ? "1 product" : targetLabel(c.target)}</span>
+                  {c.firstTimeOnly && <span className="tag ws">First-time only</span>}
+                  {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
+                </div>
+                <div className="muted of-meta">
+                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.expiresAt ? ` · until ${brisbaneLabel(c.expiresAt)}` : " · no expiry"}
+                </div>
+                {c.active && (
+                  <div className="r2 of-acts">
+                    {isBlueprintTarget(c.target) && <Button size="sm" variant="gh" onClick={() => copy(`${SITE}/blueprint/checkout?tier=${tierOf(c.target)}&code=${c.code}`)}>Copy Blueprint link</Button>}
+                    <Button size="sm" variant="dg" onClick={() => deactivate(c)}>Turn off</Button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          <CardBody><p className="muted of-meta">Care plan pay links: add <span className="num">?code=YOURCODE</span> to the link to pre-apply a code, or the client can type it on the Stripe page. Every completed checkout records the code on the order, the audit and the client&apos;s journey.</p></CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}

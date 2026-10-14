@@ -1,25 +1,28 @@
 /**
- * GET  /api/admin/coupons  — list promotion codes (with their coupon)
- * POST /api/admin/coupons  — create a coupon + customer-facing promotion code
- * Admin-only. Backed entirely by Stripe (no local storage).
+ * GET  /api/admin/coupons  list promotion codes (with their coupon) + product picker status
+ * POST /api/admin/coupons  create a coupon + customer-facing promotion code
+ * Admin-only. Codes live in Stripe; Stripe Checkout enforces every rule.
  */
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "../../../../lib/stripe";
-import { getProduct } from "../../../../lib/product-catalogue";
 import { isAdminRequest } from "../../../../lib/product-stripe";
+import { buildStripeParams, parseCouponInput } from "../../../../lib/coupons/core";
+import { targetStatuses } from "../../../../lib/coupons/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  if (!(await isAdminRequest())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
     const stripe = getStripe();
-    const list = await stripe.promotionCodes.list({ limit: 100, expand: ["data.promotion.coupon"] });
-    const codes = list.data.map((pc) => {
+    const all: Stripe.PromotionCode[] = [];
+    for await (const pc of stripe.promotionCodes.list({ limit: 100, expand: ["data.promotion.coupon"] })) {
+      all.push(pc);
+      if (all.length >= 500) break;
+    }
+    const codes = all.map((pc) => {
       const c = pc.promotion.coupon as Stripe.Coupon;
       return {
         id: pc.id,
@@ -28,16 +31,19 @@ export async function GET() {
         timesRedeemed: pc.times_redeemed,
         maxRedemptions: pc.max_redemptions ?? null,
         expiresAt: pc.expires_at ?? null,
-        percentOff: c.percent_off ?? null,
-        amountOff: c.amount_off ?? null,
-        currency: c.currency ?? null,
-        duration: c.duration,
-        durationMonths: c.duration_in_months ?? null,
-        restrictedProducts: c.applies_to?.products ?? [],
-        appliesTo: (c.metadata?.applies_to as string) ?? "both",
+        percentOff: c?.percent_off ?? null,
+        amountOff: c?.amount_off ?? null,
+        duration: c?.duration ?? "once",
+        durationMonths: c?.duration_in_months ?? null,
+        restrictedProducts: c?.applies_to?.products ?? [],
+        target: (pc.metadata?.target as string) || (c?.metadata?.target as string) || (c?.applies_to?.products?.length ? "product" : "all"),
+        firstTimeOnly: !!pc.restrictions?.first_time_transaction,
+        minimumSpend: pc.restrictions?.minimum_amount ?? null,
+        created: pc.created,
       };
     });
-    return NextResponse.json({ codes });
+    const targets = await targetStatuses().catch(() => []);
+    return NextResponse.json({ codes, targets });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[admin/coupons GET]", msg);
@@ -46,81 +52,29 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdminRequest())) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+  if (!(await isAdminRequest())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const body = await req.json().catch(() => ({}));
-
-  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase() : "";
-  if (!code) return NextResponse.json({ error: "A code is required" }, { status: 400 });
-
-  const kind = body?.kind === "fixed" ? "fixed" : "percent";
-  const value = typeof body?.value === "number" ? body.value : parseFloat(String(body?.value));
-  if (!value || Number.isNaN(value) || value <= 0) {
-    return NextResponse.json({ error: "Discount value must be greater than zero" }, { status: 400 });
-  }
-  if (kind === "percent" && value > 100) {
-    return NextResponse.json({ error: "Percentage cannot exceed 100" }, { status: 400 });
-  }
-
-  const duration: "once" | "forever" | "repeating" =
-    body?.duration === "forever" ? "forever" : body?.duration === "repeating" ? "repeating" : "once";
-
-  // Which fees the code discounts. "setup"/"recurring" require a product so we can
-  // point Stripe at the right underlying product; "both" is general.
-  const appliesTo: "setup" | "recurring" | "both" =
-    body?.appliesTo === "setup" ? "setup" : body?.appliesTo === "recurring" ? "recurring" : "both";
-
+  const input = parseCouponInput(body ?? {});
+  if (typeof input === "string") return NextResponse.json({ error: input }, { status: 400 });
   try {
     const stripe = getStripe();
-
-    const couponParams: Stripe.CouponCreateParams = { duration, name: code, metadata: { applies_to: appliesTo } };
-    if (kind === "percent") {
-      couponParams.percent_off = value;
-    } else {
-      couponParams.amount_off = Math.round(value * 100);
-      couponParams.currency = "aud";
+    let productId: string | null = null;
+    if (input.target !== "all") {
+      const t = (await targetStatuses()).find((x) => x.id === input.target);
+      if (!t?.ready || !t.productId) return NextResponse.json({ error: `${t?.label ?? "That product"} isn't ready: ${t?.note ?? "not linked to Stripe"}` }, { status: 400 });
+      productId = t.productId;
     }
-    if (duration === "repeating") {
-      const months = parseInt(String(body?.durationMonths), 10);
-      couponParams.duration_in_months = !months || months < 1 ? 1 : months;
+    const existing = await stripe.promotionCodes.list({ code: input.code, active: true, limit: 1 });
+    if (existing.data.length) return NextResponse.json({ error: `${input.code} already exists and is active` }, { status: 409 });
+    const p = buildStripeParams(input, productId);
+    const coupon = await stripe.coupons.create(p.coupon as unknown as Stripe.CouponCreateParams);
+    try {
+      const promo = await stripe.promotionCodes.create({ ...(p.promo as object), promotion: { type: "coupon", coupon: coupon.id } } as Stripe.PromotionCodeCreateParams);
+      return NextResponse.json({ id: promo.id, code: promo.code });
+    } catch (e) {
+      await stripe.coupons.del(coupon.id).catch(() => {}); // don't leave an orphan coupon behind
+      throw e;
     }
-
-    // Resolve product scoping.
-    const product = body?.productId ? await getProduct(String(body.productId)) : null;
-    if ((appliesTo === "setup" || appliesTo === "recurring") && !product) {
-      return NextResponse.json({ error: "Pick a product for a setup-only or recurring-only code" }, { status: 400 });
-    }
-    if (appliesTo === "setup") {
-      if (product!.billingType !== "setup_monthly" || !product!.stripeSetupProductId) {
-        return NextResponse.json({ error: "This product has no separate setup fee. Re-save it first, or pick a setup + monthly product." }, { status: 400 });
-      }
-      couponParams.applies_to = { products: [product!.stripeSetupProductId] };
-    } else if (appliesTo === "recurring") {
-      couponParams.applies_to = { products: [product!.stripeProductId] };
-    } else if (product) {
-      // "Both" restricted to one product: cover its main and setup products.
-      const ids = [product.stripeProductId, product.stripeSetupProductId].filter(Boolean) as string[];
-      couponParams.applies_to = { products: ids };
-    }
-
-    const coupon = await stripe.coupons.create(couponParams);
-
-    const promoParams: Stripe.PromotionCodeCreateParams = {
-      code,
-      promotion: { type: "coupon", coupon: coupon.id },
-    };
-    const maxRedemptions = parseInt(String(body?.maxRedemptions), 10);
-    if (maxRedemptions && maxRedemptions > 0) promoParams.max_redemptions = maxRedemptions;
-    if (typeof body?.expiresAt === "string" && body.expiresAt.trim()) {
-      const ts = Math.floor(new Date(body.expiresAt.trim() + "T23:59:59").getTime() / 1000);
-      if (!Number.isNaN(ts)) promoParams.expires_at = ts;
-    }
-
-    const promo = await stripe.promotionCodes.create(promoParams);
-
-    return NextResponse.json({ id: promo.id, code: promo.code });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[admin/coupons POST]", msg);
