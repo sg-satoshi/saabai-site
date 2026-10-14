@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation FAQ for Professional Firms",
+  title: "FAQ, Websites, AI Audits and Automation",
   description:
-    "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+    "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
   alternates: { canonical: "https://www.saabai.ai/faq" },
   openGraph: {
     url: "https://www.saabai.ai/faq",
-    title: "AI Automation FAQ for Professional Firms | Saabai",
+    title: "FAQ, Websites, AI Audits and Automation | Saabai",
     description:
-      "Honest answers about AI automation for professional firms: cost, timeline, integration, compliance, and working with Saabai. No buzzwords, no sales spin.",
+      "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
   },
 };
 
@@ -24,7 +24,7 @@ const faqSchema = {
       name: "We're not a tech company. Is AI automation actually for us?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        text: "This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
     },
     {
@@ -97,7 +97,7 @@ const faqs = [
       },
       {
         q: "We're not a tech company. Is this actually for us?",
-        a: "This is almost exclusively for non-tech businesses. Law firms, real estate agencies, accounting practices, financial advisers. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
+        a: "This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
       },
       {
         q: "Is this just another \"digital transformation\" project that takes forever and costs a fortune?",
@@ -249,8 +249,9 @@ export default function FAQ() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
-          Everything you want to know about AI automation for professional
-          firms, answered plainly.
+          Everything you want to know about websites, AI and automation for
+          Australian small businesses, answered plainly. Care plans from $100
+          a month, Blueprint AI audits from $497, and a free AI score to start.
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-12 leading-relaxed">
           If your question isn&apos;t here, book a free strategy call. We&apos;re

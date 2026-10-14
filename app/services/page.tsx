@@ -3,73 +3,77 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation Services for Professional Firms",
+  title: "Websites, AI Audits and Automation for Small Businesses",
   description:
-    "Custom AI automation services for professional firms: client intake, workflow automation, compliance document systems, and 24/7 AI agents. Book a free strategy call.",
+    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
   alternates: { canonical: "https://www.saabai.ai/services" },
   openGraph: {
     url: "https://www.saabai.ai/services",
-    title: "AI Automation Services for Professional Firms | Saabai",
+    title: "Websites, AI Audits and Automation for Small Businesses | Saabai",
     description:
-      "Custom AI automation services for professional firms: client intake, workflow automation, compliance docs, and 24/7 AI agents. Book a free strategy call.",
+    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
   },
 };
 
-const services: { title: string; description: string; benefits: string[]; wide?: boolean }[] = [
+const services: { title: string; description: string; benefits: string[]; wide?: boolean; href?: string; price?: string }[] = [
   {
-    title: "Client Intake & Lead Qualification",
+    title: "Website Care Plans",
+    price: "$100, $200 or $300 a month",
+    href: "/websites",
     description:
-      "AI systems that screen enquiries, qualify leads, and route them correctly before anyone on your team touches them.",
+      "A fast, modern website built and looked after for you, with a trained AI chatbot that answers enquiries while you're busy doing the actual work.",
     benefits: [
-      "Automated lead scoring and qualification",
-      "Intelligent enquiry routing",
-      "CRM pipeline automation",
-      "Instant follow-up sequences",
+      "Presence $100/mo, Growth $200/mo, Signature $300/mo",
+      "Builds from $2,000, or a rebuild of your current site",
+      "Hosting, security, updates and small changes included",
+      "AI enquiry chatbot on every plan",
     ],
   },
   {
-    title: "Client Communications & Support",
+    title: "The Saabai Blueprint",
+    price: "From $497",
+    href: "/blueprint",
     description:
-      "AI-powered response systems that handle routine client queries 24/7, so your team focuses on complex, high-value work.",
+      "A fixed-price AI audit that ranks exactly where AI and automation will save you time and win you work, so you stop guessing and stop paying for shiny things you don't need.",
     benefits: [
-      "24/7 automated client responses",
-      "Knowledge base integration",
-      "Appointment and scheduling automation",
-      "Proactive client status updates",
+      "Starter $497, Pro $1,497, Business $3,500",
+      "Ranked fix list with effort, impact and dollar estimates",
+      "SEO and AI search visibility included",
+      "Fee credited if you build with us within 30 days",
     ],
   },
   {
-    title: "Operations & Workflow Automation",
+    title: "SEO & AI Search Visibility",
+    price: "In every Blueprint",
+    href: "/blueprint",
     description:
-      "Connect your CRM, documents, calendar, and billing systems into automated pipelines that run without manual input.",
+      "Where you rank in Google, and whether ChatGPT, Claude, Perplexity and Gemini actually recommend you, or your competitor down the road.",
     benefits: [
-      "Cross-system data synchronisation",
-      "Automated reporting and dashboards",
-      "Document generation workflows",
-      "Task routing and escalation",
+      "Google ranking and Business Profile check",
+      "AI answer checks across ChatGPT, Claude, Perplexity and Gemini",
+      "Side-by-side competitor comparison",
+      "Copy-paste fixes for your site",
     ],
   },
   {
-    title: "Compliance & Document Automation",
+    title: "AI Chat Agents & Automations",
+    href: "/blueprint",
     description:
-      "Automate compliance documentation, contract workflows, and audit trails, reducing risk and reclaiming hours.",
+      "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
     benefits: [
-      "Automated document generation",
-      "Compliance checklists and reminders",
-      "Digital signature workflows",
-      "Audit trail management",
+      "Trained on your services, prices and FAQs",
+      "Captures and qualifies every lead",
+      "Follow-up, reminders and CRM handoff",
+      "Scoped from your Blueprint, no surprise invoices",
     ],
   },
   {
-    title: "AI Chat Agents",
+    title: "Not sure where to start? Take the free AI score.",
+    href: "/score",
+    price: "Free",
     description:
-      "Custom AI agents embedded directly on your website, handling enquiries, quoting, lead qualification, and client support around the clock. Currently live across specialist law firms, trade businesses, and professional services. No staff required after hours.",
-    benefits: [
-      "Custom-trained on your products, services, and pricing",
-      "Captures and qualifies leads automatically",
-      "Instant responses: day, night, and weekends",
-      "CRM integration and email notification on every lead",
-    ],
+      "A few quick questions and you'll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.",
+    benefits: [],
     wide: true,
   },
 ];
@@ -78,12 +82,12 @@ const steps = [
   {
     step: "01",
     title: "Saabai Blueprint",
-    body: "We analyse your current operations to identify where automation can create the biggest impact.",
+    body: "A fixed-price audit of your business, website and search visibility, with a ranked plan of what to fix first.",
   },
   {
     step: "02",
     title: "System Design",
-    body: "We design custom AI workflows tailored to your firm's specific tools, team structure, and commercial priorities.",
+    body: "We design the website, AI agent or automation around the tools you already use and the way you already work.",
   },
   {
     step: "03",
@@ -93,30 +97,30 @@ const steps = [
   {
     step: "04",
     title: "Ongoing Optimisation",
-    body: "Monthly review cycles, performance monitoring, and iterative improvements to compound efficiency over time.",
+    body: "Your care plan keeps it hosted, secure, updated and improving. If something breaks, that's our problem, not yours.",
   },
 ];
 
 const results = [
   {
-    stat: "20–30 hrs",
-    label: "Recovered per week",
-    detail: "Professional firms typically recover 20–30 hours a week by automating admin, reporting, follow-up, and document workflows.",
+    stat: "90s",
+    label: "Enquiry response",
+    detail: "Every enquiry answered within 90 seconds, day or night, for a Brisbane law firm. Previously 2 to 14 hours.",
   },
   {
-    stat: "3×",
-    label: "Faster response times",
-    detail: "AI agents respond to leads and clients instantly, day or night, without increasing headcount.",
+    stat: "12 hrs",
+    label: "Recovered per week",
+    detail: "Intake admin taken off the same team's plate each week by one AI agent.",
   },
   {
     stat: "40%",
-    label: "Reduction in operational costs",
-    detail: "Automating manual workflows reduces the cost of delivery, support, and administration across the firm.",
+    label: "Enquiries resolved by AI",
+    detail: "Share of a national supplier's inbound enquiries fully handled without staff, with instant quotes.",
   },
   {
-    stat: "24/7",
-    label: "Automated coverage",
-    detail: "AI systems handle enquiries, follow-up, and routine tasks around the clock. No sick days, no overtime.",
+    stat: "3 wks",
+    label: "Kickoff to live",
+    detail: "Typical time from kickoff to an AI agent handling real customers. See the case studies.",
   },
 ];
 
@@ -138,22 +142,34 @@ export default function Services() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            AI Automation for Professional Firms · Australia
+            Gold Coast · AI for Australian Small Businesses
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          Stop managing admin.
+          Get found. Win the enquiry.
           <br />
-          <span className="text-gradient">Start scaling expertise.</span>
+          <span className="text-gradient">Get your week back.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          We design and deploy custom automation systems that eliminate
-          operational drag, so your team can focus on high-value client work,
-          not the admin wrapped around it.
+          Websites that answer enquiries for you, a fixed-price AI audit that
+          tells you what&apos;s actually worth doing, and the automations to
+          make it happen. Plain prices, no jargon.
         </p>
+        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
+          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
+            Saabai, founded by Shane Goldberg on the Gold Coast, offers website care
+            plans (<strong className="text-saabai-text">Presence $100, Growth $200,
+            Signature $300 a month</strong>), the Saabai Blueprint AI audit (
+            <strong className="text-saabai-text">Starter $497, Pro $1,497, Business
+            $3,500</strong>) with SEO and AI search visibility, and custom AI agents
+            and automations. Start free with the <a href="/score" className="text-saabai-teal">AI score</a>.
+          </p>
+        </div>
+
 
         <div className="relative">
           <a
@@ -171,69 +187,29 @@ export default function Services() {
         }} />
       </section>
 
-      {/* ── Advisory & Board Roles ───────────────────────────────────────── */}
-      <section className="py-20 px-6 max-w-5xl mx-auto">
-        <div
-          className="relative rounded-xl overflow-hidden border border-saabai-border-accent bg-saabai-surface p-10 md:p-14 flex flex-col md:flex-row md:items-center gap-8"
-          style={{ boxShadow: "0 0 80px rgba(98,197,209,0.35), 0 0 32px rgba(98,197,209,0.15)" }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
-          <div className="flex-1">
-            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-4">
-              New Offering
-            </p>
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-4 leading-snug">
-              Advisory &amp; Board Roles
-            </h2>
-            <p className="text-base text-saabai-text-muted leading-relaxed max-w-xl">
-              Beyond implementation, Shane Goldberg is now available for advisory retainers,
-              board of director positions, advisory board roles, and implementation oversight
-              engagements. For leadership teams and boards that need AI expertise at the
-              decision-making level, not just the operational level.
-            </p>
-            <ul className="flex flex-col gap-2.5 mt-6">
-              {["AI Advisory Retainer (2–4 days/month)", "Board of Directors", "Advisory Board Member", "Implementation Oversight"].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-saabai-text-muted">
-                  <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="shrink-0">
-            <a
-              href="/advisory"
-              className="inline-block bg-saabai-teal text-saabai-bg px-8 py-3.5 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity tracking-wide shadow-[0_0_30px_var(--saabai-glow-mid)] whitespace-nowrap"
-            >
-              Learn More
-            </a>
-          </div>
-        </div>
-      </section>
-
       {/* ── What We Help Automate ────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          What We Help Professional Firms Automate
+          What We Do
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
-          Stop doing manually what AI can do automatically.
+          Four things, done properly.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-20 leading-relaxed">
-          Most professional firms are held back by the same problems: manual
-          admin, slow client follow-up, repetitive reporting. Saabai identifies
-          these bottlenecks and replaces them with intelligent systems built
-          around how your firm actually operates.
+          Most small businesses don&apos;t need an &ldquo;AI transformation&rdquo;.
+          They need a website that works, to show up when people search, and
+          fewer hours lost to admin. That&apos;s what we do.
         </p>
 
         <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {services.map(({ title, description, benefits, wide }) => (
+          {services.map(({ title, description, benefits, wide, href, price }) => (
             <div
               key={title}
               className={`bg-saabai-surface p-12 hover:bg-saabai-surface-raised transition-colors relative group${wide ? " md:col-span-2" : ""}`}
             >
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-border to-transparent group-hover:via-saabai-teal/30 transition-all" />
-              <h3 className="text-xl font-semibold mb-3 tracking-tight">{title}</h3>
+              <h3 className="text-xl font-semibold mb-2 tracking-tight">{title}</h3>
+              {price && <p className="text-sm font-semibold text-saabai-teal mb-3">{price}</p>}
               <p className="text-base text-saabai-text-muted leading-relaxed mb-8">
                 {description}
               </p>
@@ -245,6 +221,11 @@ export default function Services() {
                   </li>
                 ))}
               </ul>
+              {href && (
+                <a href={href} className="inline-block mt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
+                  {href === "/score" ? "Take the free AI score →" : "Learn more →"}
+                </a>
+              )}
             </div>
           ))}
         </div>
@@ -301,7 +282,7 @@ export default function Services() {
             View Saabai Blueprint
           </a>
           <p className="text-xs text-saabai-text-dim mt-5 tracking-wide">
-            Or book a free call to discuss which tier fits your firm
+            Or book a free call to work out which tier fits
           </p>
         </div>
       </section>
@@ -336,7 +317,7 @@ export default function Services() {
       {/* ── Results ─────────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          Results Professional Firms Typically See
+          Results From Live Client Systems
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
           Time recovered. Costs reduced. Capacity unlocked.
@@ -372,14 +353,14 @@ export default function Services() {
           Get Started
         </p>
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
-          Find out exactly where your firm
+          Find out where your business
           <br />
-          <span className="text-gradient">is losing time, and how to fix it.</span>
+          <span className="text-gradient">is leaking time and leads.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free 30-minute strategy call. We&apos;ll map the highest-value
-          automation opportunities in your operation and give you a clear
-          picture of what&apos;s possible. No obligation, no jargon.
+          Take the free AI score, or book a free 30-minute call with Shane.
+          You&apos;ll get a straight answer on what&apos;s worth doing, and
+          what isn&apos;t. No obligation, no jargon.
         </p>
 
         <a

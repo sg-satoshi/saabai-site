@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Case Studies, AI Automation Results",
+  title: "Case Studies, AI Results for Australian Businesses",
   description:
-    "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms, and went live in 3 weeks.",
+    "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
   alternates: { canonical: "https://www.saabai.ai/case-studies" },
   openGraph: {
     url: "https://www.saabai.ai/case-studies",
-    title: "Case Studies, AI Automation Results | Saabai",
+    title: "Case Studies, AI Results for Australian Businesses | Saabai",
     description:
-      "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms, and went live in 3 weeks.",
+      "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
   },
 };
 
@@ -41,7 +41,7 @@ export default function CaseStudies() {
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           Real results
           <br />
-          <span className="text-gradient">from real firms.</span>
+          <span className="text-gradient">from real businesses.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
@@ -49,6 +49,17 @@ export default function CaseStudies() {
           Saabai AI agents and measured the difference, in hours recovered, leads
           converted, and revenue captured after hours.
         </p>
+        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
+          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
+            Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
+            live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12 hours
+            a week recovered) and a national plastics supplier (instant quotes, 40% of
+            enquiries resolved without staff). Most projects start with a{" "}
+            <a href="/blueprint" className="text-saabai-teal">Saabai Blueprint from $497</a>.
+          </p>
+        </div>
+
 
         <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none" style={{
           background: "linear-gradient(to bottom, transparent, var(--saabai-bg))"
@@ -301,9 +312,9 @@ export default function CaseStudies() {
           <span className="text-gradient">the next case study?</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          Book a free 30-minute strategy call. We&apos;ll map your workflows, identify
-          where automation creates the biggest impact, and give you a clear picture
-          of what&apos;s possible, no obligation.
+          Start with the free AI score, or go straight to a Saabai Blueprint
+          (Starter $497, Pro $1,497, Business $3,500). Prefer a chat first? Book a
+          free 30-minute call.
         </p>
         <a
           href="https://calendly.com/shanegoldberg/30min"
@@ -313,6 +324,7 @@ export default function CaseStudies() {
         >
           Book Your Free Strategy Call
         </a>
+        <p className="relative mt-5"><a href="/score" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">Or take the free AI score →</a></p>
         <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
           No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
         </p>

@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation Use Cases for Professional Firms",
+  title: "AI Automation Use Cases for Small Businesses",
   description:
-    "See how law firms, real estate agencies, accounting firms and financial advisers use AI automation to eliminate manual work and recover hours each week.",
+    "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
   alternates: { canonical: "https://www.saabai.ai/use-cases" },
   openGraph: {
     url: "https://www.saabai.ai/use-cases",
-    title: "AI Automation Use Cases for Professional Firms | Saabai",
+    title: "AI Automation Use Cases for Small Businesses | Saabai",
     description:
-      "See how law firms, real estate agencies, accounting firms and financial advisers use AI automation to eliminate manual work and recover hours each week.",
+      "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
   },
 };
 
@@ -79,7 +79,7 @@ const useCases = [
   {
     category: "Compliance & Document Automation",
     description:
-      "Across every professional firm, there is a layer of compliance, documentation, and audit trail work that consumes hours and creates risk when it falls behind. Automation brings consistency and speed to this work.",
+      "Across every business, there is a layer of compliance, documentation, and audit trail work that consumes hours and creates risk when it falls behind. Automation brings consistency and speed to this work.",
     examples: [
       "Automated compliance checklist generation",
       "Contract and engagement letter workflows",
@@ -114,7 +114,7 @@ export default function UseCases() {
         <div className="relative inline-flex items-center gap-2.5 mb-10">
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
           <p className="text-xs font-medium tracking-[0.2em] text-saabai-text-dim uppercase">
-            AI Automation for Professional Firms · Real-World Applications
+            AI for Australian Small Businesses · Real-World Applications
           </p>
           <span className="w-1 h-1 rounded-full bg-saabai-teal inline-block" />
         </div>
@@ -122,11 +122,11 @@ export default function UseCases() {
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           What can actually be
           <br />
-          <span className="text-gradient">automated in your firm?</span>
+          <span className="text-gradient">automated in your business?</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-6 leading-relaxed">
-          Practical examples of how professional firms are using AI automation
+          Practical examples of how Australian businesses are using AI automation
           to reclaim hours, reduce operational risk, and focus on the work that
           actually requires expertise.
         </p>

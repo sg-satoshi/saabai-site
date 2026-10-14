@@ -6,13 +6,13 @@ import JsonLd from "../components/JsonLd";
 export const metadata: Metadata = {
   title: "Websites and Care Plans for Small Businesses",
   description:
-    "We build and rebuild websites for Australian professional firms, each with a trained AI chatbot built in. Three tiers from $2,000 plus care from $100/mo. Book a free website consult.",
+    "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
   alternates: { canonical: "https://www.saabai.ai/websites" },
   openGraph: {
     url: "https://www.saabai.ai/websites",
-    title: "AI-Native Websites for Professional Firms | Saabai",
+    title: "Website Care Plans for Small Businesses | Saabai",
     description:
-      "We build and rebuild websites for Australian professional firms, each with a trained AI chatbot built in. Three tiers from $2,000 plus care from $100/mo.",
+      "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
   },
 };
 
@@ -26,9 +26,9 @@ const tiers = [
     priceNote: "one-off build",
     monthly: "then $100/mo care",
     description:
-      "A polished, fast, professional website built for your firm, with a trained enquiry chatbot that answers common questions and captures every lead.",
+      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures every lead.",
     features: [
-      "Custom site designed for your firm",
+      "Custom site designed for your business",
       "Fast, mobile and search ready",
       "Trained enquiry chatbot that answers FAQs",
       "Lead capture straight to your inbox",
@@ -38,7 +38,7 @@ const tiers = [
   },
   {
     name: "Growth",
-    tagline: "For firms that want the site to sell",
+    tagline: "For businesses that want the site to sell",
     price: "from $4,000",
     priceNote: "one-off build",
     monthly: "then $200/mo care",
@@ -83,11 +83,15 @@ const faqs = [
   },
   {
     q: "What is the custom avatar on the Signature tier?",
-    a: "We train the AI to look and sound like a persona you choose, so it matches your brand voice rather than sounding like a generic bot. It becomes a recognisable part of your firm.",
+    a: "We train the AI to look and sound like a persona you choose, so it matches your brand voice rather than sounding like a generic bot. It becomes a recognisable part of your business.",
   },
   {
     q: "What does the monthly care cover?",
     a: "Hosting, security, updates and keeping your AI running and trained. Your site stays fast, current and looked after without you lifting a finger.",
+  },
+  {
+    q: "How much is a Saabai website care plan?",
+    a: "Presence is $100 a month, Growth is $200 a month and Signature is $300 a month (AUD). Builds start from $2,000, $4,000 and $6,500 respectively. Not sure which fits? Take the free AI score at saabai.ai/score or book a free consult.",
   },
   {
     q: "How do we get started?",
@@ -162,18 +166,31 @@ export default function WebsitesPage() {
           }}
         />
         <p className="text-[11px] font-medium tracking-[0.22em] uppercase text-saabai-teal mb-6">
-          AI-Native Websites · Built for Professional Firms
+          Website Care Plans · Gold Coast · Australia-wide
         </p>
         <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
           A website that works like an{" "}
           <span className="text-gradient">employee</span>
         </h1>
         <p className="text-lg text-saabai-text-muted max-w-2xl mx-auto leading-relaxed mb-10">
-          We build and rebuild websites for professional firms, each one with a
-          trained AI team member built in. It answers enquiries, qualifies leads
-          and works around the clock, so your site does far more than sit there
-          looking good.
+          We build, host and look after websites for Australian small
+          businesses, each one with a trained AI team member built in. It
+          answers enquiries, qualifies leads and works around the clock, so your
+          site does more than sit there looking pretty.
         </p>
+        <div className="relative max-w-2xl mx-auto mb-12 text-left bg-saabai-surface/80 border border-saabai-border rounded-xl px-6 py-5">
+          <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-saabai-teal mb-2">In short</p>
+          <p className="text-sm md:text-base text-saabai-text-muted leading-relaxed">
+            Saabai builds and looks after small business websites on a monthly care
+            plan: <strong className="text-saabai-text">Presence $100</strong>,{" "}
+            <strong className="text-saabai-text">Growth $200</strong> or{" "}
+            <strong className="text-saabai-text">Signature $300</strong> a month
+            (AUD), with builds from $2,000. Hosting, security, updates and a trained
+            AI enquiry chatbot are included. Founded by Shane Goldberg on the Gold
+            Coast, Queensland.
+          </p>
+        </div>
+
         <a
           href={CALENDLY}
           target="_blank"
@@ -209,7 +226,7 @@ export default function WebsitesPage() {
               d: "Enquiries are captured and sent to you the moment they happen, so slow follow-up stops costing you work.",
             },
             {
-              t: "Sounds like your firm",
+              t: "Sounds like you",
               d: "The AI is trained on your services and voice, so it reads like your team wrote it, not a generic bot.",
             },
           ].map((item) => (
@@ -231,7 +248,7 @@ export default function WebsitesPage() {
               New build
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Starting fresh. We design and build a site that fits your firm,
+              Starting fresh. We design and build a site that fits your business,
               built to be fast, found on search and ready for the AI to go to
               work from day one.
             </p>
@@ -241,7 +258,7 @@ export default function WebsitesPage() {
               Rebuild
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Already have a site that looks tired or barely converts. We rebuild
+              Got a site that looks tired or barely converts? We rebuild
               it to the same standard and add the AI team member, so it finally
               earns its place.
             </p>
@@ -413,7 +430,7 @@ export default function WebsitesPage() {
           }}
         />
         <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight mb-6 max-w-3xl mx-auto">
-          Let us build you a website that earns its keep
+          A website that earns its keep, not just its hosting fee
         </h2>
         <p className="text-saabai-text-muted max-w-xl mx-auto leading-relaxed mb-10">
           Book a free consult. We will look at your current site, your enquiries

@@ -80,7 +80,7 @@ export default function Process() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          A structured, four-step process that takes professional firms from
+          A simple, four-step process that takes your business from
           identifying the right workflows to automating them, without
           disrupting how your team works.
         </p>

@@ -3,15 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Insights, AI Automation for Professional Firms",
+  title: "Insights, AI for Australian Small Businesses",
   description:
-    "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
+    "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
   alternates: { canonical: "https://www.saabai.ai/insights" },
   openGraph: {
     url: "https://www.saabai.ai/insights",
-    title: "Insights, AI Automation for Professional Firms | Saabai",
+    title: "Insights, AI for Australian Small Businesses | Saabai",
     description:
-      "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
+      "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
   },
 };
 
@@ -87,7 +87,7 @@ export default function InsightsPage() {
         <h1 className="relative text-6xl md:text-7xl lg:text-[80px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           What we&apos;re learning
           <br />
-          <span className="text-gradient">building AI for professional firms</span>
+          <span className="text-gradient">building AI for Australian businesses</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto leading-relaxed">
