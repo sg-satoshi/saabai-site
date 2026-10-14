@@ -52,7 +52,7 @@ export default function SbFooter() {
           </nav>
         </div>
         <div className="legal">
-          <span>© 2026 Saabai. All prices in AUD and include GST.</span>
+          <span>© 2026 Saabai. ABN 71 889 082 572. Merrimac QLD 4226. All prices in AUD and include GST.</span>
           <a href="mailto:hello@saabai.ai">hello@saabai.ai</a>
         </div>
       </div>
