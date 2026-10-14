@@ -18,7 +18,6 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/calculator", updated: "2026-05-15", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faq", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
   { path: "/insights", updated: "2026-10-14", priority: 0.8, changeFrequency: "weekly" },
-  { path: "/insights/law-firm-intake-automation", updated: "2026-10-14", priority: 0.8, changeFrequency: "monthly" },
   { path: "/legal", updated: "2026-05-15", priority: 0.7, changeFrequency: "monthly" },
   { path: "/about", updated: "2026-10-14", priority: 0.7, changeFrequency: "monthly" },
   { path: "/privacy", updated: "2026-10-14", priority: 0.3, changeFrequency: "yearly" },
