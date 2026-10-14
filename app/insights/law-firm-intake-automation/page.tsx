@@ -3,7 +3,7 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 
 export const metadata: Metadata = {
-  title: "The Hidden Cost of Manual Intake: What Law Firms Are Missing | Saabai",
+  title: "The Hidden Cost of Manual Intake: What Law Firms Are Missing",
   description:
     "Manual client intake is costing law firms 8–15 hours per week per fee earner. Here's what we found across 12 firms, and what they did about it.",
   alternates: {

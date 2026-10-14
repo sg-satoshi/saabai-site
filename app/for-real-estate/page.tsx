@@ -3,7 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation for Real Estate Agencies Australia | Saabai",
+  title: "AI Automation for Real Estate Agencies Australia",
   description:
     "Stop losing leads to slow follow-up. Saabai's AI systems respond to every enquiry within minutes, qualify buyers and sellers, and keep your agents focused on negotiations.",
   alternates: { canonical: "https://www.saabai.ai/for-real-estate" },

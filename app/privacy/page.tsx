@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Saabai",
+  title: "Privacy Policy",
   description: "How Saabai collects, uses and protects your personal information.",
   alternates: { canonical: "https://www.saabai.ai/privacy" },
 };

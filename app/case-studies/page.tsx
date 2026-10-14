@@ -3,7 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Case Studies, AI Automation Results | Saabai",
+  title: "Case Studies, AI Automation Results",
   description:
     "See how Saabai's AI automation systems recovered 12+ hours a week for professional services firms, and went live in 3 weeks.",
   alternates: { canonical: "https://www.saabai.ai/case-studies" },

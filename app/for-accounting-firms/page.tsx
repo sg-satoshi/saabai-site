@@ -3,7 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "AI Automation for Accounting Firms Australia | Saabai",
+  title: "AI Automation for Accounting Firms Australia",
   description:
     "Recover 15–25 hours a week in your accounting practice. Automated document chasing, deadline reminders, client onboarding, without changing your software stack.",
   alternates: { canonical: "https://www.saabai.ai/for-accounting-firms" },
