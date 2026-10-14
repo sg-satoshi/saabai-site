@@ -38,7 +38,6 @@ export default function SbFooter() {
             <h4>Products</h4>
             <a href="/lex">Lex</a>
             <a href="/case-studies">Rex</a>
-            <a href="/pulse">Pulse</a>
           </div>
         </div>
         <div className="areas">
