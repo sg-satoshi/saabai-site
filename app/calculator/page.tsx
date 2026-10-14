@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { gaEvent } from "@/lib/ga";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
@@ -49,6 +50,7 @@ export default function Calculator() {
         }),
       });
       setEmailSubmitted(true);
+      gaEvent("generate_lead", { form: "calculator_page" });
     } finally {
       setEmailSubmitting(false);
     }

@@ -5,6 +5,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import SbNav from "../../components/sb/SbNav";
 import "../../components/sb/checkout.css";
+import { gaEvent } from "@/lib/ga";
 import { TIERS, TIER_ORDER, aud, gstOf, type BlueprintTier } from "@/lib/blueprint";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -59,6 +60,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
         if (cancelledFetch) return;
         if (res.ok && d.clientSecret) {
           setClientSecret(d.clientSecret);
+          gaEvent("begin_checkout", { currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] });
           setLoadingPay(false);
           return;
         }

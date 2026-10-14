@@ -1,3 +1,5 @@
+import { gaEvent } from "./ga";
+
 /**
  * Thin analytics utility for the chat widget.
  *
@@ -40,6 +42,9 @@ export function track(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   }).catch(() => {});
+
+  // GA4 (saabai.ai only; gaEvent no-ops on client sites and admin routes)
+  if (event === "lead_captured") gaEvent("generate_lead", { form: "chat_widget", ...(properties ?? {}) });
 
   // ── Wire provider calls here ────────────────────────────────────────
   // PostHog:
