@@ -1,0 +1,53 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy | Saabai",
+  description: "How Saabai collects, uses and protects your personal information.",
+  alternates: { canonical: "https://www.saabai.ai/privacy" },
+};
+
+const SECTIONS: { heading: string; body: string }[] = [
+  {
+    heading: "1. About this policy",
+    body: "Saabai (ABN 71 889 082 572, Merrimac QLD 4226, Australia) (\"we\", \"us\") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.",
+  },
+  {
+    heading: "2. What we collect",
+    body: "Information you give us, such as your name, email, phone number, business details and the answers you submit in our score quiz, Blueprint fact-find or contact forms. Payment details are handled by Stripe and we never see or store your full card number.",
+  },
+  {
+    heading: "3. Cookies and source tracking",
+    body: "We set a first-party cookie called sb_attr that lasts 90 days. It records the first and the most recent way you arrived at our site (for example a search, an ad or a campaign link) so we can see which marketing works. It is only used by Saabai and is never shared or sold. You can clear or block it in your browser settings at any time.",
+  },
+  {
+    heading: "4. How we use it",
+    body: "To deliver the services you buy, reply to enquiries, send transactional messages such as receipts and delivery updates, and, if you have agreed, send marketing emails or SMS. Every marketing message includes a way to unsubscribe, or reply STOP for SMS.",
+  },
+  {
+    heading: "5. Who we share it with",
+    body: "Only the service providers that help us run Saabai, such as hosting, payments, email and SMS delivery, and only as needed to provide their service. We do not sell personal information.",
+  },
+  {
+    heading: "6. Access, correction and complaints",
+    body: "You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing hello@saabai.ai or writing to Saabai, Merrimac QLD 4226, Australia. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).",
+  },
+];
+
+export default function PrivacyPage() {
+  return (
+    <main style={{ minHeight: "100vh", background: "#fff", color: "#14202b", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 80px" }}>
+        <a href="/" style={{ color: "#5c6670", fontSize: 14, textDecoration: "none" }}>← Back to Saabai</a>
+        <h1 style={{ fontSize: 34, fontWeight: 800, margin: "24px 0 8px" }}>Privacy Policy</h1>
+        <p style={{ color: "#5c6670", fontSize: 14, marginBottom: 40 }}>Last updated: October 2026</p>
+        {SECTIONS.map((s) => (
+          <section key={s.heading} style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.heading}</h2>
+            <p style={{ fontSize: 16, lineHeight: 1.7, margin: 0 }}>{s.body}</p>
+          </section>
+        ))}
+        <p style={{ color: "#5c6670", fontSize: 14, marginTop: 48 }}>Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia</p>
+      </div>
+    </main>
+  );
+}

@@ -33,6 +33,7 @@ export default function SbFooter() {
             <a href="/about">About</a>
             <a href="mailto:hello@saabai.ai">Contact</a>
             <a href="/faq">FAQ</a>
+            <a href="/privacy">Privacy</a>
           </div>
           <div>
             <h4>Products</h4>

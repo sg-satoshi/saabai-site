@@ -7,6 +7,7 @@ const footerLinks = [
   { label: "Process", href: "/process" },
   { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
+  { label: "Privacy", href: "/privacy" },
   { label: "LinkedIn", href: "https://www.linkedin.com/in/shanegoldberg-ai" },
 ];
 
