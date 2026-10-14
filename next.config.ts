@@ -30,6 +30,8 @@ const nextConfig: NextConfig = {
       { source: "/canberra", destination: "/websites", statusCode: 301 },
       { source: "/hobart", destination: "/websites", statusCode: 301 },
       { source: "/darwin", destination: "/websites", statusCode: 301 },
+      { source: "/for-real-estate", destination: "/blueprint", statusCode: 301 },
+      { source: "/for-real-estate/:path*", destination: "/blueprint", statusCode: 301 },
       // Saabai Blueprint replaces the old audit offers
       { source: "/audit", destination: "/blueprint", statusCode: 301 },
       { source: "/ai-audit", destination: "/blueprint", permanent: true },

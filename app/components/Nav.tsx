@@ -18,12 +18,6 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    section: "Industries",
-    links: [
-      { label: "For Real Estate", href: "/for-real-estate" },
-    ],
-  },
-  {
     section: "Proof",
     links: [
       { label: "Case Studies", href: "/case-studies" },
