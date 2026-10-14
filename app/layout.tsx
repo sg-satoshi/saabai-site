@@ -18,8 +18,6 @@ export const viewport: Viewport = {
   themeColor: "#0e0c2e",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 const BASE_URL = "https://www.saabai.ai";
@@ -27,20 +25,18 @@ const BASE_URL = "https://www.saabai.ai";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "AI Automation for Professional Firms Australia | Saabai",
+    default: "Websites and AI Systems for Small Businesses | Saabai",
     template: "%s | Saabai",
   },
   description:
-    "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call, no obligation.",
+    "Gold Coast based Saabai builds, hosts and manages small business websites on care plans from $100/month, and the Saabai Blueprint AI audit (from $497) shows exactly where AI saves you hours and dollars.",
   keywords: [
-    "AI automation professional firms Australia",
-    "AI automation law firms",
-    "AI automation accounting firms",
-    "AI workflow automation",
-    "business process automation professional services",
-    "AI systems professional services Australia",
-    "automate repetitive work",
-    "AI automation plan Australia",
+    "website care plan Gold Coast",
+    "small business website hosting and management",
+    "AI audit small business Australia",
+    "Saabai Blueprint",
+    "AI readiness score",
+    "AI consultant Gold Coast",
   ],
   authors: [{ name: "Shane Goldberg", url: BASE_URL }],
   creator: "Saabai",
@@ -65,23 +61,23 @@ export const metadata: Metadata = {
     locale: "en_AU",
     url: BASE_URL,
     siteName: "Saabai",
-    title: "AI Automation for Professional Firms Australia | Saabai",
+    title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia. Free 30-min strategy call.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast based, working Australia wide.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Saabai, AI Automation for Professional Firms",
+        alt: "Saabai, websites and AI systems for small businesses",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Automation for Professional Firms Australia | Saabai",
+    title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Saabai builds AI systems that recover 20+ hours/week for law firms, accounting practices & professional firms across Australia.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast based, working Australia wide.",
     images: ["/og-image.png"],
   },
   alternates: {

@@ -2,7 +2,7 @@ import FactFindClient from "./FactFindClient";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Saabai Blueprint Questionnaire | Saabai",
+  title: "Saabai Blueprint Questionnaire",
   robots: { index: false, follow: false },
 };
 

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import JsonLd from "../components/JsonLd";
 
 export const metadata: Metadata = {
-  title: "AI-Native Websites for Professional Firms | Saabai",
+  title: "Websites and Care Plans for Small Businesses",
   description:
     "We build and rebuild websites for Australian professional firms, each with a trained AI chatbot built in. Three tiers from $2,000 plus care from $100/mo. Book a free website consult.",
   alternates: { canonical: "https://www.saabai.ai/websites" },
@@ -94,9 +95,61 @@ const faqs = [
   },
 ];
 
+const SITE = "https://www.saabai.ai";
+const CARE: Record<string, number> = { Presence: 100, Growth: 200, Signature: 300 };
+
+const websitesSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      "@id": `${SITE}/websites#service`,
+      name: "Saabai website care plans",
+      serviceType: "Website build, hosting and care plan",
+      description:
+        "Saabai builds, hosts and manages small business websites with a trained AI enquiry chatbot built in. Monthly care covers hosting, security, updates and keeping the AI trained.",
+      url: `${SITE}/websites`,
+      provider: { "@id": `${SITE}/#organization` },
+      areaServed: { "@type": "Country", name: "Australia" },
+      offers: tiers.map((t) => ({
+        "@type": "Offer",
+        name: `${t.name} care plan`,
+        description: `${t.tagline}. Build ${t.price}, ${t.monthly}.`,
+        price: CARE[t.name],
+        priceCurrency: "AUD",
+        availability: "https://schema.org/InStock",
+        url: `${SITE}/websites`,
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: CARE[t.name],
+          priceCurrency: "AUD",
+          unitCode: "MON",
+          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+        },
+      })),
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
+        { "@type": "ListItem", position: 2, name: "Websites", item: `${SITE}/websites` },
+      ],
+    },
+  ],
+};
+
 export default function WebsitesPage() {
   return (
     <div className="min-h-screen bg-saabai-bg text-saabai-text">
+      <JsonLd data={websitesSchema} />
       <Nav activePage="/websites" />
 
       {/* Hero */}

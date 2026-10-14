@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AI Automation for Law Firms Australia | Saabai",
+  title: "AI Automation for Law Firms Australia",
   description:
     "Saabai builds AI systems that recover 20+ hours a week for law firms — automated client intake, matter tracking, and document workflows. Free strategy call.",
   alternates: { canonical: "https://www.saabai.ai/for-law-firms" },

@@ -3,7 +3,7 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Insights, AI Automation for Professional Firms | Saabai",
+  title: "Insights, AI Automation for Professional Firms",
   description:
     "Real patterns from building AI automation systems for law firms, accounting practices, and real estate agencies.",
   alternates: { canonical: "https://www.saabai.ai/insights" },

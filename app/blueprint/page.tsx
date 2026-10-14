@@ -3,6 +3,7 @@ import SbNav from "../components/sb/SbNav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/blueprint.css";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
+import JsonLd from "../components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Saabai Blueprint: your AI plan, ranked by dollars saved",
@@ -29,9 +30,52 @@ const FAQS = [
   ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
 ];
 
+const SITE = "https://www.saabai.ai";
+
+const blueprintSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      "@id": `${SITE}/blueprint#service`,
+      name: "Saabai Blueprint AI audit",
+      serviceType: "AI audit",
+      description: metadata.description,
+      url: `${SITE}/blueprint`,
+      provider: { "@id": `${SITE}/#organization` },
+      areaServed: { "@type": "Country", name: "Australia" },
+      offers: TIER_ORDER.map((id) => ({
+        "@type": "Offer",
+        name: `Blueprint ${TIERS[id].name}`,
+        description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
+        price: TIERS[id].price,
+        priceCurrency: "AUD",
+        availability: "https://schema.org/InStock",
+        url: `${SITE}/blueprint`,
+      })),
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map(([q, a]) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: a },
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
+        { "@type": "ListItem", position: 2, name: "Blueprint", item: `${SITE}/blueprint` },
+      ],
+    },
+  ],
+};
+
 export default function BlueprintPage() {
   return (
     <div className="sb">
+      <JsonLd data={blueprintSchema} />
       <SbNav active="blueprint" />
       <div className="bhero">
         <div className="glow" />
