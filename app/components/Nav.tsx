@@ -14,15 +14,12 @@ const navSections: NavSection[] = [
       { label: "Free AI Score", href: "/score", isNew: true },
       { label: "Services", href: "/services" },
       { label: "Websites", href: "/websites", isNew: true },
-      { label: "Advisory", href: "/advisory" },
       { label: "Process", href: "/process" },
     ],
   },
   {
     section: "Industries",
     links: [
-      { label: "For Law Firms", href: "/for-law-firms" },
-      { label: "For Accounting Firms", href: "/for-accounting-firms" },
       { label: "For Real Estate", href: "/for-real-estate" },
     ],
   },

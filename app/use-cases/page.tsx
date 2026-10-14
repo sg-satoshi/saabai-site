@@ -17,17 +17,18 @@ export const metadata: Metadata = {
 
 const useCases = [
   {
-    category: "Law Firms",
+    category: "Trades & Home Services",
     description:
-      "Law firms run on expertise, relationships, and precision. The problem is that principals and staff spend a disproportionate amount of time on admin that has nothing to do with practising law.",
+      "Tradies win work on how fast they quote and lose it on how slowly they follow up. Most of that happens at night, after a full day on the tools.",
     examples: [
-      "AI-assisted client intake that qualifies matters before anyone touches them",
-      "Automated follow-up for enquiries that went quiet",
-      "Document templates that populate from intake data",
-      "Billing and deadline reminders without manual chasing",
+      "Website AI agent that answers enquiries and books site visits after hours",
+      "Instant ballpark quotes from your own price list",
+      "Automatic quote follow-up when a customer goes quiet",
+      "Invoice and payment reminders without awkward phone calls",
     ],
-    outcome: "Fee earners spend more time on client work. Intake runs itself. Nothing falls through the cracks.",
+    outcome: "More jobs quoted, fewer leads gone cold, and evenings back.",
   },
+
   {
     category: "Real Estate Agencies",
     description:
@@ -41,29 +42,31 @@ const useCases = [
     outcome: "Agents focus on relationships and negotiations. The system handles everything else.",
   },
   {
-    category: "Accounting Firms",
+    category: "Clinics, Studios & Salons",
     description:
-      "Accounting firms operate on tight deadlines with high compliance requirements. Automation removes the manual coordination overhead, chasing clients for documents, sending reminders, generating reports, so your team can focus on advice.",
+      "Appointment businesses run on bookings, and the phone rings while you're with a client. Automation answers, books and reminds so your chair or room stays full.",
     examples: [
-      "Automated client onboarding and document collection",
-      "Deadline reminder sequences for tax and compliance lodgements",
-      "Report generation from structured data",
-      "Client communication workflows",
+      "AI agent that answers FAQs and takes booking requests 24/7",
+      "Appointment reminders that cut no-shows",
+      "Post-visit review requests that build your Google rating",
+      "Rebooking nudges for clients who haven't been back",
     ],
-    outcome: "Less time chasing. More time advising. Deadlines managed without manual coordination.",
+    outcome: "Fewer missed calls, fewer no-shows, more five-star reviews.",
   },
+
   {
-    category: "Financial Advisory",
+    category: "Local Retail & Hospitality",
     description:
-      "Advisers spend a significant portion of their week on compliance documentation, review scheduling, and client communication, work that is highly repeatable and well-suited to automation.",
+      "Seasonal surges and after-hours questions swamp small teams. An AI agent handles the repeat questions and bookings so staff can serve the people in front of them.",
     examples: [
-      "Annual review reminder and scheduling automation",
-      "Pre-meeting data collection workflows",
-      "Post-meeting follow-up and SOA preparation support",
-      "Automated portfolio update communications",
+      "Opening hours, stock and booking questions answered instantly",
+      "Function and group booking enquiries captured and qualified",
+      "Email and SMS offers to past customers, with opt-in handled properly",
+      "Showing up when locals ask Google or ChatGPT for a recommendation",
     ],
-    outcome: "More client-facing time for advisers. Compliance workflows running in the background.",
+    outcome: "Peak demand captured without hiring extra staff just to answer messages.",
   },
+
   {
     category: "Trade & E-commerce",
     description:
@@ -82,7 +85,7 @@ const useCases = [
       "Across every business, there is a layer of compliance, documentation, and audit trail work that consumes hours and creates risk when it falls behind. Automation brings consistency and speed to this work.",
     examples: [
       "Automated compliance checklist generation",
-      "Contract and engagement letter workflows",
+      "Quote, contract and job sheet workflows",
       "Audit trail documentation",
       "Regulatory deadline tracking and escalation",
     ],
@@ -91,7 +94,7 @@ const useCases = [
 ];
 
 const inlineCta = {
-  headline: "See this in your firm?",
+  headline: "See this in your business?",
   body: "Book a free 30-minute call. We'll identify the highest-value automation opportunities in your specific operation.",
   cta: "Book Your Free Strategy Call",
 };
@@ -243,7 +246,7 @@ export default function UseCases() {
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
           Find out what could be
           <br />
-          <span className="text-gradient">automated in your firm.</span>
+          <span className="text-gradient">automated in your business.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map your workflows,
