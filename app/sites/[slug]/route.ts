@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { readFileSync } from "fs";
 import path from "path";
+import { ensurePoweredBy } from "@/lib/client-site";
 import { ensureFavicon } from "@/lib/site-favicon";
 
 export const runtime = "nodejs";
@@ -32,7 +33,7 @@ export async function GET(
 
     if (blob) {
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-      const html = await ensureFavicon(slug, applyCssPatch(slug, await res.text()));
+      const html = ensurePoweredBy(slug, await ensureFavicon(slug, applyCssPatch(slug, await res.text())));
       return new Response(html, {
         status: 200,
         headers: {
@@ -45,7 +46,7 @@ export async function GET(
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = await ensureFavicon(slug, readFileSync(filePath, "utf-8"));
+      const html = ensurePoweredBy(slug, await ensureFavicon(slug, readFileSync(filePath, "utf-8")));
       return new Response(html, {
         status: 200,
         headers: {

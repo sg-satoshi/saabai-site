@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
 import EmailCapturePopup from "./components/EmailCapturePopup";
-import JsonLd from "./components/JsonLd";
-import { organizationSchema } from "../lib/seo-entity";
+import SaabaiJsonLd from "./components/SaabaiJsonLd";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -108,7 +107,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <JsonLd data={organizationSchema} />
+        <SaabaiJsonLd />
         {children}
         <ConditionalWidgets />
         <EmailCapturePopup />
