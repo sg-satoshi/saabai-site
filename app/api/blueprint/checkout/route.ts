@@ -1,3 +1,4 @@
+import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
@@ -50,7 +51,8 @@ export async function POST(req: NextRequest) {
   }
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
-  const metadata = { product: "blueprint", tier, name, business, phone, website, abn };
+  const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
+  const metadata = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };
   const embedded = body.ui_mode !== "hosted";
 
   try {

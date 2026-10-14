@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
@@ -280,6 +281,23 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith("/api/")) return apiAuth(req, pathname);
 
   // ── Page routes: redirect to login when protected ────────────────────
+  return withAttribution(req, await pageRoute(req, pathname));
+}
+
+/** Sets the first-party sb_attr cookie (first + last touch) on public page views. */
+function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
+  try {
+    const { pathname } = req.nextUrl;
+    if (req.method !== "GET" || /\.\w+$/.test(pathname) || pathname.startsWith("/_next") || pathname.startsWith("/sites/") || matches(pathname, PROTECTED_PAGES)) return res;
+    const ref = pathname.match(/^\/r\/([A-Za-z0-9_-]{3,32})$/)?.[1];
+    const cur = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
+    const next = mergeTouch(cur, touchFrom(req.nextUrl, req.headers.get("referer"), req.nextUrl.hostname, ref), pathname);
+    if (next) res.cookies.set(ATTR_COOKIE, serialiseAttr(next), { maxAge: ATTR_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
+  } catch { /* never block a page view on attribution */ }
+  return res;
+}
+
+async function pageRoute(req: NextRequest, pathname: string): Promise<NextResponse> {
   // The admin login page itself must stay reachable while signed out.
   if (pathname === "/saabai-admin/login" || pathname === "/saabai-admin/login/verify") return NextResponse.next();
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();

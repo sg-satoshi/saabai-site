@@ -1,3 +1,4 @@
+import { recordEvent } from "@/lib/growth/events";
 /**
  * POST /api/audit/engagements/[id]/report — generate a .docx report draft
  * from the engagement (profile + assessment), store in Vercel Blob, and
@@ -101,6 +102,11 @@ export async function PATCH(req: Request, { params }: Params) {
     `Report v${deliveredReport?.version ?? "?"} delivered to client`,
     deliveredReport?.filename
   );
+
+  await recordEvent({
+    contactId: engagement.contactEmail, type: "report_delivered", refId: id,
+    meta: { tier: engagement.tier, version: deliveredReport?.version },
+  });
 
   return Response.json({ engagement: updated });
 }

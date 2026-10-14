@@ -83,7 +83,7 @@ case "HMGET": return args.slice(1).map((f) => hashes.get(k)?.get(f) ?? null);
       case "ZADD": { if (!zsets.has(k)) zsets.set(k, new Map()); const z = zsets.get(k); let n = 0; for (let i = 1; i + 1 < args.length; i += 2) { if (!z.has(args[i + 1])) n++; z.set(args[i + 1], Number(args[i])); } return n; }
       case "ZREM": { const z = zsets.get(k); if (!z) return 0; let n = 0; for (const m of args.slice(1)) if (z.delete(m)) n++; return n; }
       case "ZCARD": return zsets.get(k)?.size ?? 0;
-      case "ZRANGE": { const z = [...(zsets.get(k) ?? new Map()).entries()].sort((a, b) => a[1] - b[1]); if (args.map(String).some((a) => a.toUpperCase() === "REV")) z.reverse(); const s0 = Number(args[1]); let e = Number(args[2]); if (e < 0) e = z.length + e; return z.slice(s0, e + 1).map((x) => x[0]); }
+      case "ZRANGE": { const z = [...(zsets.get(k) ?? new Map()).entries()].sort((a, b) => a[1] - b[1]); const flags = args.map((a) => String(a).toUpperCase()); if (flags.includes("BYSCORE")) { const num = (v) => (v === "+inf" ? Infinity : v === "-inf" ? -Infinity : Number(v)); return z.filter((x) => x[1] >= num(args[1]) && x[1] <= num(args[2])).map((x) => x[0]); } if (flags.includes("REV")) z.reverse(); const s0 = Number(args[1]); let e = Number(args[2]); if (e < 0) e = z.length + e; return z.slice(s0, e + 1).map((x) => x[0]); }
             case "SADD": { if (!sets.has(k)) sets.set(k, new Set()); const s = sets.get(k); let n = 0; for (const m of args.slice(1)) if (!s.has(m)) { s.add(m); n++; } return n; }
       case "SMEMBERS": return [...(sets.get(k) ?? [])];
       case "SREM": { const s = sets.get(k); if (!s) return 0; let n = 0; for (const m of args.slice(1)) if (s.delete(m)) n++; return n; }

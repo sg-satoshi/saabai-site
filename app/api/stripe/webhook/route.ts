@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { handleBlueprintCheckout } from "@/lib/blueprint-order";
+import { attrFromMetadata } from "@/lib/growth/attribution";
+import { recordEvent, touchContact } from "@/lib/growth/events";
 
 export const runtime = "nodejs";
 
@@ -128,6 +130,19 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
+
+  // Journey + attribution (idempotent on the Stripe event id).
+  const buyer = session.customer_details?.email || session.customer_email;
+  if (buyer && session.payment_status === "paid") {
+    const attr = attrFromMetadata(session.metadata as Record<string, string>);
+    await touchContact(buyer, attr, session.customer_details?.name ?? undefined);
+    await recordEvent({
+      id: `stripe_${event.id}`, contactId: buyer,
+      type: session.metadata?.product === "blueprint" ? "blueprint_purchased" : "purchase",
+      refId: session.id, amountCents: session.amount_total ?? undefined,
+      meta: { tier: session.metadata?.tier, product: session.metadata?.product || "lex", source: attr?.l, firstTouch: attr?.f },
+    });
+  }
 
   // Saabai Blueprint one-off orders: create engagement + send fact-find.
   if (session.metadata?.product === "blueprint") {
