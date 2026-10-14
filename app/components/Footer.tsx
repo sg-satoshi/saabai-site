@@ -49,7 +49,7 @@ export default function Footer() {
             ))}
           </nav>
           <p className="text-xs text-saabai-text-dim tracking-wide shrink-0">
-            © {new Date().getFullYear()} Saabai.ai. All rights reserved.
+            © {new Date().getFullYear()} Saabai.ai. ABN 71 889 082 572. Gold Coast based, head office Merrimac QLD 4226.
           </p>
         </div>
 

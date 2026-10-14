@@ -466,7 +466,7 @@ export default function CounselPage() {
             {
               quote: "We were losing at least two quality enquiries a week to after-hours voicemails. Lex captured a $12,000 commercial matter at 10pm on a Sunday. That one matter paid for the year.",
               name: "Partner",
-              firm: "Adelaide commercial law firm",
+              firm: "Commercial law firm",
             },
             {
               quote: "The structured briefs Lex delivers mean our first consultation is 15 minutes instead of 45. We're billing sooner and clients feel like we already understand their problem.",
@@ -944,7 +944,7 @@ export default function CounselPage() {
             <p style={{ fontSize: 11, color: gold, letterSpacing: "1.2px", textTransform: "uppercase" as const, fontWeight: 700, margin: "0 0 14px" }}>About Saabai</p>
             <h2 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.8px", margin: "0 0 16px", color: textPrimary, lineHeight: 1.2 }}>We build AI agents for professional services firms.</h2>
             <p style={{ fontSize: 15, color: textSecondary, lineHeight: 1.8, margin: 0 }}>
-              Saabai is an AI automation business based in Adelaide. We don&apos;t sell off-the-shelf chatbots — we build custom agents trained on how your firm actually works. Rex has been running for Plastics Online for several months, capturing leads around the clock and auto-generating CRM records. Lex brings the same system to law firms.
+              Saabai is an AI automation business based on the Gold Coast, Queensland. We don&apos;t sell off-the-shelf chatbots — we build custom agents trained on how your firm actually works. Rex has been running for Plastics Online for several months, capturing leads around the clock and auto-generating CRM records. Lex brings the same system to law firms.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column" as const, gap: 14, minWidth: 180 }}>

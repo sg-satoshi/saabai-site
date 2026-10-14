@@ -136,7 +136,7 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-5">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a specialist tax and trust law firm in Adelaide.
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a specialist tax and trust law firm. Saabai is based on the Gold Coast, Queensland, with head office in Merrimac QLD 4226 (ABN 71 889 082 572).
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Neither client had to rip out their existing tools. Both were live within weeks of the initial Blueprint.
