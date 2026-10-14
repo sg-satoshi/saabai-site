@@ -8,8 +8,7 @@ const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const SAABAI_EMAIL = "hello@saabai.ai";
 
 function getPlanLabel(amountTotal: number | null): { name: string; setup: string; monthly: string } {
-  // Growth: $2,500 setup + $499/mo — total first charge ~$2,999
-  // Starter: $1,500 setup + $299/mo — total first charge ~$1,799
+  // Lex plan label from the first charge amount.
   // Match on amount_total (in cents) or fall back to heuristic
   if (!amountTotal) return { name: "Starter", setup: "$1,500", monthly: "$299/mo" };
   return amountTotal >= 200000

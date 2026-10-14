@@ -5,7 +5,30 @@
  * profile, fact-find responses, workflows, goals, assessment, status.
  */
 
-export type AuditTier = "essential" | "professional" | "enterprise";
+/** Blueprint tiers. Legacy engagements stored as essential/professional/enterprise
+ * (retired AI Audit tiers) are mapped on read via normalizeAuditTier. */
+export type AuditTier = "starter" | "pro" | "business";
+
+export const AUDIT_TIERS: AuditTier[] = ["starter", "pro", "business"];
+
+const LEGACY_TIER_MAP: Record<string, AuditTier> = {
+  essential: "starter",
+  professional: "pro",
+  enterprise: "business",
+};
+
+/** Map any stored/legacy tier value to a current Blueprint tier. Unknown values fall back to starter. */
+export function normalizeAuditTier(v: unknown): AuditTier {
+  if (typeof v === "string") {
+    if ((AUDIT_TIERS as string[]).includes(v)) return v as AuditTier;
+    if (LEGACY_TIER_MAP[v]) return LEGACY_TIER_MAP[v];
+  }
+  return "starter";
+}
+
+export function isAuditTierInput(v: unknown): boolean {
+  return typeof v === "string" && ((AUDIT_TIERS as string[]).includes(v) || v in LEGACY_TIER_MAP);
+}
 
 export type FirmType =
   | "law"
@@ -36,9 +59,9 @@ export const AUDIT_STATUS_LABELS: Record<AuditStatus, string> = {
 };
 
 export const AUDIT_TIER_LABELS: Record<AuditTier, string> = {
-  essential: "Essential ($3,500)",
-  professional: "Professional ($7,500)",
-  enterprise: "Enterprise ($15,000)",
+  starter: "Starter ($497)",
+  pro: "Pro ($1,497)",
+  business: "Business ($3,500)",
 };
 
 export interface AuditStakeholder {

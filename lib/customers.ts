@@ -239,9 +239,10 @@ export async function listUnifiedCustomers(): Promise<UnifiedCustomer[]> {
   // 6. AI Audit engagements
   try {
     const AUDIT_PRICE_CENTS: Record<string, number> = {
-      essential: 350000,
-      professional: 750000,
-      enterprise: 1500000,
+      // Blueprint prices (legacy tiers are normalised on read)
+      starter: 49700,
+      pro: 149700,
+      business: 350000,
     };
     const engagements = await listEngagements();
     for (const e of engagements) {

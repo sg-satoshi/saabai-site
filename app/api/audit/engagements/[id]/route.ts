@@ -5,6 +5,7 @@
  */
 
 import { requireAdmin } from "../../../../../lib/audit-admin";
+import { isAuditTierInput, normalizeAuditTier } from "../../../../../lib/audit-types";
 import {
   addEngagementNote,
   deleteEngagement,
@@ -97,6 +98,11 @@ export async function PATCH(req: Request, { params }: Params) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (patch as any)[key] = body[key];
     }
+  }
+  if ("tier" in body) {
+    if (!isAuditTierInput(body.tier))
+      return Response.json({ error: "Invalid tier" }, { status: 400 });
+    patch.tier = normalizeAuditTier(body.tier);
   }
   if (Object.keys(patch).length === 0)
     return Response.json({ error: "Nothing to update" }, { status: 400 });

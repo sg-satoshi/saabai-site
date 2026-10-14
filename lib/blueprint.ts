@@ -1,3 +1,4 @@
+import type { AuditTier } from "./audit-types";
 // Saabai Blueprint: tiers, AI Readiness Score quiz and scoring.
 // Prices are AUD including GST.
 
@@ -16,7 +17,7 @@ export interface TierInfo {
   /** Name of the env var holding the Stripe price ID */
   priceEnv: string;
   /** Internal engagement tier used by the existing order engine */
-  engineTier: "essential" | "professional" | "enterprise";
+  engineTier: AuditTier;
 }
 
 export const TIERS: Record<BlueprintTier, TierInfo> = {
@@ -37,7 +38,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
       "Fact-find online, no call needed",
     ],
     priceEnv: "STRIPE_BLUEPRINT_STARTER_PRICE_ID",
-    engineTier: "essential",
+    engineTier: "starter",
   },
   pro: {
     id: "pro",
@@ -56,7 +57,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
       "Delivered within 3 business days",
     ],
     priceEnv: "STRIPE_BLUEPRINT_PRO_PRICE_ID",
-    engineTier: "professional",
+    engineTier: "pro",
   },
   business: {
     id: "business",
@@ -75,7 +76,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
       "Delivered in 2 to 3 weeks",
     ],
     priceEnv: "STRIPE_BLUEPRINT_BUSINESS_PRICE_ID",
-    engineTier: "enterprise",
+    engineTier: "business",
   },
 };
 

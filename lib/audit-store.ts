@@ -14,6 +14,7 @@ import {
   AuditNote,
   FactFindResponse,
   newId,
+  normalizeAuditTier,
 } from "./audit-types";
 
 const ENGAGEMENTS_KEY = "audit:engagements";
@@ -21,14 +22,22 @@ const TOKEN_PREFIX = "audit:token:";
 
 function parse<T>(raw: unknown): T | null {
   if (!raw) return null;
+  let v: T | null = null;
   if (typeof raw === "string") {
     try {
-      return JSON.parse(raw) as T;
+      v = JSON.parse(raw) as T;
     } catch {
       return null;
     }
+  } else {
+    v = raw as T;
   }
-  return raw as T;
+  // Legacy AI Audit tiers (essential/professional/enterprise) map to Blueprint tiers on read.
+  if (v && typeof v === "object" && "tier" in (v as object)) {
+    const rec = v as unknown as { tier: unknown };
+    rec.tier = normalizeAuditTier(rec.tier);
+  }
+  return v;
 }
 
 export function generateFactFindToken(): string {

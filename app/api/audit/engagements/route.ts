@@ -5,12 +5,11 @@
 
 import { requireAdmin } from "../../../../lib/audit-admin";
 import { createEngagement, listEngagements } from "../../../../lib/audit-store";
-import { AuditTier, FirmType } from "../../../../lib/audit-types";
+import { FirmType, isAuditTierInput, normalizeAuditTier } from "../../../../lib/audit-types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TIERS: AuditTier[] = ["essential", "professional", "enterprise"];
 const FIRM_TYPES: FirmType[] = [
   "law",
   "accounting",
@@ -38,13 +37,13 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const tier = body.tier as AuditTier;
+  const tier = normalizeAuditTier(body.tier);
   const firmType = body.firmType as FirmType;
   const firmName = String(body.firmName ?? "").trim();
   const contactName = String(body.contactName ?? "").trim();
   const contactEmail = String(body.contactEmail ?? "").trim();
 
-  if (!TIERS.includes(tier))
+  if (!isAuditTierInput(body.tier))
     return Response.json({ error: "Invalid tier" }, { status: 400 });
   if (!FIRM_TYPES.includes(firmType))
     return Response.json({ error: "Invalid firmType" }, { status: 400 });

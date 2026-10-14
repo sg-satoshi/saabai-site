@@ -39,9 +39,9 @@ export interface FactFindSection {
   tiers: AuditTier[];
 }
 
-const ALL: AuditTier[] = ["essential", "professional", "enterprise"];
-const PRO_ENT: AuditTier[] = ["professional", "enterprise"];
-const ENT: AuditTier[] = ["enterprise"];
+const ALL: AuditTier[] = ["starter", "pro", "business"];
+const PRO_ENT: AuditTier[] = ["pro", "business"];
+const ENT: AuditTier[] = ["business"];
 
 export const FACTFIND_SECTIONS: FactFindSection[] = [
   {

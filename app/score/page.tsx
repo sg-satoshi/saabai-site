@@ -80,6 +80,7 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
   const rec = TIERS[r.recommended];
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [website, setWebsite] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const send = async (e: React.FormEvent) => {
@@ -89,7 +90,7 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
       const res = await fetch("/api/blueprint/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, answers }),
+        body: JSON.stringify({ email, name, website, answers }),
       });
       setState(res.ok ? "sent" : "error");
     } catch {
@@ -160,6 +161,7 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
                 <div className="emailrow">
                   <input aria-label="First name" placeholder="First name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
                   <input aria-label="Email" type="email" required placeholder="you@business.com.au" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                  <input aria-label="Website (optional)" placeholder="Your website (optional)" value={website} onChange={(e) => setWebsite(e.target.value)} autoComplete="url" inputMode="url" />
                   <button className="btn" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending..." : "Send"}</button>
                 </div>
                 {state === "error" && <p style={{ marginTop: 10, color: "#fca5a5" }}>Could not send right now. Your results are still shown above.</p>}

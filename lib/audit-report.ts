@@ -25,15 +25,15 @@ const GOLD = "C9A84C";
 const GREY = "6B7280";
 
 const TIER_NAMES: Record<string, string> = {
-  essential: "Essential",
-  professional: "Professional",
-  enterprise: "Enterprise",
+  starter: "Starter",
+  pro: "Pro",
+  business: "Business",
 };
 
 const TIER_ROADMAP: Record<string, string> = {
-  essential: "Recommended Implementation Sequence",
-  professional: "90-Day Implementation Roadmap",
-  enterprise: "12-Month Phased Implementation Roadmap",
+  starter: "Recommended Implementation Sequence",
+  pro: "90-Day Implementation Roadmap",
+  business: "12-Month Phased Implementation Roadmap",
 };
 
 function h1(text: string): Paragraph {
@@ -220,13 +220,13 @@ export async function buildAuditReportDocx(
   );
   if (opps.length > 0) {
     const phases =
-      eng.tier === "enterprise"
+      eng.tier === "business"
         ? [
             { label: "Phase 1 (Months 1–3): Foundations & highest-ROI build", slice: opps.slice(0, 3) },
             { label: "Phase 2 (Months 4–8): Expansion", slice: opps.slice(3, 7) },
             { label: "Phase 3 (Months 9–12): Scale & optimise", slice: opps.slice(7) },
           ]
-        : eng.tier === "professional"
+        : eng.tier === "pro"
           ? [
               { label: "Days 1–30: First build", slice: opps.slice(0, 2) },
               { label: "Days 31–60: Second wave", slice: opps.slice(2, 5) },
