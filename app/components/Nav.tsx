@@ -95,8 +95,8 @@ export default function Nav({ activePage }: { activePage?: string }) {
         <div
           className="relative"
           ref={menuRef}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpen(true); }}
+          onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpen(false); }}
         >
 
           {/* Hamburger button */}
@@ -113,9 +113,9 @@ export default function Nav({ activePage }: { activePage?: string }) {
 
           {/* Dropdown */}
           {open && (
-            <div className="absolute right-0 top-full pt-2">
+            <div className="fixed left-3 right-3 top-[88px] sm:absolute sm:left-auto sm:right-0 sm:top-full pt-2">
               <div
-                className="w-72 bg-saabai-surface border border-saabai-border rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-[calc(100vh-120px)] overflow-y-auto"
+                className="w-full sm:w-72 bg-saabai-surface border border-saabai-border rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-h-[calc(100vh-120px)] overflow-y-auto"
               >
                 {navSections.map(({ section, links }, sectionIdx) => (
                   <div

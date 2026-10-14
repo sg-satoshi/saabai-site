@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import SbNav from "./components/sb/SbNav";
+import Nav from "./components/Nav";
 import SbFooter from "./components/sb/SbFooter";
+import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,8 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
-      <SbNav />
+      <Nav activePage="/" />
+      <div aria-hidden="true" style={{ height: 92 }} />
       <div className="hero">
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
