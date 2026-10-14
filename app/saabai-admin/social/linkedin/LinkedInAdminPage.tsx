@@ -1,4 +1,5 @@
 "use client";
+import { notify, confirmDialog } from "../../ui/Feedback";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../../AdminSidebar";
@@ -1131,7 +1132,7 @@ function QueuePanel({ refresh }: { refresh: number }) {
   useEffect(() => { load(); }, [refresh]);
 
   async function postNow(post: Post) {
-    if (!confirm("Post to LinkedIn right now?")) return;
+    if (!(await confirmDialog("Post to LinkedIn right now?"))) return;
     try {
       const body: Record<string, string> = { content: post.content };
       if (post.imageUrl) body.imageUrl = post.imageUrl;
@@ -1156,15 +1157,15 @@ function QueuePanel({ refresh }: { refresh: number }) {
 
       setViewingPost(null);
       load();
-      alert("✓ Posted to LinkedIn successfully!");
+      notify.success("Posted to LinkedIn successfully!");
     } catch (err) {
-      alert(`✗ Error posting to LinkedIn: ${String(err)}`);
+      notify.error(`Error posting to LinkedIn: ${String(err)}`);
       console.error("postNow error:", err);
     }
   }
 
   async function cancelPost(id: string) {
-    if (!confirm("Remove this post from the queue?")) return;
+    if (!(await confirmDialog("Remove this post from the queue?"))) return;
     try {
       const res = await fetch("/api/linkedin/queue", {
         method: "DELETE",
@@ -1175,9 +1176,9 @@ function QueuePanel({ refresh }: { refresh: number }) {
         throw new Error("Failed to remove post");
       }
       load();
-      alert("✓ Post removed from queue");
+      notify.success("Post removed from queue");
     } catch (err) {
-      alert(`✗ Error: ${String(err)}`);
+      notify.error(`Error: ${String(err)}`);
       console.error("cancelPost error:", err);
     }
   }

@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "../ui/Feedback";
 
 /* ─────────────────────────────────────────────────────────────────────────
    UsersClient.tsx — User Directory page
@@ -1009,12 +1010,12 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
                 .then(async (res) => {
                   const data = await res.json().catch(() => ({}));
                   if (!res.ok) {
-                    alert(data.error || "Could not start View as client.");
+                    notify.error(data.error || "Could not start View as client.");
                     return;
                   }
                   window.location.href = data.redirect || "/client-portal";
                 })
-                .catch(() => alert("Network error starting View as client."));
+                .catch(() => notify.error("Network error starting View as client."));
             }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

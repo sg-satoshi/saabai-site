@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "../ui/Feedback";
 
 import { useState, useEffect } from "react";
 import AdminShell from "../AdminSidebar";
@@ -364,7 +365,7 @@ export default function LexSettingsClient() {
           setSelectedModel(data.model);
         }
       })
-      .catch(() => {});
+      .catch(() => notify.error("Couldn't load the current Lex settings."));
   }, [clientId]);
 
   function selectProvider(id: ProviderId) {

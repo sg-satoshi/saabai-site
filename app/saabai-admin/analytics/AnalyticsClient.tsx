@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "../ui/Feedback";
 
 import { useEffect, useState } from "react";
 import AdminShell from "../AdminSidebar";
@@ -12,8 +13,8 @@ export default function AnalyticsClient() {
   const [bp, setBp] = useState<BpStats | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/orders").then(r => r.json()).then(d => setOrders(d.orders || [])).catch(() => {});
-    fetch("/api/admin/blueprint-stats").then(r => r.json()).then(d => { if (typeof d.todayCount === "number") setBp(d); }).catch(() => {});
+    fetch("/api/admin/orders").then(r => r.json()).then(d => setOrders(d.orders || [])).catch(() => notify.error("Couldn't load orders for analytics."));
+    fetch("/api/admin/blueprint-stats").then(r => r.json()).then(d => { if (typeof d.todayCount === "number") setBp(d); }).catch(() => notify.error("Couldn't load Blueprint stats."));
   }, []);
 
   const lex = orders.filter(o => o.kind === "lex_subscription");

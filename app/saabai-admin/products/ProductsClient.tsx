@@ -1,4 +1,5 @@
 "use client";
+import { notify, confirmDialog } from "../ui/Feedback";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AdminShell from "../AdminSidebar";
@@ -327,14 +328,14 @@ function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
   }
 
   async function deactivate(id: string) {
-    if (!confirm("Deactivate this code? Customers will no longer be able to use it.")) return;
+    if (!(await confirmDialog("Deactivate this code? Customers will no longer be able to use it."))) return;
     try {
       const res = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : String(e));
+      notify.error(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -763,14 +764,14 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
   }
 
   async function archive(p: CatalogueProduct) {
-    if (!confirm(`Archive "${p.name}"? It will stop being billable and leave the catalogue.`)) return;
+    if (!(await confirmDialog(`Archive "${p.name}"? It will stop being billable and leave the catalogue.`))) return;
     try {
       const res = await fetch(`/api/admin/products/${p.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Archive failed");
       await load();
     } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
+      notify.error(err instanceof Error ? err.message : String(err));
     }
   }
 

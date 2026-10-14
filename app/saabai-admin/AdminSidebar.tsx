@@ -1,4 +1,5 @@
 "use client";
+import { FeedbackHost } from "./ui/Feedback";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -254,6 +255,7 @@ export default function AdminShell({
 
   return (
     <div className="app">
+      <FeedbackHost />
       <aside className="side dt">{sideInner}</aside>
 
       <div className="main">
