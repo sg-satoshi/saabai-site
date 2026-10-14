@@ -18,6 +18,7 @@ export const KIND_LABELS: Record<string, string> = {
   blueprint: "Blueprint",
   website_care: "Web/Care",
   lex_subscription: "Lex",
+  subscription: "Other subscription",
 };
 
 /** Sum live revenue and per-kind paid-order counts for the dashboard. Only kinds with sales appear. */

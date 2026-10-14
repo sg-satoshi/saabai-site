@@ -1,6 +1,7 @@
 "use client";
 import { confirmDialog } from "./ui/Feedback";
 import { BNE_TZ } from "../../lib/brisbane-time";
+import BusinessHealth from "./BusinessHealth";
 import { summariseRevenue, revenueBreakdownLabel } from "../../lib/live-revenue";
 
 import { useState, useEffect } from "react";
@@ -828,6 +829,10 @@ export default function AdminClient({
         </div>
       </div>
 
+      <SectionLabel>Business health</SectionLabel>
+      <BusinessHealth />
+
+      <SectionLabel>Sales</SectionLabel>
       <div className="kpis">
         <div className="card kpi">
           <div className="l">Paid orders (all time)</div>

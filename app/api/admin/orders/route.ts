@@ -28,7 +28,7 @@ export interface InvoiceRecord {
   hostedUrl: string | null;
 }
 
-export type OrderKind = "blueprint" | "lex_subscription" | "website_care";
+export type OrderKind = "blueprint" | "lex_subscription" | "website_care" | "subscription";
 
 export interface OrderRecord {
   id: string;

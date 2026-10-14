@@ -59,8 +59,11 @@ export function subscriptionProjectLabel(type: SubscriptionProductType): string 
 
 export function subscriptionOrderKind(
   type: SubscriptionProductType,
-): "lex_subscription" | "website_care" {
-  return type === "website_care" ? "website_care" : "lex_subscription";
+): "lex_subscription" | "website_care" | "subscription" {
+  if (type === "website_care") return "website_care";
+  if (type === "lex") return "lex_subscription";
+  // Unclassified subscriptions are never shown as Lex.
+  return "subscription";
 }
 
 export function subscriptionProductLabel(

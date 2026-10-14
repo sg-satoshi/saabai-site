@@ -138,7 +138,7 @@ export async function sendWelcomeEmail(opts: {
     const brand = opts.brand ?? "saabai";
     const link = setPasswordUrl(token, "welcome", brand);
     if (brand === "saabai") {
-      const email = accountReadyEmail({ name: opts.name, email: opts.email, setPasswordLink: link });
+      const email = accountReadyEmail({ name: opts.name, email: opts.email, setPasswordLink: link, intro: opts.intro });
       const payload = opts.subject ? { ...email, subject: opts.subject } : email;
       return await sendBrandedEmail({ to: opts.email, email: payload, from: EMAIL_BRAND.from });
     }
