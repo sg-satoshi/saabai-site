@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: "Saabai (\"we\", \"us\") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.",
+    body: "Saabai (ABN 71 889 082 572, Merrimac QLD 4226, Australia) (\"we\", \"us\") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.",
   },
   {
     heading: "2. What we collect",
@@ -29,7 +29,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "6. Access, correction and complaints",
-    body: "You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing hello@saabai.ai. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).",
+    body: "You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing hello@saabai.ai or writing to Saabai, Merrimac QLD 4226, Australia. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).",
   },
 ];
 
@@ -46,6 +46,7 @@ export default function PrivacyPage() {
             <p style={{ fontSize: 16, lineHeight: 1.7, margin: 0 }}>{s.body}</p>
           </section>
         ))}
+        <p style={{ color: "#5c6670", fontSize: 14, marginTop: 48 }}>Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia</p>
       </div>
     </main>
   );
