@@ -95,8 +95,8 @@ export default function Nav({ activePage }: { activePage?: string }) {
         <div
           className="relative"
           ref={menuRef}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpen(true); }}
+          onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpen(false); }}
         >
 
           {/* Hamburger button */}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "./components/Nav";
 import SbFooter from "./components/sb/SbFooter";
+import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = {
