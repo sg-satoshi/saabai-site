@@ -1,13 +1,13 @@
 import type { AuditTier } from "./audit-types";
 // Saabai Blueprint: tiers, AI Readiness Score quiz and scoring.
-// Prices are AUD including GST.
+// Prices are AUD. GST not applicable (Saabai is not GST registered).
 
 export type BlueprintTier = "starter" | "pro" | "business";
 
 export interface TierInfo {
   id: BlueprintTier;
   name: string;
-  price: number; // AUD inc GST
+  price: number; // AUD (GST not applicable)
   priceLabel: string;
   who: string;
   short: string;

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { handleBlueprintCheckout } from "@/lib/blueprint-order";
+import { handlePresenceDeposit } from "@/lib/website-presence-order";
 import { redemptionFrom } from "@/lib/coupons/core";
 import { resolveRedemptionCode } from "@/lib/coupons/stripe";
 import { attrFromMetadata } from "@/lib/growth/attribution";
@@ -151,6 +152,13 @@ export async function POST(req: Request) {
       await recordReferralPurchase({ code: attr?.l?.ref || attr?.f?.ref, buyerEmail: buyer, purchaseId: session.id, amountCents: session.amount_total ?? undefined });
       if (session.metadata?.product !== "blueprint") await markUpsellConverted(buyer);
     } catch (err) { console.error("[growth] referral/upsell update failed", err); }
+  }
+
+  // Presence website deposit ("Presence, buy now"): alert Saabai, never the Lex signup flow.
+  if (session.metadata?.product === "website_presence") {
+    if (session.payment_status !== "paid") return Response.json({ received: true, skipped: "unpaid website deposit" });
+    const result = await handlePresenceDeposit(session);
+    return Response.json({ received: true, website: result });
   }
 
   // Saabai Blueprint one-off orders: create engagement + send fact-find.

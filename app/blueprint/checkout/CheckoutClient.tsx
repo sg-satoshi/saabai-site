@@ -6,7 +6,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe
 import SbNav from "../../components/sb/SbNav";
 import "../../components/sb/checkout.css";
 import { gaEvent } from "@/lib/ga";
-import { TIERS, TIER_ORDER, aud, gstOf, type BlueprintTier } from "@/lib/blueprint";
+import { TIERS, TIER_ORDER, aud, type BlueprintTier } from "@/lib/blueprint";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const PUBLISHABLE = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
@@ -179,8 +179,8 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               <b>{aud(t.price, true)}</b>
             </div>
             <div className="li">
-              <span>Includes GST</span>
-              <b>{aud(gstOf(t.price), true)}</b>
+              <span>GST</span>
+              <b>Not applicable</b>
             </div>
             <div className="li">
               <span>Delivery</span>
