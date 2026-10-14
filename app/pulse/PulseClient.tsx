@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 
 // ── Brand ──────────────────────────────────────────────────────────────────────
@@ -454,7 +455,7 @@ export default function PulseClient() {
 
       {/* Footer */}
       <div style={{ padding: "16px 20px", borderTop: `1px solid ${P.border}` }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 6,
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 6,
           fontSize: 11, color: P.textDim, textDecoration: "none" }}
           onMouseEnter={e => (e.currentTarget.style.color = P.textMuted)}
           onMouseLeave={e => (e.currentTarget.style.color = P.textDim)}
@@ -463,7 +464,7 @@ export default function PulseClient() {
             <path d="M7.5 2L3.5 6L7.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Back to Saabai.ai
-        </a>
+        </Link>
       </div>
     </aside>
   );
