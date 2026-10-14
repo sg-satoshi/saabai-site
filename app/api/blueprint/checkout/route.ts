@@ -2,6 +2,8 @@ import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
+import { findActivePromo } from "@/lib/coupons/stripe";
+import { normaliseCode } from "@/lib/coupons/core";
 
 export const runtime = "nodejs";
 
@@ -52,7 +54,9 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
   const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
-  const metadata = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };
+  const promo = body.code ? await findActivePromo(normaliseCode(body.code)) : null;
+  const metadata: Record<string, string> = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };
+  if (promo) metadata.coupon_code = promo.code;
   const embedded = body.ui_mode !== "hosted";
 
   try {
@@ -71,7 +75,8 @@ export async function POST(req: NextRequest) {
         individual: { enabled: true, optional: false },
       },
       phone_number_collection: { enabled: true },
-      allow_promotion_codes: true,
+      // A valid ?code= is pre-applied; otherwise the customer can type one.
+      ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
       metadata,
       payment_intent_data: { metadata, description: `Saabai ${TIERS[tier].name} Blueprint` },
       custom_fields: [

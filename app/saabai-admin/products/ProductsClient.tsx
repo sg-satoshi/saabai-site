@@ -72,10 +72,6 @@ function fmtDate(iso?: string | null): string {
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function fmtUnix(sec?: number | null): string {
-  if (!sec) return "";
-  return new Date(sec * 1000).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-}
 
 // ── Was / now / save price display ────────────────────────────────────────────
 function PriceBlock({ p }: { p: CatalogueProduct }) {
@@ -245,229 +241,8 @@ const btnPrimary: React.CSSProperties = {
   padding: "10px 18px", borderRadius: 8, border: "none", background: C.blue, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
 };
 
-// ── Coupons tab ─────────────────────────────────────────────────────────────
-interface CouponCode {
-  id: string;
-  code: string;
-  active: boolean;
-  timesRedeemed: number;
-  maxRedemptions: number | null;
-  expiresAt: number | null;
-  percentOff: number | null;
-  amountOff: number | null;
-  currency: string | null;
-  duration: string;
-  durationMonths: number | null;
-  restrictedProducts: string[];
-  appliesTo: string;
-}
+// Coupons moved to Marketing > Offers & Coupons (/saabai-admin/marketing/offers).
 
-function CouponsPanel({ products }: { products: CatalogueProduct[] }) {
-  const [codes, setCodes] = useState<CouponCode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [formErr, setFormErr] = useState<string | null>(null);
-  const [f, setF] = useState({
-    code: "",
-    kind: "percent" as "percent" | "fixed",
-    value: "",
-    appliesTo: "both" as "setup" | "recurring" | "both",
-    duration: "once" as "once" | "forever" | "repeating",
-    durationMonths: "3",
-    maxRedemptions: "",
-    expiresAt: "",
-    productId: "",
-  });
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await fetch("/api/admin/coupons");
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load codes");
-      setCodes(data.codes || []);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  async function create() {
-    setSaving(true);
-    setFormErr(null);
-    try {
-      const res = await fetch("/api/admin/coupons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: f.code,
-          kind: f.kind,
-          value: parseFloat(f.value),
-          appliesTo: f.appliesTo,
-          duration: f.duration,
-          durationMonths: f.duration === "repeating" ? parseInt(f.durationMonths, 10) : undefined,
-          maxRedemptions: f.maxRedemptions ? parseInt(f.maxRedemptions, 10) : undefined,
-          expiresAt: f.expiresAt || undefined,
-          productId: f.productId || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Create failed");
-      setF({ ...f, code: "", value: "", maxRedemptions: "", expiresAt: "", productId: "" });
-      await load();
-    } catch (e) {
-      setFormErr(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function deactivate(id: string) {
-    if (!(await confirmDialog("Deactivate this code? Customers will no longer be able to use it."))) return;
-    try {
-      const res = await fetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed");
-      await load();
-    } catch (e) {
-      notify.error(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  function offLabel(c: CouponCode): string {
-    if (c.percentOff != null) return `${c.percentOff}% off`;
-    if (c.amountOff != null) return `${fmtCents(c.amountOff)} off`;
-    return "";
-  }
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 340px) 1fr", gap: 24, alignItems: "start" }}>
-      {/* Create form */}
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20 }}>
-        <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 800, color: C.text }}>New coupon code</h3>
-
-        <Field label="Code">
-          <input style={{ ...inputStyle, textTransform: "uppercase" }} value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} placeholder="e.g. LAUNCH25" />
-        </Field>
-
-        <Field label="Discount">
-          <div style={{ display: "flex", gap: 8 }}>
-            <select style={{ ...inputStyle, width: 110 }} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as "percent" | "fixed" })}>
-              <option value="percent">% off</option>
-              <option value="fixed">$ off</option>
-            </select>
-            <input style={inputStyle} type="number" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder={f.kind === "percent" ? "25" : "50"} />
-          </div>
-        </Field>
-
-        <Field label="Applies to">
-          <select style={inputStyle} value={f.appliesTo} onChange={(e) => setF({ ...f, appliesTo: e.target.value as "setup" | "recurring" | "both" })}>
-            <option value="both">Both (setup + recurring)</option>
-            <option value="setup">Setup fee only</option>
-            <option value="recurring">Recurring only</option>
-          </select>
-        </Field>
-
-        <Field label="Duration (for subscriptions)">
-          <select style={inputStyle} value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as "once" | "forever" | "repeating" })}>
-            <option value="once">Once (first payment)</option>
-            <option value="repeating">Repeating (X months)</option>
-            <option value="forever">Forever</option>
-          </select>
-        </Field>
-
-        {f.duration === "repeating" && (
-          <Field label="Number of months">
-            <input style={inputStyle} type="number" value={f.durationMonths} onChange={(e) => setF({ ...f, durationMonths: e.target.value })} placeholder="3" />
-          </Field>
-        )}
-
-        <Field label={f.appliesTo === "both" ? "Restrict to product (optional)" : "Product (required for this scope)"}>
-          <select style={inputStyle} value={f.productId} onChange={(e) => setF({ ...f, productId: e.target.value })}>
-            <option value="">{f.appliesTo === "both" ? "Any product" : "Select a product…"}</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-          {f.appliesTo === "setup" && (
-            <p style={{ margin: "5px 0 0", fontSize: 10, color: C.dim }}>Only setup + monthly products have a separate setup fee to target.</p>
-          )}
-        </Field>
-
-        <Field label="Max redemptions (optional)">
-          <input style={inputStyle} type="number" value={f.maxRedemptions} onChange={(e) => setF({ ...f, maxRedemptions: e.target.value })} placeholder="e.g. 50" />
-        </Field>
-
-        <Field label="Expires (optional)">
-          <input style={inputStyle} type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
-        </Field>
-
-        {formErr && <p style={{ margin: "0 0 10px", fontSize: 12, color: C.red }}>{formErr}</p>}
-
-        <button style={{ ...btnPrimary, width: "100%", opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={create}>
-          {saving ? "Creating…" : "Create code"}
-        </button>
-        <p style={{ margin: "10px 0 0", fontSize: 11, color: C.dim, lineHeight: 1.5 }}>
-          Codes are stored in Stripe and become redeemable once the checkout piece is live.
-        </p>
-      </div>
-
-      {/* List */}
-      <div>
-        {loading ? (
-          <p style={{ color: C.muted, fontSize: 13 }}>Loading codes…</p>
-        ) : err ? (
-          <p style={{ color: C.red, fontSize: 13 }}>{err}</p>
-        ) : codes.length === 0 ? (
-          <div style={{ padding: 32, textAlign: "center", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12 }}>
-            <p style={{ margin: 0, fontSize: 13, color: C.dim }}>No coupon codes yet.</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {codes.map((c) => {
-              const prodName = c.restrictedProducts.length
-                ? products.find((p) => c.restrictedProducts.includes(p.stripeProductId) || (p.stripeSetupProductId != null && c.restrictedProducts.includes(p.stripeSetupProductId)))?.name || "1 product"
-                : null;
-              const scopeLabel = c.appliesTo === "setup" ? "Setup only" : c.appliesTo === "recurring" ? "Recurring only" : null;
-              return (
-                <div key={c.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14, opacity: c.active ? 1 : 0.55 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 14, fontWeight: 800, color: C.text }}>{c.code}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.teal, background: "rgba(15,118,110,0.08)", padding: "1px 7px", borderRadius: 4 }}>{offLabel(c)}</span>
-                      {scopeLabel && <span style={{ fontSize: 10, fontWeight: 700, color: C.blue, background: C.blueBg, padding: "1px 7px", borderRadius: 4 }}>{scopeLabel}</span>}
-                      {!c.active && <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>Inactive</span>}
-                    </div>
-                    <p style={{ margin: 0, fontSize: 11, color: C.dim }}>
-                      {c.duration === "repeating" ? `${c.durationMonths} months` : c.duration}
-                      {" · "}
-                      {c.timesRedeemed} used{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ""}
-                      {c.expiresAt ? ` · expires ${fmtUnix(c.expiresAt)}` : ""}
-                      {prodName ? ` · ${prodName} only` : ""}
-                    </p>
-                  </div>
-                  {c.active && (
-                    <button
-                      onClick={() => deactivate(c.id)}
-                      style={{ padding: "7px 12px", borderRadius: 7, border: `1px solid ${C.redBg}`, background: C.redBg, color: C.red, fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
-                    >
-                      Deactivate
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ── Sell panel ────────────────────────────────────────────────────────────────
 const CARD_STYLE = {
@@ -801,18 +576,17 @@ export default function ProductsClient({ publishableKey }: { publishableKey: str
           )}
         </div>
         <p className="mc-sub" style={{ marginBottom: 18 }}>
-          Create the products you sell, set discounts, and manage coupon codes. Everything syncs to Stripe.
+          Create the products you sell and set discounts. Everything syncs to Stripe. Promo codes now live in{" "}
+          <a href="/saabai-admin/marketing/offers" style={{ color: "var(--teal-700)", fontWeight: 600 }}>Marketing &gt; Offers &amp; Coupons</a>.
         </p>
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 22, background: C.surface, padding: 4, borderRadius: 10, width: "fit-content" }}>
           {tabBtn("products", "Products")}
-          {tabBtn("coupons", "Coupons")}
+          <a href="/saabai-admin/marketing/offers" style={{ padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, color: C.dim, textDecoration: "none" }}>Coupons ↗</a>
         </div>
 
-        {tab === "coupons" ? (
-          <CouponsPanel products={products} />
-        ) : loading ? (
+        {loading ? (
           <p style={{ color: C.muted, fontSize: 13 }}>Loading products…</p>
         ) : loadError ? (
           <p style={{ color: C.red, fontSize: 13 }}>{loadError}</p>

@@ -44,6 +44,9 @@ export interface SiteBillingRecord {
   dunningSent?: number;
   lastDunningAt?: string;
   updateCardUrl?: string;
+  /** Promo code redeemed on the setup checkout, and the discount it gave (cents) */
+  couponCode?: string;
+  discountCents?: number;
   addons: SiteAddonState[];
   history: { at: string; event: string }[];
   createdAt: string;

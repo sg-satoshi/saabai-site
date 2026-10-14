@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { handleBlueprintCheckout } from "@/lib/blueprint-order";
+import { redemptionFrom } from "@/lib/coupons/core";
+import { resolveRedemptionCode } from "@/lib/coupons/stripe";
 import { attrFromMetadata } from "@/lib/growth/attribution";
 import { recordEvent, touchContact } from "@/lib/growth/events";
 import { markUpsellConverted, recordReferralPurchase } from "@/lib/growth/growth2";
@@ -131,6 +133,8 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
+  // Which promo code (if any) this checkout used, recorded on the order and the journey.
+  const redemption = await resolveRedemptionCode(redemptionFrom(session as never));
 
   // Journey + attribution (idempotent on the Stripe event id).
   const buyer = session.customer_details?.email || session.customer_email;
@@ -141,7 +145,7 @@ export async function POST(req: Request) {
       id: `stripe_${event.id}`, contactId: buyer,
       type: session.metadata?.product === "blueprint" ? "blueprint_purchased" : "purchase",
       refId: session.id, amountCents: session.amount_total ?? undefined,
-      meta: { tier: session.metadata?.tier, product: session.metadata?.product || "lex", source: attr?.l, firstTouch: attr?.f },
+      meta: { tier: session.metadata?.tier, product: session.metadata?.product || "lex", source: attr?.l, firstTouch: attr?.f, ...(redemption ? { coupon: redemption.code ?? redemption.promotionCodeId, discountCents: redemption.discountCents } : {}) },
     });
     try {
       await recordReferralPurchase({ code: attr?.l?.ref || attr?.f?.ref, buyerEmail: buyer, purchaseId: session.id, amountCents: session.amount_total ?? undefined });
@@ -152,7 +156,7 @@ export async function POST(req: Request) {
   // Saabai Blueprint one-off orders: create engagement + send fact-find.
   if (session.metadata?.product === "blueprint") {
     if (session.payment_status !== "paid") return Response.json({ received: true, skipped: "unpaid blueprint" });
-    const result = await handleBlueprintCheckout(session);
+    const result = await handleBlueprintCheckout(session, redemption);
     return Response.json({ received: true, blueprint: result });
   }
   const customerName = session.customer_details?.name ?? null;

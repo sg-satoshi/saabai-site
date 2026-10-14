@@ -52,7 +52,8 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
         const res = await fetch("/api/blueprint/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tier, ui_mode: "embedded" }),
+          // ?code=XYZ on the checkout URL pre-applies a promo code.
+          body: JSON.stringify({ tier, ui_mode: "embedded", code: new URLSearchParams(window.location.search).get("code") || undefined }),
         });
         const d = await res.json().catch(() => ({}));
         if (cancelledFetch) return;

@@ -1,3 +1,4 @@
+import type { Redemption } from "./coupons/core";
 import type Stripe from "stripe";
 import { EMAIL_BRAND, sendBrandedEmail } from "./email/branded-layout";
 import { blueprintOrderAdminEmail, blueprintOrderCustomerEmail } from "./email/templates";
@@ -27,7 +28,7 @@ function formatAddress(addr: Stripe.Address | null | undefined): string | undefi
  * stores key Stripe fields, emails the client their fact-find link,
  * and alerts hello@saabai.ai. Safe when Redis or Resend are missing.
  */
-export async function handleBlueprintCheckout(session: Stripe.Checkout.Session) {
+export async function handleBlueprintCheckout(session: Stripe.Checkout.Session, redemption?: Redemption | null) {
   const md = session.metadata ?? {};
   const tierId = isTier(md.tier) ? md.tier : "starter";
   const tier = TIERS[tierId];
@@ -80,6 +81,7 @@ export async function handleBlueprintCheckout(session: Stripe.Checkout.Session) 
     amountTotal,
     currency,
     billingAddress,
+    ...(redemption ? { couponCode: redemption.code ?? redemption.promotionCodeId, discountCents: redemption.discountCents } : {}),
   });
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://saabai.ai";

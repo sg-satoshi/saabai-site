@@ -215,6 +215,9 @@ export interface AuditEngagement {
   /** Billing address summary from Stripe customer_details */
   billingAddress?: string;
   calendlyRef?: string;
+  /** Promo code redeemed at checkout, and the discount it gave (cents) */
+  couponCode?: string;
+  discountCents?: number;
 }
 
 export function newId(prefix: string): string {

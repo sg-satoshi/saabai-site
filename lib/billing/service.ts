@@ -10,6 +10,8 @@ import { DEFAULT_SENDER, isAllowedSender, paymentFailedEmail, setupLinkEmail, si
 import { dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresAt, shouldPause, statusAfterFailure, statusFromSubscription } from "./state";
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
 import { BILLING_SOURCE, periodOf, siteUrl } from "./stripe-ops";
+import { redemptionFrom } from "../coupons/core";
+import { resolveRedemptionCode } from "../coupons/stripe";
 
 export interface SetupInput {
   siteId: string;
@@ -134,7 +136,9 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
       const rec = await getSiteBilling(o.metadata.siteId);
       if (!rec) return "no-record";
       if (o.metadata.kind === "setup") {
-        await saveSiteBilling({ ...rec, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, "Paid, subscription active");
+        const red = await resolveRedemptionCode(redemptionFrom(o));
+        const coupon = red ? { couponCode: red.code ?? red.promotionCodeId, discountCents: red.discountCents } : {};
+        await saveSiteBilling({ ...rec, ...coupon, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, red ? `Paid, subscription active (code ${coupon.couponCode})` : "Paid, subscription active");
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {
