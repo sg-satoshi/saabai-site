@@ -5,9 +5,9 @@ import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = {
-  title: { absolute: "Websites and AI Systems for Small Businesses | Saabai" },
+  title: { absolute: "AI Blueprint for Small Businesses | Saabai" },
   description:
-    "Saabai builds, hosts and manages websites for small businesses and professional practices, then shows you exactly where AI can save hours every week with a Saabai Blueprint.",
+    "The Saabai Blueprint shows small businesses and professional practices exactly where AI can save hours every week, what each task costs to automate, and what you will save. Start with the free 3 minute AI score.",
   alternates: { canonical: "/" },
 };
 
@@ -28,15 +28,15 @@ export default function Home() {
         <div className="wrap" style={{ position: "relative" }}>
           <span className="pill">New: Saabai Blueprint, your AI plan in 48 hours</span>
           <h1 style={{ marginTop: 28 }}>
-            Websites and AI systems <br />
-            <span className="grad">that run your business for&nbsp;you</span>
+            Know exactly where AI will <br />
+            <span className="grad">save your business hours, in 48&nbsp;hours.</span>
           </h1>
           <p className="lead">
-            Built for small businesses first, and professional practices too. We build, host and manage your website, then show you exactly where AI can save you hours every week.
+            Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you'll save. Start with the free 3 minute AI score.
           </p>
           <div className="ctas">
             <a className="btn" href="/score">Get your free AI score →</a>
-            <a className="btn ghost" href="/websites">See websites</a>
+            <a className="btn ghost" href="/blueprint">See the Blueprint</a>
           </div>
           <div className="trust">Free 3 minute quiz · Instant score out of 100 · No credit card</div>
         </div>
