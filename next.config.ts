@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+// City-page redirects are for saabai.ai only; client sites on their own domains must not inherit them.
+const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?stuscyclerepairs\\.com" }];
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["mammoth", "pdf-parse"],
   // Members-only Wholesale files live outside public/ and are read from disk
@@ -23,13 +26,13 @@ const nextConfig: NextConfig = {
       { source: "/for-law-firms/:path*", destination: "/blueprint", statusCode: 301 },
       { source: "/for-accounting-firms", destination: "/blueprint", statusCode: 301 },
       { source: "/for-accounting-firms/:path*", destination: "/blueprint", statusCode: 301 },
-      { source: "/sydney", destination: "/websites", statusCode: 301 },
-      { source: "/melbourne", destination: "/websites", statusCode: 301 },
-      { source: "/perth", destination: "/websites", statusCode: 301 },
-      { source: "/adelaide", destination: "/websites", statusCode: 301 },
-      { source: "/canberra", destination: "/websites", statusCode: 301 },
-      { source: "/hobart", destination: "/websites", statusCode: 301 },
-      { source: "/darwin", destination: "/websites", statusCode: 301 },
+      { source: "/sydney", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/melbourne", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/perth", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/adelaide", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/canberra", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/hobart", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
+      { source: "/darwin", destination: "/websites", statusCode: 301, missing: CLIENT_HOST },
       { source: "/for-real-estate", destination: "/blueprint", statusCode: 301 },
       { source: "/for-real-estate/:path*", destination: "/blueprint", statusCode: 301 },
       { source: "/insights/law-firm-intake-automation", destination: "/blueprint", statusCode: 301 },
