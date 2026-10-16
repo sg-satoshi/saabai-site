@@ -18,9 +18,9 @@ export async function listSuggestions(expId: string): Promise<SuggestionRow[]> {
 /** Asks the AI for new headline variants and stores them as PENDING. Nothing here touches live copy. */
 export async function generateSuggestions(siteKey: string, expId: string, actor: string): Promise<{ ok: true; added: number; suggestions: SuggestionRow[] } | Fail> {
   const db = serviceDb();
-  if (!db) return { ok: false, error: "The experiments database isn't configured.", status: 503 };
+  if (!db) return { ok: false, error: "The split testing database isn't configured.", status: 503 };
   const exp = (await listExperiments(siteKey)).find((e) => e.id === expId);
-  if (!exp) return { ok: false, error: "Experiment not found.", status: 404 };
+  if (!exp) return { ok: false, error: "Test not found.", status: 404 };
   if ((exp.slotType ?? "text") !== "text") return { ok: false, error: "Suggestions only work for text slots for now.", status: 400 };
 
   const existing = await listSuggestions(expId);
