@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { EXP_TRACK_HEADER, EXP_HEADER, defaultVariant, variantFromHeader, type Experiment, type Variant } from "./core";
 import { getExperiments } from "./config";
 import { ensureSeeded } from "./register";
@@ -26,7 +27,8 @@ export async function resolveSlot(slot: string, siteKey = "saabai"): Promise<Res
       if (v) variant = v;
       tracked = h.get(EXP_TRACK_HEADER) === "1" && !!v;
     }
-    void ensureSeeded(siteKey);
+    // after() keeps the serverless function alive until registration finishes (a bare void promise can be frozen).
+    after(() => ensureSeeded(siteKey));
   } catch { /* render control */ }
   return { exp, variant, tracked };
 }
