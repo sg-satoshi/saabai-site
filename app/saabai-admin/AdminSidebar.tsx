@@ -50,7 +50,7 @@ const NAV: NavGroup[] = [
     items: [
       { label: "Dashboard", href: "/saabai-admin", icon: "grid" },
       { label: "Analytics", href: "/saabai-admin/analytics", icon: "chart" },
-      { label: "Experiments", href: "/saabai-admin/experiments", icon: "flow" },
+      { label: "Split testing", href: "/saabai-admin/experiments", icon: "flow" },
     ],
   },
   {

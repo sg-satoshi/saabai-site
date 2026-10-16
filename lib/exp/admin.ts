@@ -102,10 +102,10 @@ export type ApplyOutcome = MutationResult | { ok: false; error: string; status: 
  */
 export async function applyDashboardAction(siteKey: string, expId: string, action: Action, expectedRev: number | undefined, actor: string): Promise<ApplyOutcome> {
   const db = serviceDb();
-  if (!db) return { ok: false, error: "The experiments database isn't configured.", status: 503 };
+  if (!db) return { ok: false, error: "The split testing database isn't configured.", status: 503 };
   const list = await listExperiments(siteKey);
   const cur = list.find((e) => e.id === expId);
-  if (!cur) return { ok: false, error: "Experiment not found.", status: 404 };
+  if (!cur) return { ok: false, error: "Test not found.", status: 404 };
   if (expectedRev !== undefined && (cur.rev ?? 0) !== expectedRev) return { ok: false, error: "Someone changed this test since you opened it. Refresh and try again.", status: 409 };
   let a = action;
   const res = applyAction(cur, a);

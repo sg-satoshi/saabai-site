@@ -50,7 +50,7 @@ export default function ExperimentsClient() {
     <div className="pg xp">
       {openId ? <DetailView id={openId} onBack={() => open(null)} /> : (
         <>
-          <div className="ph"><div><h1>Experiments</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div></div>
+          <div className="ph"><div><h1>Split testing</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div></div>
           {err && <div className="xp-err">{err}</div>}
           {!items && !err && <p className="muted">Loading…</p>}
           <div className="xp-list">
@@ -64,7 +64,7 @@ export default function ExperimentsClient() {
                 <div className="m"><span>Views <b>{nf(i.views)}</b></span><span>Conversions <b>{nf(i.conversions)}</b></span><span>Rate <b>{pct(i.rate)}</b></span></div>
               </button>
             ))}
-            {items?.length === 0 && <p className="muted">No experiments yet.</p>}
+            {items?.length === 0 && <p className="muted">No split tests yet.</p>}
           </div>
         </>
       )}
@@ -116,7 +116,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
     finally { setBusy(false); }
   }
 
-  if (err) return <><button className="xp-back" onClick={onBack}>← All experiments</button><div className="xp-err">{err}</div></>;
+  if (err) return <><button className="xp-back" onClick={onBack}>← All tests</button><div className="xp-err">{err}</div></>;
   if (!d) return <p className="muted">Loading…</p>;
   const { experiment: e, analysis, totals, daysRunning } = d;
   const v = analysis.verdict;
@@ -132,7 +132,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <>
-      <button className="xp-back" onClick={onBack}>← All experiments</button>
+      <button className="xp-back" onClick={onBack}>← All tests</button>
       <div className="ph">
         <div><h1>{e.name ?? e.id}</h1><p className="sub">{e.slot} on {e.path} · changes go live within about a minute, no redeploy</p></div>
         <div className="xp-acts">
