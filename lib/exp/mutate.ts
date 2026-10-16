@@ -3,7 +3,7 @@ import { validateExperiment, type Experiment, type Variant } from "./core";
 /** Dashboard actions on one experiment. Pure: returns the next config or an error, never touches storage. */
 export type Action =
   | { type: "update_variant"; variantId: string; text: string; emphasis?: string }
-  | { type: "add_variant"; text: string; emphasis?: string }
+  | { type: "add_variant"; text: string; emphasis?: string; source?: "human" | "ai"; suggestionId?: string; edited?: boolean }
   | { type: "set_variant_active"; variantId: string; active: boolean }
   | { type: "set_status"; status: "running" | "paused" }
   | { type: "make_winner"; variantId: string }
@@ -58,10 +58,11 @@ export function applyAction(current: Experiment, a: Action, now: Date = new Date
       if (bad) return fail(bad);
       const id = [...LETTERS].find((l) => !exp.variants.some((v) => v.id === l));
       if (!id) return fail("No free variant slot.");
-      const v: Variant = { id, text, active: true, source: "human" };
+      const v: Variant = { id, text, active: true, source: a.source === "ai" ? "ai" : "human" };
       if (emphasis) v.emphasis = emphasis;
       exp.variants.push(v);
       detail = { variant: id, text, emphasis };
+      if (a.source === "ai") { detail.source = "ai"; detail.suggestionId = a.suggestionId ?? null; detail.editedBeforeApproval = !!a.edited; action = "approve_suggestion"; }
       break;
     }
     case "set_variant_active": {
