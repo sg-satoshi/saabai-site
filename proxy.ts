@@ -5,7 +5,7 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
-import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assign, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
+import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
 
 const redis = Redis.fromEnv();
@@ -338,8 +338,8 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
     const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
     let setCookie: string | undefined;
     let tracked = false;
-    for (const e of exps.slice(0, 1)) {
-      const a = assign(e, {
+    if (exps.length) {
+      const r = assignAll(exps, {
         ua: req.headers.get("user-agent"),
         privacy: privacySignal(req.headers),
         admin: !!req.cookies.get(COOKIE_NAME)?.value,
@@ -347,9 +347,9 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
         cookie,
         newVisitorId: () => crypto.randomUUID(),
       });
-      headers.set(EXP_HEADER, `${e.id}:${a.variant.id}`);
-      if (a.track) { headers.set(EXP_TRACK_HEADER, "1"); tracked = true; }
-      if (a.cookie) setCookie = a.cookie;
+      headers.set(EXP_HEADER, r.header);
+      if (r.track) { headers.set(EXP_TRACK_HEADER, "1"); tracked = true; }
+      setCookie = r.cookie;
     }
     const res = NextResponse.next({ request: { headers } });
     if (setCookie && tracked) {

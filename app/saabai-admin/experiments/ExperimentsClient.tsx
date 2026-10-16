@@ -8,7 +8,7 @@ import "./experiments.css";
 
 type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
 type Sugg = { id: string; text: string; emphasis: string; rationale: string; status: string; created_at: string; decided_at: string | null; variant_key: string | null };
-type Exp = { id: string; name?: string; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
+type Exp = { id: string; name?: string; kind?: "headline" | "button"; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
 type VR = { id: string; label?: string; impressions: number; ctaClicks: number; calls: number; enquiries: number; converters: number; rate: number; rateLow: number; rateHigh: number; probBest: number };
 type Verdict = { kind: string; leaderId?: string; probBest: number; lift?: { median: number; low: number; high: number }; missing: string[]; headline: string; detail: string; canMakeWinner: boolean };
 type Breakdown = { dim: string; rows: { bucket: string; views: number; ctaClicks: number; conversions: number; rate: number }[] };
@@ -120,6 +120,9 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   if (!d) return <p className="muted">Loading…</p>;
   const { experiment: e, analysis, totals, daysRunning } = d;
   const v = analysis.verdict;
+  const noun = e.kind === "button" ? "button label" : "headline";
+  const hasEmph = e.kind !== "button";
+  const maxLen = hasEmph ? 90 : 40;
   const byId = new Map(analysis.variants.map((x) => [x.id, x]));
   const maxDay = Math.max(1, ...d.daily.map((x) => x.views));
   const rules = [
@@ -175,7 +178,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
                   {!isControl && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: vr.id, active: !vr.active }, vr.active ? `Variant ${vr.id.toUpperCase()} paused.` : `Variant ${vr.id.toUpperCase()} resumed.`)}>{vr.active ? "Pause" : "Resume"}</Button>}
                   {!(e.status === "won" && isControl) && <Button size="sm" variant="pri" disabled={busy} onClick={async () => {
                     const proven = v.canMakeWinner && v.leaderId === vr.id;
-                    const ok = await confirmDialog(proven ? `Make variant ${vr.id.toUpperCase()} the live headline for everyone? The test will end.` : `Variant ${vr.id.toUpperCase()} is not a proven winner yet. Make it the live headline for everyone anyway? The test will end, and the call is logged as yours.`, { confirmLabel: "Make it live" });
+                    const ok = await confirmDialog(proven ? `Make variant ${vr.id.toUpperCase()} the live ${noun} for everyone? The test will end.` : `Variant ${vr.id.toUpperCase()} is not a proven winner yet. Make it the live ${noun} for everyone anyway? The test will end, and the call is logged as yours.`, { confirmLabel: "Make it live" });
                     if (ok) act({ type: "make_winner", variantId: vr.id }, `Variant ${vr.id.toUpperCase()} is now live for everyone.`);
                   }}>{isControl ? "Keep as live" : "Make winner live"}</Button>}
                 </div>
@@ -190,7 +193,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
                   <div className="xp-bar" aria-hidden><i style={{ width: `${Math.round(s.probBest * 100)}%` }} /></div>
                 </>
               )}
-              {editing === vr.id && <EditForm key={vr.id} v={vr} hasData={(s?.impressions ?? 0) >= 50} busy={busy} onSave={async (text, emphasis) => { if (await act({ type: "update_variant", variantId: vr.id, text, emphasis }, "Copy saved. Live within about a minute.")) setEditing(null); }} />}
+              {editing === vr.id && <EditForm key={vr.id} v={vr} noun={noun} hasEmph={hasEmph} maxLen={maxLen} hasData={(s?.impressions ?? 0) >= 50} busy={busy} onSave={async (text, emphasis) => { if (await act({ type: "update_variant", variantId: vr.id, text, emphasis }, "Copy saved. Live within about a minute.")) setEditing(null); }} />}
             </div>
           );
         })}
@@ -200,7 +203,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
         <Card>
           <CardHeader title="Add a variant" action={e.variants.length < 8 && !adding ? <Button size="sm" onClick={() => setAdding(true)}>+ Add</Button> : undefined} />
           <CardBody>
-            {adding ? <EditForm v={{ text: "", emphasis: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (text, emphasis) => { if (await act({ type: "add_variant", text, emphasis }, "Variant added. It starts getting visitors within about a minute.")) setAdding(false); }} />
+            {adding ? <EditForm noun={noun} hasEmph={hasEmph} maxLen={maxLen} v={{ text: "", emphasis: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (text, emphasis) => { if (await act({ type: "add_variant", text, emphasis }, "Variant added. It starts getting visitors within about a minute.")) setAdding(false); }} />
               : <p className="xp-note">{e.variants.length >= 8 ? "This test already has the maximum of 8 variants." : "New variants share traffic evenly with the others. Add one at a time and let it gather data."}</p>}
           </CardBody>
         </Card>
@@ -208,17 +211,17 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
         <Card>
           <CardHeader title="AI suggestions" action={<Button size="sm" variant="acc" disabled={genBusy || busy || e.variants.length >= 8} onClick={() => suggest({ op: "generate" }, "New ideas are ready to review below. None are live.")}>{genBusy && !sEdit ? "Thinking…" : "Suggest variants"}</Button>} />
           <CardBody>
-            <p className="xp-note">The AI proposes 3 new headlines in our voice, using what has and hasn&apos;t worked so far. They stay pending and are never shown to visitors until you approve one. You can edit the wording first.</p>
+            <p className="xp-note">The AI proposes 3 new {noun}s in our voice, using what has and hasn&apos;t worked so far. They stay pending and are never shown to visitors until you approve one. You can edit the wording first.</p>
             {sugg.filter((x) => x.status === "pending" || x.status === "approving").map((x) => (
               <div key={x.id} className="xp-var" style={{ marginTop: 10 }}>
                 <div className="xp-top"><div className="nm"><Badge tone="warn">pending approval</Badge></div></div>
                 {sEdit === x.id
-                  ? <EditForm v={x} hasData={false} busy={genBusy} saveLabel="Approve with my edits" onCancel={() => setSEdit(null)} onSave={async (text, emphasis) => { if (await suggest({ op: "approve", suggestionId: x.id, text, emphasis }, "Approved and added. It starts getting visitors within about a minute.")) setSEdit(null); }} />
+                  ? <EditForm noun={noun} hasEmph={hasEmph} maxLen={maxLen} v={x} hasData={false} busy={genBusy} saveLabel="Approve with my edits" onCancel={() => setSEdit(null)} onSave={async (text, emphasis) => { if (await suggest({ op: "approve", suggestionId: x.id, text, emphasis }, "Approved and added. It starts getting visitors within about a minute.")) setSEdit(null); }} />
                   : <>
                     <CopyView v={x} />
                     {x.rationale && <p className="xp-note">{x.rationale}</p>}
                     <div className="xp-acts">
-                      <Button size="sm" variant="pri" disabled={genBusy || busy || e.variants.length >= 8} onClick={async () => { if (await confirmDialog(`Approve this headline? It will be added as a new variant and start getting visitors within about a minute.`)) suggest({ op: "approve", suggestionId: x.id }, "Approved and added. It starts getting visitors within about a minute."); }}>Approve</Button>
+                      <Button size="sm" variant="pri" disabled={genBusy || busy || e.variants.length >= 8} onClick={async () => { if (await confirmDialog(`Approve this ${noun}? It will be added as a new variant and start getting visitors within about a minute.`)) suggest({ op: "approve", suggestionId: x.id }, "Approved and added. It starts getting visitors within about a minute."); }}>Approve</Button>
                       <Button size="sm" disabled={genBusy || busy} onClick={() => setSEdit(x.id)}>Edit then approve</Button>
                       <Button size="sm" variant="gh" disabled={genBusy || busy} onClick={() => suggest({ op: "reject", suggestionId: x.id }, "Rejected. The AI won't repeat that style.")}>Reject</Button>
                     </div>
@@ -276,15 +279,15 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   );
 }
 
-function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy" }: { v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
+function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90 }: { noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
   const [text, setText] = useState(v.text);
   const [emphasis, setEmphasis] = useState(v.emphasis ?? "");
-  const bad = /[\u2013\u2014]/.test(text + emphasis) ? "Please avoid long dashes. Use a comma or full stop." : !text.trim() ? "" : text.length > 90 || emphasis.length > 90 ? "Keep each part under 90 characters." : "";
+  const bad = /[\u2013\u2014]/.test(text + emphasis) ? "Please avoid long dashes. Use a comma or full stop." : !text.trim() ? "" : text.length > maxLen || emphasis.length > maxLen ? `Keep each part under ${maxLen} characters.` : "";
   return (
     <form className="xp-form" onSubmit={(ev) => { ev.preventDefault(); if (!bad && text.trim()) onSave(text, emphasis); }}>
-      <label>Headline <span className="xp-count">{text.length}/90</span><input value={text} onChange={(x) => setText(x.target.value)} maxLength={120} required /></label>
-      <label>Highlighted part, shown in the gradient (optional) <span className="xp-count">{emphasis.length}/90</span><input value={emphasis} onChange={(x) => setEmphasis(x.target.value)} maxLength={120} /></label>
-      <div className="xp-prev"><CopyView v={{ text: text || "Your headline", emphasis }} /></div>
+      <label>{noun.charAt(0).toUpperCase() + noun.slice(1)} <span className="xp-count">{text.length}/{maxLen}</span><input value={text} onChange={(x) => setText(x.target.value)} maxLength={120} required /></label>
+      {hasEmph && <label>Highlighted part, shown in the gradient (optional) <span className="xp-count">{emphasis.length}/90</span><input value={emphasis} onChange={(x) => setEmphasis(x.target.value)} maxLength={120} /></label>}
+      <div className="xp-prev"><CopyView v={{ text: text || `Your ${noun}`, emphasis }} /></div>
       {hasData && <p className="xp-note">This variant already has results. Changing the wording mixes old and new numbers, so adding a new variant is usually cleaner.</p>}
       {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>{bad}</p>}
       <div className="xp-acts"><Button variant="acc" type="submit" disabled={busy || !!bad || !text.trim()}>{saveLabel}</Button>{onCancel && <Button variant="gh" onClick={onCancel}>Cancel</Button>}</div>

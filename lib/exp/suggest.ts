@@ -3,7 +3,7 @@
  * Suggestions are only proposals. Nothing here can change what visitors see: a human approves in the dashboard,
  * and approval goes through the same audited add_variant path as a manual edit.
  */
-import type { Experiment } from "./core";
+import { KIND_RULES, kindOf, type Experiment, type SlotKind } from "./core";
 import type { Analysis } from "./stats";
 
 export const SUGGEST_COUNT = 3;
@@ -19,26 +19,37 @@ export const combined = (t: string, e: string) => [t, e].filter(Boolean).join(" 
 /** Words and claims we never let through without a human writing them. */
 const BANNED = /\b(guarantee[ds]?|best|#1|number one|no\.? ?1|proven|revolutionary|game.?chang\w*|10x|\d+x|free|instant\w*|risk.?free|unlimited|cutting.?edge|unlock\w*|supercharge\w*|transform\w*|skyrocket\w*|secret|hack|effortless\w*|automagic\w*|dominate|crush)\b/i;
 
+/** Buttons may say "free" (the quiz is free, the page says so) but make no other claim. */
+const BANNED_BUTTON = /\b(guarantee[ds]?|best|#1|number one|no\.? ?1|proven|revolutionary|game.?chang\w*|10x|\d+x|instant\w*|risk.?free|unlimited|cutting.?edge|unlock\w*|supercharge\w*|transform\w*|skyrocket\w*|secret|hack|effortless\w*|automagic\w*|dominate|crush|now|today|hurry|limited|exclusive|save)\b/i;
+
 /** Returns why a suggestion is not allowed, or null when it passes. */
-export function checkSuggestion(s: Suggestion, existingCopy: string[]): string | null {
+export function checkSuggestion(s: Suggestion, existingCopy: string[], kind: SlotKind = "headline"): string | null {
   const text = s.text.trim(), emphasis = s.emphasis.trim();
+  const rules = KIND_RULES[kind];
   if (!text) return "empty";
-  if (text.length > 90 || emphasis.length > 90 || combined(text, emphasis).length > MAX_COMBINED) return "too long";
+  if (emphasis && !rules.emphasis) return "no highlighted part allowed";
+  if (text.length > rules.maxText || emphasis.length > rules.maxEmphasis || combined(text, emphasis).length > rules.maxCombined) return "too long";
   const all = combined(text, emphasis);
   if (/[\u2013\u2014]/.test(all)) return "long dash";
   if (/!/.test(all)) return "exclamation";
   if (/https?:|www\.|@/i.test(all)) return "link";
   if (/\p{Extended_Pictographic}/u.test(all)) return "emoji";
   const digits = all.match(/\d+/g) ?? [];
-  if (digits.some((d) => d !== "48")) return "number we cannot back up";
-  if (/\b48\b/.test(all) && !/48[\u00a0 ]hours/i.test(all)) return "48 must mean 48 hours";
-  if (BANNED.test(all)) return "claim we cannot back up";
+  if (kind === "button") {
+    // The only numbers a button can back up are the ones on the page: the 3 minute quiz.
+    if (digits.some((d) => d !== "3") || (digits.length && !/\b3[\u00a0 ]min/i.test(all))) return "number we cannot back up";
+    if (BANNED_BUTTON.test(all)) return "claim we cannot back up";
+  } else {
+    if (digits.some((d) => d !== "48")) return "number we cannot back up";
+    if (/\b48\b/.test(all) && !/48[\u00a0 ]hours/i.test(all)) return "48 must mean 48 hours";
+    if (BANNED.test(all)) return "claim we cannot back up";
+  }
   if (existingCopy.some((c) => norm(c) === norm(all))) return "duplicate";
   return null;
 }
 
 /** Tidies, applies the guardrails and drops duplicates inside the batch. */
-export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUGGEST_COUNT): { ok: Suggestion[]; dropped: { text: string; why: string }[] } {
+export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUGGEST_COUNT, kind: SlotKind = "headline"): { ok: Suggestion[]; dropped: { text: string; why: string }[] } {
   const arr = Array.isArray(raw) ? raw : [];
   const ok: Suggestion[] = [];
   const dropped: { text: string; why: string }[] = [];
@@ -49,8 +60,8 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
     const tidy = (x: unknown) => (typeof x === "string" ? x.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
     // Keep "48 hours" together like the live headline does.
     const nb = (x: string) => x.replace(/\b48 hours/gi, "48\u00a0hours");
-    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
-    const why = checkSuggestion(s, seen);
+    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: kind === "button" ? "" : nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
+    const why = checkSuggestion(s, seen, kind);
     if (why) { dropped.push({ text: s.text, why }); continue; }
     if (ok.length >= max) continue;
     ok.push(s);
@@ -58,6 +69,19 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
   }
   return { ok, dropped };
 }
+
+export const SUGGEST_SYSTEM_BUTTON = `You write button label variants for the main button on the saabai.ai homepage. The button opens a free 3 minute quiz that gives the visitor an AI score out of 100 and leads into the Saabai Blueprint, a clear plan for where AI will save a small business time, delivered in 48 hours.
+Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no urgency tricks.
+Hard rules:
+- Never use em dashes or en dashes.
+- 40 characters or fewer. No arrow or symbols, the page adds the arrow.
+- Only describe what the button does: start the free quiz and get a score. Do not promise savings, prices, percentages, results, guarantees or reviews.
+- The only number allowed is "3 minute" (the quiz length). No other digits.
+- Avoid: best, guaranteed, proven, instant, unlock, transform, revolutionary, now, today, save.
+- Each label must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles: the quiz itself, the score, finding out where AI fits, a low-effort first step.
+Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
+
+export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : SUGGEST_SYSTEM);
 
 export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
 Voice: plain, direct, Australian English, like a sensible tradie explaining things. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no question marks needed.
@@ -86,7 +110,7 @@ export function buildSuggestPrompt(exp: Experiment, analysis: Analysis, daysRunn
     `Verdict so far: ${analysis.verdict.headline} ${analysis.verdict.detail}`,
     analysis.verdict.kind !== "winner" ? "No result is proven yet, so the numbers are early and noisy. Treat them as a weak hint only." : "",
     rejected.length ? `The owner rejected these before, so do not repeat their style:\n${rejected.map((r) => `- "${r}"`).join("\n")}` : "",
-    `Write 3 new headline variants.`,
+    `Write 3 new ${KIND_RULES[kindOf(exp)].noun} variants.`,
   ].filter(Boolean).join("\n");
 }
 

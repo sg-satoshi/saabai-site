@@ -29,10 +29,21 @@ export type Variant = {
   /** "human" or "ai" (AI variants arrive in Phase 3 and need approval before serving). */
   source?: "human" | "ai";
 };
+/** Copy kinds. "headline" has an optional highlighted second part; "button" is one short label. */
+export const SLOT_KINDS = ["headline", "button"] as const;
+export type SlotKind = (typeof SLOT_KINDS)[number];
+export const KIND_RULES: Record<SlotKind, { noun: string; maxText: number; maxEmphasis: number; maxCombined: number; emphasis: boolean }> = {
+  headline: { noun: "headline", maxText: 90, maxEmphasis: 90, maxCombined: 100, emphasis: true },
+  button: { noun: "button label", maxText: 40, maxEmphasis: 0, maxCombined: 40, emphasis: false },
+};
+export const kindOf = (e: { kind?: SlotKind }): SlotKind => (e.kind && SLOT_KINDS.includes(e.kind) ? e.kind : "headline");
+
 export type Experiment = {
   id: string;
   siteKey: string;
   slot: string;
+  /** Copy kind, defaults to "headline" when absent (older stored experiments). */
+  kind?: SlotKind;
   /** Defaults to "text" when absent. */
   slotType?: SlotType;
   path: string;
@@ -105,6 +116,8 @@ export function validateExperiment(e: unknown): Experiment | null {
   if (typeof x.siteKey !== "string" || typeof x.slot !== "string" || typeof x.path !== "string") return null;
   if (!["draft", "running", "paused", "won"].includes(x.status)) return null;
   if (x.slotType !== undefined && !SLOT_TYPES.includes(x.slotType)) return null;
+  if (x.kind !== undefined && !SLOT_KINDS.includes(x.kind)) return null;
+  const rules = KIND_RULES[kindOf(x)];
   if (!Array.isArray(x.variants) || x.variants.length < 1 || x.variants.length > 8) return null;
   const ids = new Set<string>();
   for (const v of x.variants) {
@@ -112,8 +125,8 @@ export function validateExperiment(e: unknown): Experiment | null {
     ids.add(v.id);
     if (typeof v.active !== "boolean") return null;
     if (v.value !== undefined && (typeof v.value !== "object" || v.value === null || Object.values(v.value).some((z) => typeof z !== "string" || z.length > 300))) return null;
-    if (typeof v.text !== "string" || !v.text.trim() || v.text.length > 90) return null;
-    if (v.emphasis !== undefined && (typeof v.emphasis !== "string" || v.emphasis.length > 90)) return null;
+    if (typeof v.text !== "string" || !v.text.trim() || v.text.length > rules.maxText) return null;
+    if (v.emphasis !== undefined && (typeof v.emphasis !== "string" || v.emphasis.length > rules.maxEmphasis)) return null;
     if (/—|–/.test(v.text + (v.emphasis ?? ""))) return null;
   }
   if (!x.variants.some((v) => v.id === x.defaultVariantId)) return null;
@@ -160,4 +173,31 @@ export function assign(
   const variant = pickVariant(exp, ctx.rng);
   const next: ExpCookie = { v: ctx.cookie?.v ?? ctx.newVisitorId(), a: { ...(ctx.cookie?.a ?? {}), [exp.id]: variant.id } };
   return { exp, variant, track: true, cookie: serialiseExpCookie(next) };
+}
+
+/**
+ * Assign every running experiment on a page in one pass, carrying one visitor id and one cookie.
+ * `header` is "expId:variantId,expId:variantId" for the page to read; `cookie` is set only when something changed.
+ */
+export function assignAll(exps: Experiment[], ctx: Parameters<typeof assign>[1]): { header: string; track: boolean; cookie?: string } {
+  let cur = ctx.cookie;
+  let cookie: string | undefined;
+  let track = false;
+  const pairs: string[] = [];
+  for (const e of exps) {
+    const a = assign(e, { ...ctx, cookie: cur });
+    pairs.push(`${e.id}:${a.variant.id}`);
+    if (a.track) track = true;
+    if (a.cookie) { cookie = a.cookie; cur = parseExpCookie(a.cookie); }
+  }
+  return { header: pairs.join(","), track, cookie };
+}
+
+/** Pulls one experiment's variant id out of the multi-experiment header. */
+export function variantFromHeader(header: string | null | undefined, expId: string): string | undefined {
+  for (const pair of (header ?? "").split(",")) {
+    const i = pair.indexOf(":");
+    if (i > 0 && pair.slice(0, i).trim() === expId) return pair.slice(i + 1).trim();
+  }
+  return undefined;
 }

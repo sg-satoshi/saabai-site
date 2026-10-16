@@ -1,9 +1,10 @@
 import { generateText } from "ai";
 import { randomUUID } from "node:crypto";
 import { getDefaultModel } from "../chat-config";
+import { kindOf } from "./core";
 import { applyDashboardAction, listExperiments, loadView, type ApplyOutcome } from "./admin";
 import { serviceDb } from "./track";
-import { SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, SUGGEST_SYSTEM, buildSuggestPrompt, cleanSuggestions, combined, parseModelJson } from "./suggest";
+import { SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, suggestSystem, buildSuggestPrompt, cleanSuggestions, combined, parseModelJson } from "./suggest";
 
 export type SuggestionRow = { id: string; text: string; emphasis: string; rationale: string; status: "pending" | "approving" | "approved" | "rejected"; created_at: string; decided_at: string | null; variant_key: string | null };
 type Fail = { ok: false; error: string; status: number };
@@ -41,8 +42,8 @@ export async function generateSuggestions(siteKey: string, expId: string, actor:
   try {
     modelName = process.env.DEFAULT_CHAT_MODEL || "anthropic:claude-haiku-4-5";
     for (let attempt = 0; attempt < 2 && good.length < SUGGEST_COUNT; attempt++) {
-      const r = await generateText({ model: getDefaultModel(), system: SUGGEST_SYSTEM, prompt: attempt ? `${prompt}\nYour last answer broke a rule or repeated something. Follow every hard rule.` : prompt, maxOutputTokens: 700, temperature: 0.9 });
-      const c = cleanSuggestions(parseModelJson(r.text), [...avoid, ...good.map((g) => combined(g.text, g.emphasis))], SUGGEST_COUNT - good.length);
+      const r = await generateText({ model: getDefaultModel(), system: suggestSystem(kindOf(exp)), prompt: attempt ? `${prompt}\nYour last answer broke a rule or repeated something. Follow every hard rule.` : prompt, maxOutputTokens: 700, temperature: 0.9 });
+      const c = cleanSuggestions(parseModelJson(r.text), [...avoid, ...good.map((g) => combined(g.text, g.emphasis))], SUGGEST_COUNT - good.length, kindOf(exp));
       good = [...good, ...c.ok];
     }
   } catch (e) {

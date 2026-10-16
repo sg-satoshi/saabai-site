@@ -98,7 +98,9 @@ if (expMode) {
       title: html.match(/<title>([^<]*)/i)?.[1], canon: html.match(/<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)/i)?.[1],
       ld: [...html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]).join("|"),
     };
-    return { status: r.status, html, ck, cookieHeader: ck?.split(";")[0], variant, h1, meta, httpOnly: /httponly/i.test(ck || "") };
+    const ctaTag = html.match(/<a\b[^>]*data-exp-slot="home\.hero\.cta"[^>]*>([\s\S]*?)<\/a>/i);
+    const cta = ctaTag ? { variant: ctaTag[0].match(/data-exp-variant="([^"]+)"/)?.[1], text: ctaTag[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() } : null;
+    return { status: r.status, html, ck, cta, cookieHeader: ck?.split(";")[0], variant, h1, meta, httpOnly: /httponly/i.test(ck || "") };
   };
   if (expMode === "off") {
     const h = await fetchHome();
@@ -125,13 +127,25 @@ if (expMode) {
       sameMeta ? log("PASS", "exp: title, canonical and JSON-LD identical across variants", `variants seen: ${[...seen.keys()].join(",")}`) : log("FAIL", "exp: title/canonical/JSON-LD must not vary by variant");
       new Set(vs.map((v) => v.h1)).size === vs.length ? log("PASS", "exp: variants show different headlines") : log("FAIL", "exp: variants show the same headline");
     }
+    // Second slot: hero button label. Same rules, independent assignment.
+    if (!h1.cta?.variant || !h1.cta.text) log("FAIL", "exp: hero button variant rendered in raw server HTML", JSON.stringify(h1.cta));
+    else log("PASS", "exp: hero button variant rendered in raw server HTML", `${h1.cta.variant}: "${h1.cta.text}"`);
+    if (h1.cookieHeader) {
+      let same = true;
+      for (let i = 0; i < 3; i++) { const r = await fetchHome({ cookie: h1.cookieHeader }); if (r.cta?.variant !== h1.cta?.variant) same = false; }
+      same ? log("PASS", "exp: hero button variant sticky across repeat visits") : log("FAIL", "exp: hero button variant sticky across repeat visits");
+    }
+    const ctaSeen = new Map();
+    for (let i = 0; i < 24 && ctaSeen.size < 3; i++) { const r = await fetchHome(); if (r.cta?.variant && !ctaSeen.has(r.cta.variant)) ctaSeen.set(r.cta.variant, r.cta.text); }
+    if (ctaSeen.size < 2) log("WARN", "exp: saw fewer than 2 hero button variants in 24 fresh visits", `${[...ctaSeen.keys()]}`);
+    else new Set(ctaSeen.values()).size === ctaSeen.size ? log("PASS", "exp: hero button variants show different labels", [...ctaSeen.entries()].map(([k, t]) => `${k}="${t}"`).join(" ")) : log("FAIL", "exp: hero button variants show the same label");
     const bot = await fetchHome({ "user-agent": BOT_UA });
     const def = [...seen.values()].find((v) => v.variant === "a") ?? null;
-    !bot.ck && bot.variant === "a" && (!def || bot.h1 === def.h1) ? log("PASS", "exp: bot gets default (control) headline and no cookie") : log("FAIL", "exp: bot must get default and no cookie", `variant ${bot.variant}, cookie ${!!bot.ck}`);
+    !bot.ck && bot.variant === "a" && bot.cta?.variant === "a" && (!def || bot.h1 === def.h1) ? log("PASS", "exp: bot gets default (control) headline and no cookie") : log("FAIL", "exp: bot must get default and no cookie", `variant ${bot.variant}, cookie ${!!bot.ck}`);
     const gpc = await fetchHome({ "sec-gpc": "1" });
-    !gpc.ck && gpc.variant === "a" ? log("PASS", "exp: Global Privacy Control gets default and no cookie") : log("FAIL", "exp: GPC must get default and no cookie", `variant ${gpc.variant}, cookie ${!!gpc.ck}`);
+    !gpc.ck && gpc.variant === "a" && gpc.cta?.variant === "a" ? log("PASS", "exp: Global Privacy Control gets default and no cookie") : log("FAIL", "exp: GPC must get default and no cookie", `variant ${gpc.variant}, cookie ${!!gpc.ck}`);
     const off = await fetchHome({ cookie: "sb_exp_off=1" });
-    !off.ck && off.variant === "a" ? log("PASS", "exp: opt-out cookie gets default and no cookie") : log("FAIL", "exp: opt-out must get default and no cookie");
+    !off.ck && off.variant === "a" && off.cta?.variant === "a" ? log("PASS", "exp: opt-out cookie gets default and no cookie") : log("FAIL", "exp: opt-out must get default and no cookie");
     // Bot beacon: must be accepted (204) and ignored.
     try {
       const r = await fetch(new URL("/api/exp/event", origin), { method: "POST", headers: { "user-agent": BOT_UA, "content-type": "application/json" }, body: JSON.stringify({ type: "impression", exp: "home-hero-headline" }) });

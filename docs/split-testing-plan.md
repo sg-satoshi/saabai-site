@@ -189,3 +189,11 @@ Total build about 9 to 12 working days, plus soak.
 3. Lead value for saabai.ai in AUD, and rough enquiry-to-client close rate.
 4. Privacy policy wording update, and whether to gate on consent from day one (recommended: no banner, disclose, honour GPC).
 5. Weekly note recipient and first-run review (recommended: Shane only until happy).
+
+## Appendix: adding a test slot (built, Part A of Phase 4 prep)
+
+1. Add one entry to `SLOTS` in `lib/exp/seed.ts`: `id`, `slot` name, `kind` (`headline` or `button`), `path`, `control` copy (the live copy, byte for byte) and any starting `variants`.
+2. Render it with `<ExpText slot="your.slot">{(v) => <a {...v.attrs}>{v.text}</a>}</ExpText>` (see `app/components/exp/HeroCta.tsx`).
+3. Done. The proxy assigns it (one cookie, independent per slot), the beacon tracks views, clicks and calls, bots and GPC/DNT get the control, the slot registers itself in Redis and Supabase on first render, and it appears in the Split testing dashboard with editing, AI suggestions and approval.
+
+Copy limits and AI rules come from the `kind` (`KIND_RULES` in `lib/exp/core.ts`). A new kind needs its limits there plus a suggestion prompt in `lib/exp/suggest.ts`. Button clicks only count when made on the tested button itself.

@@ -1,4 +1,4 @@
-import { validateExperiment, type Experiment, type Variant } from "./core";
+import { KIND_RULES, kindOf, validateExperiment, type Experiment, type Variant } from "./core";
 
 /** Dashboard actions on one experiment. Pure: returns the next config or an error, never touches storage. */
 export type Action =
@@ -20,11 +20,13 @@ export const MAX_LEN = 90;
 
 const tidy = (s: unknown) => (typeof s === "string" ? s.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
 
-function checkCopy(text: string, emphasis: string): string | null {
-  if (!text) return "The headline can't be empty.";
-  if (text.length > MAX_LEN) return `Keep the headline under ${MAX_LEN} characters.`;
-  if (emphasis.length > MAX_LEN) return `Keep the highlighted part under ${MAX_LEN} characters.`;
-  if (/[\u2013\u2014]/.test(text + emphasis)) return "Please avoid long dashes (en and em dashes). Use a comma or full stop instead.";
+function checkCopy(exp: Experiment, text: string, emphasis: string): string | null {
+  const r = KIND_RULES[kindOf(exp)];
+  if (!text) return `The ${r.noun} can't be empty.`;
+  if (text.length > r.maxText) return `Keep the ${r.noun} under ${r.maxText} characters.`;
+  if (emphasis && !r.emphasis) return `A ${r.noun} has no highlighted part.`;
+  if (emphasis.length > r.maxEmphasis) return `Keep the highlighted part under ${r.maxEmphasis} characters.`;
+  if (/[\u2013\u2014]/.test(text + emphasis)) return `Please avoid long dashes (en and em dashes). Use a comma or full stop instead.`;
   return null;
 }
 
@@ -42,7 +44,7 @@ export function applyAction(current: Experiment, a: Action, now: Date = new Date
       if (!v) return fail("That variant doesn't exist.", 404);
       if ((exp.slotType ?? "text") !== "text") return fail("Only text slots can be edited here for now.");
       const text = tidy(a.text), emphasis = tidy(a.emphasis ?? "");
-      const bad = checkCopy(text, emphasis);
+      const bad = checkCopy(exp, text, emphasis);
       if (bad) return fail(bad);
       detail = { variant: v.id, before: { text: v.text, emphasis: v.emphasis ?? "" }, after: { text, emphasis } };
       if (v.text === text && (v.emphasis ?? "") === emphasis) return fail("Nothing changed.");
@@ -54,7 +56,7 @@ export function applyAction(current: Experiment, a: Action, now: Date = new Date
       if (exp.variants.length >= MAX_VARIANTS) return fail(`A test can have at most ${MAX_VARIANTS} variants.`);
       if ((exp.slotType ?? "text") !== "text") return fail("Only text slots can be added here for now.");
       const text = tidy(a.text), emphasis = tidy(a.emphasis ?? "");
-      const bad = checkCopy(text, emphasis);
+      const bad = checkCopy(exp, text, emphasis);
       if (bad) return fail(bad);
       const id = [...LETTERS].find((l) => !exp.variants.some((v) => v.id === l));
       if (!id) return fail("No free variant slot.");

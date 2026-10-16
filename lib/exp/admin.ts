@@ -1,4 +1,5 @@
-import { expKey, ensureSeeded, getExperiments, writeExperiment } from "./config";
+import { expKey, getExperiments, writeExperiment } from "./config";
+import { ensureSeeded } from "./register";
 import { type Experiment } from "./core";
 import { applyAction, variantRows, type Action, type MutationResult } from "./mutate";
 import { analyse, daysSince, type Analysis, type VariantCounts } from "./stats";

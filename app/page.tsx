@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Nav from "./components/Nav";
 import HeroHeadline from "./components/exp/HeroHeadline";
+import HeroCta from "./components/exp/HeroCta";
 import SbFooter from "./components/sb/SbFooter";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
@@ -33,7 +34,7 @@ export default function Home() {
             Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you'll save. Start with the free 3 minute AI score.
           </p>
           <div className="ctas">
-            <a className="btn" href="/score" data-exp-event="cta_click">Get your free AI score →</a>
+            <HeroCta />
             <a className="btn ghost" href="/blueprint">See the Blueprint</a>
           </div>
           <div className="trust">Free 3 minute quiz · Instant score out of 100 · No credit card</div>
