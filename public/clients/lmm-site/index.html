@@ -717,6 +717,9 @@
       .nav-links.open { display: flex; }
       .nav-links a { display: flex !important; align-items: center; font-size: 1rem; color: var(--text); }
     }
+  
+    /* Anchor jumps: keep section content clear of the sticky header */
+    main section[id] { scroll-margin-top: 40px; }
   </style>
 </head>
 <body>
