@@ -1,0 +1,25 @@
+{
+ "name": "Lifestyle Money Management",
+ "short_name": "LMM",
+ "start_url": "/",
+ "display": "browser",
+ "background_color": "#f8faf7",
+ "theme_color": "#101F34",
+ "icons": [
+  {
+   "src": "/apple-touch-icon.png",
+   "sizes": "180x180",
+   "type": "image/png"
+  },
+  {
+   "src": "/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}

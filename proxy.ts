@@ -4,6 +4,7 @@ import { Redis } from "@upstash/redis";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
+import { lmmBrandAsset } from "./lib/lmm-brand";
 
 const redis = Redis.fromEnv();
 
@@ -162,6 +163,7 @@ const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
 ];
 
+
 function matches(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
@@ -234,6 +236,18 @@ export async function proxy(req: NextRequest) {
       // Rewrite _next/static assets to the real deployment domain so
       // CSS, JS, and fonts load properly (the custom domain isn't a
       // registered Vercel domain, so Vercel 404s on static chunks there).
+      // LMM brand assets: icon/manifest/social-image paths on the LMM host must
+      // always resolve to LMM files, never Saabai's. Checked before the generic
+      // custom-domain favicon below.
+      if (slug === "lmm-site") {
+        const lmmAsset = lmmBrandAsset(pathname);
+        if (lmmAsset) {
+          url.hostname = "www.saabai.ai";
+          url.pathname = `/clients/lmm-site/assets/${lmmAsset}`;
+          url.search = "";
+          return NextResponse.rewrite(url);
+        }
+      }
       // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
       if (pathname === "/favicon.ico") {
         url.hostname = "www.saabai.ai";
