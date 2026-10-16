@@ -6,13 +6,13 @@ import { Card, CardBody, CardHeader } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import "./experiments.css";
 
-type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
+export type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
 type Sugg = { id: string; text: string; emphasis: string; rationale: string; status: string; created_at: string; decided_at: string | null; variant_key: string | null };
-type Exp = { id: string; name?: string; kind?: "headline" | "button"; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
-type VR = { id: string; label?: string; impressions: number; ctaClicks: number; calls: number; enquiries: number; converters: number; rate: number; rateLow: number; rateHigh: number; probBest: number };
-type Verdict = { kind: string; leaderId?: string; probBest: number; lift?: { median: number; low: number; high: number }; missing: string[]; headline: string; detail: string; canMakeWinner: boolean };
+export type Exp = { id: string; name?: string; kind?: "headline" | "button"; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
+export type VR = { id: string; label?: string; impressions: number; ctaClicks: number; calls: number; enquiries: number; converters: number; rate: number; rateLow: number; rateHigh: number; probBest: number };
+export type Verdict = { kind: string; leaderId?: string; probBest: number; lift?: { median: number; low: number; high: number }; missing: string[]; headline: string; detail: string; canMakeWinner: boolean };
 type Breakdown = { dim: string; rows: { bucket: string; views: number; ctaClicks: number; conversions: number; rate: number }[] };
-type Detail = {
+export type Detail = {
   experiment: Exp; analysis: { variants: VR[]; verdict: Verdict }; daysRunning: number;
   totals: { views: number; ctaClicks: number; calls: number; enquiries: number; conversions: number; rate: number };
   daily: { day: string; views: number; conversions: number }[]; breakdowns: Breakdown[]; dataAvailable: boolean;
@@ -20,14 +20,14 @@ type Detail = {
 };
 type Item = { id: string; name: string; slot: string; status: string; variants: number; activeVariants: number; views: number; conversions: number; rate: number; daysRunning: number; verdict: { kind: string; headline: string } };
 
-const pct = (x: number, dp = 1) => `${(x * 100).toFixed(dp)}%`;
-const nf = (x: number) => x.toLocaleString("en-AU");
-const tone = (s: string) => (s === "running" ? "ok" : s === "won" ? "info" : s === "paused" ? "warn" : "neutral");
-const vtone = (k: string) => (k === "winner" ? "ok" : k === "leading" ? "info" : "neutral");
+export const pct = (x: number, dp = 1) => `${(x * 100).toFixed(dp)}%`;
+export const nf = (x: number) => x.toLocaleString("en-AU");
+export const tone = (s: string) => (s === "running" ? "ok" : s === "won" ? "info" : s === "paused" ? "warn" : "neutral");
+export const vtone = (k: string) => (k === "winner" ? "ok" : k === "leading" ? "info" : "neutral");
 const DIMS: Record<string, string> = { channel: "Channel", utm_source: "Source", utm_campaign: "Campaign" };
 const ACTION_WORDS: Record<string, string> = { update_variant: "Edited copy", add_variant: "Added variant", pause_variant: "Paused variant", resume_variant: "Resumed variant", pause_test: "Paused test", resume_test: "Resumed test", reopen_test: "Reopened test", make_winner: "Made winner live", ai_suggest: "AI suggested variants", approve_suggestion: "Approved AI suggestion", reject_suggestion: "Rejected AI suggestion", set_lead_value: "Changed lead value" };
 
-async function api(url: string, init?: RequestInit) {
+export async function api(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || `Request failed (${r.status})`);
@@ -50,7 +50,7 @@ export default function ExperimentsClient() {
     <div className="pg xp">
       {openId ? <DetailView id={openId} onBack={() => open(null)} /> : (
         <>
-          <div className="ph"><div><h1>Split testing</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div></div>
+          <div className="ph"><div><h1>Split testing</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div><a className="xp-editlink" href="?view=editor">Visual editor</a></div>
           {err && <div className="xp-err">{err}</div>}
           {!items && !err && <p className="muted">Loading…</p>}
           <div className="xp-list">
@@ -72,7 +72,7 @@ export default function ExperimentsClient() {
   );
 }
 
-function CopyView({ v }: { v: { text: string; emphasis?: string } }) {
+export function CopyView({ v }: { v: { text: string; emphasis?: string } }) {
   return <div className="xp-copy">{v.text} {v.emphasis && <span className="g">{v.emphasis}</span>}</div>;
 }
 
@@ -279,7 +279,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   );
 }
 
-function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90 }: { noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
+export function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90 }: { noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
   const [text, setText] = useState(v.text);
   const [emphasis, setEmphasis] = useState(v.emphasis ?? "");
   const bad = /[\u2013\u2014]/.test(text + emphasis) ? "Please avoid long dashes. Use a comma or full stop." : !text.trim() ? "" : text.length > maxLen || emphasis.length > maxLen ? `Keep each part under ${maxLen} characters.` : "";

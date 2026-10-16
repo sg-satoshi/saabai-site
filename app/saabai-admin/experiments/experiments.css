@@ -62,3 +62,23 @@
  .xp-acts .btn{flex:1;justify-content:center}
  .xp-form input,.xp-in{font-size:16px}
 }
+.xp-wide{max-width:none}
+.xp-editlink{white-space:nowrap;display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:var(--r-md);border:1px solid var(--n-300);background:#fff;color:var(--navy-900);font-weight:500;font-size:13.5px;text-decoration:none}
+.xp-editlink:hover{border-color:var(--teal-400)}
+.xp-ve-bar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.xp-ve-bar label{font-size:12.5px;font-weight:500;color:var(--n-600);display:grid;gap:4px;min-width:200px}
+.xp-key{display:inline-block;width:12px;height:12px;margin:0 4px 0 10px;vertical-align:-2px;border-radius:3px}
+.xp-key.t{border:2px dashed #0d9488}.xp-key.g{border:2px dotted #94a3b8}.xp-key.a{border:2px solid #f59e0b}
+.xp-ve{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.xp-ve-frame{background:var(--n-100);border:1px solid var(--n-200);border-radius:var(--r-lg);padding:10px;display:flex;justify-content:center;overflow:auto}
+.xp-ve-frame iframe{height:78vh;min-height:520px;border:0;background:#fff;border-radius:var(--r-md);max-width:100%}
+.xp-ve-panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.xp-ve-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.xp-ve-vars{display:grid;gap:10px}
+.xp-ve-var{border:1px solid var(--n-200);border-radius:var(--r-md);padding:10px 12px;display:grid;gap:8px;background:#fff}
+.xp-ve-var.off{opacity:.72;background:var(--n-25)}
+.xp-ve-var .xp-top{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.xp-ve-var .nm{display:flex;gap:6px;align-items:center;font-weight:600}
+.xp-ve-var .xp-copy{font-size:14.5px}
+.xp-pre{white-space:pre-wrap;font-size:12px;background:var(--n-25);border:1px solid var(--n-200);border-radius:var(--r-md);padding:10px;overflow:auto}
+@media (max-width:1100px){.xp-ve{grid-template-columns:1fr}.xp-ve-panel{position:static;max-height:none}}
