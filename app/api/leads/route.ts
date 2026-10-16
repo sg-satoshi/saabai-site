@@ -954,6 +954,11 @@ export async function POST(req: Request) {
 
   console.log("[lead captured]", JSON.stringify(lead));
 
+  if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator")) {
+    const { recordConversion } = await import("@/lib/exp/track");
+    await recordConversion(req, "form_submit");
+  }
+
   const isCalculator = lead.source?.startsWith("calculator");
   const isMiaQualified = lead.source === "mia_qualified";
   const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";

@@ -5,6 +5,8 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
+import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assign, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
+import { getExperiments } from "./lib/exp/config";
 
 const redis = Redis.fromEnv();
 
@@ -92,6 +94,7 @@ const PUBLIC_API = [
   "/api/webhooks",
   // Write-only telemetry beacon fired from public pages
   "/api/analytics",
+  "/api/exp/event",          // split-testing beacon (always 204, ignores bots)
   // Widget media / embeds
   "/api/tts",
   "/api/heygen-token",
@@ -309,8 +312,55 @@ export async function proxy(req: NextRequest) {
   // ── API routes: deny-by-default ──────────────────────────────────────
   if (pathname.startsWith("/api/")) return apiAuth(req, pathname);
 
+  // ── Split testing (saabai.ai only; custom client domains returned above) ──
+  const exp = await experimentsRoute(req, pathname, hostname);
+  if (exp) return withAttribution(req, exp);
+
   // ── Page routes: redirect to login when protected ────────────────────
   return withAttribution(req, await pageRoute(req, pathname));
+}
+
+/**
+ * Variant assignment for the saabai.ai home page. Fails open: any error serves the page untouched
+ * (the page then renders the default copy). Bots, GPC/DNT, admins and opt-outs get the default and no cookie.
+ */
+async function experimentsRoute(req: NextRequest, pathname: string, hostname: string): Promise<NextResponse | null> {
+  try {
+    if (req.method !== "GET" || pathname !== "/") return null;
+    const siteKey = siteKeyForHost(hostname);
+    if (!siteKey || !enabledSites().includes(siteKey)) return null;
+    const headers = new Headers(req.headers);
+    headers.delete(EXP_HEADER);
+    headers.delete(EXP_TRACK_HEADER);
+    const optParam = req.nextUrl.searchParams.get("exp_off");
+    const optedOut = optParam === "1" || req.cookies.get(EXP_OFF_COOKIE)?.value === "1";
+    const exps = (await getExperiments(siteKey)).filter((e) => e.path === pathname && e.status === "running");
+    const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
+    let setCookie: string | undefined;
+    let tracked = false;
+    for (const e of exps.slice(0, 1)) {
+      const a = assign(e, {
+        ua: req.headers.get("user-agent"),
+        privacy: privacySignal(req.headers),
+        admin: !!req.cookies.get(COOKIE_NAME)?.value,
+        optedOut,
+        cookie,
+        newVisitorId: () => crypto.randomUUID(),
+      });
+      headers.set(EXP_HEADER, `${e.id}:${a.variant.id}`);
+      if (a.track) { headers.set(EXP_TRACK_HEADER, "1"); tracked = true; }
+      if (a.cookie) setCookie = a.cookie;
+    }
+    const res = NextResponse.next({ request: { headers } });
+    if (setCookie && tracked) {
+      res.cookies.set(EXP_COOKIE, setCookie, { maxAge: EXP_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
+    }
+    if (optParam === "1") res.cookies.set(EXP_OFF_COOKIE, "1", { maxAge: 365 * 24 * 3600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
+    if (optParam === "0") res.cookies.delete(EXP_OFF_COOKIE);
+    return res;
+  } catch {
+    return null;
+  }
 }
 
 /** Sets the first-party sb_attr cookie (first + last touch) on public page views. */
