@@ -82,7 +82,10 @@ export function validateWrapRequest(b: unknown, existingSlots: string[], siteKey
   if (!name) return { ok: false, error: "Give the test a short name." };
   if (/[\u2013\u2014]/.test(name)) return { ok: false, error: "Please avoid long dashes in the name." };
   const c = (o.control ?? {}) as Record<string, unknown>;
-  const text = str(c.text, 200), emphasis = str(c.emphasis, 200);
+  let text = str(c.text, 200);
+  const emphasis = str(c.emphasis, 200);
+  // Buttons here render their own trailing arrow, so the stored control is the label without it.
+  if (kind === "button") text = text.replace(/\s*(\u2192|&rarr;)\s*$/, "").trim();
   if (!text) return { ok: false, error: "The current copy is missing." };
   if (emphasis && kind === "button") return { ok: false, error: "A button label has no highlighted part." };
   const tag = str(o.tag, 10).toLowerCase();
@@ -128,7 +131,7 @@ export function requestNote(r: WrapRequest): string {
     `- Kind: ${r.kind}`,
     `- Current copy: ${JSON.stringify(r.control)}`,
     "",
-    "## To finish",
+    "## To finish (only if the PR says it was not wrapped automatically)",
     "",
     `1. Find where this copy renders and wrap it: \`<ExpText slot="${r.slot}">{(v) => ( ...element... {...v.attrs} )}</ExpText>\`, with the control text unchanged.`,
     `2. Keep the \`SLOTS\` entry in \`${SEED_FILE}\`. Add variants only when Shane has approved the copy.`,
@@ -138,5 +141,51 @@ export function requestNote(r: WrapRequest): string {
   ].join("\n");
 }
 
-export const prBody = (r: WrapRequest) =>
-  `Draft slot request from the visual editor.\n\n- Slot: \`${r.slot}\` (${r.kind}) on \`${r.path}\`\n- Current copy: ${JSON.stringify(r.control)}\n\nThis PR registers the slot only. The element still needs wrapping in \`ExpText\` (see docs/exp-slot-requests). Do not merge until wrapped and checked. No test is running and visitors see no change.`;
+/** Why a wrap was not applied (shown in the PR). */
+export type WrapOutcome = { wrapped: true; file: string } | { wrapped: false; reason: string };
+
+export const prBody = (r: WrapRequest, w?: WrapOutcome) => {
+  const head = `Draft slot request from the visual editor.\n\n- Slot: \`${r.slot}\` (${r.kind}) on \`${r.path}\`\n- Current copy: ${JSON.stringify(r.control)}\n\n`;
+  const tail = "No test is running and visitors see no change. A test only starts when a human presses Start in the dashboard.";
+  if (w?.wrapped) return `${head}**Wrapped automatically** in \`${w.file}\` with \`ExpText\` (control text unchanged). Check the diff and the Vercel preview before merging.\n\n${tail}`;
+  return `${head}**Not wrapped automatically.** ${w?.reason ?? "No wrap was attempted."} The element still needs wrapping in \`ExpText\`, see docs/exp-slot-requests. Do not merge until wrapped and checked.\n\n${tail}`;
+};
+
+const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const ARROW = "(?:\\s*(?:\\u2192|&rarr;))?";
+
+/** Candidate source files for wrapping: server components and pages under app/, never admin, API or client files. */
+export const isWrapCandidatePath = (p: string) => /^app\/.+\.tsx$/.test(p) && !/^app\/(saabai-admin|admin|api)\//.test(p) && !/ExpText\.tsx$/.test(p);
+
+const elementRe = (r: WrapRequest) => {
+  const tags = r.kind === "button" ? "(?:a|button)" : "h[1-3]";
+  return new RegExp(`<(${tags})((?:\\s[^<>]*|\\s*\\n[^<>]*?)?)>\\s*${esc(r.control.text)}(${ARROW})\\s*</\\1>`, "g");
+};
+
+/** Number of safe literal matches of the request's element in one source file. */
+export function countWrapMatches(source: string, r: WrapRequest): number {
+  if (/^\s*["']use client["']/m.test(source.slice(0, 200))) return 0;
+  if (r.control.emphasis) return 0;
+  return (source.match(elementRe(r)) ?? []).filter((m) => !m.includes("=>")).length;
+}
+
+/**
+ * Wraps the single literal match in ExpText. Returns null unless there is exactly one match in this file.
+ * The control text stays byte for byte, the opening tag keeps its attributes and gains the tracking attrs.
+ */
+export function wrapSource(source: string, r: WrapRequest): string | null {
+  if (countWrapMatches(source, r) !== 1) return null;
+  const re = elementRe(r);
+  let out = source.replace(re, (_m, tag: string, attrs: string, arrow: string) => {
+    const ev = r.kind === "button" && !/data-exp-event/.test(attrs) ? ' data-exp-event="cta_click"' : "";
+    const suffix = arrow ? `{${JSON.stringify(arrow.replace(/\s+/g, " ").replace("&rarr;", "\u2192").replace(/^(?! )/, " "))}}` : "";
+    return `<ExpText slot="${r.slot}">{(v) => (<${tag}${attrs.replace(/\s+$/, "")}${ev} {...v.attrs}>{v.text}${suffix}</${tag}>)}</ExpText>`;
+  });
+  if (!/from\s+["']@\/app\/components\/exp\/ExpText["']/.test(out)) {
+    const imp = 'import ExpText from "@/app/components/exp/ExpText";';
+    const all = [...out.matchAll(/^import[\s\S]*?;\s*$/gm)];
+    const last = all[all.length - 1];
+    out = last ? `${out.slice(0, last.index! + last[0].length)}\n${imp}${out.slice(last.index! + last[0].length)}` : `${imp}\n${out}`;
+  }
+  return out;
+}

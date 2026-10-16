@@ -43,6 +43,7 @@ export function applyAction(current: Experiment, a: Action, now: Date = new Date
       const v = find(a.variantId);
       if (!v) return fail("That variant doesn't exist.", 404);
       if ((exp.slotType ?? "text") !== "text") return fail("Only text slots can be edited here for now.");
+      if (v.id === exp.defaultVariantId && exp.status === "running") return fail("The control is the live copy, so it can't be edited while the test runs. Pause the test first, or edit a variant.");
       const text = tidy(a.text), emphasis = tidy(a.emphasis ?? "");
       const bad = checkCopy(exp, text, emphasis);
       if (bad) return fail(bad);

@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import type { WrapRequest } from "../lib/exp/editor";
 import assert from "node:assert/strict";
 import { insertSlotEntry, kindForElement, slotEntrySource, slugify, suggestSlot, uniqueSlot, validateWrapRequest, requestNote } from "../lib/exp/editor";
 import { SLOTS } from "../lib/exp/seed";
@@ -66,4 +67,66 @@ test("control copy with quotes survives and the request note never starts a test
   assert.match(slotEntrySource(c.req), /text: "Say \\"hello\\" \\\\ there"/);
   assert.match(requestNote(c.req), /Nothing is live/);
   assert.ok(!/[\u2013\u2014]/.test(requestNote(c.req)));
+});
+
+import { wrapSource, countWrapMatches, prBody, isWrapCandidatePath } from "../lib/exp/editor";
+import { applyAction } from "../lib/exp/mutate";
+import { slotToExperiment } from "../lib/exp/seed";
+
+const btnReq = (o: Record<string, unknown> = {}) => {
+  const c = validateWrapRequest({ path: "/about", slot: "about.intro.cta", kind: "button", name: "About button", tag: "a", section: "intro", control: { text: "Take the free AI score \u2192" }, ...o }, []);
+  if (!c.ok) throw new Error(c.error);
+  return c.req;
+};
+
+test("button control drops the trailing arrow", () => {
+  assert.equal(btnReq().control.text, "Take the free AI score");
+});
+
+test("wrap: single literal button is wrapped, arrow kept, import added", () => {
+  const src = `import Link from "next/link";\n\nexport default function P() {\n  return <a className="btn-secondary max-sm:w-full" href="/score">Take the free AI score \u2192</a>;\n}\n`;
+  const out = wrapSource(src, btnReq())!;
+  assert.ok(out.includes('<ExpText slot="about.intro.cta">'));
+  assert.ok(out.includes('data-exp-event="cta_click" {...v.attrs}>{v.text}{" \u2192"}</a>'));
+  assert.ok(out.includes('import ExpText from "@/app/components/exp/ExpText";'));
+  assert.ok(out.indexOf("import ExpText") > out.indexOf("next/link"));
+});
+
+test("wrap: headline without emphasis, multiline attrs", () => {
+  const r = validateWrapRequest({ path: "/about", slot: "about.intro.headline", kind: "headline", name: "h", tag: "h2", section: "intro", control: { text: "Who we are" } }, []);
+  assert.ok(r.ok);
+  const src = `import x from "y";\nexport default () => (\n  <h2\n    className="t"\n  >\n    Who we are\n  </h2>\n);\n`;
+  const out = wrapSource(src, (r as { ok: true; req: WrapRequest }).req)!;
+  assert.ok(out && out.includes("{v.text}</h2>"));
+});
+
+test("wrap: refuses ambiguous, client, emphasis and missing matches", () => {
+  const one = `<a className="btn" href="/s">Take the free AI score</a>`;
+  assert.equal(wrapSource(`${one}\n${one}`, btnReq()), null);
+  assert.equal(wrapSource(`"use client";\n${one}`, btnReq()), null);
+  assert.equal(wrapSource(`<a className="btn">Something else</a>`, btnReq()), null);
+  assert.equal(countWrapMatches(`<a onClick={() => go()}>Take the free AI score</a>`, btnReq()), 0);
+  const emph = validateWrapRequest({ path: "/a", slot: "a.b.headline", kind: "headline", name: "h", tag: "h1", section: "s", control: { text: "Hello", emphasis: "world" } }, []);
+  assert.equal(countWrapMatches(`<h1>Hello</h1>`, (emph as { ok: true; req: WrapRequest }).req), 0);
+});
+
+test("wrap candidate paths exclude admin, api and the wrapper itself", () => {
+  assert.ok(isWrapCandidatePath("app/about/page.tsx"));
+  assert.ok(!isWrapCandidatePath("app/saabai-admin/x.tsx"));
+  assert.ok(!isWrapCandidatePath("app/api/x/route.ts"));
+  assert.ok(!isWrapCandidatePath("app/components/exp/ExpText.tsx"));
+});
+
+test("pr body states wrap outcome plainly", () => {
+  const r = btnReq();
+  assert.ok(prBody(r, { wrapped: true, file: "app/about/page.tsx" }).includes("Wrapped automatically"));
+  assert.ok(prBody(r, { wrapped: false, reason: "No match." }).includes("Not wrapped automatically.** No match."));
+  assert.ok(!/[\u2013\u2014]/.test(prBody(r, { wrapped: false, reason: "x" })));
+});
+
+test("a running control can't be edited, a paused one can", () => {
+  const exp = slotToExperiment(SLOTS[1]);
+  assert.equal(exp.status, "running");
+  const bad = applyAction(exp, { type: "update_variant", variantId: "a", text: "Get your Free AI Score Now" });
+  assert.equal(bad.ok, false);
 });

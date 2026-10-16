@@ -132,9 +132,10 @@ function isActive(pathname: string, href: string) {
 }
 
 // Contextual top-right primary button. Only pages with a real create action are listed.
-// (Orders, Customers and Split testing have no create flow yet, so they show no button.)
+// (Orders and Customers have no create flow yet, so they show no button.)
 const HEADER_ACTIONS: { match: string; label: string; href: string }[] = [
   { match: "/saabai-admin/payments", label: "New invoice", href: "/saabai-admin/payments?new=invoice" },
+  { match: "/saabai-admin/experiments", label: "Add split test", href: "/saabai-admin/experiments?view=editor" },
 ];
 
 function NavLinks({
