@@ -196,6 +196,17 @@ export default function InvoiceTracker() {
   const totalOutstanding = invoices.filter(inv => inv.status !== "paid").reduce((s, inv) => s + inv.total, 0);
   const ytd = invoices.filter(inv => inv.date.startsWith("2026")).reduce((s, inv) => s + inv.total, 0);
 
+  // Deep link from the admin header button: /saabai-admin/payments?new=invoice
+  useEffect(() => {
+    if (loading) return;
+    const u = new URL(window.location.href);
+    if (u.searchParams.get("new") !== "invoice") return;
+    u.searchParams.delete("new");
+    window.history.replaceState(null, "", u.pathname + u.search + u.hash);
+    openNewInvoice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   // ── Open new invoice modal ────────────────────────────────────────────────
 
   function openNewInvoice() {

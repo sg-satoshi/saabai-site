@@ -131,6 +131,12 @@ function isActive(pathname: string, href: string) {
   return pathname === path || pathname.startsWith(path + "/");
 }
 
+// Contextual top-right primary button. Only pages with a real create action are listed.
+// (Orders, Customers and Split testing have no create flow yet, so they show no button.)
+const HEADER_ACTIONS: { match: string; label: string; href: string }[] = [
+  { match: "/saabai-admin/payments", label: "New invoice", href: "/saabai-admin/payments?new=invoice" },
+];
+
 function NavLinks({
   pathname,
   onNavigate,
@@ -236,6 +242,8 @@ export default function AdminShell({
     NAV.flatMap((g) => g.items).find((i) => isActive(pathname, i.href))?.label ||
     "Dashboard";
 
+  const headerAction = HEADER_ACTIONS.find((a) => isActive(pathname, a.match));
+
   function toggleGroup(s: string) {
     setCollapsedGroups((c) => ({ ...c, [s]: !c[s] }));
   }
@@ -290,10 +298,12 @@ export default function AdminShell({
             <button type="button" className="btn gh" style={{ padding: "0 8px" }} aria-label="Notifications">
               <Icon name="bell" />
             </button>
-            <Link href="/saabai-admin/orders" className="btn pri" style={{ textDecoration: "none" }}>
-              <Icon name="plus" />
-              New order
-            </Link>
+            {headerAction && (
+              <Link href={headerAction.href} className="btn pri" style={{ textDecoration: "none" }}>
+                <Icon name="plus" />
+                {headerAction.label}
+              </Link>
+            )}
           </div>
         </div>
 
