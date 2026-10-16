@@ -1,4 +1,4 @@
-import { KIND_RULES, kindOf, validateExperiment, type Experiment, type Variant } from "./core";
+import { KIND_RULES, kindCopyError, kindOf, validateExperiment, type Experiment, type Variant } from "./core";
 
 /** Dashboard actions on one experiment. Pure: returns the next config or an error, never touches storage. */
 export type Action =
@@ -27,7 +27,7 @@ function checkCopy(exp: Experiment, text: string, emphasis: string): string | nu
   if (emphasis && !r.emphasis) return `A ${r.noun} has no highlighted part.`;
   if (emphasis.length > r.maxEmphasis) return `Keep the highlighted part under ${r.maxEmphasis} characters.`;
   if (/[\u2013\u2014]/.test(text + emphasis)) return `Please avoid long dashes (en and em dashes). Use a comma or full stop instead.`;
-  return null;
+  return kindCopyError(kindOf(exp), text, emphasis);
 }
 
 export const variantLabel = (e: Experiment, v: Variant) => `${v.id.toUpperCase()}${v.id === e.defaultVariantId ? " (control)" : ""}`;

@@ -5,9 +5,9 @@ import { Button } from "../ui/Button";
 import { Card, CardBody } from "../ui/Card";
 import { notify } from "../ui/Feedback";
 import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./ExperimentsClient";
-import { kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
-import { previewInto, sectionOf } from "../../../lib/exp/editor-dom";
-import type { SlotKind } from "../../../lib/exp/core";
+import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
+import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
+import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
 import "./experiments.css";
 
 type Picked =
@@ -20,21 +20,46 @@ const STYLE = `
 .sb-edit .sb-cand{outline:2px dotted #94a3b8 !important;outline-offset:4px;cursor:copy !important}
 .sb-edit .sb-sel{outline:3px solid #f59e0b !important;outline-offset:4px}
 `;
-const EXCL = "nav, footer, form, header, [data-no-test], [itemprop], script, style";
+const EXCL = "[data-no-test], [itemprop], script, style, svg";
+const PICKABLE = "h1,h2,h3,h4,h5,h6,button,a,p,li,blockquote,figcaption,dt,dd,td,th,label,small,span,div,strong,em,summary,cite,img,input,textarea";
+const KIND_LABEL: Record<SlotKind, string> = { headline: "headline", button: "button", text: "text", link: "link", price: "price", placeholder: "form hint", image: "image" };
 
 function describe(el: HTMLElement): ElementInfo {
   const kids = Array.from(el.children).filter((c) => !["SPAN", "BR"].includes(c.tagName));
   const spans = el.querySelectorAll(":scope > span").length;
-  return { tag: el.tagName, className: typeof el.className === "string" ? el.className : "", complex: kids.length > 0 || spans > 1, excluded: !!el.closest(EXCL) || !!el.closest("[data-exp-slot]") && !el.hasAttribute("data-exp-slot"), text: el.textContent ?? "" };
+  const credit = !!el.parentElement && isProtectedText(el.parentElement.textContent ?? "") && (el.parentElement.textContent ?? "").length < 120;
+  return {
+    tag: el.tagName, className: typeof el.className === "string" ? el.className : "", complex: kids.length > 0 || spans > 1, spans,
+    excluded: credit || !!el.closest(EXCL) || (!!el.closest("[data-exp-slot]") && !el.hasAttribute("data-exp-slot")),
+    text: el.textContent ?? "", placeholder: el.getAttribute("placeholder") ?? undefined, src: el.tagName === "IMG" ? imagePathOf(el) : undefined, alt: el.getAttribute("alt") ?? undefined,
+  };
+}
+
+/** The element to offer for a click: a link or button ancestor first, then the nearest eligible element upwards. */
+function pick(t: HTMLElement): HTMLElement | null {
+  const slotEl = t.closest<HTMLElement>("[data-exp-slot]");
+  if (slotEl) return slotEl;
+  const c = t.closest<HTMLElement>("a,button");
+  if (c && kindForElement(describe(c))) return c;
+  let n: HTMLElement | null = t;
+  for (let i = 0; n && i < 4; i++, n = n.parentElement) {
+    if (n.matches(PICKABLE) && kindForElement(describe(n))) return n;
+    if (n.matches("section, main, body")) break;
+  }
+  return null;
 }
 
 function copyOf(el: HTMLElement, kind: SlotKind): { text: string; emphasis: string } {
-  if (kind === "button") return { text: (el.textContent ?? "").replace(/\s*→\s*$/, "").replace(/\s+/g, " ").trim(), emphasis: "" };
+  const flat = (x: string) => x.replace(/\s+/g, " ").trim();
+  if (kind === "image") return { text: imagePathOf(el), emphasis: flat(el.getAttribute("alt") ?? "") };
+  if (kind === "placeholder") return { text: flat(el.getAttribute("placeholder") ?? ""), emphasis: "" };
+  if (kind === "button") return { text: flat((el.textContent ?? "").replace(/\s*→\s*$/, "")), emphasis: "" };
+  if (kind !== "headline") return { text: flat(el.textContent ?? ""), emphasis: "" };
   const span = el.querySelector(":scope > span");
   const emphasis = (span?.textContent ?? "").trim();
   const clone = el.cloneNode(true) as HTMLElement;
   clone.querySelector(":scope > span")?.remove();
-  return { text: (clone.textContent ?? "").replace(/\s+/g, " ").trim(), emphasis };
+  return { text: flat(clone.textContent ?? ""), emphasis };
 }
 
 export default function VisualEditor() {
@@ -46,8 +71,11 @@ export default function VisualEditor() {
   const frame = useRef<HTMLIFrameElement>(null);
   const selEl = useRef<HTMLElement | null>(null);
   const orig = useRef<string>("");
+  const selKind = useRef<SlotKind>("headline");
+  const pathRef = useRef("/");
   const editRef = useRef(editing);
   editRef.current = editing;
+  pathRef.current = path;
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("page");
@@ -76,10 +104,9 @@ export default function VisualEditor() {
       if (!editRef.current) return null;
       const t = e.target as HTMLElement | null;
       if (!t || !t.closest) return null;
-      const slotEl = t.closest<HTMLElement>("[data-exp-slot]");
-      if (slotEl) return slotEl;
-      const c = t.closest<HTMLElement>("h1,h2,h3,button,a");
-      return c && kindForElement(describe(c)) ? c : null;
+      const found = pick(t);
+      if (found && !found.hasAttribute("data-exp-slot") && isLegalPath(pathRef.current)) return null;
+      return found;
     };
     let hov: HTMLElement | null = null;
     doc.addEventListener("mouseover", (e) => {
@@ -95,12 +122,13 @@ export default function VisualEditor() {
       e.preventDefault(); e.stopPropagation();
       t.classList.remove("sb-hov", "sb-cand");
       selEl.current?.classList.remove("sb-sel");
-      if (selEl.current && selEl.current !== t) previewInto(selEl.current, orig.current, "headline", null);
-      selEl.current = t; orig.current = t.innerHTML;
+      if (selEl.current && selEl.current !== t) previewInto(selEl.current, orig.current, selKind.current, null);
+      selEl.current = t; orig.current = captureOrig(t);
       t.classList.add("sb-sel");
       const slot = t.getAttribute("data-exp-slot");
-      if (slot) { setPicked({ type: "slot", slotName: slot, expId: t.getAttribute("data-exp-id") || slot.replace(/\./g, "-") }); return; }
+      if (slot) { selKind.current = (["headline","button","text","link","price","placeholder","image"].includes(t.getAttribute("data-exp-kind") ?? "") ? t.getAttribute("data-exp-kind") : "headline") as SlotKind; setPicked({ type: "slot", slotName: slot, expId: t.getAttribute("data-exp-id") || slot.replace(/\./g, "-") }); return; }
       const kind = kindForElement(describe(t))!;
+      selKind.current = kind;
       const c = copyOf(t, kind);
       setPicked({ type: "candidate", tag: t.tagName.toLowerCase(), kind, text: c.text, emphasis: c.emphasis, section: sectionOf(t) });
     }, true);
@@ -132,14 +160,14 @@ export default function VisualEditor() {
           <button className={mobile ? "on" : ""} onClick={() => setMobile(true)}>Mobile</button>
           <button className={editing ? "on" : ""} onClick={() => setEditing(!editing)}>{editing ? "Edit mode on" : "Edit mode off"}</button>
         </div>
-        <span className="xp-note"><i className="xp-key t" /> test element <i className="xp-key g" /> not a test yet (headlines and buttons) <i className="xp-key a" /> selected</span>
+        <span className="xp-note"><i className="xp-key t" /> test element <i className="xp-key g" /> not a test yet (headings, text, buttons, links, prices, images, form hints) <i className="xp-key a" /> selected</span>
       </div>
       <div className="xp-ve">
         <div className="xp-ve-frame">
           <iframe ref={frame} key={src} src={src} title="Site preview" onLoad={onLoad} style={{ width: mobile ? 390 : "100%" }} />
         </div>
         <aside className="xp-ve-panel">
-          {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headlines and buttons you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
+          {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
           {picked?.type === "slot" && <SlotPanel key={picked.expId} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
           {picked?.type === "candidate" && <CandidatePanel key={picked.text} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} />}
         </aside>
@@ -167,7 +195,8 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
 
   if (err) return <Card><CardBody><div className="xp-err">{err}</div><Button variant="gh" onClick={onClose}>Close</Button></CardBody></Card>;
   if (!d) return <Card><CardBody><p className="muted">Loading…</p></CardBody></Card>;
-  const e = d.experiment, kind: SlotKind = e.kind === "button" ? "button" : "headline";
+  const e = d.experiment, kind: SlotKind = e.kind && e.kind in KIND_RULES ? e.kind : "headline";
+  const kr = KIND_RULES[kind];
   const byId = new Map(d.analysis.variants.map((x) => [x.id, x]));
   const v = d.analysis.verdict;
   return (
@@ -192,9 +221,9 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
                 <div className="xp-top"><span className="nm">{x.id.toUpperCase()}{isCtl && <Badge tone="neutral">control</Badge>}{!x.active && <Badge tone="warn">paused</Badge>}</span>
                   <span className="xp-note">{r ? `${nf(r.impressions)} views · ${pct(r.rate)} · ${pct(r.probBest, 0)} best` : ""}</span></div>
                 {editing === x.id
-                  ? <EditForm noun={kind === "button" ? "button label" : "headline"} hasEmph={kind !== "button"} maxLen={kind === "button" ? 40 : 90} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }); } }} />
+                  ? <EditForm image={kind === "image"} noun={kr.noun} hasEmph={kr.emphasis} maxLen={kr.maxText} v={x} hasData={(r?.impressions ?? 0) > 0} busy={busy} onCancel={() => setEditing(null)} onSave={async (t, em) => { if (await act({ type: "update_variant", variantId: x.id, text: t, emphasis: em }, "Copy saved. Live within about a minute.")) { setEditing(null); onPreview(kind, { text: t, emphasis: em }); } }} />
                   : <>
-                    <CopyView v={x} />
+                    <CopyView v={x} kind={kind} />
                     <div className="xp-acts">
                       <Button size="sm" onClick={() => onPreview(kind, x)}>Preview in page</Button>
                       <Button size="sm" variant="gh" disabled={busy} onClick={() => setEditing(x.id)}>Edit</Button>
@@ -214,33 +243,36 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
 }
 
 function CandidatePanel({ p, path, onClose }: { p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void }) {
-  const [name, setName] = useState(`${p.kind === "button" ? "Button" : "Headline"}: ${p.text.slice(0, 40)}`.slice(0, 80));
+  const [name, setName] = useState(`${KIND_LABEL[p.kind].charAt(0).toUpperCase() + KIND_LABEL[p.kind].slice(1)}: ${p.text.split("/").pop()!.slice(0, 40)}`.slice(0, 80));
   const [slot, setSlot] = useState(suggestSlot(path, p.section, p.kind));
   const [busy, setBusy] = useState(false);
+  const [fail, setFail] = useState("");
   const [res, setRes] = useState<{ mode: string; prUrl?: string; prNumber?: number; snippet?: string; message?: string } | null>(null);
   async function request() {
-    setBusy(true);
+    if (busy || res) return;
+    setBusy(true); setFail("");
     try {
       const r = await api("/api/admin/experiments/wrap-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path, slot, kind: p.kind, name, tag: p.tag, section: p.section, control: { text: p.text, emphasis: p.emphasis } }) });
       setRes(r); notify.success(r.mode === "pr" ? "Draft pull request opened. Nothing is live." : "Request ready.");
-    } catch (e) { notify.error((e as Error).message); } finally { setBusy(false); }
+    } catch (e) { setFail((e as Error).message); notify.error((e as Error).message); } finally { setBusy(false); }
   }
   const bad = /[\u2013\u2014]/.test(name);
   return (
     <Card>
       <CardBody>
         <div className="xp-ve-head"><div><b>Not a test yet</b><div className="xp-note">{p.tag} on {path}</div></div><button className="xp-back" style={{ margin: 0 }} onClick={onClose}>Close</button></div>
-        <div className="xp-prev" style={{ margin: "10px 0" }}><CopyView v={{ text: p.text, emphasis: p.emphasis }} /></div>
-        <p className="xp-note">This is plain {p.kind === "button" ? "button text" : "headline text"}, so it can become a test. It has to be wrapped in the site code first so visitors get the right words straight away, with no flicker. This opens a draft pull request for you to look at. It never merges and never starts a test.</p>
+        <div className="xp-prev" style={{ margin: "10px 0" }}><CopyView kind={p.kind} v={{ text: p.text, emphasis: p.emphasis }} /></div>
+        <p className="xp-note">This is a {KIND_LABEL[p.kind]}, so it can become a test.{p.kind === "price" ? " Only the displayed price words change. What a customer is actually charged is never touched, so only test wording you can honour." : ""}{p.kind === "image" ? " Variant images must already be on the site (a file in the public folder), and should be the same shape as the original." : ""}{p.kind === "link" ? " Only the link words change, never where it goes." : ""} It has to be wrapped in the site code first so visitors get the right words straight away, with no flicker. This opens a draft pull request for you to look at. It never merges and never starts a test.</p>
         {!res && (
           <div className="xp-form">
             <label>Test name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></label>
             <label>Slot name<input value={slot} onChange={(e) => setSlot(e.target.value.toLowerCase())} maxLength={80} /></label>
             {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>Please avoid long dashes.</p>}
-            <div className="xp-acts"><Button variant="acc" disabled={busy || bad || !name.trim()} onClick={request}>Request test slot (draft PR)</Button></div>
+            <div className="xp-acts"><Button variant="acc" className={busy ? "loading" : ""} disabled={busy || bad || !name.trim()} onClick={request}>{busy ? "Opening draft pull request…" : "Request test slot (draft PR)"}</Button></div>
+            {fail && <div className="xp-err" role="alert">{fail}</div>}
           </div>
         )}
-        {res?.mode === "pr" && <p className="xp-note" style={{ marginTop: 10 }}>Draft pull request #{res.prNumber} opened: <a href={res.prUrl} target="_blank" rel="noreferrer">{res.prUrl}</a>. Once it is wrapped and checked, the test appears in the list as a draft.</p>}
+        {res?.mode === "pr" && <div className="xp-ok" role="status">Draft PR opened: <a href={res.prUrl} target="_blank" rel="noreferrer">#{res.prNumber}</a>. Nothing is live. Once it is wrapped and checked, the test appears in the list as a draft.</div>}
         {res?.mode === "manual" && (<><p className="xp-note" style={{ marginTop: 10 }}>{res.message}</p><pre className="xp-pre">{res.snippet}</pre></>)}
       </CardBody>
     </Card>

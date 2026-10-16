@@ -6,6 +6,8 @@
 import { KIND_RULES, kindOf, type Experiment, type SlotKind } from "./core";
 import type { Analysis } from "./stats";
 
+/** Kinds the AI may propose copy for. Prices and images are always written by a human. */
+export const AI_KINDS: SlotKind[] = ["headline", "button", "text", "link", "placeholder"];
 export const SUGGEST_COUNT = 3;
 export const MAX_PENDING = 9;
 export const SUGGEST_COOLDOWN_MS = 60_000;
@@ -35,7 +37,13 @@ export function checkSuggestion(s: Suggestion, existingCopy: string[], kind: Slo
   if (/https?:|www\.|@/i.test(all)) return "link";
   if (/\p{Extended_Pictographic}/u.test(all)) return "emoji";
   const digits = all.match(/\d+/g) ?? [];
-  if (kind === "button") {
+  if (!AI_KINDS.includes(kind)) return "no AI suggestions for this type";
+  if (kind === "text" || kind === "link" || kind === "placeholder") {
+    // Only numbers already in the live copy can be reused, and no claims we cannot back up.
+    const known = new Set(existingCopy.join(" ").match(/\d+/g) ?? []);
+    if (digits.some((d) => !known.has(d))) return "number we cannot back up";
+    if (BANNED_BUTTON.test(all)) return "claim we cannot back up";
+  } else if (kind === "button") {
     // The only numbers a button can back up are the ones on the page: the 3 minute quiz.
     if (digits.some((d) => d !== "3") || (digits.length && !/\b3[\u00a0 ]min/i.test(all))) return "number we cannot back up";
     if (BANNED_BUTTON.test(all)) return "claim we cannot back up";
@@ -60,7 +68,7 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
     const tidy = (x: unknown) => (typeof x === "string" ? x.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
     // Keep "48 hours" together like the live headline does.
     const nb = (x: string) => x.replace(/\b48 hours/gi, "48\u00a0hours");
-    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: kind === "button" ? "" : nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
+    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: kind !== "headline" ? "" : nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
     const why = checkSuggestion(s, seen, kind);
     if (why) { dropped.push({ text: s.text, why }); continue; }
     if (ok.length >= max) continue;
@@ -81,7 +89,17 @@ Hard rules:
 - Each label must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles: the quiz itself, the score, finding out where AI fits, a low-effort first step.
 Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
 
-export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : SUGGEST_SYSTEM);
+export const suggestSystemGeneric = (noun: string, maxText: number) => `You write ${noun} variants for a page on saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
+Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks.
+Hard rules:
+- Never use em dashes or en dashes.
+- ${maxText} characters or fewer. Keep the same job as the current copy (same meaning and same facts), only change the angle or wording.
+- Do not invent prices, savings, percentages, customer numbers, awards, guarantees, reviews or results. Only reuse numbers already in the current copy.
+- Avoid: best, guaranteed, proven, instant, unlock, transform, revolutionary, now, today, save.
+- Each option must be meaningfully different from the others and from the existing ones.
+Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
+
+export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : kind === "headline" ? SUGGEST_SYSTEM : suggestSystemGeneric(KIND_RULES[kind].noun, KIND_RULES[kind].maxText));
 
 export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
 Voice: plain, direct, Australian English, like a sensible tradie explaining things. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no question marks needed.

@@ -29,13 +29,36 @@ export type Variant = {
   /** "human" or "ai" (AI variants arrive in Phase 3 and need approval before serving). */
   source?: "human" | "ai";
 };
-/** Copy kinds. "headline" has an optional highlighted second part; "button" is one short label. */
-export const SLOT_KINDS = ["headline", "button"] as const;
+/**
+ * Copy kinds. "headline" has an optional highlighted second part; "button" is one short label.
+ * "text" (paragraphs, list items, captions, labels), "link" (nav, footer and inline links, text only, never the
+ * destination), "price" (the displayed price text only, it never changes what is charged), "placeholder" (form
+ * field hint text) and "image" (text = site path of the image, emphasis = alt text) are single plain-text slots.
+ */
+export const SLOT_KINDS = ["headline", "button", "text", "link", "price", "placeholder", "image"] as const;
 export type SlotKind = (typeof SLOT_KINDS)[number];
-export const KIND_RULES: Record<SlotKind, { noun: string; maxText: number; maxEmphasis: number; maxCombined: number; emphasis: boolean }> = {
+type Rule = { noun: string; maxText: number; maxEmphasis: number; maxCombined: number; emphasis: boolean };
+export const KIND_RULES: Record<SlotKind, Rule> = {
   headline: { noun: "headline", maxText: 90, maxEmphasis: 90, maxCombined: 100, emphasis: true },
   button: { noun: "button label", maxText: 40, maxEmphasis: 0, maxCombined: 40, emphasis: false },
+  text: { noun: "text block", maxText: 300, maxEmphasis: 0, maxCombined: 300, emphasis: false },
+  link: { noun: "link text", maxText: 60, maxEmphasis: 0, maxCombined: 60, emphasis: false },
+  price: { noun: "displayed price", maxText: 40, maxEmphasis: 0, maxCombined: 40, emphasis: false },
+  placeholder: { noun: "field hint", maxText: 80, maxEmphasis: 0, maxCombined: 80, emphasis: false },
+  image: { noun: "image", maxText: 200, maxEmphasis: 140, maxCombined: 340, emphasis: true },
 };
+/** Kinds whose slot is a click target (tracked per slot, not per page). */
+export const CLICK_KINDS: SlotKind[] = ["button", "link"];
+export const IMAGE_PATH_RE = /^\/[A-Za-z0-9_\-./]{1,190}\.(?:jpe?g|png|webp|avif|gif|svg)$/i;
+/** Kind specific copy rules beyond length. Returns a plain message, or null when fine. */
+export function kindCopyError(kind: SlotKind, text: string, emphasis = ""): string | null {
+  if (kind === "image") {
+    if (!IMAGE_PATH_RE.test(text) || text.includes("..") || text.includes("//")) return "Use the path of an image already on the site, for example /images/new-hero.jpg.";
+    return null;
+  }
+  if (kind === "price" && !/\d/.test(text)) return "A displayed price needs a number in it.";
+  return null;
+}
 export const kindOf = (e: { kind?: SlotKind }): SlotKind => (e.kind && SLOT_KINDS.includes(e.kind) ? e.kind : "headline");
 
 export type Experiment = {
@@ -128,6 +151,7 @@ export function validateExperiment(e: unknown): Experiment | null {
     if (typeof v.text !== "string" || !v.text.trim() || v.text.length > rules.maxText) return null;
     if (v.emphasis !== undefined && (typeof v.emphasis !== "string" || v.emphasis.length > rules.maxEmphasis)) return null;
     if (/—|–/.test(v.text + (v.emphasis ?? ""))) return null;
+    if (kindCopyError(kindOf(x), v.text, v.emphasis ?? "")) return null;
   }
   if (!x.variants.some((v) => v.id === x.defaultVariantId)) return null;
   return x;

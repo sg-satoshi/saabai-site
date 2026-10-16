@@ -11,8 +11,7 @@ test("eligibility: plain headlines and buttons only", () => {
   assert.equal(kindForElement(el()), "headline");
   assert.equal(kindForElement(el({ tag: "a", className: "btn primary", text: "Book a call" })), "button");
   assert.equal(kindForElement(el({ tag: "button", text: "Send" })), "button");
-  assert.equal(kindForElement(el({ tag: "a", className: "link", text: "Read more here" })), null);
-  assert.equal(kindForElement(el({ tag: "p", text: "A paragraph of text" })), null);
+  assert.equal(kindForElement(el({ tag: "a", className: "link", text: "Read more here" })), "link");
   assert.equal(kindForElement(el({ complex: true })), null);
   assert.equal(kindForElement(el({ excluded: true })), null);
   assert.equal(kindForElement(el({ text: "ab" })), null);
@@ -37,7 +36,8 @@ test("wrap request validation", () => {
   assert.equal(bad({ slot: "Bad Slot" }).ok, false);
   assert.equal(bad({ path: "//evil.com" }).ok, false);
   assert.equal(bad({ path: "about" }).ok, false);
-  assert.equal(bad({ kind: "image" }).ok, false);
+  assert.equal(bad({ kind: "video" }).ok, false);
+  assert.equal(bad({ path: "/privacy" }).ok, false);
   assert.equal(bad({ name: "A \u2014 B" }).ok, false);
   assert.equal(bad({ kind: "button", control: { text: "Go", emphasis: "x" } }).ok, false);
   assert.equal(bad({ control: { text: "" } }).ok, false);
@@ -129,4 +129,58 @@ test("a running control can't be edited, a paused one can", () => {
   assert.equal(exp.status, "running");
   const bad = applyAction(exp, { type: "update_variant", variantId: "a", text: "Get your Free AI Score Now" });
   assert.equal(bad.ok, false);
+});
+
+import { IMAGE_PATH_RE, validateExperiment } from "../lib/exp/core";
+import { checkSuggestion } from "../lib/exp/suggest";
+
+test("every element type is detected", () => {
+  assert.equal(kindForElement(el({ tag: "p", text: "A paragraph of plain text" })), "text");
+  assert.equal(kindForElement(el({ tag: "li", text: "Fast turnaround" })), "text");
+  assert.equal(kindForElement(el({ tag: "span", text: "$1,000 deposit" })), "price");
+  assert.equal(kindForElement(el({ tag: "div", text: "From $49 a month" })), "price");
+  assert.equal(kindForElement(el({ tag: "a", text: "Pricing" })), "link");
+  assert.equal(kindForElement(el({ tag: "input", text: "", placeholder: "Your email address" })), "placeholder");
+  assert.equal(kindForElement(el({ tag: "img", text: "", src: "/images/hero.jpg" })), "image");
+  assert.equal(kindForElement(el({ tag: "img", text: "", src: "https://x.com/a.jpg" })), null);
+  assert.equal(kindForElement(el({ tag: "p", text: "Powered by Saabai.ai" })), null);
+  assert.equal(kindForElement(el({ tag: "p", text: "Para", spans: 1 })), null);
+  assert.equal(kindForElement(el({ tag: "p", text: "x".repeat(400) })), null);
+});
+
+const req = (o: object) => ({ siteKey: "saabai", path: "/", slot: "home.main.text", kind: "text", name: "n", tag: "p", section: "main", control: { text: "Hello there" }, ...o }) as WrapRequest;
+
+test("wrap: paragraph, link, price with entities and line breaks", () => {
+  const src = `import x from "y";\nexport default function P(){return (<div><p className="a">\n  Don&apos;t guess   where\n AI fits.\n</p></div>)}`;
+  const out = wrapSource(src, req({ control: { text: "Don't guess where AI fits." } }))!;
+  assert.ok(out.includes('<ExpText slot="home.main.text">{(v) => (<p className="a" {...v.attrs}>{v.text}</p>)}</ExpText>'));
+  assert.ok(out.includes('import ExpText'));
+  const l = wrapSource(`<nav><a href="/x">Pricing</a></nav>`, req({ kind: "link", tag: "a", slot: "home.nav.link", control: { text: "Pricing" } }))!;
+  assert.ok(l.includes('data-exp-event="cta_click"') && l.includes('href="/x"'));
+  const pr = wrapSource(`<span>$49 a month</span>`, req({ kind: "price", slot: "home.main.price", control: { text: "$49 a month" } }))!;
+  assert.ok(pr.includes("{v.text}"));
+});
+
+test("wrap: image and placeholder keep other attributes", () => {
+  const im = wrapSource(`<img src="/a/hero.jpg" alt="Old alt" className="w-full" />`, req({ kind: "image", tag: "img", slot: "home.main.image", control: { text: "/a/hero.jpg", emphasis: "Old alt" } }))!;
+  assert.ok(im.includes("src={v.text}") && im.includes("alt={v.emphasis ?? \"\"}") && im.includes('className="w-full"') && im.includes("{...v.attrs}"));
+  const nx = wrapSource(`<Image src="/a/hero.jpg" alt="Old" width={10} height={10} />`, req({ kind: "image", tag: "image", slot: "home.main.image", control: { text: "/a/hero.jpg", emphasis: "Old" } }))!;
+  assert.ok(nx.includes("<Image") && nx.includes("width={10}"));
+  const ph = wrapSource(`<input type="email" placeholder="Your email" />`, req({ kind: "placeholder", tag: "input", slot: "home.main.hint", control: { text: "Your email" } }))!;
+  assert.ok(ph.includes("placeholder={v.text}") && ph.includes('type="email"'));
+  assert.equal(wrapSource(`<img src="/a.jpg" /><img src="/a.jpg" />`, req({ kind: "image", control: { text: "/a.jpg" } })), null);
+  assert.equal(wrapSource(`"use client";\n<input placeholder="Your email" />`, req({ kind: "placeholder", control: { text: "Your email" } })), null);
+});
+
+test("kind rules: image paths, price numbers, no AI for price or image", () => {
+  assert.ok(IMAGE_PATH_RE.test("/images/a-b.webp"));
+  assert.ok(!IMAGE_PATH_RE.test("https://evil.com/a.jpg") && !IMAGE_PATH_RE.test("/a.php"));
+  const e = (kind: string, text: string) => validateExperiment({ ...slotToExperiment({ id: "t-one", siteKey: "saabai", slot: "a.b.c", kind: kind as never, name: "n", path: "/", control: { text: "/x.jpg" }, variants: [{ text }] }) });
+  assert.ok(e("image", "/y.jpg"));
+  assert.equal(e("image", "https://evil.com/y.jpg"), null);
+  assert.equal(e("image", "/a/../b.jpg"), null);
+  assert.equal(e("price", "Free"), null);
+  assert.equal(checkSuggestion({ text: "Cheaper $9", emphasis: "", rationale: "" }, ["$49"], "price"), "no AI suggestions for this type");
+  assert.equal(checkSuggestion({ text: "Plans from 99 dollars", emphasis: "", rationale: "" }, ["Plans"], "text"), "number we cannot back up");
+  assert.equal(checkSuggestion({ text: "Pick a plan", emphasis: "", rationale: "" }, ["Plans"], "text"), null);
 });

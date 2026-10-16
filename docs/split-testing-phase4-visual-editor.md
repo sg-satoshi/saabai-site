@@ -151,3 +151,11 @@ Total about 19 to 25 working days. A useful slice ships after M1 (about 4 days) 
 2. Start with owner-only (Shane) in M1 to M3 and open a client-facing editor only in M5. Recommended.
 3. Whether the script embed pilot (M4) uses a Saabai-owned Lovable test site first. Recommended, and kept separate from any Localsearch work.
 4. Images behind the Advanced tier in M5, with text and buttons in Entry. Recommended.
+
+## 11. Element coverage (17 Oct 2026)
+
+Selectable and wrappable: headings (h1 to h6), paragraphs and other plain text (p, li, blockquote, figcaption, dt, dd, td, th, label, small, span, div), buttons, links (nav and footer included, text only), displayed prices (text only, never what is charged), form field hints (placeholder) and images (variants must be existing site paths under public/, alt text is the second field).
+Never testable: the "Powered by Saabai.ai" credit, legal, privacy and terms pages, [data-no-test] and [itemprop] elements, mixed markup (children other than one span), text longer than the kind limit.
+Auto-wrap only when the copy is a single literal in a server component. Copy in arrays, client components or split across tags opens a draft PR with a note for manual wrapping.
+AI suggestions cover headline, button, text, link and field hint. Prices and images are written by a person.
+Not yet: section backgrounds (CSS driven), Stu's and LMM (their hosts are not wired into the experiment proxy; LMM is static HTML).

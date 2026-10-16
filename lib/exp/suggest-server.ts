@@ -4,7 +4,7 @@ import { getDefaultModel } from "../chat-config";
 import { kindOf } from "./core";
 import { applyDashboardAction, listExperiments, loadView, type ApplyOutcome } from "./admin";
 import { serviceDb } from "./track";
-import { SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, suggestSystem, buildSuggestPrompt, cleanSuggestions, combined, parseModelJson } from "./suggest";
+import { AI_KINDS, SUGGEST_COOLDOWN_MS, MAX_PENDING, SUGGEST_COUNT, suggestSystem, buildSuggestPrompt, cleanSuggestions, combined, parseModelJson } from "./suggest";
 
 export type SuggestionRow = { id: string; text: string; emphasis: string; rationale: string; status: "pending" | "approving" | "approved" | "rejected"; created_at: string; decided_at: string | null; variant_key: string | null };
 type Fail = { ok: false; error: string; status: number };
@@ -23,6 +23,8 @@ export async function generateSuggestions(siteKey: string, expId: string, actor:
   const exp = (await listExperiments(siteKey)).find((e) => e.id === expId);
   if (!exp) return { ok: false, error: "Test not found.", status: 404 };
   if ((exp.slotType ?? "text") !== "text") return { ok: false, error: "Suggestions only work for text slots for now.", status: 400 };
+
+  if (!AI_KINDS.includes(kindOf(exp))) return { ok: false, error: "Prices and images are written by a person, so there are no AI suggestions for this type.", status: 400 };
 
   const existing = await listSuggestions(expId);
   const pending = existing.filter((s) => s.status === "pending" || s.status === "approving");

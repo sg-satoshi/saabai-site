@@ -61,6 +61,8 @@ export async function POST(req: Request) {
   if (recent.length >= 5) return Response.json({ error: "Five requests in the last hour. Please wait a bit." }, { status: 429 });
   recent.push(now);
   try {
+    const open = (await (await fetch(`${GH}/repos/${REPO}/git/matching-refs/heads/exp-slot-${r.slot.replace(/\./g, "-")}-`, { headers: { authorization: `Bearer ${token}`, accept: "application/vnd.github+json", "user-agent": "saabai-exp-editor" } })).json().catch(() => [])) as unknown;
+    if (Array.isArray(open) && open.length) return Response.json({ error: "A request for this slot is already open as a draft PR. Check GitHub, or pick a different slot name." }, { status: 409 });
     const base = (await gh(token, `/repos/${REPO}/git/ref/heads/main`)).object as { sha: string };
     const file = await gh(token, `/repos/${REPO}/contents/${SEED_FILE}?ref=main`);
     const src = Buffer.from(String(file.content), "base64").toString("utf8");

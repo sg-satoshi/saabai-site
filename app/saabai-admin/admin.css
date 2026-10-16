@@ -159,3 +159,17 @@ a.btn{text-decoration:none}
 .mc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 .pg [style*="Segoe UI"],.pg [style*="-apple-system"]{font-family:inherit!important}
 @media (max-width:600px){.mc-h1{font-size:21px}.mc-head{flex-direction:column;align-items:flex-start}}
+
+/* Button states: hover, pressed, keyboard focus, disabled, loading */
+.btn{cursor:pointer;transition:background-color .12s,border-color .12s,box-shadow .12s,transform .06s,filter .12s}
+.btn:hover:not(:disabled){filter:brightness(.96);box-shadow:var(--sh-2,0 2px 6px rgba(15,23,42,.14))}
+.btn.pri:hover:not(:disabled){filter:brightness(1.18)}
+.btn.gh:hover:not(:disabled){background:var(--n-100,#f1f5f9);filter:none}
+.btn:active:not(:disabled){transform:translateY(1px);filter:brightness(.9);box-shadow:none}
+.btn:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.btn.loading{position:relative;cursor:progress;opacity:.85;pointer-events:none}
+.btn.loading::before{content:"";width:13px;height:13px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:btnspin .7s linear infinite}
+@keyframes btnspin{to{transform:rotate(360deg)}}
+.xp-ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:var(--r-md);padding:10px 12px;font-size:13px;margin-top:10px}
+.xp-ok a{color:inherit;font-weight:600;text-decoration:underline}

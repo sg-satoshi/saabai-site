@@ -1,9 +1,11 @@
-import { KIND_RULES, SLOT_KINDS, type SlotKind } from "./core";
+import { IMAGE_PATH_RE, KIND_RULES, SLOT_KINDS, kindCopyError, type SlotKind } from "./core";
 
 /**
  * Visual editor helpers (pure, no storage). Used by the dashboard editor and the wrap-request API.
- * Rules: only plain text and button labels are eligible, anything inside nav, footer, forms or [data-no-test]
- * is skipped, and nothing here ever starts a test or changes what visitors see.
+ * Eligible: headings, paragraphs and other plain text, buttons, links (nav and footer too), displayed prices,
+ * form field hints and images. Skipped: anything with child elements (mixed markup), [data-no-test], structured
+ * data ([itemprop]), the "Powered by Saabai.ai" footer credit, and legal pages. Nothing here ever starts a test
+ * or changes what visitors see.
  */
 export const REPO = "sg-satoshi/saabai-site";
 export const SEED_FILE = "lib/exp/seed.ts";
@@ -13,24 +15,50 @@ export type ElementInfo = {
   className?: string;
   /** True when the element has child elements other than one span and br (so its copy is not plain text). */
   complex: boolean;
-  /** True when inside nav, footer, form, header, [data-no-test], or [itemprop]. */
+  /** True when inside [data-no-test], [itemprop], or another test slot. */
   excluded: boolean;
   text: string;
+  /** Number of direct span children (only headlines may carry one, as the highlighted part). */
+  spans?: number;
+  /** Placeholder attribute, for input and textarea. */
+  placeholder?: string;
+  /** Image path as written in the source (site-relative), for img. */
+  src?: string;
+  alt?: string;
 };
 
 export const slugify = (s: string, max = 20): string =>
   s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, max).replace(/-+$/g, "");
 
-/** Kind for an element, or null when it is not testable in this slice. */
+/** Pages where copy is never testable from the editor (legal, privacy, terms). */
+export const LEGAL_PATH_RE = /^\/(?:legal|privacy|terms|privacy-policy|sites\/[^/]+\/(?:privacy|terms)[^/]*)(?:\/|$)/i;
+export const isLegalPath = (p: string) => LEGAL_PATH_RE.test(p.split("?")[0]) || /(?:^|\/)(?:privacy|terms)(?:-[a-z]+)*(?:\/|$)/i.test(p.split("?")[0]);
+/** The footer credit must always stay exactly as is. */
+export const isProtectedText = (t: string) => /powered by\s+saabai/i.test(t);
+
+const TEXT_TAGS = new Set(["p", "li", "blockquote", "figcaption", "dt", "dd", "td", "th", "label", "small", "span", "div", "strong", "em", "h4", "h5", "h6", "summary", "cite"]);
+const PRICE_RE = /(?:^|\s)(?:from\s+|only\s+)?(?:A?\$|AUD\s?)\s?\d[\d,]*(?:\.\d{2})?/i;
+
+/** Kind for an element, or null when it is not testable. */
 export function kindForElement(el: ElementInfo): SlotKind | null {
-  if (el.excluded || el.complex) return null;
-  const text = el.text.replace(/\s+/g, " ").trim();
-  if (text.length < 3) return null;
+  if (el.excluded) return null;
   const tag = el.tag.toLowerCase();
+  if (tag === "img") return el.src && IMAGE_PATH_RE.test(el.src) ? "image" : null;
+  if (tag === "input" || tag === "textarea") {
+    const ph = (el.placeholder ?? "").replace(/\s+/g, " ").trim();
+    return ph.length >= 3 && ph.length <= KIND_RULES.placeholder.maxText ? "placeholder" : null;
+  }
+  if (el.complex) return null;
+  const text = el.text.replace(/\s+/g, " ").trim();
+  if (text.length < 3 || isProtectedText(text)) return null;
   const isButtonish = tag === "button" || (tag === "a" && /\b(btn|button)\b/i.test(el.className ?? ""));
   if (isButtonish) return text.length <= KIND_RULES.button.maxText + 2 ? "button" : null;
   if (tag === "h1" || tag === "h2" || tag === "h3") return text.length <= KIND_RULES.headline.maxCombined + 60 ? "headline" : null;
-  return null;
+  const plainOnly = (el.spans ?? 0) === 0;
+  if (tag === "a") return plainOnly && text.length <= KIND_RULES.link.maxText ? "link" : null;
+  if (!TEXT_TAGS.has(tag) || !plainOnly) return null;
+  if (text.length <= KIND_RULES.price.maxText && PRICE_RE.test(text)) return "price";
+  return text.length <= KIND_RULES.text.maxText ? "text" : null;
 }
 
 export function pathKey(path: string): string {
@@ -38,9 +66,11 @@ export function pathKey(path: string): string {
   return first ? slugify(first) || "page" : "home";
 }
 
+const ROLE: Record<SlotKind, string> = { headline: "headline", button: "cta", text: "text", link: "link", price: "price", placeholder: "hint", image: "image" };
+
 /** `<page>.<section>.<role>`, for example home.hero.cta. */
 export function suggestSlot(path: string, section: string, kind: SlotKind): string {
-  const role = kind === "button" ? "cta" : "headline";
+  const role = ROLE[kind];
   return `${pathKey(path)}.${slugify(section) || "main"}.${role}`;
 }
 
@@ -74,7 +104,8 @@ export function validateWrapRequest(b: unknown, existingSlots: string[], siteKey
   const path = str(o.path, 120);
   if (!path.startsWith("/") || path.startsWith("//") || /[\s<>"'`]/.test(path)) return { ok: false, error: "That page path looks wrong." };
   const kind = o.kind as SlotKind;
-  if (!SLOT_KINDS.includes(kind)) return { ok: false, error: "Only headlines and button labels can be tested for now." };
+  if (!SLOT_KINDS.includes(kind)) return { ok: false, error: "That type of element can't be tested yet." };
+  if (isLegalPath(path)) return { ok: false, error: "Legal and privacy pages can't be split tested." };
   const slot = str(o.slot, 80);
   if (!SLOT_RE.test(slot)) return { ok: false, error: "The slot name must look like home.hero.cta." };
   if (existingSlots.includes(slot)) return { ok: false, error: "A test slot with that name already exists." };
@@ -87,9 +118,13 @@ export function validateWrapRequest(b: unknown, existingSlots: string[], siteKey
   // Buttons here render their own trailing arrow, so the stored control is the label without it.
   if (kind === "button") text = text.replace(/\s*(\u2192|&rarr;)\s*$/, "").trim();
   if (!text) return { ok: false, error: "The current copy is missing." };
-  if (emphasis && kind === "button") return { ok: false, error: "A button label has no highlighted part." };
+  if (isProtectedText(text + " " + emphasis)) return { ok: false, error: "The Powered by Saabai.ai credit can't be tested." };
+  if (emphasis && !KIND_RULES[kind].emphasis) return { ok: false, error: `A ${KIND_RULES[kind].noun} has no highlighted part.` };
+  if (text.length > KIND_RULES[kind].maxText) return { ok: false, error: `That ${KIND_RULES[kind].noun} is too long to test (max ${KIND_RULES[kind].maxText} characters).` };
+  const ke = kind === "image" ? kindCopyError(kind, text) : null;
+  if (ke) return { ok: false, error: ke };
   const tag = str(o.tag, 10).toLowerCase();
-  if (!/^[a-z0-9]{1,6}$/.test(tag)) return { ok: false, error: "Unknown element." };
+  if (!/^[a-z0-9]{1,8}$/.test(tag)) return { ok: false, error: "Unknown element." };
   return { ok: true, req: { siteKey, path, slot, kind, name, control: { text, ...(emphasis ? { emphasis } : {}) }, tag, section: str(o.section, 40) } };
 }
 
@@ -154,17 +189,33 @@ export const prBody = (r: WrapRequest, w?: WrapOutcome) => {
 const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const ARROW = "(?:\\s*(?:\\u2192|&rarr;))?";
 
+/** Regex source matching text as it may be written in JSX source (entities, line breaks, curly quotes). */
+export function textPattern(t: string): string {
+  return t.trim().split(/\s+/).map((word) => Array.from(word).map((ch) => {
+    if (ch === "'" || ch === "\u2019") return "(?:'|&apos;|&#39;|&rsquo;|\u2019)";
+    if (ch === '"') return '(?:"|&quot;)';
+    if (ch === "&") return "(?:&amp;|&)";
+    if (ch === "\u00a0") return "(?:\u00a0|&nbsp;)";
+    return esc(ch);
+  }).join("")).join("\\s+");
+}
+
 /** Candidate source files for wrapping: server components and pages under app/, never admin, API or client files. */
 export const isWrapCandidatePath = (p: string) => /^app\/.+\.tsx$/.test(p) && !/^app\/(saabai-admin|admin|api)\//.test(p) && !/ExpText\.tsx$/.test(p);
 
-const elementRe = (r: WrapRequest) => {
-  const tags = r.kind === "button" ? "(?:a|button)" : "h[1-3]";
-  return new RegExp(`<(${tags})((?:\\s[^<>]*|\\s*\\n[^<>]*?)?)>\\s*${esc(r.control.text)}(${ARROW})\\s*</\\1>`, "g");
-};
+const TEXT_TAG_RE = "(?:p|li|blockquote|figcaption|dt|dd|td|th|label|small|span|div|strong|em|h[4-6]|summary|cite)";
+const tagsFor = (k: SlotKind) => (k === "button" ? "(?:a|button)" : k === "headline" ? "h[1-3]" : k === "link" ? "a" : TEXT_TAG_RE);
+
+const elementRe = (r: WrapRequest) => new RegExp(`<(${tagsFor(r.kind)})((?:\\s[^<>]*|\\s*\\n[^<>]*?)?)>\\s*${textPattern(r.control.text)}(${r.kind === "button" ? ARROW : ""})\\s*</\\1>`, "g");
+const voidRe = (r: WrapRequest) => new RegExp(r.kind === "image" ? "<(img|Image)(\\s[^<>]*?)?\\s*/>" : "<(input|textarea)(\\s[^<>]*?)?\\s*/>", "g");
+const attrLit = (name: string, val: string) => new RegExp(`(?:^|\\s)${name}=(?:"${esc(val)}"|'${esc(val)}')`);
+
+const voidMatches = (source: string, r: WrapRequest) => [...source.matchAll(voidRe(r))].filter((m) => !m[0].includes("=>") && attrLit(r.kind === "image" ? "src" : "placeholder", r.control.text).test(m[2] ?? ""));
 
 /** Number of safe literal matches of the request's element in one source file. */
 export function countWrapMatches(source: string, r: WrapRequest): number {
   if (/^\s*["']use client["']/m.test(source.slice(0, 200))) return 0;
+  if (r.kind === "image" || r.kind === "placeholder") return voidMatches(source, r).length;
   if (r.control.emphasis) return 0;
   return (source.match(elementRe(r)) ?? []).filter((m) => !m.includes("=>")).length;
 }
@@ -175,12 +226,26 @@ export function countWrapMatches(source: string, r: WrapRequest): number {
  */
 export function wrapSource(source: string, r: WrapRequest): string | null {
   if (countWrapMatches(source, r) !== 1) return null;
-  const re = elementRe(r);
-  let out = source.replace(re, (_m, tag: string, attrs: string, arrow: string) => {
-    const ev = r.kind === "button" && !/data-exp-event/.test(attrs) ? ' data-exp-event="cta_click"' : "";
-    const suffix = arrow ? `{${JSON.stringify(arrow.replace(/\s+/g, " ").replace("&rarr;", "\u2192").replace(/^(?! )/, " "))}}` : "";
-    return `<ExpText slot="${r.slot}">{(v) => (<${tag}${attrs.replace(/\s+$/, "")}${ev} {...v.attrs}>{v.text}${suffix}</${tag}>)}</ExpText>`;
-  });
+  let out: string;
+  if (r.kind === "image" || r.kind === "placeholder") {
+    const m = voidMatches(source, r)[0];
+    const tag = m[1];
+    let attrs = (m[2] ?? "").replace(/\s+$/, "");
+    if (r.kind === "image") {
+      attrs = attrs.replace(attrLit("src", r.control.text), (x) => `${x.match(/^\s/) ? " " : ""}src={v.text}`);
+      attrs = attrs.replace(/(^|\s)alt=(?:"[^"]*"|'[^']*')/, (_x, pre: string) => `${pre}alt={v.emphasis ?? ""}`);
+    } else {
+      attrs = attrs.replace(attrLit("placeholder", r.control.text), (x) => `${x.match(/^\s/) ? " " : ""}placeholder={v.text}`);
+    }
+    out = source.slice(0, m.index!) + `<ExpText slot="${r.slot}">{(v) => (<${tag}${attrs} {...v.attrs} />)}</ExpText>` + source.slice(m.index! + m[0].length);
+  } else {
+    const re = elementRe(r);
+    out = source.replace(re, (_m, tag: string, attrs: string, arrow: string) => {
+      const ev = (r.kind === "button" || r.kind === "link") && !/data-exp-event/.test(attrs) ? ' data-exp-event="cta_click"' : "";
+      const suffix = arrow ? `{${JSON.stringify(arrow.replace(/\s+/g, " ").replace("&rarr;", "\u2192").replace(/^(?! )/, " "))}}` : "";
+      return `<ExpText slot="${r.slot}">{(v) => (<${tag}${attrs.replace(/\s+$/, "")}${ev} {...v.attrs}>{v.text}${suffix}</${tag}>)}</ExpText>`;
+    });
+  }
   if (!/from\s+["']@\/app\/components\/exp\/ExpText["']/.test(out)) {
     const imp = 'import ExpText from "@/app/components/exp/ExpText";';
     const all = [...out.matchAll(/^import[\s\S]*?;\s*$/gm)];
