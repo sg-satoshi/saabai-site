@@ -1,6 +1,6 @@
 import { CLIENT_EVENT_TYPES, isBot, privacySignal, type EventType } from "@/lib/exp/core";
 import { getExperiments } from "@/lib/exp/config";
-import { cookieFromRequest, rateLimited, recordEvent } from "@/lib/exp/track";
+import { attrFromRequest, cookieFromRequest, rateLimited, recordEvent } from "@/lib/exp/track";
 
 export const runtime = "nodejs";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const exp = (await getExperiments("saabai")).find((e) => e.id === body.exp);
     if (!exp || exp.status !== "running" || !exp.variants.some((v) => v.id === variantId)) return done();
     if (await rateLimited(req)) return done();
-    await recordEvent(exp.id, variantId, ck.v, body.type as EventType);
+    await recordEvent(exp.id, variantId, ck.v, body.type as EventType, attrFromRequest(req));
   } catch { /* never error to the browser */ }
   return done();
 }

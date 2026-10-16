@@ -10,6 +10,8 @@ export const SEED_EXPERIMENTS: Experiment[] = [
     id: "home-hero-headline",
     siteKey: "saabai",
     slot: "home.hero.headline",
+    slotType: "text",
+    name: "Homepage hero headline",
     path: "/",
     status: "running",
     defaultVariantId: "a",
