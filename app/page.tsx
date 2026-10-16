@@ -6,6 +6,7 @@ import SbFooter from "./components/sb/SbFooter";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
+import ExpText from "@/app/components/exp/ExpText";
 export const metadata: Metadata = {
   title: { absolute: "AI Blueprint for Small Businesses | Saabai" },
   description:
@@ -57,7 +58,7 @@ export default function Home() {
           </div>
           <div className="card offer feat">
             <span className="eyebrow">Saabai Blueprint</span>
-            <h3>Your AI plan, ranked by dollars saved</h3>
+            <ExpText slot="home.main.headline">{(v) => (<h3 {...v.attrs}>{v.text}</h3>)}</ExpText>
             <p>Whether you run a workshop or a practice, we study how your business runs and hand you a clear plan: which tasks to automate first, what it costs and what it saves.</p>
             <ul className="tick">
               <li>Ranked opportunities with hours and $ saved</li>
