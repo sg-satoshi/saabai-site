@@ -129,3 +129,67 @@ body {
   &:hover { background: color-mix(in srgb, var(--saabai-teal) 10%, transparent); border-color: var(--saabai-teal); }
   &:focus-visible { outline: 2px solid var(--saabai-teal-bright); outline-offset: 3px; }
 }
+
+/* ─── Shared interaction states (buttons, button-like links, controls) ───────
+   Lives in the base layer so any explicit brand styling or Tailwind utility still
+   wins; this only fills the gaps so every control shows hover, pressed, focus,
+   disabled and loading states. Colours/layout are untouched. */
+@layer base {
+  :where(button, [role="button"], a[class*="btn"], a[class*="button"], summary, input[type="submit"], input[type="button"], select, [data-btn]) {
+    cursor: pointer;
+    transition: filter .12s, transform .06s, box-shadow .12s, background-color .12s, border-color .12s, opacity .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(button:hover, [role="button"]:hover, a[class*="btn"]:hover, a[class*="button"]:hover, input[type="submit"]:hover, [data-btn]:hover):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+    filter: brightness(1.1);
+    box-shadow: inset 0 0 0 999px rgba(127, 127, 127, .09);
+  }
+  :where(button:active, [role="button"]:active, a[class*="btn"]:active, a[class*="button"]:active, input[type="submit"]:active, [data-btn]:active):not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+    filter: brightness(.88);
+    transform: translateY(1px);
+    box-shadow: none;
+  }
+  /* Two-tone focus ring: visible on both dark brand and light client sites */
+  :where(button, [role="button"], a, summary, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #2dd4bf;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px #0b092e;
+  }
+  :where(button:disabled, [role="button"][aria-disabled="true"], input:disabled, select:disabled, a[aria-disabled="true"]) {
+    opacity: .5;
+    cursor: not-allowed;
+    filter: none;
+  }
+  :where([aria-busy="true"]):is(button, [role="button"], a, input[type="submit"]) {
+    cursor: progress;
+    opacity: .85;
+    pointer-events: none;
+  }
+  :where(button, [role="button"], a)[aria-busy="true"]::before {
+    content: "";
+    display: inline-block;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    margin-right: .5em;
+    vertical-align: -.125em;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: sb-spin .7s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :where(button, [role="button"], a)[aria-busy="true"]::before { animation-duration: 2s; }
+    :where(button, [role="button"], a):active { transform: none; }
+  }
+}
+@keyframes sb-spin { to { transform: rotate(360deg); } }
+
+.sb-toasts { position: fixed; z-index: 2147483000; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; max-width: min(92vw, 360px); pointer-events: none; }
+.sb-toast { pointer-events: auto; padding: 10px 14px; border-radius: 10px; font: 500 14px/1.4 system-ui, sans-serif; color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.28); animation: sb-toast-in .18s ease-out; }
+.sb-toast[data-kind="ok"] { background: #047857; }
+.sb-toast[data-kind="err"] { background: #b91c1c; }
+@keyframes sb-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Inputs that suppress the default outline still get a visible keyboard ring */
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #2dd4bf !important; outline-offset: 2px; }
