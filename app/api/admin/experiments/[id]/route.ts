@@ -28,6 +28,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const site = body?.site || "saabai";
   if (!body?.action || typeof body.action !== "object" || !ACTIONS.includes((body.action as { type: string }).type)) return Response.json({ error: "Invalid action" }, { status: 400 });
   if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
+  // AI-sourced variants can only be created through the approve route, never by posting an action directly.
+  if (body.action.type === "add_variant") body.action = { type: "add_variant", text: String(body.action.text ?? ""), emphasis: body.action.emphasis === undefined ? undefined : String(body.action.emphasis) };
   const res = await applyDashboardAction(site, id, body.action, typeof body.rev === "number" ? body.rev : undefined, actor);
   if (!res.ok) return Response.json({ error: res.error }, { status: res.status });
   const exp = (await listExperiments(site)).find((e) => e.id === id);

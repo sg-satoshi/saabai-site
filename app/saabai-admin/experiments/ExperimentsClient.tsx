@@ -6,7 +6,8 @@ import { Card, CardBody, CardHeader } from "../ui/Card";
 import { confirmDialog, notify } from "../ui/Feedback";
 import "./experiments.css";
 
-type Variant = { id: string; text: string; emphasis?: string; active: boolean };
+type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
+type Sugg = { id: string; text: string; emphasis: string; rationale: string; status: string; created_at: string; decided_at: string | null; variant_key: string | null };
 type Exp = { id: string; name?: string; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
 type VR = { id: string; label?: string; impressions: number; ctaClicks: number; calls: number; enquiries: number; converters: number; rate: number; rateLow: number; rateHigh: number; probBest: number };
 type Verdict = { kind: string; leaderId?: string; probBest: number; lift?: { median: number; low: number; high: number }; missing: string[]; headline: string; detail: string; canMakeWinner: boolean };
@@ -24,7 +25,7 @@ const nf = (x: number) => x.toLocaleString("en-AU");
 const tone = (s: string) => (s === "running" ? "ok" : s === "won" ? "info" : s === "paused" ? "warn" : "neutral");
 const vtone = (k: string) => (k === "winner" ? "ok" : k === "leading" ? "info" : "neutral");
 const DIMS: Record<string, string> = { channel: "Channel", utm_source: "Source", utm_campaign: "Campaign" };
-const ACTION_WORDS: Record<string, string> = { update_variant: "Edited copy", add_variant: "Added variant", pause_variant: "Paused variant", resume_variant: "Resumed variant", pause_test: "Paused test", resume_test: "Resumed test", reopen_test: "Reopened test", make_winner: "Made winner live", set_lead_value: "Changed lead value" };
+const ACTION_WORDS: Record<string, string> = { update_variant: "Edited copy", add_variant: "Added variant", pause_variant: "Paused variant", resume_variant: "Resumed variant", pause_test: "Paused test", resume_test: "Resumed test", reopen_test: "Reopened test", make_winner: "Made winner live", ai_suggest: "AI suggested variants", approve_suggestion: "Approved AI suggestion", reject_suggestion: "Rejected AI suggestion", set_lead_value: "Changed lead value" };
 
 async function api(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
@@ -83,6 +84,22 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   const [adding, setAdding] = useState(false);
   const [dim, setDim] = useState("channel");
   const [lead, setLead] = useState("");
+  const [sugg, setSugg] = useState<Sugg[]>([]);
+  const [genBusy, setGenBusy] = useState(false);
+  const [sEdit, setSEdit] = useState<string | null>(null);
+
+  const loadSugg = useCallback(async () => { try { setSugg((await api(`/api/admin/experiments/${id}/suggestions`)).suggestions ?? []); } catch { /* shown empty */ } }, [id]);
+  useEffect(() => { loadSugg(); }, [loadSugg]);
+  async function suggest(body: Record<string, unknown>, okMsg: string): Promise<boolean> {
+    setGenBusy(true);
+    try {
+      const x = await api(`/api/admin/experiments/${id}/suggestions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (x.suggestions) setSugg(x.suggestions);
+      if (x.experiment) { setD(x); }
+      notify.success(okMsg); return true;
+    } catch (er) { notify.error((er as Error).message); loadSugg(); return false; }
+    finally { setGenBusy(false); }
+  }
 
   const load = useCallback(async () => {
     try { const x = await api(`/api/admin/experiments/${id}`); setD(x); setLead(x.experiment.leadValueAUD != null ? String(x.experiment.leadValueAUD) : ""); setErr(""); } catch (e) { setErr((e as Error).message); }
@@ -152,7 +169,7 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
           return (
             <div key={vr.id} className={`xp-var ${leader ? "leader" : ""} ${vr.active ? "" : "off"}`}>
               <div className="xp-top">
-                <div className="nm">Variant {vr.id.toUpperCase()} {isControl && <Badge tone="neutral">control</Badge>} {!vr.active && <Badge tone="warn">paused</Badge>} {leader && <Badge tone="info">leading</Badge>}</div>
+                <div className="nm">Variant {vr.id.toUpperCase()} {isControl && <Badge tone="neutral">control</Badge>} {!vr.active && <Badge tone="warn">paused</Badge>} {leader && <Badge tone="info">leading</Badge>} {vr.source === "ai" && <Badge tone="neutral">AI idea, approved</Badge>}</div>
                 <div className="xp-acts">
                   <Button size="sm" disabled={busy} onClick={() => setEditing(editing === vr.id ? null : vr.id)}>{editing === vr.id ? "Close" : "Edit copy"}</Button>
                   {!isControl && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_variant_active", variantId: vr.id, active: !vr.active }, vr.active ? `Variant ${vr.id.toUpperCase()} paused.` : `Variant ${vr.id.toUpperCase()} resumed.`)}>{vr.active ? "Pause" : "Resume"}</Button>}
@@ -185,6 +202,31 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
           <CardBody>
             {adding ? <EditForm v={{ text: "", emphasis: "" }} hasData={false} busy={busy} saveLabel="Add variant" onCancel={() => setAdding(false)} onSave={async (text, emphasis) => { if (await act({ type: "add_variant", text, emphasis }, "Variant added. It starts getting visitors within about a minute.")) setAdding(false); }} />
               : <p className="xp-note">{e.variants.length >= 8 ? "This test already has the maximum of 8 variants." : "New variants share traffic evenly with the others. Add one at a time and let it gather data."}</p>}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="AI suggestions" action={<Button size="sm" variant="acc" disabled={genBusy || busy || e.variants.length >= 8} onClick={() => suggest({ op: "generate" }, "New ideas are ready to review below. None are live.")}>{genBusy && !sEdit ? "Thinking…" : "Suggest variants"}</Button>} />
+          <CardBody>
+            <p className="xp-note">The AI proposes 3 new headlines in our voice, using what has and hasn&apos;t worked so far. They stay pending and are never shown to visitors until you approve one. You can edit the wording first.</p>
+            {sugg.filter((x) => x.status === "pending" || x.status === "approving").map((x) => (
+              <div key={x.id} className="xp-var" style={{ marginTop: 10 }}>
+                <div className="xp-top"><div className="nm"><Badge tone="warn">pending approval</Badge></div></div>
+                {sEdit === x.id
+                  ? <EditForm v={x} hasData={false} busy={genBusy} saveLabel="Approve with my edits" onCancel={() => setSEdit(null)} onSave={async (text, emphasis) => { if (await suggest({ op: "approve", suggestionId: x.id, text, emphasis }, "Approved and added. It starts getting visitors within about a minute.")) setSEdit(null); }} />
+                  : <>
+                    <CopyView v={x} />
+                    {x.rationale && <p className="xp-note">{x.rationale}</p>}
+                    <div className="xp-acts">
+                      <Button size="sm" variant="pri" disabled={genBusy || busy || e.variants.length >= 8} onClick={async () => { if (await confirmDialog(`Approve this headline? It will be added as a new variant and start getting visitors within about a minute.`)) suggest({ op: "approve", suggestionId: x.id }, "Approved and added. It starts getting visitors within about a minute."); }}>Approve</Button>
+                      <Button size="sm" disabled={genBusy || busy} onClick={() => setSEdit(x.id)}>Edit then approve</Button>
+                      <Button size="sm" variant="gh" disabled={genBusy || busy} onClick={() => suggest({ op: "reject", suggestionId: x.id }, "Rejected. The AI won't repeat that style.")}>Reject</Button>
+                    </div>
+                  </>}
+              </div>
+            ))}
+            {!sugg.some((x) => x.status === "pending" || x.status === "approving") && <p className="xp-note" style={{ marginTop: 8 }}>{e.variants.length >= 8 ? "This test already has the maximum of 8 variants." : "No suggestions waiting. Press Suggest variants for a fresh batch."}</p>}
+            {sugg.some((x) => x.status === "approved" || x.status === "rejected") && <p className="xp-note" style={{ marginTop: 10 }}>Recently decided: {sugg.filter((x) => x.status === "approved" || x.status === "rejected").slice(0, 5).map((x) => `${x.status === "approved" ? "approved" : "rejected"}: "${[x.text, x.emphasis].filter(Boolean).join(" ")}"`).join(" · ")}</p>}
           </CardBody>
         </Card>
 

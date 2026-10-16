@@ -31,6 +31,10 @@
     {
       "path": "/api/cron/growth-daily",
       "schedule": "30 20 * * *"
+    },
+    {
+      "path": "/api/cron/exp-weekly-note",
+      "schedule": "30 21 * * 0"
     }
   ]
 }
