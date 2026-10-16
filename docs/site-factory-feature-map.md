@@ -129,3 +129,13 @@ Checks: home 200; every same-host sitemap URL and `--pages` return 200; robots.t
 - Mia on client hosts: `ConditionalWidgets` renders nothing until mounted, then checks path and hostname (fixed 17 Oct: previously the server saw the rewritten `/sites/slug` path while the browser saw `/`, causing hydration error #418 and a stray `/brand/agent-avatar.png` request on stuscyclerepairs.com). `proxy.ts` now also passes `/brand/*` through to the master domain on custom hosts. No open findings.
 - New API route for a public form: add it to `PUBLIC_API` in `proxy.ts`.
 - New client domain checklist: `CLIENT_HOST` in `next.config.ts`, `SUPPRESS_HOSTNAMES` in `ConditionalWidgets.tsx`, domain-map entry (`STATIC_DOMAIN_MAP` or Redis), a geo profile, then run the self-check.
+
+## 9. Split testing (Phase 1, live on saabai.ai only)
+
+- Plan: `docs/split-testing-plan.md`. Code: `lib/exp/` (`core.ts` pure logic, `config.ts` Redis + seed fallback, `track.ts` Supabase events), `proxy.ts` (`experimentsRoute`, home page only), `app/components/exp/HeroHeadline.tsx` (server-rendered hero h1) and `ExpBeacon.tsx`, `app/api/exp/event/route.ts`.
+- Switch: `EXPERIMENTS_ENABLED_SITES` (default `saabai` when unset; `none` kills it). Custom client domains (Stu's, LMM) return from `proxy.ts` before the experiment code, so they are untouched.
+- Copy lives in Redis hash `saabai:exp:saabai` (field `home-hero-headline`, JSON). `lib/exp/seed.ts` is the fallback and is written to Redis on first render. Edit the JSON to change copy live.
+- Data: Supabase schema `experiments` (RLS on, no policies, service role only) via `public.exp_record_event` and `public.exp_stats`. Migration `db/migrations/002_experiments.sql`. Phase 1 assignment is an even split (bandit comes later).
+- Opt out of your own traffic: visit `/?exp_off=1`. Bots, GPC/DNT, admin session and opt-out always see the control with no cookie.
+- Check: `node scripts/site-check.mjs https://www.saabai.ai --exp` and `... https://stuscyclerepairs.com --exp=off`. Tests: `npm run test:exp`.
+

@@ -4,6 +4,7 @@ import { TIERS, scoreAnswers } from "@/lib/blueprint";
 import { upsertScoreLead } from "@/lib/saabai-crm";
 import { ATTR_COOKIE, parseAttr } from "@/lib/growth/attribution";
 import { recordEvent, touchContact } from "@/lib/growth/events";
+import { recordConversion } from "@/lib/exp/track";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,9 @@ export async function POST(req: NextRequest) {
   const r = scoreAnswers(answers);
   const rec = TIERS[r.recommended];
   const website = normaliseWebsite(body.website);
+
+  // Split testing: count this enquiry against the visitor's variant (server side, never blocks).
+  await recordConversion(req, "form_submit");
 
   // Save every /score lead to the CRM (deduped by email). Never block the email on CRM failure.
   try {
