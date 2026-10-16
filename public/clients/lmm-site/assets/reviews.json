@@ -1,0 +1,33 @@
+{
+  "source": "Google Business Profile",
+  "rating": 5.0,
+  "count": 4,
+  "reviews_url": "https://www.google.com/search?kgmid=/g/11b6hyfwnh&q=Lifestyle+Money+Management#lrd=0x6ab0cedb64cd8233:0x43ddf01d057f2221,1,,,,",
+  "updated": "2026-10-16",
+  "reviews": [
+    {
+      "name": "Lee Boys",
+      "stars": 5,
+      "date": "2 years ago",
+      "text": "Simply cannot recommend Nick and Jeff highly enough. My situation as a self employed person was rather complex and they navigated me through it all, dealing not only with the financial institutions but with me (who was rather stressed) brilliantly. Their knowledge, professionalism, communication at all times is outstanding. Would simply never undertake any finance through anyone else and I would recommend you do the same. Thanks Nick & Jeff for getting us our dream home ... you simply are the best."
+    },
+    {
+      "name": "Shane Goldberg",
+      "stars": 5,
+      "date": "7 years ago",
+      "text": "I've been fortunate enough to have at least 4 home loans and investment loans through the Lifestyle Money Management guys. They are great to deal with, excellent communication and super friendly. They've been able to help us achieve things we didn't think were possible. We worked with other banks and brokers in the past but to be perfectly honest I wouldn't go anywhere else now. These guys are highly recommended especially for residential / investment properties. Thanks again Nick, Lily and Andy + team. Really appreciate all your help! Cheers Shane & Mandy"
+    },
+    {
+      "name": "Tony Vuong",
+      "stars": 5,
+      "date": "Edited 5 years ago",
+      "text": "Assisted with my long term financial goals and property investment. Very professional and had great customer service."
+    },
+    {
+      "name": "Les Foale",
+      "stars": 5,
+      "date": "9 years ago",
+      "text": "Excellent service and understanding of my financial needs. Les"
+    }
+  ]
+}
