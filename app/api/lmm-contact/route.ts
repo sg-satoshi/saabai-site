@@ -36,7 +36,7 @@ ${row("Name", esc(name))}${row("Email", `<a href="mailto:${esc(email)}" style="c
 <p style="color:#14302A;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${esc(message)}</p></div></div></div></body></html>`;
 
     const { data, error } = await new Resend(apiKey).emails.send({
-      from: "Lifestyle Money Management <noreply@saabai.ai>",
+      from: "Lifestyle Money Management <enquiries@lifestylemoneymanagement.com.au>",
       to: TO,
       replyTo: email,
       subject: `New website enquiry: ${name}`,
