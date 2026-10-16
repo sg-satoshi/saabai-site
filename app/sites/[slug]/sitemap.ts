@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
+import { resolveGeoProfile } from "@/lib/geo/profiles";
 import { Redis } from "@upstash/redis";
 
 export const runtime = "nodejs";
@@ -28,72 +29,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [];
   }
 
-  // Resolve canonical base URL — prefer custom domain over saabai.ai path
-  const domainMap = await redis
-    .hgetall<Record<string, string>>("saabai:domain-map")
-    .catch(() => null);
-  const customDomain = domainMap
-    ? Object.entries(domainMap).find(([, v]) => v === slug)?.[0] ?? null
-    : null;
-
-  const baseUrl = customDomain
-    ? `https://${customDomain}`
-    : `https://www.saabai.ai/sites/${slug}`;
-
-  return [
-    {
-      url: `${baseUrl}/`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/sydney`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/melbourne`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/brisbane`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/gold-coast`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/perth`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/canberra`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/hobart`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-  ];
+  // Only real pages, on the site's canonical host (no template city leftovers).
+  const profile = await resolveGeoProfile(slug);
+  if (!profile) return [];
+  return profile.pages.map((pg) => ({
+    url: pg.path === "/" ? `${profile.url}/` : `${profile.url}${pg.path}`,
+    lastModified: new Date(),
+    changeFrequency: pg.path === "/" ? ("weekly" as const) : ("monthly" as const),
+    priority: pg.priority ?? (pg.path === "/" ? 1 : 0.7),
+  }));
 }
