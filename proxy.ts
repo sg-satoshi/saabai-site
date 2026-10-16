@@ -7,6 +7,10 @@ import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
+import { SLOTS } from "./lib/exp/seed";
+
+// Pages that declare a slot in code. Only these paths pay for an experiment lookup; every other page is untouched.
+const SLOT_PATHS = new Set(SLOTS.map((s) => s.path));
 
 const redis = Redis.fromEnv();
 
@@ -321,12 +325,14 @@ export async function proxy(req: NextRequest) {
 }
 
 /**
- * Variant assignment for the saabai.ai home page. Fails open: any error serves the page untouched
+ * Variant assignment for saabai.ai pages that declare a slot (see SLOT_PATHS). Fails open: any error serves the page untouched
  * (the page then renders the default copy). Bots, GPC/DNT, admins and opt-outs get the default and no cookie.
  */
 async function experimentsRoute(req: NextRequest, pathname: string, hostname: string): Promise<NextResponse | null> {
   try {
-    if (req.method !== "GET" || pathname !== "/") return null;
+    if (req.method !== "GET") return null;
+    const key = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+    if (!SLOT_PATHS.has(key) || matches(pathname, PROTECTED_PAGES)) return null;
     const siteKey = siteKeyForHost(hostname);
     if (!siteKey || !enabledSites().includes(siteKey)) return null;
     const headers = new Headers(req.headers);
@@ -334,7 +340,7 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
     headers.delete(EXP_TRACK_HEADER);
     const optParam = req.nextUrl.searchParams.get("exp_off");
     const optedOut = optParam === "1" || req.cookies.get(EXP_OFF_COOKIE)?.value === "1";
-    const exps = (await getExperiments(siteKey)).filter((e) => e.path === pathname && e.status === "running");
+    const exps = (await getExperiments(siteKey)).filter((e) => e.path === key && e.status === "running");
     const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
     let setCookie: string | undefined;
     let tracked = false;
