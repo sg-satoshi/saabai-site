@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { ensurePoweredBy } from "@/lib/client-site";
+import { resolveGeoProfile } from "@/lib/geo/profiles";
+import { llmsFullTxt, llmsTxt, robotsTxt, sitemapXml } from "@/lib/geo";
 import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
 
 export const runtime = "nodejs";
@@ -27,7 +29,20 @@ const HTML_PAGES = [
 const SEO_FILES: Record<string, { ext: string; contentType: string }> = {
   "sitemap.xml": { ext: "xml", contentType: "application/xml; charset=utf-8" },
   "robots.txt": { ext: "txt", contentType: "text/plain; charset=utf-8" },
+  "llms.txt": { ext: "txt", contentType: "text/plain; charset=utf-8" },
+  "llms-full.txt": { ext: "txt", contentType: "text/plain; charset=utf-8" },
 };
+
+/** AI SEO standard: every factory site gets these even when none was uploaded. */
+async function generatedSeoFile(slug: string, page: string): Promise<string | null> {
+  const profile = await resolveGeoProfile(slug);
+  if (!profile) return null;
+  if (page === "robots.txt") return robotsTxt({ sitemapUrl: `${profile.url}/sitemap.xml` });
+  if (page === "sitemap.xml") return sitemapXml(profile);
+  if (page === "llms.txt") return llmsTxt(profile);
+  if (page === "llms-full.txt") return llmsFullTxt(profile);
+  return null;
+}
 const FAVICON_EXTS: Record<string, string> = {
   "favicon.ico": "image/x-icon",
   "favicon.png": "image/png",
@@ -69,7 +84,14 @@ export async function GET(
     try {
       const { blobs } = await list({ prefix: `sites/${slug}/${page}` });
       const blob = blobs.find((b) => b.pathname === `sites/${slug}/${page}`);
-      if (!blob) return new Response("Not found", { status: 404 });
+      if (!blob) {
+        const generated = await generatedSeoFile(slug, page);
+        if (generated === null) return new Response("Not found", { status: 404 });
+        return new Response(generated, {
+          status: 200,
+          headers: { "Content-Type": seoFile.contentType, "Cache-Control": "public, s-maxage=3600" },
+        });
+      }
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
       const text = await res.text();
       return new Response(text, {

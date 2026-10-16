@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // City-page redirects are for saabai.ai only; client sites on their own domains must not inherit them.
-const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?stuscyclerepairs\\.com" }];
+const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com)" }];
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["mammoth", "pdf-parse"],

@@ -1,0 +1,55 @@
+# Saabai
+
+> Saabai (ABN 71 889 082 572) is a Gold Coast, Queensland business (head office Merrimac QLD 4226, Australia) founded by Shane Goldberg. Saabai has two products: website care plans for small businesses, and the Saabai Blueprint AI audit. All prices are in AUD. Saabai is not GST registered (GST not applicable).
+
+## Products
+
+- [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month.
+- [Saabai Blueprint AI audit](https://www.saabai.ai/blueprint): a ranked AI plan showing where AI saves hours and dollars. Starter $497 (48 hours), Pro $1,497 (3 business days, reviewed by Shane, 30 min walkthrough), Business $3,500 (2 to 3 weeks, team discovery, 12 month roadmap). Fee credited if you build with Saabai within 30 days.
+- [Free AI Readiness Score](https://www.saabai.ai/score): a free 3 minute, 12 question quiz with an instant score out of 100 and three quick wins.
+
+## About
+
+- [About Saabai and Shane Goldberg](https://www.saabai.ai/about)
+- [Case studies](https://www.saabai.ai/case-studies)
+- [FAQ](https://www.saabai.ai/faq)
+- [Privacy policy](https://www.saabai.ai/privacy)
+
+## Contact
+
+- Email: hello@saabai.ai
+- Book a free 30 minute call: https://calendly.com/shanegoldberg/30min
+
+## Business details
+- Business name: Saabai
+- ABN: 71 889 082 572
+- Head office: Merrimac QLD 4226, Australia
+- GST: not applicable
+- Founder: Shane Goldberg
+- Website: https://www.saabai.ai
+
+## FAQ
+
+**We're not a tech company. Is AI automation actually for us?**
+This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.
+
+**How long does it take to get AI automation live?**
+Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment.
+
+**Will AI automation work with our existing software tools?**
+Almost certainly yes. We build on top of the tools you already have: your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.
+
+**How much does AI automation typically cost?**
+Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes.
+
+**Is the strategy call really free?**
+Yes, genuinely free. No invoice, no follow-up pressure, no free call that turns into a two-hour pitch. We only take it if we think there's a real opportunity to help. If your operation isn't a good fit, we'll tell you on the call.
+
+**We tried automation before and it didn't stick. Why would this be different?**
+Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal, not an afterthought.
+
+**I run a trade or local service business. What does AI actually do for us?**
+Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.
+
+**What about privacy and data security?**
+We design with data handling in mind from the start and only connect the tools you approve. Your requirements are discussed upfront and the setup is built around them. Most of what we automate is enquiries, follow-up and scheduling, not sensitive records.

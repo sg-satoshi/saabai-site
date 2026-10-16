@@ -248,6 +248,13 @@ export async function proxy(req: NextRequest) {
           return NextResponse.rewrite(url);
         }
       }
+      // LMM static SEO files (robots, sitemap, llms) live beside its static page.
+      if (slug === "lmm-site" && /^\/(robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt)$/.test(pathname)) {
+        url.hostname = "www.saabai.ai";
+        url.pathname = `/clients/lmm-site${pathname}`;
+        url.search = "";
+        return NextResponse.rewrite(url);
+      }
       // Custom-domain favicon: the site's own Site Factory favicon, else Saabai's.
       if (pathname === "/favicon.ico") {
         url.hostname = "www.saabai.ai";
