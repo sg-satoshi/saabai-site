@@ -620,6 +620,19 @@
       .form-footer { align-items: stretch; flex-direction: column; }
       .button { width: 100%; }
     }
+  
+    /* Meet Nick */
+    .meet-nick { background: var(--bg-elevated); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .meet-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+    .meet-photo { margin: 0; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--line); }
+    .meet-photo img { display: block; width: 100%; height: auto; }
+    .meet-role { color: var(--gold); font-weight: 700; margin-top: 8px; }
+    .meet-bio { margin-top: 18px; }
+    .meet-contact { margin-top: 28px; display: grid; gap: 10px; }
+    .meet-contact a { color: var(--green); font-weight: 700; }
+    .meet-contact a:hover { text-decoration: underline; }
+    .meet-contact span { color: var(--muted); font-size: 0.92rem; }
+    @media (max-width: 860px) { .meet-grid { grid-template-columns: 1fr; gap: 32px; } .meet-photo { max-width: 460px; } }
   </style>
 </head>
 <body>
@@ -637,6 +650,7 @@
       <nav class="nav-links" aria-label="Primary navigation">
         <a href="#services">Services</a>
         <a href="#approach">Approach</a>
+        <a href="#meet-nick">Meet Nick</a>
         <!-- Testimonials hidden for now: <a href="#testimonials">Testimonials</a> -->
         <a href="#contact">Contact</a>
         <button class="theme-toggle" type="button" aria-label="Toggle dark mode">DL</button>
@@ -751,6 +765,27 @@
     </section>
 
     <!-- Testimonials hidden for now: remove hidden + style to restore -->
+    <section class="meet-nick" id="meet-nick" aria-label="Meet Nick Foale">
+      <div class="container meet-grid">
+        <figure class="meet-photo reveal">
+          <img src="/clients/lmm-site/assets/nick-foale-lmm.jpg" alt="Nick Foale, Managing Director of Lifestyle Money Management" width="900" height="1200" loading="lazy">
+        </figure>
+        <div class="reveal">
+          <div class="eyebrow">Meet your adviser</div>
+          <h2 style="margin-top: 18px;">Nick Foale</h2>
+          <p class="meet-role">Managing Director</p>
+          <p class="muted meet-bio">Bio coming soon.</p>
+          <div class="meet-contact">
+            <span>Call</span>
+            <a href="tel:1300799119">1300 799 119</a>
+            <a href="tel:0488165908">0488 165 908</a>
+            <span>Email</span>
+            <a href="mailto:nick@lifestylemoneymanagement.com.au">nick@lifestylemoneymanagement.com.au</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="testimonials" hidden style="display:none">
       <div class="container">
         <div class="section-head reveal">
