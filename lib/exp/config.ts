@@ -16,9 +16,9 @@ function redis(): Redis | null {
 const seedFor = (siteKey: string) => SEED_EXPERIMENTS.filter((e) => e.siteKey === siteKey);
 
 /** Experiments for a site. Redis wins; the built-in seed is the fail-open fallback. Never throws. */
-export async function getExperiments(siteKey: string): Promise<Experiment[]> {
+export async function getExperiments(siteKey: string, opts: { fresh?: boolean } = {}): Promise<Experiment[]> {
   const hit = cache.get(siteKey);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.list;
+  if (!opts.fresh && hit && Date.now() - hit.at < TTL_MS) return hit.list;
   let list = seedFor(siteKey);
   try {
     const r = redis();
@@ -47,3 +47,11 @@ export async function ensureSeeded(siteKey: string): Promise<void> {
 }
 
 export const resetExpCache = () => cache.clear();
+
+/** Dashboard write: stores one experiment (already validated) in Redis. Throws if Redis is unavailable. */
+export async function writeExperiment(e: Experiment): Promise<void> {
+  const r = redis();
+  if (!r) throw new Error("Redis is not configured");
+  await r.hset(expKey(e.siteKey), { [e.id]: JSON.stringify(e) });
+  cache.delete(e.siteKey);
+}

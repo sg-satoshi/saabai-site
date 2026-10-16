@@ -9,16 +9,42 @@ export const EXP_MAX_AGE = 90 * 24 * 3600;
 export const EXP_HEADER = "x-sb-exp";
 export const EXP_TRACK_HEADER = "x-sb-track";
 
-export type Variant = { id: string; text: string; emphasis?: string; active: boolean; weight?: number };
+/**
+ * Slot types. Only "text" renders today. "image" and "style" are reserved in the data model: a variant of
+ * those types carries its settings in `value` (for example { src, alt } or { font, colour }) and the slot
+ * component that consumes it validates the keys. Adding a type means a renderer plus a validator here.
+ */
+export const SLOT_TYPES = ["text", "image", "style"] as const;
+export type SlotType = (typeof SLOT_TYPES)[number];
+export const RENDERABLE_SLOT_TYPES: SlotType[] = ["text"];
+
+export type Variant = {
+  id: string;
+  text: string;
+  emphasis?: string;
+  active: boolean;
+  weight?: number;
+  /** Non-text slot settings (image, style tokens). Unused for text slots. */
+  value?: Record<string, string>;
+  /** "human" or "ai" (AI variants arrive in Phase 3 and need approval before serving). */
+  source?: "human" | "ai";
+};
 export type Experiment = {
   id: string;
   siteKey: string;
   slot: string;
+  /** Defaults to "text" when absent. */
+  slotType?: SlotType;
   path: string;
   status: "draft" | "running" | "paused" | "won";
   defaultVariantId: string;
   variants: Variant[];
   leadValueAUD?: number;
+  /** Optimistic-concurrency counter, bumped by every dashboard write. */
+  rev?: number;
+  updatedAt?: string;
+  /** Plain label shown in the dashboard. */
+  name?: string;
 };
 export type ExpCookie = { v: string; a: Record<string, string> };
 
@@ -78,9 +104,14 @@ export function validateExperiment(e: unknown): Experiment | null {
   if (!x || typeof x.id !== "string" || !/^[a-z0-9-]{3,48}$/.test(x.id)) return null;
   if (typeof x.siteKey !== "string" || typeof x.slot !== "string" || typeof x.path !== "string") return null;
   if (!["draft", "running", "paused", "won"].includes(x.status)) return null;
+  if (x.slotType !== undefined && !SLOT_TYPES.includes(x.slotType)) return null;
   if (!Array.isArray(x.variants) || x.variants.length < 1 || x.variants.length > 8) return null;
+  const ids = new Set<string>();
   for (const v of x.variants) {
-    if (!v || typeof v.id !== "string" || !/^[a-z0-9-]{1,24}$/.test(v.id)) return null;
+    if (!v || typeof v.id !== "string" || !/^[a-z0-9-]{1,24}$/.test(v.id) || ids.has(v.id)) return null;
+    ids.add(v.id);
+    if (typeof v.active !== "boolean") return null;
+    if (v.value !== undefined && (typeof v.value !== "object" || v.value === null || Object.values(v.value).some((z) => typeof z !== "string" || z.length > 300))) return null;
     if (typeof v.text !== "string" || !v.text.trim() || v.text.length > 90) return null;
     if (v.emphasis !== undefined && (typeof v.emphasis !== "string" || v.emphasis.length > 90)) return null;
     if (/—|–/.test(v.text + (v.emphasis ?? ""))) return null;

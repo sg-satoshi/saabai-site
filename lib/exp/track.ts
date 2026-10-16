@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Redis } from "@upstash/redis";
 import { createHash } from "node:crypto";
 import { EXP_COOKIE, isBot, parseExpCookie, privacySignal, type EventType } from "./core";
+import { eventSource } from "./attr";
 import { getExperiments } from "./config";
 
 /** Server-only. Service role key never leaves the server; RLS has no anon policies. */
@@ -11,11 +12,20 @@ function db() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-export async function recordEvent(experimentId: string, variantId: string, visitorId: string, type: EventType): Promise<boolean> {
+/** Service-role client for server routes (events, admin dashboard). Never import from client code. */
+export const serviceDb = db;
+
+export function attrFromRequest(req: Request): string | null {
+  const raw = (req.headers.get("cookie") ?? "").split(/;\s*/).find((p) => p.startsWith("sb_attr="));
+  return raw ? raw.slice("sb_attr=".length) : null;
+}
+
+export async function recordEvent(experimentId: string, variantId: string, visitorId: string, type: EventType, attr: string | null = null): Promise<boolean> {
   try {
     const c = db();
     if (!c) return false;
-    const { error } = await c.rpc("exp_record_event", { p_experiment: experimentId, p_variant: variantId, p_visitor: visitorId, p_type: type });
+    const src = eventSource(attr);
+    const { error } = await c.rpc("exp_record_event", { p_experiment: experimentId, p_variant: variantId, p_visitor: visitorId, p_type: type, p_source: src.source, p_campaign: src.campaign, p_channel: src.channel });
     return !error;
   } catch { return false; }
 }
@@ -34,7 +44,7 @@ export async function recordConversion(req: Request, type: EventType = "form_sub
     const exps = await getExperiments(siteKey);
     for (const e of exps) {
       const vid = ck.a[e.id];
-      if (e.status === "running" && vid && e.variants.some((v) => v.id === vid)) await recordEvent(e.id, vid, ck.v, type);
+      if (e.status === "running" && vid && e.variants.some((v) => v.id === vid)) await recordEvent(e.id, vid, ck.v, type, attrFromRequest(req));
     }
   } catch { /* tracking must never break a lead */ }
 }
