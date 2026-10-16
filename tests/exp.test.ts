@@ -95,6 +95,8 @@ test("cookie parse and serialise reject junk", () => {
   assert.equal(parseExpCookie(serialiseExpCookie({ v: "not-a-uuid", a: {} })), null);
   const ok = { v: "11111111-1111-4111-8111-111111111111", a: { x: "a" } };
   assert.deepEqual(parseExpCookie(serialiseExpCookie(ok)), ok);
+  // Raw Cookie header as the browser sends it after Next encoded the value a second time.
+  assert.deepEqual(parseExpCookie(encodeURIComponent(serialiseExpCookie(ok))), ok);
 });
 
 test("only saabai.ai is switched on; client hosts are never experiment sites", () => {

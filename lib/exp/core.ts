@@ -59,7 +59,10 @@ export function enabledSites(env: string | undefined = process.env.EXPERIMENTS_E
 export function parseExpCookie(raw: string | undefined | null): ExpCookie | null {
   if (!raw) return null;
   try {
-    const o = JSON.parse(decodeURIComponent(raw));
+    // Next percent-encodes cookie values on set, and the cookie jar may or may not decode once on read.
+    let txt = raw;
+    for (let i = 0; i < 3 && !txt.trim().startsWith("{"); i++) txt = decodeURIComponent(txt);
+    const o = JSON.parse(txt);
     if (o && typeof o.v === "string" && /^[0-9a-f-]{36}$/i.test(o.v) && o.a && typeof o.a === "object") {
       const a: Record<string, string> = {};
       for (const [k, val] of Object.entries(o.a)) if (typeof val === "string" && k.length < 64 && val.length < 64) a[k] = val;
