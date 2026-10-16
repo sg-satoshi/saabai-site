@@ -26,8 +26,18 @@ export function channelOf(source: string | null, medium: string | null | undefin
   return "referral";
 }
 
+/** A raw Cookie header value may be percent-encoded twice (Next encodes on set). Decode until it is JSON, then hand parseAttr its single-encoded form. */
+function normaliseAttr(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  try {
+    let t = raw;
+    for (let i = 0; i < 3 && !t.trim().startsWith("{"); i++) t = decodeURIComponent(t);
+    return t.trim().startsWith("{") ? encodeURIComponent(t) : null;
+  } catch { return null; }
+}
+
 export function eventSource(attrCookie: string | undefined | null): EventSource {
-  const a = parseAttr(attrCookie ?? null);
+  const a = parseAttr(normaliseAttr(attrCookie));
   const t = a?.l;
   if (!t) return { source: null, campaign: null, channel: "direct" };
   const source = clean(t.s);

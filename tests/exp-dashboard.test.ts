@@ -193,6 +193,15 @@ test("event source comes from sb_attr and carries no PII", () => {
   assert.equal(channelOf(null, undefined), "direct");
 });
 
+test("source is read from a raw Cookie header whether encoded once or twice", () => {
+  const once = attr({ s: "google", m: "cpc", c: "spring" });
+  const twice = encodeURIComponent(once);
+  const want = { source: "google", campaign: "spring", channel: "paid" };
+  assert.deepEqual(eventSource(once), want);
+  assert.deepEqual(eventSource(twice), want);
+  assert.deepEqual(eventSource(encodeURIComponent(twice)), want);
+});
+
 // ---- access control (static) ----
 test("dashboard APIs and page are admin-gated, only the beacon is public", () => {
   const proxy = readFileSync("proxy.ts", "utf8");
