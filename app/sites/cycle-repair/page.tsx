@@ -3,16 +3,15 @@ import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
 import { ReviewsCarousel } from "./ReviewsCarousel";
 import PoweredBySaabai from "../../components/PoweredBySaabai";
-import { googleRating, googleReviewCount } from "./reviews";
+import { googleRating, googleReviewCount, googleMapsUrl } from "./reviews";
 
 const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
 const mechanicImg = "/sites/cycle-repair/stu.jpg";
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "LocalBusiness",
+  "@type": ["LocalBusiness", "BicycleStore"],
   "@id": "https://stuscyclerepairs.com/#business",
-  additionalType: "https://schema.org/BicycleStore",
   name: "Stu's Cycle Repairs",
   image: "https://stuscyclerepairs.com/sites/cycle-repair/stu.jpg",
   logo: "https://stuscyclerepairs.com/sites/cycle-repair/stus-logo-v2.png",
@@ -21,6 +20,7 @@ const jsonLd = {
   telephone: "+61405225721",
   email: "stuscyclerepairs@gmail.com",
   url: "https://stuscyclerepairs.com",
+  sameAs: [googleMapsUrl],
   aggregateRating: {
     "@type": "AggregateRating",
     ratingValue: googleRating,
@@ -37,7 +37,7 @@ const jsonLd = {
     { name: "Bronze Service", price: "119.00" },
     { name: "Silver Service", price: "189.00" },
     { name: "Gold Service (Road Bike)", price: "249.00" },
-    { name: "Gold Service (MTB)", price: "299.00" },
+    { name: "Gold Service (MTB)", price: "349.00" },
   ].map((o) => ({
     "@type": "Offer",
     priceCurrency: "AUD",

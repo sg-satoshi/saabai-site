@@ -1,3 +1,6 @@
+import { tiers, additionalServiceWork, specialist } from "./services";
+import { googleRating, googleReviewCount } from "./reviews";
+
 export const SITE_URL = "https://stuscyclerepairs.com";
 
 /** Every indexable page on stuscyclerepairs.com. Keep in sync with real routes. */
@@ -51,3 +54,58 @@ export const faqs: Array<{ q: string; a: string }> = [
     a: "Call Stu on 0405 225 721, email stuscyclerepairs@gmail.com, or use the quote form on this website. If you are not sure whether Stu covers your suburb, send an enquiry and he will let you know.",
   },
 ];
+
+function priceLines(): string[] {
+  return tiers.map((t) => `- ${t.name} (${t.tag}): ${t.price}`);
+}
+
+export function llmsSummary(): string {
+  return `# Stu's Cycle Repairs
+
+> Stu's Cycle Repairs is a mobile bicycle mechanic. Stu has 37 years of experience and travels to customers' homes or workplaces across all of the Gold Coast, QLD, and the Tweed Coast, NSW, with a fully equipped mobile workshop.
+
+## Key facts
+- Business: Stu's Cycle Repairs (mobile bike mechanic, no shopfront visits needed)
+- Service area: all of the Gold Coast, Queensland, Australia, and the Tweed Coast, New South Wales, Australia
+- Phone: 0405 225 721
+- Email: stuscyclerepairs@gmail.com
+- Website: ${SITE_URL}
+- Google rating: ${googleRating} from ${googleReviewCount} Google reviews
+
+## Service prices (AUD, labour only, parts not included)
+${priceLines().join("\n")}
+- Call-out fee for repairs under $120: $70
+- E-bike servicing: $149-$299
+- Kid's bike service (up to 20"): $59
+
+## Pages
+- [Home, services and prices](${SITE_URL}/)
+- [Mobile bike repairs on the Gold Coast](${SITE_URL}/gold-coast)
+- [FAQ](${SITE_URL}/faq)
+- [Get a quote](${SITE_URL}/quote)
+- [Contact Stu](${SITE_URL}/contact)
+- [Full details for AI assistants](${SITE_URL}/llms-full.txt)
+`;
+}
+
+export function llmsFull(): string {
+  const extra = additionalServiceWork.map((l) => `- ${l.label}: ${l.price}`).join("\n");
+  const spec = specialist.map((l) => `- ${l.label}: ${l.price}`).join("\n");
+  const tierText = tiers
+    .map((t) => `### ${t.name} (${t.tag}), ${t.price}\n${t.items.map((i) => `- ${i}`).join("\n")}`)
+    .join("\n\n");
+  const faqText = faqs.map((f) => `**${f.q}**\n${f.a}`).join("\n\n");
+  return `${llmsSummary()}
+## Service tiers
+${tierText}
+
+## Additional service work
+${extra}
+
+## Specialist care
+${spec}
+
+## FAQ
+${faqText}
+`;
+}
