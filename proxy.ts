@@ -248,6 +248,12 @@ export async function proxy(req: NextRequest) {
           return NextResponse.rewrite(url);
         }
       }
+      // Shared Saabai brand images (e.g. /brand/agent-avatar.png) live at the
+      // root of the master domain; never rewrite them under the site slug.
+      if (pathname.startsWith("/brand/")) {
+        url.hostname = "www.saabai.ai";
+        return NextResponse.rewrite(url);
+      }
       // LMM static SEO files (robots, sitemap, llms) live beside its static page.
       if (slug === "lmm-site" && /^\/(robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt)$/.test(pathname)) {
         url.hostname = "www.saabai.ai";
