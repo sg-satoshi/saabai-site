@@ -214,7 +214,7 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
 }
 
 function CandidatePanel({ p, path, onClose }: { p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void }) {
-  const [name, setName] = useState(p.kind === "button" ? "Button label" : "Headline");
+  const [name, setName] = useState(`${p.kind === "button" ? "Button" : "Headline"}: ${p.text.slice(0, 40)}`.slice(0, 80));
   const [slot, setSlot] = useState(suggestSlot(path, p.section, p.kind));
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<{ mode: string; prUrl?: string; prNumber?: number; snippet?: string; message?: string } | null>(null);
