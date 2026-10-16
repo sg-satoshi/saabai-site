@@ -181,7 +181,7 @@ function Chips({ options, value, onChange, multi }: { options: readonly string[]
         const on = value.includes(o);
         return (
           <button key={o} type="button" aria-pressed={on} className={on ? "on" : ""}
-            onClick={() => onChange(multi ? (on ? value.filter((x) => x !== o) : [...value, o]) : [o])}>{o}</button>
+            onClick={() => onChange(multi ? (on ? value.filter((x) => x !== o) : [...value, o]) : [o])}>{o === "sms" ? "SMS" : o}</button>
         );
       })}
     </div>

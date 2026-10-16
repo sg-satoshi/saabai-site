@@ -23,7 +23,7 @@ export default async function MarketingPage() {
           {!err && !drafts.length && <CardBody><p className="muted">No drafts yet. Use Send to Marketing in Pulse to create one.</p></CardBody>}
           {drafts.map((d) => (
             <div className="oc" key={d.id}>
-              <div className="r1"><b>{d.subject || (d.channel === "sms" ? "SMS draft" : "Email draft")}</b><Badge tone="neutral">{d.channel}</Badge></div>
+              <div className="r1"><b>{d.subject || (d.channel === "sms" ? "SMS draft" : "Email draft")}</b><Badge tone="neutral">{d.channel === "sms" ? "SMS" : d.channel}</Badge></div>
               <p className="muted" style={{ whiteSpace: "pre-wrap", marginTop: 6, fontSize: 13 }}>{d.body.slice(0, 280)}{d.body.length > 280 ? "..." : ""}</p>
               <div className="r2"><span className="muted" style={{ fontSize: 12 }}>From {d.source} · {new Date(d.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" })} AEST</span></div>
             </div>
