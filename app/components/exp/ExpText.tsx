@@ -1,4 +1,5 @@
 import { resolveSlot } from "@/lib/exp/resolve";
+import { CLICK_KINDS } from "@/lib/exp/core";
 import ExpBeacon from "./ExpBeacon";
 import type { ReactNode } from "react";
 
@@ -13,11 +14,11 @@ export default async function ExpText({ slot, children }: {
   children: (v: { text: string; emphasis?: string; attrs: Record<string, string> }) => ReactNode;
 }) {
   const { exp, variant, tracked } = await resolveSlot(slot);
-  const attrs = { "data-exp-slot": slot, "data-exp-id": exp.id, "data-exp-variant": variant.id };
+  const attrs = { "data-exp-slot": slot, "data-exp-id": exp.id, "data-exp-variant": variant.id, "data-exp-kind": exp.kind ?? "headline" };
   return (
     <>
       {children({ text: variant.text, emphasis: variant.emphasis, attrs })}
-      {tracked && <ExpBeacon exp={exp.id} slot={slot} scope={exp.kind === "button" ? "slot" : "page"} />}
+      {tracked && <ExpBeacon exp={exp.id} slot={slot} scope={CLICK_KINDS.includes(exp.kind ?? "headline") ? "slot" : "page"} />}
     </>
   );
 }
