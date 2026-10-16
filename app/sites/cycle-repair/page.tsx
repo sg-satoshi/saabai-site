@@ -97,6 +97,8 @@ export default function Index() {
             <a href="#services" className="hover:text-brand transition-colors">Services</a>
             <a href="#how" className="hover:text-brand transition-colors">How it Works</a>
             <a href="#about" className="hover:text-brand transition-colors">About</a>
+            <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
 
             <a
@@ -474,6 +476,8 @@ export default function Index() {
           <div className="flex gap-8 text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
             <a href="#services" className="hover:text-brand transition-colors">Services</a>
             <a href="#about" className="hover:text-brand transition-colors">About</a>
+            <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
             <a href="tel:0405225721" className="hover:text-brand transition-colors">Call Stu</a>
 
