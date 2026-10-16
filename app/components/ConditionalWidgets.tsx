@@ -35,11 +35,16 @@ const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au", "w
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();
-  const [hostname, setHostname] = useState("");
+  // null until mounted: on custom client hosts the server sees the rewritten path
+  // (/sites/slug) but the browser sees the public path, so rendering before we
+  // know the host caused a hydration mismatch (#418) and a stray Mia avatar request.
+  const [hostname, setHostname] = useState<string | null>(null);
 
   useEffect(() => {
     setHostname(window.location.hostname);
   }, []);
+
+  if (hostname === null) return null;
 
   const suppress =
     SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
