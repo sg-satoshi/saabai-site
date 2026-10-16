@@ -2,7 +2,7 @@
  * Weekly "what we learned" note, pure logic. Plain templates over our own numbers (no AI, so nothing can be invented).
  * Sent to Shane only. Skipped quietly when there was no meaningful traffic.
  */
-import type { Experiment } from "./core";
+import { KIND_RULES, kindOf, type Experiment } from "./core";
 import type { Analysis } from "./stats";
 
 /** An experiment needs at least this many views in the last 7 days to be worth a note. */
@@ -40,8 +40,9 @@ export function nextStep(i: WeekInput): string {
   const v = i.analysis.verdict;
   const lead = v.leaderId ? v.leaderId.toUpperCase() : "";
   const control = i.exp.defaultVariantId.toUpperCase();
+  const noun = KIND_RULES[kindOf(i.exp)].noun;
   const pend = i.pendingSuggestions ? ` ${i.pendingSuggestions} AI suggestion${i.pendingSuggestions === 1 ? " is" : "s are"} waiting for your approval in the dashboard.` : "";
-  if (v.kind === "winner" && v.canMakeWinner) return `Variant ${lead} has met every rule to be called the winner. Open the dashboard and decide whether to make it the live headline. It is your click.${pend}`;
+  if (v.kind === "winner" && v.canMakeWinner) return `Variant ${lead} has met every rule to be called the winner. Open the dashboard and decide whether to make it the live ${noun}. It is your click.${pend}`;
   if (v.kind === "winner") return `The control (${control}) is the clear winner, so there is nothing to switch. Use "Suggest variants" to bring in a fresh challenger.${pend}`;
   if (v.kind === "leading") return `${lead} is ahead but the result isn't proven yet. Leave the test running, don't switch anything yet. ${v.missing[0] ? `Still needed: ${v.missing[0]}` : ""}${pend}`.trim();
   return `It is too early to tell. Keep it running and let the numbers build.${i.pendingSuggestions ? pend : ""}`.trim();

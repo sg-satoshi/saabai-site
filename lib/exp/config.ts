@@ -7,7 +7,7 @@ const TTL_MS = 45_000;
 const cache = new Map<string, { at: number; list: Experiment[] }>();
 let client: Redis | null | undefined;
 
-function redis(): Redis | null {
+export function redis(): Redis | null {
   if (client !== undefined) return client;
   try { client = Redis.fromEnv(); } catch { client = null; }
   return client;
@@ -30,20 +30,12 @@ export async function getExperiments(siteKey: string, opts: { fresh?: boolean } 
         const ok = validateExperiment(o);
         if (ok) parsed.push(ok);
       }
-      if (parsed.length) list = parsed;
+      // Redis wins per experiment. Slots declared in code but not yet in Redis are served from the seed.
+      if (parsed.length) list = [...parsed, ...seedFor(siteKey).filter((s) => !parsed.some((p) => p.id === s.id))];
     }
   } catch { /* fail open to seed */ }
   cache.set(siteKey, { at: Date.now(), list });
   return list;
-}
-
-/** Writes the seed into Redis for fields that do not exist yet. Best effort, node runtime. */
-export async function ensureSeeded(siteKey: string): Promise<void> {
-  try {
-    const r = redis();
-    if (!r) return;
-    for (const e of seedFor(siteKey)) await r.hsetnx(expKey(siteKey), e.id, JSON.stringify(e));
-  } catch { /* ignore */ }
 }
 
 export const resetExpCache = () => cache.clear();
