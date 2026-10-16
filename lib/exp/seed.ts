@@ -45,6 +45,15 @@ export const SLOTS: SlotDecl[] = [
       { text: "See where AI fits in your business" },
     ],
   },
+  {
+    id: "home-main-headline",
+    siteKey: "saabai",
+    slot: "home.main.headline",
+    kind: "headline",
+    name: "Headline: Your AI plan, ranked by dollars saved",
+    path: "/",
+    control: { text: "Your AI plan, ranked by dollars saved" },
+  },
 ];
 
 const LETTERS = "abcdefgh";
