@@ -9,7 +9,7 @@ const SYSTEM_PROMPT = `You are Zara, a knowledgeable and friendly Australian fin
 
 About LMM:
 - Services: Investment Strategy, Financial Analysis, Portfolio Management
-- Focus: Brisbane, Queensland, and selected Australian residential growth locations
+- Focus: Adelaide, Brisbane, Queensland, and selected Australian residential growth locations
 - Philosophy: Advice that starts with suitability — affordability, asset quality, downside protection, financial independence
 - Ethical ROI advice — the right property is not just the one with a glossy forecast
 

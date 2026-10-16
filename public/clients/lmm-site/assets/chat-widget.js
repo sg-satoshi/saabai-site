@@ -36,14 +36,14 @@
   styles.textContent = `
     .lmm-chat-widget { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: Inter, -apple-system, sans-serif; -webkit-transform: translateZ(0); transform: translateZ(0); }
     .lmm-chat-button {
-      width: 60px; height: 60px; border-radius: 50%; border: none;
-      background: ${CONFIG.accentColor}; color: white; cursor: pointer;
+      width: 64px; height: 64px; border-radius: 50%; border: 2px solid ${CONFIG.accentColor}; padding: 0; overflow: hidden;
+      background: #fff; color: white; cursor: pointer;
       box-shadow: 0 4px 20px rgba(196, 154, 58, 0.4);
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .lmm-chat-button:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(196, 154, 58, 0.5); }
-    .lmm-chat-button img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+    .lmm-chat-button img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 22%; display: block; border: none; }
     .lmm-chat-panel {
       position: absolute; bottom: 76px; right: 0;
       width: 380px; max-width: calc(100vw - 48px); height: 520px; max-height: calc(100vh - 120px);
@@ -58,7 +58,7 @@
       padding: 16px 20px; background: ${CONFIG.brandColor}; color: white;
       display: flex; align-items: center; gap: 12px;
     }
-    .lmm-chat-header img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid ${CONFIG.accentColor}; }
+    .lmm-chat-header img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: 50% 22%; border: 1.5px solid ${CONFIG.accentColor}; }
     .lmm-chat-header-info { flex: 1; }
     .lmm-chat-header-name { font-weight: 700; font-size: 15px; }
     .lmm-chat-header-status { font-size: 12px; opacity: 0.8; display: flex; align-items: center; gap: 6px; }
@@ -69,7 +69,7 @@
     .lmm-chat-message { display: flex; gap: 10px; max-width: 85%; }
     .lmm-chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
     .lmm-chat-message.bot { align-self: flex-start; }
-    .lmm-chat-message-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .lmm-chat-message-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; object-position: 50% 22%; flex-shrink: 0; }
     .lmm-chat-message-user-avatar {
       width: 32px; height: 32px; border-radius: 50%; background: ${CONFIG.brandColor};
       color: white; display: flex; align-items: center; justify-content: center;
@@ -102,8 +102,7 @@
     .lmm-chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
     @media (max-width: 480px) {
       .lmm-chat-widget { bottom: 16px; right: 16px; }
-      .lmm-chat-button { width: 54px; height: 54px; }
-      .lmm-chat-button img { width: 36px; height: 36px; }
+      .lmm-chat-button { width: 58px; height: 58px; }
       .lmm-chat-panel { width: calc(100vw - 32px); right: -8px; height: 70vh; max-height: 520px; }
       .lmm-chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
     }
