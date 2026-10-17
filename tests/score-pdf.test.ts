@@ -2,19 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument } from "pdf-lib";
 import { QUESTIONS, scoreAnswers } from "../lib/blueprint";
-import { buildScorePdf, pdfSafe } from "../lib/score-pdf";
+import { buildScorePdf, buildScorePdfDetailed, areaHours, parseHours, AREA_COPY, PAGE2_LIMIT, pdfSafe } from "../lib/score-pdf";
 import { buildConsentRecord, cleanPageUrl, SCORE_CONSENT_WORDING } from "../lib/score-consent";
 import { buildVisitorEmail, type MailSender, type ScoreMail } from "../lib/score-email";
 
 const answersFor = (pick: (i: number, n: number) => number) => Object.fromEntries(QUESTIONS.map((q, i) => [q.id, Math.min(q.options.length - 1, pick(i, q.options.length))]));
 
-test("PDF renders one A4 page for low, mid and high scores", async () => {
+test("PDF renders two A4 pages for low, mid and high scores", async () => {
   for (const pick of [() => 0, (i: number) => i % 3, (_: number, n: number) => n - 1]) {
     const r = scoreAnswers(answersFor(pick));
     const bytes = await buildScorePdf({ result: r });
     assert.equal(Buffer.from(bytes.slice(0, 5)).toString(), "%PDF-");
     const doc = await PDFDocument.load(bytes);
-    assert.equal(doc.getPageCount(), 1);
+    assert.equal(doc.getPageCount(), 2);
     assert.ok(Math.abs(doc.getPage(0).getWidth() - 595.28) < 1);
   }
 });
@@ -42,4 +42,28 @@ test("visitor email: PDF attached when requested, plain otherwise; mocked sender
   const plain = await buildVisitorEmail({ from: "t@example.test", email: "a@example.test", result: r, withPdf: false });
   assert.equal(plain.attachments, undefined);
   assert.match(plain.subject, /^Your AI Readiness Score: \d+\/100$/);
+});
+
+test("page 2 never overflows across many answer combinations and every tier", async () => {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const tiers = new Set<string>();
+  for (let n = 0; n < 60; n++) {
+    const r = scoreAnswers(answersFor((_, k) => Math.floor(rnd() * k)));
+    tiers.add(r.recommended);
+    const { page2Bottom } = await buildScorePdfDetailed({ result: r });
+    assert.ok(page2Bottom <= PAGE2_LIMIT, `page 2 bottom ${page2Bottom} > ${PAGE2_LIMIT}`);
+  }
+  assert.ok(tiers.size >= 2);
+});
+test("area hours are scaled from the quiz range, not invented", () => {
+  const r = scoreAnswers(answersFor((i) => i % 3));
+  const [L, H] = parseHours(r.hours);
+  const a = areaHours(r);
+  assert.equal(a.length, 4);
+  assert.ok(Math.abs(a.reduce((s, x) => s + x.share, 0) - 1) < 1e-9);
+  assert.ok(Math.abs(a.reduce((s, x) => s + x.lo, 0) - L) <= 1.5);
+  assert.ok(Math.abs(a.reduce((s, x) => s + x.hi, 0) - H) <= 2);
+  for (const x of a) { assert.ok(x.hi > x.lo); assert.ok(AREA_COPY[x.id]); }
+  assert.deepEqual(parseHours("5 to 8 hours a week"), [5, 8]);
 });
