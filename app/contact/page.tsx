@@ -1,44 +1,82 @@
 import type { Metadata } from "next";
+import Nav from "../components/Nav";
+import SbFooter from "../components/sb/SbFooter";
+import "../components/sb/sb.css";
+
+const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "How to contact Saabai: email, business details and service area.",
+  description:
+    "Contact Saabai by email or book a call. Merrimac, working across the Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
   alternates: { canonical: "https://www.saabai.ai/contact" },
 };
 
 const ROWS: [string, string][] = [
-  ["Business name", "Saabai"],
-  ["Operated by", "Shane Goldberg, sole trader"],
+  ["Email", "hello@saabai.ai"],
+  ["Address", "Merrimac"],
   ["ABN", "71 889 082 572"],
-  ["Address", "Merrimac QLD 4226, Australia"],
-  ["Service area", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
+  ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
 ];
 
 export default function ContactPage() {
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", color: "#14202b", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 80px" }}>
-        <a href="/" style={{ color: "#5c6670", fontSize: 14, textDecoration: "none" }}>← Back to Saabai</a>
-        <h1 style={{ fontSize: 34, fontWeight: 800, margin: "24px 0 8px" }}>Contact Saabai</h1>
-        <p style={{ fontSize: 16, lineHeight: 1.7, marginBottom: 32 }}>
-          The best way to reach us is email. We reply within one business day.
-        </p>
-        <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 32 }}>
-          <a href="mailto:hello@saabai.ai" style={{ color: "#0b6b64" }}>hello@saabai.ai</a>
-        </p>
-        <dl style={{ margin: 0 }}>
-          {ROWS.map(([k, v]) => (
-            <div key={k} style={{ display: "flex", gap: 16, padding: "12px 0", borderTop: "1px solid #e3e7eb" }}>
-              <dt style={{ width: 160, flexShrink: 0, color: "#5c6670", fontSize: 15 }}>{k}</dt>
-              <dd style={{ margin: 0, fontSize: 16 }}>{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <p style={{ color: "#5c6670", fontSize: 14, marginTop: 40 }}>
-          Saabai is a home-based, online business. We do not operate a public shopfront, and visits are by appointment only. See our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms</a>.
-        </p>
+    <div className="sb">
+      <Nav />
+      <div aria-hidden="true" style={{ height: 92 }} />
+      <div style={{ position: "relative" }}>
+        <div className="glow" />
+        <div className="wrap" style={{ position: "relative", maxWidth: 760, paddingTop: 72, paddingBottom: 96 }}>
+          <span className="eyebrow">Saabai</span>
+          <h1 style={{ marginTop: 16 }}>Contact</h1>
+          <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
+            The best way to reach us is email. We reply within one business day.
+          </p>
+
+          <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>
+            {ROWS.map(([label, value]) => (
+              <div key={label} style={{ minWidth: 0 }}>
+                <p className="dim" style={{ fontSize: 13, marginBottom: 4 }}>{label}</p>
+                {label === "Email" ? (
+                  <a
+                    href="mailto:hello@saabai.ai"
+                    style={{ color: "var(--teal)", fontSize: 20, fontWeight: 600, textDecoration: "none", overflowWrap: "anywhere" }}
+                  >
+                    {value}
+                  </a>
+                ) : (
+                  <p style={{ color: "#fff", fontSize: 17, overflowWrap: "break-word" }}>{value}</p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <p className="dim" style={{ marginTop: 28, fontSize: 15 }}>
+            Saabai is a home-based, online business. We do not operate a public shopfront, and visits are by appointment only.
+          </p>
+
+          <div style={{ marginTop: 28 }}>
+            <a
+              href={CALENDLY}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center min-h-[44px] text-sm font-semibold bg-saabai-teal text-saabai-bg px-5 py-2.5 rounded-lg hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap max-w-full"
+            >
+              <span className="sm:hidden">Book a call</span>
+              <span className="hidden sm:inline">Book a Free 30-Min Call</span>
+            </a>
+          </div>
+
+          <p className="dim" style={{ marginTop: 28, fontSize: 14 }}>
+            See our{" "}
+            <a href="/privacy" style={{ color: "var(--teal)", textDecoration: "underline" }}>Privacy Policy</a>
+            {" "}and{" "}
+            <a href="/terms" style={{ color: "var(--teal)", textDecoration: "underline" }}>Terms</a>.
+          </p>
+        </div>
       </div>
-    </main>
+      <SbFooter />
+    </div>
   );
 }
