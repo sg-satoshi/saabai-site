@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import { ensurePoweredBy } from "@/lib/client-site";
 import { ensureFavicon } from "@/lib/site-favicon";
+import { ensureSchema } from "@/lib/site-schema";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,7 @@ export async function GET(
 
     if (blob) {
       const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-      const html = ensurePoweredBy(slug, await ensureFavicon(slug, applyCssPatch(slug, await res.text())));
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, await res.text()))));
       return new Response(html, {
         status: 200,
         headers: {
