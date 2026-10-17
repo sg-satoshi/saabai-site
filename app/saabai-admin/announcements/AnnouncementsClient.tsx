@@ -1,10 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement } from "../../../lib/announce/core";
+import AnnouncementTimer, { TIMER_CSS } from "../../components/AnnouncementTimer";
+import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, TIMER_STYLES, DEFAULT_END_SHOW_HOURS, LIMITS, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement } from "../../../lib/announce/core";
 
-type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number; cBg: string; cFg: string; cCta: string; cClose: string; shadow: string; shadowColor: string };
-const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: DEFAULT_CUSTOM.bg, cFg: DEFAULT_CUSTOM.fg, cCta: DEFAULT_CUSTOM.cta, cClose: DEFAULT_CUSTOM.close, shadow: "none", shadowColor: "" };
+type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number; cBg: string; cFg: string; cCta: string; cClose: string; shadow: string; shadowColor: string; tOn: boolean; tEnd: string; tStyle: string; tMode: string; tMsg: string; tLinkText: string; tLinkUrl: string; tAuto: boolean; tHours: number };
+const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: DEFAULT_CUSTOM.bg, cFg: DEFAULT_CUSTOM.fg, cCta: DEFAULT_CUSTOM.cta, cClose: DEFAULT_CUSTOM.close, shadow: "none", shadowColor: "", tOn: false, tEnd: "", tStyle: "boxed", tMode: "hide", tMsg: "", tLinkText: "", tLinkUrl: "", tAuto: false, tHours: DEFAULT_END_SHOW_HOURS };
 
 // Admin enters Australia/Brisbane (UTC+10, no DST); stored as UTC ISO.
 const toUtc = (local: string) => (local ? new Date(local + ":00+10:00").toISOString() : "");
@@ -19,6 +20,9 @@ export default function AnnouncementsClient() {
   const [msg, setMsg] = useState<string>("");
   const [goal, setGoal] = useState<string>("call_click");
   const [view, setView] = useState<"desktop" | "mobile">("desktop");
+  const [endPrev, setEndPrev] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => { const id = window.setInterval(() => setNowMs(Date.now()), 30_000); return () => clearInterval(id); }, []);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/admin/announcements");
@@ -36,11 +40,16 @@ export default function AnnouncementsClient() {
   async function save() {
     if (f.shadowColor && !normHex(f.shadowColor)) { setMsg("Shadow colour must be a hex value like #000000."); return; }
     if (blocked) { setMsg("Fix the colours first: some contrast is below 3:1 so it can't be read."); return; }
-    const data = { ...f, ...(f.theme === "custom" ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}), startsAt: toUtc(f.startsAt), endsAt: toUtc(f.endsAt), include: lines(f.include), exclude: lines(f.exclude) };
+    if (f.tOn) {
+      if (!f.tEnd) { setMsg("Pick the timer end date and time (Brisbane)."); return; }
+      if (f.status === "live" && Date.parse(toUtc(f.tEnd)) <= Date.now()) { setMsg("The timer end is in the past. Pick a future date and time before setting it Live."); return; }
+    }
+    const timer = f.tOn ? { style: f.tStyle, endAt: toUtc(f.tEnd), endMode: f.tMode, ...(f.tMode === "message" ? { endMessage: f.tMsg, endLinkText: f.tLinkText, endLinkUrl: f.tLinkUrl, autoEnd: f.tAuto, endShowHours: f.tHours } : {}) } : null;
+    const data = { ...f, timer, ...(f.theme === "custom" ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}), startsAt: toUtc(f.startsAt), endsAt: toUtc(f.endsAt), include: lines(f.include), exclude: lines(f.exclude) };
     if (await post({ action: "save", id: editing ?? undefined, data })) { setF(blank); setEditing(null); }
   }
-  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, cBg: a.colors?.bg ?? DEFAULT_CUSTOM.bg, cFg: a.colors?.fg ?? DEFAULT_CUSTOM.fg, cCta: a.colors?.cta ?? DEFAULT_CUSTOM.cta, cClose: a.colors?.close ?? DEFAULT_CUSTOM.close, shadow: a.shadow ?? "none", shadowColor: a.shadowColor ?? "" }); window.scrollTo({ top: 0 }); };
-  const set = (k: keyof Form, v: string | number) => setF((p) => ({ ...p, [k]: v }));
+  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, cBg: a.colors?.bg ?? DEFAULT_CUSTOM.bg, cFg: a.colors?.fg ?? DEFAULT_CUSTOM.fg, cCta: a.colors?.cta ?? DEFAULT_CUSTOM.cta, cClose: a.colors?.close ?? DEFAULT_CUSTOM.close, shadow: a.shadow ?? "none", shadowColor: a.shadowColor ?? "", tOn: !!a.timer, tEnd: toBrisbane(a.timer?.endAt), tStyle: a.timer?.style ?? "boxed", tMode: a.timer?.endMode ?? "hide", tMsg: a.timer?.endMessage ?? "", tLinkText: a.timer?.endLinkText ?? "", tLinkUrl: a.timer?.endLinkUrl ?? "", tAuto: !!a.timer?.autoEnd, tHours: a.timer?.endShowHours ?? DEFAULT_END_SHOW_HOURS }); setEndPrev(false); window.scrollTo({ top: 0 }); };
+  const set = (k: keyof Form, v: string | number | boolean) => setF((p) => ({ ...p, [k]: v }));
   const custom = f.theme === "custom";
   const hexOk = [f.cBg, f.cFg, f.cCta, f.cClose].every((h) => normHex(h));
   const th = resolveTheme(f.theme, custom && hexOk ? { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } : undefined);
@@ -83,6 +92,24 @@ export default function AnnouncementsClient() {
           <label style={lab}>Device<select style={inp} value={f.device} onChange={(e) => set("device", e.target.value)}>{DEVICES.map((d) => <option key={d}>{d}</option>)}</select></label>
           <label style={lab}>Starts (Brisbane time)<input style={inp} type="datetime-local" value={f.startsAt} onChange={(e) => set("startsAt", e.target.value)} /></label>
           <label style={lab}>Ends (Brisbane time)<input style={inp} type="datetime-local" value={f.endsAt} onChange={(e) => set("endsAt", e.target.value)} /></label>
+          <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #3b3a6b", paddingTop: 12 }}>
+            <label style={{ ...lab, marginBottom: 4 }}><input data-testid="timer-on" type="checkbox" checked={f.tOn} onChange={(e) => set("tOn", e.target.checked)} /> Countdown timer (fixed deadline)</label>
+            <div style={{ fontSize: 12, color: "#8d9cc4" }}>Everyone sees the same real deadline. Per-visitor or restarting timers are not offered (misleading offers can breach Australian consumer law).</div>
+          </div>
+          {f.tOn && (<>
+            <label style={lab}>Timer ends (Brisbane time, stored as UTC)<input data-testid="timer-end" style={inp} type="datetime-local" value={f.tEnd} onChange={(e) => set("tEnd", e.target.value)} /></label>
+            <label style={lab}>Timer style<select data-testid="timer-style" style={inp} value={f.tStyle} onChange={(e) => set("tStyle", e.target.value)}>{TIMER_STYLES.map((x) => <option key={x} value={x}>{x === "text" ? "Plain text line" : x === "boxed" ? "Boxed digits" : x === "flip" ? "Flip clock" : "Compact pill"}</option>)}</select></label>
+            <label style={{ ...lab, gridColumn: "1 / -1" }}>When the timer ends
+              <select data-testid="timer-mode" style={inp} value={f.tMode} onChange={(e) => set("tMode", e.target.value)}><option value="hide">Hide the bar</option><option value="message">Swap to an end message</option></select>
+            </label>
+            {f.tMode === "message" && (<>
+              <label style={{ ...lab, gridColumn: "1 / -1" }}>End message (max {f.layout === "card" ? LIMITS.cardBody : LIMITS.message})<input data-testid="timer-msg" style={inp} maxLength={f.layout === "card" ? LIMITS.cardBody : LIMITS.message} value={f.tMsg} onChange={(e) => set("tMsg", e.target.value)} /></label>
+              <label style={lab}>End button text (blank = no button)<input data-testid="timer-link-text" style={inp} maxLength={40} value={f.tLinkText} onChange={(e) => set("tLinkText", e.target.value)} /></label>
+              <label style={lab}>End button URL<input data-testid="timer-link-url" style={inp} value={f.tLinkUrl} onChange={(e) => set("tLinkUrl", e.target.value)} /></label>
+              <label style={{ ...lab, gridColumn: "1 / -1" }}><input data-testid="timer-auto" type="checkbox" checked={f.tAuto} onChange={(e) => set("tAuto", e.target.checked)} /> Auto-end the announcement after the end message has shown for{" "}
+                <input style={{ ...inp, width: 80, display: "inline-block", marginTop: 0 }} type="number" min={1} max={720} value={f.tHours} disabled={!f.tAuto} onChange={(e) => set("tHours", Number(e.target.value))} /> hours</label>
+            </>)}
+          </>)}
           <label style={lab}>Only on these pages (one per line, * wildcard; blank = all)<textarea style={inp} rows={3} value={f.include} onChange={(e) => set("include", e.target.value)} /></label>
           <label style={lab}>Never on these pages (checkout, admin, privacy, terms, unsubscribe are always excluded)<textarea style={inp} rows={3} value={f.exclude} onChange={(e) => set("exclude", e.target.value)} /></label>
           <label style={lab}>Re-show<select style={inp} value={f.reshow} onChange={(e) => set("reshow", e.target.value)}>{RESHOW.map((d) => <option key={d} value={d}>{d === "days" ? "After N days" : d === "never" ? "Never again for this version" : "Every new session"}</option>)}</select></label>
@@ -123,12 +150,28 @@ export default function AnnouncementsClient() {
           Preview:{" "}
           <button type="button" aria-pressed={view === "desktop"} onClick={() => setView("desktop")}>Desktop 1440</button>{" "}
           <button type="button" aria-pressed={view === "mobile"} onClick={() => setView("mobile")}>Mobile 390</button>
+          {f.tOn && <>{" "}<button type="button" data-testid="end-toggle" aria-pressed={endPrev} onClick={() => setEndPrev((v) => !v)}>{endPrev ? "Showing: end state" : "Showing: counting down"}</button></>}
         </div>
-        <div data-testid="ann-preview" data-view={view} style={{ width: view === "mobile" ? 390 : "100%", maxWidth: "100%", margin: "0 0 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: view === "mobile" ? 8 : 16, flexWrap: view === "mobile" ? "wrap" : "nowrap", padding: view === "mobile" ? "6px 4px 6px 16px" : "6px 8px 6px 32px", minHeight: 56, borderRadius: f.layout === "card" ? 16 : 0, background: th.bg, color: th.fg, border: `1px solid ${th.border}`, fontSize: view === "mobile" ? 14 : 15, boxShadow: shadowCss(f.layout, f.shadow, normHex(f.shadowColor) ?? undefined) }}>
-          <span>{f.title ? <b>{f.title}. </b> : null}{f.message || "Your message"}</span>
-          {f.linkText && <span style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: 8, fontWeight: 600, background: th.cta, color: th.ctaFg }}>{f.linkText}</span>}
-          <span aria-hidden="true" style={{ width: 44, height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: th.close }}>×</span>
-        </div>
+        <style>{TIMER_CSS}</style>
+        {(() => {
+          const endMs = f.tEnd ? Date.parse(toUtc(f.tEnd)) : NaN;
+          const sample = (2 * 86400 + 4 * 3600 + 15 * 60 + 9) * 1000;
+          const live = Number.isFinite(endMs) && endMs > nowMs;
+          const hideEnd = f.tOn && endPrev && f.tMode === "hide";
+          const swap = f.tOn && endPrev && f.tMode === "message";
+          const text = swap ? (f.tMsg || "Your end message") : (f.message || "Your message");
+          const lt = swap ? f.tLinkText : f.linkText;
+          return (
+            <div data-testid="ann-preview" data-view={view} data-state={f.tOn && endPrev ? "ended" : "running"} style={{ width: view === "mobile" ? 390 : "100%", maxWidth: "100%", margin: "0 0 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: view === "mobile" ? 8 : 16, flexWrap: view === "mobile" || f.tOn ? "wrap" : "nowrap", padding: view === "mobile" ? "6px 4px 6px 16px" : "6px 8px 6px 32px", minHeight: 56, borderRadius: f.layout === "card" ? 16 : 0, background: hideEnd ? "transparent" : th.bg, color: th.fg, border: hideEnd ? "1px dashed #3b3a6b" : `1px solid ${th.border}`, fontSize: view === "mobile" ? 14 : 15, boxShadow: hideEnd ? "none" : shadowCss(f.layout, f.shadow, normHex(f.shadowColor) ?? undefined) }}>
+              {hideEnd ? <span style={{ color: "#a5b4fc" }}>The bar disappears when the timer ends.</span> : (<>
+                <span>{!swap && f.title ? <b>{f.title}. </b> : null}{text}</span>
+                {f.tOn && !endPrev && <AnnouncementTimer endAt={live ? new Date(endMs).toISOString() : new Date(nowMs + sample).toISOString()} offset={0} style={f.tStyle as never} colors={th} fixedMs={live ? undefined : sample} />}
+                {lt && <span style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: 8, fontWeight: 600, background: th.cta, color: th.ctaFg }}>{lt}</span>}
+                <span aria-hidden="true" style={{ width: 44, height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: th.close }}>×</span>
+              </>)}
+            </div>
+          );
+        })()}
         <button onClick={save} disabled={blocked}>{editing ? "Save changes" : "Create"}</button>{editing && <button style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
         {msg && <p role="status" style={{ marginTop: 8 }}>{msg}</p>}
       </div>
@@ -139,6 +182,7 @@ export default function AnnouncementsClient() {
         <div key={a.id} style={box}>
           <strong>{a.name}</strong> <span style={{ color: "#8d9cc4" }}>({a.id}, {a.layout}, v{a.version}) status: {a.status}</span>
           <p style={{ margin: "8px 0" }}>{a.message}</p>
+          {a.timer && <p style={{ margin: "4px 0", fontSize: 13, color: "#a5b4fc" }}>Timer ({a.timer.style}) ends {toBrisbane(a.timer.endAt).replace("T", " ")} Brisbane. At the end: {a.timer.endMode === "hide" ? "hide the bar" : `show "${a.timer.endMessage}"${a.timer.autoEnd ? `, then auto-end after ${a.timer.endShowHours}h` : ""}`}.</p>}
           <button onClick={() => edit(a)}>Edit</button>{" "}
           {a.status !== "live" && a.status !== "scheduled" && <button onClick={() => { if (confirm("Delete this announcement?")) void post({ action: "delete", id: a.id }); }}>Delete</button>}
           <div style={{ marginTop: 12, fontSize: 13 }}>

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { EXP_COOKIE, EXP_MAX_AGE, EXP_OFF_COOKIE, assign, parseExpCookie, privacySignal, siteKeyForHost, defaultVariant, type Variant } from "@/lib/exp/core";
 import { getExperiments } from "@/lib/exp/config";
-import { isShadow, normHex, isEmptyValue, isThemeKey, normColors, testIdFor, toPublic, type Announcement, type PublicAnnouncement } from "@/lib/announce/core";
+import { isShadow, normHex, isEmptyValue, isThemeKey, normColors, testIdFor, toPublic, timerFromValue, timerOver, type Announcement, type PublicAnnouncement } from "@/lib/announce/core";
 import { liveAnnouncement } from "@/lib/announce/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Timers need the server clock and the current deadline state on every load, so they are never cached by the CDN. */
+const CACHE_TIMER = "private, no-store";
+const cacheFor = (a: Announcement | null | undefined, cdn: string) => (a?.timer ? CACHE_TIMER : cdn);
 const none = (cache = true) => NextResponse.json({ announcement: null }, { headers: { "Cache-Control": cache ? "public, s-maxage=30, stale-while-revalidate=60" : "no-store" } });
 
 function fromVariant(a: Announcement, v: Variant): Announcement | null {
@@ -18,6 +21,9 @@ function fromVariant(a: Announcement, v: Variant): Announcement | null {
   o.shadow = isShadow(x.shadow) ? x.shadow : a.shadow;
   const sc = normHex(x.shadowColor); if (sc) o.shadowColor = sc; else if (!x.shadowColor) { /* inherit */ } else delete o.shadowColor;
   if (x.title) o.title = x.title; else delete o.title;
+  const tm = timerFromValue(x, a.timer, o.layout);
+  if (tm) o.timer = tm; else delete o.timer;
+  if (timerOver(o.timer, Date.now())) return null;
   return o;
 }
 
@@ -33,10 +39,10 @@ export async function GET(req: Request) {
     const a = await liveAnnouncement(site);
     if (!a) return none();
     const exp = (await getExperiments(site)).find((e) => e.id === (a.testId ?? testIdFor(a.id)));
-    if (!exp || exp.slotType !== "announcement" || exp.status === "draft" || exp.status === "paused") return NextResponse.json({ announcement: toPublic(a) }, { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } });
+    if (!exp || exp.slotType !== "announcement" || exp.status === "draft" || exp.status === "paused") return NextResponse.json({ announcement: toPublic(a) }, { headers: { "Cache-Control": cacheFor(a, "public, s-maxage=30, stale-while-revalidate=60") } });
     if (exp.status === "won") {
       const shown = fromVariant(a, defaultVariant(exp));
-      return NextResponse.json({ announcement: shown ? toPublic(shown) : null }, { headers: { "Cache-Control": "public, s-maxage=30" } });
+      return NextResponse.json({ announcement: shown ? toPublic(shown) : null }, { headers: { "Cache-Control": cacheFor(shown ?? a, "public, s-maxage=30") } });
     }
     // Running test: sticky per-visitor assignment through the existing engine (bots, GPC and DNT get the control, untracked).
     const jar = Object.fromEntries((req.headers.get("cookie") ?? "").split(/;\s*/).map((p) => { const i = p.indexOf("="); return [p.slice(0, i), p.slice(i + 1)]; }));
