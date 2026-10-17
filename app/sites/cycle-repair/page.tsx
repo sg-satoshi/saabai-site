@@ -498,7 +498,7 @@ export default function Index() {
               className="text-[11px] tracking-[0.08em] text-muted-foreground/80 hover:text-brand transition-colors py-2"
             />
           </div>
-          <div className="flex gap-8 text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
             <a href="#services" className="hover:text-brand transition-colors">Services</a>
             <a href="#about" className="hover:text-brand transition-colors">About</a>
             <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
