@@ -7,6 +7,7 @@ import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import ExpOverlay from "./components/exp/ExpOverlay";
+import AnnouncementBar from "./components/AnnouncementBar";
 import { ANTI_FLICKER_SCRIPT } from "@/lib/exp/overlay";
 
 const geistSans = Geist({
@@ -117,6 +118,7 @@ export default function RootLayout({
         <EmailCapturePopup />
         <GoogleAnalytics />
         <ExpOverlay />
+        <AnnouncementBar />
       </body>
     </html>
   );

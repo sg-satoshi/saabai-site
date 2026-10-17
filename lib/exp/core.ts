@@ -14,7 +14,7 @@ export const EXP_TRACK_HEADER = "x-sb-track";
  * those types carries its settings in `value` (for example { src, alt } or { font, colour }) and the slot
  * component that consumes it validates the keys. Adding a type means a renderer plus a validator here.
  */
-export const SLOT_TYPES = ["text", "image", "style"] as const;
+export const SLOT_TYPES = ["text", "image", "style", "announcement"] as const;
 export type SlotType = (typeof SLOT_TYPES)[number];
 export const RENDERABLE_SLOT_TYPES: SlotType[] = ["text"];
 
