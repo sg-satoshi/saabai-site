@@ -63,27 +63,27 @@ function drawRound(page: PDFPage, x: number, top: number, w: number, h: number, 
 export const AREA_COPY: Record<string, { cause: string; fixes: string[] }> = {
   customers: {
     cause: "Enquiries arrive by phone, text, forms and socials, and replies wait until someone is free. Slow or missed follow up quietly costs jobs.",
-    fixes: ["Send calls, texts and forms to one inbox or phone alert", "Auto reply to website enquiries with your booking link"],
+    fixes: ["Send website and chatbot enquiries to one inbox or alert", "Auto reply to website enquiries with your booking link"],
   },
   admin: {
     cause: "The same emails, quotes and invoice chases get typed out by hand, one at a time, usually after hours.",
-    fixes: ["Turn your top 5 repeat emails into templates, with AI drafting the first version", "Let your accounting software chase overdue invoices"],
+    fixes: ["Turn your top 5 repeat emails into templates, with AI drafting the first version", "Turn on invoice reminders in your accounting software"],
   },
   tools: {
     cause: "Booking, CRM and accounting tools do not talk to each other, so the same details are re-typed and checked by hand.",
-    fixes: ["Link booking, CRM and accounting so data is typed in once", "Make the website capture leads and alert you instantly"],
+    fixes: ["Link booking, CRM and accounting so data is typed in once (quoted separately)", "Make the website capture leads and alert you instantly"],
   },
   team: {
     cause: "Changes stall when nobody owns them, the first step feels big, or nobody checks whether the change actually saved time.",
-    fixes: ["Pick one quick win and measure it", "Give the team an AI assistant for drafting emails, notes and quotes"],
+    fixes: ["Pick one quick win and measure it", "Give the team an AI assistant for emails, notes and quotes (basic training included)"],
   },
 };
 
 export const STEPS: { name: string; body: string }[] = [
   { name: "Audit", body: "Fact-find, your website and your tools, in the Blueprint." },
-  { name: "Prioritise", body: "Opportunities ranked by hours and dollars saved." },
-  { name: "Build", body: "Fix the biggest leak first, then the next." },
-  { name: "Measure", body: "Check the numbers, then go again." },
+  { name: "Prioritise", body: "Opportunities ranked by estimated time and cost saved." },
+  { name: "Build", body: "Fix the biggest leak first. Sites take 2 to 3 weeks." },
+  { name: "Check", body: "Review results together, then go again." },
 ];
 
 /** Parses the quiz's "X to Y hours a week" range. */
@@ -173,7 +173,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
   const hl = name ? `${pdfSafe(name.split(/\s+/)[0] || "").slice(0, 30)}, ${r.headline.charAt(0).toLowerCase()}${r.headline.slice(1)}` : r.headline;
   for (const l of wrap(hl, bold, 20, tw)) { page.drawText(l, { x: tx, y: Y(ty), size: 20, font: bold, color: WHITE }); ty += 24; }
   ty += 4;
-  const sum = `${r.summary} We estimate ${r.hours} could be automated.`;
+  const sum = `${r.summary} A rough estimate is that you could free up ${r.hours}, not a guarantee.`;
   for (const l of wrap(sum, reg, 10.5, tw)) { page.drawText(l, { x: tx, y: Y(ty), size: 10.5, font: reg, color: MUTED }); ty += 15; }
 
   // Breakdown
@@ -214,7 +214,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
   page.drawText(pdfSafe(`${rec.name} Blueprint - ${rec.priceLabel} AUD`), { x: M + 22, y: Y(pTop + 54), size: 19, font: bold, color: WHITE });
   const blurb =
     rec.id === "starter"
-      ? "A fast, practical plan with your top opportunities ranked by hours and dollars saved. No call needed."
+      ? "A fast, practical plan with your top opportunities ranked by estimated time and cost saved. No call needed."
       : rec.id === "pro"
         ? "Your score suggests several automation opportunities. Pro adds Shane's review and a 30 minute call to prioritise them."
         : "With several teams, Business adds discovery sessions and a phased 12 month roadmap.";
@@ -256,7 +256,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
   let q = 124;
   for (const l of wrap(`Where your ${Lh} to ${Hh} hours a week could come from`, bold, 19, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(q), size: 19, font: bold, color: WHITE }); q += 23; }
   q += 2;
-  for (const l of wrap("An estimate of your quiz hours, split across the four areas by how much room each has. The biggest gap comes first.", reg, 9.5, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(q), size: 9.5, font: reg, color: MUTED }); q += 13; }
+  for (const l of wrap("An illustrative split of your estimate, by how much room each area has. The biggest gap comes first.", reg, 9.5, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(q), size: 9.5, font: reg, color: MUTED }); q += 13; }
   q += 4;
 
   const areas = areaHours(r).sort((a, b) => b.share - a.share);
@@ -298,7 +298,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
     stepLines[i].forEach((l, k) => p2.drawText(l, { x: x + 10, y: Y2(q + 34 + k * 10.5), size: 8, font: reg, color: LIGHT }));
   });
   q += sh + 10;
-  const tools = "What we use: the Blueprint (fact-find, website and tools analysis, ranked opportunities), a website with an AI enquiry chatbot that captures and qualifies leads, and automations such as instant replies, review requests and invoice reminders, scoped in your Blueprint.";
+  const tools = "Every Saabai website build is AI-ready and SEO-ready, with a reviews carousel, AI chatbot and a basic training session. Automations are quoted separately. For review requests or call and text capture, use outside tools.";
   for (const l of wrap(tools, reg, 8.5, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(q + 8), size: 8.5, font: reg, color: MUTED }); q += 11.5; }
   q += 4;
 
@@ -321,7 +321,7 @@ export async function buildScorePdfDetailed({ result: r, name, scan, now = new D
   const page2Bottom = q;
 
   p2.drawLine({ start: { x: M, y: Y2(H - 74) }, end: { x: W - M, y: Y2(H - 74) }, thickness: 0.6, color: TRACK });
-  const foot2 = "Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable. Estimates, not guarantees: hours are derived from your quiz answers and will vary by business. Your answers are private and used only to calculate your score.";
+  const foot2 = "Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable. Estimates, not guarantees: any hours or savings are derived from your quiz answers and will vary by business. Your answers are private and used only to calculate your score.";
   let f2 = H - 60;
   for (const l of wrap(foot2, reg, 8, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(f2), size: 8, font: reg, color: MUTED }); f2 += 11; }
 

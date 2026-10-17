@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { list, put, del } from "@vercel/blob";
 import { Redis } from "@upstash/redis";
 import { snapshotVersion } from "../../../../lib/site-versions";
+import { robotsTxt } from "../../../../lib/geo";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,8 @@ function buildSitemap(baseUrl: string, lastmod: string): string {
 }
 
 function buildRobots(sitemapUrl: string): string {
-  return `User-agent: *\nAllow: /\n\nSitemap: ${sitemapUrl}\n`;
+  // Explicitly welcome AI crawlers (AI-ready by default) as well as search engines.
+  return robotsTxt({ sitemapUrl });
 }
 
 function escapeRe(s: string) {

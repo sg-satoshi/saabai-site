@@ -3,9 +3,9 @@ import type { OfferId } from "./types";
 export type FixCopy = { meaning: string; fix: string; time: string; mins: number; dev: boolean; offer: OfferId };
 
 export const OFFERS: Record<OfferId, { name: string; line: string; href: string }> = {
-  build: { name: "Saabai website build", line: "A fast, AI-ready website with an AI enquiry chatbot included. Presence $2,000 + $100/mo, Growth $4,000 + $200/mo, Signature $6,500 + $300/mo (AUD, GST not applicable).", href: "/websites" },
-  chatbot: { name: "AI enquiry chatbot", line: "Catches and qualifies leads after hours. Included in every Saabai website tier.", href: "/websites" },
-  reviews: { name: "Reviews carousel", line: "Shows your real customer reviews on your website.", href: "/websites" },
+  build: { name: "Saabai website build", line: "A fast, AI-ready and SEO-ready website with an AI enquiry chatbot and Google reviews carousel included. Every build starts with AI information gathering and a basic training session. Typically 2 to 3 weeks. Fixing your current site instead is quoted separately. Presence $2,000 + $100/mo, Growth $4,000 + $200/mo, Signature $6,500 + $300/mo (AUD, GST not applicable).", href: "/websites" },
+  chatbot: { name: "AI enquiry chatbot", line: "Answers questions and catches leads after hours. Included in every Saabai website tier (booking and qualifying on Growth and above).", href: "/websites" },
+  reviews: { name: "Google reviews on your site", line: "A reviews carousel showing your real Google reviews. Included in every Saabai website plan.", href: "/websites" },
   blueprint: { name: "AI Blueprint", line: "A ranked plan for your whole business. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.", href: "/blueprint" },
 };
 
@@ -13,7 +13,7 @@ export const NO_SITE_FIX = {
   id: "no_website", label: "Website not present or detected",
   meaning: "Customers who search for you, or ask Google and ChatGPT for a business like yours, find nothing to read or trust. That is the biggest gap a business can have.",
   fix: "Get a fast, professional website with your services, area, phone and reviews, set up so Google and AI tools can read it.",
-  time: "About 2 weeks with Saabai", offer: "build" as OfferId,
+  time: "Typically 2 to 3 weeks with Saabai", offer: "build" as OfferId,
 };
 
 export const FIX_COPY: Record<string, FixCopy> = {
@@ -34,6 +34,6 @@ export const FIX_COPY: Record<string, FixCopy> = {
   nap: { meaning: "Google checks that your name, address and phone match everywhere. Gaps or mismatches hurt local results.", fix: "Show your name, address and phone in the footer and on a contact page, matching your Google profile.", time: "30 minutes", mins: 30, dev: false, offer: "build" },
   local_signals: { meaning: "Local signals tell Google which area you serve.", fix: "Name your suburbs, add a map and a tap-to-call phone link.", time: "1 to 2 hours", mins: 90, dev: false, offer: "build" },
   reviews_site: { meaning: "Visitors cannot see that real customers rate you.", fix: "Show your best Google reviews with star ratings on the homepage.", time: "1 to 2 hours", mins: 90, dev: false, offer: "reviews" },
-  gbp: { meaning: "Your Google Business Profile is how most local customers first find you. A strong rating, plenty of reviews and recent activity win the click.", fix: "Link your profile from your site, ask recent customers for reviews and post an update monthly.", time: "1 to 2 hours", mins: 90, dev: false, offer: "reviews" },
+  gbp: { meaning: "Your Google Business Profile is how most local customers first find you. A strong rating, plenty of reviews and recent activity win the click.", fix: "Link your profile from your site, ask recent customers for reviews (a tool like Podium, Birdeye or Hatch can automate it) and post an update monthly. This is owner advice, not a Saabai service.", time: "1 to 2 hours", mins: 90, dev: false, offer: "blueprint" },
   social_links: { meaning: "Linked social profiles prove you are a real, active business.", fix: "Link your active profiles from the footer.", time: "5 minutes", mins: 5, dev: false, offer: "build" },
 };

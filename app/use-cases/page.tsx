@@ -47,11 +47,11 @@ const useCases = [
       "Appointment businesses run on bookings, and the phone rings while you're with a client. Automation answers, books and reminds so your chair or room stays full.",
     examples: [
       "AI agent that answers FAQs and takes booking requests 24/7",
-      "Appointment reminders that cut no-shows",
-      "Post-visit review requests that build your Google rating",
-      "Rebooking nudges for clients who haven't been back",
+      "Appointment reminders that cut no-shows (quoted separately, or use your booking system's built-in reminders)",
+      "Post-visit review requests that build your Google rating (best done with an outside tool such as Podium, Birdeye or Hatch; we advise in your Blueprint)",
+      "Rebooking nudges for clients who haven't been back (quoted separately)",
     ],
-    outcome: "Fewer missed calls, fewer no-shows, more five-star reviews.",
+    outcome: "Fewer missed calls and no-shows, and a plan for building more five-star reviews.",
   },
 
   {
