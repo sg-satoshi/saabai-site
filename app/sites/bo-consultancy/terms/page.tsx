@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://www.boconsulting.com.au/terms" },
 };
 
+import { BOLogo } from "../BOLogo";
+
 export default function TermsOfService() {
   const NAVY = "#123B5D";
   const ORANGE = "#F58220";
@@ -17,9 +19,7 @@ export default function TermsOfService() {
       {/* Nav */}
       <nav style={{ background: NAVY, padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <a href="/" style={{ textDecoration: "none" }}>
-          <div style={{ background: "#fff", borderRadius: 6, padding: "4px 10px", display: "inline-block" }}>
-            <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 32, width: "auto", display: "block" }} />
-          </div>
+          <BOLogo />
         </a>
         <a href="/" style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, textDecoration: "none" }}>← Back to Home</a>
       </nav>
