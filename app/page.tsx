@@ -79,9 +79,7 @@ export default function Home() {
           <div className="grid2">
             <a className="site" href="https://stuscyclerepairs.com" target="_blank" rel="noopener noreferrer">
               <div className="bar"><i /><i /><i /></div>
-              <div className="shot" style={{ backgroundImage: "linear-gradient(0deg,rgba(11,9,46,.85),rgba(11,9,46,.1)),url(/sites/cycle-repair/mechanic.jpg)" }}>
-                <img src="/sites/cycle-repair/stus-logo-v2.png" alt="Stu's Cycle Repairs logo" style={{ position: "absolute", left: 20, bottom: 18, height: 46, width: "auto" }} />
-              </div>
+              <div className="shot" role="img" aria-label="Stu's Cycle Repairs website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
               <div className="meta">
                 <h3>Stu&apos;s Cycle Repairs</h3>
                 <p style={{ fontSize: 15 }}>Bookings site with online enquiries, Google reviews and instant lead alerts to Stu&apos;s phone.</p>
@@ -97,6 +95,14 @@ export default function Home() {
               <div className="meta">
                 <h3>Wholesale Homes Australia</h3>
                 <p style={{ fontSize: 15 }}>Home design catalogue with floor plans, enquiry flow and an AI assistant that answers buyer questions.</p>
+              </div>
+            </a>
+            <a className="site" href="https://www.lifestylemoneymanagement.com.au" target="_blank" rel="noopener noreferrer">
+              <div className="bar"><i /><i /><i /></div>
+              <div className="shot" role="img" aria-label="Lifestyle Money Management website homepage with a golden-hour family home and 5.0 Google reviews badge" style={{ backgroundImage: "url(/sites/lmm-hero-thumb.webp)", backgroundPosition: "top center" }} />
+              <div className="meta">
+                <h3>Lifestyle Money Management</h3>
+                <p style={{ fontSize: 15 }}>Mortgage broking and lending advice for SA and QLD, with a strategy call booking flow and Google reviews on show.</p>
               </div>
             </a>
           </div>
