@@ -62,10 +62,10 @@
 @media (max-width:760px){
  .sb .arrowgap{height:96px}.sb .arrow-d{display:none}.sb .arrow-m{display:block}.sb .arrow-wrap{left:36%}
  .sb .pdfbox{grid-template-columns:1fr;gap:22px;padding:28px 22px}
- .sb .pdfbox h2{font-size:34px;max-width:64%}.sb .pdfbox-tag{max-width:58%;line-height:1.4;margin-bottom:12px}
+ .sb .pdfbox h2{font-size:34px;max-width:62%}.sb .pdfbox-tag{max-width:58%;line-height:1.4;margin-bottom:12px}
  .sb .pdfbox p.pdfbox-ben{font-size:16px}
  .sb .pdfbox-form{padding-top:0;position:static}
- .sb .pdfthumb{position:absolute;right:16px;top:-26px;width:96px;height:136px;padding:8px}
+ .sb .pdfthumb{position:absolute;right:16px;top:16px;width:96px;height:136px;padding:8px}
  .sb .pdfbox{position:relative}
  .sb .pdfbox-btn{height:64px;font-size:18px}
  .sb .pdfbox input[type=email]{font-size:16px;height:60px}
