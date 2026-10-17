@@ -20,6 +20,8 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/insights", updated: "2026-10-14", priority: 0.8, changeFrequency: "weekly" },
   { path: "/legal", updated: "2026-05-15", priority: 0.7, changeFrequency: "monthly" },
   { path: "/about", updated: "2026-10-14", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/contact", updated: "2026-10-17", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/terms", updated: "2026-10-17", priority: 0.3, changeFrequency: "yearly" },
   { path: "/privacy", updated: "2026-10-14", priority: 0.3, changeFrequency: "yearly" },
   { path: "/ai-news", updated: "2026-05-15", priority: 0.5, changeFrequency: "daily" },
 ];

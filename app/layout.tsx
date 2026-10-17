@@ -34,14 +34,12 @@ export const metadata: Metadata = {
     template: "%s | Saabai",
   },
   description:
-    "Gold Coast based Saabai builds, hosts and manages small business websites on care plans from $100/month, and the Saabai Blueprint AI audit (from $497) shows exactly where AI saves you hours and dollars.",
+    "Saabai builds, hosts and manages small business websites on care plans from $100/month, and the Saabai Blueprint AI audit (from $497) shows exactly where AI saves you hours and dollars.",
   keywords: [
-    "website care plan Gold Coast",
-    "small business website hosting and management",
-    "AI audit small business Australia",
+    "Saabai",
     "Saabai Blueprint",
+    "website care plan",
     "AI readiness score",
-    "AI consultant Gold Coast",
   ],
   authors: [{ name: "Shane Goldberg", url: BASE_URL }],
   creator: "Saabai",
@@ -68,7 +66,7 @@ export const metadata: Metadata = {
     siteName: "Saabai",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast based, working Australia wide.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Working Australia wide.",
     images: [
       {
         url: "/og-image.png",
@@ -82,7 +80,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast based, working Australia wide.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Working Australia wide.",
     images: ["/og-image.png"],
   },
   alternates: {

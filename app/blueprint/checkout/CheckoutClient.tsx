@@ -6,7 +6,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe
 import SbNav from "../../components/sb/SbNav";
 import "../../components/sb/checkout.css";
 import { gaEvent } from "@/lib/ga";
-import { TIERS, TIER_ORDER, aud, gstOf, type BlueprintTier } from "@/lib/blueprint";
+import { TIERS, TIER_ORDER, aud, type BlueprintTier } from "@/lib/blueprint";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const PUBLISHABLE = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
@@ -93,7 +93,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
             </div>
             <h2 style={{ marginTop: 14, fontSize: 34 }}>Get your Saabai Blueprint</h2>
             <p className="dim" style={{ marginTop: 10, fontSize: 15, maxWidth: 560 }}>
-              Pay on this page by card, Apple Pay or Google Pay. Your tax invoice is emailed the moment payment clears.
+              Pay on this page by card, Apple Pay or Google Pay. Your invoice is emailed the moment payment clears.
             </p>
 
             <div className="card" style={{ marginTop: 24 }}>
@@ -155,7 +155,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               <ul className="trust">
                 <li>Encrypted by Stripe</li>
                 <li>Card, Apple Pay, Google Pay</li>
-                <li>Tax invoice emailed instantly</li>
+                <li>Invoice emailed instantly</li>
               </ul>
               {error && (
                 <div className="err" role="alert">
@@ -179,8 +179,8 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               <b>{aud(t.price, true)}</b>
             </div>
             <div className="li">
-              <span>Includes GST</span>
-              <b>{aud(gstOf(t.price), true)}</b>
+              <span>GST</span>
+              <b>Not applicable</b>
             </div>
             <div className="li">
               <span>Delivery</span>
