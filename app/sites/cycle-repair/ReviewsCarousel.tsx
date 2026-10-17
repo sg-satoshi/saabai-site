@@ -50,7 +50,7 @@ export function ReviewsCarousel() {
   }, [paused, scroll]);
 
   return (
-    <section aria-labelledby="reviews-heading" className="py-16 bg-white text-[#202124]">
+    <section id="reviews" aria-labelledby="reviews-heading" className="scroll-mt-24 py-16 bg-white text-[#202124]">
       <style>{`.stu-review-card{flex:0 0 100%}@media(min-width:768px){.stu-review-card{flex-basis:calc(50% - 12px)}}@media(min-width:1024px){.stu-review-card{flex-basis:calc((100% - 48px)/3)}}`}</style>
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
