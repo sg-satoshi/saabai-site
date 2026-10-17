@@ -47,7 +47,7 @@ export async function GET(
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = ensurePoweredBy(slug, await ensureFavicon(slug, readFileSync(filePath, "utf-8")));
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, readFileSync(filePath, "utf-8"))));
       return new Response(html, {
         status: 200,
         headers: {
