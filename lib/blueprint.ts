@@ -32,7 +32,7 @@ export const TIERS: Record<BlueprintTier, TierInfo> = {
     includesCall: false,
     features: [
       "Fully automated analysis of your fact-find, website and tools",
-      "Top opportunities ranked by hours and $ saved",
+      "Top opportunities ranked by estimated hours and $ saved",
       "Branded PDF plus web version in your portal",
       "Delivered within 48 hours",
       "Fact-find online, no call needed",
@@ -190,14 +190,14 @@ export interface ScoreResult {
 }
 
 const WINS: Record<string, { title: string; body: string }> = {
-  enquiries: { title: "Capture every enquiry in one place", body: "Send calls, texts and form enquiries to one inbox or phone alert so nothing slips through." },
-  reply: { title: "Auto reply to website enquiries", body: "Send an instant reply with your booking link or next steps. Saves around 2 hours a week." },
-  reviews: { title: "Review requests after each job", body: "A friendly text asking for a Google review, sent automatically when the invoice is paid." },
-  admin_hours: { title: "Batch and template your admin", body: "Turn your top 5 repeat emails into templates and let AI draft the first version." },
-  quotes: { title: "Automatic quote and invoice reminders", body: "Let your accounting software chase overdue invoices so you don't have to." },
-  tools: { title: "Connect the apps you already use", body: "Link your booking, CRM and accounting tools so data is typed in once." },
-  website: { title: "Make your website work harder", body: "A fast mobile site with a clear call to action and instant lead alerts." },
-  ai_use: { title: "Give the team an AI assistant", body: "Start with drafting emails, summarising notes and writing quotes." },
+  enquiries: { title: "Capture every enquiry in one place", body: "Send website and chatbot enquiries to one inbox or alert so nothing slips through. Included in your website build. For calls and texts, use a tool like OpenPhone or Zapier." },
+  reply: { title: "Auto reply to website enquiries", body: "Send an instant reply with your booking link or next steps. Included with your website build. Could save a couple of hours a week (estimate)." },
+  reviews: { title: "Ask every happy customer for a review", body: "A friendly message asking for a Google review after each job. Use a tool like Podium, Birdeye or Hatch to automate it. Your Google reviews can show on your Saabai website, included in every plan." },
+  admin_hours: { title: "Batch and template your admin", body: "Turn your top 5 repeat emails into templates and let AI draft the first version. Covered as advice in your Blueprint." },
+  quotes: { title: "Automatic quote and invoice reminders", body: "Turn on automatic reminders in your accounting software (Xero, MYOB or QuickBooks) so overdue invoices get chased for you. We can advise in your Blueprint." },
+  tools: { title: "Connect the apps you already use", body: "Link your booking, CRM and accounting tools so data is typed in once. Scoped in your Blueprint and quoted separately." },
+  website: { title: "Make your website work harder", body: "A fast mobile site with a clear call to action and instant lead alerts. Included in every Saabai website build, AI-ready and SEO-ready." },
+  ai_use: { title: "Give the team an AI assistant", body: "Start with drafting emails, summarising notes and writing quotes using tools like ChatGPT or Claude. We cover set-up advice and basic training in your Blueprint. Custom assistants are quoted separately." },
   appetite: { title: "Pick one quick win and measure it", body: "Small, visible results build confidence for the next step." },
 };
 

@@ -30,7 +30,9 @@ const tiers = [
       "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures every lead.",
     features: [
       "Custom site designed for your business",
-      "Fast, mobile and search ready",
+      "Fast, mobile, SEO and AI search ready out of the box",
+      "Google reviews carousel showing your real reviews",
+      "AI information gathering and a basic training session before we build",
       "Trained enquiry chatbot that answers FAQs",
       "Lead capture straight to your inbox",
       "Hosting, security and updates included",

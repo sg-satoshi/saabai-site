@@ -157,7 +157,7 @@ function Result({ answers, scan, onRestart }: { answers: Record<string, number>;
             <div>
               <span className="eyebrow">Your AI Readiness Score</span>
               <h1 style={{ fontSize: 52, marginTop: 14 }}>{r.headline.split(",")[0]},{" "}<span className="grad">{r.headline.split(",").slice(1).join(",").trim()}</span></h1>
-              <p style={{ fontSize: 18, marginTop: 16 }}>{r.summary} We estimate <b style={{ color: "#fff" }}>{r.hours}</b> could be automated.</p>
+              <p style={{ fontSize: 18, marginTop: 16 }}>{r.summary} A rough estimate is that you could free up <b style={{ color: "#fff" }}>{r.hours}</b> (not a guarantee).</p>
             </div>
           </div>
           <div className="grid2">
@@ -186,7 +186,7 @@ function Result({ answers, scan, onRestart }: { answers: Record<string, number>;
               <h2 style={{ marginTop: 14, fontSize: 32 }}>{rec.name} Blueprint · {rec.priceLabel}</h2>
               <p style={{ marginTop: 8 }}>
                 {rec.id === "starter"
-                  ? "A fast, practical plan with your top opportunities ranked by hours and dollars saved. No call needed."
+                  ? "A fast, practical plan with your top opportunities ranked by estimated time and cost saved. No call needed."
                   : rec.id === "pro"
                     ? "Your score suggests several automation opportunities. Pro adds Shane's review and a 30 minute call to prioritise them."
                     : "With several teams, Business adds discovery sessions and a phased 12 month roadmap."}{" "}
