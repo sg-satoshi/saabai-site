@@ -12,7 +12,15 @@ export const metadata: Metadata = {
   },
   manifest: null,
   appleWebApp: { capable: false, title: "BO Consulting" },
-  icons: null,
+  icons: {
+    icon: [
+      { url: "/sites/bo-consultancy/favicon.ico", sizes: "any" },
+      { url: "/sites/bo-consultancy/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/sites/bo-consultancy/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/sites/bo-consultancy/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/sites/bo-consultancy/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   description:
     "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire, and workforce solutions across Construction, Mining, Manufacturing, Transport and more.",
   keywords: [
