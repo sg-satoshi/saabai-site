@@ -1,5 +1,6 @@
 import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { TIERS, type ScoreResult } from "./blueprint";
+import { LOGO_ASPECT, LOGO_PNG_BASE64 } from "./score-logo";
 
 // Server-side PDF of a /score result (A4, one page, vector only, no external assets).
 // Everything is computed from the answers on the server. Nothing is invented.
@@ -71,9 +72,9 @@ export async function buildScorePdf({ result: r, name, now = new Date() }: Score
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: NAVY });
 
   // Header: vector wordmark + date
-  page.drawText("SAABAI", { x: M, y: Y(58), size: 20, font: bold, color: WHITE });
-  page.drawText(".ai", { x: M + bold.widthOfTextAtSize("SAABAI", 20), y: Y(58), size: 20, font: bold, color: TEAL });
-  page.drawText("Business, without the busywork", { x: M, y: Y(72), size: 8, font: reg, color: MUTED });
+  const logo = await doc.embedPng(Buffer.from(LOGO_PNG_BASE64, "base64"));
+  const logoW = 132, logoH = logoW / LOGO_ASPECT;
+  page.drawImage(logo, { x: M, y: Y(36 + logoH), width: logoW, height: logoH });
   const date = now.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Australia/Brisbane" });
   page.drawText(pdfSafe(date), { x: W - M - reg.widthOfTextAtSize(pdfSafe(date), 9), y: Y(58), size: 9, font: reg, color: MUTED });
 
