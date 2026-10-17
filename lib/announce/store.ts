@@ -1,5 +1,5 @@
 import { redis } from "@/lib/exp/config";
-import { validateAnnouncement, isOwnedSite, isLiveNow, type Announcement, type Input } from "./core";
+import { validateAnnouncement, isOwnedSite, isLiveNow, settle, type Announcement, type Input } from "./core";
 
 const key = (site: string) => `saabai:announce:${site}`;
 const flagKey = (site: string) => `saabai:announce:flag:${site}`;
@@ -31,7 +31,7 @@ export async function listAnnouncements(site: string): Promise<Announcement[]> {
     for (const v of Object.values(raw ?? {})) {
       const o = (typeof v === "string" ? JSON.parse(v) : v) as Announcement;
       const c = validateAnnouncement(o, null, new Date(o.createdAt ?? Date.now()));
-      if (c.ok) out.push({ ...c.value, version: o.version ?? 1, createdAt: o.createdAt, updatedAt: o.updatedAt, ...(o.testId ? { testId: o.testId } : {}) });
+      if (c.ok) out.push(settle({ ...c.value, version: o.version ?? 1, createdAt: o.createdAt, updatedAt: o.updatedAt, ...(o.testId ? { testId: o.testId } : {}) }));
     }
     return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } catch { return []; }

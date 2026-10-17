@@ -105,6 +105,67 @@ export function checkColors(t: ThemeColors): ContrastCheck[] {
   ];
 }
 
+
+// ---- Countdown timer (fixed deadlines only: never per-visitor or evergreen/resetting timers) ----
+export const TIMER_STYLES = ["text", "boxed", "flip", "pill"] as const;
+export type TimerStyle = (typeof TIMER_STYLES)[number];
+export const isTimerStyle = (v: unknown): v is TimerStyle => typeof v === "string" && (TIMER_STYLES as readonly string[]).includes(v);
+export const END_MODES = ["hide", "message"] as const;
+export type EndMode = (typeof END_MODES)[number];
+export type TimerConfig = {
+  style: TimerStyle;
+  /** Fixed deadline, ISO UTC. Admin enters Australia/Brisbane. The same instant for every visitor. */
+  endAt: string;
+  /** hide = remove the bar at the deadline. message = swap to endMessage (and optional end link). */
+  endMode: EndMode;
+  endMessage?: string;
+  endLinkText?: string;
+  endLinkUrl?: string;
+  /** Message mode only: stop showing the end message after endShowHours, ending the announcement. */
+  autoEnd?: boolean;
+  endShowHours?: number;
+};
+export const TIMER_MAX_DAYS = 366;
+export const DEFAULT_END_SHOW_HOURS = 24;
+
+/** Days, hours, minutes, seconds left (all zero once passed). */
+export function timerParts(ms: number): { d: number; h: number; m: number; s: number } {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  return { d: Math.floor(t / 86400), h: Math.floor((t % 86400) / 3600), m: Math.floor((t % 3600) / 60), s: t % 60 };
+}
+export const pad2 = (n: number) => String(n).padStart(2, "0");
+/** Digits to show. Days are hidden when 0. */
+export function timerUnits(ms: number): { key: "d" | "h" | "m" | "s"; label: string; short: string; value: string }[] {
+  const p = timerParts(ms);
+  const all = [
+    { key: "d" as const, label: p.d === 1 ? "Day" : "Days", short: "d", value: pad2(p.d) },
+    { key: "h" as const, label: "Hrs", short: "h", value: pad2(p.h) },
+    { key: "m" as const, label: "Min", short: "m", value: pad2(p.m) },
+    { key: "s" as const, label: "Sec", short: "s", value: pad2(p.s) },
+  ];
+  return p.d > 0 ? all : all.slice(1);
+}
+/** Has the deadline passed at `now`? */
+export const timerExpired = (t: Pick<TimerConfig, "endAt">, now: number) => now >= Date.parse(t.endAt);
+/** True once the announcement should no longer show at all because of its timer. */
+export function timerOver(t: TimerConfig | undefined, now: number): boolean {
+  if (!t || !timerExpired(t, now)) return false;
+  if (t.endMode === "hide") return true;
+  return !!t.autoEnd && now >= Date.parse(t.endAt) + (t.endShowHours ?? DEFAULT_END_SHOW_HOURS) * 3600_000;
+}
+/** Plain Brisbane date text for the screen reader label, e.g. "Sat 24 Oct, 5:00 pm". Brisbane is UTC+10 with no DST. */
+export function brisbaneText(iso: string): string {
+  const d = new Date(Date.parse(iso) + 10 * 3600_000);
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], mons = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const h = d.getUTCHours(), h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${days[d.getUTCDay()]} ${d.getUTCDate()} ${mons[d.getUTCMonth()]}, ${h12}:${pad2(d.getUTCMinutes())} ${h < 12 ? "am" : "pm"}`;
+}
+/**
+ * Timer colours. Digit boxes are inverted (box = text colour, digits = bar colour) so their contrast equals the already
+ * checked text-on-background ratio, whatever preset or custom colours are used.
+ */
+export function timerColors(t: ThemeColors) { return { text: t.fg, box: t.fg, digit: t.bg, line: t.bg, label: t.fg }; }
+
 export const DEFAULT_EXCLUDES = ["/checkout", "/checkout/*", "/blueprint/pay*", "/blueprint/checkout*", "/admin", "/admin/*", "/saabai-admin", "/saabai-admin/*", "/unsubscribe", "/unsubscribe/*", "/privacy", "/terms"];
 
 export type Announcement = {
@@ -128,6 +189,8 @@ export type Announcement = {
   /** ISO UTC. Admin enters Australia/Brisbane; stored as UTC. */
   startsAt?: string;
   endsAt?: string;
+  /** Optional fixed-deadline countdown. */
+  timer?: TimerConfig;
   include: string[];
   exclude: string[];
   device: Device;
@@ -171,6 +234,37 @@ const noDash = (s: string) => !/[\u2013\u2014]/.test(s);
 const tidy = (s: unknown) => (typeof s === "string" ? s.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
 const isIso = (s: unknown) => typeof s === "string" && !Number.isNaN(Date.parse(s));
 
+/** Validates a timer config (shape and content only; date rules against "now" live in validateAnnouncement). */
+export function normTimer(raw: unknown, layout: Layout = "top"): { ok: true; value: TimerConfig } | { ok: false; error: string } {
+  const bad = (error: string) => ({ ok: false as const, error });
+  if (!raw || typeof raw !== "object") return bad("Timer settings are missing.");
+  const o = raw as Record<string, unknown>;
+  const style = o.style ?? "text";
+  if (!isTimerStyle(style)) return bad("Pick one of the timer styles: text line, boxed digits, flip clock or pill.");
+  if (typeof o.endAt !== "string" || !isIso(o.endAt)) return bad("Add a valid timer end date and time.");
+  const endAt = new Date(Date.parse(o.endAt)).toISOString();
+  const endMode = o.endMode ?? "hide";
+  if (!(END_MODES as readonly string[]).includes(endMode as string)) return bad("When the timer ends, choose to hide the bar or show an end message.");
+  const value: TimerConfig = { style, endAt, endMode: endMode as EndMode };
+  if (endMode === "message") {
+    const max = layout === "card" ? LIMITS.cardBody : LIMITS.message;
+    const endMessage = tidy(o.endMessage), endLinkText = tidy(o.endLinkText), endLinkUrl = tidy(o.endLinkUrl);
+    if (!endMessage || endMessage.length > max) return bad(`The end message needs 1 to ${max} characters.`);
+    if ((endLinkText && !endLinkUrl) || (!endLinkText && endLinkUrl)) return bad("Add both the end button text and URL, or neither (no button).");
+    if (endLinkText.length > LIMITS.link) return bad(`Keep the end button text under ${LIMITS.link} characters.`);
+    if (endLinkUrl && !safeUrl(endLinkUrl)) return bad("The end button link must be a site path (/book), an https URL, tel: or mailto:.");
+    if (!noDash(endMessage + endLinkText)) return bad("Please avoid long dashes (en and em dashes) in the end message.");
+    value.endMessage = endMessage;
+    if (endLinkText) { value.endLinkText = endLinkText; value.endLinkUrl = endLinkUrl; }
+    if (o.autoEnd === true || o.autoEnd === "1") {
+      const h = Math.round(Number(o.endShowHours ?? DEFAULT_END_SHOW_HOURS));
+      if (!(h >= 1 && h <= 720)) return bad("Show the end message for 1 to 720 hours before auto-ending.");
+      value.autoEnd = true; value.endShowHours = h;
+    }
+  }
+  return { ok: true, value };
+}
+
 /** Path matcher: exact, or a trailing "*" wildcard ("/blog/*", "/blueprint/pay*"). */
 export function pathMatches(pattern: string, path: string): boolean {
   const p = path.split("?")[0].split("#")[0].replace(/(.)\/+$/, "$1") || "/";
@@ -190,13 +284,19 @@ export function pageAllowed(a: Pick<Announcement, "include" | "exclude">, path: 
 }
 
 /** Whether the announcement is live right now (status plus schedule). "draft" and "ended" never show. */
-export function isLiveNow(a: Pick<Announcement, "status" | "startsAt" | "endsAt">, now: Date = new Date()): boolean {
+export function isLiveNow(a: Pick<Announcement, "status" | "startsAt" | "endsAt"> & { timer?: TimerConfig }, now: Date = new Date()): boolean {
   if (a.status !== "live" && a.status !== "scheduled") return false;
   const t = now.getTime();
   if (a.status === "scheduled" && !a.startsAt) return false;
   if (a.startsAt && t < Date.parse(a.startsAt)) return false;
   if (a.endsAt && t >= Date.parse(a.endsAt)) return false;
+  if (timerOver(a.timer, t)) return false;
   return true;
+}
+
+/** Derived status: a live or scheduled announcement whose timer has finished (hide mode, or auto-end) reads as "ended". */
+export function settle<T extends Pick<Announcement, "status" | "timer">>(a: T, now: Date = new Date()): T {
+  return (a.status === "live" || a.status === "scheduled") && timerOver(a.timer, now.getTime()) ? { ...a, status: "ended" as AnnStatus } : a;
 }
 
 export type Input = Partial<Announcement> & { id?: string };
@@ -245,6 +345,18 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   if (startsAt !== undefined && !isIso(startsAt)) return bad("Start date is not valid.");
   if (endsAt !== undefined && !isIso(endsAt)) return bad("End date is not valid.");
   if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) return bad("The end must be after the start.");
+  let timer: TimerConfig | undefined;
+  if (input.timer !== null && (input.timer ?? prev?.timer) !== undefined) {
+    const c = normTimer(input.timer ?? prev?.timer, layout);
+    if (!c.ok) return bad(c.error);
+    timer = c.value;
+    const end = Date.parse(timer.endAt), t = now.getTime();
+    const unchanged = !!prev && prev.status === status && prev.timer?.endAt === timer.endAt;
+    if ((status === "live" || status === "scheduled") && end <= t && !unchanged) return bad("The timer end date is in the past. Pick a future date and time before setting it Live.");
+    if (end > t + TIMER_MAX_DAYS * 86400_000 && !unchanged) return bad(`Keep the timer deadline within ${TIMER_MAX_DAYS} days.`);
+    if (startsAt && end <= Date.parse(startsAt)) return bad("The timer must end after the announcement starts.");
+    if (endsAt && Date.parse(endsAt) < end) return bad("The announcement ends before its timer does. Set the announcement end after the timer deadline, or leave it blank.");
+  }
   const list = (v: unknown, fallback: string[]) => (Array.isArray(v) ? v : fallback).map(tidy).filter(Boolean);
   const include = list(input.include, prev?.include ?? []), exclude = list(input.exclude, prev?.exclude ?? []);
   if (include.length > 30 || exclude.length > 30 || [...include, ...exclude].some((p) => !PATTERN_RE.test(p) || p.length > 120)) return bad("Page rules must be paths like /pricing or /blog/* (max 30 each).");
@@ -258,10 +370,10 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   const scrollPct = Math.round(Number(input.scrollPct ?? prev?.scrollPct ?? (layout === "card" ? 40 : 0)));
   if (!(delaySec >= 0 && delaySec <= 120) || !(scrollPct >= 0 && scrollPct <= 100)) return bad("Delay is 0 to 120 seconds and scroll is 0 to 100 percent.");
   if (status === "live" && layout === "card" && delaySec === 0 && scrollPct === 0) return bad("A slide-in card needs a delay or a scroll trigger so it never shows on first paint.");
-  const contentChanged = !prev || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout;
+  const contentChanged = !prev || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout || prev.timer?.endAt !== timer?.endAt || prev.timer?.endMode !== timer?.endMode || prev.timer?.endMessage !== timer?.endMessage;
   const value: Announcement = {
     id, siteKey, name, status, layout, message, ...(title ? { title } : {}), linkText, linkUrl, theme, ...(colors ? { colors } : {}), shadow, ...(shadowColor ? { shadowColor } : {}),
-    ...(startsAt ? { startsAt } : {}), ...(endsAt ? { endsAt } : {}), include, exclude, device, reshow, reshowDays, delaySec, scrollPct,
+    ...(startsAt ? { startsAt } : {}), ...(endsAt ? { endsAt } : {}), ...(timer ? { timer } : {}), include, exclude, device, reshow, reshowDays, delaySec, scrollPct,
     version: prev ? prev.version + (contentChanged ? 1 : 0) : 1,
     ...(prev?.testId ? { testId: prev.testId } : {}),
     createdAt: prev?.createdAt ?? now.toISOString(), updatedAt: now.toISOString(),
@@ -270,8 +382,16 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
 }
 
 /** What a browser needs to render. Never includes admin-only fields. */
-export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & { expId?: string };
-export const toPublic = (a: Announcement, expId?: string): PublicAnnouncement => ({
+export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & { expId?: string; timer?: PublicTimer };
+/** What the browser gets for a timer. `serverNow` lets it correct for a wrong device clock. `expired` is decided on the server. */
+export type PublicTimer = { style: TimerStyle; endAt: string; endMode: EndMode; endMessage?: string; endLinkText?: string; endLinkUrl?: string; expired: boolean; serverNow: number };
+export const toPublic = (a: Announcement, expId?: string, now: number = Date.now()): PublicAnnouncement => {
+  const tm = a.timer, expired = !!tm && timerExpired(tm, now);
+  const ended = expired && tm?.endMode === "message" && !!tm.endMessage;
+  const base = toPublicBase(ended && tm ? { ...a, message: tm.endMessage as string, linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a, expId);
+  return tm ? { ...base, timer: { style: tm.style, endAt: tm.endAt, endMode: tm.endMode, ...(tm.endMessage ? { endMessage: tm.endMessage } : {}), ...(tm.endLinkText ? { endLinkText: tm.endLinkText, endLinkUrl: tm.endLinkUrl } : {}), expired, serverNow: now } } : base;
+};
+const toPublicBase = (a: Announcement, expId?: string): PublicAnnouncement => ({
   id: a.id, layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { colors: a.colors } : {}), shadow: a.shadow ?? "none", ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}), device: a.device,
   reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, version: a.version, include: a.include, exclude: a.exclude, ...(expId ? { expId } : {}),
 });
@@ -291,7 +411,21 @@ export type Goal = (typeof GOALS)[number];
 export const MIN_TEST_DAYS = 14;
 
 /** Flat string map stored in Variant.value (the engine allows string values up to 300 chars each). Empty object = no bar. */
-export function announcementValue(a: Pick<Announcement, "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor">): Record<string, string> {
-  return { layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { cBg: a.colors.bg, cFg: a.colors.fg, cCta: a.colors.cta, cClose: a.colors.close } : {}), ...(a.shadow ? { shadow: a.shadow } : {}), ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}) };
+export function announcementValue(a: Pick<Announcement, "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor"> & { timer?: TimerConfig }): Record<string, string> {
+  return {
+    ...timerValue(a.timer), layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { cBg: a.colors.bg, cFg: a.colors.fg, cCta: a.colors.cta, cClose: a.colors.close } : {}), ...(a.shadow ? { shadow: a.shadow } : {}), ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}) };
 }
 export const isEmptyValue = (v: Record<string, string> | undefined) => !v || Object.keys(v).length === 0;
+
+/** Timer keys inside Variant.value (each under the 300-char limit). `tStyle: "none"` explicitly removes the timer for a variant. */
+export function timerValue(t: TimerConfig | undefined): Record<string, string> {
+  if (!t) return { tStyle: "none" };
+  return { tStyle: t.style, tEnd: t.endAt, tMode: t.endMode, ...(t.endMessage ? { tMsg: t.endMessage } : {}), ...(t.endLinkText ? { tLinkText: t.endLinkText, tLinkUrl: t.endLinkUrl ?? "" } : {}), ...(t.autoEnd ? { tAuto: "1", tHours: String(t.endShowHours ?? DEFAULT_END_SHOW_HOURS) } : {}) };
+}
+/** Timer for a variant. No timer keys = inherit the announcement's timer. Invalid timer keys = no timer (never guess a deadline). */
+export function timerFromValue(x: Record<string, string>, inherit: TimerConfig | undefined, layout: Layout): TimerConfig | undefined {
+  if (x.tStyle === "none") return undefined;
+  if (!x.tStyle && !x.tEnd) return inherit;
+  const c = normTimer({ style: x.tStyle, endAt: x.tEnd, endMode: x.tMode, endMessage: x.tMsg, endLinkText: x.tLinkText, endLinkUrl: x.tLinkUrl, autoEnd: x.tAuto === "1", endShowHours: x.tHours }, layout);
+  return c.ok ? c.value : undefined;
+}
