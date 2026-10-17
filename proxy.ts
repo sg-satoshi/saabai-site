@@ -92,6 +92,7 @@ const PUBLIC_API = [
   "/api/checkout",
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
+  "/api/site-scan",          // website scan step of /score: self-gates (404 unless flag on or admin), rate limited.
   "/api/rex-checkout",
   "/api/rex-cart",
   "/api/rex-pay",

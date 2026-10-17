@@ -9,6 +9,9 @@ import { CATEGORIES, QUESTIONS, TIERS, scoreAnswers } from "@/lib/blueprint";
 import { gaEvent } from "@/lib/ga";
 import { SCORE_CONSENT_WORDING } from "@/lib/score-consent";
 import { ARROW_DESKTOP, ARROW_MOBILE } from "./arrowSvg";
+import ReportView from "../components/scan/ReportView";
+import ScanSteps, { type ScanDetails } from "./ScanSteps";
+import type { ScanReport } from "@/lib/site-scan/types";
 
 /** Brush arrow from the recommended card down to the PDF box. Draws once when scrolled into view (no animation for reduced motion, see score.css). */
 function ScoreArrow() {
@@ -33,8 +36,19 @@ export default function ScorePage() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [done, setDone] = useState(false);
+  // Website scan step: only when the flag is on (or an admin is signed in). Otherwise the page is exactly as before.
+  const [scanOn, setScanOn] = useState(false);
+  const [scanPhase, setScanPhase] = useState(false);
+  const [scan, setScan] = useState<{ report: ScanReport; details: ScanDetails } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/site-scan/status", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (alive && j?.enabled === true) setScanOn(true); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
-  if (done) return <Result answers={answers} onRestart={() => { setAnswers({}); setStep(0); setDone(false); }} />;
+  const restart = () => { setAnswers({}); setStep(0); setDone(false); setScanPhase(false); setScan(null); };
+  if (scanPhase && !done) return <ScanSteps onDone={(report, details) => { setScan({ report, details }); setDone(true); setScanPhase(false); window.scrollTo({ top: 0 }); }} />;
+  if (done) return <Result answers={answers} scan={scan} onRestart={restart} />;
 
   const q = QUESTIONS[step];
   const total = QUESTIONS.length;
@@ -45,7 +59,7 @@ export default function ScorePage() {
   const next = () => {
     if (selected === undefined) return;
     if (step + 1 >= total) {
-      setDone(true);
+      if (scanOn) setScanPhase(true); else setDone(true);
       window.scrollTo({ top: 0 });
     } else setStep(step + 1);
   };
@@ -97,14 +111,14 @@ export default function ScorePage() {
   );
 }
 
-function Result({ answers, onRestart }: { answers: Record<string, number>; onRestart: () => void }) {
+function Result({ answers, scan, onRestart }: { answers: Record<string, number>; scan: { report: ScanReport; details: ScanDetails } | null; onRestart: () => void }) {
   const r = useMemo(() => scoreAnswers(answers), [answers]);
   const rec = TIERS[r.recommended];
   useEffect(() => {
     gaEvent("score_quiz_complete", { quiz: "ai_readiness", recommended_tier: r.recommended });
   }, [r.recommended]);
-  const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(false);
+  const [email, setEmail] = useState(scan?.details.email ?? "");
+  const [consent, setConsent] = useState(scan?.details.consent ?? false);
   const [fieldError, setFieldError] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -121,7 +135,7 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
       const res = await fetch("/api/blueprint/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), answers, pdf: true, consent, pageUrl: window.location.href }),
+        body: JSON.stringify({ email: email.trim(), answers, pdf: true, consent, pageUrl: window.location.href, ...(scan ? { scanId: scan.report.id, name: scan.details.name, industry: scan.details.industry, suburb: scan.details.suburb, goal: scan.details.goal } : {}) }),
       });
       setState(res.ok ? "sent" : "error");
       if (res.ok) gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended, pdf: true, marketing_consent: consent });
@@ -184,6 +198,11 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
             </div>
             <a className="btn" href={`/blueprint/checkout?tier=${rec.id}`}>Get my {rec.name} Blueprint →</a>
           </div>
+          {scan && (
+            <section className="card" style={{ marginTop: 24, padding: 28 }} aria-label="Your website report">
+              <ReportView report={scan.report} />
+            </section>
+          )}
           <ScoreArrow />
           <section className="pdfbox" aria-labelledby="pdfbox-h">
             <div className="pdfbox-copy">
