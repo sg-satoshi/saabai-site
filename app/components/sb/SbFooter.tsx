@@ -1,5 +1,6 @@
 const serviceAreaLinks = [
   { label: "Gold Coast", href: "/gold-coast" },
+  { label: "Brisbane", href: "/brisbane" },
 ];
 
 export default function SbFooter() {
@@ -36,6 +37,9 @@ export default function SbFooter() {
         </div>
         <div className="areas">
           <h4>Service areas</h4>
+          <p className="dim" style={{ fontSize: 14, margin: "0 auto 4px", maxWidth: 560 }}>
+            Gold Coast, Brisbane and Queensland, with clients Australia-wide online
+          </p>
           <nav>
             {serviceAreaLinks.map(({ label, href }) => (
               <a key={href} href={href}>

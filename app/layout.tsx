@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     siteName: "Saabai",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Working Australia wide.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
     images: [
       {
         url: "/og-image.png",
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Working Australia wide.",
+      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
     images: ["/og-image.png"],
   },
   alternates: {
