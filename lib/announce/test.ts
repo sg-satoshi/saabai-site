@@ -2,6 +2,7 @@ import { getExperiments, writeExperiment } from "@/lib/exp/config";
 import { validateExperiment, type Experiment } from "@/lib/exp/core";
 import { variantRows } from "@/lib/exp/mutate";
 import { serviceDb } from "@/lib/exp/track";
+import { visibleText } from "./rich";
 import { announcementValue, testIdFor, type Announcement, type Goal } from "./core";
 
 export type TestKind = "bar_vs_none" | "ab";
@@ -13,7 +14,7 @@ export type AbOverride = { layout?: Announcement["layout"]; message?: string; th
  */
 export function buildTest(a: Announcement, kind: TestKind, goal: Goal, ab: AbOverride = {}, now = new Date()): Experiment | { error: string } {
   const barVal = announcementValue(a);
-  const label = (v: Record<string, string>) => (v.message ? `${v.layout}: ${v.message}`.slice(0, 280) : "No announcement (control)");
+  const label = (v: Record<string, string>) => (v.message ? `${v.layout}: ${visibleText(v.message)}`.slice(0, 280) : "No announcement (control)");
   let a1: Record<string, string>, b1: Record<string, string>;
   if (kind === "bar_vs_none") { a1 = {}; b1 = barVal; }
   else {

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { shadowCss, isShadow, normHex, normColors, bestText, resolveTheme, checkColors, isThemeKey, validateAnnouncement, pageAllowed, pathMatches, isLiveNow, safeUrl, contrast, THEMES, isOwnedSite, isDismissed, toPublic, announcementValue, isEmptyValue, normTimer, timerParts, timerUnits, timerOver, timerExpired, timerColors, timerValue, timerFromValue, settle, brisbaneText, TIMER_STYLES } from "../lib/announce/core";
+import { shadowCss, isShadow, normHex, normColors, bestText, resolveTheme, checkColors, isThemeKey, validateAnnouncement, pageAllowed, pathMatches, isLiveNow, safeUrl, contrast, THEMES, isOwnedSite, isDismissed, toPublic, announcementValue, isEmptyValue, normTimer, timerParts, timerUnits, timerOver, timerExpired, timerColors, timerValue, timerFromValue, validateAll, settle, brisbaneText, TIMER_STYLES } from "../lib/announce/core";
 import { buildTest } from "../lib/announce/test";
 import { validateExperiment, assign } from "../lib/exp/core";
 
@@ -257,4 +257,28 @@ test("timer: version bumps when the deadline or end message changes", () => {
   const a = mkT({ status: "live" });
   const same = validateAnnouncement({ timer: tm({ style: "pill" }) } as never, a, NOW); assert.ok(same.ok && same.value.version === a.version);
   const moved = validateAnnouncement({ timer: tm({ endAt: "2026-10-26T07:00:00Z" }) } as never, a, NOW); assert.ok(moved.ok && moved.value.version === a.version + 1);
+});
+
+// ---- field-level errors ----
+test("validateAnnouncement tags each failure with the form field", () => {
+  const f = (o: object) => { const c = validateAnnouncement({ ...base, ...o } as never, null, NOW); return c.ok ? null : c.field; };
+  assert.equal(f({ id: "A" }), "id"); assert.equal(f({ message: "x".repeat(121) }), "message"); assert.equal(f({ linkUrl: "javascript:x" }), "linkUrl");
+  assert.equal(f({ linkText: "" }), "linkText"); assert.equal(f({ shadowColor: "nope", shadow: "soft" }), "shadowColor");
+  assert.equal(f({ theme: "custom", colors: { bg: "#000", fg: "bad", cta: "#fff", close: "#fff" } }), "cFg");
+  assert.equal(f({ theme: "custom", colors: { bg: "#ffff00", fg: "#ffffff", cta: "#000000", close: "#000000" } }), "cFg", "contrast on text");
+  assert.equal(f({ startsAt: "x" }), "startsAt"); assert.equal(f({ endsAt: "2020-01-01T00:00:00Z", startsAt: "2021-01-01T00:00:00Z" }), "endsAt");
+  assert.equal(f({ timer: tm({ endAt: "x" }) }), "tEnd"); assert.equal(f({ status: "live", timer: tm({ endAt: "2026-10-19T00:00:00Z" }) }), "tEnd");
+  assert.equal(f({ timer: tm({ endMode: "message" }) }), "tMsg"); assert.equal(f({ timer: tm({ endMode: "message", endMessage: "x", endLinkText: "a" }) }), "tLinkText");
+  assert.equal(f({ timer: tm({ endMode: "message", endMessage: "x", endLinkText: "a", endLinkUrl: "javascript:1" }) }), "tLinkUrl");
+  assert.equal(f({ layout: "card", title: "", status: "live" }), "title");
+  assert.equal(f({ layout: "card", title: "T", status: "live", delaySec: 0, scrollPct: 0 }), "delaySec");
+});
+test("validateAll reports every faulty field at once, keyed by form field id", () => {
+  const c = validateAll({ ...base, id: "A", message: "", linkUrl: "javascript:x", theme: "custom", colors: { bg: "#ffff00", fg: "#ffffff", cta: "#000", close: "#000" }, shadow: "soft", shadowColor: "zz", status: "live", timer: tm({ endAt: "2026-10-19T00:00:00Z" }) } as never, null, NOW);
+  assert.ok(!c.ok);
+  if (c.ok) return;
+  for (const k of ["id", "message", "linkUrl", "cFg", "shadowColor", "tEnd"]) assert.ok(c.fields[k], k + " missing: " + JSON.stringify(c.fields));
+  assert.match(c.error, /things need fixing/);
+  const one = validateAll({ ...base, message: "" } as never, null, NOW); assert.ok(!one.ok && Object.keys(one.fields).join() === "message" && one.error === one.fields.message);
+  assert.ok(validateAll({ ...base } as never, null, NOW).ok);
 });

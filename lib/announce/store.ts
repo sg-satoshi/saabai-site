@@ -1,5 +1,5 @@
 import { redis } from "@/lib/exp/config";
-import { validateAnnouncement, isOwnedSite, isLiveNow, settle, type Announcement, type Input } from "./core";
+import { validateAll, validateAnnouncement, isOwnedSite, isLiveNow, settle, type Announcement, type Input, type FieldErrors } from "./core";
 
 const key = (site: string) => `saabai:announce:${site}`;
 const flagKey = (site: string) => `saabai:announce:flag:${site}`;
@@ -43,19 +43,28 @@ export async function writeAnnouncement(a: Announcement): Promise<void> {
 }
 export async function deleteAnnouncement(site: string, id: string): Promise<void> { await redis()?.hdel(key(site), id); }
 
-export async function saveAnnouncement(site: string, input: Input): Promise<{ ok: true; value: Announcement } | { ok: false; error: string; status: number }> {
-  if (!isOwnedSite(site)) return { ok: false, error: "Announcements are only available on Saabai-owned sites.", status: 403 };
+export type SaveResult = { ok: true; value: Announcement } | { ok: false; error: string; status: number; fields?: FieldErrors };
+export async function saveAnnouncement(site: string, input: Input): Promise<SaveResult> {
+  if (!isOwnedSite(site)) return { ok: false, error: "Announcements are only available on Saabai-owned sites.", status: 403, fields: { form: "Announcements are only available on Saabai-owned sites." } };
   const all = await listAnnouncements(site);
   const prev = input.id ? all.find((x) => x.id === input.id) ?? null : null;
-  const c = validateAnnouncement({ ...input, siteKey: site }, prev);
-  if (!c.ok) return { ok: false, error: c.error, status: 400 };
-  if (!prev && all.some((x) => x.id === c.value.id)) return { ok: false, error: "That id is already used.", status: 409 };
-  // One live announcement per site at a time (one announcement per page view).
+  const c = validateAll({ ...input, siteKey: site }, prev);
+  const fields: FieldErrors = c.ok ? {} : { ...c.fields };
+  if (!prev && c.ok && all.some((x) => x.id === c.value.id)) fields.id = "That id is already used. Pick a different one.";
+  if (!c.ok || Object.keys(fields).length) {
+    // One live announcement per site at a time (one announcement per page view). Checked here too so it is reported alongside the other faults.
+    const st = (input.status ?? prev?.status) as string | undefined;
+    const idv = (prev?.id ?? String(input.id ?? "")).toLowerCase();
+    const other = all.find((x) => x.id !== idv && (x.status === "live" || x.status === "scheduled"));
+    if (!c.ok && (st === "live" || st === "scheduled") && other && !fields.status) fields.status = `"${other.name}" is already live or scheduled. End it first (one announcement at a time).`;
+    const n = Object.keys(fields).length;
+    return { ok: false, error: n === 1 ? Object.values(fields)[0] : `${n} things need fixing before this can be saved.`, status: fields.id && n === 1 ? 409 : 400, fields };
+  }
   if (c.value.status === "live" || c.value.status === "scheduled") {
     const other = all.find((x) => x.id !== c.value.id && (x.status === "live" || x.status === "scheduled"));
-    if (other) return { ok: false, error: `"${other.name}" is already live or scheduled. End it first (one announcement at a time).`, status: 409 };
+    if (other) { const m = `"${other.name}" is already live or scheduled. End it first (one announcement at a time).`; return { ok: false, error: m, status: 409, fields: { status: m } }; }
   }
-  try { await writeAnnouncement(c.value); } catch { return { ok: false, error: "Couldn't save (Redis unavailable).", status: 502 }; }
+  try { await writeAnnouncement(c.value); } catch { return { ok: false, error: "Couldn't save (Redis unavailable). Nothing was changed. Try again.", status: 502, fields: { form: "Couldn't save (Redis unavailable). Nothing was changed. Try again." } }; }
   return { ok: true, value: c.value };
 }
 

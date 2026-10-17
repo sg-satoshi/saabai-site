@@ -1,6 +1,7 @@
 "use client";
 
 import type { Ref } from "react";
+import Rich from "./Rich";
 import AnnouncementTimer, { TIMER_CSS } from "./AnnouncementTimer";
 import { shadowCss, resolveTheme, type PublicAnnouncement } from "@/lib/announce/core";
 
@@ -30,13 +31,13 @@ export default function AnnouncementView({ ann, ended, offset, onEnd, onClose, o
         <div ref={innerRef} role="dialog" aria-label="Announcement" aria-modal="false" className={`sb-ann sb-ann-card${timerEl ? " sb-ann-has-timer" : ""}`} style={{ background: t.bg, color: t.fg, borderColor: t.border, boxShadow: shadow }}>
           {closeBtn}
           {ann.title ? <p className="sb-ann-title">{ann.title}</p> : null}
-          <p className="sb-ann-msg" aria-live="polite" aria-atomic="true">{view.message}</p>
+          <p className="sb-ann-msg" aria-live="polite" aria-atomic="true"><Rich html={view.message} /></p>
           {timerEl}
           {link}
         </div>
       ) : (
         <div ref={innerRef} role="region" aria-label="Announcement" className={`sb-ann sb-ann-${ann.layout}${timerEl ? " sb-ann-has-timer" : ""}`} style={{ background: t.bg, color: t.fg, borderColor: t.border, boxShadow: shadow }}>
-          <p className="sb-ann-msg" aria-live="polite" aria-atomic="true">{view.message}</p>
+          <p className="sb-ann-msg" aria-live="polite" aria-atomic="true"><Rich html={view.message} /></p>
           {timerEl}
           {link}
           {closeBtn}
@@ -52,6 +53,7 @@ export const CSS = `
 .sb-ann-top{top:0;border-bottom-width:1px}
 .sb-ann-bottom{bottom:0;border-top-width:1px}
 .sb-ann-msg{margin:0;font-size:15px;line-height:22px}
+.sb-ann-msg a,.sb-ann-title a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .sb-ann-cta{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
 .sb-ann-cta:hover{filter:brightness(.92)}
 .sb-ann-cta:hover{text-decoration:underline}

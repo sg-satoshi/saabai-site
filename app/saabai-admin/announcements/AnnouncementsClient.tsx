@@ -1,11 +1,14 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import RichEditor from "./RichEditor";
 import AnnouncementView from "../../components/AnnouncementView";
-import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, TIMER_STYLES, DEFAULT_END_SHOW_HOURS, LIMITS, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement, type PublicAnnouncement, type PublicTimer, type TimerStyle, type ThemeKey } from "../../../lib/announce/core";
+import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, TIMER_STYLES, DEFAULT_END_SHOW_HOURS, LIMITS, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, sanitizeRich, visibleText, type Announcement, type PublicAnnouncement, type PublicTimer, type TimerStyle, type ThemeKey } from "../../../lib/announce/core";
 
 type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number; cBg: string; cFg: string; cCta: string; cClose: string; shadow: string; shadowColor: string; tOn: boolean; tEnd: string; tStyle: string; tMode: string; tMsg: string; tLinkText: string; tLinkUrl: string; tAuto: boolean; tHours: number };
-const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: DEFAULT_CUSTOM.bg, cFg: DEFAULT_CUSTOM.fg, cCta: DEFAULT_CUSTOM.cta, cClose: DEFAULT_CUSTOM.close, shadow: "none", shadowColor: "", tOn: false, tEnd: "", tStyle: "boxed", tMode: "hide", tMsg: "", tLinkText: "", tLinkUrl: "", tAuto: false, tHours: DEFAULT_END_SHOW_HOURS };
+const ERROR_ORDER = ["id", "name", "layout", "status", "title", "message", "linkText", "linkUrl", "theme", "cBg", "cFg", "cCta", "cClose", "shadow", "shadowColor", "device", "startsAt", "endsAt", "tEnd", "tStyle", "tMode", "tMsg", "tLinkText", "tLinkUrl", "tHours", "include", "exclude", "reshow", "reshowDays", "delaySec", "scrollPct"];
+const FIELD_LABEL: Record<string, string> = { id: "Id", name: "Name", layout: "Layout", status: "Status", title: "Title", message: "Message", linkText: "Link text", linkUrl: "Link URL", theme: "Theme", cBg: "Background colour", cFg: "Text colour", cCta: "Button colour", cClose: "Close icon colour", shadow: "Drop shadow", shadowColor: "Shadow colour", device: "Device", startsAt: "Starts", endsAt: "Ends", tEnd: "Timer end", tStyle: "Timer style", tMode: "When the timer ends", tMsg: "End message", tLinkText: "End button text", tLinkUrl: "End button URL", tHours: "Auto-end hours", include: "Only on these pages", exclude: "Never on these pages", reshow: "Re-show", reshowDays: "Re-show days", delaySec: "Show delay", scrollPct: "Scroll depth", form: "Save" };
+const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: THEMES.surface.bg, cFg: THEMES.surface.fg, cCta: THEMES.surface.cta, cClose: THEMES.surface.close, shadow: "none", shadowColor: "", tOn: false, tEnd: "", tStyle: "boxed", tMode: "hide", tMsg: "", tLinkText: "", tLinkUrl: "", tAuto: false, tHours: DEFAULT_END_SHOW_HOURS };
 
 // Admin enters Australia/Brisbane (UTC+10, no DST); stored as UTC ISO.
 const toUtc = (local: string) => (local ? new Date(local + ":00+10:00").toISOString() : "");
@@ -21,6 +24,8 @@ export default function AnnouncementsClient() {
   const [goal, setGoal] = useState<string>("call_click");
   const [view, setView] = useState<"desktop" | "mobile">("desktop");
   const [endPrev, setEndPrev] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
   const [pin, setPin] = useState(false);
   const [showPanel, setShowPanel] = useState(true);
   const [frameReady, setFrameReady] = useState(false);
@@ -41,25 +46,44 @@ export default function AnnouncementsClient() {
   useEffect(() => { if (window.innerWidth < 768) setView("mobile"); }, []);
 
   async function post(body: object) {
-    const r = await fetch("/api/admin/announcements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = await r.json().catch(() => ({}));
-    setMsg(r.ok ? "Saved." : j.error || "Something went wrong.");
-    if (r.ok) await load();
-    return r.ok;
+    setBusy(true);
+    let r: Response | null = null; let j: { error?: string; fields?: Record<string, string> } = {};
+    try { r = await fetch("/api/admin/announcements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); j = await r.json().catch(() => ({})); } catch { /* network */ }
+    setBusy(false);
+    if (r?.ok) { setErrors({}); setMsg("Saved."); await load(); return true; }
+    const fields = j.fields && Object.keys(j.fields).length ? j.fields : { form: j.error || "Something went wrong. Nothing was saved." };
+    fail(fields, j.error || "Something went wrong. Nothing was saved.");
+    return false;
+  }
+  /** Shows every faulty field (red border, message under the field), a summary banner, and focuses the first one. */
+  function fail(fields: Record<string, string>, summary: string) {
+    setErrors(fields); setMsg(summary);
+    window.setTimeout(() => {
+      const first = ERROR_ORDER.find((k) => fields[k] && document.getElementById(`f-${k}`));
+      const el = first ? document.getElementById(`f-${first}`) : document.getElementById("ann-banner");
+      el?.scrollIntoView({ block: "center", behavior: "smooth" }); (el as HTMLElement | null)?.focus({ preventScroll: true });
+    }, 50);
   }
   async function save() {
-    if (f.shadowColor && !normHex(f.shadowColor)) { setMsg("Shadow colour must be a hex value like #000000."); return; }
-    if (blocked) { setMsg("Fix the colours first: some contrast is below 3:1 so it can't be read."); return; }
-    if (f.tOn) {
-      if (!f.tEnd) { setMsg("Pick the timer end date and time (Brisbane)."); return; }
-      if (f.status === "live" && Date.parse(toUtc(f.tEnd)) <= Date.now()) { setMsg("The timer end is in the past. Pick a future date and time before setting it Live."); return; }
-    }
+    const local: Record<string, string> = {};
+    if (f.shadow !== "none" && f.shadowColor && !normHex(f.shadowColor)) local.shadowColor = "Shadow colour must be a hex value like #000000.";
+    if (f.tOn && !f.tEnd) local.tEnd = "Pick the timer end date and time (Brisbane).";
+    if (Object.keys(local).length) { fail(local, `${Object.keys(local).length} thing${Object.keys(local).length > 1 ? "s" : ""} to fix before saving.`); return; }
     const timer = f.tOn ? { style: f.tStyle, endAt: toUtc(f.tEnd), endMode: f.tMode, ...(f.tMode === "message" ? { endMessage: f.tMsg, endLinkText: f.tLinkText, endLinkUrl: f.tLinkUrl, autoEnd: f.tAuto, endShowHours: f.tHours } : {}) } : null;
     const data = { ...f, timer, ...(f.theme === "custom" ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}), startsAt: toUtc(f.startsAt), endsAt: toUtc(f.endsAt), include: lines(f.include), exclude: lines(f.exclude) };
     if (await post({ action: "save", id: editing ?? undefined, data })) { setF(blank); setEditing(null); }
   }
-  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, cBg: a.colors?.bg ?? DEFAULT_CUSTOM.bg, cFg: a.colors?.fg ?? DEFAULT_CUSTOM.fg, cCta: a.colors?.cta ?? DEFAULT_CUSTOM.cta, cClose: a.colors?.close ?? DEFAULT_CUSTOM.close, shadow: a.shadow ?? "none", shadowColor: a.shadowColor ?? "", tOn: !!a.timer, tEnd: toBrisbane(a.timer?.endAt), tStyle: a.timer?.style ?? "boxed", tMode: a.timer?.endMode ?? "hide", tMsg: a.timer?.endMessage ?? "", tLinkText: a.timer?.endLinkText ?? "", tLinkUrl: a.timer?.endLinkUrl ?? "", tAuto: !!a.timer?.autoEnd, tHours: a.timer?.endShowHours ?? DEFAULT_END_SHOW_HOURS }); setEndPrev(false); window.scrollTo({ top: 0 }); };
-  const set = (k: keyof Form, v: string | number | boolean) => setF((p) => ({ ...p, [k]: v }));
+  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, cBg: a.colors?.bg ?? resolveTheme(a.theme).bg, cFg: a.colors?.fg ?? resolveTheme(a.theme).fg, cCta: a.colors?.cta ?? resolveTheme(a.theme).cta, cClose: a.colors?.close ?? resolveTheme(a.theme).close, shadow: a.shadow ?? "none", shadowColor: a.shadowColor ?? "", tOn: !!a.timer, tEnd: toBrisbane(a.timer?.endAt), tStyle: a.timer?.style ?? "boxed", tMode: a.timer?.endMode ?? "hide", tMsg: a.timer?.endMessage ?? "", tLinkText: a.timer?.endLinkText ?? "", tLinkUrl: a.timer?.endLinkUrl ?? "", tAuto: !!a.timer?.autoEnd, tHours: a.timer?.endShowHours ?? DEFAULT_END_SHOW_HOURS }); setEndPrev(false); window.scrollTo({ top: 0 }); };
+  const COLOUR_KEYS = ["cBg", "cFg", "cCta", "cClose"];
+  const pickTheme = (t: string) => {
+    const pre = (THEMES as Record<string, { bg: string; fg: string; cta: string; close: string }>)[t];
+    setF((p) => ({ ...p, theme: t, ...(pre ? { cBg: pre.bg, cFg: pre.fg, cCta: pre.cta, cClose: pre.close } : {}) }));
+    setErrors((e) => { const n = { ...e }; for (const k of ["theme", ...COLOUR_KEYS]) delete n[k]; return n; });
+  };
+  const set = (k: keyof Form, v: string | number | boolean) => { setF((p) => ({ ...p, [k]: v, ...(COLOUR_KEYS.includes(k) && p.theme !== "custom" ? { theme: "custom" } : {}) })); if (errors[k]) setErrors((e) => { const n = { ...e }; delete n[k]; return n; }); };
+  const ip = (k: string) => ({ id: `f-${k}`, "aria-invalid": errors[k] ? (true as const) : undefined, "aria-describedby": errors[k] ? `e-${k}` : undefined });
+  const inpS = (k: string) => ({ ...inp, ...(errors[k] ? { borderColor: "var(--bad)", boxShadow: "0 0 0 1px var(--bad)", background: "var(--bad-bg)" } : {}) });
+  const Err = ({ k }: { k: string }) => (errors[k] ? <span id={`e-${k}`} role="alert" style={{ display: "block", color: "var(--bad)", fontSize: 12.5, marginTop: 4 }}>{errors[k]}</span> : null);
   const custom = f.theme === "custom";
   const hexOk = [f.cBg, f.cFg, f.cCta, f.cClose].every((h) => normHex(h));
   const th = resolveTheme(f.theme, custom && hexOk ? { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } : undefined);
@@ -74,10 +98,10 @@ export default function AnnouncementsClient() {
   const endMsT = f.tEnd ? Date.parse(toUtc(f.tEnd)) : NaN;
   const liveEnd = Number.isFinite(endMsT) && endMsT > nowMs;
   const isCard = f.layout === "card";
-  const pTimer: PublicTimer | undefined = f.tOn ? { style: (f.tStyle as TimerStyle), endAt: new Date(liveEnd ? endMsT : sampleEnd).toISOString(), endMode: f.tMode === "message" ? "message" : "hide", ...(f.tMode === "message" ? { endMessage: f.tMsg || "Your end message", ...(f.tLinkText ? { endLinkText: f.tLinkText, endLinkUrl: f.tLinkUrl || "#" } : {}) } : {}), expired: false, serverNow: 0 } : undefined;
+  const pTimer: PublicTimer | undefined = f.tOn ? { style: (f.tStyle as TimerStyle), endAt: new Date(liveEnd ? endMsT : sampleEnd).toISOString(), endMode: f.tMode === "message" ? "message" : "hide", ...(f.tMode === "message" ? { endMessage: sanitizeRich(f.tMsg) || "Your end message", ...(f.tLinkText ? { endLinkText: f.tLinkText, endLinkUrl: f.tLinkUrl || "#" } : {}) } : {}), expired: false, serverNow: 0 } : undefined;
   const hideEnd = !!pTimer && endPrev && f.tMode === "hide";
   const previewAnn: PublicAnnouncement | null = hideEnd ? null : {
-    id: "preview", layout: f.layout as Announcement["layout"], message: f.message || "Your message", ...(isCard ? { title: f.title || "Title" } : {}),
+    id: "preview", layout: f.layout as Announcement["layout"], message: sanitizeRich(f.message) || "Your message", ...(isCard ? { title: f.title || "Title" } : {}),
     linkText: f.linkText && f.linkUrl ? f.linkText : "", linkUrl: f.linkText && f.linkUrl ? f.linkUrl : "",
     theme: ((custom && !hexOk) ? "surface" : f.theme) as ThemeKey, ...(custom && hexOk ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}),
     shadow: f.shadow as never, ...(normHex(f.shadowColor) ? { shadowColor: normHex(f.shadowColor) as string } : {}),
@@ -150,62 +174,72 @@ export default function AnnouncementsClient() {
 
       <div style={box}>
         <strong>{editing ? `Edit: ${editing}` : "New announcement"}</strong>
+        {Object.keys(errors).length > 0 && (<div id="ann-banner" data-testid="error-banner" role="alert" tabIndex={-1} style={{ marginTop: 12, padding: "12px 14px", border: "1px solid var(--bad)", background: "var(--bad-bg)", color: "var(--bad)", borderRadius: "var(--r-md)" }}>
+            <strong>Couldn&apos;t save: {msg}</strong>
+            <ul style={{ margin: "6px 0 0 18px", fontSize: 13 }}>
+              {[...ERROR_ORDER.filter((k) => errors[k]), ...Object.keys(errors).filter((k) => !ERROR_ORDER.includes(k))].map((k) => (
+                <li key={k}>{document.getElementById(`f-${k}`) ? <a href={`#f-${k}`} onClick={(e) => { e.preventDefault(); const el = document.getElementById(`f-${k}`); el?.scrollIntoView({ block: "center", behavior: "smooth" }); el?.focus({ preventScroll: true }); }} style={{ color: "var(--bad)", textDecoration: "underline" }}>{FIELD_LABEL[k] ?? k}</a> : <b>{FIELD_LABEL[k] ?? k}</b>}: {errors[k]}</li>
+              ))}
+            </ul>
+          </div>)}
         {panel}
         <div className="ann-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
-          <label style={lab}>Id (lowercase, dashes)<input style={inp} value={f.id} disabled={!!editing} onChange={(e) => set("id", e.target.value)} /></label>
-          <label style={lab}>Name<input style={inp} value={f.name} onChange={(e) => set("name", e.target.value)} /></label>
-          <label style={lab}>Layout<select style={inp} value={f.layout} onChange={(e) => set("layout", e.target.value)}>{LAYOUTS.map((l) => <option key={l} value={l}>{l === "top" ? "Top bar" : l === "bottom" ? "Bottom bar" : "Slide-in card"}</option>)}</select></label>
-          <label style={lab}>Status<select style={inp} value={f.status} onChange={(e) => set("status", e.target.value)}><option>draft</option><option>scheduled</option><option>live</option><option>ended</option></select></label>
-          {f.layout === "card" && <label style={{ ...lab, gridColumn: "1 / -1" }}>Title (max 60)<input style={inp} maxLength={60} value={f.title} onChange={(e) => set("title", e.target.value)} /></label>}
-          <label style={{ ...lab, gridColumn: "1 / -1" }}>Message (max {f.layout === "card" ? 140 : 120})<input style={inp} maxLength={f.layout === "card" ? 140 : 120} value={f.message} onChange={(e) => set("message", e.target.value)} /></label>
-          <label style={lab}>Link text<input style={inp} maxLength={40} value={f.linkText} onChange={(e) => set("linkText", e.target.value)} /></label>
-          <label style={lab}>Link URL (/path, https, tel:, mailto:)<input style={inp} value={f.linkUrl} onChange={(e) => set("linkUrl", e.target.value)} /></label>
-          <label style={lab}>Theme<select style={inp} value={f.theme} onChange={(e) => set("theme", e.target.value)}>
+          <label style={lab}>Id (lowercase, dashes)<input {...ip("id")} style={inpS("id")} value={f.id} disabled={!!editing} onChange={(e) => set("id", e.target.value)} /><Err k="id" /></label>
+          <label style={lab}>Name<input {...ip("name")} style={inpS("name")} value={f.name} onChange={(e) => set("name", e.target.value)} /><Err k="name" /></label>
+          <label style={lab}>Layout<select {...ip("layout")} style={inpS("layout")} value={f.layout} onChange={(e) => set("layout", e.target.value)}>{LAYOUTS.map((l) => <option key={l} value={l}>{l === "top" ? "Top bar" : l === "bottom" ? "Bottom bar" : "Slide-in card"}</option>)}</select><Err k="layout" /></label>
+          <label style={lab}>Status<select {...ip("status")} style={inpS("status")} value={f.status} onChange={(e) => set("status", e.target.value)}><option>draft</option><option>scheduled</option><option>live</option><option>ended</option></select><Err k="status" /></label>
+          {f.layout === "card" && <label style={{ ...lab, gridColumn: "1 / -1" }}>Title (max 60)<input {...ip("title")} style={inpS("title")} maxLength={60} value={f.title} onChange={(e) => set("title", e.target.value)} /><Err k="title" /></label>}
+          <div style={{ ...lab, gridColumn: "1 / -1" }}><span id="l-message">Message (max {f.layout === "card" ? 140 : 120} visible characters)</span><RichEditor id="f-message" testId="rt-message" label="Message" value={f.message} onChange={(h) => set("message", h)} max={f.layout === "card" ? 140 : 120} invalid={!!errors.message} describedBy={errors.message ? "e-message" : undefined} /><Err k="message" /></div>
+          <label style={lab}>Link text<input {...ip("linkText")} style={inpS("linkText")} maxLength={40} value={f.linkText} onChange={(e) => set("linkText", e.target.value)} /><Err k="linkText" /></label>
+          <label style={lab}>Link URL (/path, https, tel:, mailto:)<input {...ip("linkUrl")} style={inpS("linkUrl")} value={f.linkUrl} onChange={(e) => set("linkUrl", e.target.value)} /><Err k="linkUrl" /></label>
+          <label style={lab}>Theme<select {...ip("theme")} style={inpS("theme")} value={f.theme} onChange={(e) => pickTheme(e.target.value)}>
             <optgroup label="Brand (blends with the site)">{Object.entries(THEMES).filter(([, v]) => v.group === "brand").map(([k, v]) => <option key={k} value={k}>{v.label} ({contrast(v.fg, v.bg).toFixed(1)}:1)</option>)}</optgroup>
             <optgroup label="Alert (stands out from the site)">{Object.entries(THEMES).filter(([, v]) => v.group === "alert").map(([k, v]) => <option key={k} value={k}>{v.label} ({contrast(v.fg, v.bg).toFixed(1)}:1)</option>)}</optgroup>
             <optgroup label="Your own"><option value="custom">Custom colours</option></optgroup>
-          </select></label>
-          <label style={lab}>Drop shadow<select data-testid="shadow-select" style={inp} value={f.shadow} onChange={(e) => set("shadow", e.target.value)}>{SHADOWS.map((x) => <option key={x} value={x}>{x === "none" ? "None" : x === "soft" ? "Soft" : "Strong"}</option>)}</select></label>
-          {f.shadow !== "none" && <label style={lab}>Shadow colour (optional, hex, blank = black)<input data-testid="hex-shadow" style={{ ...inp, borderColor: !f.shadowColor || normHex(f.shadowColor) ? "var(--n-300)" : "var(--bad)" }} maxLength={7} value={f.shadowColor} placeholder="#000000" onChange={(e) => set("shadowColor", e.target.value)} /></label>}
-          <label style={lab}>Device<select style={inp} value={f.device} onChange={(e) => set("device", e.target.value)}>{DEVICES.map((d) => <option key={d}>{d}</option>)}</select></label>
-          <label style={lab}>Starts (Brisbane time)<input style={inp} type="datetime-local" value={f.startsAt} onChange={(e) => set("startsAt", e.target.value)} /></label>
-          <label style={lab}>Ends (Brisbane time)<input style={inp} type="datetime-local" value={f.endsAt} onChange={(e) => set("endsAt", e.target.value)} /></label>
+          </select><Err k="theme" /></label>
+          <label style={lab}>Drop shadow<select {...ip("shadow")} data-testid="shadow-select" style={inpS("shadow")} value={f.shadow} onChange={(e) => set("shadow", e.target.value)}>{SHADOWS.map((x) => <option key={x} value={x}>{x === "none" ? "None" : x === "soft" ? "Soft" : "Strong"}</option>)}</select><Err k="shadow" /></label>
+          {f.shadow !== "none" && <label style={lab}>Shadow colour (optional, hex, blank = black)<input {...ip("shadowColor")} data-testid="hex-shadow" style={{ ...inpS("shadowColor"), borderColor: !f.shadowColor || normHex(f.shadowColor) ? "var(--n-300)" : "var(--bad)" }} maxLength={7} value={f.shadowColor} placeholder="#000000" onChange={(e) => set("shadowColor", e.target.value)} /><Err k="shadowColor" /></label>}
+          <label style={lab}>Device<select {...ip("device")} style={inpS("device")} value={f.device} onChange={(e) => set("device", e.target.value)}>{DEVICES.map((d) => <option key={d}>{d}</option>)}</select><Err k="device" /></label>
+          <label style={lab}>Starts (Brisbane time)<input {...ip("startsAt")} style={inpS("startsAt")} type="datetime-local" value={f.startsAt} onChange={(e) => set("startsAt", e.target.value)} /><Err k="startsAt" /></label>
+          <label style={lab}>Ends (Brisbane time)<input {...ip("endsAt")} style={inpS("endsAt")} type="datetime-local" value={f.endsAt} onChange={(e) => set("endsAt", e.target.value)} /><Err k="endsAt" /></label>
           <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #3b3a6b", paddingTop: 12 }}>
             <label style={{ ...lab, marginBottom: 4 }}><input data-testid="timer-on" type="checkbox" checked={f.tOn} onChange={(e) => set("tOn", e.target.checked)} /> Countdown timer (fixed deadline)</label>
             <div style={{ fontSize: 12, color: "var(--n-500)" }}>Everyone sees the same real deadline. Per-visitor or restarting timers are not offered (misleading offers can breach Australian consumer law).</div>
           </div>
           {f.tOn && (<>
-            <label style={lab}>Timer ends (Brisbane time, stored as UTC)<input data-testid="timer-end" style={inp} type="datetime-local" value={f.tEnd} onChange={(e) => set("tEnd", e.target.value)} /></label>
-            <label style={lab}>Timer style<select data-testid="timer-style" style={inp} value={f.tStyle} onChange={(e) => set("tStyle", e.target.value)}>{TIMER_STYLES.map((x) => <option key={x} value={x}>{x === "text" ? "Plain text line" : x === "boxed" ? "Boxed digits" : x === "flip" ? "Flip clock" : "Compact pill"}</option>)}</select></label>
+            <label style={lab}>Timer ends (Brisbane time, stored as UTC)<input {...ip("tEnd")} data-testid="timer-end" style={inpS("tEnd")} type="datetime-local" value={f.tEnd} onChange={(e) => set("tEnd", e.target.value)} /><Err k="tEnd" /></label>
+            <label style={lab}>Timer style<select {...ip("tStyle")} data-testid="timer-style" style={inpS("tStyle")} value={f.tStyle} onChange={(e) => set("tStyle", e.target.value)}>{TIMER_STYLES.map((x) => <option key={x} value={x}>{x === "text" ? "Plain text line" : x === "boxed" ? "Boxed digits" : x === "flip" ? "Flip clock" : "Compact pill"}</option>)}</select><Err k="tStyle" /></label>
             <label style={{ ...lab, gridColumn: "1 / -1" }}>When the timer ends
-              <select data-testid="timer-mode" style={inp} value={f.tMode} onChange={(e) => set("tMode", e.target.value)}><option value="hide">Hide the bar</option><option value="message">Swap to an end message</option></select>
+              <select {...ip("tMode")} data-testid="timer-mode" style={inpS("tMode")} value={f.tMode} onChange={(e) => set("tMode", e.target.value)}><option value="hide">Hide the bar</option><option value="message">Swap to an end message</option></select>
+              <Err k="tMode" />
             </label>
             {f.tMode === "message" && (<>
-              <label style={{ ...lab, gridColumn: "1 / -1" }}>End message (max {f.layout === "card" ? LIMITS.cardBody : LIMITS.message})<input data-testid="timer-msg" style={inp} maxLength={f.layout === "card" ? LIMITS.cardBody : LIMITS.message} value={f.tMsg} onChange={(e) => set("tMsg", e.target.value)} /></label>
-              <label style={lab}>End button text (blank = no button)<input data-testid="timer-link-text" style={inp} maxLength={40} value={f.tLinkText} onChange={(e) => set("tLinkText", e.target.value)} /></label>
-              <label style={lab}>End button URL<input data-testid="timer-link-url" style={inp} value={f.tLinkUrl} onChange={(e) => set("tLinkUrl", e.target.value)} /></label>
+              <div style={{ ...lab, gridColumn: "1 / -1" }}><span>End message (max {f.layout === "card" ? LIMITS.cardBody : LIMITS.message} visible characters)</span><RichEditor id="f-tMsg" testId="rt-tmsg" label="End message" value={f.tMsg} onChange={(h) => set("tMsg", h)} max={f.layout === "card" ? LIMITS.cardBody : LIMITS.message} invalid={!!errors.tMsg} describedBy={errors.tMsg ? "e-tMsg" : undefined} /><Err k="tMsg" /></div>
+              <label style={lab}>End button text (blank = no button)<input {...ip("tLinkText")} data-testid="timer-link-text" style={inpS("tLinkText")} maxLength={40} value={f.tLinkText} onChange={(e) => set("tLinkText", e.target.value)} /><Err k="tLinkText" /></label>
+              <label style={lab}>End button URL<input {...ip("tLinkUrl")} data-testid="timer-link-url" style={inpS("tLinkUrl")} value={f.tLinkUrl} onChange={(e) => set("tLinkUrl", e.target.value)} /><Err k="tLinkUrl" /></label>
               <label style={{ ...lab, gridColumn: "1 / -1" }}><input data-testid="timer-auto" type="checkbox" checked={f.tAuto} onChange={(e) => set("tAuto", e.target.checked)} /> Auto-end the announcement after the end message has shown for{" "}
-                <input style={{ ...inp, width: 80, display: "inline-block", marginTop: 0 }} type="number" min={1} max={720} value={f.tHours} disabled={!f.tAuto} onChange={(e) => set("tHours", Number(e.target.value))} /> hours</label>
+                <input {...ip("tHours")} style={{ ...inpS("tHours"), width: 80, display: "inline-block", marginTop: 0 }} type="number" min={1} max={720} value={f.tHours} disabled={!f.tAuto} onChange={(e) => set("tHours", Number(e.target.value))} /> hours<Err k="tHours" /><Err k="tHours" /></label>
             </>)}
           </>)}
-          <label style={lab}>Only on these pages (one per line, * wildcard; blank = all)<textarea style={inp} rows={3} value={f.include} onChange={(e) => set("include", e.target.value)} /></label>
-          <label style={lab}>Never on these pages (checkout, admin, privacy, terms, unsubscribe are always excluded)<textarea style={inp} rows={3} value={f.exclude} onChange={(e) => set("exclude", e.target.value)} /></label>
-          <label style={lab}>Re-show<select style={inp} value={f.reshow} onChange={(e) => set("reshow", e.target.value)}>{RESHOW.map((d) => <option key={d} value={d}>{d === "days" ? "After N days" : d === "never" ? "Never again for this version" : "Every new session"}</option>)}</select></label>
-          <label style={lab}>Days (if after N days)<input style={inp} type="number" min={1} value={f.reshowDays} onChange={(e) => set("reshowDays", Number(e.target.value))} /></label>
-          {f.layout === "card" && <><label style={lab}>Show delay (seconds)<input style={inp} type="number" min={0} value={f.delaySec} onChange={(e) => set("delaySec", Number(e.target.value))} /></label>
-          <label style={lab}>Or scroll depth (%)<input style={inp} type="number" min={0} max={100} value={f.scrollPct} onChange={(e) => set("scrollPct", Number(e.target.value))} /></label></>}
+          <label style={lab}>Only on these pages (one per line, * wildcard; blank = all)<textarea {...ip("include")} style={inpS("include")} rows={3} value={f.include} onChange={(e) => set("include", e.target.value)} /><Err k="include" /></label>
+          <label style={lab}>Never on these pages (checkout, admin, privacy, terms, unsubscribe are always excluded)<textarea {...ip("exclude")} style={inpS("exclude")} rows={3} value={f.exclude} onChange={(e) => set("exclude", e.target.value)} /><Err k="exclude" /></label>
+          <label style={lab}>Re-show<select {...ip("reshow")} style={inpS("reshow")} value={f.reshow} onChange={(e) => set("reshow", e.target.value)}>{RESHOW.map((d) => <option key={d} value={d}>{d === "days" ? "After N days" : d === "never" ? "Never again for this version" : "Every new session"}</option>)}</select><Err k="reshow" /></label>
+          <label style={lab}>Days (if after N days)<input {...ip("reshowDays")} style={inpS("reshowDays")} type="number" min={1} value={f.reshowDays} onChange={(e) => set("reshowDays", Number(e.target.value))} /><Err k="reshowDays" /></label>
+          {f.layout === "card" && <><label style={lab}>Show delay (seconds)<input {...ip("delaySec")} style={inpS("delaySec")} type="number" min={0} value={f.delaySec} onChange={(e) => set("delaySec", Number(e.target.value))} /><Err k="delaySec" /></label>
+          <label style={lab}>Or scroll depth (%)<input {...ip("scrollPct")} style={inpS("scrollPct")} type="number" min={0} max={100} value={f.scrollPct} onChange={(e) => set("scrollPct", Number(e.target.value))} /><Err k="scrollPct" /></label></>}
         </div>
-        {custom && (
-          <div data-testid="custom-colours" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, margin: "8px 0" }}>
-            {([["cBg", "Background"], ["cFg", "Text"], ["cCta", "Link / button"], ["cClose", "Close icon"]] as const).map(([k, l]) => {
+        <div style={{ margin: "12px 0 4px", fontWeight: 600, fontSize: 13.5 }}>Colours <span style={{ fontWeight: 400, color: "var(--n-500)", fontSize: 12.5 }}>Pick a preset above to fill these, or type your own hex. Editing any colour switches to Custom.</span></div>
+        {(
+          <div data-testid="custom-colours" className="ann-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, margin: "8px 0" }}>
+            {([["cBg", "Background colour"], ["cFg", "Text colour"], ["cCta", "Button colour"], ["cClose", "Close icon colour"]] as const).map(([k, l]) => {
               const valid = !!normHex(f[k]);
               return (
-                <label key={k} style={lab}>{l}
+                <label key={k} style={k === "cBg" ? { ...lab, gridColumn: "1 / -1", fontWeight: 600, fontSize: 14, color: "var(--n-900)", padding: 12, border: "1px solid var(--n-300)", borderRadius: "var(--r-md)", background: "var(--n-25)" } : lab}>{l}
                   <span style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
-                    <input type="color" aria-label={`${l} colour picker`} value={normHex(f[k]) ?? "#000000"} onChange={(e) => set(k, e.target.value)} style={{ width: 44, height: 36, padding: 0, border: "1px solid #3b3a6b", background: "none" }} />
-                    <input aria-label={`${l} hex`} data-testid={`hex-${k}`} style={{ ...inp, marginTop: 0, borderColor: valid ? "var(--n-300)" : "var(--bad)" }} value={f[k]} maxLength={7} onChange={(e) => set(k, e.target.value)} placeholder="#rrggbb" />
+                    <input type="color" aria-label={`${l} colour picker`} value={normHex(f[k]) ?? "#000000"} onChange={(e) => set(k, e.target.value)} style={{ width: k === "cBg" ? 64 : 44, height: k === "cBg" ? 44 : 36, padding: 0, border: "1px solid #3b3a6b", background: "none" }} />
+                    <input {...ip(k)} aria-label={`${l} hex`} data-testid={`hex-${k}`} style={{ ...inp, marginTop: 0, borderColor: valid && !errors[k] ? "var(--n-300)" : "var(--bad)" }} value={f[k]} maxLength={7} onChange={(e) => set(k, e.target.value)} placeholder="#rrggbb" />
                   </span>
-                  {!valid && <span style={{ color: "var(--bad)" }}>Enter a hex colour like #dc2626</span>}
+                  {!valid && !errors[k] && <span style={{ color: "var(--bad)" }}>Enter a hex colour like #dc2626</span>}<Err k={k} />
                 </label>
               );
             })}
@@ -224,8 +258,8 @@ export default function AnnouncementsClient() {
             </div>
           ))}
         </div>
-        <button className="btn pri" onClick={save} disabled={blocked}>{editing ? "Save changes" : "Create"}</button>{editing && <button className="btn sm" style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
-        {msg && <p role="status" style={{ marginTop: 8 }}>{msg}</p>}
+        <button className="btn pri" onClick={save} disabled={busy}>{editing ? "Save changes" : "Create"}</button>{editing && <button className="btn sm" style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
+        {Object.keys(errors).length > 0 ? <p style={{ marginTop: 8, color: "var(--bad)", fontSize: 13 }}>Not saved. {Object.keys(errors).length} field{Object.keys(errors).length > 1 ? "s" : ""} need attention (highlighted above).</p> : msg ? <p role="status" style={{ marginTop: 8 }}>{msg}</p> : null}
       </div>
 
       <h2 style={{ fontSize: 18 }}>Your announcements</h2>
@@ -233,8 +267,8 @@ export default function AnnouncementsClient() {
       {items.map((a) => (
         <div key={a.id} style={box}>
           <strong>{a.name}</strong> <span style={{ color: "var(--n-500)" }}>({a.id}, {a.layout}, v{a.version}) status: {a.status}</span>
-          <p style={{ margin: "8px 0" }}>{a.message}</p>
-          {a.timer && <p style={{ margin: "4px 0", fontSize: 13, color: "var(--n-500)" }}>Timer ({a.timer.style}) ends {toBrisbane(a.timer.endAt).replace("T", " ")} Brisbane. At the end: {a.timer.endMode === "hide" ? "hide the bar" : `show "${a.timer.endMessage}"${a.timer.autoEnd ? `, then auto-end after ${a.timer.endShowHours}h` : ""}`}.</p>}
+          <p style={{ margin: "8px 0" }}>{visibleText(a.message)}</p>
+          {a.timer && <p style={{ margin: "4px 0", fontSize: 13, color: "var(--n-500)" }}>Timer ({a.timer.style}) ends {toBrisbane(a.timer.endAt).replace("T", " ")} Brisbane. At the end: {a.timer.endMode === "hide" ? "hide the bar" : `show "${visibleText(a.timer.endMessage ?? "")}"${a.timer.autoEnd ? `, then auto-end after ${a.timer.endShowHours}h` : ""}`}.</p>}
           <button className="btn sm" onClick={() => edit(a)}>Edit</button>{" "}
           {a.status !== "live" && a.status !== "scheduled" && <button className="btn sm" onClick={() => { if (confirm("Delete this announcement?")) void post({ action: "delete", id: a.id }); }}>Delete</button>}
           <div style={{ marginTop: 12, fontSize: 13 }}>
