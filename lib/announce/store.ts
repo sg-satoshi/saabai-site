@@ -51,25 +51,21 @@ export async function saveAnnouncement(site: string, input: Input): Promise<Save
   const c = validateAll({ ...input, siteKey: site }, prev);
   const fields: FieldErrors = c.ok ? {} : { ...c.fields };
   if (!prev && c.ok && all.some((x) => x.id === c.value.id)) fields.id = "That id is already used. Pick a different one.";
+  if (c.ok && c.value.requiresClickOf && !all.some((x) => x.id === c.value.requiresClickOf)) fields.requiresClickOf = "That announcement does not exist. Pick one of your other announcements.";
   if (!c.ok || Object.keys(fields).length) {
-    // One live announcement per site at a time (one announcement per page view). Checked here too so it is reported alongside the other faults.
-    const st = (input.status ?? prev?.status) as string | undefined;
-    const idv = (prev?.id ?? String(input.id ?? "")).toLowerCase();
-    const other = all.find((x) => x.id !== idv && (x.status === "live" || x.status === "scheduled"));
-    if (!c.ok && (st === "live" || st === "scheduled") && other && !fields.status) fields.status = `"${other.name}" is already live or scheduled. End it first (one announcement at a time).`;
     const n = Object.keys(fields).length;
     return { ok: false, error: n === 1 ? Object.values(fields)[0] : `${n} things need fixing before this can be saved.`, status: fields.id && n === 1 ? 409 : 400, fields };
-  }
-  if (c.value.status === "live" || c.value.status === "scheduled") {
-    const other = all.find((x) => x.id !== c.value.id && (x.status === "live" || x.status === "scheduled"));
-    if (other) { const m = `"${other.name}" is already live or scheduled. End it first (one announcement at a time).`; return { ok: false, error: m, status: 409, fields: { status: m } }; }
   }
   try { await writeAnnouncement(c.value); } catch { return { ok: false, error: "Couldn't save (Redis unavailable). Nothing was changed. Try again.", status: 502, fields: { form: "Couldn't save (Redis unavailable). Nothing was changed. Try again." } }; }
   return { ok: true, value: c.value };
 }
 
-/** The one announcement that may show now, or null. */
+/** Every announcement that may show now, highest priority first (ties: most recently edited). The browser picks one per page. */
+export async function liveAnnouncements(site: string, now = new Date()): Promise<Announcement[]> {
+  if (!(await announcementsEnabled(site))) return [];
+  return (await listAnnouncements(site)).filter((a) => isLiveNow(a, now)).sort((x, y) => (y.priority ?? 0) - (x.priority ?? 0) || y.updatedAt.localeCompare(x.updatedAt));
+}
+/** The top live announcement, or null. */
 export async function liveAnnouncement(site: string, now = new Date()): Promise<Announcement | null> {
-  if (!(await announcementsEnabled(site))) return null;
-  return (await listAnnouncements(site)).find((a) => isLiveNow(a, now)) ?? null;
+  return (await liveAnnouncements(site, now))[0] ?? null;
 }
