@@ -6,6 +6,8 @@ import ButtonFeedback from "./components/ui/ButtonFeedback";
 import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import ExpOverlay from "./components/exp/ExpOverlay";
+import { ANTI_FLICKER_SCRIPT } from "@/lib/exp/overlay";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,7 +107,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-AU">
+    <html lang="en-AU" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: ANTI_FLICKER_SCRIPT }} /></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -115,6 +118,7 @@ export default function RootLayout({
         <ConditionalWidgets />
         <EmailCapturePopup />
         <GoogleAnalytics />
+        <ExpOverlay />
       </body>
     </html>
   );

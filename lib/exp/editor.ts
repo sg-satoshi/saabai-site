@@ -179,9 +179,11 @@ export function requestNote(r: WrapRequest): string {
 /** Why a wrap was not applied (shown in the PR). */
 export type WrapOutcome = { wrapped: true; file: string } | { wrapped: false; reason: string };
 
-export const prBody = (r: WrapRequest, w?: WrapOutcome) => {
+export const prBody = (r: WrapRequest, w?: WrapOutcome, hybrid = false) => {
   const head = `Draft slot request from the visual editor.\n\n- Slot: \`${r.slot}\` (${r.kind}) on \`${r.path}\`\n- Current copy: ${JSON.stringify(r.control)}\n\n`;
-  const tail = "No test is running and visitors see no change. A test only starts when a human presses Start in the dashboard.";
+  const tail = hybrid
+    ? "This test is ALREADY RUNNING through the runtime overlay (same experiment id, same assignments, same results). Merging this wraps the element natively; the overlay then steps aside automatically, so visitors see no change and no data resets. Never auto-merge: check the diff and the preview first."
+    : "No test is running and visitors see no change. A test only starts when a human presses Start in the dashboard.";
   if (w?.wrapped) return `${head}**Wrapped automatically** in \`${w.file}\` with \`ExpText\` (control text unchanged). Check the diff and the Vercel preview before merging.\n\n${tail}`;
   return `${head}**Not wrapped automatically.** ${w?.reason ?? "No wrap was attempted."} The element still needs wrapping in \`ExpText\`, see docs/exp-slot-requests. Do not merge until wrapped and checked.\n\n${tail}`;
 };

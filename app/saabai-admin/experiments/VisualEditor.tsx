@@ -8,11 +8,12 @@ import { api, CopyView, EditForm, nf, pct, tone, vtone, type Detail } from "./Ex
 import { isLegalPath, isProtectedText, kindForElement, suggestSlot, type ElementInfo } from "../../../lib/exp/editor";
 import { captureOrig, imagePathOf, previewInto, sectionOf } from "../../../lib/exp/editor-dom";
 import { KIND_RULES, type SlotKind } from "../../../lib/exp/core";
+import { findTarget, stableSelector } from "../../../lib/exp/overlay-dom";
 import "./experiments.css";
 
 type Picked =
   | { type: "slot"; slotName: string; expId: string }
-  | { type: "candidate"; tag: string; kind: SlotKind; text: string; emphasis: string; section: string };
+  | { type: "candidate"; tag: string; kind: SlotKind; text: string; emphasis: string; section: string; selector: string | null };
 
 const STYLE = `
 .sb-edit [data-exp-slot]{outline:2px dashed #0d9488 !important;outline-offset:4px;cursor:pointer !important}
@@ -130,7 +131,7 @@ export default function VisualEditor() {
       const kind = kindForElement(describe(t))!;
       selKind.current = kind;
       const c = copyOf(t, kind);
-      setPicked({ type: "candidate", tag: t.tagName.toLowerCase(), kind, text: c.text, emphasis: c.emphasis, section: sectionOf(t) });
+      setPicked({ type: "candidate", tag: t.tagName.toLowerCase(), kind, text: c.text, emphasis: c.emphasis, section: sectionOf(t), selector: stableSelector(t) });
     }, true);
   }, []);
 
@@ -140,7 +141,19 @@ export default function VisualEditor() {
     if (selEl.current) previewInto(selEl.current, orig.current, kind, v);
   }, []);
 
-  const onLoad = () => { clearSel(); setPicked(null); wire(); };
+  const onLoad = () => {
+    clearSel(); setPicked(null); wire();
+    // Show overlay tests (no code wrapper) as test elements too, so clicking one opens its variants.
+    const doc = frame.current?.contentDocument; const here = pathRef.current;
+    if (!doc) return;
+    fetch("/api/admin/experiments").then((r) => r.json()).then((d: { items?: { id: string; slot: string; path: string; kind?: string; overlay?: { sel: string; fp: string; tag: string } }[] }) => {
+      for (const it of d.items ?? []) {
+        if (!it.overlay || it.path !== here || doc.querySelector(`[data-exp-id="${it.id}"]`)) continue;
+        const el = findTarget(doc, { s: it.overlay.sel, f: it.overlay.fp, t: it.overlay.tag });
+        if (el) { el.setAttribute("data-exp-slot", it.slot); el.setAttribute("data-exp-id", it.id); el.setAttribute("data-exp-kind", it.kind ?? "headline"); }
+      }
+    }).catch(() => { /* editor still works without the highlights */ });
+  };
   const src = path.startsWith("/") && !path.startsWith("//") ? path : "/";
 
   return (
@@ -169,7 +182,7 @@ export default function VisualEditor() {
         <aside className="xp-ve-panel">
           {!picked && <Card><CardBody><p className="xp-note">{editing ? "Hover the page. Teal dashed outlines are existing test elements, grey dotted ones are headings, text, buttons, links, prices, images and form hints you could turn into a test. Click one." : "Edit mode is off, so the page behaves normally. Turn it on to pick an element."}</p></CardBody></Card>}
           {picked?.type === "slot" && <SlotPanel key={picked.expId} expId={picked.expId} onPreview={preview} onClose={() => { preview("headline", null); clearSel(); setPicked(null); }} />}
-          {picked?.type === "candidate" && <CandidatePanel key={picked.text} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} />}
+          {picked?.type === "candidate" && <CandidatePanel key={picked.text} p={picked} path={path} onClose={() => { clearSel(); setPicked(null); }} onStarted={(expId, slotName) => setPicked({ type: "slot", slotName, expId })} />}
         </aside>
       </div>
     </div>
@@ -207,8 +220,10 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
         <div className="xp-nums" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
           <div>Views<b>{nf(d.totals.views)}</b></div><div>Conversions<b>{nf(d.totals.conversions)}</b></div><div>Rate<b>{pct(d.totals.rate)}</b></div>
         </div>
+        {e.overlay && <p className="xp-note">Live without a code change. {e.wrapPr?.state === "open" && e.wrapPr.url ? <>Native wrap: <a href={e.wrapPr.url} target="_blank" rel="noreferrer">draft PR #{e.wrapPr.number}</a> waiting for your review. When merged, the test switches over with no change for visitors or results.</> : e.wrapPr?.state === "pending" ? "Opening a draft code change in the background…" : e.wrapPr?.state === "failed" ? "The background code change couldn't be opened (the test still works)." : e.wrapPr?.state === "manual" ? "No code change was opened (no GitHub access). The test still works." : ""}</p>}
         <div className="xp-acts" style={{ margin: "10px 0" }}>
           {e.status === "running" && <Button size="sm" disabled={busy} onClick={() => act({ type: "set_status", status: "paused" }, "Test paused. Everyone sees the control.")}>Pause test</Button>}
+          {e.status === "draft" && <Button size="sm" variant="acc" disabled={busy || e.variants.filter((x) => x.active).length < 2} onClick={() => act({ type: "set_status", status: "running" }, "Test started.")}>Start test</Button>}
           {e.status === "paused" && <Button size="sm" variant="acc" disabled={busy} onClick={() => act({ type: "set_status", status: "running" }, "Test resumed.")}>Resume test</Button>}
           <Button size="sm" variant="gh" onClick={() => onPreview(kind, null)}>Show control in page</Button>
           <a className="xp-editlink" href={`/saabai-admin/experiments?id=${e.id}`}>Full results</a>
@@ -242,12 +257,27 @@ function SlotPanel({ expId, onPreview, onClose }: { expId: string; onPreview: (k
   );
 }
 
-function CandidatePanel({ p, path, onClose }: { p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void }) {
+function CandidatePanel({ p, path, onClose, onStarted }: { p: Extract<Picked, { type: "candidate" }>; path: string; onClose: () => void; onStarted: (expId: string, slot: string) => void }) {
   const [name, setName] = useState(`${KIND_LABEL[p.kind].charAt(0).toUpperCase() + KIND_LABEL[p.kind].slice(1)}: ${p.text.split("/").pop()!.slice(0, 40)}`.slice(0, 80));
-  const [slot, setSlot] = useState(suggestSlot(path, p.section, p.kind));
+  const [slot] = useState(suggestSlot(path, p.section, p.kind));
   const [busy, setBusy] = useState(false);
   const [fail, setFail] = useState("");
   const [res, setRes] = useState<{ mode: string; prUrl?: string; prNumber?: number; snippet?: string; message?: string } | null>(null);
+  const [manual, setManual] = useState(!p.selector);
+  const bad = /[\u2013\u2014]/.test(name);
+
+  async function start(text: string, emphasis: string) {
+    if (busy) return;
+    setBusy(true); setFail("");
+    try {
+      const r = await api("/api/admin/experiments/overlay", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ path, slot, kind: p.kind, name, tag: p.tag, section: p.section, selector: p.selector, control: { text: p.text, emphasis: p.emphasis }, variant: { text, emphasis } }) });
+      notify.success("Test started. Visitors start seeing it within about a minute.");
+      onStarted(r.expId, r.slot);
+    } catch (e) {
+      const m = (e as Error).message; setFail(m); notify.error(m);
+      if (/already a test/i.test(m)) setManual(false);
+    } finally { setBusy(false); }
+  }
   async function request() {
     if (busy || res) return;
     setBusy(true); setFail("");
@@ -256,18 +286,26 @@ function CandidatePanel({ p, path, onClose }: { p: Extract<Picked, { type: "cand
       setRes(r); notify.success(r.mode === "pr" ? "Draft pull request opened. Nothing is live." : "Request ready.");
     } catch (e) { setFail((e as Error).message); notify.error((e as Error).message); } finally { setBusy(false); }
   }
-  const bad = /[\u2013\u2014]/.test(name);
   return (
     <Card>
       <CardBody>
         <div className="xp-ve-head"><div><b>Not a test yet</b><div className="xp-note">{p.tag} on {path}</div></div><button className="xp-back" style={{ margin: 0 }} onClick={onClose}>Close</button></div>
         <div className="xp-prev" style={{ margin: "10px 0" }}><CopyView kind={p.kind} v={{ text: p.text, emphasis: p.emphasis }} /></div>
-        <p className="xp-note">This is a {KIND_LABEL[p.kind]}, so it can become a test.{p.kind === "price" ? " Only the displayed price words change. What a customer is actually charged is never touched, so only test wording you can honour." : ""}{p.kind === "image" ? " Variant images must already be on the site (a file in the public folder), and should be the same shape as the original." : ""}{p.kind === "link" ? " Only the link words change, never where it goes." : ""} It has to be wrapped in the site code first so visitors get the right words straight away, with no flicker. This opens a draft pull request for you to look at. It never merges and never starts a test.</p>
-        {!res && (
+        <p className="xp-note">This is a {KIND_LABEL[p.kind]}, so it can become a test right now.{p.kind === "price" ? " Only the displayed price words change. What a customer is actually charged is never touched, so only test wording you can honour." : ""}{p.kind === "image" ? " Variant images must already be on the site (a file in the public folder), and should be the same shape as the original." : ""}{p.kind === "link" ? " Only the link words change, never where it goes." : ""}</p>
+        {!manual && (
           <div className="xp-form">
             <label>Test name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></label>
-            <label>Slot name<input value={slot} onChange={(e) => setSlot(e.target.value.toLowerCase())} maxLength={80} /></label>
             {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>Please avoid long dashes.</p>}
+            <EditForm noun={p.kind === "image" ? "variant image path" : p.kind === "button" ? "variant button label" : "variant copy"} hasEmph={p.kind === "headline"} maxLen={p.kind === "image" ? 190 : KIND_RULES[p.kind].maxText} v={{ text: "" }} hasData={false} busy={busy || bad || !name.trim()} saveLabel="Start split test" image={p.kind === "image"} onSave={start} />
+            <p className="xp-note">Starts straight away with no pull request. A draft code change is also opened in the background so the element gets wrapped natively. It never merges by itself.</p>
+            {fail && <div className="xp-err" role="alert">{fail}</div>}
+            <button className="xp-back" style={{ margin: 0 }} onClick={() => setManual(true)}>This element won't start? Use a code request instead</button>
+          </div>
+        )}
+        {manual && !res && (
+          <div className="xp-form">
+            <p className="xp-note">{p.selector ? "" : "This element couldn't be pinned down reliably, so it needs wrapping in code first. "}This opens a draft pull request for you to look at. It never merges and never starts a test.</p>
+            <label>Test name<input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></label>
             <div className="xp-acts"><Button variant="acc" className={busy ? "loading" : ""} disabled={busy || bad || !name.trim()} onClick={request}>{busy ? "Opening draft pull request…" : "Request test slot (draft PR)"}</Button></div>
             {fail && <div className="xp-err" role="alert">{fail}</div>}
           </div>

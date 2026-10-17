@@ -13,8 +13,8 @@
     "atlas:dev": "tsx watch ./atlas/atlas.ts",
     "lint": "next lint",
     "predeploy": "npx tsc --noEmit && npm run build",
-    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts tests/security-lex-redirect.test.ts tests/wholesale-portal-mc.test.ts tests/wholesale-admin-data.test.ts tests/wholesale-public-files.test.ts tests/admin-2fa.test.ts tests/site-billing-status.test.ts tests/request-clarifier.test.ts tests/billing.test.ts tests/admin-p1-security.test.ts tests/live-revenue.test.ts tests/business-summary.test.ts tests/audit-tiers.test.ts tests/growth.test.ts tests/coupons.test.ts tests/client-site-seo.test.ts tests/lmm-brand.test.ts tests/exp.test.ts tests/exp-dashboard.test.ts tests/exp-suggest.test.ts tests/exp-slots.test.ts tests/exp-editor.test.ts",
-    "test:exp": "tsx --test tests/exp.test.ts tests/exp-dashboard.test.ts tests/exp-suggest.test.ts tests/exp-slots.test.ts tests/exp-editor.test.ts",
+    "test:portal": "tsx --test tests/client-portal.test.ts tests/security-passwords.test.ts tests/security-lex-redirect.test.ts tests/wholesale-portal-mc.test.ts tests/wholesale-admin-data.test.ts tests/wholesale-public-files.test.ts tests/admin-2fa.test.ts tests/site-billing-status.test.ts tests/request-clarifier.test.ts tests/billing.test.ts tests/admin-p1-security.test.ts tests/live-revenue.test.ts tests/business-summary.test.ts tests/audit-tiers.test.ts tests/growth.test.ts tests/coupons.test.ts tests/client-site-seo.test.ts tests/lmm-brand.test.ts tests/exp.test.ts tests/exp-dashboard.test.ts tests/exp-suggest.test.ts tests/exp-slots.test.ts tests/exp-editor.test.ts tests/exp-overlay.test.ts",
+    "test:exp": "tsx --test tests/exp.test.ts tests/exp-dashboard.test.ts tests/exp-suggest.test.ts tests/exp-slots.test.ts tests/exp-editor.test.ts tests/exp-overlay.test.ts",
     "dev:mock-redis": "node scripts/dev/mock-upstash.mjs"
   },
   "dependencies": {
