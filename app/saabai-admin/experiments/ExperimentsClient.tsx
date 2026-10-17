@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Card, CardBody, CardHeader } from "../ui/Card";
@@ -283,14 +283,20 @@ function DetailView({ id, onBack }: { id: string; onBack: () => void }) {
   );
 }
 
+function AutoText({ value, onChange, minRows, ...rest }: { value: string; onChange: (v: string) => void; minRows: number; maxLength: number; required?: boolean }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; }, [value]);
+  return <textarea ref={ref} className="xp-ta" rows={minRows} value={value} onChange={(x) => onChange(x.target.value.replace(/\r?\n/g, " "))} {...rest} />;
+}
+
 export function EditForm({ v, hasData, busy, onSave, onCancel, saveLabel = "Save copy", noun = "headline", hasEmph = true, maxLen = 90, image = false }: { image?: boolean; noun?: string; hasEmph?: boolean; maxLen?: number; v: { text: string; emphasis?: string }; hasData: boolean; busy: boolean; onSave: (text: string, emphasis: string) => void; onCancel?: () => void; saveLabel?: string }) {
   const [text, setText] = useState(v.text);
   const [emphasis, setEmphasis] = useState(v.emphasis ?? "");
   const bad = /[\u2013\u2014]/.test(text + emphasis) ? "Please avoid long dashes. Use a comma or full stop." : !text.trim() ? "" : text.length > maxLen || emphasis.length > 140 ? `Keep each part under ${maxLen} characters.` : "";
   return (
     <form className="xp-form" onSubmit={(ev) => { ev.preventDefault(); if (!bad && text.trim()) onSave(text, emphasis); }}>
-      <label>{noun.charAt(0).toUpperCase() + noun.slice(1)} <span className="xp-count">{text.length}/{maxLen}</span><input value={text} onChange={(x) => setText(x.target.value)} maxLength={maxLen + 40} required /></label>
-      {hasEmph && <label>{image ? "Alt text, what the image shows (for screen readers)" : "Highlighted part, shown in the gradient (optional)"} <span className="xp-count">{emphasis.length}/{image ? 140 : 90}</span><input value={emphasis} onChange={(x) => setEmphasis(x.target.value)} maxLength={120} /></label>}
+      <label>{noun.charAt(0).toUpperCase() + noun.slice(1)} <span className="xp-count">{text.length}/{maxLen}</span><AutoText value={text} onChange={setText} maxLength={maxLen + 40} minRows={maxLen > 90 ? 4 : 2} required /></label>
+      {hasEmph && <label>{image ? "Alt text, what the image shows (for screen readers)" : "Highlighted part, shown in the gradient (optional)"} <span className="xp-count">{emphasis.length}/{image ? 140 : 90}</span><AutoText value={emphasis} onChange={setEmphasis} maxLength={120} minRows={image ? 2 : 1} /></label>}
       <div className="xp-prev"><CopyView kind={image ? "image" : undefined} v={{ text: text || `Your ${noun}`, emphasis }} /></div>
       {hasData && <p className="xp-note">This variant already has results. Changing the wording mixes old and new numbers, so adding a new variant is usually cleaner.</p>}
       {bad && <p className="xp-note" style={{ color: "var(--bad)" }}>{bad}</p>}
