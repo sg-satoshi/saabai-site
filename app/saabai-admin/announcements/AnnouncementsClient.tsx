@@ -1,8 +1,8 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import AnnouncementTimer, { TIMER_CSS } from "../../components/AnnouncementTimer";
-import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, TIMER_STYLES, DEFAULT_END_SHOW_HOURS, LIMITS, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement } from "../../../lib/announce/core";
+import AnnouncementView from "../../components/AnnouncementView";
+import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, TIMER_STYLES, DEFAULT_END_SHOW_HOURS, LIMITS, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement, type PublicAnnouncement, type PublicTimer, type TimerStyle, type ThemeKey } from "../../../lib/announce/core";
 
 type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number; cBg: string; cFg: string; cCta: string; cClose: string; shadow: string; shadowColor: string; tOn: boolean; tEnd: string; tStyle: string; tMode: string; tMsg: string; tLinkText: string; tLinkUrl: string; tAuto: boolean; tHours: number };
 const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: DEFAULT_CUSTOM.bg, cFg: DEFAULT_CUSTOM.fg, cCta: DEFAULT_CUSTOM.cta, cClose: DEFAULT_CUSTOM.close, shadow: "none", shadowColor: "", tOn: false, tEnd: "", tStyle: "boxed", tMode: "hide", tMsg: "", tLinkText: "", tLinkUrl: "", tAuto: false, tHours: DEFAULT_END_SHOW_HOURS };
@@ -21,6 +21,15 @@ export default function AnnouncementsClient() {
   const [goal, setGoal] = useState<string>("call_click");
   const [view, setView] = useState<"desktop" | "mobile">("desktop");
   const [endPrev, setEndPrev] = useState(false);
+  const [pin, setPin] = useState(false);
+  const [showPanel, setShowPanel] = useState(true);
+  const [frameReady, setFrameReady] = useState(false);
+  const [sampleEnd] = useState(() => Date.now() + (2 * 86400 + 4 * 3600 + 15 * 60 + 9) * 1000);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const holderRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const [holderW, setHolderW] = useState(900);
+  const [pinH, setPinH] = useState(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => { const id = window.setInterval(() => setNowMs(Date.now()), 30_000); return () => clearInterval(id); }, []);
 
@@ -29,6 +38,7 @@ export default function AnnouncementsClient() {
     if (r.ok) { const j = await r.json(); setItems(j.items); setEnabled(j.enabled); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (window.innerWidth < 768) setView("mobile"); }, []);
 
   async function post(body: object) {
     const r = await fetch("/api/admin/announcements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -56,24 +66,92 @@ export default function AnnouncementsClient() {
   const checks = custom && !hexOk ? [] : checkColors(th);
   const blocked = (custom && !hexOk) || checks.some((c) => c.level === "block");
   const fixText = (k: "cFg" | "cClose", bgv: string) => { const h = normHex(bgv); if (h) set(k, bestText(h)); };
-  const box = { background: "#14123a", border: "1px solid rgba(98,197,209,.22)", borderRadius: 12, padding: 20, marginBottom: 20 } as const;
-  const inp = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #3b3a6b", background: "#0b092e", color: "#fff", marginTop: 4 } as const;
-  const lab = { display: "block", fontSize: 13, color: "#a5b4fc", marginBottom: 12 } as const;
+  const box = { background: "#fff", border: "1px solid var(--n-200)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-1)", padding: 20, marginBottom: 20 } as const;
+  const inp = { width: "100%", padding: "8px 10px", borderRadius: "var(--r-md)", border: "1px solid var(--n-300)", background: "#fff", color: "var(--n-900)", fontSize: 13.5, marginTop: 4 } as const;
+  const lab = { display: "block", fontSize: 13, color: "var(--n-600)", marginBottom: 12 } as const;
+
+  // ---- Live preview: the real announcement component, driven by the form as you type (admin only, no side effects) ----
+  const endMsT = f.tEnd ? Date.parse(toUtc(f.tEnd)) : NaN;
+  const liveEnd = Number.isFinite(endMsT) && endMsT > nowMs;
+  const isCard = f.layout === "card";
+  const pTimer: PublicTimer | undefined = f.tOn ? { style: (f.tStyle as TimerStyle), endAt: new Date(liveEnd ? endMsT : sampleEnd).toISOString(), endMode: f.tMode === "message" ? "message" : "hide", ...(f.tMode === "message" ? { endMessage: f.tMsg || "Your end message", ...(f.tLinkText ? { endLinkText: f.tLinkText, endLinkUrl: f.tLinkUrl || "#" } : {}) } : {}), expired: false, serverNow: 0 } : undefined;
+  const hideEnd = !!pTimer && endPrev && f.tMode === "hide";
+  const previewAnn: PublicAnnouncement | null = hideEnd ? null : {
+    id: "preview", layout: f.layout as Announcement["layout"], message: f.message || "Your message", ...(isCard ? { title: f.title || "Title" } : {}),
+    linkText: f.linkText && f.linkUrl ? f.linkText : "", linkUrl: f.linkText && f.linkUrl ? f.linkUrl : "",
+    theme: ((custom && !hexOk) ? "surface" : f.theme) as ThemeKey, ...(custom && hexOk ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}),
+    shadow: f.shadow as never, ...(normHex(f.shadowColor) ? { shadowColor: normHex(f.shadowColor) as string } : {}),
+    device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, version: 1, include: [], exclude: [],
+    ...(pTimer ? { timer: pTimer } : {}),
+  };
+  const previewKey = JSON.stringify([previewAnn, f.tOn && endPrev]);
+  useEffect(() => {
+    const send = () => frameRef.current?.contentWindow?.postMessage({ type: "ann-preview", ann: previewAnn ? { ...previewAnn, ...(previewAnn.timer ? { timer: { ...previewAnn.timer, serverNow: Date.now() } } : {}) } : null, ended: !!pTimer && endPrev }, window.location.origin);
+    send();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewKey, frameReady, showPanel, view]);
+  useEffect(() => {
+    const on = (e: MessageEvent) => { if (e.origin === window.location.origin && e.data?.type === "ann-preview-ready") { setFrameReady(true); frameRef.current?.contentWindow?.postMessage({ type: "ann-preview", ann: previewAnn, ended: !!pTimer && endPrev }, window.location.origin); } };
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewKey]);
+  useEffect(() => {
+    if (!holderRef.current) return;
+    const ro = new ResizeObserver(() => setHolderW(holderRef.current?.clientWidth ?? 900)); ro.observe(holderRef.current);
+    return () => ro.disconnect();
+  }, [showPanel]);
+  // Pinned: the same component as a real bar at the very top of this admin page (pushes the page down). Admin only.
+  const pinned = pin && !!previewAnn;
+  useEffect(() => {
+    const body = document.body;
+    if (!pinned || previewAnn?.layout !== "top" || !pinRef.current) { body.style.removeProperty("padding-top"); setPinH(0); return; }
+    const set = () => { const h = pinRef.current?.offsetHeight ?? 0; body.style.paddingTop = `${h}px`; setPinH(h); };
+    set(); const ro = new ResizeObserver(set); ro.observe(pinRef.current);
+    return () => { ro.disconnect(); body.style.removeProperty("padding-top"); };
+  }, [pinned, previewKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const scale = Math.min(1, holderW / (view === "desktop" ? 1440 : 390));
+  const vh = view === "desktop" ? 300 : 520;
+  const panel = (
+    <div className="ann-panel" data-testid="ann-preview" data-view={view} data-state={f.tOn && endPrev ? "ended" : "running"} style={{ position: "sticky", top: 8 + pinH, zIndex: 30, background: "#fff", border: "1px solid var(--n-200)", borderRadius: "var(--r-lg)", boxShadow: "var(--sh-2)", padding: 12, margin: "8px 0 16px" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: showPanel ? 8 : 0 }}>
+        <strong style={{ fontSize: 13 }}>Live preview</strong>
+        <span style={{ color: "var(--n-500)", fontSize: 12 }}>Updates as you type. Admin only, never shown to visitors.</span>
+        <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+          <button className="btn sm" type="button" aria-pressed={view === "desktop"} onClick={() => setView("desktop")}>Desktop 1440</button>
+          <button className="btn sm" type="button" aria-pressed={view === "mobile"} onClick={() => setView("mobile")}>Mobile 390</button>
+          {f.tOn && <button className="btn sm" type="button" data-testid="end-toggle" aria-pressed={endPrev} onClick={() => setEndPrev((v) => !v)}>{endPrev ? "End state" : "Counting down"}</button>}
+          <button className="btn sm" type="button" data-testid="pin-toggle" aria-pressed={pin} onClick={() => setPin((v) => !v)}>Pin as live bar at top of this page</button>
+          <button className="btn sm" type="button" aria-pressed={!showPanel} onClick={() => setShowPanel((v) => !v)}>{showPanel ? "Hide" : "Show"}</button>
+        </span>
+      </div>
+      {showPanel && (
+        <div ref={holderRef} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+          <div style={{ width: (view === "desktop" ? 1440 : 390) * scale, height: vh * scale, border: "1px solid var(--n-200)", borderRadius: 8, overflow: "hidden", background: "#f4f5f9" }}>
+            <iframe ref={frameRef} data-testid="ann-frame" title="Announcement preview" src="/saabai-admin/announcements/preview" onLoad={() => setFrameReady(true)} style={{ width: view === "desktop" ? 1440 : 390, height: vh, border: 0, transform: `scale(${scale})`, transformOrigin: "0 0", display: "block" }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: 960, color: "#fff" }}>
-      <h1 style={{ fontSize: 24, marginBottom: 4 }}>Announcements</h1>
-      <p style={{ color: "#a5b4fc", marginTop: 0 }}>Top bar, bottom bar and slide-in card for saabai.ai. Saabai-owned sites only. Nothing shows until the site switch is on and an announcement is set to Live.</p>
+    <div style={{ maxWidth: 960, color: "var(--n-900)" }}>
+      {pinned && previewAnn && <AnnouncementView ann={previewAnn} ended={!!pTimer && endPrev} offset={0} preview onClose={() => setPin(false)} innerRef={pinRef} />}
+      <style>{`.btn[aria-pressed="true"]{background:var(--navy-900);border-color:var(--navy-900);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed}@media (max-width:767px){.ann-grid{grid-template-columns:1fr!important}.ann-grid>*{grid-column:1/-1!important;min-width:0}.ann-panel{position:static!important}}`}</style>
+      <div className="ph"><div><h1>Announcements</h1>
+      <p className="sub">Top bar, bottom bar and slide-in card for saabai.ai. Saabai-owned sites only. Nothing shows until the site switch is on and an announcement is set to Live.</p></div></div>
 
       <div style={box}>
         <strong>Site switch (announcements_enabled)</strong>
         <p style={{ margin: "8px 0" }}>saabai.ai is currently <b>{enabled ? "ON" : "OFF"}</b>. Client sites cannot enable this.</p>
-        <button onClick={() => { if (!enabled && !confirm("Turn announcements on for saabai.ai? Any announcement set to Live will show to visitors.")) return; void post({ action: "set_flag", enabled: !enabled }); }}>{enabled ? "Turn off" : "Turn on"}</button>
+        <button className="btn pri" onClick={() => { if (!enabled && !confirm("Turn announcements on for saabai.ai? Any announcement set to Live will show to visitors.")) return; void post({ action: "set_flag", enabled: !enabled }); }}>{enabled ? "Turn off" : "Turn on"}</button>
       </div>
 
       <div style={box}>
         <strong>{editing ? `Edit: ${editing}` : "New announcement"}</strong>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
+        {panel}
+        <div className="ann-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
           <label style={lab}>Id (lowercase, dashes)<input style={inp} value={f.id} disabled={!!editing} onChange={(e) => set("id", e.target.value)} /></label>
           <label style={lab}>Name<input style={inp} value={f.name} onChange={(e) => set("name", e.target.value)} /></label>
           <label style={lab}>Layout<select style={inp} value={f.layout} onChange={(e) => set("layout", e.target.value)}>{LAYOUTS.map((l) => <option key={l} value={l}>{l === "top" ? "Top bar" : l === "bottom" ? "Bottom bar" : "Slide-in card"}</option>)}</select></label>
@@ -88,13 +166,13 @@ export default function AnnouncementsClient() {
             <optgroup label="Your own"><option value="custom">Custom colours</option></optgroup>
           </select></label>
           <label style={lab}>Drop shadow<select data-testid="shadow-select" style={inp} value={f.shadow} onChange={(e) => set("shadow", e.target.value)}>{SHADOWS.map((x) => <option key={x} value={x}>{x === "none" ? "None" : x === "soft" ? "Soft" : "Strong"}</option>)}</select></label>
-          {f.shadow !== "none" && <label style={lab}>Shadow colour (optional, hex, blank = black)<input data-testid="hex-shadow" style={{ ...inp, borderColor: !f.shadowColor || normHex(f.shadowColor) ? "#3b3a6b" : "#f87171" }} maxLength={7} value={f.shadowColor} placeholder="#000000" onChange={(e) => set("shadowColor", e.target.value)} /></label>}
+          {f.shadow !== "none" && <label style={lab}>Shadow colour (optional, hex, blank = black)<input data-testid="hex-shadow" style={{ ...inp, borderColor: !f.shadowColor || normHex(f.shadowColor) ? "var(--n-300)" : "var(--bad)" }} maxLength={7} value={f.shadowColor} placeholder="#000000" onChange={(e) => set("shadowColor", e.target.value)} /></label>}
           <label style={lab}>Device<select style={inp} value={f.device} onChange={(e) => set("device", e.target.value)}>{DEVICES.map((d) => <option key={d}>{d}</option>)}</select></label>
           <label style={lab}>Starts (Brisbane time)<input style={inp} type="datetime-local" value={f.startsAt} onChange={(e) => set("startsAt", e.target.value)} /></label>
           <label style={lab}>Ends (Brisbane time)<input style={inp} type="datetime-local" value={f.endsAt} onChange={(e) => set("endsAt", e.target.value)} /></label>
           <div style={{ gridColumn: "1 / -1", borderTop: "1px solid #3b3a6b", paddingTop: 12 }}>
             <label style={{ ...lab, marginBottom: 4 }}><input data-testid="timer-on" type="checkbox" checked={f.tOn} onChange={(e) => set("tOn", e.target.checked)} /> Countdown timer (fixed deadline)</label>
-            <div style={{ fontSize: 12, color: "#8d9cc4" }}>Everyone sees the same real deadline. Per-visitor or restarting timers are not offered (misleading offers can breach Australian consumer law).</div>
+            <div style={{ fontSize: 12, color: "var(--n-500)" }}>Everyone sees the same real deadline. Per-visitor or restarting timers are not offered (misleading offers can breach Australian consumer law).</div>
           </div>
           {f.tOn && (<>
             <label style={lab}>Timer ends (Brisbane time, stored as UTC)<input data-testid="timer-end" style={inp} type="datetime-local" value={f.tEnd} onChange={(e) => set("tEnd", e.target.value)} /></label>
@@ -125,71 +203,45 @@ export default function AnnouncementsClient() {
                 <label key={k} style={lab}>{l}
                   <span style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
                     <input type="color" aria-label={`${l} colour picker`} value={normHex(f[k]) ?? "#000000"} onChange={(e) => set(k, e.target.value)} style={{ width: 44, height: 36, padding: 0, border: "1px solid #3b3a6b", background: "none" }} />
-                    <input aria-label={`${l} hex`} data-testid={`hex-${k}`} style={{ ...inp, marginTop: 0, borderColor: valid ? "#3b3a6b" : "#f87171" }} value={f[k]} maxLength={7} onChange={(e) => set(k, e.target.value)} placeholder="#rrggbb" />
+                    <input aria-label={`${l} hex`} data-testid={`hex-${k}`} style={{ ...inp, marginTop: 0, borderColor: valid ? "var(--n-300)" : "var(--bad)" }} value={f[k]} maxLength={7} onChange={(e) => set(k, e.target.value)} placeholder="#rrggbb" />
                   </span>
-                  {!valid && <span style={{ color: "#f87171" }}>Enter a hex colour like #dc2626</span>}
+                  {!valid && <span style={{ color: "var(--bad)" }}>Enter a hex colour like #dc2626</span>}
                 </label>
               );
             })}
           </div>
         )}
         <div data-testid="contrast-panel" style={{ margin: "8px 0", fontSize: 13 }}>
-          {custom && !hexOk && <div style={{ color: "#f87171" }}>Enter valid hex colours to check contrast.</div>}
+          {custom && !hexOk && <div style={{ color: "var(--bad)" }}>Enter valid hex colours to check contrast.</div>}
           {checks.map((c) => (
-            <div key={c.key} role={c.level === "ok" ? undefined : "alert"} style={{ color: c.level === "block" ? "#f87171" : c.level === "warn" ? "#fbbf24" : "#86efac" }}>
+            <div key={c.key} role={c.level === "ok" ? undefined : "alert"} style={{ color: c.level === "block" ? "var(--bad)" : c.level === "warn" ? "var(--warn)" : "var(--ok)" }}>
               {c.level === "ok" ? "✓" : c.level === "warn" ? "⚠" : "✕"} {c.label}: {c.ratio.toFixed(1)}:1{" "}
               {c.level === "warn" && `is under ${MIN_WARN}:1 (hard to read for some people).`}
               {c.level === "block" && `is under ${MIN_BLOCK}:1. Saving is blocked.`}
               {c.level !== "ok" && custom && (c.key === "fg" || c.key === "close") && (
-                <button type="button" style={{ marginLeft: 8 }} onClick={() => fixText(c.key === "fg" ? "cFg" : "cClose", f.cBg)}>Use {c.suggest === "#000000" ? "black" : "white"} {c.key === "fg" ? "text" : "icon"}</button>
+                <button className="btn sm" type="button" style={{ marginLeft: 8 }} onClick={() => fixText(c.key === "fg" ? "cFg" : "cClose", f.cBg)}>Use {c.suggest === "#000000" ? "black" : "white"} {c.key === "fg" ? "text" : "icon"}</button>
               )}
             </div>
           ))}
         </div>
-        <div style={{ margin: "8px 0" }}>
-          Preview:{" "}
-          <button type="button" aria-pressed={view === "desktop"} onClick={() => setView("desktop")}>Desktop 1440</button>{" "}
-          <button type="button" aria-pressed={view === "mobile"} onClick={() => setView("mobile")}>Mobile 390</button>
-          {f.tOn && <>{" "}<button type="button" data-testid="end-toggle" aria-pressed={endPrev} onClick={() => setEndPrev((v) => !v)}>{endPrev ? "Showing: end state" : "Showing: counting down"}</button></>}
-        </div>
-        <style>{TIMER_CSS}</style>
-        {(() => {
-          const endMs = f.tEnd ? Date.parse(toUtc(f.tEnd)) : NaN;
-          const sample = (2 * 86400 + 4 * 3600 + 15 * 60 + 9) * 1000;
-          const live = Number.isFinite(endMs) && endMs > nowMs;
-          const hideEnd = f.tOn && endPrev && f.tMode === "hide";
-          const swap = f.tOn && endPrev && f.tMode === "message";
-          const text = swap ? (f.tMsg || "Your end message") : (f.message || "Your message");
-          const lt = swap ? f.tLinkText : f.linkText;
-          return (
-            <div data-testid="ann-preview" data-view={view} data-state={f.tOn && endPrev ? "ended" : "running"} style={{ width: view === "mobile" ? 390 : "100%", maxWidth: "100%", margin: "0 0 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: view === "mobile" ? 8 : 16, flexWrap: view === "mobile" || f.tOn ? "wrap" : "nowrap", padding: view === "mobile" ? "6px 4px 6px 16px" : "6px 8px 6px 32px", minHeight: 56, borderRadius: f.layout === "card" ? 16 : 0, background: hideEnd ? "transparent" : th.bg, color: th.fg, border: hideEnd ? "1px dashed #3b3a6b" : `1px solid ${th.border}`, fontSize: view === "mobile" ? 14 : 15, boxShadow: hideEnd ? "none" : shadowCss(f.layout, f.shadow, normHex(f.shadowColor) ?? undefined) }}>
-              {hideEnd ? <span style={{ color: "#a5b4fc" }}>The bar disappears when the timer ends.</span> : (<>
-                <span>{!swap && f.title ? <b>{f.title}. </b> : null}{text}</span>
-                {f.tOn && !endPrev && <AnnouncementTimer endAt={live ? new Date(endMs).toISOString() : new Date(nowMs + sample).toISOString()} offset={0} style={f.tStyle as never} colors={th} fixedMs={live ? undefined : sample} />}
-                {lt && <span style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: 8, fontWeight: 600, background: th.cta, color: th.ctaFg }}>{lt}</span>}
-                <span aria-hidden="true" style={{ width: 44, height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: th.close }}>×</span>
-              </>)}
-            </div>
-          );
-        })()}
-        <button onClick={save} disabled={blocked}>{editing ? "Save changes" : "Create"}</button>{editing && <button style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
+        <button className="btn pri" onClick={save} disabled={blocked}>{editing ? "Save changes" : "Create"}</button>{editing && <button className="btn sm" style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
         {msg && <p role="status" style={{ marginTop: 8 }}>{msg}</p>}
       </div>
 
       <h2 style={{ fontSize: 18 }}>Your announcements</h2>
-      {items.length === 0 && <p style={{ color: "#a5b4fc" }}>None yet. Nothing is showing on the site.</p>}
+      {items.length === 0 && <p style={{ color: "var(--n-500)" }}>None yet. Nothing is showing on the site.</p>}
       {items.map((a) => (
         <div key={a.id} style={box}>
-          <strong>{a.name}</strong> <span style={{ color: "#8d9cc4" }}>({a.id}, {a.layout}, v{a.version}) status: {a.status}</span>
+          <strong>{a.name}</strong> <span style={{ color: "var(--n-500)" }}>({a.id}, {a.layout}, v{a.version}) status: {a.status}</span>
           <p style={{ margin: "8px 0" }}>{a.message}</p>
-          {a.timer && <p style={{ margin: "4px 0", fontSize: 13, color: "#a5b4fc" }}>Timer ({a.timer.style}) ends {toBrisbane(a.timer.endAt).replace("T", " ")} Brisbane. At the end: {a.timer.endMode === "hide" ? "hide the bar" : `show "${a.timer.endMessage}"${a.timer.autoEnd ? `, then auto-end after ${a.timer.endShowHours}h` : ""}`}.</p>}
-          <button onClick={() => edit(a)}>Edit</button>{" "}
-          {a.status !== "live" && a.status !== "scheduled" && <button onClick={() => { if (confirm("Delete this announcement?")) void post({ action: "delete", id: a.id }); }}>Delete</button>}
+          {a.timer && <p style={{ margin: "4px 0", fontSize: 13, color: "var(--n-500)" }}>Timer ({a.timer.style}) ends {toBrisbane(a.timer.endAt).replace("T", " ")} Brisbane. At the end: {a.timer.endMode === "hide" ? "hide the bar" : `show "${a.timer.endMessage}"${a.timer.autoEnd ? `, then auto-end after ${a.timer.endShowHours}h` : ""}`}.</p>}
+          <button className="btn sm" onClick={() => edit(a)}>Edit</button>{" "}
+          {a.status !== "live" && a.status !== "scheduled" && <button className="btn sm" onClick={() => { if (confirm("Delete this announcement?")) void post({ action: "delete", id: a.id }); }}>Delete</button>}
           <div style={{ marginTop: 12, fontSize: 13 }}>
-            {a.testId ? <>Split test: <Link href="/saabai-admin/experiments" style={{ color: "#62c5d1" }}>{a.testId}</Link> (start, pause and read results on the Experiments page; minimum 14 days)</> : (
-              <>Split test: <select value={goal} onChange={(e) => setGoal(e.target.value)} style={{ background: "#0b092e", color: "#fff" }}>{GOALS.map((g) => <option key={g}>{g}</option>)}</select>{" "}
-                <button onClick={() => void post({ action: "create_test", id: a.id, test: { kind: "bar_vs_none", goal } })}>Create draft test: bar vs no bar</button>
-                <span style={{ color: "#8d9cc4" }}> (creates a draft only, {testIdFor(a.id)}. It does not start.)</span></>
+            {a.testId ? <>Split test: <Link href="/saabai-admin/experiments" style={{ color: "var(--teal-700)" }}>{a.testId}</Link> (start, pause and read results on the Experiments page; minimum 14 days)</> : (
+              <>Split test: <select value={goal} onChange={(e) => setGoal(e.target.value)} style={{ background: "#fff", color: "var(--n-900)", border: "1px solid var(--n-300)", borderRadius: 6 }}>{GOALS.map((g) => <option key={g}>{g}</option>)}</select>{" "}
+                <button className="btn sm" onClick={() => void post({ action: "create_test", id: a.id, test: { kind: "bar_vs_none", goal } })}>Create draft test: bar vs no bar</button>
+                <span style={{ color: "var(--n-500)" }}> (creates a draft only, {testIdFor(a.id)}. It does not start.)</span></>
             )}
           </div>
         </div>
