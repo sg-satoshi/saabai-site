@@ -1,5 +1,6 @@
 import Script from "next/script";
 import type { Metadata } from "next";
+import { BO_CSS } from "./styles";
 
 // Overrides every Saabai root-layout field so nothing leaks onto the client site.
 // Sub-page titles already carry "| BO Consulting", so the template is a pass-through.
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: false, title: "BO Consulting" },
   icons: null,
   description:
-    "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire, and workforce solutions across Construction, Mining, Manufacturing, Transport and more. 1,000+ placements, 95% retention rate.",
+    "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire, and workforce solutions across Construction, Mining, Manufacturing, Transport and more.",
   keywords: [
     "blue collar recruitment Australia",
     "labour hire Australia",
@@ -44,9 +45,9 @@ export const metadata: Metadata = {
       "Australia's specialist blue-collar workforce recruitment partner. Connecting businesses with skilled workers across Construction, Mining, Manufacturing, Transport, Civil, Trades, Warehousing and Logistics.",
     images: [
       {
-        url: "/sites/bo-consultancy/logo.png",
-        width: 813,
-        height: 272,
+        url: "/sites/bo-consultancy/og.png",
+        width: 1200,
+        height: 630,
         alt: "BO Consulting – Blue-Collar Recruitment Australia",
       },
     ],
@@ -55,8 +56,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BO Consulting | Blue-Collar Recruitment & Labour Hire Australia",
     description:
-      "Australia's specialist blue-collar workforce recruitment partner. 1,000+ placements, 95% retention rate, 48hr average turnaround.",
-    images: ["/sites/bo-consultancy/logo.png"],
+      "Australia's specialist blue-collar workforce recruitment partner.",
+    images: ["/sites/bo-consultancy/og.png"],
   },
   alternates: {
     canonical: "https://www.boconsulting.com.au",
@@ -69,68 +70,7 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
-      <style dangerouslySetInnerHTML={{ __html: `
-        html { background: #123B5D; overflow-x: hidden; scroll-behavior: smooth; }
-        body { overflow-x: hidden; -webkit-font-smoothing: antialiased; font-feature-settings: "ss01"; }
-        h1, h2, h3, h4 { font-family: 'Sora', system-ui, sans-serif; letter-spacing: -0.02em; }
-        #bo-nav-desktop { display: none; align-items: center; gap: 32px; }
-        #bo-hamburger { display: flex; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
-        #bo-find-staff-nav { display: none; }
-        @media (min-width: 768px) {
-          #bo-nav-desktop { display: flex !important; }
-          #bo-hamburger { display: none !important; }
-          #bo-find-staff-nav { display: inline-flex !important; }
-        }
-        /* Scroll reveal: progressive enhancement, only hide if JS loaded */
-        html.bo-js [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1); }
-        html.bo-js [data-reveal].bo-visible { opacity: 1; transform: translateY(0); }
-        html.bo-js [data-reveal][data-delay="1"] { transition-delay: 0.1s; }
-        html.bo-js [data-reveal][data-delay="2"] { transition-delay: 0.2s; }
-        html.bo-js [data-reveal][data-delay="3"] { transition-delay: 0.3s; }
-        html.bo-js [data-reveal][data-delay="4"] { transition-delay: 0.4s; }
-        html.bo-js [data-reveal][data-delay="5"] { transition-delay: 0.5s; }
-        html.bo-js [data-reveal][data-delay="6"] { transition-delay: 0.6s; }
-        html.bo-js [data-reveal][data-delay="7"] { transition-delay: 0.7s; }
-        /* Hero entrance */
-        @keyframes bo-hero-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .bo-hero-animate { animation: bo-hero-in 0.8s cubic-bezier(0.22,1,0.36,1) both; }
-        .bo-hero-delay-1 { animation-delay: 0.15s; }
-        .bo-hero-delay-2 { animation-delay: 0.3s; }
-        .bo-hero-delay-3 { animation-delay: 0.45s; }
-        .bo-hero-delay-4 { animation-delay: 0.6s; }
-        .bo-hero-delay-5 { animation-delay: 0.75s; }
-        /* Nav scroll */
-        #bo-nav { transition: background 0.3s ease, box-shadow 0.3s ease; }
-        #bo-nav.bo-nav-scrolled { background: rgba(18,59,93,1) !important; box-shadow: 0 4px 32px rgba(18,59,93,0.4); }
-        /* Ken Burns hero bg */
-        @keyframes bo-kenburns { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
-        .bo-hero-bg { animation: bo-kenburns 12s ease-out forwards; }
-        /* Stripe texture overlays */
-        .bo-stripe { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 2px, transparent 2px, transparent 12px); }
-        /* Buttons */
-        .bo-btn { position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(245,130,32,0.30); transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
-        .bo-btn::after { content: ''; position: absolute; top: -50%; left: -60%; width: 30%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent); transform: skewX(-20deg); transition: left 0.5s; pointer-events: none; }
-        .bo-btn:hover::after { left: 130%; }
-        .bo-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 24px rgba(245,130,32,0.45) !important; }
-        /* Cards */
-        .bo-ind-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease, border-color 0.3s ease !important; cursor: default; }
-        .bo-ind-card:hover { transform: translateY(-6px) !important; box-shadow: 0 16px 48px rgba(18,59,93,0.15) !important; border-color: rgba(245,130,32,0.35) !important; }
-        .bo-svc-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
-        .bo-svc-card:hover { transform: translateY(-6px) !important; box-shadow: 0 20px 48px rgba(18,59,93,0.14) !important; }
-        .bo-why-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), background 0.3s ease, border-color 0.3s ease !important; }
-        .bo-why-card:hover { transform: translateY(-4px) !important; background: rgba(255,255,255,0.08) !important; border-color: rgba(245,130,32,0.4) !important; }
-        .bo-test-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
-        .bo-test-card:hover { transform: translateY(-4px) !important; box-shadow: 0 16px 48px rgba(18,59,93,0.14) !important; }
-        .bo-process-card { transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease !important; }
-        .bo-process-card:hover { transform: translateY(-6px) !important; box-shadow: 0 20px 48px rgba(18,59,93,0.12) !important; }
-        @keyframes bo-stat-in { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        html.bo-js .bo-stat { opacity: 0; }
-        html.bo-js .bo-stat.bo-visible { animation: bo-stat-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
-        html.bo-js .bo-stat:nth-child(1).bo-visible { animation-delay: 0s; }
-        html.bo-js .bo-stat:nth-child(2).bo-visible { animation-delay: 0.1s; }
-        html.bo-js .bo-stat:nth-child(3).bo-visible { animation-delay: 0.2s; }
-        html.bo-js .bo-stat:nth-child(4).bo-visible { animation-delay: 0.3s; }
-      ` }} />
+      <style dangerouslySetInnerHTML={{ __html: BO_CSS }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -139,7 +79,7 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
             "@type": "EmploymentAgency",
             name: "BO Consulting",
             url: "https://www.boconsulting.com.au",
-            logo: "https://www.boconsulting.com.au/sites/bo-consultancy/logo.png",
+            logo: "https://www.boconsulting.com.au/sites/bo-consultancy/mark-dark.png",
             description:
               "Australia's specialist blue-collar workforce recruitment partner. Permanent placement, labour hire and workforce solutions across Construction, Mining, Manufacturing, Transport, Civil, Trades, Warehousing and Logistics.",
             email: "info@boconsulting.com.au",
@@ -273,92 +213,10 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
     document.getElementById('bo-inp').addEventListener('keydown',function(e){if(e.key==='Enter')send();});
   }
 
-  function initNav() {
-    var hamburger = document.getElementById('bo-hamburger');
-    var menu = document.getElementById('bo-mobile-menu');
-    if (!hamburger || !menu) return;
-    var open = false;
-    hamburger.addEventListener('click', function() {
-      open = !open;
-      menu.style.display = open ? 'block' : 'none';
-      var spans = hamburger.querySelectorAll('span');
-      if (open) {
-        spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-        spans[1].style.transform = 'rotate(-45deg)';
-        spans[2].style.display = 'none';
-      } else {
-        spans[0].style.transform = 'none';
-        spans[1].style.transform = 'none';
-        spans[2].style.display = 'block';
-      }
-    });
-    menu.querySelectorAll('a').forEach(function(link) {
-      link.addEventListener('click', function() {
-        open = false;
-        menu.style.display = 'none';
-        var spans = hamburger.querySelectorAll('span');
-        spans[0].style.transform = 'none';
-        spans[1].style.transform = 'none';
-        spans[2].style.display = 'block';
-      });
-    });
-  }
-
-  function initForm() {
-    var form = document.getElementById('bo-contact-form');
-    if (!form) return;
-
-    var formSuccess = document.getElementById('bo-form-success');
-    var NAVY='#123B5D', GREY='#5C6670';
-    var currentType='employer';
-
-    function setTab(type) {
-      currentType = type;
-      var tabH = document.getElementById('bo-tab-hiring');
-      var tabC = document.getElementById('bo-tab-candidate');
-      var companyRow = document.getElementById('bo-company-row');
-      var msgLabel = document.getElementById('bo-msg-label');
-      if (tabH) { tabH.style.background = type==='employer' ? NAVY : 'transparent'; tabH.style.color = type==='employer' ? '#fff' : GREY; }
-      if (tabC) { tabC.style.background = type==='candidate' ? NAVY : 'transparent'; tabC.style.color = type==='candidate' ? '#fff' : GREY; }
-      if (companyRow) companyRow.style.display = type==='employer' ? '' : 'none';
-      if (msgLabel) msgLabel.textContent = type==='employer' ? 'What roles are you looking to fill?' : 'What type of work are you looking for?';
-    }
-
-    var tabH = document.getElementById('bo-tab-hiring');
-    var tabC = document.getElementById('bo-tab-candidate');
-    if (tabH) tabH.addEventListener('click', function() { setTab('employer'); });
-    if (tabC) tabC.addEventListener('click', function() { setTab('candidate'); });
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var nameEl = document.getElementById('bo-name');
-      var emailEl = document.getElementById('bo-email');
-      var companyEl = document.getElementById('bo-company');
-      var messageEl = document.getElementById('bo-message');
-      var name = nameEl ? nameEl.value.trim() : '';
-      var email = emailEl ? emailEl.value.trim() : '';
-      var company = companyEl ? companyEl.value.trim() : '';
-      var message = messageEl ? messageEl.value.trim() : '';
-      if (!name || !email || !message) return;
-      var submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
-      fetch('/api/bo-contact', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:name,email:email,company:company,message:message,formType:currentType})
-      }).finally(function() {
-        if (form) form.style.display = 'none';
-        if (formSuccess) formSuccess.style.display = 'block';
-      });
-    });
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { init(); initNav(); initForm(); });
+    document.addEventListener('DOMContentLoaded', function() { init(); });
   } else {
     init();
-    initNav();
-    initForm();
   }
 })();` }} />
     </>

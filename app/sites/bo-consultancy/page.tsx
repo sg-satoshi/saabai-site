@@ -1,977 +1,341 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import PoweredBySaabai from "@/app/components/PoweredBySaabai";
+import { BOLogo } from "./BOLogo";
 
-import { useState, useEffect } from "react";
-
-const C = {
-  navy: "#123B5D",
-  navyDark: "#0D2D47",
-  orange: "#F58220",
-  orangeLight: "#FEF0E3",
-  grey: "#5C6670",
-  white: "#ffffff",
-  lightGrey: "#F7F8F9",
-  charcoal: "#1A2B3C",
-  border: "#ECEEF0",
-};
+const ICONS: string[] = ["<path d=\"M6 42V10h22M6 16h22M28 10v8M22 18h12v6H22zM28 24v6M12 42V28h10v14\"/>", "<path d=\"M8 38l16-22 16 22zM4 42h40M24 16V8M18 12h12\"/>", "<path d=\"M24 16a8 8 0 100 16 8 8 0 000-16zM24 6v6M24 36v6M6 24h6M36 24h6M11 11l4 4M33 33l4 4M37 11l-4 4M15 33l-4 4\"/>", "<path d=\"M6 18l18-10 18 10v22H6zM6 18l18 10 18-10M24 28v12\"/>", "<path d=\"M4 14h26v20H4zM30 20h8l6 7v7H30zM12 38a4 4 0 100-.1M36 38a4 4 0 100-.1\"/>", "<path d=\"M14 42L20 6M34 42L28 6M24 10v6M24 22v6M24 34v6\"/>", "<path d=\"M10 38l16-16M30 8a8 8 0 00-8 10l-14 14 4 4 14-14A8 8 0 0040 18l-6 2-4-4z\"/>", "<path d=\"M6 14h36v8H6zM6 26h36v8H6zM12 14v8M20 14v8M12 26v8M20 26v8\"/>"];
 
 const INDUSTRIES = [
-  { name: "Construction", icon: "🏗️", desc: "Commercial, residential and civil construction across Australia." },
-  { name: "Mining", icon: "⛏️", desc: "Surface and underground operations, maintenance and processing." },
-  { name: "Manufacturing", icon: "🏭", desc: "Production, assembly, quality control and plant operations." },
-  { name: "Warehousing", icon: "📦", desc: "Distribution centres, pick & pack, inventory and logistics." },
-  { name: "Transport", icon: "🚛", desc: "Heavy vehicle, freight, last-mile delivery and owner-operators." },
-  { name: "Civil", icon: "🛣️", desc: "Roads, utilities, earthworks and infrastructure projects." },
-  { name: "Trades", icon: "🔧", desc: "Electrical, plumbing, HVAC, carpentry and specialist trades." },
-  { name: "Logistics", icon: "🔄", desc: "Supply chain, dispatch, container handling and 3PL operations." },
+  { name: "Construction", desc: "Commercial, residential and civil construction across Australia." },
+  { name: "Mining", desc: "Surface and underground operations, maintenance and processing." },
+  { name: "Manufacturing", desc: "Production, assembly, quality control and plant operations." },
+  { name: "Warehousing", desc: "Distribution centres, pick & pack, inventory and logistics." },
+  { name: "Transport", desc: "Heavy vehicle, freight, last-mile delivery and owner-operators." },
+  { name: "Civil", desc: "Roads, utilities, earthworks and infrastructure projects." },
+  { name: "Trades", desc: "Electrical, plumbing, HVAC, carpentry and specialist trades." },
+  { name: "Logistics", desc: "Supply chain, dispatch, container handling and 3PL operations." },
 ];
 
 const SERVICES = [
-  {
-    title: "Permanent Recruitment",
-    desc: "End-to-end placement of full-time workers who fit your culture and pass our rigorous skills screening.",
-    icon: "👤",
-  },
-  {
-    title: "Labour Hire",
-    desc: "Flexible workforce solutions. Scale up or down with pre-screened, safety-inducted workers ready to start.",
-    icon: "👷",
-  },
-  {
-    title: "Executive Search",
-    desc: "Confidential search for senior operational leaders, site managers and department heads.",
-    icon: "🎯",
-  },
-  {
-    title: "Volume Recruitment",
-    desc: "High-volume hiring campaigns managed from brief to onboarding. Fast, compliant and cost-effective.",
-    icon: "📋",
-  },
-  {
-    title: "Workforce Planning",
-    desc: "Strategic workforce consulting to match your labour needs with project timelines and budget.",
-    icon: "📊",
-  },
-  {
-    title: "Recruitment Process Outsourcing",
-    desc: "We embed into your business as your dedicated recruitment function. Same team, lower cost.",
-    icon: "🤝",
-  },
-];
-
-const WHY = [
-  { title: "Fast Response", desc: "We move at the speed of your projects. Same-day response, fast shortlists.", icon: "⚡" },
-  { title: "Quality Candidates", desc: "Every candidate is screened, reference-checked and verified before they reach you.", icon: "✅" },
-  { title: "Industry Specialists", desc: "Our consultants have worked in the industries they recruit for. They speak your language.", icon: "🎓" },
-  { title: "National Coverage", desc: "Offices and networks across every major metro and regional market in Australia.", icon: "🗺️" },
-  { title: "Relationship Driven", desc: "We build long-term partnerships, not transactional placements. Your success is ours.", icon: "🤝" },
-  { title: "Compliance Focus", desc: "Fully compliant labour hire. PAYG, super, WHS all handled so you're protected.", icon: "🛡️" },
-];
-
-const TESTIMONIALS = [
-  {
-    text: "BO Consulting filled three site supervisor roles for us within two weeks. The quality of candidates was exceptional. All had the right tickets, experience and attitude. We've used them exclusively ever since.",
-    name: "James T.",
-    title: "Operations Manager, Commercial Builder, Queensland",
-    initials: "JT",
-  },
-  {
-    text: "We needed to ramp up 40 warehouse workers for peak season with less than three weeks notice. BO Consulting delivered on time, every worker was inducted and ready to go. Genuinely impressive.",
-    name: "Michelle R.",
-    title: "Logistics Director, Distribution Centre, New South Wales",
-    initials: "MR",
-  },
-  {
-    text: "What sets BO Consulting apart is that they actually understand civil construction. They don't send us candidates who look good on paper but have never been on a site. Every referral is the real deal.",
-    name: "Dave K.",
-    title: "Project Director, Civil Infrastructure, Western Australia",
-    initials: "DK",
-  },
-];
-
-const STATS = [
-  { val: "1,000+", label: "Placements" },
-  { val: "Australia Wide", label: "National Coverage" },
-  { val: "48hr", label: "Average Turnaround" },
-  { val: "95%", label: "Retention Rate" },
+  { title: "Permanent Recruitment", desc: "End-to-end placement of full-time workers who fit your culture and pass our rigorous skills screening." },
+  { title: "Labour Hire", desc: "Flexible workforce solutions. Scale up or down with pre-screened, safety-inducted workers ready to start." },
+  { title: "Executive Search", desc: "Confidential search for senior operational leaders, site managers and department heads." },
+  { title: "Volume Recruitment", desc: "High-volume hiring campaigns managed from brief to onboarding. Fast, compliant and cost-effective." },
+  { title: "Workforce Planning", desc: "Strategic workforce consulting to match your labour needs with project timelines and budget." },
+  { title: "Recruitment Process Outsourcing", desc: "We embed into your business as your dedicated recruitment function. Same team, lower cost." },
 ];
 
 const PROCESS = [
-  {
-    num: "01",
-    title: "Brief Us",
-    desc: "Tell us what you need: the role, the site, the timeline. One call or email is all it takes.",
-    icon: "📋",
-  },
-  {
-    num: "02",
-    title: "We Source",
-    desc: "Our consultants tap their networks and databases to find pre-screened, reference-checked candidates fast.",
-    icon: "🔍",
-  },
-  {
-    num: "03",
-    title: "You Hire",
-    desc: "Review our shortlist, interview your picks, and onboard with our support every step of the way.",
-    icon: "✅",
-  },
+  { n: "01", title: "Brief Us", desc: "Tell us what you need: the role, the site, the timeline. One call or email is all it takes." },
+  { n: "02", title: "We Source", desc: "Our consultants tap their networks and databases to find pre-screened, reference-checked candidates fast." },
+  { n: "03", title: "You Hire", desc: "Review our shortlist, interview your picks, and onboard with our support every step of the way." },
 ];
 
-const NAV_ITEMS = ["About", "Industries", "Services", "Why Us", "Testimonials", "Contact"];
+const NAV = [
+  ["About", "#about"],
+  ["Industries", "#industries"],
+  ["Services", "#services"],
+  ["How It Works", "#how-it-works"],
+  ["Contact", "#contact"],
+];
 
-export default function BOConsultancyPage() {
-  const [formData, setFormData] = useState({ type: "employer" });
+const EMAIL = "info@boconsulting.com.au";
+type Kind = "employer" | "candidate";
 
-  // Scroll reveal
+async function submitEnquiry(payload: { name: string; email: string; company: string; message: string; formType: Kind }) {
+  const r = await fetch("/api/bo-contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error("failed");
+}
+
+export default function BOConsultingPage() {
+  const [kind, setKind] = useState<Kind>("employer");
+  const [menu, setMenu] = useState(false);
+  const [fixedNav, setFixedNav] = useState(false);
+  const [hideSticky, setHideSticky] = useState(false);
+  const briefRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+
+  // Brief card state
+  const [b, setB] = useState({ name: "", email: "", role: "", site: "", timeline: "" });
+  const [bState, setBState] = useState<"idle" | "sending" | "ok" | "err">("idle");
+  // Contact form state
+  const [c, setC] = useState({ name: "", email: "", company: "", message: "" });
+  const [cState, setCState] = useState<"idle" | "sending" | "ok" | "err">("idle");
+
   useEffect(() => {
-    // Mark JS as active: gates the opacity:0 hiding CSS so elements stay visible if JS fails
     document.documentElement.classList.add("bo-js");
-    const reveals = document.querySelectorAll("[data-reveal]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("bo-visible");
-          }
-        });
-      },
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("bo-visible")),
       { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
     );
-    reveals.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  // Stat items scroll reveal (separate for the hero bar)
-  useEffect(() => {
-    const stats = document.querySelectorAll(".bo-stat");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("bo-visible");
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-    stats.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  // Nav scroll effect
-  useEffect(() => {
-    const nav = document.getElementById("bo-nav");
-    if (!nav) return;
-    const onScroll = () => {
-      nav.classList.toggle("bo-nav-scrolled", window.scrollY > 20);
-    };
+    document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+    const onScroll = () => setFixedNav(window.scrollY > 40);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // Hide the sticky bar while a form is in view to avoid duplicate CTAs
+    const forms = [briefRef.current, contactRef.current].filter(Boolean) as Element[];
+    const visible = new Set<Element>();
+    const fo = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+      setHideSticky(visible.size > 0);
+    }, { threshold: 0.25 });
+    forms.forEach((f) => fo.observe(f));
+    return () => { io.disconnect(); fo.disconnect(); window.removeEventListener("scroll", onScroll); };
   }, []);
 
+  const goHiring = () => {
+    setMenu(false);
+    setKind("employer");
+    const el = window.innerWidth >= 900 ? briefRef.current : contactRef.current;
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const goWork = () => {
+    setMenu(false);
+    setKind("candidate");
+    contactRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  async function sendBrief(e: React.FormEvent) {
+    e.preventDefault();
+    if (bState === "sending") return;
+    setBState("sending");
+    const message = `Role needed: ${b.role}\nSite or location: ${b.site || "Not given"}\nTimeline: ${b.timeline || "Not given"}\n(Sent from the homepage brief card)`;
+    try {
+      await submitEnquiry({ name: b.name.trim(), email: b.email.trim(), company: "", message, formType: "employer" });
+      setBState("ok");
+    } catch { setBState("err"); }
+  }
+
+  async function sendContact(e: React.FormEvent) {
+    e.preventDefault();
+    if (cState === "sending") return;
+    setCState("sending");
+    try {
+      await submitEnquiry({ name: c.name.trim(), email: c.email.trim(), company: c.company.trim(), message: c.message.trim(), formType: kind });
+      setCState("ok");
+    } catch { setCState("err"); }
+  }
 
   return (
-    <main style={{ fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", color: C.charcoal, overflowX: "hidden" }}>
+    <main className="bo-root">
+      <a href="#about" className="bo-sr">Skip to content</a>
 
-      {/* ── Sticky Nav ── */}
-      <nav
-        id="bo-nav"
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          background: "rgba(18, 59, 93, 0.97)",
-          backdropFilter: "blur(8px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
-          <a href="#" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-            <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 36, width: "auto", background: "#fff", borderRadius: 6, padding: "4px 10px" }} />
-          </a>
+      {/* Nav */}
+      <header className={`bo-nav${fixedNav ? " bo-fixed" : ""}`}>
+        <a href="#top" aria-label="BO Consulting home"><BOLogo /></a>
+        <nav className="bo-links" aria-label="Main">
+          {NAV.map(([l, h]) => <a key={l} href={h}>{l}</a>)}
+        </nav>
+        <a href="#brief" className="bo-cta" onClick={(e) => { e.preventDefault(); goHiring(); }}>Find Staff</a>
+        <button className="bo-burger" aria-label="Toggle menu" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
+          <i /><i /><i />
+        </button>
+      </header>
+      <div className={`bo-menu${menu ? " bo-open" : ""}`}>
+        {NAV.map(([l, h]) => <a key={l} href={h} onClick={() => setMenu(false)}>{l}</a>)}
+        <a href="#contact" className="bo-cta" onClick={(e) => { e.preventDefault(); goHiring(); }}>Find Staff</a>
+      </div>
 
-          <div id="bo-nav-desktop" style={{ alignItems: "center", gap: 32 }}>
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace(" ", "-")}`}
-                style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: 14, fontWeight: 500, transition: "color 0.2s" }}
-                onMouseOver={(e) => (e.currentTarget.style.color = "#fff")}
-                onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
-              >
-                {item}
-              </a>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <a
-              id="bo-find-staff-nav"
-              href="#contact"
-              className="bo-btn"
-              style={{ background: C.orange, color: "#fff", padding: "10px 24px", borderRadius: 6, fontSize: 14, fontWeight: 600, textDecoration: "none", alignItems: "center" }}
-            >
-              Find Staff
-            </a>
-            <button
-              id="bo-hamburger"
-              aria-label="Toggle menu"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 8 }}
-            >
-              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
-              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
-              <span style={{ display: "block", width: 24, height: 2, background: "#fff" }} />
-            </button>
-          </div>
-        </div>
-
-        <div id="bo-mobile-menu" style={{ display: "none", background: C.navy, borderTop: "1px solid rgba(255,255,255,0.1)", padding: "16px 24px 24px" }}>
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item}
-              href={`#${item.toLowerCase().replace(" ", "-")}`}
-              style={{ display: "block", color: "rgba(255,255,255,0.8)", textDecoration: "none", fontSize: 16, fontWeight: 500, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", transition: "color 0.2s" }}
-            >
-              {item}
-            </a>
-          ))}
-          <a
-            href="#contact"
-            style={{ display: "block", marginTop: 16, background: C.orange, color: "#fff", padding: "14px", borderRadius: 8, fontSize: 15, fontWeight: 700, textDecoration: "none", textAlign: "center" }}
-          >
-            Find Staff
-          </a>
-        </div>
-      </nav>
-
-      {/* ── Hero ── */}
-      <section
-        id="home"
-        style={{
-          background: `linear-gradient(135deg, ${C.navy} 0%, ${C.navyDark} 60%, #1a4a6e 100%)`,
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          paddingTop: 72,
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          className="bo-hero-bg"
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80&auto=format&fit=crop')",
-            backgroundSize: "cover",
-            backgroundPosition: "center 40%",
-            opacity: 0.18,
-            pointerEvents: "none",
-            transformOrigin: "center center",
-          }}
+      {/* Hero */}
+      <section id="top" className="bo-hero">
+        <img
+          className="bo-hero-img"
+          src="/sites/bo-consultancy/hero-site-1600.webp"
+          srcSet="/sites/bo-consultancy/hero-site-900.webp 900w, /sites/bo-consultancy/hero-site-1600.webp 1600w"
+          sizes="100vw"
+          width={1600}
+          height={899}
+          alt="Construction workers in hi-vis vests on a building site at dusk with cranes behind them"
+          fetchPriority="high"
         />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: `linear-gradient(to right, rgba(18,59,93,0.92) 0%, rgba(18,59,93,0.7) 60%, rgba(18,59,93,0.4) 100%)`,
-            pointerEvents: "none",
-          }}
-        />
-        <div className="bo-stripe" style={{ position: "absolute", inset: 0, pointerEvents: "none" }} />
-        <div
-          style={{
-            position: "absolute",
-            right: "-10%",
-            top: "10%",
-            width: 600,
-            height: 600,
-            borderRadius: "50%",
-            background: `radial-gradient(circle, rgba(245,130,32,0.12) 0%, transparent 70%)`,
-            pointerEvents: "none",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: "-5%",
-            bottom: "-10%",
-            width: 400,
-            height: 400,
-            borderRadius: "50%",
-            background: `radial-gradient(circle, rgba(245,130,32,0.06) 0%, transparent 70%)`,
-            pointerEvents: "none",
-          }}
-        />
-
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "80px 32px", position: "relative", zIndex: 1 }}>
-          <div
-            className="bo-hero-animate bo-hero-delay-1"
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(254,240,227,0.12)", border: "1px solid rgba(245,130,32,0.35)", borderRadius: 100, padding: "6px 16px", marginBottom: 32 }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.orange, display: "inline-block" }} />
-            <span style={{ color: C.orange, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Australia&apos;s Workforce Specialists
-            </span>
-          </div>
-
-          <h1
-            className="bo-hero-animate bo-hero-delay-2"
-            style={{ color: "#fff", fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 700, lineHeight: 1.1, marginBottom: 24, maxWidth: 800 }}
-          >
-            Connecting Australia&apos;s{" "}
-            <span style={{ color: C.orange }}>Workforce.</span>
-          </h1>
-
-          <p
-            className="bo-hero-animate bo-hero-delay-3"
-            style={{ color: "rgba(255,255,255,0.7)", fontSize: "clamp(16px, 2vw, 20px)", maxWidth: 540, lineHeight: 1.7, marginBottom: 48 }}
-          >
-            Helping Australian businesses find reliable, skilled workers faster. Blue-collar recruitment done right.
-          </p>
-
-          <div className="bo-hero-animate bo-hero-delay-4" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <a
-              href="#contact"
-              className="bo-btn"
-              style={{
-                background: C.orange,
-                color: "#fff",
-                padding: "16px 36px",
-                borderRadius: 8,
-                fontSize: 16,
-                fontWeight: 700,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              Find Staff →
-            </a>
-            <a
-              href="#contact"
-              onClick={() => setFormData((f) => ({ ...f, type: "candidate" }))}
-              style={{
-                background: "transparent",
-                color: "#fff",
-                padding: "16px 36px",
-                borderRadius: 8,
-                fontSize: 16,
-                fontWeight: 600,
-                textDecoration: "none",
-                border: "2px solid rgba(255,255,255,0.3)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                transition: "border-color 0.2s, background 0.2s",
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-              onMouseOut={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}
-            >
-              Looking for Work
-            </a>
-          </div>
-
-          <div
-            className="bo-hero-animate bo-hero-delay-5"
-            style={{
-              display: "flex",
-              gap: 48,
-              marginTop: 72,
-              paddingTop: 40,
-              borderTop: "1px solid rgba(255,255,255,0.1)",
-              flexWrap: "wrap",
-            }}
-          >
-            {STATS.map((s, i) => (
-              <div key={i} className="bo-stat">
-                <div style={{ color: C.orange, fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{s.val}</div>
-                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── About ── */}
-      <section id="about" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 64, alignItems: "center" }}>
-          <div data-reveal>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              About BO Consulting
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 24 }}>
-              We don&apos;t just fill roles. We build workforces.
-            </h2>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.8, marginBottom: 20 }}>
-              BO Consulting was built on a simple belief: Australian businesses deserve a recruitment partner that truly understands blue-collar work. Not just the roles, but the sites, the culture, the safety requirements and the pressure of project deadlines.
-            </p>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.8, marginBottom: 32 }}>
-              Our consultants have worked in the industries they recruit for. That means faster shortlists, better candidate fit and fewer surprises on site.
-            </p>
-            <a
-              href="#contact"
-              style={{ color: C.orange, fontSize: 15, fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8, transition: "gap 0.2s" }}
-              onMouseOver={(e) => (e.currentTarget.style.gap = "12px")}
-              onMouseOut={(e) => (e.currentTarget.style.gap = "8px")}
-            >
-              Talk to our team →
-            </a>
-          </div>
-
-          <div data-reveal data-delay="2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {[
-              { val: "8", label: "Industries Covered" },
-              { val: "6", label: "Service Offerings" },
-              { val: "National", label: "Australia Wide" },
-              { val: "Fast", label: "48hr Turnaround" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  background: i % 2 === 0 ? C.navy : C.lightGrey,
-                  borderRadius: 16,
-                  padding: "32px 24px",
-                  transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)",
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
-                onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              >
-                <div style={{ color: i % 2 === 0 ? C.orange : C.navy, fontSize: 32, fontWeight: 700, marginBottom: 8 }}>{item.val}</div>
-                <div style={{ color: i % 2 === 0 ? "rgba(255,255,255,0.6)" : C.grey, fontSize: 13, letterSpacing: "0.05em", textTransform: "uppercase" }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Industries ── */}
-      <section id="industries" style={{ background: C.lightGrey, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              Industries We Serve
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
-              Specialists across every blue-collar sector.
-            </h2>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7 }}>
-              Deep industry knowledge that means better candidate matching and faster placements.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
-            {INDUSTRIES.map((ind, i) => (
-              <div
-                key={i}
-                data-reveal
-                data-delay={String((i % 4) + 1)}
-                className="bo-ind-card"
-                style={{
-                  background: C.white,
-                  borderRadius: 12,
-                  padding: "28px 24px",
-                  border: `1px solid ${C.border}`,
-                  boxShadow: "0 2px 12px rgba(18,59,93,0.06)",
-                }}
-              >
-                <div style={{ fontSize: 32, marginBottom: 16 }}>{ind.icon}</div>
-                <h3 style={{ color: C.navy, fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{ind.name}</h3>
-                <p style={{ color: C.grey, fontSize: 14, lineHeight: 1.6 }}>{ind.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Services ── */}
-      <section id="services" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              What We Do
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
-              The right service for every workforce need.
-            </h2>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7 }}>
-              From single permanent placements to full RPO partnerships, we scale to your requirements.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
-            {SERVICES.map((s, i) => (
-              <div
-                key={i}
-                data-reveal
-                data-delay={String((i % 3) + 1)}
-                className="bo-svc-card"
-                style={{
-                  background: C.lightGrey,
-                  borderRadius: 16,
-                  padding: "36px 32px",
-                  border: `1px solid ${C.border}`,
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: 4,
-                    height: "100%",
-                    background: C.orange,
-                    borderRadius: "16px 0 0 16px",
-                  }}
-                />
-                <div style={{ fontSize: 28, marginBottom: 16 }}>{s.icon}</div>
-                <h3 style={{ color: C.navy, fontSize: 18, fontWeight: 700, marginBottom: 12 }}>{s.title}</h3>
-                <p style={{ color: C.grey, fontSize: 14, lineHeight: 1.7 }}>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ── */}
-      <section id="how-it-works" className="bo-stripe" style={{ background: C.navy, padding: "96px 32px", position: "relative", overflow: "hidden" }}>
-        {/* Background accent */}
-        <div style={{ position: "absolute", right: "-5%", top: "0%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", left: "-5%", bottom: "0%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,130,32,0.05) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-        <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <div data-reveal style={{ textAlign: "center", marginBottom: 72 }}>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              How It Works
-            </p>
-            <h2 style={{ color: "#fff", fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
-              Hired in three steps.
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 16, lineHeight: 1.7, maxWidth: 480, margin: "0 auto" }}>
-              Simple, fast, no lock-in contracts. We work at the speed your business demands.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 32 }}>
-            {PROCESS.map((step, i) => (
-              <div
-                key={i}
-                data-reveal
-                data-delay={String(i + 1)}
-                className="bo-process-card"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 20,
-                  padding: "48px 36px",
-                  textAlign: "center",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <div style={{ position: "absolute", top: 20, right: 24, color: C.orange, fontSize: 52, fontWeight: 800, lineHeight: 1, opacity: 0.1 }}>
-                  {step.num}
-                </div>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: 68,
-                    height: 68,
-                    borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${C.orange}, #d96f10)`,
-                    marginBottom: 24,
-                    fontSize: 28,
-                  }}
-                >
-                  {step.icon}
-                </div>
-                <div style={{ color: C.orange, fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8 }}>
-                  Step {step.num}
-                </div>
-                <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginBottom: 14 }}>{step.title}</h3>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 15, lineHeight: 1.7 }}>{step.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div data-reveal data-delay="4" style={{ textAlign: "center", marginTop: 56 }}>
-            <a
-              href="#contact"
-              className="bo-btn"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: C.orange,
-                color: "#fff",
-                padding: "16px 40px",
-                borderRadius: 8,
-                fontSize: 15,
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              Get Started Today →
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Why Us ── */}
-      <section id="why-us" style={{ background: C.lightGrey, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div data-reveal style={{ marginBottom: 56, maxWidth: 640 }}>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              Why BO Consulting
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
-              The difference is in the details.
-            </h2>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7 }}>
-              We&apos;ve built our business around the things that actually matter to the industries we serve.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
-            {WHY.map((w, i) => (
-              <div
-                key={i}
-                data-reveal
-                data-delay={String((i % 3) + 1)}
-                className="bo-why-card"
-                style={{
-                  background: C.white,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 16,
-                  padding: "32px 28px",
-                  boxShadow: "0 2px 12px rgba(18,59,93,0.04)",
-                }}
-              >
-                <div style={{ fontSize: 28, marginBottom: 16 }}>{w.icon}</div>
-                <h3 style={{ color: C.navy, fontSize: 17, fontWeight: 700, marginBottom: 10 }}>{w.title}</h3>
-                <p style={{ color: C.grey, fontSize: 14, lineHeight: 1.7 }}>{w.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section id="testimonials" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div data-reveal style={{ textAlign: "center", marginBottom: 56 }}>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              Client Testimonials
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2 }}>
-              What our clients say.
-            </h2>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
-            {TESTIMONIALS.map((t, i) => (
-              <div
-                key={i}
-                data-reveal
-                data-delay={String(i + 1)}
-                className="bo-test-card"
-                style={{
-                  background: C.lightGrey,
-                  borderRadius: 16,
-                  padding: "36px 32px",
-                  boxShadow: "0 4px 24px rgba(18,59,93,0.06)",
-                  border: `1px solid ${C.border}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  <div style={{ color: C.orange, fontSize: 20, letterSpacing: 2, marginBottom: 20 }}>★★★★★</div>
-                  <p style={{ color: C.charcoal, fontSize: 15, lineHeight: 1.8, fontStyle: "italic", marginBottom: 28 }}>
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      background: C.navy,
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p style={{ color: C.navy, fontSize: 14, fontWeight: 700 }}>{t.name}</p>
-                    <p style={{ color: C.grey, fontSize: 12, marginTop: 2 }}>{t.title}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA Banner ── */}
-      <section
-        data-reveal
-        style={{
-          background: `linear-gradient(135deg, ${C.orange} 0%, #d96f10 100%)`,
-          padding: "72px 32px",
-          textAlign: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ position: "absolute", right: "-5%", top: "-20%", width: 400, height: 400, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", left: "-5%", bottom: "-20%", width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
-        <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <h2 style={{ color: "#fff", fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 16 }}>
-            Ready to build your workforce?
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 18, marginBottom: 40, lineHeight: 1.6 }}>
-            Talk to our team today. No lock-in contracts, no hidden fees. Just great recruitment.
-          </p>
-          <a
-            href="#contact"
-            className="bo-btn"
-            style={{
-              background: C.white,
-              color: C.orange,
-              padding: "18px 48px",
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 700,
-              textDecoration: "none",
-              display: "inline-block",
-            }}
-          >
-            Contact Us Today
-          </a>
-        </div>
-      </section>
-
-      {/* ── Contact ── */}
-      <section id="contact" style={{ background: C.white, padding: "96px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 64 }}>
-          <div data-reveal>
-            <p style={{ color: C.orange, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16 }}>
-              Get in Touch
-            </p>
-            <h2 style={{ color: C.navy, fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, lineHeight: 1.2, marginBottom: 24 }}>
-              Let&apos;s find the right people for your business.
-            </h2>
-            <p style={{ color: C.grey, fontSize: 16, lineHeight: 1.7, marginBottom: 40 }}>
-              Whether you&apos;re an employer looking for skilled workers or a candidate looking for your next opportunity, we want to hear from you.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {[
-                { label: "Email", value: "info@boconsulting.com.au", href: "mailto:info@boconsulting.com.au" },
-                { label: "Operating Hours", value: "Mon–Fri: 9am – 5pm AEST", href: null },
-                { label: "Coverage", value: "All states and territories, Australia", href: null },
-              ].map((item, i) => (
-                <div key={i}>
-                  <p style={{ color: C.grey, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>{item.label}</p>
-                  {item.href ? (
-                    <a href={item.href} style={{ color: C.navy, fontSize: 16, fontWeight: 600, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = C.orange)} onMouseOut={(e) => (e.currentTarget.style.color = C.navy)}>{item.value}</a>
-                  ) : (
-                    <p style={{ color: C.navy, fontSize: 16, fontWeight: 600 }}>{item.value}</p>
-                  )}
-                </div>
-              ))}
+        <div className="bo-hero-shade" />
+        <div className="bo-hb">
+          <div>
+            <span className="bo-tag">Australia&apos;s Workforce Specialists</span>
+            <h1 className="bo-h1">Connecting Australia&apos;s <span>Workforce.</span></h1>
+            <p className="bo-lead">Helping Australian businesses find reliable, skilled workers faster. Blue-collar recruitment done right.</p>
+            <div className="bo-doors">
+              <button className="bo-door bo-d1" onClick={goHiring}><span>I&apos;m Hiring<small>Brief us on the role</small></span><span aria-hidden>→</span></button>
+              <button className="bo-door bo-d2" onClick={goWork}><span>I&apos;m Looking for Work<small>Tell us what you do</small></span><span aria-hidden>→</span></button>
             </div>
           </div>
-
-          <div data-reveal data-delay="2">
-            <div style={{ display: "flex", gap: 0, marginBottom: 32, background: C.lightGrey, borderRadius: 8, padding: 4 }}>
-              <button
-                id="bo-tab-hiring"
-                onClick={() => setFormData((f) => ({ ...f, type: "employer" }))}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  borderRadius: 6,
-                  border: "none",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  background: formData.type === "employer" ? C.navy : "transparent",
-                  color: formData.type === "employer" ? "#fff" : C.grey,
-                  transition: "all 0.2s",
-                }}
-              >
-                I&apos;m Hiring
-              </button>
-              <button
-                id="bo-tab-candidate"
-                onClick={() => setFormData((f) => ({ ...f, type: "candidate" }))}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  borderRadius: 6,
-                  border: "none",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  background: formData.type === "candidate" ? C.navy : "transparent",
-                  color: formData.type === "candidate" ? "#fff" : C.grey,
-                  transition: "all 0.2s",
-                }}
-              >
-                I&apos;m Looking for Work
-              </button>
-            </div>
-
-            <div
-              id="bo-form-success"
-              style={{
-                display: "none",
-                background: C.lightGrey,
-                borderRadius: 16,
-                padding: 48,
-                textAlign: "center",
-                border: `1px solid ${C.border}`,
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
-              <h3 style={{ color: C.navy, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Thanks, we&apos;ll be in touch shortly.</h3>
-              <p style={{ color: C.grey, fontSize: 15 }}>Our team typically responds within a few hours during business hours.</p>
-            </div>
-
-            <form id="bo-contact-form" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Name *</label>
-                <input
-                  id="bo-name"
-                  type="text"
-                  required
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Email *</label>
-                <input
-                  id="bo-email"
-                  type="email"
-                  required
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
-              {formData.type === "employer" && (
-                <div id="bo-company-row">
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>Company</label>
-                  <input
-                    id="bo-company"
-                    type="text"
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
-                  />
-                </div>
-              )}
-              <div>
-                <label id="bo-msg-label" style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.grey, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>
-                  {formData.type === "employer" ? "What roles are you looking to fill?" : "What type of work are you looking for?"}
+          <div className="bo-brief" id="brief" ref={briefRef}>
+            {bState === "ok" ? (
+              <div className="bo-ok" role="status"><h3>Thanks, we&apos;ll be in touch shortly.</h3><p>Our team typically responds within a few hours during business hours.</p></div>
+            ) : (
+              <form onSubmit={sendBrief}>
+                <h2>Brief us in one call</h2>
+                <p className="bo-sub">Tell us the role and we will come back to you.</p>
+                <label className="bo-field"><span>Your name</span><input required autoComplete="name" value={b.name} onChange={(e) => setB({ ...b, name: e.target.value })} /></label>
+                <label className="bo-field"><span>Email</span><input required type="email" autoComplete="email" value={b.email} onChange={(e) => setB({ ...b, email: e.target.value })} /></label>
+                <label className="bo-field"><span>Role needed</span>
+                  <select required value={b.role} onChange={(e) => setB({ ...b, role: e.target.value })}>
+                    <option value="">Select an industry</option>
+                    {INDUSTRIES.map((i) => <option key={i.name}>{i.name}</option>)}
+                    <option>Other</option>
+                  </select>
                 </label>
-                <textarea
-                  id="bo-message"
-                  required
-                  rows={4}
-                  style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.charcoal, resize: "none", boxSizing: "border-box", transition: "border-color 0.2s", outline: "none" }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = C.orange)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
-              <button
-                type="submit"
-                className="bo-btn"
-                style={{
-                  background: C.orange,
-                  color: "#fff",
-                  padding: "16px",
-                  borderRadius: 8,
-                  border: "none",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Send Enquiry
-              </button>
-            </form>
+                <label className="bo-field"><span>Site or location</span><input autoComplete="off" value={b.site} onChange={(e) => setB({ ...b, site: e.target.value })} /></label>
+                <label className="bo-field"><span>Timeline</span>
+                  <select value={b.timeline} onChange={(e) => setB({ ...b, timeline: e.target.value })}>
+                    <option value="">Select a timeline</option>
+                    <option>As soon as possible</option><option>Within 2 weeks</option><option>Within a month</option><option>Planning ahead</option>
+                  </select>
+                </label>
+                {bState === "err" && <p className="bo-err" role="alert">Something went wrong. Please try again or email {EMAIL}.</p>}
+                <button className="bo-go" disabled={bState === "sending"}>{bState === "sending" ? "Sending…" : "Send Enquiry"}</button>
+                <p className="bo-mail">Or email <a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
+              </form>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ background: C.navy, color: "#fff", padding: "64px 32px 32px" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 48, marginBottom: 48 }}>
-            <div>
-              <img src="/sites/bo-consultancy/logo.png" alt="BO Consultancy" style={{ height: 40, marginBottom: 16, filter: "brightness(0) invert(1)" }} />
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, lineHeight: 1.7 }}>
-                Australia&apos;s specialist blue-collar workforce recruitment partner.
-              </p>
-            </div>
-            <div>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Industries</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {INDUSTRIES.slice(0, 5).map((ind, i) => (
-                  <a key={i} href="#industries" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>{ind.name}</a>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Quick Links</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {["About", "Services", "Why Us", "Testimonials", "Contact"].map((link, i) => (
-                  <a key={i} href={`#${link.toLowerCase().replace(" ", "-")}`} style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>{link}</a>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>Contact</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <a href="mailto:info@boconsulting.com.au" style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "#fff")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}>info@boconsulting.com.au</a>
-                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 14 }}>Mon–Fri: 9am – 5pm AEST</p>
-              </div>
-            </div>
-          </div>
+      {/* Facts strip (only facts already on the site) */}
+      <div className="bo-strip">
+        <div><b>Australia Wide</b><span>National coverage</span></div>
+        <div><b>6</b><span>Recruitment services</span></div>
+        <div><b>8</b><span>Industries served</span></div>
+        <div><b>Mon to Fri</b><span>9am to 5pm AEST</span></div>
+      </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 24, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
-              © 2026 BO Consulting. All rights reserved.
-              &nbsp;·&nbsp; <PoweredBySaabai site="boconsulting" />
-            </p>
-            <div style={{ display: "flex", gap: 24 }}>
-              <a href="/sites/bo-consultancy/privacy-policy" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>Privacy Policy</a>
-              <a href="/sites/bo-consultancy/terms" style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, textDecoration: "none", transition: "color 0.2s" }} onMouseOver={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")} onMouseOut={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>Terms of Service</a>
+      {/* About */}
+      <section id="about" className="bo-sec" data-reveal>
+        <div className="bo-eyebrow">About BO Consulting</div>
+        <h2>We don&apos;t just fill roles. We build workforces.</h2>
+        <div className="bo-about">
+          <p>BO Consulting was built on a simple belief: Australian businesses deserve a recruitment partner that truly understands blue-collar work. Not just the roles, but the sites, the culture, the safety requirements and the pressure of project deadlines.</p>
+          <p>Our consultants have worked in the industries they recruit for. That means faster shortlists, better candidate fit and fewer surprises on site.</p>
+        </div>
+      </section>
+
+      {/* Industries */}
+      <section id="industries" className="bo-sec" data-reveal>
+        <div className="bo-eyebrow">Industries We Serve</div>
+        <h2>Specialists across every blue-collar sector.</h2>
+        <p className="bo-intro">Deep industry knowledge that means better candidate matching and faster placements.</p>
+        <div className="bo-led">
+          {INDUSTRIES.map((i, idx) => (
+            <div className="bo-lr" key={i.name}>
+              <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{ __html: ICONS[idx] }} />
+              <div><b>{i.name}</b><span>{i.desc}</span></div>
+              <i aria-hidden>→</i>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Services */}
+      <section id="services" className="bo-sec" data-reveal>
+        <div className="bo-eyebrow">What We Do</div>
+        <h2>The right service for every workforce need.</h2>
+        <div className="bo-sv">
+          <div className="bo-svimg">
+            <img src="/sites/bo-consultancy/services-warehouse.webp" width={1000} height={667} loading="lazy" decoding="async" alt="Two workers in hi-vis vests walking through a large warehouse with tall shelving and sunlight through the roof" />
+          </div>
+          <div>
+            {SERVICES.map((s, i) => (
+              <div className="bo-r" key={s.title}>
+                <em>{String(i + 1).padStart(2, "0")}</em>
+                <div><b>{s.title}</b><span>{s.desc}</span></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="bo-sec" data-reveal>
+        <div className="bo-eyebrow">How It Works</div>
+        <h2>Hired in three steps.</h2>
+        <p className="bo-intro">Simple, fast, no lock-in contracts. We work at the speed your business demands.</p>
+        <div className="bo-route">
+          {PROCESS.map((p) => (
+            <div className="bo-rs" key={p.n}><div className="bo-n">{p.n}</div><b>{p.title}</b><span>{p.desc}</span></div>
+          ))}
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section id="contact" className="bo-sec" data-reveal>
+        <div className="bo-contact">
+          <div>
+            <div className="bo-eyebrow">Get in Touch</div>
+            <h2>Let&apos;s find the right people for your business.</h2>
+            <p className="bo-intro">Whether you&apos;re an employer looking for skilled workers or a candidate looking for your next opportunity, we want to hear from you.</p>
+            <div className="bo-facts">
+              <div><small>Email</small><a href={`mailto:${EMAIL}`}>{EMAIL}</a></div>
+              <div><small>Operating Hours</small><b>Mon to Fri: 9am to 5pm AEST</b></div>
+              <div><small>Coverage</small><b>All states and territories, Australia</b></div>
             </div>
           </div>
+          <div className="bo-card" ref={contactRef}>
+            <div className="bo-tabs" role="group" aria-label="Enquiry type">
+              <button type="button" aria-pressed={kind === "employer"} onClick={() => setKind("employer")}>I&apos;m Hiring</button>
+              <button type="button" aria-pressed={kind === "candidate"} onClick={() => setKind("candidate")}>I&apos;m Looking for Work</button>
+            </div>
+            {cState === "ok" ? (
+              <div className="bo-ok" role="status"><h3>Thanks, we&apos;ll be in touch shortly.</h3><p>Our team typically responds within a few hours during business hours.</p></div>
+            ) : (
+              <form onSubmit={sendContact}>
+                <label className="bo-field"><span>Name *</span><input required autoComplete="name" value={c.name} onChange={(e) => setC({ ...c, name: e.target.value })} /></label>
+                <label className="bo-field"><span>Email *</span><input required type="email" autoComplete="email" value={c.email} onChange={(e) => setC({ ...c, email: e.target.value })} /></label>
+                {kind === "employer" && (
+                  <label className="bo-field"><span>Company</span><input autoComplete="organization" value={c.company} onChange={(e) => setC({ ...c, company: e.target.value })} /></label>
+                )}
+                <label className="bo-field"><span>{kind === "employer" ? "What roles are you looking to fill? *" : "What type of work are you looking for? *"}</span>
+                  <textarea required value={c.message} onChange={(e) => setC({ ...c, message: e.target.value })} />
+                </label>
+                {cState === "err" && <p className="bo-err" role="alert">Something went wrong. Please try again or email {EMAIL}.</p>}
+                <button className="bo-go" disabled={cState === "sending"}>{cState === "sending" ? "Sending…" : "Send Enquiry"}</button>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA band */}
+      <section className="bo-band">
+        <div><h2>Ready to build your workforce?</h2><p>Tell us the role and we will take it from there.</p></div>
+        <a href="#contact" className="bo-btn" onClick={(e) => { e.preventDefault(); goHiring(); }}>Contact Us Today</a>
+      </section>
+
+      {/* Footer */}
+      <footer className="bo-footer">
+        <div className="bo-fg">
+          <div>
+            <a href="#top" className="bo-fl" aria-label="BO Consulting home"><BOLogo /></a>
+            <p>Australia&apos;s specialist blue-collar workforce recruitment partner.</p>
+          </div>
+          <div>
+            <h4>Industries</h4>
+            {INDUSTRIES.slice(0, 5).map((i) => <a key={i.name} href="#industries">{i.name}</a>)}
+          </div>
+          <div>
+            <h4>Quick Links</h4>
+            {NAV.map(([l, h]) => <a key={l} href={h}>{l}</a>)}
+          </div>
+          <div>
+            <h4>Contact</h4>
+            <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+            <p>Mon to Fri: 9am to 5pm AEST</p>
+          </div>
+        </div>
+        <div className="bo-copy">
+          <span>&copy; 2026 BO Consulting. All rights reserved. &nbsp;·&nbsp; <PoweredBySaabai site="boconsulting" /></span>
+          <span><a href="/sites/bo-consultancy/privacy-policy">Privacy Policy</a><a href="/sites/bo-consultancy/terms">Terms</a></span>
         </div>
       </footer>
+
+      {/* Mobile sticky CTA */}
+      <div className={`bo-sticky${hideSticky ? " bo-hide" : ""}`}>
+        <button className="bo-s1" onClick={goHiring}>Find Staff</button>
+        <button className="bo-s2" onClick={goWork}>Looking for Work</button>
+      </div>
     </main>
   );
 }
