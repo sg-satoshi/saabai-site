@@ -105,6 +105,14 @@ export default function Home() {
                 <p style={{ fontSize: 15 }}>Mortgage broking and lending advice for SA and QLD, with a strategy call booking flow and Google reviews on show.</p>
               </div>
             </a>
+            <a className="site" href="https://www.boconsulting.com.au" target="_blank" rel="noopener noreferrer">
+              <div className="bar"><i /><i /><i /></div>
+              <div className="shot" role="img" aria-label="BO Consulting website homepage with recruitment and workforce solutions hero" style={{ backgroundImage: "url(/sites/bo-consulting-hero-thumb.webp)", backgroundPosition: "top center" }} />
+              <div className="meta">
+                <h3>BO Consulting</h3>
+                <p style={{ fontSize: 15 }}>Recruitment and workforce solutions for Australian businesses, with a clear enquiry form for employers and job seekers.</p>
+              </div>
+            </a>
           </div>
         </div>
       </section>
