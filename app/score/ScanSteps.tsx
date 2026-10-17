@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SbNav from "../components/sb/SbNav";
 import "../components/sb/score.css";
 import "../components/scan/scan.css";
@@ -20,7 +20,25 @@ export default function ScanSteps({ onDone }: { onDone: (r: ScanReport, d: ScanD
   const [url, setUrl] = useState("");
   const [err, setErr] = useState("");
   const [tick, setTick] = useState(0);
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const tokenRef = useRef("");
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
   const set = (k: keyof ScanDetails, v: string | boolean) => setD((x) => ({ ...x, [k]: v }));
+
+  useEffect(() => { fetch("/api/site-scan/status").then((r) => r.json()).then((j) => setSiteKey(j.turnstileSiteKey || null)).catch(() => {}); }, []);
+
+  // Cloudflare Turnstile widget on the website step (only when keys are configured).
+  useEffect(() => {
+    if (phase !== "site" || !siteKey) return;
+    type TS = { render: (el: HTMLElement, o: Record<string, unknown>) => string; reset: (id?: string) => void; remove: (id?: string) => void };
+    const w = window as unknown as { turnstile?: TS };
+    const mount = () => { if (!w.turnstile || !widgetRef.current || widgetId.current) return; widgetId.current = w.turnstile.render(widgetRef.current, { sitekey: siteKey, theme: "dark", callback: (t: string) => { tokenRef.current = t; }, "expired-callback": () => { tokenRef.current = ""; }, "error-callback": () => { tokenRef.current = ""; } }); };
+    if (w.turnstile) mount();
+    else if (!document.getElementById("cf-turnstile-js")) { const sc = document.createElement("script"); sc.id = "cf-turnstile-js"; sc.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; sc.async = true; sc.onload = mount; document.head.appendChild(sc); }
+    else document.getElementById("cf-turnstile-js")!.addEventListener("load", mount);
+    return () => { try { if (widgetId.current) w.turnstile?.remove(widgetId.current); } catch { /* ignore */ } widgetId.current = null; };
+  }, [phase, siteKey]);
 
   useEffect(() => {
     if (phase !== "scanning") return;
@@ -37,15 +55,17 @@ export default function ScanSteps({ onDone }: { onDone: (r: ScanReport, d: ScanD
 
   const run = async (noWebsite: boolean) => {
     if (!noWebsite && !url.trim()) { setErr("Enter your website address, or choose the option below if you do not have one."); document.getElementById("sx-url")?.focus(); return; }
+    if (siteKey && !tokenRef.current) { setErr("Please complete the quick human check below first."); return; }
     setErr(""); setTick(0); setPhase("scanning");
     gaEvent("score_scan_start", { no_website: noWebsite });
     try {
       const res = await fetch("/api/site-scan", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: noWebsite ? "" : url.trim(), noWebsite, email: d.email.trim(), name: d.name, industry: d.industry, suburb: d.suburb, goal: d.goal }),
+        body: JSON.stringify({ url: noWebsite ? "" : url.trim(), noWebsite, turnstileToken: tokenRef.current, email: d.email.trim(), name: d.name, industry: d.industry, suburb: d.suburb, goal: d.goal }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok || !j.report) { setErr(j.error || "The scan did not work. Please check the address and try again."); setPhase("site"); return; }
+      if (!res.ok || !j.report) {
+        if (siteKey) { tokenRef.current = ""; } setErr(j.error || "The scan did not work. Please check the address and try again."); setPhase("site"); return; }
       gaEvent("score_scan_complete", { score: j.report.overall, mode: j.report.mode });
       onDone(j.report, { ...d, email: d.email.trim(), name: d.name.trim() });
     } catch { setErr("The scan did not work. Please try again."); setPhase("site"); }
@@ -76,6 +96,7 @@ export default function ScanSteps({ onDone }: { onDone: (r: ScanReport, d: ScanD
             <h2>Pop in your website and we will check how ready it is for Google and AI search.</h2>
             <p className="lead">About 20 seconds. We only read what is public.</p>
             <label className="f" htmlFor="sx-url">Website address<input id="sx-url" type="text" inputMode="url" autoCapitalize="none" placeholder="yourbusiness.com.au" value={url} onChange={(e) => setUrl(e.target.value)} aria-invalid={!!err} /></label>
+            {siteKey && <div ref={widgetRef} style={{ margin: "12px 0", minHeight: 65 }} />}
             <p className="err" role="alert">{err}</p>
             <button className="go" type="submit">Scan my website →</button>
             <button className="skip" type="button" onClick={() => void run(true)}>I don&apos;t have a website yet</button>

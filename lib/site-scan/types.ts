@@ -18,6 +18,10 @@ export type Snapshot = {
   llms: { found: boolean; empty: boolean } | null;
   extra: string; // html of up to 2 linked pages (about/contact)
   jsHeavy: boolean;
+  /** Page lives under a shared host path (saabai.ai/sites/slug): robots, sitemap and llms.txt belong to the host, not this site. */
+  shared: boolean;
+  /** Does the host's sitemap list this sub-site path? Only set when shared. */
+  inSitemap?: boolean;
 };
 
 export type CheckResult = { status: Status; found: string };

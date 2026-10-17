@@ -13,7 +13,18 @@ const meta = (h: string, attr: "name" | "property", v: string): string | null =>
   }
   return null;
 };
+/** Content checks need readable page text; a JavaScript-only shell has none. */
 const noHome = (s: Snapshot) => !s.home || s.jsHeavy;
+/** Head checks (title, viewport, schema, share tags) work on a JavaScript shell too, because they sit in the raw HTML. */
+const noHead = (s: Snapshot) => !s.home;
+const SHARED_MSG = "This page sits under the main saabai.ai site, which controls this file, so it is not judged here.";
+/** Loose business-name match: ignores case, punctuation and apostrophes, and accepts most of the words. */
+export function nameMatch(page: string, name: string): boolean {
+  const n = (x: string) => x.toLowerCase().replace(/[\u2018\u2019'`]/g, "").replace(/&amp;|&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+  const p = ` ${n(page)} `, w = n(name).split(" ").filter((x) => x.length > 2 && !["the", "and", "pty", "ltd"].includes(x));
+  if (!w.length) return p.includes(` ${n(name)} `);
+  return w.filter((x) => p.includes(x)).length / w.length >= 0.6;
+}
 const jsMsg = (s: Snapshot) => (s.jsHeavy ? "The page builds itself with JavaScript, so a simple scan cannot read it." : "Could not read the homepage.");
 
 /** JSON-LD blocks parsed (bad JSON ignored). */
@@ -48,12 +59,12 @@ export function blockedBots(robots: string): string[] {
 
 export const CHECKS: CheckDef[] = [
   { id: "title_meta", area: "seo", weight: 6, label: "Page title and description", run: (s) => {
-    if (noHome(s)) return U(jsMsg(s));
+    if (noHead(s)) return U(jsMsg(s));
     const t = (html(s).match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/\s+/g, " ").trim();
     const d = meta(html(s), "name", "description") ?? "";
-    if (t && d && t.length <= 70 && d.length >= 50 && d.length <= 175) return R("pass", `Title (${t.length} characters) and description (${d.length}) look good.`);
+    if (t && d && t.length <= 75 && d.length >= 50 && d.length <= 200) return R("pass", `Title (${t.length} characters) and description (${d.length}) look good.`);
     if (!t && !d) return R("fail", "No page title and no description.");
-    return R("partial", !t ? "No page title." : !d ? "No meta description." : `Title is ${t.length} characters and description is ${d.length}; aim for a title under 70 and a description of 50 to 175.`);
+    return R("partial", !t ? "No page title." : !d ? "No meta description." : `Title is ${t.length} characters and description is ${d.length}; aim for a title under 75 and a description of 50 to 200.`);
   } },
   { id: "headings", area: "seo", weight: 4, label: "Headings", run: (s) => {
     if (noHome(s)) return U(jsMsg(s));
@@ -63,17 +74,17 @@ export const CHECKS: CheckDef[] = [
     return R("partial", `${h1} main heading but only ${h2} sub heading${h2 === 1 ? "" : "s"}.`);
   } },
   { id: "mobile", area: "seo", weight: 5, label: "Mobile friendly", run: (s) => {
-    if (noHome(s)) return U(jsMsg(s));
+    if (noHead(s)) return U(jsMsg(s));
     const vp = meta(html(s), "name", "viewport");
     if (!vp) return R("fail", "No mobile viewport setting, so phones show a shrunken desktop page.");
-    if (/<(img|table|div|iframe)\b[^>]*\bwidth\s*=\s*["']?(\d{4,}|[89]\d{2})(px)?["']?/i.test(html(s))) return R("partial", "Mobile setting present, but some elements have a fixed wide width.");
+    if (/<(table|div|iframe)\b[^>]*\bwidth\s*=\s*["']?(\d{4,}|1\d{3})(px)?["']?/i.test(html(s))) return R("partial", "Mobile setting present, but some elements have a fixed wide width.");
     return R("pass", "Mobile viewport is set.");
   } },
   { id: "speed", area: "seo", weight: 6, label: "Page speed (basic)", run: (s) => {
     if (!s.home) return U("Could not load the homepage.");
     const { ms, bytes } = s.home; const mb = bytes / 1e6;
-    if (ms < 800 && mb < 2) return R("pass", `Responded in ${ms} ms, ${mb.toFixed(1)} MB page.`);
-    if (ms < 2000 && mb < 4) return R("partial", `Responded in ${ms} ms, ${mb.toFixed(1)} MB page. Faster is better.`);
+    if (ms < 1500 && mb < 2) return R("pass", `Responded in ${ms} ms, ${mb.toFixed(1)} MB page.`);
+    if (ms < 3500 && mb < 4) return R("partial", `Responded in ${ms} ms, ${mb.toFixed(1)} MB page. Faster is better.`);
     return R("fail", `Slow or heavy: ${ms} ms, ${mb.toFixed(1)} MB.`);
   } },
   { id: "https", area: "seo", weight: 5, label: "Secure (HTTPS)", run: (s) => {
@@ -86,14 +97,14 @@ export const CHECKS: CheckDef[] = [
     if (!s.home) return U("Could not load the homepage.");
     const rob = meta(html(s), "name", "robots") ?? ""; const hasCanon = /<link\b[^>]*rel=["']canonical["']/i.test(html(s));
     if (/noindex/i.test(rob)) return R("fail", "The page tells Google not to list it (noindex).");
-    if (s.robots && /^\s*disallow\s*:\s*\/\s*$/im.test(s.robots.split(/user-agent\s*:/i).find((g) => /^\s*\*/.test(g)) ?? "")) return R("fail", "robots.txt blocks all search engines.");
+    if (!s.shared && s.robots && /^\s*disallow\s*:\s*\/\s*$/im.test(s.robots.split(/user-agent\s*:/i).find((g) => /^\s*\*/.test(g)) ?? "")) return R("fail", "robots.txt blocks all search engines.");
     return hasCanon ? R("pass", "Indexable with a canonical tag.") : R("partial", "Indexable, but no canonical tag.");
   } },
   { id: "sitemap", area: "seo", weight: 4, label: "Sitemap", run: (s) => {
+    if (s.shared) return s.inSitemap ? R("pass", "This site is listed in the main saabai.ai sitemap.") : U(SHARED_MSG);
     if (s.sitemap === null) return U("Could not test.");
     const ref = !!s.robots && /sitemap\s*:/i.test(s.robots);
-    if (s.sitemap && ref) return R("pass", "Sitemap found and listed in robots.txt.");
-    if (s.sitemap) return R("partial", "Sitemap found but robots.txt does not mention it.");
+    if (s.sitemap) return R("pass", ref ? "Sitemap found and listed in robots.txt." : "Sitemap found at /sitemap.xml.");
     return R("fail", "No sitemap.xml found.");
   } },
   { id: "alt", area: "seo", weight: 3, label: "Image descriptions (alt text)", run: (s) => {
@@ -103,12 +114,12 @@ export const CHECKS: CheckDef[] = [
     return p >= 0.9 ? R("pass", `${ok} of ${imgs.length} images have alt text.`) : p >= 0.5 ? R("partial", `${ok} of ${imgs.length} images have alt text.`) : R("fail", `Only ${ok} of ${imgs.length} images have alt text.`);
   } },
   { id: "social_tags", area: "seo", weight: 2, label: "Social sharing preview", run: (s) => {
-    if (noHome(s)) return U(jsMsg(s));
+    if (noHead(s)) return U(jsMsg(s));
     const t = meta(html(s), "property", "og:title"), i = meta(html(s), "property", "og:image");
     return t && i ? R("pass", "Share title and image set.") : t || i ? R("partial", `Missing the share ${t ? "image" : "title"}.`) : R("fail", "No social share title or image.");
   } },
   { id: "schema", area: "ai", weight: 8, label: "Business schema (structured data)", run: (s) => {
-    if (noHome(s)) return U(jsMsg(s));
+    if (noHead(s)) return U(jsMsg(s));
     const biz = jsonLd(html(s)).filter((n) => types(n).some((t) => /LocalBusiness|Organization|Store|Service|Professional|Restaurant|Dentist|Attorney|Plumber|Electrician|Contractor/i.test(t)));
     if (!biz.length) return R("fail", "No business structured data, so AI tools and Google must guess what you do.");
     const n = biz[0]; const full = !!n.name && !!n.address && !!(n.telephone || n.url);
@@ -121,19 +132,21 @@ export const CHECKS: CheckDef[] = [
     return faq && faqSchema ? R("pass", "FAQ content with FAQ schema.") : faq ? R("partial", "FAQ content but no FAQ schema.") : R("fail", "No FAQ or question-style content that AI tools can quote.");
   } },
   { id: "ai_bots", area: "ai", weight: 7, label: "AI tools allowed in", run: (s) => {
+    if (s.shared) return U(SHARED_MSG);
     if (s.robotsBlocksUs) return U("The site asks bots not to scan it.");
     if (s.robots === null) return R("pass", "No robots.txt rules, so AI crawlers are not blocked.");
     const b = blockedBots(s.robots);
     return b.length === 0 ? R("pass", "AI crawlers are allowed.") : b.length >= AI_BOTS.length - 1 ? R("fail", `Blocks AI tools (${b.join(", ")}).`) : R("partial", `Blocks some AI tools (${b.join(", ")}).`);
   } },
   { id: "llms", area: "ai", weight: 3, label: "AI summary file (llms.txt)", run: (s) => {
+    if (s.shared) return U(SHARED_MSG);
     if (!s.llms) return U("Could not test.");
     return s.llms.found ? (s.llms.empty ? R("partial", "llms.txt exists but is empty.") : R("pass", "llms.txt found.")) : R("fail", "No llms.txt file.");
   } },
   { id: "who_what_where", area: "ai", weight: 5, label: "Clear who, what and where", run: (s) => {
     if (noHome(s)) return U(jsMsg(s));
     const t = text(html(s)).toLowerCase(); const { name, suburb, industry } = s.input;
-    const who = name ? t.includes(name.toLowerCase()) : /<title/i.test(html(s));
+    const who = name ? nameMatch(t + " " + (html(s).match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? ""), name) : /<title/i.test(html(s));
     const where = suburb ? t.includes(suburb.toLowerCase()) : /\b(qld|nsw|vic|wa|sa|tas|nt|act|australia|brisbane|sydney|melbourne|perth|adelaide|gold coast)\b/.test(t);
     const what = industry ? t.split(/\W+/).some((w) => w.length > 3 && industry.toLowerCase().includes(w)) || t.includes(industry.toLowerCase()) : t.length > 300;
     const n = [who, what, where].filter(Boolean).length;
@@ -145,7 +158,7 @@ export const CHECKS: CheckDef[] = [
     const a = all(s); const t = text(a);
     const phone = /(?:\+?61|\b0)[\s-]?[2-478](?:[\s-]?\d){8}\b|\b1[38]00[\s-]?\d{3}[\s-]?\d{3}\b|tel:/i.test(a);
     const addr = /\b\d{1,5}\s+[A-Z][a-z]+\s+(St|Street|Rd|Road|Ave|Avenue|Dr|Drive|Pde|Parade|Ct|Court|Pl|Place|Way|Cres|Crescent|Hwy|Highway|Blvd|Lane|Ln)\b|\b(QLD|NSW|VIC|WA|SA|TAS|NT|ACT)\s+\d{4}\b/.test(t) || jsonLd(a).some((n) => !!n.address);
-    const name = s.input.name ? t.toLowerCase().includes(s.input.name.toLowerCase()) : true;
+    const name = s.input.name ? nameMatch(t, s.input.name) : true;
     const suburbOk = s.input.suburb ? t.toLowerCase().includes(s.input.suburb.toLowerCase()) : true;
     if (phone && addr && name && suburbOk) return R("pass", "Name, address and phone are on the site.");
     if (!phone && !addr) return R("fail", "No phone number or address found on the site.");
@@ -175,7 +188,7 @@ export const CHECKS: CheckDef[] = [
   } },
   { id: "social_links", area: "local", weight: 3, label: "Social links", run: (s) => {
     if (noHome(s)) return U(jsMsg(s));
-    const n = ["facebook.com", "instagram.com", "linkedin.com", "youtube.com", "tiktok.com", "x.com", "twitter.com"].filter((d) => new RegExp(`href=["'][^"']*${d.replace(".", "\\.")}`, "i").test(html(s))).length;
+    const n = ["facebook.com", "instagram.com", "linkedin.com", "youtube.com", "tiktok.com", "x.com", "twitter.com"].filter((d) => new RegExp(`(href=["'][^"']*|["'])https?:\\/\\/(www\\.)?${d.replace(".", "\\.")}`, "i").test(all(s))).length;
     return n >= 2 ? R("pass", `${n} social profiles linked.`) : n === 1 ? R("partial", "One social profile linked.") : R("fail", "No social profiles linked.");
   } },
 ];
