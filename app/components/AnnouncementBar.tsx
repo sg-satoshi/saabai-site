@@ -146,7 +146,9 @@ const CSS = `
 .sb-ann-card .sb-ann-close{position:absolute;top:4px;right:4px}
 .sb-ann-title{margin:0;padding-right:36px;font-size:18px;line-height:24px;font-weight:600}
 html[data-ann-top] body{padding-top:var(--ann-h)}
+html[data-ann-top]{scroll-padding-top:var(--ann-h)}
 html[data-ann-top] nav.fixed.top-0{top:var(--ann-h)}
+html[data-ann-top] [id]{scroll-margin-top:calc(var(--ann-h) + 96px)}
 @media (max-width:767px){
   .sb-ann-top,.sb-ann-bottom{padding:6px 4px 6px 16px;gap:8px}
   .sb-ann-msg{font-size:14px;line-height:20px}
