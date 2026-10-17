@@ -14,7 +14,7 @@ export default function ReportView({ report: r, showLogo = false }: { report: Sc
   const sub = blocked ? r.message : noSite ? "Customers who look for you online, or ask Google and ChatGPT, find nothing. That scores zero, and it is the easiest gap to fix." : `${r.domain} scored ${r.overall} out of 100. ${crit ? `${crit} critical fix${crit > 1 ? "es" : ""}` : "No critical fixes"}${r.quickWins.length ? ` and ${r.quickWins.length} quick win${r.quickWins.length > 1 ? "s" : ""}.` : "."}`;
   return (
     <div className="sx" data-testid="scan-report">
-      {showLogo && <img src="/brand/saabai-logo-transparent.png" alt="Saabai" height={28} style={{ height: 28, width: "auto", marginBottom: 16 }} />}
+      {showLogo && <img src="/brand/saabai-lockup-dark.png" alt="Saabai" height={28} style={{ height: 28, width: "auto", marginBottom: 16 }} />}
       <div className="sx-top">
         {r.overall !== null && (
           <div className="sx-ring" role="img" aria-label={`Overall ${r.overall} out of 100`} style={{ background: `conic-gradient(#62c5d1 0 ${r.overall}%, #211f55 ${r.overall}% 100%)` }}>

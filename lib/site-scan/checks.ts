@@ -120,7 +120,7 @@ export const CHECKS: CheckDef[] = [
   } },
   { id: "schema", area: "ai", weight: 8, label: "Business schema (structured data)", run: (s) => {
     if (noHead(s)) return U(jsMsg(s));
-    const biz = jsonLd(html(s)).filter((n) => types(n).some((t) => /LocalBusiness|Organization|Store|Service|Professional|Restaurant|Dentist|Attorney|Plumber|Electrician|Contractor/i.test(t)));
+    const biz = jsonLd(html(s)).filter((n) => types(n).some((t) => /LocalBusiness|Organization|Store|Service|Professional|Restaurant|Dentist|Attorney|Plumber|Electrician|Contractor|Agency|Agent|Business|Company|Corporation|Shop|Clinic|Practice|Broker|Lawyer|Accountant|Physician|Salon|Studio|Repair/i.test(t)));
     if (!biz.length) return R("fail", "No business structured data, so AI tools and Google must guess what you do.");
     const n = biz[0]; const full = !!n.name && !!n.address && !!(n.telephone || n.url);
     return full ? R("pass", "Business schema with name, address and contact details.") : R("partial", "Business schema found but missing name, address or phone.");
