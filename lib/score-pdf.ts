@@ -2,6 +2,9 @@ import { PDFDocument, PDFName, PDFString, StandardFonts, rgb, type PDFFont, type
 import { TIERS, type ScoreResult, type Category } from "./blueprint";
 import { ARROW_PATH, ARROW_PATH_FLIPPED } from "./score-arrow";
 import { LOGO_ASPECT, LOGO_PNG_BASE64 } from "./score-logo";
+import type { ScanReport } from "./site-scan/types";
+import { AREAS, AREA_LABEL, DISCLAIMER, RATING_LABEL } from "./site-scan/score";
+import { OFFERS } from "./site-scan/copy";
 
 // Server-side PDF of a /score result (A4, one page, vector only, no external assets).
 // Everything is computed from the answers on the server. Nothing is invented.
@@ -116,6 +119,8 @@ export function areaHours(r: ScoreResult): { id: Category; label: string; score:
 export type ScorePdfInput = {
   result: ScoreResult;
   name?: string;
+  /** Website scan report. When present, page 3 "Your website report" is added. */
+  scan?: ScanReport | null;
   /** Used only in tests and the footer date. */
   now?: Date;
 };
@@ -126,7 +131,7 @@ export async function buildScorePdf(input: ScorePdfInput): Promise<Uint8Array> {
   return (await buildScorePdfDetailed(input)).bytes;
 }
 
-export async function buildScorePdfDetailed({ result: r, name, now = new Date() }: ScorePdfInput): Promise<{ bytes: Uint8Array; page2Bottom: number }> {
+export async function buildScorePdfDetailed({ result: r, name, scan, now = new Date() }: ScorePdfInput): Promise<{ bytes: Uint8Array; page2Bottom: number }> {
   const rec = TIERS[r.recommended];
   const doc = await PDFDocument.create();
   doc.setTitle(`Your AI Readiness Report: ${r.total}/100`);
@@ -320,5 +325,102 @@ export async function buildScorePdfDetailed({ result: r, name, now = new Date() 
   let f2 = H - 60;
   for (const l of wrap(foot2, reg, 8, W - M * 2)) { p2.drawText(l, { x: M, y: Y2(f2), size: 8, font: reg, color: MUTED }); f2 += 11; }
 
+  if (scan && scan.mode !== "blocked") drawWebsitePage({ doc, scan, logo, logoW, logoH, date, reg, bold, mono });
+
   return { bytes: await doc.save(), page2Bottom };
+}
+
+const RATING_COLOR = { critical: rgb(1, 0.365, 0.424), important: rgb(1, 0.702, 0.278), nice: rgb(0.62, 0.74, 0.95) };
+
+/** Page 3: "Your website report". Same look as pages 1 and 2. Top 8 fixes, then a pointer to the full list online. */
+export function drawWebsitePage(o: { doc: PDFDocument; scan: ScanReport; logo: Awaited<ReturnType<PDFDocument["embedPng"]>>; logoW: number; logoH: number; date: string; reg: PDFFont; bold: PDFFont; mono: PDFFont }) {
+  const { doc, scan, logo, logoW, logoH, date, reg, bold, mono } = o;
+  const p = doc.addPage([W, H]);
+  const Y = (top: number) => H - top;
+  const CARD = rgb(0.075, 0.067, 0.29), EDGE = rgb(0.2, 0.19, 0.45);
+  p.drawRectangle({ x: 0, y: 0, width: W, height: H, color: NAVY });
+  p.drawImage(logo, { x: M, y: Y(36 + logoH), width: logoW, height: logoH });
+  p.drawText(pdfSafe(date), { x: W - M - reg.widthOfTextAtSize(pdfSafe(date), 9), y: Y(58), size: 9, font: reg, color: MUTED });
+  p.drawText("YOUR WEBSITE REPORT", { x: M, y: Y(100), size: 8.5, font: mono, color: TEAL });
+  const noSite = scan.mode === "no_website";
+  const title = noSite ? "No website detected" : pdfSafe(scan.domain || "Your website");
+  p.drawText(title, { x: M, y: Y(124), size: 19, font: bold, color: WHITE });
+  const scanned = new Date(scan.scannedAt).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Australia/Brisbane" });
+  p.drawText(pdfSafe(`Scanned ${scanned}`), { x: M, y: Y(139), size: 9, font: reg, color: MUTED });
+
+  // Overall + three area scores
+  const ov = scan.overall ?? 0;
+  const bw = (W - M * 2 - 3 * 8) / 4;
+  const boxes: { label: string; v: number | null }[] = [{ label: "Overall", v: scan.overall }, ...AREAS.map((a) => ({ label: AREA_LABEL[a], v: scan.areas[a] }))];
+  boxes.forEach((b, i) => {
+    const x = M + i * (bw + 8);
+    drawRound(p, x, Y(152), bw, 62, 10, { color: CARD, border: i === 0 ? YEL : EDGE, bw: i === 0 ? 1.5 : 0.8 });
+    p.drawText(pdfSafe(b.label), { x: x + 10, y: Y(168), size: 8, font: reg, color: MUTED });
+    p.drawText(b.v === null ? "n/a" : String(i === 0 ? ov : b.v), { x: x + 10, y: Y(194), size: 22, font: bold, color: i === 0 ? YEL : TEAL });
+    if (b.v !== null) p.drawText("/ 100", { x: x + 10 + bold.widthOfTextAtSize(String(b.v), 22) + 4, y: Y(194), size: 8, font: reg, color: MUTED });
+    const tw = bw - 20;
+    drawRound(p, x + 10, Y(204), tw, 4, 2, { color: TRACK });
+    if (b.v) drawRound(p, x + 10, Y(204), Math.max(4, (tw * b.v) / 100), 4, 2, { color: TEAL });
+  });
+
+  let y = 238;
+  const LIMIT = 744;
+  // Quick wins
+  if (scan.quickWins.length) {
+    const qs = scan.quickWins.slice(0, 4);
+    const h = 30 + qs.length * 26 + 6;
+    drawRound(p, M, Y(y), W - M * 2, h, 10, { color: CARD, border: YEL, bw: 1.5 });
+    p.drawText("Quick wins", { x: M + 14, y: Y(y + 20), size: 11.5, font: bold, color: WHITE });
+    qs.forEach((f, i) => {
+      const ry = y + 42 + i * 26;
+      p.drawText(pdfSafe(f.label), { x: M + 14, y: Y(ry), size: 9.5, font: bold, color: WHITE });
+      const t = pdfSafe(f.time); const tw = reg.widthOfTextAtSize(t, 8);
+      drawRound(p, W - M - 14 - tw - 14, Y(ry - 10), tw + 14, 15, 7, { color: YEL });
+      p.drawText(t, { x: W - M - 14 - tw - 7, y: Y(ry), size: 8, font: bold, color: NAVY });
+      const fx = wrap(f.fix, reg, 8, W - M * 2 - 28 - tw - 30)[0] ?? "";
+      p.drawText(fx, { x: M + 14, y: Y(ry + 11), size: 8, font: reg, color: LIGHT });
+    });
+    y += h + 14;
+  }
+
+  // Fixes (top 8)
+  p.drawText(noSite ? "What we found" : "Fixes, most important first", { x: M, y: Y(y + 8), size: 11.5, font: bold, color: WHITE });
+  y += 22;
+  const shown = scan.fixes.slice(0, 8);
+  for (const f of shown) {
+    const lines = wrap(f.found, reg, 8.5, W - M * 2 - 20).slice(0, 2);
+    const meaning = noSite ? wrap(f.meaning, reg, 8.5, W - M * 2 - 20).slice(0, 3) : [];
+    const h = 20 + (lines.length + meaning.length) * 11;
+    if (y + h > LIMIT - 120) break;
+    const label = pdfSafe(RATING_LABEL[f.rating]).toUpperCase();
+    const lw = mono.widthOfTextAtSize(label, 6.5) + 12;
+    drawRound(p, M, Y(y - 2), lw, 12, 6, { color: RATING_COLOR[f.rating] });
+    p.drawText(label, { x: M + 6, y: Y(y + 6.5), size: 6.5, font: mono, color: NAVY });
+    p.drawText(pdfSafe(f.label), { x: M + lw + 8, y: Y(y + 7), size: 9.5, font: bold, color: WHITE });
+    [...lines, ...meaning].forEach((l, i) => p.drawText(l, { x: M, y: Y(y + 20 + i * 11), size: 8.5, font: reg, color: LIGHT }));
+    y += h + 8;
+  }
+  if (scan.fixes.length > shown.length) { p.drawText(pdfSafe(`+ ${scan.fixes.length - shown.length} more. See the full list online at saabai.ai/score.`), { x: M, y: Y(y + 8), size: 8.5, font: reg, color: MUTED }); y += 16; }
+  if (scan.unverified.length) {
+    const t = `Unable to verify (not counted): ${scan.unverified.map((u) => u.label).join(", ")}.`;
+    for (const l of wrap(t, reg, 8, W - M * 2).slice(0, 2)) { p.drawText(l, { x: M, y: Y(y + 8), size: 8, font: reg, color: MUTED }); y += 11; }
+    y += 4;
+  }
+
+  // Recommended offer
+  const offer = OFFERS[scan.offer];
+  const oy = Math.min(Math.max(y + 8, 600), LIMIT - 70);
+  drawRound(p, M, Y(oy), W - M * 2, 68, 12, { color: CARD, border: YEL, bw: 2 });
+  p.drawText(pdfSafe(`Recommended: ${offer.name}`), { x: M + 16, y: Y(oy + 22), size: 12, font: bold, color: WHITE });
+  wrap(scan.offerReason, reg, 8.5, W - M * 2 - 32 - 150).slice(0, 2).forEach((l, i) => p.drawText(l, { x: M + 16, y: Y(oy + 38 + i * 11), size: 8.5, font: reg, color: LIGHT }));
+  const bW = 126, bX = W - M - 16 - bW;
+  drawRound(p, bX, Y(oy + 14), bW, 34, 8, { color: YEL });
+  const bl = pdfSafe("See how it works"); p.drawText(bl, { x: bX + (bW - bold.widthOfTextAtSize(bl, 10)) / 2, y: Y(oy + 35), size: 10, font: bold, color: NAVY });
+  const link = doc.context.obj({ Type: "Annot", Subtype: "Link", Rect: [bX, Y(oy + 48), bX + bW, Y(oy + 14)], Border: [0, 0, 0], A: { Type: "Action", S: "URI", URI: PDFString.of(`https://www.saabai.ai${offer.href}`) } });
+  p.node.set(PDFName.of("Annots"), doc.context.obj([doc.context.register(link)]));
+
+  p.drawLine({ start: { x: M, y: Y(H - 74) }, end: { x: W - M, y: Y(H - 74) }, thickness: 0.6, color: TRACK });
+  const foot = `${DISCLAIMER} Saabai, ABN 71 889 082 572, Merrimac QLD 4226. Prices in AUD. GST not applicable.`;
+  let fy = H - 60;
+  for (const l of wrap(foot, reg, 8, W - M * 2)) { p.drawText(l, { x: M, y: Y(fy), size: 8, font: reg, color: MUTED }); fy += 11; }
 }
