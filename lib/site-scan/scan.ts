@@ -19,13 +19,25 @@ export function robotsDisallowsUs(robots: string): boolean {
   return false;
 }
 
-const looksEmpty = (h: string) => { const t = h.replace(/<(script|style)[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(); return t.length < 200 && /<script/i.test(h); };
+/** Page body is (almost) empty until JavaScript runs: a client-rendered shell. Visible text under 200 chars (noscript counts), with scripts or a root mount point. */
+const looksEmpty = (h: string) => {
+  const t = h.replace(/<(script|style)[\s\S]*?<\/\1>/gi, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return t.length < 200 && (/<script/i.test(h) || /id=["'](root|app|__next)["']/i.test(h));
+};
+const SHARED_HOSTS = new Set(["saabai.ai"]);
+/** Slug of a sub-site served under a shared host, e.g. /sites/nico-moretti/ on saabai.ai. */
+export function subSitePath(t: URL): string | null {
+  const m = SHARED_HOSTS.has(t.hostname.replace(/^www\./, "")) ? t.pathname.match(/^\/sites\/([a-z0-9-]+)/i) : null;
+  return m ? `/sites/${m[1]}` : null;
+}
 
 export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?: Fetcher; now?: Date } = {}): Promise<ScanReport> {
   const f: Fetcher = deps.fetch ?? safeFetch;
   const target = parseTarget(rawUrl); // throws ScanUrlError on bad or unsafe input
   const id = randomUUID();
-  const domain = target.hostname.replace(/^www\./, "");
+  const sub = subSitePath(target);
+  const host = target.hostname.replace(/^www\./, "");
+  const domain = sub ? `${host}${sub}` : host;
   const origin = target.origin;
   const budget = 5000;
   const [home, robotsR, sitemapR, llmsR, httpR] = await Promise.all([
@@ -49,7 +61,7 @@ export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?:
   // up to 2 linked pages (contact, about) for NAP and local signals
   const links = [...home.body.matchAll(/href=["']([^"'#?]+)["']/gi)].map((m) => m[1]).filter((h) => /contact|about/i.test(h) && !/^(mailto|tel):/i.test(h));
   const uniq: string[] = [];
-  for (const l of links) { try { const u = new URL(l, base); if (u.hostname.replace(/^www\./, "") === domain && !uniq.includes(u.toString())) uniq.push(u.toString()); } catch { /* skip */ } if (uniq.length >= 2) break; }
+  for (const l of links) { try { const u = new URL(l, base); if (u.hostname.replace(/^www\./, "") === host && (!sub || u.pathname.startsWith(sub)) && !uniq.includes(u.toString())) uniq.push(u.toString()); } catch { /* skip */ } if (uniq.length >= 2) break; }
   const extraR = await Promise.all(uniq.map((u) => f(u, { timeoutMs: budget })));
   const snap: Snapshot = {
     input, finalUrl: base, host: domain,
@@ -59,6 +71,8 @@ export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?:
     robots, robotsBlocksUs: !!robots && robotsDisallowsUs(robots),
     sitemap: sitemapR.status ? sitemapR.ok && /<(urlset|sitemapindex)/i.test(sitemapR.body) : null,
     llms: llmsR.status ? { found: llmsR.ok && !/<html/i.test(llmsR.body.slice(0, 500)), empty: llmsR.ok && llmsR.body.trim().length < 20 } : null,
+    shared: !!sub,
+    inSitemap: sub ? sitemapR.ok && sitemapR.body.includes(sub) : undefined,
     extra: extraR.filter((r) => r.ok).map((r) => r.body).join("\n"),
     jsHeavy: looksEmpty(home.body),
   };

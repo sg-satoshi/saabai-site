@@ -131,3 +131,50 @@ test("PDF gets page 3 only when a scan exists, for scan and no-website cases", a
     fs.writeFileSync(`${process.env.SCAN_SAMPLE_DIR}/sample-nosite.pdf`, await buildScorePdf({ result: quiz, scan: noWebsiteReport({ id: "n", input: {} }) }));
   }
 });
+
+import { nameMatch } from "../lib/site-scan/checks";
+import { subSitePath } from "../lib/site-scan/scan";
+import { verifyTurnstile } from "../lib/site-scan/turnstile";
+
+test("nameMatch ignores punctuation and apostrophes", () => {
+  assert.ok(nameMatch("Welcome to Stu\u2019s Cycle Repairs, Burleigh", "Stu's Cycle Repairs"));
+  assert.ok(!nameMatch("Acme Plumbing", "Stu's Cycle Repairs"));
+});
+
+test("subSitePath only for saabai.ai /sites/", () => {
+  assert.equal(subSitePath(new URL("https://www.saabai.ai/sites/nico-moretti/")), "/sites/nico-moretti");
+  assert.equal(subSitePath(new URL("https://www.saabai.ai/")), null);
+  assert.equal(subSitePath(new URL("https://acme.com.au/sites/x")), null);
+});
+
+test("sub-site: shared robots, sitemap and llms are not judged", async () => {
+  const pages: Record<string, FetchResult> = {
+    "https://www.saabai.ai/sites/acme/": res({ body: GOOD }),
+    "https://www.saabai.ai/robots.txt": res({ body: "User-agent: *\nDisallow: /\n" }),
+    "https://www.saabai.ai/sitemap.xml": res({ body: "<urlset></urlset>" }),
+  };
+  const r = await runScan("https://www.saabai.ai/sites/acme/", {}, { fetch: fake(pages) });
+  assert.equal(r.domain, "saabai.ai/sites/acme");
+  for (const id of ["ai_bots", "llms", "sitemap"]) assert.ok(r.unverified.some((u) => u.id === id), id);
+  assert.ok(!r.fixes.some((f) => f.id === "indexable" && f.status === "fail"));
+});
+
+test("JS-only shell still gets head checks, content checks unverified", async () => {
+  const shell = `<html><head><title>Acme Plumbing Burleigh</title><meta name="description" content="Acme Plumbing is a Burleigh plumber serving the Gold Coast with fast repairs."><meta name="viewport" content="width=device-width"></head><body><div id="root"></div><script src="/app.js"></script></body></html>`;
+  const r = await runScan("https://acme.com.au/", {}, { fetch: fake({ "https://acme.com.au/": res({ body: shell }) }) });
+  assert.ok(r.passed.some((p) => p.id === "title_meta") && r.passed.some((p) => p.id === "mobile"));
+  assert.ok(r.unverified.some((u) => u.id === "headings"));
+});
+
+test("turnstile: skipped without keys, strict with keys", async () => {
+  const keep = { s: process.env.TURNSTILE_SECRET_KEY, k: process.env.TURNSTILE_SITE_KEY };
+  delete process.env.TURNSTILE_SECRET_KEY; delete process.env.TURNSTILE_SITE_KEY;
+  assert.equal(await verifyTurnstile(undefined, null), true);
+  process.env.TURNSTILE_SECRET_KEY = "s"; process.env.TURNSTILE_SITE_KEY = "k";
+  assert.equal(await verifyTurnstile("", null), false);
+  assert.equal(await verifyTurnstile("tok", "1.2.3.4", (async () => ({ json: async () => ({ success: true }) })) as never), true);
+  assert.equal(await verifyTurnstile("tok", null, (async () => ({ json: async () => ({ success: false }) })) as never), false);
+  assert.equal(await verifyTurnstile("tok", null, (async () => { throw new Error("x"); }) as never), false);
+  if (keep.s === undefined) delete process.env.TURNSTILE_SECRET_KEY; else process.env.TURNSTILE_SECRET_KEY = keep.s;
+  if (keep.k === undefined) delete process.env.TURNSTILE_SITE_KEY; else process.env.TURNSTILE_SITE_KEY = keep.k;
+});

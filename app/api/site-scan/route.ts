@@ -5,6 +5,7 @@ import { ScanUrlError, parseTarget } from "@/lib/site-scan/ssrf";
 import { cleanInput } from "@/lib/site-scan/input";
 import { isAdminRequest } from "@/lib/site-scan/admin-auth";
 import { cachedReport, limitReason, saveReport, scannerPublic } from "@/lib/site-scan/store";
+import { verifyTurnstile } from "@/lib/site-scan/turnstile";
 import { recordEvent } from "@/lib/growth/events";
 
 export const runtime = "nodejs";
@@ -20,6 +21,10 @@ export async function POST(req: NextRequest) {
   const input = cleanInput(body, admin);
   const email = typeof body.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim()) ? body.email.trim().slice(0, 200) : "";
 
+  if (!admin) {
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
+    if (!(await verifyTurnstile(body.turnstileToken, ip))) return NextResponse.json({ error: "Please complete the quick human check and try again.", code: "turnstile" }, { status: 403 });
+  }
   if (!admin) { const why = await limitReason(req); if (why) return NextResponse.json({ error: why }, { status: 429 }); }
 
   const noSite = body.noWebsite === true || !(typeof body.url === "string" && body.url.trim());
