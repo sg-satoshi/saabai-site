@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { THEMES, isDismissed, pageAllowed, type PublicAnnouncement } from "@/lib/announce/core";
+import { shadowCss, resolveTheme, isDismissed, pageAllowed, type PublicAnnouncement } from "@/lib/announce/core";
 
 const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$/i;
 const storeKey = (a: PublicAnnouncement) => `sb_ann_${a.id}_v${a.version}`;
@@ -102,27 +102,27 @@ export default function AnnouncementBar() {
   });
 
   if (!ann || !show) return null;
-  const t = THEMES[ann.theme] ?? THEMES.surface;
+  const t = resolveTheme(ann.theme, ann.colors);
   const onLink = () => { if (ann.expId) beacon(ann.linkUrl.startsWith("tel:") ? "call_click" : "cta_click", ann.expId); };
   const link = ann.linkText && ann.linkUrl ? (
-    <a href={ann.linkUrl} onClick={onLink} className="sb-ann-cta" style={{ color: t.fg, borderColor: t.accent }}>{ann.linkText}</a>
+    <a href={ann.linkUrl} onClick={onLink} className="sb-ann-cta" style={{ color: t.ctaFg, background: t.cta, borderColor: t.cta }}>{ann.linkText}</a>
   ) : null;
   const closeBtn = (
-    <button type="button" onClick={close} aria-label="Close announcement" className="sb-ann-close" style={{ color: t.fg }}><span aria-hidden="true">×</span></button>
+    <button type="button" onClick={close} aria-label="Close announcement" className="sb-ann-close" style={{ color: t.close }}><span aria-hidden="true">×</span></button>
   );
 
   return (
     <>
       <style>{CSS}</style>
       {ann.layout === "card" ? (
-        <div ref={ref} role="dialog" aria-label="Announcement" aria-modal="false" className="sb-ann sb-ann-card" style={{ background: t.bg, color: t.fg, borderColor: t.border }}>
+        <div ref={ref} role="dialog" aria-label="Announcement" aria-modal="false" className="sb-ann sb-ann-card" style={{ background: t.bg, color: t.fg, borderColor: t.border, boxShadow: shadowCss(ann.layout, ann.shadow, ann.shadowColor) }}>
           {closeBtn}
           {ann.title ? <p className="sb-ann-title">{ann.title}</p> : null}
           <p className="sb-ann-msg">{ann.message}</p>
           {link}
         </div>
       ) : (
-        <div ref={ref} role="region" aria-label="Announcement" className={`sb-ann sb-ann-${ann.layout}`} style={{ background: t.bg, color: t.fg, borderColor: t.border }}>
+        <div ref={ref} role="region" aria-label="Announcement" className={`sb-ann sb-ann-${ann.layout}`} style={{ background: t.bg, color: t.fg, borderColor: t.border, boxShadow: shadowCss(ann.layout, ann.shadow, ann.shadowColor) }}>
           <p className="sb-ann-msg">{ann.message}</p>
           {link}
           {closeBtn}
@@ -140,9 +140,11 @@ const CSS = `
 .sb-ann-msg{margin:0;font-size:15px;line-height:22px}
 .sb-ann-cta{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
 .sb-ann-cta:hover{filter:brightness(.92)}
-.sb-ann a:focus-visible,.sb-ann button:focus-visible{outline:2px solid #62c5d1;outline-offset:4px}
+.sb-ann-cta:hover{text-decoration:underline}
+/* Two-tone ring (white inside, black outside) is visible on any background colour. */
+.sb-ann a:focus-visible,.sb-ann button:focus-visible{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 4px #000}
 .sb-ann-close{flex:none;width:44px;height:44px;background:transparent;border:0;cursor:pointer;font-size:24px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
-.sb-ann-card{right:24px;bottom:24px;width:380px;max-width:calc(100vw - 16px);padding:24px;border:1px solid;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.sb-ann-card{right:24px;bottom:24px;width:380px;max-width:calc(100vw - 16px);padding:24px;border:1px solid;border-radius:16px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .sb-ann-card .sb-ann-close{position:absolute;top:4px;right:4px}
 .sb-ann-title{margin:0;padding-right:36px;font-size:18px;line-height:24px;font-weight:600}
 html[data-ann-top] body{padding-top:var(--ann-h)}
