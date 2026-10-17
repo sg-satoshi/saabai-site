@@ -8,6 +8,7 @@ import { lmmBrandAsset } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
 import { SLOTS } from "./lib/exp/seed";
+import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
 
 // Pages that declare a slot in code. Only these paths pay for an experiment lookup; every other page is untouched.
@@ -39,6 +40,7 @@ const PROTECTED_PAGES = [
 // forms, payment flows, auth, content, and cron (cron self-checks CRON_SECRET).
 const PUBLIC_API = [
   "/api/auth/login",
+  "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
   "/api/auth/register",
   "/api/auth/forgot-password",
@@ -313,6 +315,22 @@ export async function proxy(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
+
+  // ── Chief (AI overseer) read-only session: hard allowlist, everything else refused ──
+  const chiefCookie = req.cookies.get(CHIEF_COOKIE)?.value;
+  if (chiefCookie && !req.cookies.get(COOKIE_NAME)?.value && chiefHostOk(hostname) && (await verifyChiefToken(chiefCookie))) {
+    const ok = chiefAllowed(req.method, pathname);
+    const isAsset = pathname.startsWith("/_next/") || /\.\w+$/.test(pathname);
+    if (!isAsset && (pathname.startsWith("/saabai-admin") || pathname.startsWith("/api/") || matches(pathname, PROTECTED_PAGES))) {
+      await chiefAudit(redis, ok ? "allow" : "deny", { m: req.method, p: pathname.slice(0, 120) });
+      if (!ok) {
+        return pathname.startsWith("/api/")
+          ? NextResponse.json({ error: "Forbidden (chief is read-only)" }, { status: 403 })
+          : new NextResponse("Forbidden (chief is read-only)", { status: 403 });
+      }
+      return NextResponse.next();
+    }
+  }
 
   // ── API routes: deny-by-default ──────────────────────────────────────
   if (pathname.startsWith("/api/")) return apiAuth(req, pathname);

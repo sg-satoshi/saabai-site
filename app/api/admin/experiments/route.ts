@@ -1,4 +1,4 @@
-import { adminActor } from "@/lib/exp/actor";
+import { readActor } from "@/lib/exp/actor";
 import { EXP_SITES, isKnownSite, listExperiments, loadView } from "@/lib/exp/admin";
 
 export const runtime = "nodejs";
@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 /** Admin only. Lists experiments with a one-line verdict each. */
 export async function GET(req: Request) {
-  if (!(await adminActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await readActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
   const site = new URL(req.url).searchParams.get("site") || "saabai";
   if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
   const exps = await listExperiments(site);

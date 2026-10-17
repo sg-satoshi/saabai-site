@@ -214,7 +214,7 @@ test("dashboard APIs and page are admin-gated, only the beacon is public", () =>
   assert.ok(proxy.includes('"/saabai-admin"') && proxy.includes('"/admin"'), "pages protected");
   for (const f of ["app/api/admin/experiments/route.ts", "app/api/admin/experiments/[id]/route.ts"]) {
     const src = readFileSync(f, "utf8");
-    assert.ok(/adminActor\(\)/.test(src) && src.includes("Forbidden"), f);
+    assert.ok(/(adminActor|readActor)\(\)/.test(src) && src.includes("Forbidden"), f);
     assert.ok(!/service_role|SERVICE_ROLE/i.test(src));
   }
   assert.ok(readFileSync("app/saabai-admin/experiments/page.tsx", "utf8").includes("requireAdmin("));
