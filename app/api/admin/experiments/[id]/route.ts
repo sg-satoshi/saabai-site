@@ -1,4 +1,4 @@
-import { adminActor } from "@/lib/exp/actor";
+import { adminActor, readActor } from "@/lib/exp/actor";
 import { applyDashboardAction, isKnownSite, listExperiments, loadAudit, loadView } from "@/lib/exp/admin";
 import type { Action } from "@/lib/exp/mutate";
 
@@ -9,7 +9,7 @@ const ACTIONS = ["update_variant", "add_variant", "set_variant_active", "set_sta
 
 /** Admin only. Full detail: config, analytics, breakdowns, audit trail. */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  if (!(await adminActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await readActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await ctx.params;
   const site = new URL(req.url).searchParams.get("site") || "saabai";
   if (!isKnownSite(site)) return Response.json({ error: "Unknown site" }, { status: 400 });
