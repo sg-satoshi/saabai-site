@@ -8,6 +8,7 @@ import { lmmBrandAsset } from "./lib/lmm-brand";
 import { EXP_COOKIE, EXP_HEADER, EXP_MAX_AGE, EXP_OFF_COOKIE, EXP_TRACK_HEADER, assignAll, enabledSites, parseExpCookie, privacySignal, siteKeyForHost } from "./lib/exp/core";
 import { getExperiments } from "./lib/exp/config";
 import { SLOTS } from "./lib/exp/seed";
+import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
 
 // Pages that declare a slot in code. Only these paths pay for an experiment lookup; every other page is untouched.
 const SLOT_PATHS = new Set(SLOTS.map((s) => s.path));
@@ -332,7 +333,10 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
   try {
     if (req.method !== "GET") return null;
     const key = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-    if (!SLOT_PATHS.has(key) || matches(pathname, PROTECTED_PAGES)) return null;
+    if (matches(pathname, PROTECTED_PAGES)) return null;
+    // Code-declared slots always pay for a lookup. Other public pages only do when a runtime-overlay test targets them.
+    const maybeOverlay = !SLOT_PATHS.has(key) && overlayPathOk(key);
+    if (!SLOT_PATHS.has(key) && !maybeOverlay) return null;
     const siteKey = siteKeyForHost(hostname);
     if (!siteKey || !enabledSites().includes(siteKey)) return null;
     const headers = new Headers(req.headers);
@@ -340,7 +344,11 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
     headers.delete(EXP_TRACK_HEADER);
     const optParam = req.nextUrl.searchParams.get("exp_off");
     const optedOut = optParam === "1" || req.cookies.get(EXP_OFF_COOKIE)?.value === "1";
-    const exps = (await getExperiments(siteKey)).filter((e) => e.path === key && e.status === "running");
+    const forPage = (await getExperiments(siteKey)).filter((e) => e.path === key);
+    const exps = forPage.filter((e) => e.status === "running");
+    const nativeIds = new Set(SLOTS.map((s) => s.id));
+    const wonOv = liveOverlays(forPage.filter((e) => e.status === "won"), nativeIds, key);
+    if (maybeOverlay && !exps.length && !wonOv.length) return null;
     const cookie = parseExpCookie(req.cookies.get(EXP_COOKIE)?.value);
     let setCookie: string | undefined;
     let tracked = false;
@@ -358,6 +366,13 @@ async function experimentsRoute(req: NextRequest, pathname: string, hostname: st
       setCookie = r.cookie;
     }
     const res = NextResponse.next({ request: { headers } });
+    // Runtime overlay: only for counted humans (bots, GPC/DNT, admins and opt-outs always get the untouched control HTML).
+    const ovExps = liveOverlays(exps, nativeIds, key);
+    const assigned = (parseExpCookie(setCookie ?? req.cookies.get(EXP_COOKIE)?.value)?.a) ?? {};
+    // A finished test keeps showing its winner to everyone (the overlay stands in until the wrap PR is merged).
+    const ovCookie = encodeOverlay(key, [...(tracked ? ovExps : []), ...wonOv], assigned);
+    if (ovCookie) res.cookies.set(OV_COOKIE, ovCookie, { maxAge: 600, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: false });
+    else if (req.cookies.get(OV_COOKIE)) res.cookies.delete(OV_COOKIE);
     if (setCookie && tracked) {
       res.cookies.set(EXP_COOKIE, setCookie, { maxAge: EXP_MAX_AGE, path: "/", sameSite: "lax", secure: req.nextUrl.protocol === "https:", httpOnly: true });
     }

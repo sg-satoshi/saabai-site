@@ -9,7 +9,7 @@ import "./experiments.css";
 
 export type Variant = { id: string; text: string; emphasis?: string; active: boolean; source?: string };
 type Sugg = { id: string; text: string; emphasis: string; rationale: string; status: string; created_at: string; decided_at: string | null; variant_key: string | null };
-export type Exp = { id: string; name?: string; kind?: SlotKind; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string };
+export type Exp = { id: string; name?: string; kind?: SlotKind; slot: string; path: string; status: string; defaultVariantId: string; variants: Variant[]; leadValueAUD?: number; rev?: number; updatedAt?: string; overlay?: { sel: string; fp: string; tag: string }; wrapPr?: { state: string; url?: string; number?: number; note?: string } };
 export type VR = { id: string; label?: string; impressions: number; ctaClicks: number; calls: number; enquiries: number; converters: number; rate: number; rateLow: number; rateHigh: number; probBest: number };
 export type Verdict = { kind: string; leaderId?: string; probBest: number; lift?: { median: number; low: number; high: number }; missing: string[]; headline: string; detail: string; canMakeWinner: boolean };
 type Breakdown = { dim: string; rows: { bucket: string; views: number; ctaClicks: number; conversions: number; rate: number }[] };

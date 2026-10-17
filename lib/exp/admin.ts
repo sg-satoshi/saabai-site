@@ -1,4 +1,4 @@
-import { expKey, getExperiments, writeExperiment } from "./config";
+import { expKey, getExperiments, getWrapInfos, writeExperiment } from "./config";
 import { ensureSeeded } from "./register";
 import { type Experiment } from "./core";
 import { applyAction, variantRows, type Action, type MutationResult } from "./mutate";
@@ -32,7 +32,8 @@ const n = (x: unknown) => Number(x) || 0;
 export async function listExperiments(siteKey: string): Promise<Experiment[]> {
   await ensureSeeded(siteKey);
   const list = await getExperiments(siteKey, { fresh: true });
-  return list.map((e) => ({ ...e, name: e.name ?? SEED_EXPERIMENTS.find((s) => s.id === e.id)?.name ?? e.id }));
+  const wraps = list.some((e) => e.overlay) ? await getWrapInfos(siteKey) : {};
+  return list.map((e) => ({ ...e, name: e.name ?? SEED_EXPERIMENTS.find((s) => s.id === e.id)?.name ?? e.id, ...(e.overlay ? { wrapPr: SEED_EXPERIMENTS.some((s) => s.id === e.id) ? { state: "open" as const, note: "Wrapped in code. The overlay has stepped aside." } : wraps[e.id] } : {}) }));
 }
 
 export async function loadView(exp: Experiment): Promise<ExperimentView> {

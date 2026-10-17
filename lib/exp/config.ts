@@ -47,3 +47,19 @@ export async function writeExperiment(e: Experiment): Promise<void> {
   await r.hset(expKey(e.siteKey), { [e.id]: JSON.stringify(e) });
   cache.delete(e.siteKey);
 }
+
+/** Status of the background wrap PR for an overlay test. Kept in its own hash so it can never race a dashboard edit. */
+export type WrapInfo = NonNullable<Experiment["wrapPr"]>;
+const wrapKey = (siteKey: string) => `saabai:exp:wrap:${siteKey}`;
+export async function getWrapInfos(siteKey: string): Promise<Record<string, WrapInfo>> {
+  try {
+    const r = redis(); if (!r) return {};
+    const raw = await r.hgetall<Record<string, unknown>>(wrapKey(siteKey));
+    const out: Record<string, WrapInfo> = {};
+    for (const [k, v] of Object.entries(raw ?? {})) { const o = typeof v === "string" ? JSON.parse(v) : v; if (o && typeof o === "object") out[k] = o as WrapInfo; }
+    return out;
+  } catch { return {}; }
+}
+export async function setWrapInfo(siteKey: string, id: string, info: WrapInfo): Promise<void> {
+  try { await redis()?.hset(wrapKey(siteKey), { [id]: JSON.stringify(info) }); } catch { /* display only */ }
+}

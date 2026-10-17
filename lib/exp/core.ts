@@ -79,6 +79,10 @@ export type Experiment = {
   updatedAt?: string;
   /** Plain label shown in the dashboard. */
   name?: string;
+  /** Runtime overlay target (no code change needed). Absent for natively wrapped slots. See lib/exp/overlay.ts. */
+  overlay?: { sel: string; fp: string; tag: string };
+  /** Display only, merged in by the dashboard from a separate store. Never stored on the experiment. */
+  wrapPr?: { state: "open" | "manual" | "failed" | "pending"; url?: string; number?: number; note?: string };
 };
 export type ExpCookie = { v: string; a: Record<string, string> };
 
@@ -140,6 +144,10 @@ export function validateExperiment(e: unknown): Experiment | null {
   if (!["draft", "running", "paused", "won"].includes(x.status)) return null;
   if (x.slotType !== undefined && !SLOT_TYPES.includes(x.slotType)) return null;
   if (x.kind !== undefined && !SLOT_KINDS.includes(x.kind)) return null;
+  if (x.overlay !== undefined) {
+    const o = x.overlay as Record<string, unknown> | null;
+    if (!o || typeof o.sel !== "string" || typeof o.fp !== "string" || typeof o.tag !== "string" || !/^[a-z0-9#_\-:>() .]{1,300}$/i.test(o.sel) || o.fp.length > 160 || !/^[a-z0-9]{1,8}$/.test(o.tag)) return null;
+  }
   const rules = KIND_RULES[kindOf(x)];
   if (!Array.isArray(x.variants) || x.variants.length < 1 || x.variants.length > 8) return null;
   const ids = new Set<string>();
