@@ -9,7 +9,7 @@ export const tag = (h: string, re: RegExp) => [...h.matchAll(re)].map((m) => m[1
 const meta = (h: string, attr: "name" | "property", v: string): string | null => {
   for (const m of h.matchAll(/<meta\b[^>]*>/gi)) {
     const t = m[0];
-    if (new RegExp(`${attr}\\s*=\\s*["']${v}["']`, "i").test(t)) return (t.match(/content\s*=\s*["']([^"']*)["']/i)?.[1] ?? "").trim();
+    if (new RegExp(`${attr}\\s*=\\s*["']${v}["']`, "i").test(t)) return (() => { const m = t.match(/content\s*=\s*(?:"([^"]*)"|'([^']*)')/i); return (m?.[1] ?? m?.[2] ?? "").trim(); })();
   }
   return null;
 };
