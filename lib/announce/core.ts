@@ -18,6 +18,13 @@ export const DEVICES = ["all", "desktop", "mobile"] as const;
 export type Device = (typeof DEVICES)[number];
 export const RESHOW = ["never", "days", "session"] as const;
 export type Reshow = (typeof RESHOW)[number];
+/** Where a bar may show: every page, only the listed pages, or every page except the listed ones. */
+export const PAGE_MODES = ["all", "include", "exclude"] as const;
+export type PageMode = (typeof PAGE_MODES)[number];
+/** What a click on the bar button does afterwards: keep showing (default), hide on the target page only, or hide everywhere. */
+export const AFTER_CLICK = ["keep", "hide_target", "hide_all"] as const;
+export type AfterClick = (typeof AFTER_CLICK)[number];
+export const MAX_SHOWS_LIMIT = 50;
 
 /**
  * Themes. `bg`/`fg` are the bar surface and text, `cta` is the button fill (`ctaFg` its text), `close` the close icon.
@@ -196,9 +203,20 @@ export type Announcement = {
   timer?: TimerConfig;
   include: string[];
   exclude: string[];
+  /** Page rule. Missing on bars saved before this existed: those keep the old behaviour (both lists apply). */
+  pageMode?: PageMode;
   device: Device;
+  /** After the visitor closes it with the X: never again (for this version), after N days, or next session. */
   reshow: Reshow;
   reshowDays: number;
+  /** After a click on the bar button. Default "keep". */
+  afterClick?: AfterClick;
+  /** Show in at most this many sessions per visitor, then stop. 0 = no limit (default). */
+  maxShows?: number;
+  /** When several bars match a page the highest number wins. Default 0. */
+  priority?: number;
+  /** Only show this bar once the visitor has clicked the bar with this id (follow-up bar). */
+  requiresClickOf?: string;
   /** Seconds. Card default 8. */
   delaySec: number;
   /** Scroll percent that triggers the card. Card default 40. */
@@ -271,10 +289,18 @@ export function normTimer(raw: unknown, layout: Layout = "top"): { ok: true; val
   return { ok: true, value };
 }
 
-/** Path matcher: exact, or a trailing "*" wildcard ("/blog/*", "/blueprint/pay*"). */
+/**
+ * Path matcher. Exact ("/pricing"), prefix with a trailing "*" ("/blog/*", "/blueprint/pay*"), or "*" anywhere
+ * ("/services/*\/apply"). "/blog/*" also matches "/blog". Query strings, hashes and trailing slashes are ignored.
+ */
 export function pathMatches(pattern: string, path: string): boolean {
   const p = path.split("?")[0].split("#")[0].replace(/(.)\/+$/, "$1") || "/";
   if (pattern === "*" || pattern === "/*") return true;
+  const star = pattern.indexOf("*");
+  if (star !== -1 && star !== pattern.length - 1) {
+    const re = new RegExp("^" + pattern.split("*").map((x) => x.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*") + "$");
+    return re.test(p);
+  }
   if (pattern.endsWith("*")) {
     const base = pattern.slice(0, -1);
     if (base.endsWith("/")) return p === base.slice(0, -1) || p.startsWith(base);
@@ -282,11 +308,21 @@ export function pathMatches(pattern: string, path: string): boolean {
   }
   return p === (pattern.replace(/(.)\/+$/, "$1") || "/");
 }
-export function pageAllowed(a: Pick<Announcement, "include" | "exclude">, path: string): boolean {
+export function pageAllowed(a: Pick<Announcement, "include" | "exclude"> & { pageMode?: PageMode }, path: string): boolean {
   if (DEFAULT_EXCLUDES.some((x) => pathMatches(x, path))) return false;
+  const mode = a.pageMode;
+  if (mode === "all") return true;
+  if (mode === "include") return a.include.some((x) => pathMatches(x, path));
+  if (mode === "exclude") return !a.exclude.some((x) => pathMatches(x, path));
+  // No mode saved (older bars): both lists apply, exactly as before.
   if (a.exclude.some((x) => pathMatches(x, path))) return false;
   if (a.include.length && !a.include.some((x) => pathMatches(x, path))) return false;
   return true;
+}
+/** The site path the bar button points at ("/ai-score"), or null for external, tel: and mailto: links. */
+export function targetPathOf(linkUrl: string | undefined): string | null {
+  if (!linkUrl || !/^\/(?!\/)/.test(linkUrl)) return null;
+  return linkUrl.split("?")[0].split("#")[0].replace(/(.)\/+$/, "$1") || "/";
 }
 
 /** Whether the announcement is live right now (status plus schedule). "draft" and "ended" never show. */
@@ -413,6 +449,21 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   const list = (v: unknown, fallback: string[]) => (Array.isArray(v) ? v : fallback).map(tidy).filter(Boolean);
   const include = list(input.include, prev?.include ?? []), exclude = list(input.exclude, prev?.exclude ?? []);
   if (include.length > 30 || exclude.length > 30 || [...include, ...exclude].some((p) => !PATTERN_RE.test(p) || p.length > 120)) return bad("Page rules must be paths like /pricing or /blog/* (max 30 each).", "include");
+  const pageMode = (input.pageMode ?? prev?.pageMode) as PageMode | undefined;
+  if (pageMode !== undefined && !PAGE_MODES.includes(pageMode)) return bad("Pages must be all pages, selected pages or all except selected.", "pageMode");
+  if (pageMode === "include" && !include.length) return bad("Add at least one page, or choose All pages.", "include");
+  if (pageMode === "exclude" && !exclude.length) return bad("Add at least one page to leave out, or choose All pages.", "exclude");
+  const afterClick = (input.afterClick ?? prev?.afterClick ?? "keep") as AfterClick;
+  if (!AFTER_CLICK.includes(afterClick)) return bad("Unknown after-click setting.", "afterClick");
+  if (afterClick === "hide_target" && !targetPathOf(linkUrl)) return bad("To hide on the target page, the button must link to a page on this site (like /ai-score).", "afterClick");
+  const maxShows = Math.round(Number(input.maxShows ?? prev?.maxShows ?? 0));
+  if (!(maxShows >= 0 && maxShows <= MAX_SHOWS_LIMIT)) return bad(`Show limit is 0 (no limit) to ${MAX_SHOWS_LIMIT}.`, "maxShows");
+  const priority = Math.round(Number(input.priority ?? prev?.priority ?? 0));
+  if (!(priority >= 0 && priority <= 100)) return bad("Priority is 0 to 100. The higher number wins.", "priority");
+  const rcRaw = input.requiresClickOf === "" ? "" : tidy(input.requiresClickOf ?? prev?.requiresClickOf);
+  if (rcRaw && !/^[a-z0-9-]{3,32}$/.test(rcRaw)) return bad("Pick one of your other announcements.", "requiresClickOf");
+  if (rcRaw && rcRaw === id) return bad("A bar cannot wait for a click on itself.", "requiresClickOf");
+  const requiresClickOf = rcRaw || undefined;
   const device = (input.device ?? prev?.device ?? "all") as Device;
   if (!DEVICES.includes(device)) return bad("Unknown device setting.", "device");
   const reshow = (input.reshow ?? prev?.reshow ?? (layout === "card" ? "days" : "days")) as Reshow;
@@ -423,10 +474,11 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   const scrollPct = Math.round(Number(input.scrollPct ?? prev?.scrollPct ?? (layout === "card" ? 40 : 0)));
   if (!(delaySec >= 0 && delaySec <= 120) || !(scrollPct >= 0 && scrollPct <= 100)) return bad("Delay is 0 to 120 seconds and scroll is 0 to 100 percent.", delaySec >= 0 && delaySec <= 120 ? "scrollPct" : "delaySec");
   if (status === "live" && layout === "card" && delaySec === 0 && scrollPct === 0) return bad("A slide-in card needs a delay or a scroll trigger so it never shows on first paint.", "delaySec");
-  const contentChanged = !prev || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout || prev.timer?.endAt !== timer?.endAt || prev.timer?.endMode !== timer?.endMode || prev.timer?.endMessage !== timer?.endMessage;
+  const ruleChanged = !!prev && ((prev.afterClick ?? "keep") !== afterClick || (prev.maxShows ?? 0) !== maxShows || (prev.requiresClickOf ?? "") !== (requiresClickOf ?? ""));
+  const contentChanged = !prev || ruleChanged || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout || prev.timer?.endAt !== timer?.endAt || prev.timer?.endMode !== timer?.endMode || prev.timer?.endMessage !== timer?.endMessage;
   const value: Announcement = {
     id, siteKey, name, status, layout, message, ...(title ? { title } : {}), linkText, linkUrl, theme, ...(colors ? { colors } : {}), shadow, ...(shadowColor ? { shadowColor } : {}),
-    ...(startsAt ? { startsAt } : {}), ...(endsAt ? { endsAt } : {}), ...(timer ? { timer } : {}), include, exclude, device, reshow, reshowDays, delaySec, scrollPct,
+    ...(startsAt ? { startsAt } : {}), ...(endsAt ? { endsAt } : {}), ...(timer ? { timer } : {}), include: pageMode === "exclude" ? [] : include, exclude: pageMode === "include" ? [] : exclude, ...(pageMode ? { pageMode } : {}), device, reshow, reshowDays, afterClick, maxShows, priority, ...(requiresClickOf ? { requiresClickOf } : {}), delaySec, scrollPct,
     version: prev ? prev.version + (contentChanged ? 1 : 0) : 1,
     ...(prev?.testId ? { testId: prev.testId } : {}),
     createdAt: prev?.createdAt ?? now.toISOString(), updatedAt: now.toISOString(),
@@ -435,7 +487,7 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
 }
 
 /** What a browser needs to render. Never includes admin-only fields. */
-export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & { expId?: string; timer?: PublicTimer };
+export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & Partial<Pick<Announcement, "pageMode" | "afterClick" | "maxShows" | "priority" | "requiresClickOf">> & { expId?: string; timer?: PublicTimer };
 /** What the browser gets for a timer. `serverNow` lets it correct for a wrong device clock. `expired` is decided on the server. */
 export type PublicTimer = { style: TimerStyle; endAt: string; endMode: EndMode; endMessage?: string; endLinkText?: string; endLinkUrl?: string; expired: boolean; serverNow: number };
 export const toPublic = (a: Announcement, expId?: string, now: number = Date.now()): PublicAnnouncement => {
@@ -446,7 +498,7 @@ export const toPublic = (a: Announcement, expId?: string, now: number = Date.now
 };
 const toPublicBase = (a: Announcement, expId?: string): PublicAnnouncement => ({
   id: a.id, layout: a.layout, message: sanitizeRich(a.message), ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { colors: a.colors } : {}), shadow: a.shadow ?? "none", ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}), device: a.device,
-  reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, version: a.version, include: a.include, exclude: a.exclude, ...(expId ? { expId } : {}),
+  reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, version: a.version, include: a.include, exclude: a.exclude, ...(a.pageMode ? { pageMode: a.pageMode } : {}), afterClick: a.afterClick ?? "keep", maxShows: a.maxShows ?? 0, priority: a.priority ?? 0, ...(a.requiresClickOf ? { requiresClickOf: a.requiresClickOf } : {}), ...(expId ? { expId } : {}),
 });
 
 /** Client-side dismissal check. `stored` is the timestamp (ms) saved when closed, or null. */
@@ -481,4 +533,72 @@ export function timerFromValue(x: Record<string, string>, inherit: TimerConfig |
   if (!x.tStyle && !x.tEnd) return inherit;
   const c = normTimer({ style: x.tStyle, endAt: x.tEnd, endMode: x.tMode, endMessage: x.tMsg, endLinkText: x.tLinkText, endLinkUrl: x.tLinkUrl, autoEnd: x.tAuto === "1", endShowHours: x.tHours }, layout);
   return c.ok ? c.value : undefined;
+}
+
+
+// ---- Visitor rules: which bar shows, and when it stops ----
+/** What the browser remembers about one bar (stored per bar id and version, so editing a bar resets it). */
+export type VisitorState = {
+  /** Timestamp (ms) of the last close with the X, or null. */
+  dismissedAt: number | null;
+  /** Timestamp (ms) of the last click on the bar button, or null. */
+  clickedAt: number | null;
+  /** In how many separate sessions this bar has been shown. */
+  sessions: number;
+  /** Id of the session that was last counted. */
+  lastSession: string | null;
+};
+export const EMPTY_STATE: VisitorState = { dismissedAt: null, clickedAt: null, sessions: 0, lastSession: null };
+
+type Rule = Pick<PublicAnnouncement, "id" | "version" | "include" | "exclude" | "device" | "reshow" | "reshowDays" | "linkUrl"> & Partial<Pick<PublicAnnouncement, "pageMode" | "afterClick" | "maxShows" | "priority" | "requiresClickOf">>;
+export type PickCtx = { path: string; mobile: boolean; session: string; now?: number; state: (a: { id: string; version: number }) => VisitorState };
+
+/** Why a bar is hidden for this visitor on this page, or null when it may show. */
+export function hiddenReason(a: Rule, list: Rule[], c: PickCtx): "page" | "device" | "dismissed" | "clicked" | "limit" | "waiting" | null {
+  if (!pageAllowed(a, c.path)) return "page";
+  if (!(a.device === "all" || (a.device === "mobile") === c.mobile)) return "device";
+  const st = c.state(a);
+  if (isDismissed(a, st.dismissedAt, c.now)) return "dismissed";
+  if (st.clickedAt !== null) {
+    const ac = a.afterClick ?? "keep";
+    if (ac === "hide_all") return "clicked";
+    if (ac === "hide_target") { const t = targetPathOf(a.linkUrl); if (t && pathMatches(t, c.path)) return "clicked"; }
+  }
+  const cap = a.maxShows ?? 0;
+  if (cap > 0 && st.lastSession !== c.session && st.sessions >= cap) return "limit";
+  if (a.requiresClickOf) {
+    const src = list.find((x) => x.id === a.requiresClickOf);
+    if (!src || c.state(src).clickedAt === null) return "waiting";
+  }
+  return null;
+}
+/** The one bar to show: highest priority among those allowed here. Ties keep list order (newest first from the server). */
+export function pickAnnouncement<T extends Rule>(list: T[], c: PickCtx): T | null {
+  let best: T | null = null;
+  for (const a of list) {
+    if (hiddenReason(a, list, c) !== null) continue;
+    if (!best || (a.priority ?? 0) > (best.priority ?? 0)) best = a;
+  }
+  return best;
+}
+/** State after the bar has been shown in `session` (counts a session once). */
+export function countShown(st: VisitorState, session: string): VisitorState {
+  return st.lastSession === session ? st : { ...st, sessions: st.sessions + 1, lastSession: session };
+}
+
+/** Plain-English summary of a bar's rules for the admin preview. */
+export function describeRules(a: { pageMode?: PageMode; include: string[]; exclude: string[]; device: Device; reshow: Reshow; reshowDays: number; afterClick?: AfterClick; maxShows?: number; priority?: number; requiresClickOf?: string; linkUrl?: string }, nameOf: (id: string) => string = (x) => x): string[] {
+  const out: string[] = [];
+  const mode = a.pageMode ?? (a.include.length ? "include" : a.exclude.length ? "exclude" : "all");
+  out.push(mode === "include" ? `Shows only on: ${a.include.join(", ") || "(add a page)"}.` : mode === "exclude" ? `Shows on every page except: ${a.exclude.join(", ") || "(add a page)"}.` : "Shows on every page.");
+  out.push("Never on checkout, admin, privacy, terms or unsubscribe pages.");
+  if (a.device !== "all") out.push(`Only on ${a.device === "mobile" ? "phones" : "desktop"}.`);
+  if (a.requiresClickOf) out.push(`Only appears after the visitor has clicked "${nameOf(a.requiresClickOf)}".`);
+  const t = targetPathOf(a.linkUrl);
+  const ac = a.afterClick ?? "keep";
+  out.push(ac === "hide_all" ? "After a click on the button: hidden everywhere for that visitor." : ac === "hide_target" ? `After a click on the button: hidden on ${t ?? "the target page"} only, still shown elsewhere.` : "After a click on the button: keeps showing.");
+  out.push(a.reshow === "never" ? "After the X: stays hidden." : a.reshow === "days" ? `After the X: comes back after ${a.reshowDays} day${a.reshowDays === 1 ? "" : "s"}.` : "After the X: comes back next visit (new session).");
+  out.push((a.maxShows ?? 0) > 0 ? `Shown in at most ${a.maxShows} session${a.maxShows === 1 ? "" : "s"} per visitor, then stops.` : "No limit on how often it is shown.");
+  out.push(`Priority ${a.priority ?? 0}. If more than one bar fits a page, the higher number shows.`);
+  return out;
 }

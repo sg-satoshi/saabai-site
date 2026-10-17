@@ -3,12 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AnnouncementView from "./AnnouncementView";
-import { isDismissed, pageAllowed, type PublicAnnouncement } from "@/lib/announce/core";
+import { countShown, EMPTY_STATE, pickAnnouncement, type PublicAnnouncement, type VisitorState } from "@/lib/announce/core";
 
 const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$/i;
-const storeKey = (a: PublicAnnouncement) => `sb_ann_${a.id}_v${a.version}`;
+const storeKey = (a: { id: string; version: number }) => `sb_ann_${a.id}_v${a.version}`;
+/** Click, session count and last-counted session. Keyed by bar id and version, so editing a bar starts everyone fresh. */
+const stateKey = (a: { id: string; version: number }) => `sb_ann_st_${a.id}_v${a.version}`;
+const memState: Record<string, VisitorState> = {};
 
-function readStored(a: PublicAnnouncement): number | null {
+function sessionId(): string {
+  try {
+    let v = sessionStorage.getItem("sb_ann_session");
+    if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem("sb_ann_session", v); }
+    return v;
+  } catch { return "mem"; }
+}
+function readDismissed(a: PublicAnnouncement): number | null {
   try {
     const s = a.reshow === "session" ? sessionStorage : localStorage;
     const v = s.getItem(storeKey(a));
@@ -17,7 +27,17 @@ function readStored(a: PublicAnnouncement): number | null {
   const m = document.cookie.split("; ").find((c) => c.startsWith(storeKey(a) + "="));
   return m ? Number(m.split("=")[1]) || Date.now() : null;
 }
-function writeStored(a: PublicAnnouncement) {
+function readState(a: { id: string; version: number; reshow?: string }, full?: PublicAnnouncement): VisitorState {
+  let st: VisitorState = { ...EMPTY_STATE };
+  try { const raw = localStorage.getItem(stateKey(a)); if (raw) { const j = JSON.parse(raw); st = { ...st, clickedAt: typeof j.c === "number" ? j.c : null, sessions: Number(j.n) || 0, lastSession: typeof j.s === "string" ? j.s : null }; } } catch { st = { ...(memState[stateKey(a)] ?? st) }; }
+  if (full) st.dismissedAt = readDismissed(full);
+  return st;
+}
+function saveState(a: { id: string; version: number }, st: VisitorState) {
+  memState[stateKey(a)] = st;
+  try { localStorage.setItem(stateKey(a), JSON.stringify({ c: st.clickedAt, n: st.sessions, s: st.lastSession })); } catch { /* storage blocked: kept in memory for this page only */ }
+}
+function writeDismissed(a: PublicAnnouncement) {
   const now = String(Date.now());
   try { (a.reshow === "session" ? sessionStorage : localStorage).setItem(storeKey(a), now); return; } catch { /* use cookie */ }
   document.cookie = `${storeKey(a)}=${now}; Max-Age=${Math.max(1, a.reshowDays) * 86400}; Path=/; SameSite=Lax`;
@@ -32,7 +52,8 @@ function beacon(type: string, exp: string) {
  */
 export default function AnnouncementBar() {
   const path = usePathname() || "/";
-  const [ann, setAnn] = useState<PublicAnnouncement | null>(null);
+  const [list, setList] = useState<PublicAnnouncement[]>([]);
+  const [, setTick] = useState(0);
   const [show, setShow] = useState(false);
   const [mobile, setMobile] = useState(false);
   // Timer: offset = server clock minus device clock. `ended` flips when the deadline is reached (or the server says so).
@@ -46,10 +67,11 @@ export default function AnnouncementBar() {
     let dead = false;
     const t0 = Date.now();
     fetch("/api/announcement/active", { credentials: "same-origin", cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => {
-      if (dead || !j?.announcement) return;
-      const t = j.announcement.timer;
+      const all: PublicAnnouncement[] = Array.isArray(j?.announcements) ? j.announcements : j?.announcement ? [j.announcement] : [];
+      if (dead || !all.length) return;
+      const t = all.find((x) => x.timer)?.timer;
       if (t) { setOffset(t.serverNow - (t0 + Date.now()) / 2); setEnded(!!t.expired); }
-      setAnn(j.announcement);
+      setList(all);
     }).catch(() => {});
     return () => { dead = true; };
   }, []);
@@ -61,11 +83,13 @@ export default function AnnouncementBar() {
     return () => mq.removeEventListener("change", f);
   }, []);
 
-  const eligible = !!ann && pageAllowed(ann, path) && (ann.device === "all" || (ann.device === "mobile") === mobile);
+  // One bar per page view: the highest priority one that this page, device and visitor history allow.
+  const ann = list.length ? pickAnnouncement(list, { path, mobile, session: sessionId(), state: (x) => readState(x, list.find((l) => l.id === x.id)) }) : null;
+  const annKey = ann ? `${ann.id}:${ann.version}` : "";
 
   useEffect(() => {
     setShow(false);
-    if (!ann || !eligible || isDismissed(ann, readStored(ann))) return;
+    if (!ann) return;
     if (ann.layout !== "card") { setShow(true); return; }
     // Card: after a delay or scroll depth, never on first paint.
     let done = false;
@@ -78,7 +102,7 @@ export default function AnnouncementBar() {
     if (ann.scrollPct > 0) window.addEventListener("scroll", onScroll, { passive: true });
     const cleanup = () => { if (t) clearTimeout(t); window.removeEventListener("scroll", onScroll); };
     return cleanup;
-  }, [ann, eligible, path]);
+  }, [annKey, path]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Top bar pushes the page down: publish its height and shift the fixed nav.
   useEffect(() => {
@@ -94,6 +118,13 @@ export default function AnnouncementBar() {
   useEffect(() => {
     if (show && ann?.layout === "bottom" && mobile && ref.current && (ref.current.offsetHeight + 64) / window.innerHeight > 0.25) ref.current.style.display = "none";
   }, [show, ann, mobile]);
+
+  // Frequency cap: count this session once, the first time the bar is actually shown.
+  useEffect(() => {
+    if (!show || !ann || !(ann.maxShows && ann.maxShows > 0)) return;
+    const sid = sessionId(), st = readState(ann);
+    if (st.lastSession !== sid) saveState(ann, countShown(st, sid));
+  }, [show, annKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Impression once per visitor per day (only when the engine says this visitor is a counted participant).
   useEffect(() => {
@@ -119,7 +150,8 @@ export default function AnnouncementBar() {
     confirm(0);
   };
 
-  const close = () => { if (ann) writeStored(ann); setShow(false); };
+  const close = () => { if (ann) writeDismissed(ann); setShow(false); setTick((t) => t + 1); };
+  const clicked = (a: PublicAnnouncement) => { saveState(a, { ...readState(a), clickedAt: Date.now() }); setTick((t) => t + 1); };
   useEffect(() => {
     if (!show) return;
     const f = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
@@ -128,6 +160,6 @@ export default function AnnouncementBar() {
   });
 
   if (!ann || !show) return null;
-  return <AnnouncementView ann={ann} ended={ended} offset={offset} onEnd={onEnd} onClose={close} innerRef={ref} onCta={(url) => { if (ann.expId) beacon(url.startsWith("tel:") ? "call_click" : "cta_click", ann.expId); }} />;
+  return <AnnouncementView ann={ann} ended={ended} offset={offset} onEnd={onEnd} onClose={close} innerRef={ref} onCta={(url) => { clicked(ann); if (ann.expId) beacon(url.startsWith("tel:") ? "call_click" : "cta_click", ann.expId); }} />;
 }
 
