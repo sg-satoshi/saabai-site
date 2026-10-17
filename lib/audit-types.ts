@@ -143,6 +143,10 @@ export type AuditEventType =
   | "questionnaire_sent"
   | "factfind_started"
   | "factfind_completed"
+  | "portal_login"
+  | "portal_submitted"
+  | "portal_unlocked"
+  | "portal_link_sent"
   | "interview_updated"
   | "status_changed"
   | "assessment_generated"
@@ -164,6 +168,20 @@ export interface AuditReport {
   url: string; // Vercel Blob URL (unguessable)
   generatedAt: string;
   deliveredAt?: string;
+}
+
+export interface PortalState {
+  /** Bumped on every client write, used for optimistic concurrency. */
+  version?: number;
+  /** Set on "Submit for build"; while set, client edits are refused. */
+  submittedAt?: string;
+  submittedBy?: string;
+  /** Admin unlock history (ISO timestamps). */
+  reopenedAt?: string[];
+  /** Answers frozen at submit. */
+  lockedSnapshot?: Record<string, FactFindResponse>;
+  lastClientActivityAt?: string;
+  lastLoginAt?: string;
 }
 
 export interface AuditEngagement {
@@ -201,6 +219,9 @@ export interface AuditEngagement {
   reports?: AuditReport[];
   timeline?: AuditEvent[];
   notes: AuditNote[];
+
+  /** Client portal state (Stage 1). Absent on engagements that never used the portal. */
+  portal?: PortalState;
 
   stripeRef?: string;
   /** Stripe PaymentIntent id when paid via Checkout */

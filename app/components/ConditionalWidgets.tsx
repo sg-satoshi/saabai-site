@@ -11,6 +11,8 @@ const SUPPRESS_PATHS = [
   "/onboarding/plon", "/mission-control", "/plon", "/rex-widget", "/lex-widget",
   // Lex platform — has its own full-page experience
   "/lex", "/client-portal", "/legal",
+  // Blueprint buyer portal: private, focused, no sales widgets
+  "/portal",
   // Focused Blueprint flows: no chat or sticky bars
   "/score", "/blueprint/checkout", "/blueprint/confirmation",
   // Client feedback and unsubscribe: focused, no sales widgets
