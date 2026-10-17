@@ -1,12 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SbNav from "../components/sb/SbNav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/score.css";
 import { CATEGORIES, QUESTIONS, TIERS, scoreAnswers } from "@/lib/blueprint";
 import { gaEvent } from "@/lib/ga";
+import { SCORE_CONSENT_WORDING } from "@/lib/score-consent";
+import { ARROW_DESKTOP, ARROW_MOBILE } from "./arrowSvg";
+
+/** Brush arrow from the recommended card down to the PDF box. Draws once when scrolled into view (no animation for reduced motion, see score.css). */
+function ScoreArrow() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [go, setGo] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") { setGo(true); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setGo(true); io.disconnect(); } }, { threshold: 0.35 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`arrowgap${go ? " go" : ""}`} aria-hidden="true">
+      <div className="arrow-wrap" dangerouslySetInnerHTML={{ __html: ARROW_DESKTOP + ARROW_MOBILE }} />
+    </div>
+  );
+}
 
 export default function ScorePage() {
   const [step, setStep] = useState(0);
@@ -83,21 +104,27 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
     gaEvent("score_quiz_complete", { quiz: "ai_readiness", recommended_tier: r.recommended });
   }, [r.recommended]);
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [website, setWebsite] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [fieldError, setFieldError] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setFieldError("Enter a valid email address so we know where to send your PDF.");
+      document.getElementById("score-pdf-email")?.focus();
+      return;
+    }
+    setFieldError("");
     setState("sending");
     try {
       const res = await fetch("/api/blueprint/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, website, answers }),
+        body: JSON.stringify({ email: email.trim(), answers, pdf: true, consent, pageUrl: window.location.href }),
       });
       setState(res.ok ? "sent" : "error");
-      if (res.ok) gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended });
+      if (res.ok) gaEvent("generate_lead", { form: "score_result_email", recommended_tier: r.recommended, pdf: true, marketing_consent: consent });
     } catch {
       setState("error");
     }
@@ -157,25 +184,52 @@ function Result({ answers, onRestart }: { answers: Record<string, number>; onRes
             </div>
             <a className="btn" href={`/blueprint/checkout?tier=${rec.id}`}>Get my {rec.name} Blueprint →</a>
           </div>
-          <div className="card" style={{ margin: "24px 0 96px" }}>
-            <h3>Email me my results</h3>
-            {state === "sent" ? (
-              <p style={{ marginTop: 10 }}>Done. Your score and quick wins are on their way to {email}.</p>
-            ) : (
-              <form onSubmit={send}>
-                <div className="emailrow">
-                  <input aria-label="First name" placeholder="First name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />
-                  <input aria-label="Email" type="email" required placeholder="you@business.com.au" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-                  <input aria-label="Website (optional)" placeholder="Your website (optional)" value={website} onChange={(e) => setWebsite(e.target.value)} autoComplete="url" inputMode="url" />
-                  <button className="btn" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending..." : "Send"}</button>
-                </div>
-                {state === "error" && <p style={{ marginTop: 10, color: "#fca5a5" }}>Could not send right now. Your results are still shown above.</p>}
-              </form>
-            )}
-            <p className="dim" style={{ fontSize: 13, marginTop: 12 }}>
-              No spam. <button type="button" className="linkbtn" onClick={onRestart}>Retake the quiz</button>
-            </p>
-          </div>
+          <ScoreArrow />
+          <section className="pdfbox" aria-labelledby="pdfbox-h">
+            <div className="pdfbox-copy">
+              <span className="pdfbox-tag">Free · your personal report</span>
+              <h2 id="pdfbox-h">Get your results as a <u>PDF</u></h2>
+              <p className="pdfbox-ben">Your score of {r.total} out of 100, what it means for your business, your three quick wins and your recommended {rec.name} Blueprint, all in one PDF sent to your inbox. Keep it, print it or forward it to your team.</p>
+              <ul className="pdfbox-list">
+                <li>Your score and breakdown</li>
+                <li>What it means, in plain English</li>
+                <li>Your three quick wins for this week</li>
+                <li>Your {rec.name} Blueprint, priced in AUD</li>
+              </ul>
+            </div>
+            <div className="pdfbox-form">
+              <div className="pdfthumb" aria-hidden="true"><b>AI READINESS</b><span className="pr" /><i /><i style={{ width: "70%" }} /><span className="pp" /><em>PDF</em></div>
+              {state === "sent" ? (
+                <p className="pdfbox-done" role="status">Done. Your PDF is on its way to {email}.</p>
+              ) : (
+                <form onSubmit={send} noValidate>
+                  <label htmlFor="score-pdf-email" className="sr-only">Email address</label>
+                  <input
+                    id="score-pdf-email"
+                    type="email"
+                    inputMode="email"
+                    placeholder="you@business.com.au"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); if (fieldError) setFieldError(""); }}
+                    autoComplete="email"
+                    aria-invalid={fieldError ? true : undefined}
+                    aria-describedby={fieldError ? "score-pdf-err" : undefined}
+                  />
+                  <p id="score-pdf-err" className="pdfbox-err" aria-live="polite">{fieldError}</p>
+                  <label className="pdfbox-chk">
+                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                    <span>{SCORE_CONSENT_WORDING} Unsubscribe any time. See our <Link href="/privacy">Privacy Policy</Link>.</span>
+                  </label>
+                  <button className="pdfbox-btn" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending..." : "Email me my PDF →"}</button>
+                  <p className="pdfbox-fine">One email with your PDF. No spam.</p>
+                  {state === "error" && <p className="pdfbox-err" role="alert" style={{ minHeight: 0 }}>Could not send right now. Your results are still shown above, please try again.</p>}
+                </form>
+              )}
+            </div>
+          </section>
+          <p className="dim" style={{ fontSize: 14, margin: "22px 0 96px", textAlign: "center" }}>
+            Not now? <button type="button" className="linkbtn" onClick={onRestart}>Retake the quiz</button>
+          </p>
         </div>
       </div>
       <SbFooter />
