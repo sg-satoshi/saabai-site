@@ -42,17 +42,6 @@ background:var(--bg);color:var(--text);font-family:var(--font-geist-sans),system
 .sb .mmenu a{display:flex;align-items:center;min-height:48px;padding:0 14px;border-radius:10px;text-decoration:none;color:#fff}
 .sb .mmenu a:hover{background:rgba(98,197,209,.08)}
 .sb .mmenu .btn{justify-content:center;width:100%;box-sizing:border-box}
-/* footer */
-.sb footer{border-top:1px solid var(--border);padding:56px 0 40px;font-size:14px;color:var(--dim)}
-.sb footer .cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
-.sb footer h4{color:#fff;font-size:13px;margin:0 0 4px;font-weight:600}
-.sb footer .cols div a{display:flex;align-items:center;min-height:44px;color:var(--dim);text-decoration:none}
-.sb .legal{margin-top:40px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:12px}
-.sb .legal a{text-decoration:none;color:var(--dim);display:inline-flex;align-items:center;min-height:44px}
-.sb footer .areas{margin-top:40px;padding-top:24px;border-top:1px solid var(--border);text-align:center}
-.sb footer .areas h4{color:#fff;font-size:13px;margin:0 0 8px;font-weight:600}
-.sb footer .areas nav{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px}
-.sb footer .areas nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;color:var(--dim);text-decoration:none}
 /* forms */
 .sb input,.sb select{width:100%;min-height:48px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:#fff;font:inherit;font-size:16px}
 .sb input:focus,.sb select:focus{outline:2px solid var(--teal);outline-offset:1px}
@@ -71,8 +60,6 @@ background:var(--bg);color:var(--text);font-family:var(--font-geist-sans),system
  .sb .nav{height:64px;overflow:visible}.sb .nav .logo img{height:34px}.sb .nav .links,.sb .nav .navcta{display:none}.sb .burger{display:block}
  .sb .grid2,.sb .grid3,.sb .grid4{grid-template-columns:1fr;gap:16px}
  .sb .card{padding:24px}
- .sb footer .cols{grid-template-columns:1fr 1fr}.sb footer .cols>div:first-child{grid-column:1/-1}
- .sb .legal{flex-direction:column;gap:8px}
  .sb .btn{padding:12px 22px}
  .sb .head{text-align:left}
 }
