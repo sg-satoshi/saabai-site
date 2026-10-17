@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { EXP_COOKIE, EXP_MAX_AGE, EXP_OFF_COOKIE, assign, parseExpCookie, privacySignal, siteKeyForHost, defaultVariant, type Variant } from "@/lib/exp/core";
 import { getExperiments } from "@/lib/exp/config";
-import { isShadow, normHex, isEmptyValue, isThemeKey, normColors, testIdFor, toPublic, timerFromValue, timerOver, type Announcement, type PublicAnnouncement } from "@/lib/announce/core";
+import { isShadow, normHex, isEmptyValue, isThemeKey, normColors, testIdFor, toPublic, sanitizeRich, visibleText, timerFromValue, timerOver, type Announcement, type PublicAnnouncement } from "@/lib/announce/core";
 import { liveAnnouncement } from "@/lib/announce/store";
 
 export const runtime = "nodejs";
@@ -13,9 +13,9 @@ const cacheFor = (a: Announcement | null | undefined, cdn: string) => (a?.timer 
 const none = (cache = true) => NextResponse.json({ announcement: null }, { headers: { "Cache-Control": cache ? "public, s-maxage=30, stale-while-revalidate=60" : "no-store" } });
 
 function fromVariant(a: Announcement, v: Variant): Announcement | null {
-  if (isEmptyValue(v.value) || !v.value?.message) return null;
+  if (isEmptyValue(v.value) || !v.value?.message || !visibleText(v.value.message)) return null;
   const x = v.value;
-  const o: Announcement = { ...a, layout: (x.layout as Announcement["layout"]) ?? a.layout, message: x.message, linkText: x.linkText ?? a.linkText, linkUrl: x.linkUrl ?? a.linkUrl, theme: (x.theme as Announcement["theme"]) ?? a.theme };
+  const o: Announcement = { ...a, layout: (x.layout as Announcement["layout"]) ?? a.layout, message: sanitizeRich(x.message), linkText: x.linkText ?? a.linkText, linkUrl: x.linkUrl ?? a.linkUrl, theme: (x.theme as Announcement["theme"]) ?? a.theme };
   if (!isThemeKey(o.theme)) o.theme = a.theme;
   if (o.theme === "custom") { const c = normColors({ bg: x.cBg, fg: x.cFg, cta: x.cCta, close: x.cClose }) ?? a.colors; if (c) o.colors = c; else { o.theme = "surface"; delete o.colors; } } else delete o.colors;
   o.shadow = isShadow(x.shadow) ? x.shadow : a.shadow;

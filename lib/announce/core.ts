@@ -1,3 +1,6 @@
+import { sanitizeRich, visibleText, richColors } from "./rich";
+export { sanitizeRich, visibleText, richTree, richColors, richLinks, isSafeHref } from "./rich";
+
 /**
  * Announcement bar: pure logic (edge-safe, no Node-only imports).
  * Phase 1: top bar (A), bottom bar (B), slide-in card (C). No email opt-in yet (depends on Feature 0).
@@ -208,6 +211,8 @@ export type Announcement = {
   updatedAt: string;
 };
 
+/** Stored message HTML must fit a split-test variant value (300 chars) with room to spare. */
+export const MAX_RICH_HTML = 280;
 export const LIMITS = { name: 80, message: 120, cardBody: 140, title: 60, link: 40, url: 300 };
 
 export function contrast(fg: string, bg: string): number {
@@ -235,30 +240,31 @@ const tidy = (s: unknown) => (typeof s === "string" ? s.replace(/[\r\n\t]+/g, " 
 const isIso = (s: unknown) => typeof s === "string" && !Number.isNaN(Date.parse(s));
 
 /** Validates a timer config (shape and content only; date rules against "now" live in validateAnnouncement). */
-export function normTimer(raw: unknown, layout: Layout = "top"): { ok: true; value: TimerConfig } | { ok: false; error: string } {
-  const bad = (error: string) => ({ ok: false as const, error });
-  if (!raw || typeof raw !== "object") return bad("Timer settings are missing.");
+export function normTimer(raw: unknown, layout: Layout = "top"): { ok: true; value: TimerConfig } | { ok: false; error: string; field?: string } {
+  const bad = (error: string, field?: string) => ({ ok: false as const, error, ...(field ? { field } : {}) });
+  if (!raw || typeof raw !== "object") return bad("Timer settings are missing.", "tOn");
   const o = raw as Record<string, unknown>;
   const style = o.style ?? "text";
-  if (!isTimerStyle(style)) return bad("Pick one of the timer styles: text line, boxed digits, flip clock or pill.");
-  if (typeof o.endAt !== "string" || !isIso(o.endAt)) return bad("Add a valid timer end date and time.");
+  if (!isTimerStyle(style)) return bad("Pick one of the timer styles: text line, boxed digits, flip clock or pill.", "tStyle");
+  if (typeof o.endAt !== "string" || !isIso(o.endAt)) return bad("Add a valid timer end date and time.", "tEnd");
   const endAt = new Date(Date.parse(o.endAt)).toISOString();
   const endMode = o.endMode ?? "hide";
-  if (!(END_MODES as readonly string[]).includes(endMode as string)) return bad("When the timer ends, choose to hide the bar or show an end message.");
+  if (!(END_MODES as readonly string[]).includes(endMode as string)) return bad("When the timer ends, choose to hide the bar or show an end message.", "tMode");
   const value: TimerConfig = { style, endAt, endMode: endMode as EndMode };
   if (endMode === "message") {
     const max = layout === "card" ? LIMITS.cardBody : LIMITS.message;
-    const endMessage = tidy(o.endMessage), endLinkText = tidy(o.endLinkText), endLinkUrl = tidy(o.endLinkUrl);
-    if (!endMessage || endMessage.length > max) return bad(`The end message needs 1 to ${max} characters.`);
-    if ((endLinkText && !endLinkUrl) || (!endLinkText && endLinkUrl)) return bad("Add both the end button text and URL, or neither (no button).");
-    if (endLinkText.length > LIMITS.link) return bad(`Keep the end button text under ${LIMITS.link} characters.`);
-    if (endLinkUrl && !safeUrl(endLinkUrl)) return bad("The end button link must be a site path (/book), an https URL, tel: or mailto:.");
-    if (!noDash(endMessage + endLinkText)) return bad("Please avoid long dashes (en and em dashes) in the end message.");
+    const endMessage = sanitizeRich(o.endMessage), endVisible = visibleText(endMessage), endLinkText = tidy(o.endLinkText), endLinkUrl = tidy(o.endLinkUrl);
+    if (!endVisible || endVisible.length > max) return bad(`The end message needs 1 to ${max} characters (formatting is not counted).`, "tMsg");
+    if (endMessage.length > MAX_RICH_HTML) return bad("The formatting in the end message makes it too long to store. Remove some formatting.", "tMsg");
+    if ((endLinkText && !endLinkUrl) || (!endLinkText && endLinkUrl)) return bad("Add both the end button text and URL, or neither (no button).", "tLinkText");
+    if (endLinkText.length > LIMITS.link) return bad(`Keep the end button text under ${LIMITS.link} characters.`, "tLinkText");
+    if (endLinkUrl && !safeUrl(endLinkUrl)) return bad("The end button link must be a site path (/book), an https URL, tel: or mailto:.", "tLinkUrl");
+    if (!noDash(endVisible + endLinkText)) return bad("Please avoid long dashes (en and em dashes) in the end message.", "tMsg");
     value.endMessage = endMessage;
     if (endLinkText) { value.endLinkText = endLinkText; value.endLinkUrl = endLinkUrl; }
     if (o.autoEnd === true || o.autoEnd === "1") {
       const h = Math.round(Number(o.endShowHours ?? DEFAULT_END_SHOW_HOURS));
-      if (!(h >= 1 && h <= 720)) return bad("Show the end message for 1 to 720 hours before auto-ending.");
+      if (!(h >= 1 && h <= 720)) return bad("Show the end message for 1 to 720 hours before auto-ending.", "tHours");
       value.autoEnd = true; value.endShowHours = h;
     }
   }
@@ -300,76 +306,123 @@ export function settle<T extends Pick<Announcement, "status" | "timer">>(a: T, n
 }
 
 export type Input = Partial<Announcement> & { id?: string };
-export type Checked = { ok: true; value: Announcement } | { ok: false; error: string };
+/** Form field ids for the custom colour inputs. */
+const CFIELD = { bg: "cBg", fg: "cFg", cta: "cCta", close: "cClose" } as const;
+export type FieldErrors = Record<string, string>;
+const FIELD_INPUT_KEYS: Record<string, string[]> = { linkText: ["linkText", "linkUrl"], linkUrl: ["linkText", "linkUrl"], cBg: ["colors"], cFg: ["colors"], cCta: ["colors"], cClose: ["colors"] };
+/** Drops a faulty field from the input so validation can carry on and report the next fault. */
+function neutralise(input: Input, field: string): Input {
+  const o: Record<string, unknown> = { ...input };
+  if (field.startsWith("t") && field !== "theme" && field !== "title") {
+    const t = o.timer && typeof o.timer === "object" ? { ...(o.timer as Record<string, unknown>) } : null;
+    if (!t || field === "tEnd" || field === "tOn") { o.timer = null; return o as Input; }
+    if (field === "tMsg") t.endMessage = "x"; else if (field === "tLinkText" || field === "tLinkUrl") { delete t.endLinkText; delete t.endLinkUrl; }
+    else if (field === "tHours") t.endShowHours = DEFAULT_END_SHOW_HOURS; else if (field === "tStyle") t.style = "text"; else if (field === "tMode") t.endMode = "hide";
+    o.timer = t; return o as Input;
+  }
+  if (field === "theme" || field === "cBg" || field === "cFg" || field === "cCta" || field === "cClose") { o.theme = "surface"; delete o.colors; return o as Input; }
+  if (field === "endsAt" || field === "startsAt") { o[field] = ""; return o as Input; }
+  const PLACEHOLDER: Record<string, string> = { id: "tmp-id", name: "x", message: "x", title: "x" };
+  if (PLACEHOLDER[field]) { o[field] = PLACEHOLDER[field]; return o as Input; }
+  for (const k of FIELD_INPUT_KEYS[field] ?? [field]) delete o[k];
+  return o as Input;
+}
+/** Runs validation repeatedly, removing each faulty field, so every field at fault is reported at once (field id to message). */
+export function validateAll(input: Input, prev: Announcement | null, now: Date = new Date()): { ok: true; value: Announcement } | { ok: false; error: string; fields: FieldErrors } {
+  const fields: FieldErrors = {};
+  let cur = input;
+  for (let i = 0; i < 12; i++) {
+    const c = validateAnnouncement(cur, prev, now);
+    if (c.ok) return Object.keys(fields).length ? { ok: false, error: summary(fields), fields } : c;
+    const f = c.field ?? "form";
+    if (fields[f]) break;
+    fields[f] = c.error;
+    cur = neutralise(cur, f);
+  }
+  return { ok: false, error: summary(fields), fields };
+}
+const summary = (f: FieldErrors) => { const n = Object.keys(f).length; return n === 1 ? Object.values(f)[0] : `${n} things need fixing before this can be saved.`; };
+export type Checked = { ok: true; value: Announcement } | { ok: false; error: string; field?: string };
 
 /** Validates and normalises an announcement. `prev` is the stored version (to bump `version` on content change). */
 export function validateAnnouncement(input: Input, prev: Announcement | null, now: Date = new Date()): Checked {
-  const bad = (error: string): Checked => ({ ok: false, error });
+  const bad = (error: string, field?: string): Checked => ({ ok: false, error, ...(field ? { field } : {}) });
   const id = prev?.id ?? tidy(input.id).toLowerCase();
-  if (!/^[a-z0-9-]{3,32}$/.test(id)) return bad("Use 3 to 32 lowercase letters, numbers or dashes for the id.");
+  if (!/^[a-z0-9-]{3,32}$/.test(id)) return bad("Use 3 to 32 lowercase letters, numbers or dashes for the id.", "id");
   const siteKey = prev?.siteKey ?? input.siteKey ?? "saabai";
-  if (!isOwnedSite(siteKey)) return bad("Announcements are only available on Saabai-owned sites.");
+  if (!isOwnedSite(siteKey)) return bad("Announcements are only available on Saabai-owned sites.", "form");
   const name = tidy(input.name ?? prev?.name);
-  if (!name || name.length > LIMITS.name) return bad(`Give it a name (up to ${LIMITS.name} characters).`);
+  if (!name || name.length > LIMITS.name) return bad(`Give it a name (up to ${LIMITS.name} characters).`, "name");
   const layout = (input.layout ?? prev?.layout ?? "top") as Layout;
-  if (!LAYOUTS.includes(layout)) return bad("Unknown layout.");
-  const message = tidy(input.message ?? prev?.message);
+  if (!LAYOUTS.includes(layout)) return bad("Unknown layout.", "layout");
+  const message = sanitizeRich(typeof (input.message ?? prev?.message) === "string" ? (input.message ?? prev?.message) : "");
+  const messageText = visibleText(message);
   const max = layout === "card" ? LIMITS.cardBody : LIMITS.message;
-  if (!message || message.length > max) return bad(`The message needs 1 to ${max} characters.`);
+  if (!messageText || messageText.length > max) return bad(`The message needs 1 to ${max} characters (formatting is not counted).`, "message");
+  if (message.length > MAX_RICH_HTML) return bad("The formatting in the message makes it too long to store. Remove some formatting.", "message");
   const title = tidy(input.title ?? prev?.title);
-  if (layout === "card" && (!title || title.length > LIMITS.title)) return bad(`The card needs a title of up to ${LIMITS.title} characters.`);
-  if (title.length > LIMITS.title) return bad(`Keep the title under ${LIMITS.title} characters.`);
+  if (layout === "card" && (!title || title.length > LIMITS.title)) return bad(`The card needs a title of up to ${LIMITS.title} characters.`, "title");
+  if (title.length > LIMITS.title) return bad(`Keep the title under ${LIMITS.title} characters.`, "title");
   const linkText = tidy(input.linkText ?? prev?.linkText), linkUrl = tidy(input.linkUrl ?? prev?.linkUrl);
-  if ((linkText && !linkUrl) || (!linkText && linkUrl)) return bad("Add both the link text and the link URL, or neither.");
-  if (linkText.length > LIMITS.link) return bad(`Keep the link text under ${LIMITS.link} characters.`);
-  if (linkUrl && !safeUrl(linkUrl)) return bad("The link must be a site path (/book), an https URL, tel: or mailto:.");
-  if (!noDash(name + message + title + linkText)) return bad("Please avoid long dashes (en and em dashes). Use a comma or full stop instead.");
+  if ((linkText && !linkUrl) || (!linkText && linkUrl)) return bad("Add both the link text and the link URL, or neither.", "linkText");
+  if (linkText.length > LIMITS.link) return bad(`Keep the link text under ${LIMITS.link} characters.`, "linkText");
+  if (linkUrl && !safeUrl(linkUrl)) return bad("The link must be a site path (/book), an https URL, tel: or mailto:.", "linkUrl");
+  if (!noDash(name + messageText + title + linkText)) return bad("Please avoid long dashes (en and em dashes). Use a comma or full stop instead.", "message");
   const theme = (input.theme ?? prev?.theme ?? "surface") as ThemeKey;
-  if (!isThemeKey(theme)) return bad("Pick one of the listed themes.");
+  if (!isThemeKey(theme)) return bad("Pick one of the listed themes.", "theme");
   let colors: CustomColors | undefined;
   if (theme === CUSTOM_THEME) {
     colors = normColors(input.colors ?? prev?.colors) ?? undefined;
-    if (!colors) return bad("Custom colours must be hex values like #dc2626 for background, text, button and close icon.");
+    if (!colors) {
+      const src = (input.colors ?? prev?.colors ?? {}) as Record<string, unknown>;
+      const k = COLOR_KEYS.find((x) => !normHex(src[x])) ?? "bg";
+      return bad("Custom colours must be hex values like #dc2626 for background, text, button and close icon.", CFIELD[k]);
+    }
   }
   const worst = checkColors(resolveTheme(theme, colors)).find((c) => c.level === "block");
-  if (worst) return bad(`${worst.label} has a contrast of ${worst.ratio.toFixed(1)}:1. It must be at least ${MIN_BLOCK}:1 (aim for ${MIN_WARN}:1) so people can read it.`);
+  if (worst) return bad(`${worst.label} has a contrast of ${worst.ratio.toFixed(1)}:1. It must be at least ${MIN_BLOCK}:1 (aim for ${MIN_WARN}:1) so people can read it.`, theme === CUSTOM_THEME ? (worst.key === "fg" ? "cFg" : worst.key === "close" ? "cClose" : "cCta") : "theme");
+  const rt = resolveTheme(theme, colors);
+  const richBad = richColors(message).find((c) => contrast(c, rt.bg) < MIN_BLOCK);
+  if (richBad) return bad(`Text colour ${richBad} in the message has a contrast of ${contrast(richBad, rt.bg).toFixed(1)}:1 against the background. It must be at least ${MIN_BLOCK}:1.`, "message");
   const shadow = (input.shadow ?? prev?.shadow ?? (layout === "card" ? "soft" : "none")) as Shadow;
-  if (!isShadow(shadow)) return bad("Shadow must be none, soft or strong.");
+  if (!isShadow(shadow)) return bad("Shadow must be none, soft or strong.", "shadow");
   const rawSc = input.shadowColor === "" ? undefined : (input.shadowColor ?? prev?.shadowColor);
   const shadowColor = rawSc === undefined ? undefined : (normHex(rawSc) ?? null);
-  if (shadowColor === null) return bad("Shadow colour must be a hex value like #000000.");
+  if (shadowColor === null) return bad("Shadow colour must be a hex value like #000000.", "shadowColor");
   const status = (input.status ?? prev?.status ?? "draft") as AnnStatus;
-  if (!STATUSES.includes(status)) return bad("Unknown status.");
+  if (!STATUSES.includes(status)) return bad("Unknown status.", "status");
   const startsAt = input.startsAt === "" ? undefined : (input.startsAt ?? prev?.startsAt);
   const endsAt = input.endsAt === "" ? undefined : (input.endsAt ?? prev?.endsAt);
-  if (startsAt !== undefined && !isIso(startsAt)) return bad("Start date is not valid.");
-  if (endsAt !== undefined && !isIso(endsAt)) return bad("End date is not valid.");
-  if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) return bad("The end must be after the start.");
+  if (startsAt !== undefined && !isIso(startsAt)) return bad("Start date is not valid.", "startsAt");
+  if (endsAt !== undefined && !isIso(endsAt)) return bad("End date is not valid.", "endsAt");
+  if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) return bad("The end must be after the start.", "endsAt");
   let timer: TimerConfig | undefined;
   if (input.timer !== null && (input.timer ?? prev?.timer) !== undefined) {
     const c = normTimer(input.timer ?? prev?.timer, layout);
-    if (!c.ok) return bad(c.error);
+    if (!c.ok) return bad(c.error, c.field);
     timer = c.value;
+    const tBad = richColors(timer.endMessage ?? "").find((x) => contrast(x, rt.bg) < MIN_BLOCK);
+    if (tBad) return bad(`Text colour ${tBad} in the end message has a contrast of ${contrast(tBad, rt.bg).toFixed(1)}:1 against the background. It must be at least ${MIN_BLOCK}:1.`, "tMsg");
     const end = Date.parse(timer.endAt), t = now.getTime();
     const unchanged = !!prev && prev.status === status && prev.timer?.endAt === timer.endAt;
-    if ((status === "live" || status === "scheduled") && end <= t && !unchanged) return bad("The timer end date is in the past. Pick a future date and time before setting it Live.");
-    if (end > t + TIMER_MAX_DAYS * 86400_000 && !unchanged) return bad(`Keep the timer deadline within ${TIMER_MAX_DAYS} days.`);
-    if (startsAt && end <= Date.parse(startsAt)) return bad("The timer must end after the announcement starts.");
-    if (endsAt && Date.parse(endsAt) < end) return bad("The announcement ends before its timer does. Set the announcement end after the timer deadline, or leave it blank.");
+    if ((status === "live" || status === "scheduled") && end <= t && !unchanged) return bad("The timer end date is in the past. Pick a future date and time before setting it Live.", "tEnd");
+    if (end > t + TIMER_MAX_DAYS * 86400_000 && !unchanged) return bad(`Keep the timer deadline within ${TIMER_MAX_DAYS} days.`, "tEnd");
+    if (startsAt && end <= Date.parse(startsAt)) return bad("The timer must end after the announcement starts.", "tEnd");
+    if (endsAt && Date.parse(endsAt) < end) return bad("The announcement ends before its timer does. Set the announcement end after the timer deadline, or leave it blank.", "endsAt");
   }
   const list = (v: unknown, fallback: string[]) => (Array.isArray(v) ? v : fallback).map(tidy).filter(Boolean);
   const include = list(input.include, prev?.include ?? []), exclude = list(input.exclude, prev?.exclude ?? []);
-  if (include.length > 30 || exclude.length > 30 || [...include, ...exclude].some((p) => !PATTERN_RE.test(p) || p.length > 120)) return bad("Page rules must be paths like /pricing or /blog/* (max 30 each).");
+  if (include.length > 30 || exclude.length > 30 || [...include, ...exclude].some((p) => !PATTERN_RE.test(p) || p.length > 120)) return bad("Page rules must be paths like /pricing or /blog/* (max 30 each).", "include");
   const device = (input.device ?? prev?.device ?? "all") as Device;
-  if (!DEVICES.includes(device)) return bad("Unknown device setting.");
+  if (!DEVICES.includes(device)) return bad("Unknown device setting.", "device");
   const reshow = (input.reshow ?? prev?.reshow ?? (layout === "card" ? "days" : "days")) as Reshow;
-  if (!RESHOW.includes(reshow)) return bad("Unknown re-show rule.");
+  if (!RESHOW.includes(reshow)) return bad("Unknown re-show rule.", "reshow");
   const reshowDays = Math.round(Number(input.reshowDays ?? prev?.reshowDays ?? (layout === "card" ? 14 : 7)));
-  if (!(reshowDays >= 1 && reshowDays <= 365)) return bad("Re-show days must be 1 to 365.");
+  if (!(reshowDays >= 1 && reshowDays <= 365)) return bad("Re-show days must be 1 to 365.", "reshowDays");
   const delaySec = Math.round(Number(input.delaySec ?? prev?.delaySec ?? (layout === "card" ? 8 : 0)));
   const scrollPct = Math.round(Number(input.scrollPct ?? prev?.scrollPct ?? (layout === "card" ? 40 : 0)));
-  if (!(delaySec >= 0 && delaySec <= 120) || !(scrollPct >= 0 && scrollPct <= 100)) return bad("Delay is 0 to 120 seconds and scroll is 0 to 100 percent.");
-  if (status === "live" && layout === "card" && delaySec === 0 && scrollPct === 0) return bad("A slide-in card needs a delay or a scroll trigger so it never shows on first paint.");
+  if (!(delaySec >= 0 && delaySec <= 120) || !(scrollPct >= 0 && scrollPct <= 100)) return bad("Delay is 0 to 120 seconds and scroll is 0 to 100 percent.", delaySec >= 0 && delaySec <= 120 ? "scrollPct" : "delaySec");
+  if (status === "live" && layout === "card" && delaySec === 0 && scrollPct === 0) return bad("A slide-in card needs a delay or a scroll trigger so it never shows on first paint.", "delaySec");
   const contentChanged = !prev || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout || prev.timer?.endAt !== timer?.endAt || prev.timer?.endMode !== timer?.endMode || prev.timer?.endMessage !== timer?.endMessage;
   const value: Announcement = {
     id, siteKey, name, status, layout, message, ...(title ? { title } : {}), linkText, linkUrl, theme, ...(colors ? { colors } : {}), shadow, ...(shadowColor ? { shadowColor } : {}),
@@ -388,11 +441,11 @@ export type PublicTimer = { style: TimerStyle; endAt: string; endMode: EndMode; 
 export const toPublic = (a: Announcement, expId?: string, now: number = Date.now()): PublicAnnouncement => {
   const tm = a.timer, expired = !!tm && timerExpired(tm, now);
   const ended = expired && tm?.endMode === "message" && !!tm.endMessage;
-  const base = toPublicBase(ended && tm ? { ...a, message: tm.endMessage as string, linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a, expId);
-  return tm ? { ...base, timer: { style: tm.style, endAt: tm.endAt, endMode: tm.endMode, ...(tm.endMessage ? { endMessage: tm.endMessage } : {}), ...(tm.endLinkText ? { endLinkText: tm.endLinkText, endLinkUrl: tm.endLinkUrl } : {}), expired, serverNow: now } } : base;
+  const base = toPublicBase(ended && tm ? { ...a, message: sanitizeRich(tm.endMessage), linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a, expId);
+  return tm ? { ...base, timer: { style: tm.style, endAt: tm.endAt, endMode: tm.endMode, ...(tm.endMessage ? { endMessage: sanitizeRich(tm.endMessage) } : {}), ...(tm.endLinkText ? { endLinkText: tm.endLinkText, endLinkUrl: tm.endLinkUrl } : {}), expired, serverNow: now } } : base;
 };
 const toPublicBase = (a: Announcement, expId?: string): PublicAnnouncement => ({
-  id: a.id, layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { colors: a.colors } : {}), shadow: a.shadow ?? "none", ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}), device: a.device,
+  id: a.id, layout: a.layout, message: sanitizeRich(a.message), ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { colors: a.colors } : {}), shadow: a.shadow ?? "none", ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}), device: a.device,
   reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, version: a.version, include: a.include, exclude: a.exclude, ...(expId ? { expId } : {}),
 });
 

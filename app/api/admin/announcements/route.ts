@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
     case "save": {
       const r = await saveAnnouncement(site, { ...(b.data as object), id: b.id ?? (b.data?.id as string | undefined) } as never);
-      return r.ok ? Response.json({ ok: true, item: r.value }) : Response.json({ error: r.error }, { status: r.status });
+      return r.ok ? Response.json({ ok: true, item: r.value }) : Response.json({ error: r.error, fields: r.fields ?? {} }, { status: r.status });
     }
     case "delete": {
       const cur = (await listAnnouncements(site)).find((x) => x.id === b.id);
