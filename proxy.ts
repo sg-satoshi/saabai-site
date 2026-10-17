@@ -64,6 +64,7 @@ const PUBLIC_API = [
   "/api/portal/auth",        // magic-link handler — sets the session cookie
   "/api/portal/verify-code", // 6-digit email code exchange (opaque errors)
   "/api/portal/request-access", // access request + auto-approve (opaque ok)
+  "/api/portal/blueprint", // Blueprint buyer portal (own bp_portal session + ownership check inside; flag gated)
   "/api/portal/requests", // client change requests (portal_session inside)
   "/api/portal/billing", // plans, add-ons, billing (portal_session inside)
   // Public chat widgets (embedded on client + marketing sites)
