@@ -1,6 +1,5 @@
 const serviceAreaLinks = [
   { label: "Gold Coast", href: "/gold-coast" },
-  { label: "Brisbane", href: "/brisbane" },
 ];
 
 export default function SbFooter() {
@@ -24,9 +23,10 @@ export default function SbFooter() {
             <h4>Company</h4>
             <a href="/case-studies">Work</a>
             <a href="/about">About</a>
-            <a href="mailto:hello@saabai.ai">Contact</a>
+            <a href="/contact">Contact</a>
             <a href="/faq">FAQ</a>
             <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
           </div>
           <div>
             <h4>Products</h4>
@@ -45,7 +45,7 @@ export default function SbFooter() {
           </nav>
         </div>
         <div className="legal">
-          <span>© 2026 Saabai. ABN 71 889 082 572. Merrimac QLD 4226. All prices in AUD and include GST.</span>
+          <span>© 2026 Saabai. ABN 71 889 082 572. Merrimac QLD 4226. Prices in AUD. GST not applicable.</span>
           <a href="mailto:hello@saabai.ai">hello@saabai.ai</a>
         </div>
       </div>

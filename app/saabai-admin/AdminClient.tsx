@@ -821,7 +821,7 @@ export default function AdminClient({
       <div className="ph">
         <div>
           <h1>{greeting}, Shane</h1>
-          <div className="sub">{today} · All figures AUD, incl. GST</div>
+          <div className="sub">{today} · All figures AUD, GST not applicable</div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <a className="btn" href="/saabai-admin/orders">View orders</a>

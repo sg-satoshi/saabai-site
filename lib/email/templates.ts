@@ -173,7 +173,7 @@ export function blueprintOrderCustomerEmail(opts: {
     title: "You're in. Let's build your Blueprint.",
     bodyHtml: [
       p(`Hi ${first},`),
-      p(`Thank you for your order (${escapeHtml(opts.paidLabel)}). Stripe will send the tax invoice. Next up: a short fact-find about your team, tools and busiest tasks. About 15 minutes, then we get to work.`),
+      p(`Thank you for your order (${escapeHtml(opts.paidLabel)}). Your invoice is on its way. Next up: a short fact-find about your team, tools and busiest tasks. About 15 minutes, then we get to work.`),
       call,
       p(`Your Blueprint arrives within ${escapeHtml(opts.delivery)} of the fact-find. Book any Saabai build within 30 days of delivery and the full ${escapeHtml(opts.priceLabel)} is credited. Nice.`),
     ].join(""),
