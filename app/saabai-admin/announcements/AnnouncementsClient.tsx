@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, type Announcement } from "../../../lib/announce/core";
+import { shadowCss, SHADOWS, THEMES, LAYOUTS, DEVICES, RESHOW, GOALS, testIdFor, contrast, resolveTheme, checkColors, normHex, bestText, DEFAULT_CUSTOM, MIN_BLOCK, MIN_WARN, type Announcement } from "../../../lib/announce/core";
 
-type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number };
-const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0 };
+type Form = { id: string; name: string; layout: string; message: string; title: string; linkText: string; linkUrl: string; theme: string; status: string; startsAt: string; endsAt: string; include: string; exclude: string; device: string; reshow: string; reshowDays: number; delaySec: number; scrollPct: number; cBg: string; cFg: string; cCta: string; cClose: string; shadow: string; shadowColor: string };
+const blank: Form = { id: "", name: "", layout: "top", message: "", title: "", linkText: "", linkUrl: "", theme: "surface", status: "draft", startsAt: "", endsAt: "", include: "", exclude: "", device: "all", reshow: "days", reshowDays: 7, delaySec: 0, scrollPct: 0, cBg: DEFAULT_CUSTOM.bg, cFg: DEFAULT_CUSTOM.fg, cCta: DEFAULT_CUSTOM.cta, cClose: DEFAULT_CUSTOM.close, shadow: "none", shadowColor: "" };
 
 // Admin enters Australia/Brisbane (UTC+10, no DST); stored as UTC ISO.
 const toUtc = (local: string) => (local ? new Date(local + ":00+10:00").toISOString() : "");
@@ -18,6 +18,7 @@ export default function AnnouncementsClient() {
   const [editing, setEditing] = useState<string | null>(null);
   const [msg, setMsg] = useState<string>("");
   const [goal, setGoal] = useState<string>("call_click");
+  const [view, setView] = useState<"desktop" | "mobile">("desktop");
 
   const load = useCallback(async () => {
     const r = await fetch("/api/admin/announcements");
@@ -33,12 +34,19 @@ export default function AnnouncementsClient() {
     return r.ok;
   }
   async function save() {
-    const data = { ...f, startsAt: toUtc(f.startsAt), endsAt: toUtc(f.endsAt), include: lines(f.include), exclude: lines(f.exclude) };
+    if (f.shadowColor && !normHex(f.shadowColor)) { setMsg("Shadow colour must be a hex value like #000000."); return; }
+    if (blocked) { setMsg("Fix the colours first: some contrast is below 3:1 so it can't be read."); return; }
+    const data = { ...f, ...(f.theme === "custom" ? { colors: { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } } : {}), startsAt: toUtc(f.startsAt), endsAt: toUtc(f.endsAt), include: lines(f.include), exclude: lines(f.exclude) };
     if (await post({ action: "save", id: editing ?? undefined, data })) { setF(blank); setEditing(null); }
   }
-  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct }); window.scrollTo({ top: 0 }); };
+  const edit = (a: Announcement) => { setEditing(a.id); setF({ id: a.id, name: a.name, layout: a.layout, message: a.message, title: a.title ?? "", linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, status: a.status, startsAt: toBrisbane(a.startsAt), endsAt: toBrisbane(a.endsAt), include: a.include.join("\n"), exclude: a.exclude.join("\n"), device: a.device, reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, cBg: a.colors?.bg ?? DEFAULT_CUSTOM.bg, cFg: a.colors?.fg ?? DEFAULT_CUSTOM.fg, cCta: a.colors?.cta ?? DEFAULT_CUSTOM.cta, cClose: a.colors?.close ?? DEFAULT_CUSTOM.close, shadow: a.shadow ?? "none", shadowColor: a.shadowColor ?? "" }); window.scrollTo({ top: 0 }); };
   const set = (k: keyof Form, v: string | number) => setF((p) => ({ ...p, [k]: v }));
-  const th = THEMES[f.theme as keyof typeof THEMES] ?? THEMES.surface;
+  const custom = f.theme === "custom";
+  const hexOk = [f.cBg, f.cFg, f.cCta, f.cClose].every((h) => normHex(h));
+  const th = resolveTheme(f.theme, custom && hexOk ? { bg: f.cBg, fg: f.cFg, cta: f.cCta, close: f.cClose } : undefined);
+  const checks = custom && !hexOk ? [] : checkColors(th);
+  const blocked = (custom && !hexOk) || checks.some((c) => c.level === "block");
+  const fixText = (k: "cFg" | "cClose", bgv: string) => { const h = normHex(bgv); if (h) set(k, bestText(h)); };
   const box = { background: "#14123a", border: "1px solid rgba(98,197,209,.22)", borderRadius: 12, padding: 20, marginBottom: 20 } as const;
   const inp = { width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #3b3a6b", background: "#0b092e", color: "#fff", marginTop: 4 } as const;
   const lab = { display: "block", fontSize: 13, color: "#a5b4fc", marginBottom: 12 } as const;
@@ -65,7 +73,13 @@ export default function AnnouncementsClient() {
           <label style={{ ...lab, gridColumn: "1 / -1" }}>Message (max {f.layout === "card" ? 140 : 120})<input style={inp} maxLength={f.layout === "card" ? 140 : 120} value={f.message} onChange={(e) => set("message", e.target.value)} /></label>
           <label style={lab}>Link text<input style={inp} maxLength={40} value={f.linkText} onChange={(e) => set("linkText", e.target.value)} /></label>
           <label style={lab}>Link URL (/path, https, tel:, mailto:)<input style={inp} value={f.linkUrl} onChange={(e) => set("linkUrl", e.target.value)} /></label>
-          <label style={lab}>Theme (brand tokens)<select style={inp} value={f.theme} onChange={(e) => set("theme", e.target.value)}>{Object.entries(THEMES).map(([k, v]) => <option key={k} value={k}>{v.label} ({contrast(v.fg, v.bg).toFixed(1)}:1)</option>)}</select></label>
+          <label style={lab}>Theme<select style={inp} value={f.theme} onChange={(e) => set("theme", e.target.value)}>
+            <optgroup label="Brand (blends with the site)">{Object.entries(THEMES).filter(([, v]) => v.group === "brand").map(([k, v]) => <option key={k} value={k}>{v.label} ({contrast(v.fg, v.bg).toFixed(1)}:1)</option>)}</optgroup>
+            <optgroup label="Alert (stands out from the site)">{Object.entries(THEMES).filter(([, v]) => v.group === "alert").map(([k, v]) => <option key={k} value={k}>{v.label} ({contrast(v.fg, v.bg).toFixed(1)}:1)</option>)}</optgroup>
+            <optgroup label="Your own"><option value="custom">Custom colours</option></optgroup>
+          </select></label>
+          <label style={lab}>Drop shadow<select data-testid="shadow-select" style={inp} value={f.shadow} onChange={(e) => set("shadow", e.target.value)}>{SHADOWS.map((x) => <option key={x} value={x}>{x === "none" ? "None" : x === "soft" ? "Soft" : "Strong"}</option>)}</select></label>
+          {f.shadow !== "none" && <label style={lab}>Shadow colour (optional, hex, blank = black)<input data-testid="hex-shadow" style={{ ...inp, borderColor: !f.shadowColor || normHex(f.shadowColor) ? "#3b3a6b" : "#f87171" }} maxLength={7} value={f.shadowColor} placeholder="#000000" onChange={(e) => set("shadowColor", e.target.value)} /></label>}
           <label style={lab}>Device<select style={inp} value={f.device} onChange={(e) => set("device", e.target.value)}>{DEVICES.map((d) => <option key={d}>{d}</option>)}</select></label>
           <label style={lab}>Starts (Brisbane time)<input style={inp} type="datetime-local" value={f.startsAt} onChange={(e) => set("startsAt", e.target.value)} /></label>
           <label style={lab}>Ends (Brisbane time)<input style={inp} type="datetime-local" value={f.endsAt} onChange={(e) => set("endsAt", e.target.value)} /></label>
@@ -76,8 +90,46 @@ export default function AnnouncementsClient() {
           {f.layout === "card" && <><label style={lab}>Show delay (seconds)<input style={inp} type="number" min={0} value={f.delaySec} onChange={(e) => set("delaySec", Number(e.target.value))} /></label>
           <label style={lab}>Or scroll depth (%)<input style={inp} type="number" min={0} max={100} value={f.scrollPct} onChange={(e) => set("scrollPct", Number(e.target.value))} /></label></>}
         </div>
-        <div style={{ margin: "8px 0 16px", padding: "10px 16px", borderRadius: 8, background: th.bg, color: th.fg, border: `1px solid ${th.border}`, fontSize: 14 }}>Preview: {f.title ? <b>{f.title}. </b> : null}{f.message || "Your message"} {f.linkText && <u style={{ marginLeft: 8 }}>{f.linkText}</u>} <span style={{ opacity: .6 }}>(×)</span></div>
-        <button onClick={save}>{editing ? "Save changes" : "Create"}</button>{editing && <button style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
+        {custom && (
+          <div data-testid="custom-colours" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, margin: "8px 0" }}>
+            {([["cBg", "Background"], ["cFg", "Text"], ["cCta", "Link / button"], ["cClose", "Close icon"]] as const).map(([k, l]) => {
+              const valid = !!normHex(f[k]);
+              return (
+                <label key={k} style={lab}>{l}
+                  <span style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+                    <input type="color" aria-label={`${l} colour picker`} value={normHex(f[k]) ?? "#000000"} onChange={(e) => set(k, e.target.value)} style={{ width: 44, height: 36, padding: 0, border: "1px solid #3b3a6b", background: "none" }} />
+                    <input aria-label={`${l} hex`} data-testid={`hex-${k}`} style={{ ...inp, marginTop: 0, borderColor: valid ? "#3b3a6b" : "#f87171" }} value={f[k]} maxLength={7} onChange={(e) => set(k, e.target.value)} placeholder="#rrggbb" />
+                  </span>
+                  {!valid && <span style={{ color: "#f87171" }}>Enter a hex colour like #dc2626</span>}
+                </label>
+              );
+            })}
+          </div>
+        )}
+        <div data-testid="contrast-panel" style={{ margin: "8px 0", fontSize: 13 }}>
+          {custom && !hexOk && <div style={{ color: "#f87171" }}>Enter valid hex colours to check contrast.</div>}
+          {checks.map((c) => (
+            <div key={c.key} role={c.level === "ok" ? undefined : "alert"} style={{ color: c.level === "block" ? "#f87171" : c.level === "warn" ? "#fbbf24" : "#86efac" }}>
+              {c.level === "ok" ? "✓" : c.level === "warn" ? "⚠" : "✕"} {c.label}: {c.ratio.toFixed(1)}:1{" "}
+              {c.level === "warn" && `is under ${MIN_WARN}:1 (hard to read for some people).`}
+              {c.level === "block" && `is under ${MIN_BLOCK}:1. Saving is blocked.`}
+              {c.level !== "ok" && custom && (c.key === "fg" || c.key === "close") && (
+                <button type="button" style={{ marginLeft: 8 }} onClick={() => fixText(c.key === "fg" ? "cFg" : "cClose", f.cBg)}>Use {c.suggest === "#000000" ? "black" : "white"} {c.key === "fg" ? "text" : "icon"}</button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ margin: "8px 0" }}>
+          Preview:{" "}
+          <button type="button" aria-pressed={view === "desktop"} onClick={() => setView("desktop")}>Desktop 1440</button>{" "}
+          <button type="button" aria-pressed={view === "mobile"} onClick={() => setView("mobile")}>Mobile 390</button>
+        </div>
+        <div data-testid="ann-preview" data-view={view} style={{ width: view === "mobile" ? 390 : "100%", maxWidth: "100%", margin: "0 0 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: view === "mobile" ? 8 : 16, flexWrap: view === "mobile" ? "wrap" : "nowrap", padding: view === "mobile" ? "6px 4px 6px 16px" : "6px 8px 6px 32px", minHeight: 56, borderRadius: f.layout === "card" ? 16 : 0, background: th.bg, color: th.fg, border: `1px solid ${th.border}`, fontSize: view === "mobile" ? 14 : 15, boxShadow: shadowCss(f.layout, f.shadow, normHex(f.shadowColor) ?? undefined) }}>
+          <span>{f.title ? <b>{f.title}. </b> : null}{f.message || "Your message"}</span>
+          {f.linkText && <span style={{ display: "inline-flex", alignItems: "center", minHeight: 44, padding: "0 16px", borderRadius: 8, fontWeight: 600, background: th.cta, color: th.ctaFg }}>{f.linkText}</span>}
+          <span aria-hidden="true" style={{ width: 44, height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: th.close }}>×</span>
+        </div>
+        <button onClick={save} disabled={blocked}>{editing ? "Save changes" : "Create"}</button>{editing && <button style={{ marginLeft: 8 }} onClick={() => { setEditing(null); setF(blank); }}>Cancel</button>}
         {msg && <p role="status" style={{ marginTop: 8 }}>{msg}</p>}
       </div>
 

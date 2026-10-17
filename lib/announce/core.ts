@@ -16,13 +16,94 @@ export type Device = (typeof DEVICES)[number];
 export const RESHOW = ["never", "days", "session"] as const;
 export type Reshow = (typeof RESHOW)[number];
 
-/** Brand-token themes only. Text colour is fixed per theme and passes AA (see contrast()). */
+/**
+ * Themes. `bg`/`fg` are the bar surface and text, `cta` is the button fill (`ctaFg` its text), `close` the close icon.
+ * Brand themes follow the site; alert themes are meant to stand out from it. "custom" uses admin-picked hex colours.
+ * Every preset passes WCAG AA (4.5:1) for text and 3:1 for the button and close icon (see tests).
+ */
+export type ThemeColors = { bg: string; fg: string; cta: string; ctaFg: string; close: string; border: string };
 export const THEMES = {
-  surface: { label: "Surface", bg: "#14123a", fg: "#ffffff", accent: "#62c5d1", border: "rgba(98,197,209,.22)" },
-  navy: { label: "Navy", bg: "#0b092e", fg: "#ffffff", accent: "#62c5d1", border: "rgba(98,197,209,.22)" },
-  teal: { label: "Teal", bg: "#62c5d1", fg: "#0b092e", accent: "#0b092e", border: "rgba(11,9,46,.25)" },
+  surface: { label: "Brand: Surface", group: "brand", bg: "#14123a", fg: "#ffffff", cta: "#62c5d1", ctaFg: "#0b092e", close: "#ffffff", border: "rgba(98,197,209,.22)" },
+  navy: { label: "Brand: Navy", group: "brand", bg: "#0b092e", fg: "#ffffff", cta: "#62c5d1", ctaFg: "#0b092e", close: "#ffffff", border: "rgba(98,197,209,.22)" },
+  teal: { label: "Brand: Teal", group: "brand", bg: "#62c5d1", fg: "#0b092e", cta: "#0b092e", ctaFg: "#ffffff", close: "#0b092e", border: "rgba(11,9,46,.25)" },
+  alert_red: { label: "Alert red (white text)", group: "alert", bg: "#b91c1c", fg: "#ffffff", cta: "#ffffff", ctaFg: "#991b1b", close: "#ffffff", border: "rgba(255,255,255,.3)" },
+  warning: { label: "Warning yellow (dark text)", group: "alert", bg: "#fbbf24", fg: "#1c1400", cta: "#1c1400", ctaFg: "#fde68a", close: "#1c1400", border: "rgba(28,20,0,.3)" },
+  success: { label: "Success green (white text)", group: "alert", bg: "#15803d", fg: "#ffffff", cta: "#ffffff", ctaFg: "#14532d", close: "#ffffff", border: "rgba(255,255,255,.3)" },
+  high_contrast: { label: "Black and white (high contrast)", group: "alert", bg: "#000000", fg: "#ffffff", cta: "#ffffff", ctaFg: "#000000", close: "#ffffff", border: "rgba(255,255,255,.4)" },
+  yellow_on_dark: { label: "Yellow text on dark", group: "alert", bg: "#111111", fg: "#ffe14d", cta: "#ffe14d", ctaFg: "#111111", close: "#ffe14d", border: "rgba(255,225,77,.4)" },
 } as const;
-export type ThemeKey = keyof typeof THEMES;
+export type PresetKey = keyof typeof THEMES;
+export const CUSTOM_THEME = "custom" as const;
+export type ThemeKey = PresetKey | typeof CUSTOM_THEME;
+export const isThemeKey = (t: unknown): t is ThemeKey => typeof t === "string" && (t === CUSTOM_THEME || Object.prototype.hasOwnProperty.call(THEMES, t));
+
+/** Custom colours: exactly four hex values. */
+export type CustomColors = { bg: string; fg: string; cta: string; close: string };
+export const COLOR_KEYS = ["bg", "fg", "cta", "close"] as const;
+export const DEFAULT_CUSTOM: CustomColors = { bg: "#dc2626", fg: "#ffffff", cta: "#ffffff", close: "#ffffff" };
+
+/** Strict hex check. Accepts #rgb or #rrggbb and returns lowercase #rrggbb, or null. Nothing else ever reaches CSS. */
+export function normHex(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const m = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec(v.trim());
+  if (!m) return null;
+  const h = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+  return "#" + h.toLowerCase();
+}
+export function normColors(v: unknown): CustomColors | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  const out: Partial<CustomColors> = {};
+  for (const k of COLOR_KEYS) { const h = normHex(o[k]); if (!h) return null; out[k] = h; }
+  return out as CustomColors;
+}
+
+/** Black or white, whichever reads best on `bg`. */
+export function bestText(bg: string): "#000000" | "#ffffff" {
+  return contrast("#000000", bg) >= contrast("#ffffff", bg) ? "#000000" : "#ffffff";
+}
+
+export const SHADOWS = ["none", "soft", "strong"] as const;
+export type Shadow = (typeof SHADOWS)[number];
+export const isShadow = (v: unknown): v is Shadow => typeof v === "string" && (SHADOWS as readonly string[]).includes(v);
+/** CSS box-shadow for a layout. `color` must already be a validated hex (anything else falls back to black). */
+export function shadowCss(layout: string, shadow: string | undefined, color?: string): string {
+  if (!isShadow(shadow) || shadow === "none") return "none";
+  const hex = normHex(color) ?? "#000000";
+  const n = parseInt(hex.slice(1), 16);
+  const rgba = (a: number) => `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  const strong = shadow === "strong";
+  const y = layout === "top" ? 1 : layout === "bottom" ? -1 : 0.5;
+  const blur = strong ? 28 : 14, off = strong ? 10 : 4;
+  return `0 ${Math.round(y * off)}px ${blur}px ${rgba(strong ? 0.55 : 0.25)}`;
+}
+
+/** Final colours for rendering. Unknown themes fall back to Surface. Custom colours are re-validated here. */
+export function resolveTheme(theme: string, colors?: unknown): ThemeColors {
+  if (theme === CUSTOM_THEME) {
+    const c = normColors(colors);
+    if (c) return { bg: c.bg, fg: c.fg, cta: c.cta, ctaFg: bestText(c.cta), close: c.close, border: "rgba(128,128,128,.4)" };
+    return THEMES.surface;
+  }
+  return isThemeKey(theme) && theme !== CUSTOM_THEME ? THEMES[theme] : THEMES.surface;
+}
+
+export const MIN_BLOCK = 3, MIN_WARN = 4.5;
+export type ContrastCheck = { key: string; label: string; ratio: number; level: "ok" | "warn" | "block"; suggest?: "#000000" | "#ffffff" };
+/** Live contrast report used by the admin and by server validation. Text must reach 4.5 (warn) and 3 (block). */
+export function checkColors(t: ThemeColors): ContrastCheck[] {
+  const row = (key: string, label: string, fg: string, bg: string, text: boolean): ContrastCheck => {
+    const ratio = contrast(fg, bg);
+    const level = ratio < MIN_BLOCK ? "block" : text && ratio < MIN_WARN ? "warn" : "ok";
+    return { key, label, ratio, level, ...(level !== "ok" ? { suggest: bestText(bg) } : {}) };
+  };
+  return [
+    row("fg", "Text on background", t.fg, t.bg, true),
+    row("ctaFg", "Button text on button", t.ctaFg, t.cta, true),
+    row("cta", "Button against background", t.cta, t.bg, false),
+    row("close", "Close icon on background", t.close, t.bg, false),
+  ];
+}
 
 export const DEFAULT_EXCLUDES = ["/checkout", "/checkout/*", "/blueprint/pay*", "/blueprint/checkout*", "/admin", "/admin/*", "/saabai-admin", "/saabai-admin/*", "/unsubscribe", "/unsubscribe/*", "/privacy", "/terms"];
 
@@ -39,6 +120,11 @@ export type Announcement = {
   linkText: string;
   linkUrl: string;
   theme: ThemeKey;
+  /** Only when theme is "custom". Validated hex values. */
+  colors?: CustomColors;
+  /** Drop shadow strength and optional hex colour (default black). */
+  shadow?: Shadow;
+  shadowColor?: string;
   /** ISO UTC. Admin enters Australia/Brisbane; stored as UTC. */
   startsAt?: string;
   endsAt?: string;
@@ -139,9 +225,19 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   if (linkUrl && !safeUrl(linkUrl)) return bad("The link must be a site path (/book), an https URL, tel: or mailto:.");
   if (!noDash(name + message + title + linkText)) return bad("Please avoid long dashes (en and em dashes). Use a comma or full stop instead.");
   const theme = (input.theme ?? prev?.theme ?? "surface") as ThemeKey;
-  if (!(theme in THEMES)) return bad("Pick one of the brand themes.");
-  const t = THEMES[theme];
-  if (contrast(t.fg, t.bg) < 4.5) return bad("That theme fails the 4.5:1 contrast check.");
+  if (!isThemeKey(theme)) return bad("Pick one of the listed themes.");
+  let colors: CustomColors | undefined;
+  if (theme === CUSTOM_THEME) {
+    colors = normColors(input.colors ?? prev?.colors) ?? undefined;
+    if (!colors) return bad("Custom colours must be hex values like #dc2626 for background, text, button and close icon.");
+  }
+  const worst = checkColors(resolveTheme(theme, colors)).find((c) => c.level === "block");
+  if (worst) return bad(`${worst.label} has a contrast of ${worst.ratio.toFixed(1)}:1. It must be at least ${MIN_BLOCK}:1 (aim for ${MIN_WARN}:1) so people can read it.`);
+  const shadow = (input.shadow ?? prev?.shadow ?? (layout === "card" ? "soft" : "none")) as Shadow;
+  if (!isShadow(shadow)) return bad("Shadow must be none, soft or strong.");
+  const rawSc = input.shadowColor === "" ? undefined : (input.shadowColor ?? prev?.shadowColor);
+  const shadowColor = rawSc === undefined ? undefined : (normHex(rawSc) ?? null);
+  if (shadowColor === null) return bad("Shadow colour must be a hex value like #000000.");
   const status = (input.status ?? prev?.status ?? "draft") as AnnStatus;
   if (!STATUSES.includes(status)) return bad("Unknown status.");
   const startsAt = input.startsAt === "" ? undefined : (input.startsAt ?? prev?.startsAt);
@@ -164,7 +260,7 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   if (status === "live" && layout === "card" && delaySec === 0 && scrollPct === 0) return bad("A slide-in card needs a delay or a scroll trigger so it never shows on first paint.");
   const contentChanged = !prev || prev.message !== message || prev.title !== (title || undefined) || prev.linkUrl !== linkUrl || prev.linkText !== linkText || prev.layout !== layout;
   const value: Announcement = {
-    id, siteKey, name, status, layout, message, ...(title ? { title } : {}), linkText, linkUrl, theme,
+    id, siteKey, name, status, layout, message, ...(title ? { title } : {}), linkText, linkUrl, theme, ...(colors ? { colors } : {}), shadow, ...(shadowColor ? { shadowColor } : {}),
     ...(startsAt ? { startsAt } : {}), ...(endsAt ? { endsAt } : {}), include, exclude, device, reshow, reshowDays, delaySec, scrollPct,
     version: prev ? prev.version + (contentChanged ? 1 : 0) : 1,
     ...(prev?.testId ? { testId: prev.testId } : {}),
@@ -174,9 +270,9 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
 }
 
 /** What a browser needs to render. Never includes admin-only fields. */
-export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & { expId?: string };
+export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & { expId?: string };
 export const toPublic = (a: Announcement, expId?: string): PublicAnnouncement => ({
-  id: a.id, layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, device: a.device,
+  id: a.id, layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { colors: a.colors } : {}), shadow: a.shadow ?? "none", ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}), device: a.device,
   reshow: a.reshow, reshowDays: a.reshowDays, delaySec: a.delaySec, scrollPct: a.scrollPct, version: a.version, include: a.include, exclude: a.exclude, ...(expId ? { expId } : {}),
 });
 
@@ -195,7 +291,7 @@ export type Goal = (typeof GOALS)[number];
 export const MIN_TEST_DAYS = 14;
 
 /** Flat string map stored in Variant.value (the engine allows string values up to 300 chars each). Empty object = no bar. */
-export function announcementValue(a: Pick<Announcement, "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme">): Record<string, string> {
-  return { layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme };
+export function announcementValue(a: Pick<Announcement, "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor">): Record<string, string> {
+  return { layout: a.layout, message: a.message, ...(a.title ? { title: a.title } : {}), linkText: a.linkText, linkUrl: a.linkUrl, theme: a.theme, ...(a.theme === CUSTOM_THEME && a.colors ? { cBg: a.colors.bg, cFg: a.colors.fg, cCta: a.colors.cta, cClose: a.colors.close } : {}), ...(a.shadow ? { shadow: a.shadow } : {}), ...(a.shadowColor ? { shadowColor: a.shadowColor } : {}) };
 }
 export const isEmptyValue = (v: Record<string, string> | undefined) => !v || Object.keys(v).length === 0;
