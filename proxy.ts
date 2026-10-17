@@ -102,6 +102,7 @@ const PUBLIC_API = [
   // Write-only telemetry beacon fired from public pages
   "/api/analytics",
   "/api/exp/event",          // split-testing beacon (always 204, ignores bots)
+  "/api/announcement/active", // public read of the one live announcement (null unless flag on and live)
   // Widget media / embeds
   "/api/tts",
   "/api/heygen-token",
