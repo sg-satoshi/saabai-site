@@ -86,7 +86,44 @@ export async function createEngagement(
     [engagement.id]: JSON.stringify(engagement),
   });
   await redis.set(`${TOKEN_PREFIX}${engagement.factFindToken}`, engagement.id);
+  await indexEngagementEmail(engagement.contactEmail, engagement.id);
   return engagement;
+}
+
+const EMAIL_INDEX_PREFIX = "audit:email:";
+
+/** Add an engagement to the per-email index (client portal lookup). Never throws. */
+export async function indexEngagementEmail(email: string, id: string): Promise<void> {
+  try {
+    const redis = getRedis();
+    const e = (email || "").trim().toLowerCase();
+    if (!redis || !e) return;
+    await redis.sadd(`${EMAIL_INDEX_PREFIX}${e}`, id);
+  } catch {
+    /* index is best effort; lookups fall back to a scan */
+  }
+}
+
+/**
+ * Engagements for a buyer email. Uses the index; if it is empty (older orders
+ * created before the index existed) falls back to one scan and backfills.
+ */
+export async function findEngagementsByEmail(rawEmail: string): Promise<AuditEngagement[]> {
+  const redis = getRedis();
+  const email = (rawEmail || "").trim().toLowerCase();
+  if (!redis || !email || email.length > 254) return [];
+  const ids = ((await redis.smembers(`${EMAIL_INDEX_PREFIX}${email}`)) as string[]) ?? [];
+  let found: AuditEngagement[] = [];
+  if (ids.length > 0) {
+    found = (await Promise.all(ids.map((i) => getEngagement(i)))).filter(
+      (x): x is AuditEngagement => Boolean(x) && x!.contactEmail.trim().toLowerCase() === email
+    );
+  }
+  if (found.length === 0) {
+    found = (await listEngagements()).filter((x) => x.contactEmail.trim().toLowerCase() === email);
+    for (const x of found) await indexEngagementEmail(email, x.id);
+  }
+  return found.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function getEngagement(

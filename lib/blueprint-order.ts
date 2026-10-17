@@ -4,6 +4,8 @@ import { EMAIL_BRAND, sendBrandedEmail } from "./email/branded-layout";
 import { blueprintOrderAdminEmail, blueprintOrderCustomerEmail } from "./email/templates";
 import { createEngagement, updateEngagement, logEvent, listEngagements } from "./audit-store";
 import { TIERS, isTier } from "./blueprint";
+import { portalAllowed } from "./portal-blueprint/flag";
+import { FIRST_LINK_TTL_SECONDS, createPortalToken, linkUrl } from "./portal-blueprint/links";
 
 const SAABAI_EMAIL = "hello@saabai.ai";
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -85,7 +87,17 @@ export async function handleBlueprintCheckout(session: Stripe.Checkout.Session, 
   });
 
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://saabai.ai";
-  const link = engagement ? `${base}/audit/factfind/${engagement.factFindToken}` : null;
+  let link = engagement ? `${base}/audit/factfind/${engagement.factFindToken}` : null;
+  // Portal flag on for this buyer: the email CTA is a 24 hour one-click portal link (falls back to the old link if minting fails).
+  let portalLink = false;
+  if (engagement && email && portalAllowed(email)) {
+    try {
+      const tok = await createPortalToken(email, { redirect: `/portal/${engagement.id}/factfind`, ttlSeconds: FIRST_LINK_TTL_SECONDS });
+      if (tok) { link = linkUrl(tok); portalLink = true; }
+    } catch (err) {
+      console.error("[blueprint] portal link failed, using legacy link", err instanceof Error ? err.message : err);
+    }
+  }
   const stripeDash = `https://dashboard.stripe.com/payments/${paymentIntentId || session.id}`;
   const paidLabel = amountTotal != null ? `$${(amountTotal / 100).toLocaleString("en-AU")} ${currency}` : "paid";
 
@@ -97,6 +109,7 @@ export async function handleBlueprintCheckout(session: Stripe.Checkout.Session, 
     delivery: tier.delivery,
     priceLabel: tier.priceLabel,
     factFindUrl: link,
+    portalLink,
     includesCall: tier.includesCall,
     calendlyUrl: CALENDLY,
   });

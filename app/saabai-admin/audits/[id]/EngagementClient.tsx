@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AdminShell from "../../AdminSidebar";
+import PortalTab from "./PortalTab";
 import {
   legacyAnswers,
   questionsForTier,
@@ -62,7 +63,7 @@ const STATUS_LABELS: Record<string, string> = {
   closed: "Closed",
 };
 
-type Tab = "overview" | "factfind" | "assessment" | "reports" | "notes";
+type Tab = "overview" | "factfind" | "portal" | "assessment" | "reports" | "notes";
 
 export default function EngagementClient({ id }: { id: string }) {
   const [eng, setEng] = useState<AuditEngagement | null>(null);
@@ -319,11 +320,14 @@ export default function EngagementClient({ id }: { id: string }) {
           tabs={[
             { id: "overview", label: "Overview" },
             { id: "factfind", label: "Fact-Find", count: answeredCount },
+            { id: "portal", label: "Portal" },
             { id: "assessment", label: "Assessment" },
             { id: "reports", label: "Reports", count: eng.reports?.length ?? 0 },
             { id: "notes", label: "Notes", count: eng.notes?.length ?? 0 },
           ]}
         />
+
+        {tab === "portal" && <PortalTab id={id} onChanged={load} />}
 
         {/* ── Overview ── */}
         {tab === "overview" && (
