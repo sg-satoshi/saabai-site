@@ -11,7 +11,7 @@ const ROWS: [string, string][] = [
   ["Operated by", "Shane Goldberg, sole trader"],
   ["ABN", "71 889 082 572"],
   ["Address", "Merrimac QLD 4226, Australia"],
-  ["Service area", "Gold Coast and Queensland, working with small businesses across Australia"],
+  ["Service area", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
 ];
 
