@@ -179,3 +179,31 @@ a.btn{text-decoration:none}
 @keyframes btnspin{to{transform:rotate(360deg)}}
 .xp-ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:var(--r-md);padding:10px 12px;font-size:13px;margin-top:10px}
 .xp-ok a{color:inherit;font-weight:600;text-decoration:underline}
+
+/* ON/OFF status pill (Option A). Shared by Chatbots and Announcements. */
+.onoff-wrap{position:relative;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap}
+.onoff-note{color:var(--n-500);font-size:12px}
+.onoff{position:relative;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 8px;border-radius:999px;border:1px solid transparent;font:600 12px/1 Inter,system-ui,sans-serif;letter-spacing:.02em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.onoff i{width:8px;height:8px;border-radius:50%;flex:none}
+.onoff.on{background:#e3f5ec;color:#137a52;border-color:#bfe6d3}.onoff.on i{background:#1f9d6b}
+.onoff.off{background:#fde8e6;color:#b42318;border-color:#f6c4bf}.onoff.off i{background:#d93a2b}
+.onoff.on:hover:not(:disabled){background:#d3efe2}.onoff.off:hover:not(:disabled){background:#fbd6d2}
+.onoff:focus-visible{outline:2px solid #fff;box-shadow:0 0 0 4px #62c5d1}
+.onoff:disabled{opacity:.5;cursor:not-allowed}
+.onoff.busy:disabled{cursor:progress}
+.onoff.busy i{background:none!important;border:2px solid currentColor;border-right-color:transparent;animation:onoff-spin .8s linear infinite}
+@keyframes onoff-spin{to{transform:rotate(360deg)}}
+@media (max-width:720px){.onoff-pop{right:auto;left:0;max-width:calc(100vw - 48px)}}
+@media (prefers-reduced-motion:reduce){.onoff.busy i{animation:none;border-right-color:currentColor}}
+/* 44px touch area on touch screens and small widths; the visual pill stays 24px */
+@media (pointer:coarse),(max-width:720px){.onoff:after{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}}
+.onoff-pop{position:absolute;z-index:60;top:calc(100% + 8px);right:0;width:248px;background:#fff;border:1px solid #d6d6e2;border-radius:10px;box-shadow:0 12px 32px rgba(11,9,46,.16);padding:12px;font-size:13px;color:var(--n-900);text-align:left}
+.onoff-pop.left{right:auto;left:0}
+.onoff-pop h6{margin:0 0 4px;font:600 13px Inter,system-ui,sans-serif}
+.onoff-pop p{margin:0 0 10px;color:#3a3957;font-size:12px;line-height:1.4}
+.onoff-pop input{width:100%;box-sizing:border-box;height:28px;margin:0 0 10px;padding:0 8px;border:1px solid #d6d6e2;border-radius:6px;font:400 12px Inter,system-ui,sans-serif}
+.onoff-pop .bt{display:flex;gap:8px;justify-content:flex-end}
+.onoff-pop button{height:28px;padding:0 12px;border-radius:6px;font:600 12px Inter,system-ui,sans-serif;border:1px solid #d6d6e2;background:#fff;color:var(--n-900);cursor:pointer}
+.onoff-pop button.danger{background:#c42f21;border-color:#c42f21;color:#fff}
+.onoff-pop button:focus-visible{outline:2px solid #fff;box-shadow:0 0 0 4px #62c5d1}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
