@@ -69,9 +69,10 @@ export default function ChatbotsClient() {
               <span data-testid={`bespoke-${r.slug}`} style={{ fontSize: 12.5, color: "var(--n-500)", maxWidth: 280 }}>Uses its own chat route. It is not switched here yet and moves to the platform in a later release.</span>
             )}
           </div>
+          {r.engine === "platform" && (
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 12, fontSize: 13.5, alignItems: "center" }}>
             <label>Plan{" "}
-              <select data-testid={`plan-${r.slug}`} value={r.plan} disabled={busy === r.slug || r.engine === "bespoke"} onChange={(e) => void post(r.slug, { action: "set_plan", plan: e.target.value })}>
+              <select data-testid={`plan-${r.slug}`} value={r.plan} disabled={busy === r.slug} onChange={(e) => void post(r.slug, { action: "set_plan", plan: e.target.value })}>
                 {plans.map((p) => <option key={p.key} value={p.key}>{p.label} ({p.cap}/month)</option>)}
               </select>
             </label>
@@ -79,6 +80,7 @@ export default function ChatbotsClient() {
             {r.cap.state !== "ok" && <span style={{ color: r.cap.state === "over" ? "var(--bad)" : "#92400e", fontWeight: 700 }}>{r.cap.state === "over" ? "Over the plan limit (not enforced yet)" : "Near the plan limit"}</span>}
             <span style={{ color: "var(--n-500)" }}>Powered by Saabai: {r.canRemovePoweredBy ? "can be removed" : "always shown"}</span>
           </div>
+          )}
         </div>
       ))}
     </div>
