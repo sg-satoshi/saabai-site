@@ -288,7 +288,14 @@ export async function proxy(req: NextRequest) {
       // deny-by-default checks as on saabai.ai (below), plus a short list of
       // site-facing public endpoints.
       if (pathname.startsWith("/api/")) {
-        if (matches(pathname, CUSTOM_DOMAIN_PUBLIC_API)) return NextResponse.next();
+        if (matches(pathname, CUSTOM_DOMAIN_PUBLIC_API)) {
+          // Public here, but still size- and rate-limited like every other chat endpoint.
+          if (matches(pathname, CHAT_API)) {
+            const blocked = await chatGuard(req, redis);
+            if (blocked) return blocked;
+          }
+          return NextResponse.next();
+        }
         return apiAuth(req, pathname);
       }
       // Admin and auth pages should pass through without the site slug prefix
