@@ -78,6 +78,7 @@ const NAV: NavGroup[] = [
     section: "Build",
     items: [
       { label: "Site Factory", href: "/saabai-admin/site-factory", icon: "layers" },
+      { label: "Chatbots", href: "/saabai-admin/chatbots", icon: "bot" },
       { label: "AI Agents", href: "/ai-agent/portal", icon: "bot", external: true },
     ],
   },

@@ -72,6 +72,7 @@ export function createMockUpstash() {
       case "EXPIRE": if (!allKeys().includes(k)) return 0; expiry.set(k, Date.now() + Number(args[1]) * 1000); return 1;
       case "TTL": { if (!allKeys().includes(k)) return -2; const e = expiry.get(k); return e ? Math.ceil((e - Date.now()) / 1000) : -1; }
       case "HSET": { const h = hash(k); let n = 0; for (let i = 1; i < args.length; i += 2) { if (!h.has(args[i])) n++; h.set(args[i], args[i + 1]); } return n; }
+      case "HINCRBY": { const h = hash(k); const v = Number(h.get(args[1]) ?? 0) + Number(args[2]); h.set(args[1], String(v)); return v; }
       case "HGET": return hashes.get(k)?.get(args[1]) ?? null;
       case "HDEL": { const h = hashes.get(k); if (!h) return 0; let n = 0; for (const f of args.slice(1)) if (h.delete(f)) n++; return n; }
       case "HGETALL": { const h = hashes.get(k); if (!h) return []; return [...h.entries()].flat(); }
