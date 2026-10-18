@@ -14,6 +14,11 @@ export interface ChatWidgetConfig {
 // Generates a complete self-contained chat widget <script> block.
 // Zero external dependencies — safe to inline in any HTML file.
 export function buildChatWidget(cfg: ChatWidgetConfig): string {
+  // New one-line widget, behind the CHAT_WIDGET_V2 flag (off by default). Same call sites, same position in the page.
+  if (process.env.CHAT_WIDGET_V2 === "1" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cfg.slug)) {
+    const src = (cfg.apiBase ?? "https://www.saabai.ai") + "/embed/chat.v1.js";
+    return `<script id="saabai-chat-v2" src="${src}" data-site="${cfg.slug}" async></script>`;
+  }
   const api = (cfg.apiBase ?? "https://www.saabai.ai") + "/api/site-factory-chat";
   const placeholder = cfg.placeholder ?? "Type a message…";
   const hasAvatar = !!cfg.avatarUrl;

@@ -4,6 +4,7 @@ import { getPremiumModel } from "../../../../lib/chat-config";
 import { createSite } from "../../../../lib/site-registry";
 import { put, list } from "@vercel/blob";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
+import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
 import { THEMES, NICHE_THEME_DEFAULTS, ThemeDef, NichePage, DEFAULT_PAGES } from "../../../../lib/site-themes";
 import { snapshotVersion } from "../../../../lib/site-versions";
 
@@ -287,6 +288,7 @@ export async function POST(req: NextRequest) {
               ...colors,
               placeholder: `Ask about ${businessName}...`,
             });
+            if (widgetV2Enabled()) await seedPlatformSkin(slug, { botName, greeting: chatbotInput.greeting || `Hi! I'm ${botName}. How can I help you today?`, ...colors });
             html = html.includes("</body>")
               ? html.replace("</body>", `${widget}\n</body>`)
               : html + `\n${widget}`;

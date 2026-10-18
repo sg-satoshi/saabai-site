@@ -65,6 +65,7 @@ const PUBLIC_API = [
   "/api/bo-chat",
   "/api/site-factory-chat",  // generic Site Factory widget (Wholesale Homes etc.)
   "/api/chat-platform/message", // central chatbot platform (origin, limits and on/off inside)
+  "/api/chat-platform/config",  // public widget config (read-only, no secrets)
   "/api/bo-contact",
   "/api/lmm-contact",
   "/api/leadgen/chat",
@@ -175,6 +176,7 @@ const STATIC_DOMAIN_MAP: Record<string, string> = {
 const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
   "/api/chat-platform/message",
+  "/api/chat-platform/config",
 ];
 
 

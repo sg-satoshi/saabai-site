@@ -1,9 +1,10 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import OnOff from "../ui/OnOff";
+import ChatbotEditor, { type EditorRow } from "./ChatbotEditor";
 import { matchesSite } from "../../../lib/chatbot/search";
 
-type Row = {
+type Row = EditorRow & {
   slug: string; name: string; domains: string[]; engine: "platform" | "bespoke"; enabled: boolean | null; plan: string; canRemovePoweredBy: boolean;
   usage: { conversations: number; messages: number };
   cap: { state: "ok" | "near" | "over"; cap: number; pct: number };
@@ -12,7 +13,7 @@ type Row = {
 type Plan = { key: string; label: string; cap: number };
 
 const css = `
-.cb{max-width:1100px}
+.cb{max-width:1280px}
 .cb h1{margin:0 0 4px}
 .cb-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
 .cb-search{flex:1;min-width:220px;max-width:380px;height:36px;padding:0 12px;border:1px solid var(--n-200);border-radius:10px;font:400 13.5px Inter,system-ui,sans-serif;background:#fff;color:var(--n-900)}
@@ -45,6 +46,7 @@ export default function ChatbotsClient() {
   const [msg, setMsg] = useState("");
   const [q, setQ] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/admin/chatbots");
@@ -105,8 +107,10 @@ export default function ChatbotsClient() {
                 <span data-testid={`usage-${r.slug}`}>This month: <b>{r.usage.conversations}</b> of {r.cap.cap} conversations ({r.cap.pct}%), {r.usage.messages} messages</span>
                 {r.cap.state !== "ok" && <span className={`cb-flag ${r.cap.state}`}>{r.cap.state === "over" ? "Over the plan limit (not enforced yet)" : "Near the plan limit"}</span>}
                 <span className="cb-muted">Powered by Saabai: {r.canRemovePoweredBy ? "can be removed" : "always shown"}</span>
+                <button type="button" className="btn sm" data-testid={`customise-${r.slug}`} aria-expanded={editing === r.slug} onClick={() => setEditing(editing === r.slug ? null : r.slug)}>{editing === r.slug ? "Close editor" : "Customise"}</button>
               </div>
             )}
+            {!bespoke && editing === r.slug && <div style={{ gridColumn: "1 / -1" }}><ChatbotEditor key={r.slug} row={r} onSaved={load} /></div>}
           </div>
         );
       })}

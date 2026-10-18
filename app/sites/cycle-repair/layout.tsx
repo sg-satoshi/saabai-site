@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, IBM_Plex_Sans } from "next/font/google";
 import "./cycle-repair.css";
 import { clientSiteMetadata } from "../../../lib/client-site";
@@ -50,6 +51,8 @@ export default function CycleRepairLayout({
       className={`${spaceGrotesk.variable} ${ibmPlexSans.variable}`}
     >
       {children}
+      {/* Saabai chat widget. Installed but OFF: the site's switch is off by default (Admin > Chatbots), so nothing shows until it is turned on. */}
+      <Script id="saabai-chat-v2" src="https://www.saabai.ai/embed/chat.v1.js" data-site="cycle-repair" strategy="lazyOnload" />
     </div>
   );
 }
