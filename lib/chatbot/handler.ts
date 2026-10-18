@@ -3,16 +3,26 @@ import { generateText } from "ai";
 import { getDefaultModel } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
-import { offMessage } from "./core";
+import { offMessage, promptAdditions } from "./core";
 import { fallbackSessionId, getConfig, isEnabled, recordTokens, recordUsage } from "./store";
 
-function cors(origin: string | null): Record<string, string> {
+export function cors(origin: string | null): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": origin && origin !== "null" ? origin : "*",
     Vary: "Origin",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
+}
+
+/** Origin allow-list decision. "block" only in enforce mode; log mode records the miss and lets it through. */
+export async function originDecision(req: NextRequest, slug: string, siteDomains: string[] | undefined): Promise<"ok" | "miss" | "block"> {
+  const mode = originMode();
+  if (mode === "off") return "ok";
+  const host = callerHost(req.headers.get("origin"), req.headers.get("referer"));
+  if (hostAllowed(host, allowedHosts(siteDomains, await mappedHostsFor(slug), process.env.NODE_ENV !== "production"))) return "ok";
+  await logOriginMiss(slug, host);
+  return mode === "enforce" ? "block" : "miss";
 }
 
 export function optionsResponse(req: NextRequest) {
@@ -40,15 +50,7 @@ export async function handleChat(req: NextRequest): Promise<Response> {
     const site = await getSiteBySlug(slug);
     if (!site) return say("Chat is not available for this site.", 404, h);
 
-    const mode = originMode();
-    if (mode !== "off") {
-      const host = callerHost(origin, req.headers.get("referer"));
-      const ok = hostAllowed(host, allowedHosts(site.domains, await mappedHostsFor(slug), process.env.NODE_ENV !== "production"));
-      if (!ok) {
-        await logOriginMiss(slug, host);
-        if (mode === "enforce") return say("Chat is not available from this website.", 403, h);
-      }
-    }
+    if ((await originDecision(req, slug, site.domains)) === "block") return say("Chat is not available from this website.", 403, h);
 
     // OFF: polite message, status 200 so every widget shows it as a normal reply. No model call, nothing counted.
     if (!(await isEnabled(slug, site.chatbot?.enabled))) {
@@ -84,6 +86,9 @@ Be warm, friendly and concise. Answer questions about the business and its servi
 ${phone ? `Phone: ${phone}` : ""}${email ? ` Email: ${email}` : ""}
 Keep responses under 120 words. End with a helpful next step when relevant.`;
     }
+
+    const extra = promptAdditions(config);
+    if (extra) system = `${system}\n\n${extra}`;
 
     const result = await generateText({ model: getDefaultModel(), system, messages: chatMessages, maxOutputTokens: 600 });
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;

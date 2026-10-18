@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { list, put } from "@vercel/blob";
 import { getSiteBySlug, updateSite } from "../../../../lib/site-registry";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
+import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Remove any existing sf-chat-widget so we don't double-inject
     html = html.replace(/<script id="sf-chat-widget">[\s\S]*?<\/script>/i, "");
+    html = html.replace(/<script id="saabai-chat-v2"[^>]*><\/script>\s*/i, "");
     // Also remove the old simple chatPopup button if present
     html = html.replace(/<!-- Chat bubble button -->[\s\S]*?<\/script>/i, "");
     // Remove old chatBtn if still there
@@ -66,6 +68,10 @@ export async function POST(req: NextRequest) {
       placeholder: `Ask about ${site.business?.name || site.name}…`,
       ...(avatarUrl ? { avatarUrl } : {}),
     });
+
+    if (widgetV2Enabled()) {
+      await seedPlatformSkin(slug, { botName: resolvedBotName, greeting: resolvedGreeting, ...colors, ...(avatarUrl ? { avatarUrl } : {}) });
+    }
 
     // Inject before </body>
     if (html.includes("</body>")) {

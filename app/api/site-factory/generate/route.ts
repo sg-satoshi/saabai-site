@@ -4,6 +4,7 @@ import { getPremiumModel } from "../../../../lib/chat-config";
 import { createSite } from "../../../../lib/site-registry";
 import { put, list } from "@vercel/blob";
 import { buildChatWidget, getNicheColors } from "../../../../lib/chat-widget-template";
+import { seedPlatformSkin, widgetV2Enabled } from "../../../../lib/chatbot/seed";
 import { THEMES, NICHE_THEME_DEFAULTS } from "../../../../lib/site-themes";
 import { snapshotVersion } from "../../../../lib/site-versions";
 
@@ -204,6 +205,7 @@ SEO: JSON-LD LocalBusiness with most specific @type. Open Graph. Twitter Card. S
             ...colors,
             placeholder: `Ask about ${businessName}…`,
           });
+          if (widgetV2Enabled()) await seedPlatformSkin(slug, { botName, greeting: botGreeting, ...colors });
           html = html.includes("</body>")
             ? html.replace("</body>", `${widget}\n</body>`)
             : html + `\n${widget}`;

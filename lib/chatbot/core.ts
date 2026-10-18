@@ -29,11 +29,27 @@ export interface Skin {
   showPoweredBy: boolean;
 }
 
+export const TONES = ["friendly", "professional", "concise", "playful"] as const;
+export type Tone = (typeof TONES)[number];
+export const TONE_LABEL: Record<Tone, string> = { friendly: "Friendly", professional: "Professional", concise: "Short and to the point", playful: "Playful" };
+const TONE_PROMPT: Record<Tone, string> = {
+  friendly: "Tone: warm, friendly and approachable.",
+  professional: "Tone: professional, polished and respectful. No slang.",
+  concise: "Tone: brief and direct. Keep answers to one or two short sentences where possible.",
+  playful: "Tone: upbeat and lightly playful, but never silly about money, health or legal matters.",
+};
+
+export interface Faq { q: string; a: string }
+export interface Knowledge { facts: string; faqs: Faq[] }
+export const LIMITS = { facts: 4000, faqs: 20, q: 200, a: 600 } as const;
+
 export interface ChatbotConfig {
   schema: 1;
   slug: string;
   plan: Plan;
   skin: Partial<Skin>;
+  tone?: Tone;
+  knowledge?: Knowledge;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -154,4 +170,88 @@ export function capState(conversations: number, plan: Plan): { state: CapState; 
 export function auditSummary(on: boolean, reason?: string): string {
   const r = (reason ?? "").trim().slice(0, 200);
   return `Chatbot turned ${on ? "ON" : "OFF"}${r ? `. Reason: ${r}` : ""}`;
+}
+
+export type ContentResult = { ok: true; value: { tone?: Tone; knowledge?: Knowledge } } | { ok: false; errors: Record<string, string> };
+
+/** Validate the tone and knowledge (facts and FAQs) an admin saves. Plain text only. */
+export function validateContent(input: unknown): ContentResult {
+  const errors: Record<string, string> = {};
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const out: { tone?: Tone; knowledge?: Knowledge } = {};
+  const clean = (v: string) => v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim();
+  if (o.tone !== undefined) {
+    if ((TONES as readonly unknown[]).includes(o.tone)) out.tone = o.tone as Tone;
+    else errors.tone = "Pick one of the tones.";
+  }
+  if (o.facts !== undefined || o.faqs !== undefined) {
+    const facts = typeof o.facts === "string" ? clean(o.facts) : "";
+    if (o.facts !== undefined && typeof o.facts !== "string") errors.facts = "Must be text.";
+    if (facts.length > LIMITS.facts) errors.facts = `Max ${LIMITS.facts} characters.`;
+    const faqs: Faq[] = [];
+    if (o.faqs !== undefined && !Array.isArray(o.faqs)) errors.faqs = "Must be a list.";
+    else if (Array.isArray(o.faqs)) {
+      if (o.faqs.length > LIMITS.faqs) errors.faqs = `Max ${LIMITS.faqs} questions.`;
+      o.faqs.forEach((f, i) => {
+        const r = (f && typeof f === "object" ? f : {}) as Record<string, unknown>;
+        const q = typeof r.q === "string" ? clean(r.q) : "";
+        const a = typeof r.a === "string" ? clean(r.a) : "";
+        if (!q && !a) return;
+        if (!q || !a) errors[`faq${i}`] = "Add both a question and an answer, or remove it.";
+        else if (q.length > LIMITS.q) errors[`faq${i}`] = `Question max ${LIMITS.q} characters.`;
+        else if (a.length > LIMITS.a) errors[`faq${i}`] = `Answer max ${LIMITS.a} characters.`;
+        else faqs.push({ q, a });
+      });
+    }
+    out.knowledge = { facts, faqs };
+  }
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: out };
+}
+
+/** The extra instructions added to the bot's base prompt: tone, business facts and FAQs. Empty if nothing is set. */
+export function promptAdditions(config: Pick<ChatbotConfig, "tone" | "knowledge">): string {
+  const parts: string[] = [];
+  if (config.tone && TONE_PROMPT[config.tone]) parts.push(TONE_PROMPT[config.tone]);
+  const k = config.knowledge;
+  if (k?.facts) parts.push(`Business facts (use these, and do not invent others):\n${k.facts}`);
+  if (k?.faqs?.length) parts.push("Frequently asked questions and the approved answers:\n" + k.faqs.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n\n"));
+  if (parts.length) parts.push("If something is not covered above or in your instructions, say you are not sure and offer to connect the visitor with the team.");
+  return parts.join("\n\n");
+}
+
+/** The public config the widget reads. Never includes the prompt, knowledge, audit data or usage. */
+export interface PublicWidgetConfig {
+  v: 1;
+  active: boolean;
+  botName: string;
+  greeting: string;
+  avatarUrl: string;
+  primary: string;
+  accent: string;
+  bg: string;
+  text: string;
+  position: Position;
+  poweredBy: boolean;
+  placeholder: string;
+  offMessage: string;
+}
+
+export function toPublicConfig(opts: { active: boolean; config: Pick<ChatbotConfig, "plan" | "skin">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
+  const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
+  const bot = sk.botName || opts.site.business?.name || opts.site.name;
+  return {
+    v: 1,
+    active: opts.active,
+    botName: bot,
+    greeting: sk.greeting || `Hi! I'm ${bot}. How can I help you today?`,
+    avatarUrl: sk.avatarUrl,
+    primary: sk.primary,
+    accent: sk.accent,
+    bg: sk.bg,
+    text: sk.text,
+    position: sk.position,
+    poweredBy: sk.poweredBy,
+    placeholder: `Ask about ${opts.site.business?.name || opts.site.name}...`,
+    offMessage: offMessage(opts.site.business),
+  };
 }

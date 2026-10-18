@@ -1,6 +1,6 @@
 import { adminActor, readActor } from "@/lib/exp/actor";
 import { listSites, getSiteBySlug } from "@/lib/site-registry";
-import { BESPOKE_SLUGS, SEED_OFF, canRemovePoweredBy, capState, isPlan, validateSkin, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
+import { BESPOKE_SLUGS, SEED_OFF, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
 import { getConfig, getMeta, getUsage, isEnabled, saveConfig, setEnabled } from "@/lib/chatbot/store";
 import { addChangeLogEntry } from "@/lib/change-log";
 
@@ -23,6 +23,9 @@ export async function GET() {
         enabled: bespoke ? null : enabled,
         plan: config.plan,
         skin: config.skin,
+        resolved: toPublicConfig({ active: bespoke ? true : enabled, config, site: s }),
+        tone: config.tone ?? "friendly",
+        knowledge: config.knowledge ?? { facts: "", faqs: [] },
         canRemovePoweredBy: canRemovePoweredBy(config.plan),
         usage,
         cap: capState(usage.conversations, config.plan),
@@ -34,7 +37,7 @@ export async function GET() {
   return Response.json({ rows: rows.sort((a, b) => a.name.localeCompare(b.name)), kill, plans: PLANS.map((p) => ({ key: p, label: PLAN_LABEL[p], cap: CAPS[p] })) });
 }
 
-type Body = { slug?: string; action?: string; enabled?: boolean; reason?: string; plan?: string; skin?: unknown };
+type Body = { slug?: string; action?: string; enabled?: boolean; reason?: string; plan?: string; skin?: unknown; content?: unknown };
 
 /** Admin only (writes need a real admin session). */
 export async function POST(req: Request) {
@@ -72,6 +75,28 @@ export async function POST(req: Request) {
         }
         await saveConfig({ ...cur, skin: { ...cur.skin, ...v.value }, updatedBy: actor });
         await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot skin updated (${Object.keys(v.value).join(", ") || "no changes"})`, source: "manual", authorName: actor }).catch(() => {});
+        return Response.json({ ok: true });
+      }
+      case "save_content": {
+        const v = validateContent(b.content);
+        if (!v.ok) return Response.json({ error: "Some fields need fixing.", fields: v.errors }, { status: 400 });
+        const cur = await getConfig(site.slug);
+        await saveConfig({ ...cur, ...(v.value.tone ? { tone: v.value.tone } : {}), ...(v.value.knowledge ? { knowledge: v.value.knowledge } : {}), updatedBy: actor });
+        await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot knowledge and tone updated (${Object.keys(v.value).join(", ") || "no changes"})`, source: "manual", authorName: actor }).catch(() => {});
+        return Response.json({ ok: true });
+      }
+      case "save_all": {
+        // Skin and content together: both are validated before anything is written, so a mistake never saves half.
+        const sk = validateSkin(b.skin);
+        const ct = validateContent(b.content);
+        if (!sk.ok || !ct.ok) return Response.json({ error: "Some fields need fixing. Nothing was saved.", fields: { ...(sk.ok ? {} : sk.errors), ...(ct.ok ? {} : ct.errors) } }, { status: 400 });
+        const cur = await getConfig(site.slug);
+        if (sk.value.showPoweredBy === false && !canRemovePoweredBy(cur.plan)) {
+          return Response.json({ error: "The Powered by Saabai line can only be removed on Growth and Signature.", fields: { showPoweredBy: "Growth or Signature only." } }, { status: 400 });
+        }
+        await saveConfig({ ...cur, skin: { ...cur.skin, ...sk.value }, ...(ct.value.tone ? { tone: ct.value.tone } : {}), ...(ct.value.knowledge ? { knowledge: ct.value.knowledge } : {}), updatedBy: actor });
+        const parts = [...Object.keys(sk.value), ...Object.keys(ct.value)];
+        await addChangeLogEntry({ siteId: site.slug, siteName: site.name, summary: `Chatbot settings updated (${parts.join(", ") || "no changes"})`, source: "manual", authorName: actor }).catch(() => {});
         return Response.json({ ok: true });
       }
       default:
