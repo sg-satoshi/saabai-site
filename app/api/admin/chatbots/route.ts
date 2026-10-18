@@ -18,6 +18,7 @@ export async function GET() {
       return {
         slug: s.slug,
         name: s.name,
+        domains: s.domains ?? [],
         engine: bespoke ? "bespoke" : "platform",
         enabled: bespoke ? null : enabled,
         plan: config.plan,

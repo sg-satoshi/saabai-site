@@ -170,7 +170,10 @@ export default function AnnouncementsClient() {
       <div style={box}>
         <strong>Announcements on saabai.ai (site switch)</strong>
         <p style={{ margin: "8px 0" }}>When this is OFF nothing shows, whatever each announcement below is set to. Client sites cannot enable this.</p>
-        <OnOff testId="site-toggle" on={enabled} label="Site switch for saabai.ai" disabled={busy} onToggle={() => { if (!enabled && !confirm("Turn announcements on for saabai.ai? Any announcement that is ON will show to visitors.")) return; void post({ action: "set_flag", enabled: !enabled }); }} note={enabled ? "Announcements can show" : "Nothing is showing"} />
+        <OnOff testId="site-toggle" on={enabled} label="Announcements site switch for saabai.ai" disabled={busy} align="left"
+          confirmOn={{ title: "Turn announcements on for saabai.ai?", body: "Any announcement that is ON will show to visitors.", confirmLabel: "Turn on" }}
+          confirmOff={{ title: "Turn announcements off for saabai.ai?", body: "Nothing will show on the site." }}
+          onToggle={() => { void post({ action: "set_flag", enabled: !enabled }); }} note={enabled ? "Announcements can show" : "Nothing is showing"} />
       </div>
 
       <div style={box}>
@@ -295,7 +298,8 @@ export default function AnnouncementsClient() {
       {items.map((a) => (
         <div key={a.id} style={box}>
           <strong>{a.name}</strong> <span style={{ color: "var(--n-500)" }}>({a.id}, {a.layout}, v{a.version})</span>
-          <div style={{ margin: "10px 0" }}><OnOff testId={`toggle-${a.id}`} on={a.status === "live" || a.status === "scheduled"} label={`Announcement ${a.name}`} disabled={busy}
+          <div style={{ margin: "10px 0" }}><OnOff testId={`toggle-${a.id}`} on={a.status === "live" || a.status === "scheduled"} label={`Announcement ${a.name}`} disabled={busy} align="left"
+            confirmOff={{ title: `Turn off ${a.name}?`, body: "It stops showing on the site." }}
             note={a.status === "scheduled" ? `Scheduled${a.startsAt ? `, starts ${toBrisbane(a.startsAt).replace("T", " ")} Brisbane` : ""}` : a.status === "ended" ? "Ended" : a.status === "draft" ? "Draft" : undefined}
             onToggle={() => { const on = a.status === "live" || a.status === "scheduled"; void post({ action: "save", id: a.id, data: { status: on ? "draft" : "live" } }); }} /></div>
           <p style={{ margin: "8px 0" }}>{visibleText(a.message)}</p>
