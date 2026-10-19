@@ -841,14 +841,16 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
   onToggleDisabled: (u: User) => void;
 }) {
   const rowH = density === "compact" ? 44 : 56;
-  const allSelected = users.length > 0 && users.every(u => selected[keyOf(u)]);
-  const someSelected = users.some(u => selected[keyOf(u)]) && !allSelected;
+  // Env users (set in the site settings) can't be deleted here, so they are never selectable.
+  const selectable = users.filter(u => u.source !== "env");
+  const allSelected = selectable.length > 0 && selectable.every(u => selected[keyOf(u)]);
+  const someSelected = selectable.some(u => selected[keyOf(u)]) && !allSelected;
 
   function toggleAll() {
     if (allSelected) setSelected({});
     else {
       const next: Record<string, boolean> = {};
-      users.forEach(u => { next[keyOf(u)] = true; });
+      selectable.forEach(u => { next[keyOf(u)] = true; });
       setSelected(next);
     }
   }
@@ -950,7 +952,9 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Checkbox checked={selected} onChange={toggle} />
+        {isEnv
+          ? <span title="This user is set in the site settings and can't be deleted here" style={{ width: 16, height: 16, display: "inline-block", opacity: 0.25, border: `1px solid ${C.text}`, borderRadius: 4 }} />
+          : <Checkbox checked={selected} onChange={toggle} />}
       </div>
 
       <div style={{ padding: "0 16px", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -1425,8 +1429,8 @@ export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boole
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: u.email }),
       });
-      const out = await res.json();
-      if (out.success) {
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.success) {
         setUsers(prev => prev.filter(x => x.email !== u.email));
         setSelected(prev => { const n = { ...prev }; delete n[keyOf(u)]; return n; });
         showToast(`Deleted ${u.name}`);
@@ -1439,7 +1443,7 @@ export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boole
   }
 
   async function deleteBulk(items: User[]) {
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, firstErr = "";
     for (const u of items) {
       try {
         const res = await fetch("/api/user-directory", {
@@ -1448,12 +1452,12 @@ export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boole
           body: JSON.stringify({ email: u.email }),
         });
         const out = await res.json();
-        if (out.success) ok++; else fail++;
-      } catch { fail++; }
+        if (res.ok && out.success) ok++; else { fail++; firstErr = firstErr || out.error || `HTTP ${res.status}`; }
+      } catch { fail++; firstErr = firstErr || "Network error"; }
     }
     setSelected({});
     fetchUsers();
-    showToast(`Deleted ${ok} user${ok === 1 ? "" : "s"}${fail ? ` · ${fail} failed` : ""}`, fail === 0);
+    showToast(`Deleted ${ok} user${ok === 1 ? "" : "s"}${fail ? `, ${fail} failed: ${firstErr}` : ""}`, fail === 0);
   }
 
   async function bulkUpdateRole(items: User[], newRole: string) {
@@ -1519,7 +1523,7 @@ export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boole
   const safePage = Math.min(page, pageCount);
   const visible = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const selectedUsers = users.filter(u => selected[keyOf(u)]);
+  const selectedUsers = users.filter(u => u.source !== "env" && selected[keyOf(u)]);
   const selectedCount = selectedUsers.length;
 
   return (

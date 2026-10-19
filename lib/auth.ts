@@ -112,7 +112,12 @@ export { COOKIE_NAME };
 export async function resolveStaff(clientId: string): Promise<{ id: string; email?: string; name?: string; grant: AccessGrant } | null> {
   if (!clientId) return null;
   const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
-  if (clientId === ADMIN_ID) return { id: clientId, grant: { role: "admin", kind: "internal" } };
+  if (clientId === ADMIN_ID) {
+    // Owner identity comes from the env client with the same id (SAABAI_CLIENT_N_NAME / _EMAIL), never a placeholder.
+    const { loadClients } = await import("./clients");
+    const c = loadClients().find((x) => x.id === clientId);
+    return { id: clientId, ...(c?.email ? { email: c.email } : {}), ...(c?.name && c.name !== c.id ? { name: c.name } : {}), grant: { role: "admin", kind: "internal" } };
+  }
   if (clientId.includes(":") || clientId === "rex-dashboard") return null;
   try {
     const { listDirectoryUsers } = await import("../lib/user-directory");
