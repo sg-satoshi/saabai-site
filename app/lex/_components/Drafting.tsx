@@ -31,7 +31,7 @@ export type DraftingProps = {
 };
 
 function brisbaneTime(d: Date) {
-  return d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", timeZone: "Australia/Brisbane" }).replace(" ", "\u00a0") + " AEST";
+  return d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", timeZone: "Australia/Brisbane" }).replace(/\s?(am|pm)$/i, (m) => "\u00a0" + m.trim().toUpperCase()) + " AEST";
 }
 
 function DraftText({ text }: { text: string }) {
@@ -210,7 +210,7 @@ export function DraftingView(p: DraftingProps) {
   );
 
   return (
-    <div className={`lxd${panelOpen ? " open" : ""}`}>
+    <div className={`lxd${panelOpen ? " open" : ""}`} data-no-feedback>
       <section className="lxd-main">
         <div className="lxd-bar">
           <b className="lxd-title">{docName}{hasDraft ? ", draft" : ""}</b>
