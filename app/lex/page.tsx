@@ -8,11 +8,15 @@ import {
 } from "../../lib/lex-errors";
 import type { LexAnswerMeta } from "../../lib/lex-sources";
 import { answerWithSources, citedSources } from "../../lib/lex-cite-display";
-import type { ChatMessage, Thread, Project, Mode } from "./_components/types";
+import { type ChatMessage, type Thread, type Project, type Mode, ATTACH_MARK } from "./_components/types";
 import { Sidebar, initials } from "./_components/Sidebar";
 import { AnswerSheet, brisbaneStamp } from "./_components/Answer";
 import { SourcesPanel } from "./_components/SourcesPanel";
-import { Composer, EmptyState, SearchingSteps, ErrorCard, FOLLOW_UPS, stepLabel } from "./_components/States";
+import { Composer, EmptyState, SearchingSteps, ErrorCard, NoResultsCard, FOLLOW_UPS, type Attachment } from "./_components/States";
+import { CommandPalette, FlagDialog, ShareMenu } from "./_components/Extras";
+import { type LexStep, applyStepPart, stepSummary, mailtoHref } from "../../lib/lex-steps";
+import { ALL_SCOPES, isFullScope, normalizeScope, type LexScopeKey } from "../../lib/lex-scope";
+import type { FlagReason } from "../../lib/lex-flag";
 import { Icon } from "./_components/icons";
 import { exportAnswerToWord } from "./_components/exportAnswer";
 import { Document, Packer, Paragraph, TextRun, Header, Footer, AlignmentType } from "docx";
@@ -63,8 +67,16 @@ type ReviewReport = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/** The question as typed, without any attached document text. */
+function shownQuestion(content: string): string {
+  return content.split(ATTACH_MARK)[0];
+}
+
+const ATTACH_MAX_CHARS = 12000;
+
 function threadTitle(msgs: ChatMessage[]): string {
-  const first = msgs.find(m => m.role === "user")?.content ?? "New research";
+  const firstMsg = msgs.find(m => m.role === "user")?.content;
+  const first = firstMsg ? shownQuestion(firstMsg) : "New research";
   return first.length > 52 ? first.slice(0, 52) + "…" : first;
 }
 
@@ -206,7 +218,15 @@ export default function LexPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkLabel, setThinkLabel] = useState("Researching…");
-  const [steps, setSteps] = useState<string[]>([]);
+  const [steps, setSteps] = useState<LexStep[]>([]);
+  const [scope, setScopeState] = useState<LexScopeKey[]>(ALL_SCOPES);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [flagFor, setFlagFor] = useState<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   // True from send until the stream ends (loading only covers the wait for the first words).
   const [researchActive, setResearchActive] = useState(false);
   // Sources panel: which answer it shows (message index) and which citation is selected.
@@ -310,6 +330,7 @@ export default function LexPage() {
         if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
       } catch {}
       try {
+        try { const sc = localStorage.getItem("lex:scope"); if (sc) setScopeState(normalizeScope(JSON.parse(sc))); } catch {}
         const savedProjects = JSON.parse(localStorage.getItem("lex_projects") ?? "[]") as Project[];
         if (savedProjects.length > 0) {
           setProjects(savedProjects);
@@ -425,6 +446,8 @@ export default function LexPage() {
     setThreads(prev => [thread, ...prev]);
     setActiveId(id);
     setInput("");
+    setAttachment(null);
+    setAttachError(null);
     setMode("research");
     setNavOpen(false);
     setPanelMsg(null);
@@ -478,8 +501,9 @@ export default function LexPage() {
     ));
   }
 
-  const sendMessage = useCallback(async (text: string, opts?: { retry?: boolean }) => {
-    if (!text.trim() || loading || researchActive) return;
+  const sendMessage = useCallback(async (text: string, opts?: { retry?: boolean; scope?: LexScopeKey[] }) => {
+    if (!text.trim() || loading || researchActive || attaching) return;
+    const useScope = opts?.scope ?? scope;
 
     let tid = activeId;
     // Create a new thread if none active
@@ -490,7 +514,12 @@ export default function LexPage() {
       setActiveId(tid);
     }
 
-    const userMsg: ChatMessage = { role: "user", content: text.trim(), at: Date.now() };
+    const attach = !opts?.retry ? attachment : null;
+    const userMsg: ChatMessage = {
+      role: "user", at: Date.now(),
+      content: attach ? `${text.trim()}${ATTACH_MARK}${attach.name}\n\n${attach.text.slice(0, ATTACH_MAX_CHARS)}` : text.trim(),
+      ...(attach ? { attachment: attach.name } : {}),
+    };
     const prevMsgs = stripErrorAnswers(threads.find(t => t.id === tid)?.messages ?? []);
     const last = prevMsgs[prevMsgs.length - 1];
     // Retry re-sends the question already in the thread instead of adding it twice.
@@ -499,7 +528,7 @@ export default function LexPage() {
       : [...prevMsgs, userMsg];
 
     updateThreadMessages(tid, updated);
-    if (!opts?.retry) setInput("");
+    if (!opts?.retry) { setInput(""); setAttachment(null); setAttachError(null); }
     setResearchError(null);
     setLoading(true);
     setSteps([]);
@@ -521,7 +550,7 @@ export default function LexPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId }),
+        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId, scope: useScope }),
         signal: abortRef.current.signal,
       });
 
@@ -537,6 +566,7 @@ export default function LexPage() {
       let started = false;
       let streamFailed = false;
       let answerMeta: LexAnswerMeta | undefined;
+      let stepList: LexStep[] = [];
 
       while (!streamFailed) {
         const { done, value } = await reader.read();
@@ -550,9 +580,9 @@ export default function LexPage() {
             const parsed = JSON.parse(line.slice(6));
             if (isStreamErrorPart(parsed)) { streamFailed = true; break; }
             if (parsed.type === "data-lex-sources" && parsed.data) { answerMeta = parsed.data as LexAnswerMeta; continue; }
-            if (parsed.type === "tool-input-start" && typeof parsed.toolName === "string") {
-              const label = stepLabel(parsed.toolName);
-              if (label) setSteps(prev => (prev[prev.length - 1] === label ? prev : [...prev, label]));
+            if (typeof parsed.type === "string" && parsed.type.startsWith("tool-")) {
+              const next = applyStepPart(stepList, parsed);
+              if (next !== stepList) { stepList = next; setSteps(next); }
               continue;
             }
             if (parsed.type === "text-delta" && parsed.delta) {
@@ -574,7 +604,13 @@ export default function LexPage() {
       } else if (!fullText.trim()) {
         fail(lexEmptyError("research"));
       } else {
-        const final: ChatMessage[] = [...updated, { role: "assistant", content: fullText.trim(), at: Date.now(), ...(answerMeta ? { meta: answerMeta } : {}) }];
+        const sum = stepSummary(stepList);
+        const citedNone = !answerMeta || citedSources(answerMeta).cited.length === 0;
+        const final: ChatMessage[] = [...updated, {
+          role: "assistant", content: fullText.trim(), at: Date.now(), ...(answerMeta ? { meta: answerMeta } : {}),
+          ...(sum.failed ? { failedSearches: stepList.filter(s => s.status === "failed" && s.tool !== "readSource").length } : {}),
+          ...(sum.noResults && citedNone ? { noResults: true } : {}),
+        }];
         updateThreadMessages(finalId, final);
         setPanelMsg(final.length - 1);
       }
@@ -584,12 +620,12 @@ export default function LexPage() {
       setLoading(false);
       setResearchActive(false);
     }
-  }, [activeId, threads, loading, researchActive, clientId]);
+  }, [activeId, threads, loading, researchActive, clientId, scope, attachment, attaching]);
 
-  // Ctrl K (or Cmd K) starts new research from anywhere in Lex.
+  // Ctrl K (or Cmd K) opens the command palette: new research or jump to a thread.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); newThread(); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setMode("research"); setPaletteOpen(o => !o); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -605,7 +641,7 @@ export default function LexPage() {
   }
 
   function questionFor(idx: number): string {
-    for (let i = idx - 1; i >= 0; i--) if (messages[i].role === "user") return messages[i].content;
+    for (let i = idx - 1; i >= 0; i--) if (messages[i].role === "user") return shownQuestion(messages[i].content);
     return "";
   }
 
@@ -621,6 +657,61 @@ export default function LexPage() {
     const research = answerWithSources(msg.content, msg.meta);
     setDraftInstructions(`Base the document on this research.\n\nQuestion: ${questionFor(idx)}\n\n${research}`.slice(0, 6000));
     setMode("draft");
+  }
+
+  function setScope(next: LexScopeKey[]) {
+    setScopeState(next);
+    try { localStorage.setItem("lex:scope", JSON.stringify(next)); } catch {}
+  }
+
+  async function attachFile(file: File) {
+    setAttachError(null);
+    if (file.size > 10 * 1024 * 1024) { setAttachError("That file is over 10 MB. Attach a smaller file."); return; }
+    setAttaching(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/lex-extract", { method: "POST", body: fd });
+      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string } | null;
+      if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && res.status === 400 ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
+      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length });
+      inputRef.current?.focus();
+    } catch {
+      setAttachError("Lex could not read that file. Check your connection and try again.");
+    } finally {
+      setAttaching(false);
+    }
+  }
+
+  async function submitFlag(idx: number, reason: FlagReason, note: string): Promise<boolean> {
+    const msg = messages[idx];
+    if (!msg || !activeId) return false;
+    try {
+      const res = await fetch("/api/lex-flag", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, note, question: shownQuestion(questionFor(idx)), answer: msg.content, threadId: activeId }),
+      });
+      if (!res.ok) return false;
+      updateThreadMessages(activeId, messages.map((m, i) => (i === idx ? { ...m, flagged: true } : m)));
+      return true;
+    } catch { return false; }
+  }
+
+  function threadText(): string {
+    const title = activeThread?.title ?? "Lex research";
+    const parts = [`${title}\nResearch by Lex for ${firmName || "your firm"}. Research assistance, not legal advice.`];
+    for (const m of messages) {
+      if (m.role === "user") parts.push(`Question: ${shownQuestion(m.content)}${m.attachment ? ` (with ${m.attachment})` : ""}`);
+      else parts.push(answerWithSources(m.content, m.meta));
+    }
+    return parts.join("\n\n");
+  }
+
+  function copyThread() {
+    navigator.clipboard.writeText(threadText()).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    }).catch(() => {});
   }
 
   function selectCite(idx: number, n: number) {
@@ -870,7 +961,10 @@ export default function LexPage() {
   const composer = (hero: boolean) => (
     <Composer ref={inputRef} value={input} onChange={setInput} onSend={() => sendMessage(input)} disabled={loading || researchActive}
       placeholder={hero ? "Ask a legal research question, or paste facts from the matter..." : "Ask a follow-up about this research..."}
-      contextLabel={contextLabel} autoFocus={hero} />
+      contextLabel={contextLabel} autoFocus={hero}
+      scope={scope} onScope={setScope}
+      attachment={attachment} attaching={attaching} attachError={attachError}
+      onAttach={attachFile} onClearAttachment={() => { setAttachment(null); setAttachError(null); }} />
   );
 
   return (
@@ -933,6 +1027,13 @@ export default function LexPage() {
         </div>
       )}
 
+      {paletteOpen && (
+        <CommandPalette threads={threads} onClose={() => setPaletteOpen(false)}
+          onNew={() => { newThread(); setTimeout(() => inputRef.current?.focus(), 0); }}
+          onOpen={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setNavOpen(false); }} />
+      )}
+      {flagFor != null && <FlagDialog onClose={() => setFlagFor(null)} onSubmit={(r, n) => submitFlag(flagFor, r, n)} />}
+
       {/* ── Main ──────────────────────────────────────────────────────────── */}
       <main className="lx-main">
         <div className="lx-top">
@@ -947,6 +1048,13 @@ export default function LexPage() {
           {mode === "draft" && <div className="lx-ctx"><span className="k">Drafting</span><b>{DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document"}</b></div>}
           {mode === "review" && <div className="lx-ctx"><span className="k">Doc review</span><b>{reviewFile?.name ?? "Review a document"}</b></div>}
           <span className="lx-sp" />
+          {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
+            <div className="lx-share-wrap">
+              <button type="button" className="lx-btn sm" aria-haspopup="menu" aria-expanded={shareOpen} onClick={() => setShareOpen(o => !o)}><Icon name="share" />Share</button>
+              {shareOpen && <ShareMenu onCopy={copyThread} copied={shareCopied} onClose={() => setShareOpen(false)}
+                emailHref={mailtoHref(`Research: ${activeThread?.title ?? "Lex research"}`, threadText())} />}
+            </div>
+          )}
           {mode === "research" && !showWelcome && !panelOpen && (
             <button type="button" className="lx-btn sm" onClick={() => setPanelOpen(true)}><Icon name="book" />Sources{panelMeta ? ` ${citedSources(panelMeta).cited.length}` : ""}</button>
           )}
@@ -971,7 +1079,10 @@ export default function LexPage() {
                   {messages.map((msg, i) => msg.role === "user" ? (
                     <div className="lx-q" key={i}>
                       <div className="lx-avatar" aria-hidden="true">{userEmail ?? displayEmail ? initials(userEmail ?? displayEmail) : "Me"}</div>
-                      <p>{msg.content}</p>
+                      <div className="qt">
+                        <p>{shownQuestion(msg.content)}</p>
+                        {msg.attachment && <span className="lx-chip"><Icon name="attach" size={12} />{msg.attachment}</span>}
+                      </div>
                     </div>
                   ) : (
                     <div key={i} onClick={() => { if (msg.meta && panelIdx !== i) { setPanelMsg(i); setSelectedCite(null); } }}>
@@ -982,7 +1093,13 @@ export default function LexPage() {
                         onExport={() => exportAnswer(i)} onCopy={() => copyAnswer(i)} onDraft={() => draftFrom(i)}
                         onSources={() => { setPanelMsg(i); setPanelOpen(true); }}
                         copied={copiedMsg === i}
+                        onFlag={() => setFlagFor(i)} flagged={msg.flagged} failedSearches={msg.failedSearches}
                       />
+                      {msg.noResults && i === messages.length - 1 && !researchActive && (
+                        <NoResultsCard narrowed={!isFullScope(scope)}
+                          onWiden={() => { setScope(ALL_SCOPES); sendMessage(questionFor(i), { scope: ALL_SCOPES }); }}
+                          onRephrase={() => { setInput(questionFor(i)); inputRef.current?.focus(); }} />
+                      )}
                     </div>
                   ))}
 
@@ -992,7 +1109,7 @@ export default function LexPage() {
 
                   {loading && <SearchingSteps steps={steps} label={thinkLabel} />}
 
-                  {!loading && !researchActive && !researchError && messages[messages.length - 1]?.role === "assistant" && (
+                  {!loading && !researchActive && !researchError && messages[messages.length - 1]?.role === "assistant" && !messages[messages.length - 1]?.noResults && (
                     <div className="lx-follow">
                       {FOLLOW_UPS.map(f => <button type="button" key={f} onClick={() => sendMessage(f)}>{f}</button>)}
                     </div>

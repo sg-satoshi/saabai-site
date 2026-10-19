@@ -97,10 +97,11 @@ export function brisbaneStamp(ms: number): string {
   return `${date}, ${time} AEST`;
 }
 
-export function AnswerSheet({ text, meta, at, streaming, selected, onCite, onExport, onCopy, onDraft, onSources, copied }: {
+export function AnswerSheet({ text, meta, at, streaming, selected, onCite, onExport, onCopy, onDraft, onSources, copied, onFlag, flagged, failedSearches = 0 }: {
   text: string; meta?: LexAnswerMeta; at?: number; streaming?: boolean;
   selected?: number | null; onCite?: (n: number) => void;
   onExport?: () => void; onCopy?: () => void; onDraft?: () => void; onSources?: () => void; copied?: boolean;
+  onFlag?: () => void; flagged?: boolean; failedSearches?: number;
 }) {
   const { cited } = meta ? citedSources(meta) : { cited: [] };
   const conf = confidenceSummary(meta);
@@ -111,7 +112,10 @@ export function AnswerSheet({ text, meta, at, streaming, selected, onCite, onExp
   const secondary = cited.filter((s) => s.type === "secondary" || s.type === "ato_guidance" || s.type === "regulator" || s.type === "foreign").map((s) => s.n);
   const list = (ns: number[]) => ns.map((n) => `[${n}]`).join(", ");
   const verifyLines: string[] = [];
+  const unreadable = meta?.sources.filter((s) => s.readError).length ?? 0;
+  if (failedSearches > 0) verifyLines.push(`${failedSearches} ${failedSearches === 1 ? "search was" : "searches were"} unavailable during this research, so some sources may be missing.`);
   if (meta) {
+    if (unreadable) verifyLines.push(`Lex could not open ${unreadable} ${unreadable === 1 ? "source" : "sources"} to check the text, so ${unreadable === 1 ? "it is" : "they are"} cited without a checked pinpoint.`);
     if (unchecked.length) verifyLines.push(`${list(unchecked)} ${unchecked.length === 1 ? "was" : "were"} found by search but not checked against the source text.`);
     if (pinMissing.length) verifyLines.push(`The pinpoint for ${list(pinMissing)} was not found in the source text.`);
     if (secondary.length) verifyLines.push(`${list(secondary)} ${secondary.length === 1 ? "is" : "are"} guidance or secondary material, not binding authority.`);
@@ -177,7 +181,13 @@ export function AnswerSheet({ text, meta, at, streaming, selected, onCite, onExp
           <button type="button" className="lx-btn" onClick={onExport}><Icon name="word" />Export to Word</button>
           <button type="button" className="lx-btn" onClick={onCopy}><Icon name="copy" />{copied ? "Copied" : <>Copy<span className="lbl-long">{" with citations"}</span></>}</button>
           <button type="button" className="lx-btn" onClick={onDraft}><Icon name="draft" />Draft<span className="lbl-long">{" from this"}</span></button>
-          {meta && cited.length > 0 && <><span className="lx-sp" /><button type="button" className="lx-btn" onClick={onSources}><Icon name="book" />Sources</button></>}
+          <span className="lx-sp" />
+          {onFlag && (
+            <button type="button" className={`lx-btn ghost${flagged ? " flagged" : ""}`} onClick={onFlag} disabled={flagged} title="Tell the Saabai team something is wrong">
+              <Icon name="flag" />{flagged ? "Flagged" : <>Flag<span className="lbl-long">{" an issue"}</span></>}
+            </button>
+          )}
+          {meta && cited.length > 0 && <button type="button" className="lx-btn" onClick={onSources}><Icon name="book" />Sources</button>}
         </div>
       )}
     </article>

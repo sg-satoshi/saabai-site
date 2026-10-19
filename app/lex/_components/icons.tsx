@@ -18,6 +18,9 @@ const P: Record<string, React.ReactNode> = {
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
   book: <><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z" /><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z" /></>,
+  attach: <path d="m20 11-8.5 8.5a5 5 0 0 1-7-7L13 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L14 7" />,
+  flag: <><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></>,
+  search: <><circle cx="11" cy="11" r="6" /><path d="m20 20-4.5-4.5" /></>,
   ext: <><path d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v6H4V6h6" /></>,
 };
 

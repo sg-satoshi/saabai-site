@@ -246,3 +246,74 @@
   .lx-actions .lx-btn .lbl-long{display:none}
   .lx-ctx .id{display:none}
 }
+
+/* ── Phase B extras: composer scope and attach, steps, palette, flag, share ── */
+.lx-cbox .row{flex-wrap:wrap}
+.lx-chip.btn{cursor:pointer}
+.lx-chip.btn:hover{background:var(--hover)}
+.lx-chip.btn[disabled]{opacity:.6;cursor:progress}
+.lx-chip.on{background:rgba(98,197,209,.14);border-color:rgba(98,197,209,.5);color:var(--ink)}
+.lx-chip.off{color:var(--subtle);border-style:dashed;cursor:default}
+.lx-chip .car{font-size:9px;color:var(--muted)}
+.lx-chip svg.i{width:13px;height:13px}
+.lx-scope{position:relative}
+.lx-scope-menu{position:absolute;bottom:calc(100% + 8px);left:0;z-index:50;width:270px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(11,9,46,.16);padding:6px}
+.lx-hero .lx-scope-menu{bottom:auto;top:calc(100% + 8px)}
+.lx-scope-menu p{margin:4px 8px 6px;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.lx-scope-menu .opt{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer}
+.lx-scope-menu .opt:hover{background:var(--hover)}
+.lx-scope-menu .opt input{margin-top:3px;accent-color:var(--navy)}
+.lx-scope-menu .opt b{display:block;font-size:13px;font-weight:600;color:var(--ink)}
+.lx-scope-menu .opt small{display:block;font-size:12px;color:var(--muted)}
+.lx-scope-menu .all{display:block;width:100%;text-align:left;margin-top:4px;padding:8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--royal)}
+.lx-attached{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+.lx-attached b{font-weight:600;color:var(--ink);max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lx-attached span{color:var(--muted);flex:1}
+.lx-attached button{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--muted)}
+.lx-attached button:hover{background:var(--hover)}
+.lx-attached.bad{color:var(--bad-fg);border-color:#f4c7c2;background:#fff}
+.lx-q .qt{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.lx-steps li em{font-style:normal;font-size:12px;color:var(--subtle);margin-left:auto;padding-left:12px}
+.lx-steps li.empty .b{background:var(--bg);border:1px solid var(--line-2);color:var(--muted);font-size:9px;font-weight:600}
+.lx-steps li.failed{color:var(--ink-2)}
+.lx-steps li.failed .b{background:var(--warn-bg,#fdf3dc);color:var(--warn-fg,#8a5a00);font-size:10px;font-weight:700}
+.lx-steps li.failed em{color:var(--warn-fg,#8a5a00)}
+.lx-err.info{border-color:var(--line-2);border-left-color:var(--teal)}
+.lx-err.info b{color:var(--ink)}
+.lx-err ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);line-height:1.6}
+.lx-btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.lx-btn.ghost:hover{background:var(--hover);color:var(--ink)}
+.lx-btn.flagged{color:var(--warn-fg,#8a5a00);opacity:1}
+.lx-modal-wrap{position:fixed;inset:0;z-index:10000;background:rgba(11,9,46,.32);display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 16px}
+.lx-palette{width:100%;max-width:600px;background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(11,9,46,.28);overflow:hidden}
+.lx-palette .in{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.lx-palette .in input{flex:1;border:0;outline:none;font:inherit;font-size:15px;color:var(--ink);background:transparent}
+.lx-palette kbd{font:inherit;font-size:11px;border:1px solid var(--line-2);border-radius:5px;padding:1px 6px;color:var(--muted)}
+.lx-palette ul{list-style:none;margin:0;padding:6px;max-height:min(420px,60vh);overflow:auto}
+.lx-palette li{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--muted)}
+.lx-palette li.on{background:var(--hover)}
+.lx-palette li svg.i{margin-top:2px;flex:none}
+.lx-palette li div{min-width:0}
+.lx-palette li b{display:block;font-size:13.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lx-palette li small{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lx-palette li.hd{cursor:default;padding:10px 10px 4px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--subtle)}
+.lx-palette li.none{cursor:default;font-size:13px}
+.lx-dialog{width:100%;max-width:460px;background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(11,9,46,.28);padding:20px 22px}
+.lx-dialog h3{margin:0;font-size:16px;font-weight:600;color:var(--ink)}
+.lx-dialog .sub{margin:4px 0 14px;font-size:13px;color:var(--muted)}
+.lx-dialog .reasons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.lx-dialog .reasons label{display:flex;gap:8px;align-items:center;font-size:13px;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;cursor:pointer;color:var(--ink-2)}
+.lx-dialog .reasons label.on{border-color:var(--navy);background:var(--bg);color:var(--ink)}
+.lx-dialog .reasons input{accent-color:var(--navy)}
+.lx-dialog textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;resize:vertical;color:var(--ink)}
+.lx-dialog textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(98,197,209,.2)}
+.lx-dialog .bad{margin-top:8px;font-size:12.5px;color:var(--bad-fg)}
+.lx-dialog .row{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.lx-dialog .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.lx-share-wrap{position:relative}
+.lx-menu.lx-share{position:absolute;top:calc(100% + 6px);right:0;width:290px}
+.lx-share button,.lx-share a{display:grid;grid-template-columns:18px 1fr;column-gap:8px;align-items:center;width:100%;text-align:left;padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:13px}
+.lx-share a:hover{background:var(--hover)}
+.lx-share small{grid-column:2;font-size:11.5px;color:var(--muted)}
+.lx-share .fine{margin:4px 10px 6px;font-size:11.5px;color:var(--subtle)}
+@media (max-width:560px){.lx-dialog .reasons{grid-template-columns:1fr}.lx-chip.off{display:none}.lx-modal-wrap{padding-top:8vh}}

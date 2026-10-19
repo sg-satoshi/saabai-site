@@ -2,6 +2,7 @@ import { streamText, stepCountIs, createUIMessageStream, createUIMessageStreamRe
 import { lexErrorResponse, stripErrorAnswers } from "../../../lib/lex-errors";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
+import { normalizeScope, filterToolsByScope, scopePrompt } from "../../../lib/lex-scope";
 import { buildLexResearchTools, withSourceRegistry, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
 import { SourceRegistry, CITATION_RULES, stripMarkers } from "../../../lib/lex-sources";
 import { buildAnswerMeta } from "../../../lib/lex-answer-meta";
@@ -18,7 +19,8 @@ export const maxDuration = 120; // search, up to 4 source reads, answer, then th
 
 export async function POST(req: Request) {
   try {
-    const { messages, clientId, privacyMode } = await req.json();
+    const { messages, clientId, privacyMode, scope: rawScope } = await req.json();
+    const scope = normalizeScope(rawScope);
 
     const config = getLexConfig(clientId);
 
@@ -78,7 +80,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
 
     // Internal research mode cites by source id; the external intake bot has no research tools.
     const citeMode = config.mode === "internal";
-    if (citeMode) systemPromptContent += CITATION_RULES;
+    if (citeMode) systemPromptContent += CITATION_RULES + scopePrompt(scope);
 
     const cachedSystem: SystemModelMessage = {
       role: "system",
@@ -93,7 +95,8 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
 
     // Server-side source list: every search result gets an id and a type decided here, not by the model.
     const registry = new SourceRegistry();
-    const tools = citeMode ? withSourceRegistry(buildLexResearchTools(config), registry) : buildLexResearchTools(config);
+    const baseTools = filterToolsByScope(buildLexResearchTools(config), scope);
+    const tools = citeMode ? withSourceRegistry(baseTools, registry) : baseTools;
 
     const steps = LEX_RESEARCH_MAX_STEPS + (citeMode ? 2 : 0); // room for readSource calls
     const result = streamText({

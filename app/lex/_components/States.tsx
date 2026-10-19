@@ -1,6 +1,8 @@
 "use client";
 
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import { ALL_SCOPES, LEX_SCOPES, isFullScope, scopeLabel, type LexScopeKey } from "../../../lib/lex-scope";
+import type { LexStep } from "../../../lib/lex-steps";
 import { type LexError, signInHref } from "../../../lib/lex-errors";
 import { Icon } from "./icons";
 
@@ -18,29 +20,78 @@ export const FOLLOW_UPS = [
   "What should I check before advising the client?",
 ];
 
+export type Attachment = { name: string; text: string; words: number };
+
 type ComposerProps = {
   value: string; onChange: (v: string) => void; onSend: () => void; disabled?: boolean;
-  placeholder: string; scopeLabel?: string; contextLabel?: string; autoFocus?: boolean;
+  placeholder: string; contextLabel?: string; autoFocus?: boolean;
+  scope?: LexScopeKey[]; onScope?: (s: LexScopeKey[]) => void;
+  attachment?: Attachment | null; attaching?: boolean; attachError?: string | null;
+  onAttach?: (f: File) => void; onClearAttachment?: () => void;
 };
 
 export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Composer(
-  { value, onChange, onSend, disabled, placeholder, scopeLabel = "Sources: Cases, Legislation, ATO", contextLabel, autoFocus }, ref,
+  { value, onChange, onSend, disabled, placeholder, contextLabel, autoFocus, scope = ALL_SCOPES, onScope, attachment, attaching, attachError, onAttach, onClearAttachment }, ref,
 ) {
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = typeof ref === "object" ? ref?.current : null;
     if (!el) return;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 160) + "px";
   }, [value, ref]);
+  useEffect(() => {
+    if (!scopeOpen) return;
+    const close = (e: MouseEvent) => { if (!wrapRef.current?.contains(e.target as Node)) setScopeOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setScopeOpen(false); };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
+  }, [scopeOpen]);
+  const toggle = (k: LexScopeKey) => {
+    const next = scope.includes(k) ? scope.filter((x) => x !== k) : [...scope, k];
+    if (next.length) onScope?.(ALL_SCOPES.filter((x) => next.includes(x)));
+  };
   return (
     <div className="lx-cbox">
+      {attachment && (
+        <div className="lx-attached">
+          <Icon name="attach" size={14} /><b>{attachment.name}</b><span>{attachment.words.toLocaleString("en-AU")} words, sent with your next question</span>
+          <button type="button" aria-label="Remove attachment" onClick={onClearAttachment}><Icon name="close" size={14} /></button>
+        </div>
+      )}
+      {attachError && <div className="lx-attached bad">{attachError}</div>}
       <textarea ref={ref} value={value} rows={1} placeholder={placeholder} aria-label="Research question" autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }} />
       <div className="row">
         {contextLabel && <span className="lx-chip on" title="This research is saved in this thread">{contextLabel}</span>}
-        <span className="lx-chip" title="Lex searches AustLII, the Federal Register of Legislation and the ATO">{scopeLabel}</span>
-        <button type="button" className="lx-send" onClick={onSend} disabled={disabled || !value.trim()} aria-label="Send">
+        <div className="lx-scope" ref={wrapRef}>
+          <button type="button" className={`lx-chip btn${isFullScope(scope) ? "" : " on"}`} aria-haspopup="menu" aria-expanded={scopeOpen} onClick={() => setScopeOpen((o) => !o)}>
+            {scopeLabel(scope)}<span className="car" aria-hidden="true">&#9662;</span>
+          </button>
+          {scopeOpen && (
+            <div className="lx-scope-menu" role="menu" aria-label="Sources Lex may search">
+              <p>Search these sources</p>
+              {LEX_SCOPES.map((s) => (
+                <label key={s.key} className="opt">
+                  <input type="checkbox" checked={scope.includes(s.key)} onChange={() => toggle(s.key)} />
+                  <span><b>{s.label}</b><small>{s.hint}</small></span>
+                </label>
+              ))}
+              <button type="button" className="all" onClick={() => onScope?.(ALL_SCOPES)}>Search all sources</button>
+            </div>
+          )}
+        </div>
+        <button type="button" className="lx-chip btn" onClick={() => fileRef.current?.click()} disabled={attaching} title="Attach a PDF, Word or text file as context">
+          <Icon name="attach" size={13} />{attaching ? "Reading file..." : "Attach"}
+        </button>
+        <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.doc,.txt"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) onAttach?.(f); e.target.value = ""; }} />
+        <span className="lx-chip off" title="Matter context arrives with matters (coming soon)" aria-disabled="true">Matter context: soon</span>
+        <button type="button" className="lx-send" onClick={onSend} disabled={disabled || attaching || !value.trim()} aria-label="Send">
           <Icon name="send" />
         </button>
       </div>
@@ -76,23 +127,46 @@ export function EmptyState({ firmName, onPick, composer }: { firmName?: string; 
   );
 }
 
-/** Live step list built from the tools the research stream reports. */
-export function SearchingSteps({ steps, label }: { steps: string[]; label: string }) {
-  const all = steps.length ? steps : [label];
+/** Live step list built from the tools the research stream reports, with each search's outcome. */
+export function SearchingSteps({ steps, label }: { steps: LexStep[]; label: string }) {
+  const failed = steps.filter((s) => s.status === "failed").length;
   return (
     <div className="lx-steps" role="status" aria-live="polite">
       <h4>Researching</h4>
       <ul>
-        {all.map((s, i) => {
-          const done = i < all.length - 1;
-          return (
-            <li key={`${s}-${i}`} className={done ? "done" : "now"}>
-              <span className="b">{done && <Icon name="check" size={10} />}</span>{s}
-            </li>
-          );
-        })}
+        {steps.length === 0 && <li className="now"><span className="b" />{label}</li>}
+        {steps.map((s) => (
+          <li key={s.id} className={s.status === "running" ? "now" : s.status}>
+            <span className="b">{s.status === "done" && <Icon name="check" size={10} />}{s.status === "failed" && "!"}{s.status === "empty" && "0"}</span>
+            {stepLabel(s.tool)}
+            {s.status === "done" && s.count != null && <em>{s.count} found</em>}
+            {s.status === "empty" && <em>no results</em>}
+            {s.status === "failed" && <em>{s.tool === "readSource" ? "could not read" : "source unavailable"}</em>}
+          </li>
+        ))}
       </ul>
-      <div className="fine">Lex reads the sources it cites, so a full answer can take up to a minute.</div>
+      <div className="fine">
+        {failed > 0 ? `${failed} ${failed === 1 ? "source was" : "sources were"} unavailable. Lex carries on with the rest and flags anything it could not check.` : "Lex reads the sources it cites, so a full answer can take up to a minute."}
+      </div>
+    </div>
+  );
+}
+
+/** Shown when every search came back empty or failed and the answer cites nothing. */
+export function NoResultsCard({ narrowed, onWiden, onRephrase }: { narrowed: boolean; onWiden: () => void; onRephrase: () => void }) {
+  return (
+    <div className="lx-err info" role="note" data-lex-empty>
+      <b>No sources found for this question</b>
+      <p>Lex searched {narrowed ? "the sources you picked" : "case law, legislation and ATO material"} and found nothing it could cite, so treat the answer above as a starting point only.</p>
+      <ul>
+        {narrowed && <li>Search all sources instead of a narrowed scope.</li>}
+        <li>Use the legal term or section number, for example &quot;s 109D ITAA 1936&quot;.</li>
+        <li>Name the jurisdiction or tribunal if it matters.</li>
+      </ul>
+      <div className="row">
+        {narrowed && <button type="button" className="lx-btn primary" onClick={onWiden}>Search all sources</button>}
+        <button type="button" className="lx-btn" onClick={onRephrase}>Rephrase question</button>
+      </div>
     </div>
   );
 }
