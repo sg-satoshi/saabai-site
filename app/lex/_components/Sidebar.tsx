@@ -48,7 +48,7 @@ export function Sidebar(props: {
   rename: Rename; setRename: (r: Rename) => void; onRenameThread: (id: string, v: string) => void; onRenameProject: (id: string, v: string) => void;
   onNewProject: () => void; onMoveThread: (threadId: string, projectId: string | null) => void;
   expanded: Set<string>; toggleProject: (id: string) => void;
-  firmName: string; firmLogo: string | null; userEmail: string | null;
+  firmName: string; firmLogo: string | null; userEmail: string | null; userName?: string | null;
   onFirmSettings: () => void; onIntake: () => void; matterCount?: number;
 }) {
   const { mode, setMode, threads, projects, activeId } = props;
@@ -136,11 +136,15 @@ export function Sidebar(props: {
       </div>
 
       <div className="lx-foot">
-        <div className="lx-avatar">{initials(props.userEmail)}</div>
+        <div className="lx-avatar" aria-hidden="true">{initials(props.userName || props.userEmail)}</div>
         <div style={{ minWidth: 0 }}>
-          <b>{props.userEmail ?? "Signed in"}</b>
+          <b title={props.userEmail ?? undefined}>{props.userName || props.userEmail || "Signed in"}</b>
           <span>{props.firmName || "Lex workspace"}</span>
         </div>
+        {/* Same sign-out as Account: clears the session cookie and returns to /login. */}
+        <form method="post" action="/api/auth/logout" className="lx-signout">
+          <button type="submit">Sign out</button>
+        </form>
       </div>
       <a className="lx-powered" href="https://saabai.ai" target="_blank" rel="noopener noreferrer">Powered by Saabai.ai</a>
     </aside>

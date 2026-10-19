@@ -63,8 +63,12 @@
 .lx-empty-side{font-size:12px;color:#8786a6;padding:4px 10px 8px}
 .lx-foot{margin-top:6px;border-top:1px solid var(--nav-line);padding-top:12px;display:flex;align-items:center;gap:10px;font-size:12.5px}
 .lx-avatar{width:30px;height:30px;border-radius:50%;background:#2a2860;color:#fff;display:grid;place-items:center;font-weight:600;font-size:12px;flex:none}
-.lx-foot b{color:#fff;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
-.lx-foot span{color:#8f8eab;font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.lx-foot b{color:#fff;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.lx-foot span{color:#8f8eab;font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.lx-signout{margin:0 0 0 auto;flex-shrink:0}
+.lx-signout button{background:none;border:0;padding:0 2px;min-height:32px;color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;text-decoration:none}
+.lx-signout button:hover{color:#fff;text-decoration:underline}
+@media (max-width:980px){.lx-signout button{background:none;border:0;padding:0 2px;min-height:32px;color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;text-decoration:none}}
 .lx-powered{display:block;font-size:10.5px;color:#8786a6;text-decoration:none;padding:8px 2px 0}
 .lx-powered:hover{color:#fff}
 .lx-menu{position:fixed;z-index:9999;min-width:180px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(11,9,46,.16);padding:4px;font-size:13px}
