@@ -70,7 +70,7 @@ ${GST_LINE}
 
 **2. Saabai Blueprint** (fixed-price AI plan, ranked by hours and dollars saved). Link: ${LINKS.blueprint}
 ${tiers}
-  - 30 day credit: book any Saabai build within 30 days of receiving the Blueprint and the full Blueprint fee comes off the build invoice. Credit applies to implementation costs only, not care plans or monthly fees.
+  - 30 day credit: book any Saabai build within 30 days of receiving the Blueprint and the full Blueprint fee comes off the build invoice. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.
   - Refund: if we have not started the analysis, a full refund. They just reply to their confirmation email.
   - After checkout there is a short online fact-find (about 15 minutes).
 
