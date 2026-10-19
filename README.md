@@ -38,6 +38,7 @@ git push         # triggers Vercel auto-deploy
 | `PORTAL_SESSION_SECRET` | HMAC key for signed session cookies |
 | `REX_DASHBOARD_PASSWORD` | Rex dashboard login |
 | `RESEND_API_KEY` | Email delivery |
+| `COUPON_HASH_SECRET` | Keys the HMAC of customer emails for one-use-per-customer coupons. 32+ chars. Falls back to `SAABAI_SESSION_SECRET` if unset or too short. Don't rotate once codes are in use: it resets everyone's usage. |
 
 ## Architecture Notes
 

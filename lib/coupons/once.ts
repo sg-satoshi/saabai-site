@@ -3,6 +3,7 @@
  *
  * Privacy: we never store an email. The key is HMAC-SHA256(secret, normalised email), truncated,
  * so the stored value can't be reversed by guessing common addresses without our server secret.
+ * The secret is COUPON_HASH_SECRET, falling back to SAABAI_SESSION_SECRET (see resolveHashKey).
  * The value is just { at, sessionId } (an opaque Stripe id). Nothing here is shown in admin.
  * Fails OPEN (allows) if Redis or the secret is missing, so a storage problem never breaks checkout.
  */
@@ -15,7 +16,31 @@ export interface OnceStore {
   set(key: string, value: unknown, opts?: { nx?: boolean }): Promise<unknown>;
 }
 
-const secret = () => process.env.SAABAI_SESSION_SECRET?.trim() || "";
+/** Minimum length for the dedicated hash secret. A shorter value is ignored (we fall back). */
+export const MIN_HASH_SECRET_LENGTH = 32;
+let warnedShort = false;
+
+/**
+ * Key precedence for the email hash:
+ *   1. COUPON_HASH_SECRET, if set and at least 32 chars (dedicated, so rotating the session secret
+ *      never resets one-use records)
+ *   2. SAABAI_SESSION_SECRET (fallback, so nothing breaks before the dedicated secret exists)
+ *   3. none -> "" -> no tracking (fail open)
+ * Changing which key is in effect changes every stored hash, so don't rotate it casually.
+ */
+export function resolveHashKey(env: Record<string, string | undefined> = process.env): string {
+  const dedicated = env.COUPON_HASH_SECRET?.trim() || "";
+  if (dedicated) {
+    if (dedicated.length >= MIN_HASH_SECRET_LENGTH) return dedicated;
+    if (!warnedShort) {
+      warnedShort = true;
+      console.error(`[coupon once] COUPON_HASH_SECRET is shorter than ${MIN_HASH_SECRET_LENGTH} chars, ignoring it and using the fallback`);
+    }
+  }
+  return env.SAABAI_SESSION_SECRET?.trim() || "";
+}
+
+const secret = () => resolveHashKey();
 
 /** Stable hash of a customer's email for this feature. Null if the email or secret is missing. */
 export function hashCustomer(email: unknown, key = secret()): string | null {

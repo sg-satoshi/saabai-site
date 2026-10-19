@@ -263,3 +263,32 @@ test("once per customer: fails open when storage or email is missing or broken",
   assert.equal(await hasUsed("promo_1", "", memStore(), KEY), false);
   assert.equal(await markUsed("promo_1", undefined, "cs_1", memStore(), KEY), "skipped");
 });
+
+import { resolveHashKey } from "../lib/coupons/once";
+
+test("hash key: dedicated secret wins when set and long enough", () => {
+  const ded = "d".repeat(48);
+  assert.equal(resolveHashKey({ COUPON_HASH_SECRET: ded, SAABAI_SESSION_SECRET: "session-secret" }), ded);
+});
+
+test("hash key: falls back to session secret when dedicated is unset or too short; none -> empty (fail open)", () => {
+  assert.equal(resolveHashKey({ SAABAI_SESSION_SECRET: "session-secret" }), "session-secret");
+  assert.equal(resolveHashKey({ COUPON_HASH_SECRET: "short", SAABAI_SESSION_SECRET: "session-secret" }), "session-secret");
+  assert.equal(resolveHashKey({}), "");
+  assert.equal(hashCustomer("jane@example.com", resolveHashKey({})), null);
+});
+
+test("hash key: different secrets give different keys; stored key holds no raw email", () => {
+  const a = hashCustomer("jane@example.com", resolveHashKey({ COUPON_HASH_SECRET: "a".repeat(40) }))!;
+  const b = hashCustomer("jane@example.com", resolveHashKey({ COUPON_HASH_SECRET: "b".repeat(40) }))!;
+  assert.notEqual(a, b);
+  assert.ok(!onceKey("promo_1", a).includes("jane") && !onceKey("promo_1", a).includes("example"));
+});
+
+test("hash key: store receives only the hash key, never the raw email", async () => {
+  const seen: string[] = [];
+  const store: OnceStore = { get: async (k) => { seen.push(k); return null; }, set: async (k, v) => { seen.push(k, JSON.stringify(v)); return "OK"; } };
+  const key = "k".repeat(40);
+  await markUsed("promo_1", "Jane@Example.com", "cs_1", store, key);
+  assert.ok(seen.length > 0 && seen.every((x) => !/jane|example/i.test(x)));
+});
