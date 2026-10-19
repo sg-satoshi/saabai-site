@@ -131,6 +131,7 @@ const PUBLIC_API = [
   // MCP_API_KEY via authorizeRequest(); exempt at the proxy so it can be reached
   // on the master domain (saabai.ai) like any external MCP client.
   "/api/mcp",
+  "/api/lex-eval-run", // THROWAWAY eval branch only: preview-gated + token inside
 ];
 
 // Admin-only endpoints (destructive, PII, or operator tooling). Require a
