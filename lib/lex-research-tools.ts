@@ -18,6 +18,7 @@ import {
   searchFamilyLaw,
   type LegalSearchResponse,
 } from "./lex-tools";
+import { SourceRegistry, fetchSourceText, isAllowedSourceUrl, findPinpoint, excerptFor, MAX_READS_PER_ANSWER } from "./lex-sources";
 
 /** Max model steps (tool rounds plus the answer) for one research question. */
 export const LEX_RESEARCH_MAX_STEPS = 6;
@@ -277,4 +278,83 @@ export function buildLexResearchTools(config: LexClientConfig) {
       }),
     }),
   };
+}
+
+// ── Citation backend: source ids, readSource, real section checks ─────────────
+
+type AnyTool = { description?: string; inputSchema?: unknown; execute?: (input: never, opts: never) => unknown };
+
+async function cachedRead(url: string): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  const { createHash } = await import("node:crypto");
+  const { getRedis } = await import("./redis");
+  const key = `lex:src:${createHash("sha256").update(url).digest("hex").slice(0, 40)}`;
+  const redis = getRedis();
+  try {
+    const hit = redis ? await redis.get<string>(key) : null;
+    if (typeof hit === "string" && hit.length > 200) return { ok: true, text: hit };
+  } catch { /* cache is optional */ }
+  const res = await fetchSourceText(url);
+  if (res.ok && redis) {
+    try { await redis.set(key, res.text.slice(0, 200_000), { ex: 7 * 86400 }); } catch { /* cache is optional */ }
+  }
+  return res;
+}
+
+/**
+ * Wraps the research tools so every search result is registered with an id and a
+ * server-decided type, adds readSource, and makes verifySection actually read the section.
+ */
+export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, reg: SourceRegistry, read = cachedRead) {
+  const out: Record<string, unknown> = {};
+  for (const [name, t] of Object.entries(tools)) {
+    const orig = t as AnyTool;
+    if (name === "captureMatter" || typeof orig.execute !== "function") { out[name] = t; continue; }
+    const exec = orig.execute as (input: unknown, opts: unknown) => Promise<LegalSearchResponse>;
+    out[name] = {
+      ...orig,
+      execute: async (input: unknown, opts: unknown) => {
+        const res = await exec(input, opts);
+        if (!res || !Array.isArray(res.results)) return res;
+        const registered = reg.register(res, name);
+        if (name !== "verifySection") return registered;
+        // verifySection used to be a search only. Now read the first legislation result and look for the section.
+        const { section } = (input ?? {}) as { section?: string };
+        const first = registered.results.map((r) => ("id" in r ? reg.get(String(r.id)) : undefined)).find((s) => s && s.type === "legislation" && isAllowedSourceUrl(s.url));
+        if (!first || !section) return { ...registered, sectionCheck: { checked: false, note: "No readable legislation result to check" } };
+        const page = await read(first.url);
+        if (!page.ok) { reg.setReadError(first.id, page.error); return { ...registered, sectionCheck: { checked: false, id: first.id, note: page.error } }; }
+        reg.setText(first.id, page.text);
+        const f = findPinpoint(page.text, `s ${section}`);
+        return { ...registered, sectionCheck: { checked: true, id: first.id, found: f.found, excerpt: f.excerpt?.slice(0, 1500) ?? null } };
+      },
+    };
+  }
+  out.readSource = tool<{ id: string; pinpoint?: string }, unknown>({
+    description:
+      `Read the actual text of a source a search returned, by its id (e.g. S3). Use before giving a paragraph or section pinpoint, ` +
+      `and quote from what it returns. Works for AustLII, legislation.gov.au, ATO, ASIC, FWC and ART pages. Max ${MAX_READS_PER_ANSWER} reads per answer.`,
+    inputSchema: jsonSchema<{ id: string; pinpoint?: string }>({
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Source id from a search result, e.g. S3" },
+        pinpoint: { type: "string", description: "Optional paragraph or section to jump to, e.g. 'para 41' or 's 109D'" },
+      },
+      required: ["id"],
+    }),
+    execute: async ({ id, pinpoint }) => {
+      const src = reg.get(String(id ?? ""));
+      if (!src) return { ok: false, error: `No source ${id} in this answer. Use an id from a search result.` };
+      if (!isAllowedSourceUrl(src.url)) { reg.setReadError(src.id, "site not on the read list"); return { ok: false, id: src.id, error: "Lex can't read this site. Cite it without a pinpoint." }; }
+      if (!reg.text(src.id)) {
+        if (reg.reads >= MAX_READS_PER_ANSWER) return { ok: false, id: src.id, error: "Read limit reached for this answer. Cite without a pinpoint." };
+        reg.reads++;
+        const page = await read(src.url);
+        if (!page.ok) { reg.setReadError(src.id, page.error); return { ok: false, id: src.id, error: page.error }; }
+        reg.setText(src.id, page.text);
+      }
+      const { excerpt, pinpointFound } = excerptFor(reg.text(src.id)!, pinpoint);
+      return { ok: true, id: src.id, title: src.title, type: src.typeLabel, pinpointFound, text: excerpt };
+    },
+  });
+  return out as T & { readSource: unknown };
 }
