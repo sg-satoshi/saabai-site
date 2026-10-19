@@ -251,8 +251,8 @@ export default function AdminShell({
       .catch(() => {});
     return () => { live = false; };
   }, []);
-  const meName = me ? me.name || "Your Name" : "Signed in";
-  const meInitial = me ? (me.name ? me.name.trim().charAt(0).toUpperCase() : "Y") : "?";
+  const meName = (me?.name || me?.email || "").trim() || "Signed in";
+  const meInitial = me && (me.name || me.email) ? (me.name || me.email || "").trim().charAt(0).toUpperCase() : "?";
 
   const crumb =
     title ||

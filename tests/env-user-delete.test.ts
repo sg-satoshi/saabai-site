@@ -15,3 +15,8 @@ test("UI: env rows not selectable, bulk toast reports the real error", () => {
   assert.match(src, /failed: \$\{firstErr\}/);
   assert.ok(!/\u2014/.test(src.match(/can't be deleted here[^\n]*/)![0]));
 });
+test("admin sidebar footer never shows a placeholder name", () => {
+  const src = read("app/saabai-admin/AdminSidebar.tsx");
+  assert.ok(!/Your Name/.test(src));
+  assert.match(read("lib/auth.ts"), /Owner identity comes from the env client/);
+});
