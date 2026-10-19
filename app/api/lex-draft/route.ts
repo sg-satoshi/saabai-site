@@ -1,3 +1,4 @@
+import { lexErrorResponse } from "../../../lib/lex-errors";
 /**
  * Lex Document Drafting API — /api/lex-draft
  *
@@ -426,7 +427,7 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[lex-draft]", err);
-    return new Response(String(err), { status: 500 });
+    return lexErrorResponse(500, "draft_failed");
   }
 }
 
@@ -510,12 +511,13 @@ async function runQAPass(
     const parsed = JSON.parse(jsonText) as QAVerificationReport;
     return parsed;
   } catch (err) {
+    console.error("[lex-draft qa]", err);
     // Return a safe fallback if QA parsing fails
     return {
       overallConfidence: 0,
       sections: [],
       criticalIssues: [
-        `QA pass failed: ${String(err)}. Manual review of all clauses is required.`,
+        "The automatic QA check could not run. Manual review of all clauses is required.",
       ],
       recommendedChecks: [
         "Verify all legislative section references against legislation.gov.au",

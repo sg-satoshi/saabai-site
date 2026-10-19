@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
+import {
+  type LexError, cleanThreads, stripErrorAnswers, isStreamErrorPart, signInHref,
+  lexErrorFromResponse, lexErrorFromStatus, lexNetworkError, lexEmptyError,
+} from "../../lib/lex-errors";
 import { Document, Packer, Paragraph, TextRun, Header, Footer, AlignmentType } from "docx";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
@@ -62,6 +66,36 @@ function threadTitle(msgs: ChatMessage[]): string {
 function fmtDate(ts: number): string {
   const d = new Date(ts);
   return d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+}
+
+// ── Error card: failures are shown as a state, never as an answer ─────────────
+function LexErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: LexError; onRetry?: () => void; retryLabel?: string }) {
+  return (
+    <div role="alert" data-lex-error={error.kind} style={{
+      padding: "14px 18px", borderRadius: 10, background: "rgba(239,68,68,0.07)",
+      border: "1px solid rgba(239,68,68,0.35)", maxWidth: 560,
+    }}>
+      <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#fca5a5" }}>{error.title}</p>
+      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "#fecaca" }}>{error.message}</p>
+      {(error.signIn || (error.canRetry && onRetry)) && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          {error.signIn && (
+            <a href={signInHref(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/lex")} style={{
+              padding: "7px 14px", borderRadius: 8, background: C.gold, color: C.bg,
+              fontSize: 12, fontWeight: 700, textDecoration: "none",
+            }}>Sign in</a>
+          )}
+          {error.canRetry && onRetry && (
+            <button type="button" onClick={onRetry} data-no-feedback style={{
+              padding: "7px 14px", borderRadius: 8, cursor: "pointer",
+              background: "transparent", border: `1px solid ${C.borderAccent}`, color: C.text,
+              fontSize: 12, fontWeight: 600,
+            }}>{retryLabel}</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Lex avatar ────────────────────────────────────────────────────────────────
@@ -394,7 +428,7 @@ export default function LexPage() {
   const [reviewLoading, setReviewLoading]         = useState(false);
   const [reviewStage, setReviewStage]             = useState("Extracting document...");
   const [reviewReport, setReviewReport]           = useState<ReviewReport | null>(null);
-  const [reviewError, setReviewError]             = useState<string | null>(null);
+  const [reviewError, setReviewError]             = useState<LexError | null>(null);
   const reviewFileRef = useRef<HTMLInputElement>(null);
   const [reviewDragOver, setReviewDragOver]       = useState(false);
   // Matter context fields
@@ -404,7 +438,7 @@ export default function LexPage() {
   // Supervision submit state
   const [submitLoading, setSubmitLoading]         = useState(false);
   const [submitDone, setSubmitDone]               = useState(false);
-  const [submitError, setSubmitError]             = useState<string | null>(null);
+  const [submitError, setSubmitError]             = useState<LexError | null>(null);
   // Comparison state
   const [reviewCompareMode, setReviewCompareMode] = useState(false);
   const [reviewCompareInputMode, setReviewCompareInputMode] = useState<"upload" | "paste">("upload");
@@ -442,6 +476,9 @@ export default function LexPage() {
   const [firmLogo, setFirmLogo] = useState<string | null>(null);
 
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  // Research failure for one thread. Kept out of the thread so it is never saved or sent to the model.
+  const [researchError, setResearchError] = useState<{ threadId: string; error: LexError; retryText: string } | null>(null);
+  const [draftError, setDraftError] = useState<LexError | null>(null);
 
   const activeThread = threads.find(t => t.id === activeId) ?? null;
   const messages = activeThread?.messages ?? [];
@@ -451,7 +488,7 @@ export default function LexPage() {
     async function init() {
       // 1. Load from anonymous localStorage first (no flicker)
       try {
-        const saved = JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[];
+        const saved = cleanThreads(JSON.parse(localStorage.getItem("lex_threads") ?? "[]") as Thread[]);
         if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
       } catch {}
       try {
@@ -477,7 +514,7 @@ export default function LexPage() {
           // Prefer user-scoped localStorage (quick win while Redis loads)
           const userKey = `lex_threads_${me.email}`;
           try {
-            const localSaved = JSON.parse(localStorage.getItem(userKey) ?? "[]") as Thread[];
+            const localSaved = cleanThreads(JSON.parse(localStorage.getItem(userKey) ?? "[]") as Thread[]);
             if (localSaved.length > 0) { setThreads(localSaved); setActiveId(localSaved[0].id); }
           } catch {}
           // Load from Redis: authoritative, works across devices
@@ -485,8 +522,9 @@ export default function LexPage() {
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.threads) && data.threads.length > 0) {
-              setThreads(data.threads);
-              setActiveId(data.threads[0].id);
+              const clean = cleanThreads(data.threads as Thread[]);
+              setThreads(clean);
+              setActiveId(clean[0].id);
             }
           }
         }
@@ -610,7 +648,7 @@ export default function LexPage() {
     ));
   }
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, opts?: { retry?: boolean }) => {
     if (!text.trim() || loading) return;
 
     let tid = activeId;
@@ -623,17 +661,29 @@ export default function LexPage() {
     }
 
     const userMsg: ChatMessage = { role: "user", content: text.trim() };
-    const prevMsgs = threads.find(t => t.id === tid)?.messages ?? [];
-    const updated = [...prevMsgs, userMsg];
+    const prevMsgs = stripErrorAnswers(threads.find(t => t.id === tid)?.messages ?? []);
+    const last = prevMsgs[prevMsgs.length - 1];
+    // Retry re-sends the question already in the thread instead of adding it twice.
+    const updated = opts?.retry && last?.role === "user" && last.content === userMsg.content
+      ? prevMsgs
+      : [...prevMsgs, userMsg];
 
     updateThreadMessages(tid, updated);
-    setInput("");
+    if (!opts?.retry) setInput("");
+    setResearchError(null);
     setLoading(true);
     setChips([]);
     setThinkLabel(thinkingFor(text));
 
     abortRef.current?.abort();
     abortRef.current = new AbortController();
+
+    const finalId = tid;
+    const fail = (error: LexError) => {
+      // Drop any partial answer: the thread keeps only the question.
+      updateThreadMessages(finalId, updated);
+      setResearchError({ threadId: finalId, error, retryText: userMsg.content });
+    };
 
     try {
       const res = await fetch("/api/lex-research", {
@@ -643,16 +693,19 @@ export default function LexPage() {
         signal: abortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`);
+      if (!res.ok) {
+        fail(await lexErrorFromResponse(res, "research"));
+        return;
+      }
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
       let buffer = "";
       let started = false;
-      const finalId = tid;
+      let streamFailed = false;
 
-      while (true) {
+      while (!streamFailed) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -662,6 +715,7 @@ export default function LexPage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const parsed = JSON.parse(line.slice(6));
+            if (isStreamErrorPart(parsed)) { streamFailed = true; break; }
             if (parsed.type === "text-delta" && parsed.delta) {
               fullText += parsed.delta;
               const withAI: ChatMessage[] = [...updated, { role: "assistant", content: fullText }];
@@ -675,20 +729,19 @@ export default function LexPage() {
         }
       }
 
-      if (fullText.trim()) {
+      if (streamFailed) {
+        reader.cancel().catch(() => {});
+        fail(lexErrorFromStatus(500, null, "research"));
+      } else if (!fullText.trim()) {
+        fail(lexEmptyError("research"));
+      } else {
         const final: ChatMessage[] = [...updated, { role: "assistant", content: fullText.trim() }];
         updateThreadMessages(finalId, final);
         // Follow-up chips
         setChips(pickReplies());
       }
     } catch (e: unknown) {
-      if ((e as Error)?.name !== "AbortError") {
-        const errMsgs: ChatMessage[] = [
-          ...updated,
-          { role: "assistant", content: "There was a problem reaching the research API. Please try again." },
-        ];
-        if (tid) updateThreadMessages(tid, errMsgs);
-      }
+      if ((e as Error)?.name !== "AbortError") fail(lexNetworkError("research"));
     } finally {
       setLoading(false);
     }
@@ -725,6 +778,7 @@ export default function LexPage() {
   const sendDraft = useCallback(async () => {
     if (draftLoading) return;
     setDraftText("");
+    setDraftError(null);
     setDraftQA(null);
     setDraftLoading(true);
     setDraftQALoading(false);
@@ -755,14 +809,20 @@ export default function LexPage() {
         signal: draftAbortRef.current.signal,
       });
 
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (!res.ok) {
+        clearInterval(labelTimer);
+        setDraftError(await lexErrorFromResponse(res, "draft"));
+        setDraftLoading(false);
+        return;
+      }
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
       let buffer = "";
+      let streamFailed = false;
 
-      while (true) {
+      while (!streamFailed) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -772,6 +832,7 @@ export default function LexPage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const parsed = JSON.parse(line.slice(6));
+            if (isStreamErrorPart(parsed)) { streamFailed = true; break; }
             if (parsed.type === "text-delta" && parsed.delta) {
               fullText += parsed.delta;
               setDraftText(fullText);
@@ -782,6 +843,14 @@ export default function LexPage() {
 
       clearInterval(labelTimer);
       setDraftLoading(false);
+
+      if (streamFailed || !fullText.trim()) {
+        // A half-written or empty draft is not a document: clear it so it can't be exported or emailed.
+        if (streamFailed) reader.cancel().catch(() => {});
+        setDraftText("");
+        setDraftError(streamFailed ? lexErrorFromStatus(500, null, "draft") : lexEmptyError("draft"));
+        return;
+      }
 
       // ── QA pass ─────────────────────────────────────────────────────────────
       if (fullText.trim()) {
@@ -802,7 +871,8 @@ export default function LexPage() {
     } catch (e: unknown) {
       clearInterval(labelTimer);
       if ((e as Error)?.name !== "AbortError") {
-        setDraftText("There was a problem reaching the drafting API. Please try again.");
+        setDraftText("");
+        setDraftError(lexNetworkError("draft"));
       }
       setDraftLoading(false);
     }
@@ -825,10 +895,10 @@ export default function LexPage() {
           report: reviewReport,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Submit failed");
+      if (!res.ok) { setSubmitError(await lexErrorFromResponse(res, "submission")); return; }
       setSubmitDone(true);
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Submit failed");
+    } catch {
+      setSubmitError(lexNetworkError("submission"));
     } finally {
       setSubmitLoading(false);
     }
@@ -868,7 +938,7 @@ export default function LexPage() {
         const form = new FormData();
         form.append("file", reviewFile);
         const extractRes = await fetch("/api/lex-extract", { method: "POST", body: form });
-        if (!extractRes.ok) throw new Error((await extractRes.json()).error ?? "Extraction failed");
+        if (!extractRes.ok) { setReviewError(await lexErrorFromResponse(extractRes, "review")); return; }
         const extracted = await extractRes.json();
         documentText = extracted.text;
         wordCount = extracted.wordCount;
@@ -877,7 +947,10 @@ export default function LexPage() {
         wordCount = documentText.split(/\s+/).filter(Boolean).length;
       }
 
-      if (!documentText.trim()) throw new Error("No text could be extracted from the document.");
+      if (!documentText.trim()) {
+        setReviewError({ kind: "empty", title: "No text found", message: "No text could be read from this document. Try a text-based PDF or DOCX, or paste the text.", canRetry: false, signIn: false });
+        return;
+      }
 
       const reviewRes = await fetch("/api/lex-review", {
         method: "POST",
@@ -892,12 +965,12 @@ export default function LexPage() {
         }),
       });
 
-      if (!reviewRes.ok) throw new Error((await reviewRes.json()).error ?? "Review failed");
+      if (!reviewRes.ok) { setReviewError(await lexErrorFromResponse(reviewRes, "review")); return; }
       const report = await reviewRes.json() as ReviewReport;
       report.wordCount = report.wordCount || wordCount;
       setReviewReport(report);
-    } catch (e: unknown) {
-      setReviewError((e as Error).message ?? "Review failed. Please try again.");
+    } catch {
+      setReviewError(lexNetworkError("review"));
     } finally {
       clearInterval(stageTimer);
       setReviewLoading(false);
@@ -1508,8 +1581,15 @@ export default function LexPage() {
             {/* Output panel */}
             <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", minWidth: 0 }}>
 
+              {/* Error state */}
+              {draftError && !draftLoading && !draftText && (
+                <div style={{ padding: 32 }}>
+                  <LexErrorCard error={draftError} onRetry={() => sendDraft()} />
+                </div>
+              )}
+
               {/* Empty state */}
-              {!draftText && !draftLoading && (
+              {!draftText && !draftLoading && !draftError && (
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, textAlign: "center" }}>
                   <div style={{ width: 64, height: 64, borderRadius: 16, background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round">
@@ -1724,6 +1804,12 @@ export default function LexPage() {
                 </div>
               </div>
             ))}
+
+            {!loading && researchError && researchError.threadId === activeId && (
+              <div style={{ display: "flex", gap: 12, marginBottom: 20, marginLeft: 40 }}>
+                <LexErrorCard error={researchError.error} onRetry={() => sendMessage(researchError.retryText, { retry: true })} />
+              </div>
+            )}
 
             {loading && (
               <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
@@ -2188,10 +2274,7 @@ export default function LexPage() {
               {/* Error state */}
               {reviewError && !reviewLoading && (
                 <div style={{ padding: 32 }}>
-                  <div style={{ padding: "16px 20px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "#23344f" }}>
-                    <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#ef4444" }}>Review failed</p>
-                    <p style={{ margin: 0, fontSize: 12, color: "#fca5a5" }}>{reviewError}</p>
-                  </div>
+                  <LexErrorCard error={reviewError} onRetry={() => sendReview()} />
                 </div>
               )}
 
@@ -2216,7 +2299,7 @@ export default function LexPage() {
                         <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textMuted }}>
                           {submitDone ? "Submitted to supervisor." : "Send to client or submit for partner review."}
                         </p>
-                        {submitError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>{submitError}</p>}
+                        {submitError && <div style={{ marginTop: 8 }}><LexErrorCard error={submitError} onRetry={() => submitForSupervision()} /></div>}
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI: ${reviewReport.documentType}`); }} style={{
