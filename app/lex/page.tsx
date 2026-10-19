@@ -100,6 +100,7 @@ export default function LexPage() {
   const [navOpen, setNavOpen] = useState(false);
   // Shown in the sidebar only; thread sync still keys on userEmail from the portal session.
   const [displayEmail, setDisplayEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [firmUsage, setFirmUsage] = useState<FirmUsage | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
@@ -206,6 +207,8 @@ export default function LexPage() {
 
       const lexMe: Promise<string | null> = fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => {
         if (typeof d?.email === "string") setDisplayEmail(d.email);
+        if (typeof d?.name === "string" && d.name) setDisplayName(d.name);
+        if (d?.admin === true) setDisplayName("Saabai admin");
         setIsAdmin(d?.admin === true);
         if (d?.usage && typeof d.usage.reviews === "number") setFirmUsage(d.usage as FirmUsage);
         return typeof d?.email === "string" ? d.email : null;
@@ -971,7 +974,7 @@ export default function LexPage() {
         onNewProject={newProject} onMoveThread={moveThreadToProject}
         expanded={expandedProjects}
         toggleProject={(id) => setExpandedProjects(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
-        firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail}
+        firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail} userName={displayName}
         matterCount={matters.filter(m => m.status !== "closed").length}
         onFirmSettings={() => { setSettingsOpen(true); setNavOpen(false); }} onIntake={() => { setIntakeOpen(true); setNavOpen(false); }}
       />
