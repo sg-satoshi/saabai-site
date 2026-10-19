@@ -5,7 +5,8 @@ import { Card, CardBody, CardHeader } from "../../ui/Card";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { confirmDialog, notify } from "../../ui/Feedback";
-import { brisbaneLabel, describeCoverage, normaliseCode, shareLinks } from "@/lib/coupons/core";
+import { describeCoverage, normaliseCode, shareLinks } from "@/lib/coupons/core";
+import { formatInstant, localInputToIso, zoneAbbr } from "@/lib/coupons/time";
 import ProductPicker from "./ProductPicker";
 
 interface Code {
@@ -40,7 +41,7 @@ function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?:
   );
 }
 
-const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, oncePerCustomer: false, minimumSpend: "", maxRedemptions: "", startsAt: "", expiresAt: "" };
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, oncePerCustomer: false, minimumSpend: "", maxRedemptions: "", startsAt: "", startsTime: "", expiresAt: "", expiresTime: "" };
 
 export default function OffersClient() {
   const [codes, setCodes] = useState<Code[] | null>(null);
@@ -51,6 +52,11 @@ export default function OffersClient() {
   const [formErr, setFormErr] = useState<string | null>(null);
   const [settingUp, setSettingUp] = useState(false);
   const [filter, setFilter] = useState<"active" | "all">("active");
+  const [tz, setTz] = useState<{ name: string; abbr: string } | null>(null);
+  useEffect(() => {
+    const name = Intl.DateTimeFormat().resolvedOptions().timeZone || "Australia/Brisbane";
+    setTz({ name, abbr: zoneAbbr(Date.now(), name) });
+  }, []);
 
   const load = useCallback(async () => {
     setErr(null);
@@ -76,7 +82,7 @@ export default function OffersClient() {
     try {
       const res = await fetch("/api/admin/coupons", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...f, targetMode: undefined, targets: f.targetMode === "selected" ? f.targets : [], value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
+        body: JSON.stringify({ ...f, startsTime: undefined, expiresTime: undefined, startsAt: localInputToIso(f.startsAt, f.startsTime, "start", tz?.name ?? "Australia/Brisbane"), expiresAt: localInputToIso(f.expiresAt, f.expiresTime, "end", tz?.name ?? "Australia/Brisbane"), targetMode: undefined, targets: f.targetMode === "selected" ? f.targets : [], value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Couldn't create the code");
@@ -210,13 +216,20 @@ export default function OffersClient() {
               </div>
               <div className="of-f">
                 <label htmlFor="of-start">Starts</label>
-                <input id="of-start" type="date" value={f.startsAt} onChange={(e) => setF({ ...f, startsAt: e.target.value })} />
-                <p className="hint">Not live until 12:00 am Brisbane time on this day. Leave blank to start now. Applies to links we send and to Sell and Payments. A customer typing the code into Stripe&apos;s own promo box can&apos;t be held back, so for a hard launch date create the code on the day.</p>
+                <div className="of-row">
+                  <input id="of-start" type="date" value={f.startsAt} onChange={(e) => setF({ ...f, startsAt: e.target.value })} />
+                  <input id="of-start-time" type="time" aria-label="Start time" value={f.startsTime} onChange={(e) => setF({ ...f, startsTime: e.target.value })} disabled={!f.startsAt} />
+                </div>
+                <p className="hint">Not live until this exact date and time. Time left blank means 12:00 am. Leave the date blank to start now. Applies to links we send and to Sell and Payments. A customer typing the code into Stripe&apos;s own promo box can&apos;t be held back, so for a hard launch create the code at launch time.</p>
               </div>
               <div className="of-f">
                 <label htmlFor="of-exp">Expires</label>
-                <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
-                <p className="hint">Works until 11:59 pm Brisbane time on this day. Leave blank for no expiry.</p>
+                <div className="of-row">
+                  <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
+                  <input id="of-exp-time" type="time" aria-label="Expiry time" value={f.expiresTime} onChange={(e) => setF({ ...f, expiresTime: e.target.value })} disabled={!f.expiresAt} />
+                </div>
+                <p className="hint">Works until the end of this minute. Time left blank means 11:59 pm. Leave the date blank for no expiry.</p>
+                {tz && <p className="hint" data-testid="of-tz">Times are in {tz.name} ({tz.abbr}), your browser&apos;s timezone. Customers see start times in Brisbane time.</p>}
               </div>
               {formErr && <p className="of-err" role="alert">{formErr}</p>}
               <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value || (f.targetMode === "selected" && f.targets.length === 0)}>{saving ? "Creating…" : "Create code"}</Button>
@@ -247,7 +260,7 @@ export default function OffersClient() {
                   {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
                 </div>
                 <div className="muted of-meta">
-                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.startsAt && c.startsAt * 1000 > Date.now() ? ` · starts ${brisbaneLabel(c.startsAt)}` : ""}{c.expiresAt ? ` · until ${brisbaneLabel(c.expiresAt)}` : " · no expiry"}
+                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.startsAt && c.startsAt * 1000 > Date.now() ? ` · starts ${formatInstant(c.startsAt)}` : ""}{c.expiresAt ? ` · until ${formatInstant(c.expiresAt)}` : " · no expiry"}
                 </div>
                 {c.active && (
                   <div className="r2 of-acts">
