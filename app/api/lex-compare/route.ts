@@ -1,10 +1,23 @@
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { gateCompare } from "../../../lib/lex-review-access";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+/**
+ * Lex firm users and admins only, with a per-firm daily compare cap (LEX_COMPARE_DAILY_CAP).
+ * A request that fails is refunded so it does not use up the firm's allowance.
+ */
 export async function POST(request: Request): Promise<Response> {
+  const gate = await gateCompare(request);
+  if (!gate.ok) return gate.response;
+  const res = await runCompare(request);
+  if (!res.ok) await gate.refund();
+  return res;
+}
+
+async function runCompare(request: Request): Promise<Response> {
   try {
     const body = await request.json() as {
       documentA: string;
