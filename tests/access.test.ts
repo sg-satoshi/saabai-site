@@ -218,7 +218,7 @@ test("admin audit: writes are logged with the signed-in actor, GETs are not, no 
 });
 
 test("every grantable area is reachable by at least one prefix and none overlap with admin-only routes", () => {
-  for (const a of AREAS) assert.notEqual(areaForPath({ coupons: "/api/admin/coupons", products: "/api/admin/products", chatbots: "/api/admin/chatbots", experiments: "/api/admin/experiments", orders: "/api/admin/orders", customers: "/api/admin/customers", announcements: "/api/admin/announcements", billing: "/api/admin/billing/x", users: "/api/user-directory" }[a]), "admin-only", a);
+  for (const a of AREAS) assert.notEqual(areaForPath({ coupons: "/api/admin/coupons", products: "/api/admin/products", chatbots: "/api/admin/chatbots", experiments: "/api/admin/experiments", orders: "/api/admin/orders", customers: "/api/admin/customers", announcements: "/api/admin/announcements", billing: "/api/admin/billing/x", roadmap: "/api/admin/roadmap", users: "/api/user-directory" }[a]), "admin-only", a);
   assert.equal(areaForPath("/api/admin/impersonate"), "admin-only");
 });
 
