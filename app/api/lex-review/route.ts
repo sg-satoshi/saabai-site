@@ -145,7 +145,7 @@ export async function POST(request: Request): Promise<Response> {
       report = JSON.parse(text);
     } catch {
       return Response.json(
-        { error: "Analysis failed — could not parse review output" },
+        { error: "Analysis failed, could not parse review output" },
         { status: 500 }
       );
     }
@@ -158,7 +158,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json(report);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-review]", err);
+    return Response.json({ error: "review_failed" }, { status: 500 });
   }
 }

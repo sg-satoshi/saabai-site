@@ -1,3 +1,4 @@
+import { lexErrorResponse, stripErrorAnswers } from "../../../lib/lex-errors";
 import { streamText, tool, jsonSchema, stepCountIs, type SystemModelMessage } from "ai";
 import { getPremiumModel } from "../../../lib/chat-config";
 import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
@@ -63,7 +64,9 @@ export async function POST(req: Request) {
       // Non-fatal — fall back to base system prompt if Redis is unavailable
     }
 
-    const coreMessages = (messages as Array<{ role: string; content: string }>)
+    if (!Array.isArray(messages)) return lexErrorResponse(400, "messages required");
+    // Old threads may hold a saved error message; it is not an answer and never goes to the model.
+    const coreMessages = stripErrorAnswers(messages as Array<{ role: string; content: string }>)
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
       .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
@@ -400,6 +403,6 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("[lex-research]", err);
-    return new Response(String(err), { status: 500 });
+    return lexErrorResponse(500, "research_failed");
   }
 }
