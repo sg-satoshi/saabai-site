@@ -83,3 +83,15 @@ test("migrate-sites no longer ships a slug with a space", async () => {
   assert.ok(!/slug: "Tributum Law"/.test(src));
   assert.match(src, /Upsert by client/);
 });
+
+test("dropdown keeps hardcoded v2 only when it is the canonical record", async () => {
+  const { canonicalOnly } = await import("../lib/site-dedupe");
+  const { APP_ROUTER_SITES } = await import("../lib/site-registry");
+  const v2 = APP_ROUTER_SITES.find((s) => s.id === "tributum-law-v2")!;
+  const hard = new Set(["tributum-law-v2"]);
+  const trib = FIXTURE.filter((s) => s.id.includes("trib")) as never[];
+  const kept = canonicalOnly([...trib, v2], (id) => ({ users: id === "tributum-law-v2" ? ["mathew"] : [], billing: false }), hard).map((s) => s.id);
+  assert.deepEqual(kept, ["tributum-law-v2"]);
+  const kept2 = canonicalOnly([...trib, v2], (id) => ({ users: id === "site_7_trib2" ? ["mathew"] : [], billing: false }), hard).map((s) => s.id);
+  assert.deepEqual(kept2, ["site_7_trib2"]);
+});
