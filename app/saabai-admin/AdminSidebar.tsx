@@ -241,6 +241,18 @@ export default function AdminShell({
     setDrawer(false);
   }, [pathname]);
 
+  const [me, setMe] = useState<{ name: string; email?: string; roleLabel: string; twoFactor: boolean } | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/admin/2fa", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (live && d?.me) setMe(d.me); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const meName = me ? me.name || "Your Name" : "Signed in";
+  const meInitial = me ? (me.name ? me.name.trim().charAt(0).toUpperCase() : "Y") : "?";
+
   const crumb =
     title ||
     NAV.flatMap((g) => g.items).find((i) => isActive(pathname, i.href))?.label ||
@@ -269,10 +281,11 @@ export default function AdminShell({
         toggleGroup={toggleGroup}
       />
       <div className="me">
-        <div className="av">SG</div>
+        <div className="av">{meInitial}</div>
         <div style={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}>
-          <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>Shane Goldberg</div>
-          <div style={{ fontSize: 12, color: "#8f95c0" }}>Owner · 2FA on</div>
+          <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>{meName}</div>
+          <div style={{ fontSize: 12, color: "#8f95c0" }}>{me ? `${me.roleLabel} · 2FA ${me.twoFactor ? "on" : "off"}` : "\u00a0"}</div>
+          {me?.email ? <div style={{ fontSize: 11, color: "#8f95c0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{me.email}</div> : null}
         </div>
         <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
           <input type="hidden" name="next" value="admin" />
