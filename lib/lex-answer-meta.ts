@@ -17,8 +17,10 @@ export const ConclusionsSchema = z.object({
     confidence: z.enum(["high", "moderate", "low"]),
     basis: z.string().describe("Why that confidence: settled rule, fact dependent, conflicting authority, no primary source, etc."),
     citeIds: z.array(z.string()).describe("Source ids (S1, S2...) that support it, only from the list given"),
-  })).max(8),
-  verify: z.array(z.string()).max(8).describe("Specific things the lawyer should check before relying on the answer"),
+  })).describe("At most 8 conclusions"),
+  // No .max(): Anthropic native structured output does not accept maxItems (the likely cause of
+  // every live confidence pass failing on Sonnet 4.6). Lengths are capped in code instead.
+  verify: z.array(z.string()).describe("At most 8 specific things the lawyer should check before relying on the answer"),
 });
 
 const RANK = { low: 0, moderate: 1, high: 2 } as const;
@@ -68,11 +70,12 @@ export async function buildAnswerMeta(model: LanguageModel, answerText: string, 
         "Only use source ids from the list. Plain English, Australian spelling, no em dashes.",
       prompt: `SOURCES (id | type | title | citation check):\n${sourceList || "(none)"}\n\nANSWER:\n${renderMarkers(answerText, citations).slice(0, 12000)}`,
     }).finally(() => clearTimeout(timer));
-    const conclusions = tightenConclusions(object.conclusions, reg, citations);
-    const verify = [...new Set([...problems, ...object.verify.map((v) => noDashes(v.trim()).slice(0, 300))])].slice(0, 10);
+    const conclusions = tightenConclusions(object.conclusions.slice(0, 8), reg, citations);
+    const verify = [...new Set([...problems, ...object.verify.slice(0, 8).map((v) => noDashes(v.trim()).slice(0, 300))])].slice(0, 10);
     return buildMeta(reg, citations, conclusions, verify);
   } catch (err) {
-    console.error("[lex-answer-meta]", err instanceof Error ? err.name : err);
+    const e = err as { name?: string; statusCode?: number; responseBody?: string };
+    console.error("[lex-answer-meta]", e?.name ?? err, e?.statusCode ?? "", String(e?.responseBody ?? "").slice(0, 300));
     return buildMeta(reg, citations, [], [...problems, "The confidence check could not run for this answer. Treat every conclusion as unchecked."]);
   }
 }
