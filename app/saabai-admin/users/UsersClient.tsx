@@ -515,7 +515,8 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    // The page shows its own specific error; no generic global toast over it.
+    <form onSubmit={handleSubmit} data-no-feedback>
       <Field label="Full name" required>
         <TextInput value={name} onChange={setName} placeholder="Jane Smith" autoFocus={!isEdit} />
       </Field>
