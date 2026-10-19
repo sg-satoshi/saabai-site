@@ -29,6 +29,7 @@ const PROTECTED_PAGES = [
   "/pulse",
   "/mission-control",
   "/atlas-memory-control",
+  "/lex",                // Lex research tool (signed-in Lex users only; the public sales page is /legal)
 ];
 
 // ── API authorization tiers ──────────────────────────────────────────────
@@ -70,9 +71,7 @@ const PUBLIC_API = [
   "/api/bo-contact",
   "/api/lmm-contact",
   "/api/leadgen/chat",
-  // Public Lex tools on the /lex page (no session check in handlers today)
-  "/api/lex-extract",
-  "/api/lex-compare",
+  // /api/lex-extract and /api/lex-compare are NOT public: they fall through to the session check like the other Lex APIs.
   // Public lead / contact capture
   "/api/rex-leads",
   "/api/lex-leads",
@@ -149,9 +148,9 @@ const ADMIN_API = [
   "/api/growth",
   "/api/mission-control",
   "/api/lex-settings",
-  "/api/lex-review-queue",
-  "/api/lex-review-submit",
-  "/api/lex-review",
+  "/api/lex-review-queue",   // supervisor queue across firms: genuinely admin
+  // /api/lex-review and /api/lex-review-submit are NOT admin-only: signed-in Lex firm users run them,
+  // and each route checks the caller and the firm's daily cap (lib/lex-review-access).
   "/api/rex-woo-backfill",
   "/api/rex-price-test",
   "/api/rex-pipedrive-sync",
@@ -489,7 +488,8 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);
   const login = new URL(isAdminArea ? "/saabai-admin/login" : "/login", req.url);
-  login.searchParams.set("redirect", pathname);
+  // Keep the query string so e.g. /lex?q=... lands back in the same place after sign-in (login runs it through safeRedirect).
+  login.searchParams.set("redirect", pathname + req.nextUrl.search);
   return NextResponse.redirect(login);
 }
 
