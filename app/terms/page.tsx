@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/sb.css";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Terms",
-  description: "General terms for Saabai website care plans and the Saabai Blueprint.",
-  alternates: { canonical: "https://www.saabai.ai/terms" },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/terms",
+  title: "Terms | Saabai",
+  description: "Terms for Saabai website builds, care plans and the Saabai Blueprint, including prices, refunds and cancellation. Prices in AUD, GST not applicable.",
+});
 
 const SECTIONS: { heading: string; body: string }[] = [
   { heading: "1. Who we are", body: "These terms apply to services supplied by Saabai (ABN 71 889 082 572, Merrimac QLD 4226, Australia), a sole trader business operated by Shane Goldberg. Contact: hello@saabai.ai." },
@@ -24,6 +26,7 @@ const SECTIONS: { heading: string; body: string }[] = [
 export default function TermsPage() {
   return (
     <div className="sb">
+      <JsonLd data={breadcrumbSchema([{ name: "Terms", path: "/terms" }])} />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>

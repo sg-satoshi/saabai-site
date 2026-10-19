@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Lex, AI Legal Research for Australian Law Firms",
-  description:
-    "AI-powered legal research, document drafting, and QA verification built for Australian solicitors. Search AustLII, ATO, Federal Legislation instantly. Draft trust deeds, BFAs, and commercial agreements with clause-by-clause verification.",
-};
+export const metadata: Metadata = pageMeta({
+  path: "/legal",
+  title: "Lex: AI Legal Research for Australian Law Firms | Saabai",
+  description: "Lex searches AustLII, ATO rulings and Australian legislation and cites every source. Drafting with clause-by-clause QA. Firm plan $299 a month.",
+});
 
 // ── Brand palette ──────────────────────────────────────────────────────────────
 const C = {
@@ -96,6 +98,29 @@ function IconArrow() {
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
+const LEX_FAQS = [
+  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches AustLII, ATO rulings and Australian legislation, and every answer cites its source." },
+  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan. No lock-in, cancel any time." },
+  { q: "Can I rely on Lex's answers?", a: "Lex cites every source so you can check it. Always cite-check before use in practice." },
+];
+
+const lexSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Lex",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: "https://www.saabai.ai/legal",
+  publisher: orgRef,
+  offers: {
+    "@type": "Offer",
+    name: "Firm",
+    price: 299,
+    priceCurrency: "AUD",
+    priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
+  },
+};
+
 export default function LegalPage() {
   return (
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -112,6 +137,9 @@ export default function LegalPage() {
         }
       `}</style>
 
+      <JsonLd data={lexSchema} />
+      <JsonLd data={faqSchema(LEX_FAQS)} />
+      <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
       <Nav activePage="/legal" />
 
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
@@ -223,6 +251,18 @@ export default function LegalPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* ── 2. CLIENT PROOF ────────────────────────────────────────────────── */}
+      <section style={{
+        padding: "36px 32px",
+        borderBottom: `1px solid rgba(255,255,255,0.06)`,
+        textAlign: "center",
+      }}>
+        <p style={{ fontSize: 15, color: C.textMuted, margin: 0, lineHeight: 1.6 }}>
+          Tributum Law, an Adelaide, South Australia ATO dispute and tax law firm, uses Lex for legal research.{" "}
+          <a href="https://tributumlaw.com" target="_blank" rel="noopener noreferrer" style={{ color: C.gold, textDecoration: "underline" }}>Visit Tributum Law</a>
+        </p>
       </section>
 
       {/* ── 3. FEATURE GRID ────────────────────────────────────────────────── */}
@@ -767,6 +807,21 @@ export default function LegalPage() {
           <p style={{ textAlign: "center", fontSize: 13, color: C.textDim, marginTop: 28 }}>
             No lock-in. Cancel anytime. Australian-hosted.
           </p>
+        </div>
+      </section>
+
+      {/* ── 8b. FAQ ───────────────────────────────────────────────────────── */}
+      <section style={{ padding: "72px 32px 0" }}>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <h2 style={{ fontSize: "clamp(24px, 3.4vw, 32px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 24px", textAlign: "center" }}>
+            Lex questions
+          </h2>
+          {LEX_FAQS.map((f) => (
+            <div key={f.q} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 24px", marginBottom: 12 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px", color: C.text }}>{f.q}</h3>
+              <p style={{ fontSize: 15, color: C.textMuted, lineHeight: 1.7, margin: 0 }}>{f.a}</p>
+            </div>
+          ))}
         </div>
       </section>
 

@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
+import JsonLd from "../../components/JsonLd";
+import { pageMeta, breadcrumbSchema, orgRef } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "PlasticOnline Case Study: Rex, AI Quoting Agent",
+export const metadata: Metadata = pageMeta({
+  path: "/case-studies/rex-plastics-online",
+  title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
   description:
     "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
-  alternates: {
-    canonical: "https://www.saabai.ai/case-studies/rex-plastics-online",
-  },
-  openGraph: {
-    url: "https://www.saabai.ai/case-studies/rex-plastics-online",
-    title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
-    description:
-      "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
-  },
+});
+
+const rexArticle = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How PlasticOnline (Holland Plastics) Took Repetitive Quoting Off Their Sales Team",
+  about: { "@type": "Organization", name: "PlasticOnline (Holland Plastics)", url: "https://plasticonline.com.au" },
+  author: orgRef,
+  publisher: orgRef,
+  mainEntityOfPage: "https://www.saabai.ai/case-studies/rex-plastics-online",
 };
 
 const stats = [
@@ -27,6 +31,8 @@ const stats = [
 export default function RexPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={breadcrumbSchema([{ name: "Case studies", path: "/case-studies" }, { name: "PlasticOnline", path: "/case-studies/rex-plastics-online" }])} />
+      <JsonLd data={rexArticle} />
       <Nav />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
@@ -45,6 +51,10 @@ export default function RexPlasticsCaseStudy() {
               "radial-gradient(ellipse 40% 30% at 50% 20%, var(--saabai-glow) 0%, transparent 70%)",
           }}
         />
+
+        <a href="/case-studies" className="relative inline-block mb-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+          ← All case studies
+        </a>
 
         {/* Tags */}
         <div className="relative flex flex-wrap items-center gap-3 mb-10">
@@ -110,6 +120,9 @@ export default function RexPlasticsCaseStudy() {
               A cut-to-size plastics supplier serving trade and retail
               customers across Australia.
             </p>
+            <a href="https://plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="inline-block mt-3 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors">
+              Visit PlasticOnline
+            </a>
           </div>
           <div>
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-4">
@@ -337,6 +350,11 @@ export default function RexPlasticsCaseStudy() {
             Operations Manager, PlasticOnline (Holland Plastics)
           </p>
         </blockquote>
+        <p className="mt-10">
+          <a href="/use-cases" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+            More AI examples for product businesses →
+          </a>
+        </p>
       </section>
 
       {/* ── Bridge to Blueprint CTA ────────────────────────────────────────────── */}

@@ -2,23 +2,34 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema, orgRef } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Case Studies, AI Results for Australian Businesses",
-  description:
-    "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  alternates: { canonical: "https://www.saabai.ai/case-studies" },
-  openGraph: {
-    url: "https://www.saabai.ai/case-studies",
-    title: "Case Studies, AI Results for Australian Businesses | Saabai",
-    description:
-      "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  },
+export const metadata: Metadata = pageMeta({
+  path: "/case-studies",
+  title: "AI Chatbot and Automation Case Studies, Australia | Saabai",
+  // Meta description held (batch 2 item 34) until the Tributum case study is confirmed. Current wording kept.
+  description: "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
+});
+
+// Article schema for the PlasticOnline case study only. The Tributum Law article is held until that case study is confirmed.
+const plasticOnlineArticle = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "PlasticOnline (Holland Plastics)",
+  about: { "@type": "Organization", name: "PlasticOnline (Holland Plastics)", url: "https://plasticonline.com.au" },
+  author: orgRef,
+  publisher: orgRef,
+  url: "https://www.saabai.ai/case-studies#plasticonline",
+  mainEntityOfPage: "https://www.saabai.ai/case-studies",
 };
 
 export default function CaseStudies() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "Case studies", path: "/case-studies" }])} />
+      <JsonLd data={plasticOnlineArticle} />
 
       <Nav />
 
@@ -179,7 +190,7 @@ export default function CaseStudies() {
       </section>
 
       {/* ── Case Study 2, PlasticOnline (Holland Plastics) ───────────────────── */}
-      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+      <section id="plasticonline" className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 mb-12">
@@ -288,6 +299,15 @@ export default function CaseStudies() {
             Operations Manager, PlasticOnline (Holland Plastics)
           </p>
         </blockquote>
+
+        <p className="mt-10">
+          <a href="/case-studies/rex-plastics-online" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+            Read the full PlasticOnline case study →
+          </a>
+          <a href="https://plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="ml-8 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+            Visit PlasticOnline
+          </a>
+        </p>
 
       </section>
 

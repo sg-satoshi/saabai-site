@@ -1,90 +1,15 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { pageMeta, breadcrumbSchema } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
+import LinkedText from "../components/LinkedText";
 
-export const metadata: Metadata = {
-  title: "FAQ, Websites, AI Audits and Automation",
-  description:
-    "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
-  alternates: { canonical: "https://www.saabai.ai/faq" },
-  openGraph: {
-    url: "https://www.saabai.ai/faq",
-    title: "FAQ, Websites, AI Audits and Automation | Saabai",
-    description:
-      "Straight answers about websites, AI and automation for Australian small businesses: care plans from $100 a month, Blueprint AI audits from $497, timelines and how Saabai works.",
-  },
-};
-
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "We're not a tech company. Is AI automation actually for us?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "This is almost exclusively for non-tech businesses. Tradies, clinics, studios, agencies, retailers and local service businesses across Australia. These are exactly who we work with. Your team doesn't need to understand how any of it works. You just get the time back.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How long does it take to get AI automation live?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Will AI automation work with our existing software tools?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Almost certainly yes. We build on top of the tools you already have: your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How much does AI automation typically cost?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days of delivery. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. The price only goes above a 'from' figure for custom integrations or other additional work, and we quote that in writing before any work starts. Not sure where to start? The free AI Readiness Score takes a few minutes.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Is the strategy call really free?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes, genuinely free. No invoice, no follow-up pressure, no free call that turns into a two-hour pitch. If we don't think we can help, we'll say so on the call and point you somewhere useful.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "We tried automation before and it didn't stick. Why would this be different?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal, not an afterthought.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "I run a trade or local service business. What does AI actually do for us?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What about privacy and data security?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "We design with data handling in mind from the start and only connect the tools you approve. Your requirements are discussed upfront and the setup is built around them. Most of what we automate is enquiries, follow-up and scheduling, not sensitive records.",
-      },
-    },
-  ],
-};
+export const metadata: Metadata = pageMeta({
+  path: "/faq",
+  title: "AI Automation FAQ for Small Businesses: Cost, Time | Saabai",
+  description: "Plain answers on what AI automation costs, how long it takes and whether it suits your business. Blueprint from $497, websites from $2,000.",
+});
 
 const faqs = [
   {
@@ -109,7 +34,7 @@ const faqs = [
       },
       {
         q: "Will this replace our staff?",
-        a: "That's rarely the goal, and frankly not what our clients want. The aim is to remove the low-value, repetitive work that drains your team's time, so your people can focus on the work that actually requires their expertise. Most businesses that automate well find their team becomes more effective, not redundant.",
+        a: "No. The aim is to take repetitive work off your team, not to replace people. The aim is to remove the low-value, repetitive work that drains your team's time, so your people can focus on the work that actually requires their expertise. Most businesses that automate well find their team becomes more effective, not redundant.",
       },
     ],
   },
@@ -216,13 +141,31 @@ const faqs = [
   },
 ];
 
+// One schema Question per visible question, with the exact visible question and answer text
+// (including any link label shown after the answer).
+const faqPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.flatMap((c) => c.items).map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: "link" in item && item.link ? `${item.a} ${item.link.label}` : item.a,
+    },
+  })),
+};
+
+const ANSWER_LINKS = [
+  { phrase: "free calculator", href: "/calculator" },
+  { phrase: "free AI Readiness Score", href: "/score" },
+];
+
 export default function FAQ() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      <JsonLd data={faqPageSchema} />
+      <JsonLd data={breadcrumbSchema([{ name: "FAQ", path: "/faq" }])} />
 
       <Nav activePage="/faq" />
 
@@ -284,9 +227,9 @@ export default function FAQ() {
           id={id}
           className={`py-16 px-6 max-w-3xl mx-auto ${catIndex > 0 ? "border-t border-saabai-border" : ""}`}
         >
-          <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-8">
+          <h2 className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-8">
             {category}
-          </p>
+          </h2>
 
           <div
             className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden"
@@ -302,7 +245,7 @@ export default function FAQ() {
                 </summary>
                 <div className="px-8 pb-7 pt-1">
                   <p className="text-base text-saabai-text-muted leading-relaxed">
-                    {a}
+                    <LinkedText text={a} links={ANSWER_LINKS} />
                     {"link" in rest && rest.link ? (
                       <>
                         {" "}

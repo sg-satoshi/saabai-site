@@ -5,6 +5,7 @@ import CheckoutClient from "./CheckoutClient";
 export const metadata: Metadata = {
   title: "Checkout: Saabai Blueprint",
   robots: { index: false, follow: false },
+  alternates: { canonical: "https://www.saabai.ai/blueprint/checkout" },
 };
 
 export default async function CheckoutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

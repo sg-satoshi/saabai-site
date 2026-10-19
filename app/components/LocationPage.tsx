@@ -37,28 +37,12 @@ export default function LocationPage({ config }: Props) {
   };
 
   // ── JSON-LD Schemas ──────────────────────────────────────────────────────
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    "@id": "https://www.saabai.ai/#business",
-    name: "Saabai",
-    url: "https://www.saabai.ai",
-    description: seo.description,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Gold Coast",
-      addressRegion: "QLD",
-      addressCountry: "AU",
-    },
-    areaServed: areaServed,
-  };
-
   const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
     name: `Websites and AI automation in ${city}`,
     url: seo.canonical,
-    provider: { "@id": "https://www.saabai.ai/#business" },
+    provider: { "@id": "https://www.saabai.ai/#organization" },
     areaServed: areaServed,
     hasOfferCatalog: {
       "@type": "OfferCatalog",
@@ -107,10 +91,6 @@ export default function LocationPage({ config }: Props) {
 
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -372,12 +352,32 @@ export default function LocationPage({ config }: Props) {
               </p>
             </div>
           </div>
-          <a
-            href="/case-studies"
-            className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
-          >
-            See more case studies &rarr;
-          </a>
+          <div className="flex flex-wrap gap-x-8 mt-6">
+            {caseStudy.caseStudyHref && (
+              <a
+                href={caseStudy.caseStudyHref}
+                className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+              >
+                {caseStudy.caseStudyLabel ?? "Read the case study →"}
+              </a>
+            )}
+            {caseStudy.website && (
+              <a
+                href={caseStudy.website.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+              >
+                {caseStudy.website.label}
+              </a>
+            )}
+            <a
+              href="/case-studies"
+              className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+            >
+              See more case studies &rarr;
+            </a>
+          </div>
         </div>
       </section>
 

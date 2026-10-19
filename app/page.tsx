@@ -5,15 +5,17 @@ import HeroCta from "./components/exp/HeroCta";
 import SbFooter from "./components/sb/SbFooter";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
+import { pageMeta, faqSchema } from "@/lib/seo-meta";
+import JsonLd from "./components/JsonLd";
 
-export const metadata: Metadata = {
-  title: { absolute: "AI Blueprint for Small Businesses | Saabai" },
-  description:
-    "The Saabai Blueprint shows small businesses and professional practices exactly where AI can save hours every week, what each task costs to automate, and what you will save. Start with the free 3 minute AI score.",
-  alternates: { canonical: "/" },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/",
+  title: "AI Plans and Websites for Small Businesses | Saabai, Gold Coast",
+  description: "Saabai helps Australian small businesses use AI. Get a ranked AI plan from $497, or a website with an AI chatbot from $2,000. Start with a free AI score.",
+});
 
 const FAQS = [
+  { q: "What does Saabai do?", a: "Saabai is a Gold Coast business that builds websites with an AI chatbot for Australian small businesses, and runs the Saabai Blueprint, a fixed-price AI plan from $497. Most clients start with the free AI score." },
   { q: "What is the AI Readiness Score?", a: "A free 3 minute quiz with 12 questions about how your business runs. You get an instant score out of 100, a breakdown by area and three quick wins you can use this week." },
   { q: "Do I need a new website to get a Blueprint?", a: "No. The Blueprint looks at your whole business, including your current website and tools. Many clients start with a Blueprint and decide on a website later." },
   { q: "How is the Blueprint fee credited?", a: "Book any Saabai build within 30 days of receiving your Blueprint and the full Blueprint fee comes off your build invoice." },
@@ -23,6 +25,7 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
+      <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div className="hero">
@@ -114,6 +117,9 @@ export default function Home() {
               </div>
             </a>
           </div>
+          <div style={{ textAlign: "center", marginTop: 28 }}>
+            <a className="btn ghost" href="/case-studies">See the case studies →</a>
+          </div>
         </div>
       </section>
 
@@ -147,7 +153,7 @@ export default function Home() {
         <div className="wrap">
           <div className="head">
             <span className="eyebrow">Web Solutions packages</span>
-            <h2 style={{ marginTop: 12 }}>Built, hosted and managed for you</h2>
+            <h2 style={{ marginTop: 12 }}>Websites built, hosted and managed for you</h2>
           </div>
           <div className="grid3">
             <div className="card pkg">
@@ -179,7 +185,7 @@ export default function Home() {
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap" style={{ maxWidth: 860 }}>
-          <div className="head"><h2>Common questions</h2></div>
+          <div className="head"><h2>Common questions about AI for small businesses</h2></div>
           {FAQS.map((f) => (
             <details className="faq" key={f.q}>
               <summary>{f.q}<span aria-hidden>+</span></summary>

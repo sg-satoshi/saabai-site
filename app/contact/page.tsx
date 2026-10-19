@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/sb.css";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema, orgRef } from "@/lib/seo-meta";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Contact Saabai by email or book a call. Merrimac, working across the Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
-  alternates: { canonical: "https://www.saabai.ai/contact" },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/contact",
+  title: "Contact Saabai, Gold Coast AI and Websites | Saabai",
+  description: "Email hello@saabai.ai or book a free 30 minute call with Shane. Based in Merrimac QLD, working with the Gold Coast, Brisbane and Australia-wide.",
+});
 
 const ROWS: [string, string][] = [
   ["Email", "hello@saabai.ai"],
@@ -23,6 +24,8 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "ContactPage", url: "https://www.saabai.ai/contact", name: "Contact Saabai", about: orgRef, mainEntity: orgRef }} />
+      <JsonLd data={breadcrumbSchema([{ name: "Contact", path: "/contact" }])} />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>

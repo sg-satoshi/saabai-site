@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { pageMeta } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Our AI Automation Process, Blueprint to Deployment",
-  description:
-    "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  alternates: { canonical: "https://www.saabai.ai/process" },
-  openGraph: {
-    url: "https://www.saabai.ai/process",
-    title: "Our AI Automation Process, Blueprint to Deployment | Saabai",
-    description:
-      "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/process",
+  title: "How Saabai Works: Blueprint to Live Automation | Saabai",
+  description: "Four steps: Saabai Blueprint, system design, build and deploy, ongoing care. Most clients have a first automation live 2 to 4 weeks after the Blueprint.",
+});
 
 const steps = [
   {
@@ -53,6 +49,8 @@ const steps = [
 export default function Process() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "How we work", path: "/process" }])} />
 
       <Nav activePage="/process" />
 

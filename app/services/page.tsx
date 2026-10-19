@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, faqSchema, breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Websites, AI Audits and Automation for Small Businesses",
-  description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  alternates: { canonical: "https://www.saabai.ai/services" },
-  openGraph: {
-    url: "https://www.saabai.ai/services",
-    title: "Websites, AI Audits and Automation for Small Businesses | Saabai",
-    description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  },
+export const metadata: Metadata = pageMeta({
+  path: "/services",
+  title: "AI Automation Services for Small Businesses | Saabai",
+  description: "Websites with AI chatbots, a fixed-price AI audit and custom automations for Australian small businesses. Care from $100 a month, Blueprint from $497.",
+});
+
+const AI_SEARCH_FAQ = {
+  q: "What is AI search visibility?",
+  a: "It is whether ChatGPT, Claude, Perplexity and Gemini mention your business when someone asks for a recommendation. Every Saabai Blueprint checks this and compares you with local competitors.",
 };
 
-const services: { title: string; description: string; benefits: string[]; href?: string; price?: string }[] = [
+const services: { title: string; description: string; benefits: string[]; href?: string; price?: string; faq?: { q: string; a: string } }[] = [
   {
     title: "Website Care Plans",
     price: "$100, $200 or $300 a month",
@@ -55,11 +55,12 @@ const services: { title: string; description: string; benefits: string[]; href?:
       "Side-by-side competitor comparison",
       "Copy-paste fixes for your site",
     ],
+    faq: AI_SEARCH_FAQ,
   },
   {
     title: "AI Chat Agents & Automations",
     price: "Scoped from your Blueprint",
-    href: "/blueprint",
+    href: "/use-cases",
     description:
       "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
     benefits: [
@@ -120,6 +121,9 @@ const results = [
 export default function Services() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "Services", path: "/services" }])} />
+      <JsonLd data={faqSchema([AI_SEARCH_FAQ])} />
 
       <Nav activePage="/services" />
 
@@ -183,7 +187,7 @@ export default function Services() {
           What We Do
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
-          Four things, done properly.
+          Our services: websites, AI audits, AI search visibility and automation
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-20 leading-relaxed">
           Most small businesses don&apos;t need an &ldquo;AI transformation&rdquo;.
@@ -192,7 +196,7 @@ export default function Services() {
         </p>
 
         <div className="grid md:grid-cols-2 md:auto-rows-fr gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {services.map(({ title, description, benefits, href, price }) => (
+          {services.map(({ title, description, benefits, href, price, ...rest }) => (
             <div
               key={title}
               className="bg-saabai-surface p-8 md:p-12 hover:bg-saabai-surface-raised transition-colors relative group flex flex-col"
@@ -211,6 +215,12 @@ export default function Services() {
                   </li>
                 ))}
               </ul>
+              {"faq" in rest && rest.faq ? (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-saabai-text mb-1">{rest.faq.q}</h4>
+                  <p className="text-sm text-saabai-text-muted leading-relaxed">{rest.faq.a}</p>
+                </div>
+              ) : null}
               {href && (
                 <a href={href} className="mt-auto pt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
                   Learn more →
@@ -321,7 +331,7 @@ export default function Services() {
           Results From Live Client Systems
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
-          Time recovered. Costs reduced. Capacity unlocked.
+          Results from live client systems
         </h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -338,6 +348,9 @@ export default function Services() {
             </div>
           ))}
         </div>
+        <p className="text-center mt-10">
+          <a href="/case-studies" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">See the case studies →</a>
+        </p>
       </section>
 
       {/* ── Final CTA ───────────────────────────────────────────────────── */}

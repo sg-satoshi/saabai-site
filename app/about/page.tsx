@@ -3,23 +3,21 @@ import Image from "next/image";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import { pageMeta } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "About Saabai and Founder Shane Goldberg",
-  description:
-    "Saabai is a Gold Coast AI business for Australian small businesses, founded by Shane Goldberg. Website care plans from $100 a month and the Saabai Blueprint AI audit from $497.",
-  alternates: { canonical: "https://www.saabai.ai/about" },
-  openGraph: {
-    url: "https://www.saabai.ai/about",
-    title: "About Saabai and Founder Shane Goldberg | Saabai",
-    description:
-      "Saabai is a Gold Coast AI business for Australian small businesses, founded by Shane Goldberg. Website care plans from $100 a month and the Saabai Blueprint AI audit from $497.",
-  },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/about",
+  title: "About Saabai and Founder Shane Goldberg, Gold Coast | Saabai",
+  description: "Saabai is a Gold Coast AI business founded by Shane Goldberg. Websites with AI chatbots and fixed-price AI audits for Australian small businesses.",
+});
 
 export default function About() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "About", path: "/about" }])} />
 
       <Nav activePage="/about" />
 
@@ -84,7 +82,7 @@ export default function About() {
               />
             </div>
             <div>
-              <p className="text-base font-semibold text-saabai-text tracking-tight">Shane Goldberg</p>
+              <h2 className="text-base font-semibold text-saabai-text tracking-tight">Shane Goldberg</h2>
               <p className="text-sm text-saabai-text-dim mt-0.5">Founder, Saabai · Gold Coast, QLD</p>
             </div>
           </div>
@@ -119,9 +117,9 @@ export default function About() {
       <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
           <div>
-            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
+            <h2 className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
               Our Mission
-            </p>
+            </h2>
             <div className="w-8 h-px bg-saabai-teal/50 mt-4" />
           </div>
           <div>
@@ -139,9 +137,9 @@ export default function About() {
       <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
           <div>
-            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
+            <h2 className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
               Live in Production
-            </p>
+            </h2>
             <div className="w-8 h-px bg-saabai-teal/50 mt-4" />
           </div>
           <div className="flex flex-col gap-5">
@@ -151,6 +149,9 @@ export default function About() {
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Neither client had to rip out their existing tools. Both were live within weeks.
             </p>
+            <a href="/case-studies" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+              See the case studies →
+            </a>
           </div>
         </div>
       </section>
@@ -159,9 +160,9 @@ export default function About() {
       <section className="py-24 px-6 max-w-4xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-[200px_1fr] gap-12 items-start">
           <div>
-            <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
+            <h2 className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-3">
               Our Philosophy
-            </p>
+            </h2>
             <div className="w-8 h-px bg-saabai-teal/50 mt-4" />
           </div>
           <div className="flex flex-col gap-6">

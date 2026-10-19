@@ -330,7 +330,7 @@ export default function Calculator() {
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
           Find out how much of this
           <br />
-          <span className="text-gradient">your firm could recover.</span>
+          <span className="text-gradient">your business could recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map the highest-value

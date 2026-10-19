@@ -20,6 +20,11 @@ export interface LocationCaseStudy {
   industry: string;
   context: string;
   outcome: string;
+  /** Internal case study page, if there is one. */
+  caseStudyHref?: string;
+  caseStudyLabel?: string;
+  /** The client's own website. */
+  website?: { href: string; label: string };
 }
 
 export interface LocationIndustryLink {
@@ -153,6 +158,9 @@ export const BRISBANE: LocationConfig = {
   ],
   caseStudy: {
     client: "PlasticOnline (Holland Plastics)",
+    caseStudyHref: "/case-studies/rex-plastics-online",
+    caseStudyLabel: "Read the PlasticOnline case study →",
+    website: { href: "https://plasticonline.com.au", label: "Visit PlasticOnline" },
     industry: "Manufacturing & Industrial Supply",
     context:
       "Holland Plastics sells cut-to-size plastics where every order needs individual pricing based on material, dimensions and finishing. Quoting was a manual, expert-dependent task that capped how many enquiries the team could handle in a day.",
@@ -213,12 +221,12 @@ export const BRISBANE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for where automation saves your Brisbane business the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Brisbane",
+    title: "AI Automation and Websites, Brisbane",
     description:
-      "Brisbane websites from $2,000 plus $100/mo and AI automation plans from $497. Built for small businesses and trades. Free AI score. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Brisbane | Saabai",
+      "Websites with AI chatbots for Brisbane small businesses from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497. Free AI score.",
+    ogTitle: "AI Automation and Websites, Brisbane | Saabai",
     ogDescription:
-      "Brisbane small businesses: managed websites and a Saabai Blueprint for AI automation. Take the free AI Readiness Score.",
+      "Websites with AI chatbots for Brisbane small businesses from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497. Free AI score.",
     canonical: `${BASE_URL}/brisbane`,
   },
 };
@@ -313,6 +321,9 @@ export const GOLD_COAST: LocationConfig = {
   ],
   caseStudy: {
     client: "PlasticOnline (Holland Plastics)",
+    caseStudyHref: "/case-studies/rex-plastics-online",
+    caseStudyLabel: "Read the PlasticOnline case study →",
+    website: { href: "https://plasticonline.com.au", label: "Visit PlasticOnline" },
     industry: "Manufacturing & Industrial Supply",
     context:
       "Gold Coast-based Holland Plastics sells cut-to-size plastics, where every order is individually priced on material, size and finishing. Manual quoting limited how many enquiries the small team could process and tied up expert staff in routine pricing.",
@@ -373,12 +384,12 @@ export const GOLD_COAST: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "Websites & AI Automation Gold Coast | Local Team",
+    title: "AI Automation and Websites, Gold Coast",
     description:
-      "Gold Coast based. Websites built, hosted and managed from $2,000 plus $100/mo, and Saabai Blueprint AI plans from $497 for small businesses. Free AI score.",
-    ogTitle: "Websites & AI Automation Gold Coast | Local Team | Saabai",
+      "Gold Coast based websites with AI chatbots from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497 for local small businesses.",
+    ogTitle: "AI Automation and Websites, Gold Coast | Saabai",
     ogDescription:
-      "Saabai is a Gold Coast team building websites and AI systems for local small businesses. Take the free AI Readiness Score.",
+      "Gold Coast based websites with AI chatbots from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497 for local small businesses.",
     canonical: `${BASE_URL}/gold-coast`,
   },
 };
