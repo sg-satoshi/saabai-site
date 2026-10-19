@@ -438,7 +438,10 @@ export async function POST(req: Request) {
 
             fetch(`${BASE_URL}/api/leads`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "x-internal-token": process.env.CRON_SECRET ?? "",
+              },
               body: JSON.stringify({
                 source: "mia_qualified",
                 name: sessionData.visitorFacts.name,
