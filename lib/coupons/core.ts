@@ -2,6 +2,7 @@
  * Coupons: pure helpers shared by the admin API, checkout and webhooks.
  * No Stripe calls here so it runs in tests and on the client.
  */
+import { formatInstant, parseInstant, SITE_TZ } from "./time";
 
 export const TARGETS = [
   { id: "all", label: "All products", group: "All" },
@@ -54,8 +55,7 @@ export function codeStartsAt(meta: Record<string, string | undefined> | null | u
 /** Clear customer-facing message when a code hasn't started yet, otherwise null. */
 export function notStartedMessage(code: string, startsAt: number | null, nowMs = Date.now()): string | null {
   if (!startsAt || startsAt * 1000 <= nowMs) return null;
-  const day = new Date(startsAt * 1000).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric" });
-  return `The code ${code} isn't active yet. It starts on ${day}.`;
+  return `The code ${code} isn't active yet. It starts on ${formatInstant(startsAt, SITE_TZ)} (Brisbane time).`;
 }
 
 type PromoLike = { code: string; metadata?: Record<string, string> | null; promotion?: { coupon?: string | { metadata?: Record<string, string> | null } | null } | null };
@@ -67,9 +67,9 @@ export function promoNotStartedMessage(promo: PromoLike, nowMs = Date.now()): st
   return notStartedMessage(promo.code, codeStartsAt(meta), nowMs);
 }
 
-/** Format a unix expiry as a Brisbane date + time label. */
+/** Format a unix instant as a Brisbane date + time label, with the zone abbreviation. */
 export function brisbaneLabel(unix: number): string {
-  return new Date(unix * 1000).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+  return formatInstant(unix, SITE_TZ);
 }
 
 export function normaliseCode(v: unknown): string {
@@ -148,19 +148,21 @@ export function parseCouponInput(body: Record<string, unknown>): CouponInput | s
   const minSpend = parseFloat(String(body.minimumSpend ?? ""));
   const max = parseInt(String(body.maxRedemptions ?? ""), 10);
   let expiresAt: number | undefined;
-  if (typeof body.expiresAt === "string" && body.expiresAt.trim()) {
-    const ts = brisbaneEndOfDay(body.expiresAt.trim());
+  const hasEnd = typeof body.expiresAt === "number" || (typeof body.expiresAt === "string" && body.expiresAt.trim());
+  if (hasEnd) {
+    const ts = parseInstant(body.expiresAt, "end");
     if (ts == null) return "Expiry date isn't valid";
-    if (ts * 1000 <= Date.now()) return "Expiry must be today or later";
+    if (ts * 1000 <= Date.now()) return "Expiry must be in the future";
     expiresAt = ts;
   }
   let startsAt: number | undefined;
-  if (typeof body.startsAt === "string" && body.startsAt.trim()) {
-    const ts = brisbaneStartOfDay(body.startsAt.trim());
+  const hasStart = typeof body.startsAt === "number" || (typeof body.startsAt === "string" && body.startsAt.trim());
+  if (hasStart) {
+    const ts = parseInstant(body.startsAt, "start");
     if (ts == null) return "Start date isn't valid";
-    if (ts < brisbaneStartOfToday()) return "Start date can't be in the past";
-    if (ts * 1000 > Date.now()) startsAt = ts; // starting today = starts now, nothing to schedule
-    if (startsAt && expiresAt && startsAt >= expiresAt) return "Start date must be before the expiry date";
+    if (ts * 1000 < Date.now() - 86400e3) return "Start date can't be in the past"; // a start up to a day back just means "now" (admins can be in any timezone)
+    if (ts * 1000 > Date.now()) startsAt = ts; // already reached = starts now, nothing to schedule
+    if (expiresAt && ts >= expiresAt) return "Start date must be before the expiry date";
   }
   return {
     code, kind, value, duration,
