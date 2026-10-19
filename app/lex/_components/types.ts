@@ -12,4 +12,4 @@ export type ChatMessage = {
 export const ATTACH_MARK = "\n\n--- Attached document: ";
 export type Thread = { id: string; title: string; messages: ChatMessage[]; createdAt: number; projectId?: string };
 export type Project = { id: string; name: string; createdAt: number; colour: string };
-export type Mode = "research" | "draft" | "review";
+export type Mode = "research" | "draft" | "review" | "dashboard";
