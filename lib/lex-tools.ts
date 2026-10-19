@@ -90,7 +90,7 @@ async function siteSearch(
 /**
  * Search AustLII — the Australasian Legal Information Institute.
  * Covers: High Court, Federal Court, all State/Territory Supreme Courts,
- * AAT, VCAT, NCAT, QCAT, and 1000+ other tribunals and databases.
+ * ART (formerly AAT), VCAT, NCAT, QCAT, and 1000+ other tribunals and databases.
  *
  * @param query     Free-text legal query
  * @param jurisdiction  Optional: "HCA" | "FCA" | "NSWSC" | "VSC" | "QSC" | "WASC" etc.
@@ -200,14 +200,25 @@ export async function searchASIC(query: string): Promise<LegalSearchResponse> {
 }
 
 /**
- * Search Administrative Appeals Tribunal (AAT) decisions on AustLII.
- * Covers: tax objections, migration review, NDIS, social security, ATO appeals.
+ * Search Administrative Review Tribunal (ART) decisions on AustLII, plus the
+ * former Administrative Appeals Tribunal (AAT) for decisions before 14 Oct 2024.
+ * The ART replaced the AAT on 14 October 2024. AustLII databases: ARTA and AATA.
+ * Covers: tax objections, ATO reviews, migration, NDIS, social security.
  *
  * @param query  Legal query
  */
-export async function searchAAT(query: string): Promise<LegalSearchResponse> {
-  return siteSearch(query, "austlii.edu.au/au/cases/cth/aat", "Administrative Appeals Tribunal");
+export async function searchART(query: string): Promise<LegalSearchResponse> {
+  const [art, aat] = await Promise.all([
+    siteSearch(query, "austlii.edu.au/au/cases/cth/ARTA", "Administrative Review Tribunal (ART)", 4),
+    siteSearch(query, "austlii.edu.au/au/cases/cth/AATA", "Administrative Appeals Tribunal (AAT, before 14 Oct 2024)", 3),
+  ]);
+  const results = [...art.results, ...aat.results];
+  const error = art.error && aat.error ? art.error : undefined;
+  return { results, query, source: "Administrative Review Tribunal (ART) and former AAT", ...(error ? { error } : {}) };
 }
+
+/** @deprecated The AAT was replaced by the ART on 14 Oct 2024. Kept so saved firm tool lists keep working. */
+export const searchAAT = searchART;
 
 /**
  * Search Fair Work Commission decisions, awards, and determinations.

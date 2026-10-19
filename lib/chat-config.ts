@@ -40,7 +40,16 @@ export function parseModelSpec(raw: string | undefined, fallback: string): { pro
 }
 
 function resolveModel(envKey: string, fallback: string): LanguageModel {
-  const { provider, modelId, value } = parseModelSpec(process.env[envKey], fallback);
+  return modelFromSpec(process.env[envKey] ?? "", envKey, fallback);
+}
+
+/**
+ * Build a model from a "provider:model-id" value (same rules as the env vars above).
+ * `label` only appears in error messages, so a bad value names where it came from.
+ */
+export function modelFromSpec(raw: string, label: string, fallback = raw): LanguageModel {
+  const envKey = label;
+  const { provider, modelId, value } = parseModelSpec(raw, fallback);
 
   switch (provider) {
     case "anthropic":
