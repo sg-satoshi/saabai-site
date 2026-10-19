@@ -8,7 +8,7 @@
  * not to repeat, and answer 3 gets a direct response.
  */
 
-import { questionsForTier, START_QUESTION_IDS } from "./audit-factfind";
+import { legacyAnswers, questionsForTier, START_QUESTION_IDS } from "./audit-factfind";
 import { matrixAsPromptContext } from "./audit-capability-matrix";
 import {
   AuditAssessment,
@@ -55,6 +55,8 @@ export function buildAssessmentPrompt(engagement: AuditEngagement): string | nul
       return `Q: ${q.label}\nA (${r.mode}): ${val}`;
     })
     .filter(Boolean)
+    // Answers to retired questions (older fact-finds) are still used.
+    .concat(legacyAnswers(engagement.responses).map((l) => `Q: ${l.label}\nA (${engagement.responses[l.id].mode}): ${l.value}`))
     .join("\n\n");
 
   const told = startAnswers(engagement);

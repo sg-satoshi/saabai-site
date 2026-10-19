@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AdminShell from "../../AdminSidebar";
 import {
+  legacyAnswers,
   questionsForTier,
   sectionsForTier,
 } from "../../../../lib/audit-factfind";
@@ -435,6 +436,18 @@ export default function EngagementClient({ id }: { id: string }) {
                 Edit any answer live during the session, then save.
               </p>
             </div>
+            {legacyAnswers(eng.responses).length > 0 && (
+              <div style={card}>
+                <h3 style={{ margin: "0 0 4px", fontSize: 15, color: C.text }}>Earlier answers</h3>
+                <p style={{ margin: "0 0 16px", fontSize: 12.5, color: C.muted }}>Answers to questions no longer on the form. Still used by the assessment.</p>
+                {legacyAnswers(eng.responses).map((l) => (
+                  <div key={l.id} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: C.text, marginBottom: 3 }}>{l.label}</div>
+                    <div style={{ fontSize: 13.5, color: C.dim, whiteSpace: "pre-wrap" }}>{l.value}</div>
+                  </div>
+                ))}
+              </div>
+            )}
             {sections.map((s) => {
               const qs = questions.filter((q) => q.section === s.id);
               if (qs.length === 0) return null;

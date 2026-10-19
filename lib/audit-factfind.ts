@@ -365,17 +365,8 @@ export const FACTFIND_QUESTIONS: FactFindQuestion[] = [
   },
 
   // ── Pain ──────────────────────────────────────────────────────────────
-  {
-    id: "pain_biggest",
-    section: "pain",
-    label:
-      "If you could make one operational problem disappear tomorrow, what would it be?",
-    type: "textarea",
-    tiers: ALL,
-    required: true,
-    interviewPrompt:
-      "This is usually the emotional centre of the engagement. The report should visibly address it, even if it's not the top-ROI item.",
-  },
+  // pain_biggest was retired in fact-find v2 (it duplicated Start here answer 1).
+  // Older answers to it are kept and read via LEGACY_QUESTION_LABELS.
   {
     id: "pain_dropped_balls",
     section: "pain",
@@ -580,5 +571,25 @@ export function missingStartAnswers(
   return Object.values(START_QUESTION_IDS).filter((id) => {
     const v = values[id];
     return typeof v !== "string" || v.trim() === "";
+  });
+}
+
+/**
+ * Questions that have been removed from the form. Engagements that answered
+ * them keep those answers; the assessment and admin still read them by id.
+ */
+export const LEGACY_QUESTION_LABELS: Record<string, string> = {
+  pain_biggest: "If you could make one operational problem disappear tomorrow, what would it be?",
+};
+
+/** Stored answers to retired questions, as [label, value] pairs (blank ones skipped). */
+export function legacyAnswers(
+  responses: Record<string, { value: unknown }> | undefined
+): Array<{ id: string; label: string; value: string }> {
+  if (!responses) return [];
+  return Object.entries(LEGACY_QUESTION_LABELS).flatMap(([id, label]) => {
+    const v = responses[id]?.value;
+    if (v === undefined || v === null || v === "") return [];
+    return [{ id, label, value: Array.isArray(v) ? v.join(", ") : String(v) }];
   });
 }

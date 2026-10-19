@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { gaEvent } from "@/lib/ga";
+import { isFocusedFormPath } from "@/lib/focused-paths";
 
 const COOKIE_KEY = "saabai_subscribed";
 const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes", "/sites/cycle-repair"];
@@ -28,7 +29,7 @@ export default function EmailCapturePopup() {
   const show = useCallback(() => {
     if (hasCookie(COOKIE_KEY)) return;
     const path = window.location.pathname;
-    if (SKIP_PATHS.some(p => path.startsWith(p))) return;
+    if (SKIP_PATHS.some(p => path.startsWith(p)) || isFocusedFormPath(path)) return;
     const host = window.location.hostname;
     if (SKIP_HOSTNAMES.includes(host)) return;
     setVisible(true);

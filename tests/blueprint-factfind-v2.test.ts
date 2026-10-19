@@ -19,6 +19,8 @@ import { buildAssessmentPrompt, parseAssessmentText, rankAgainstFrustration } fr
 import { buildAuditReportDocx, whatYouToldUs } from "../lib/audit-report";
 import { demoEngagement, isDemoFactFindToken } from "../lib/audit-factfind-demo";
 import { AuditEngagement, AuditOpportunity, AuditTier } from "../lib/audit-types";
+import { legacyAnswers, LEGACY_QUESTION_LABELS } from "../lib/audit-factfind";
+import { isFocusedFormPath } from "../lib/focused-paths";
 
 const EM = /\u2014/;
 const START = Object.values(START_QUESTION_IDS);
@@ -52,7 +54,7 @@ test("spec wording is exact", () => {
 
 test("existing questions are unchanged and still follow the new section", () => {
   const ids = questionsForTier("starter", "other").map((q) => q.id);
-  for (const id of ["firm_overview", "team_admin_burden", "tools_pm", "workflow1_name", "pain_biggest", "goals_12mo"]) {
+  for (const id of ["firm_overview", "team_admin_burden", "tools_pm", "workflow1_name", "pain_dropped_balls", "goals_12mo"]) {
     assert.ok(ids.indexOf(id) > 2, id);
   }
   assert.equal(FACTFIND_SECTIONS.length, 10);
@@ -175,4 +177,27 @@ test("report docx builds with the new section and no em dashes", async () => {
   assert.match(xml, /GST not applicable/);
   assert.ok(xml.indexOf("What you told us") < xml.indexOf("Engagement Snapshot"));
   assert.ok(!EM.test(xml));
+});
+
+test("duplicate pain_biggest question is gone from every tier, older answers still feed the assessment", () => {
+  for (const t of ["starter", "pro", "business"] as AuditTier[]) {
+    assert.ok(!questionsForTier(t, "other").some((q) => q.id === "pain_biggest"), t);
+    assert.ok(questionsForTier(t, "other").some((q) => q.section === "pain"), `pain section still has questions for ${t}`);
+  }
+  const e = eng("pro");
+  e.responses.pain_biggest = { questionId: "pain_biggest", value: "Month-end reconciliations", answeredAt: new Date().toISOString(), mode: "client" };
+  assert.deepEqual(legacyAnswers(e.responses).map((l) => l.id), ["pain_biggest"]);
+  const p = buildAssessmentPrompt(e)!;
+  assert.match(p, /Month-end reconciliations/);
+  assert.ok(p.includes(LEGACY_QUESTION_LABELS.pain_biggest));
+  // without it, nothing breaks
+  assert.deepEqual(legacyAnswers(eng("pro").responses), []);
+  assert.ok(!buildAssessmentPrompt(eng("pro"))!.includes(LEGACY_QUESTION_LABELS.pain_biggest));
+  assert.deepEqual(legacyAnswers(undefined), []);
+});
+
+test("sales chrome is hidden on fact-find pages only", () => {
+  assert.ok(isFocusedFormPath("/audit/factfind/abc123"));
+  assert.ok(isFocusedFormPath("/audit/factfind"));
+  for (const p of ["/", "/blueprint", "/audit", "/audit/factfindx", "/blueprint/checkout", null, undefined]) assert.ok(!isFocusedFormPath(p), String(p));
 });
