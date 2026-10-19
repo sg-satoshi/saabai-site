@@ -272,6 +272,7 @@ export async function POST(req: Request) {
         ) {
           await saveLead({
             name: sessionData.visitorFacts.name as string | undefined,
+            email: sessionData.visitorFacts.email as string | undefined,
             business: sessionData.visitorFacts.business as string | undefined,
             industry: sessionData.visitorFacts.industry as string | undefined,
             team_size: sessionData.visitorFacts.team_size as string | undefined,
@@ -297,6 +298,12 @@ export async function POST(req: Request) {
           "You can call it multiple times as you learn more.",
         inputSchema: z.object({
           name: z.string().optional().describe("Visitor's first name or full name"),
+          email: z
+            .string()
+            .email()
+            .max(254)
+            .optional()
+            .describe("Visitor's email, only if they typed it in the chat themselves"),
           business: z
             .string()
             .optional()
@@ -435,6 +442,7 @@ export async function POST(req: Request) {
               body: JSON.stringify({
                 source: "mia_qualified",
                 name: sessionData.visitorFacts.name,
+                email: sessionData.visitorFacts.email,
                 business: sessionData.visitorFacts.business,
                 industry: sessionData.visitorFacts.industry,
                 team_size: sessionData.visitorFacts.team_size,
