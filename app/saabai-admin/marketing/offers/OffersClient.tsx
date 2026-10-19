@@ -5,19 +5,20 @@ import { Card, CardBody, CardHeader } from "../../ui/Card";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { confirmDialog, notify } from "../../ui/Feedback";
-import { TARGETS, brisbaneLabel, normaliseCode, targetLabel } from "@/lib/coupons/core";
+import { brisbaneLabel, describeCoverage, normaliseCode } from "@/lib/coupons/core";
+import ProductPicker from "./ProductPicker";
 
 interface Code {
   id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null;
   percentOff: number | null; amountOff: number | null; duration: string; durationMonths: number | null;
-  target: string; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
+  target: string; targets?: string[]; unknownProducts?: number; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
 }
 interface Target { id: string; label: string; productId: string | null; ready: boolean; note?: string }
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-AU", { minimumFractionDigits: c % 100 ? 2 : 0 })}`;
 const SITE = "https://www.saabai.ai";
 
-const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", target: "all", duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
 
 export default function OffersClient() {
   const [codes, setCodes] = useState<Code[] | null>(null);
@@ -44,7 +45,6 @@ export default function OffersClient() {
   useEffect(() => { load(); }, [load]);
 
   const careMissing = targets.some((t) => t.id.startsWith("care_") && !t.ready);
-  const tStatus = (id: string) => targets.find((t) => t.id === id);
   const shown = useMemo(() => (codes ?? []).filter((c) => filter === "all" || c.active), [codes, filter]);
   const activeCount = (codes ?? []).filter((c) => c.active).length;
   const redeemed = (codes ?? []).reduce((n, c) => n + c.timesRedeemed, 0);
@@ -54,7 +54,7 @@ export default function OffersClient() {
     try {
       const res = await fetch("/api/admin/coupons", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...f, value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
+        body: JSON.stringify({ ...f, targetMode: undefined, targets: f.targetMode === "selected" ? f.targets : [], value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Couldn't create the code");
@@ -98,8 +98,10 @@ export default function OffersClient() {
     if (c.maxRedemptions && c.timesRedeemed >= c.maxRedemptions) return <Badge tone="warn">Used up</Badge>;
     return <Badge tone="ok">Active</Badge>;
   };
-  const isBlueprintTarget = (t: string) => t === "all" || t.startsWith("blueprint");
-  const tierOf = (t: string) => (t.startsWith("blueprint_") ? t.slice(10) : "starter");
+  // Blueprint links: a code covering All or any Blueprint tier. Link goes to the first covered tier.
+  const bpTiers = (c: Code) => (c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target])).filter((t) => t.startsWith("blueprint_")).map((t) => t.slice(10));
+  const hasBlueprint = (c: Code) => ((c.targets ?? []).length === 0 && (c.target === "all" || c.target === "product") ? (c.unknownProducts ?? 0) === 0 : bpTiers(c).length > 0);
+  const tierOf = (c: Code) => bpTiers(c)[0] ?? "starter";
 
   return (
     <div className="pg">
@@ -152,21 +154,8 @@ export default function OffersClient() {
                   <input aria-label="Discount amount" type="number" inputMode="decimal" min="0" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder={f.kind === "percent" ? "50" : "100"} />
                 </div>
               </div>
-              <div className="of-f">
-                <label htmlFor="of-target">Works on</label>
-                <select id="of-target" value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })}>
-                  {["All", "Blueprint", "Website care"].map((g) => (
-                    <optgroup key={g} label={g}>
-                      {TARGETS.filter((t) => t.group === g).map((t) => {
-                        const s = tStatus(t.id);
-                        const ready = t.id === "all" || !!s?.ready;
-                        return <option key={t.id} value={t.id} disabled={!ready}>{t.label}{ready ? "" : " (not ready)"}</option>;
-                      })}
-                    </optgroup>
-                  ))}
-                </select>
-                {f.target.startsWith("care_") && <p className="hint">Discounts the monthly fee. Setup fees aren&apos;t discounted by a care plan code.</p>}
-              </div>
+              <ProductPicker mode={f.targetMode} value={f.targets} statuses={targets} onChange={(targetMode, t) => setF({ ...f, targetMode, targets: t })} />
+              {f.targets.some((t) => t.startsWith("care_")) && <p className="hint">Care plan codes discount the monthly fee. Setup fees aren&apos;t discounted. Minimum spend is checked against the whole order.</p>}
               <div className="of-f">
                 <label htmlFor="of-dur">How long (care plans)</label>
                 <select id="of-dur" value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as typeof f.duration })}>
@@ -199,7 +188,7 @@ export default function OffersClient() {
                 <p className="hint">Works until 11:59 pm Brisbane time on this day. Leave blank for no expiry.</p>
               </div>
               {formErr && <p className="of-err" role="alert">{formErr}</p>}
-              <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value}>{saving ? "Creating…" : "Create code"}</Button>
+              <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value || (f.targetMode === "selected" && f.targets.length === 0)}>{saving ? "Creating…" : "Create code"}</Button>
             </div>
           </CardBody>
         </Card>
@@ -221,7 +210,7 @@ export default function OffersClient() {
                 <div className="r1"><span className="of-code">{c.code}</span>{status(c)}</div>
                 <div className="of-tags">
                   <span className="tag bp">{off(c)}</span>
-                  <span className="tag">{c.target === "product" ? "1 product" : targetLabel(c.target)}</span>
+                  <span className="tag" title={(c.targets ?? []).length > 1 ? (c.targets ?? []).map((t) => describeCoverage([t])).join(", ") : undefined}>{describeCoverage(c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target]), c.unknownProducts)}</span>
                   {c.firstTimeOnly && <span className="tag ws">First-time only</span>}
                   {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
                 </div>
@@ -230,7 +219,7 @@ export default function OffersClient() {
                 </div>
                 {c.active && (
                   <div className="r2 of-acts">
-                    {isBlueprintTarget(c.target) && <Button size="sm" variant="gh" onClick={() => copy(`${SITE}/blueprint/checkout?tier=${tierOf(c.target)}&code=${c.code}`)}>Copy Blueprint link</Button>}
+                    {hasBlueprint(c) && <Button size="sm" variant="gh" onClick={() => copy(`${SITE}/blueprint/checkout?tier=${tierOf(c)}&code=${c.code}`)}>Copy Blueprint link</Button>}
                     <Button size="sm" variant="dg" onClick={() => deactivate(c)}>Turn off</Button>
                   </div>
                 )}

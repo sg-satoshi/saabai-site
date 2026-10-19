@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
-import { careProductFor, findActivePromo } from "../coupons/stripe";
+import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
 import { normaliseCode } from "../coupons/core";
 
 export const BILLING_SOURCE = "saabai-billing";
@@ -40,7 +40,10 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   const stripe = getStripe();
   // Fixed per-plan product (set up from Marketing > Offers & Coupons) so product-restricted codes match.
   const fixedProduct = await careProductFor(rec.planId);
-  const promo = code ? await findActivePromo(normaliseCode(code)) : null;
+  let promo = code ? await findActivePromo(normaliseCode(code)) : null;
+  // A product-restricted code (one or several products) only pre-applies if it covers this care plan.
+  // Otherwise skip the pre-apply so the customer still reaches Stripe, where they can retry a code.
+  if (promo && !promoCoversProducts(promo, [fixedProduct])) promo = null;
   const line_items: any[] = [
     {
       quantity: 1,
