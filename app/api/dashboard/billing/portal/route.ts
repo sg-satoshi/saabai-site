@@ -7,11 +7,14 @@ import { NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getClientSession } from "../../../../../lib/client-session";
 import { rejectIfImpersonatingReadOnlyCookies } from "../../../../../lib/impersonation";
+import { rejectIfLoginAs } from "../../../../../lib/login-as";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(req: Request) {
+  const loginAs = rejectIfLoginAs(req);
+  if (loginAs) return loginAs;
   const blocked = await rejectIfImpersonatingReadOnlyCookies();
   if (blocked) return blocked;
   const client = await getClientSession();

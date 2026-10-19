@@ -44,6 +44,7 @@ const PUBLIC_API = [
   "/api/auth/login",
   "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
+  "/api/auth/login-as/exit", // ends Login as; validates its own signed marker and the admin token inside
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
