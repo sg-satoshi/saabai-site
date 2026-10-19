@@ -60,7 +60,7 @@ export interface SiteConfig {
 }
 
 // App Router sites (hardcoded in code, not in Redis/Blob)
-const APP_ROUTER_SITES: SiteConfig[] = [
+export const APP_ROUTER_SITES: SiteConfig[] = [
   {
     id: "cycle-repair",
     slug: "cycle-repair",
@@ -182,6 +182,12 @@ export async function getSiteBySlug(slug: string): Promise<SiteConfig | null> {
   return sites.find(s => s.slug === slug) ?? null;
 }
 
+/** Raw Redis site records (no hardcoded merge). Used by the dedupe tool. */
+export async function listRedisSites(): Promise<SiteConfig[]> {
+  const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
+  return data ? Object.values(data).map(parseSiteValue).filter((s): s is SiteConfig => s !== null) : [];
+}
+
 export async function listSites(): Promise<SiteConfig[]> {
   try {
     const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
@@ -189,9 +195,12 @@ export async function listSites(): Promise<SiteConfig[]> {
       ? Object.values(data).map(parseSiteValue).filter((s): s is SiteConfig => s !== null)
       : [];
 
-    // Merge App Router sites, preferring Redis data if same slug exists
+    // Merge App Router sites, preferring Redis data for the same client (same slug, business name or custom domain).
+    const { nameKey, customDomains } = await import("./site-dedupe");
     const seen = new Set(redisSites.map((s) => s.slug));
-    const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug))];
+    const names = new Set(redisSites.map((s) => nameKey(s)).filter(Boolean));
+    const doms = new Set(redisSites.flatMap((s) => customDomains(s)));
+    const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug) && !names.has(nameKey(s)) && !customDomains(s).some((d) => doms.has(d)))];
 
     return merged;
   } catch {

@@ -6,7 +6,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
-import { createSite, getSiteBySlug } from "../../../../lib/site-registry";
+import { createSite, getSiteBySlug, listSites } from "../../../../lib/site-registry";
+import { normaliseSlug, nameKey, customDomains } from "../../../../lib/site-dedupe";
 
 export const runtime = "nodejs";
 
@@ -70,11 +71,11 @@ const SITES = [
     },
   },
   {
-    slug: "Tributum Law",
+    slug: "tributum-law",
     name: "Tributum Law",
     niche: "legal",
     source: "factory" as const,
-    url: "https://www.saabai.ai/sites/Tributum%20Law/",
+    url: "https://www.saabai.ai/sites/tributum-law/",
     business: { name: "Tributum Law" },
     chatbot: {
       enabled: true, name: "Tributum Assistant",
@@ -95,7 +96,10 @@ export async function POST() {
 
   const results: Array<{ slug: string; name: string; status: string }> = [];
   for (const s of SITES) {
-    const existing = await getSiteBySlug(s.slug);
+    // Upsert by client (normalised slug, business name or custom domain): never create a second record.
+    const existing = (await getSiteBySlug(s.slug)) ?? (await listSites()).find((x) =>
+      normaliseSlug(x.slug) === normaliseSlug(s.slug) || nameKey(x) === nameKey(s as never) ||
+      customDomains(x).some((d) => customDomains(s as never).includes(d)));
     if (existing && !existing.id.startsWith("legacy_")) {
       results.push({ slug: s.slug, name: s.name, status: "already registered" });
       continue;

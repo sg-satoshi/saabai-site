@@ -4,6 +4,9 @@
  */
 import { requireAdminSession } from "../../../../lib/admin-guard";
 import { listSites } from "../../../../lib/site-registry";
+import { listDirectoryUsers } from "../../../../lib/user-directory";
+import { listSiteBilling } from "../../../../lib/billing/store";
+import { canonicalOnly } from "../../../../lib/site-dedupe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +17,11 @@ function hostOf(u?: string): string {
 
 export async function GET() {
   if (!(await requireAdminSession())) return Response.json({ error: "Forbidden" }, { status: 403 });
-  const sites = await listSites();
+  const all = await listSites();
+  // One listing per client: duplicates fold into the canonical record (see lib/site-dedupe.ts).
+  const users = await listDirectoryUsers().catch(() => []);
+  const billed = new Set((await listSiteBilling().catch(() => [])).map((b) => b.siteId));
+  const sites = canonicalOnly(all, (id) => ({ users: users.filter((u) => u.siteId === id).map((u) => u.id), billing: billed.has(id) }));
   return Response.json({
     sites: sites
       // Archived and test sites are not offered for linking (a user already linked to one keeps it; the form shows the raw id).
