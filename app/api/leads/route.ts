@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { saveNurtureRecord } from "../../../lib/redis";
+import { isSuppressed, miaFooterHtml, unsubHeaders } from "../../../lib/growth/consent";
 
 export const runtime = "nodejs";
 
@@ -1108,7 +1109,8 @@ export async function POST(req: Request) {
       }
 
       // Visitor follow-up — send when they didn't request a transcript (fills the gap)
-      if (!isCalculator && lead.email && !lead.sendTranscript) {
+      const suppressed = lead.email ? await isSuppressed(lead.email).catch(() => false) : true;
+      if (!isCalculator && lead.email && !lead.sendTranscript && !suppressed) {
         const analysis = await analyseConversation(lead.conversation ?? []);
         const { subject: fuSubject, html: fuHtml } = buildVisitorFollowUpEmail({ ...lead, analysis });
         try {
@@ -1116,8 +1118,9 @@ export async function POST(req: Request) {
             from: "Shane at Saabai.ai <hello@saabai.ai>",
             to: [lead.email],
             subject: fuSubject,
-            html: fuHtml,
+            html: fuHtml + miaFooterHtml(lead.email),
             replyTo: "hello@saabai.ai",
+            headers: unsubHeaders(lead.email),
           });
         } catch (err) {
           console.error("[resend follow-up error]", err);
@@ -1125,7 +1128,7 @@ export async function POST(req: Request) {
       }
 
       // Enroll in nurture sequence — Day 2 and Day 5 emails via cron
-      if (!isCalculator && lead.email) {
+      if (!isCalculator && lead.email && !suppressed) {
         saveNurtureRecord({
           email: lead.email,
           name: lead.name,

@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { getPendingNurture, markNurtureSent } from "../../../../lib/redis";
+import { isSuppressed, miaFooterHtml, unsubHeaders } from "../../../../lib/growth/consent";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -7,7 +8,7 @@ export const maxDuration = 60;
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function buildDay2Html(name?: string, business?: string, industry?: string): { subject: string; html: string } {
+function buildDay2Html(name?: string, business?: string, industry?: string, footer = ""): { subject: string; html: string } {
   const firstName = name?.split(" ")[0] || null;
   const greeting = firstName ? `Hey ${firstName},` : "Hey,";
   const businessLine = business
@@ -36,15 +37,16 @@ function buildDay2Html(name?: string, business?: string, industry?: string): { s
           <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 32px;">Free · 30 minutes · No obligation</p>
           <div style="border-top: 1px solid #e8e8ec; padding-top: 20px;">
             <p style="font-size: 14px; color: #555; margin: 0 0 4px;">Shane Goldberg</p>
-            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
+            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI for small businesses and practices</p>
           </div>
+          ${footer}
         </div>
       </div>
     `,
   };
 }
 
-function buildDay5Html(name?: string, business?: string): { subject: string; html: string } {
+function buildDay5Html(name?: string, business?: string, footer = ""): { subject: string; html: string } {
   const firstName = name?.split(" ")[0] || null;
   const greeting = firstName ? `${firstName},` : "One last one —";
   const context = business
@@ -70,8 +72,9 @@ function buildDay5Html(name?: string, business?: string): { subject: string; htm
           <p style="text-align: center; font-size: 13px; color: #aaa; margin: 0 0 32px;">Free · 30 minutes · Pick your time</p>
           <div style="border-top: 1px solid #e8e8ec; padding-top: 20px;">
             <p style="font-size: 14px; color: #555; margin: 0 0 4px;">Shane Goldberg</p>
-            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI Automation for Professional Firms</p>
+            <p style="font-size: 13px; color: #999; margin: 0;">Saabai · AI for small businesses and practices</p>
           </div>
+          ${footer}
         </div>
       </div>
     `,
@@ -97,13 +100,20 @@ export async function GET(req: Request) {
   let day5Sent = 0;
   const errors: string[] = [];
 
+  let skipped = 0;
   for (const record of records) {
+    // Honour unsubscribes (Spam Act): never send to a suppressed address.
+    if (!record.email || (await isSuppressed(record.email).catch(() => false))) {
+      skipped++;
+      continue;
+    }
+    const footer = miaFooterHtml(record.email);
     const capturedMs = new Date(record.capturedAt).getTime();
     const daysSince = (now - capturedMs) / DAY_MS;
 
     // Day 2 — send between day 1.5 and day 3
     if (!record.day2Sent && daysSince >= 1.5 && daysSince < 3) {
-      const { subject, html } = buildDay2Html(record.name, record.business, record.industry);
+      const { subject, html } = buildDay2Html(record.name, record.business, record.industry, footer);
       try {
         await resend.emails.send({
           from: "Shane at Saabai.ai <hello@saabai.ai>",
@@ -111,17 +121,18 @@ export async function GET(req: Request) {
           subject,
           html,
           replyTo: "hello@saabai.ai",
+          headers: unsubHeaders(record.email),
         });
         await markNurtureSent(record.id, "day2");
         day2Sent++;
       } catch (err) {
-        errors.push(`day2 ${record.email}: ${String(err)}`);
+        errors.push(`day2 ${record.id}: ${String(err)}`);
       }
     }
 
     // Day 5 — send between day 4.5 and day 7
     if (!record.day5Sent && daysSince >= 4.5 && daysSince < 7) {
-      const { subject, html } = buildDay5Html(record.name, record.business);
+      const { subject, html } = buildDay5Html(record.name, record.business, footer);
       try {
         await resend.emails.send({
           from: "Shane at Saabai.ai <hello@saabai.ai>",
@@ -129,15 +140,16 @@ export async function GET(req: Request) {
           subject,
           html,
           replyTo: "hello@saabai.ai",
+          headers: unsubHeaders(record.email),
         });
         await markNurtureSent(record.id, "day5");
         day5Sent++;
       } catch (err) {
-        errors.push(`day5 ${record.email}: ${String(err)}`);
+        errors.push(`day5 ${record.id}: ${String(err)}`);
       }
     }
   }
 
-  console.log(`[mia-nurture] day2=${day2Sent} day5=${day5Sent} errors=${errors.length}`);
-  return Response.json({ ok: true, day2Sent, day5Sent, errors });
+  console.log(`[mia-nurture] day2=${day2Sent} day5=${day5Sent} skipped=${skipped} errors=${errors.length}`);
+  return Response.json({ ok: true, day2Sent, day5Sent, skipped, errors: errors.length });
 }
