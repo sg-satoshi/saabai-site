@@ -61,8 +61,14 @@ export function DraftingView(p: DraftingProps) {
 
   // Switch to suggestions once a draft exists; back to setup when it is cleared.
   const hasDraft = !!p.text;
-  useEffect(() => { setTab(hasDraft ? "suggest" : "setup"); if (!hasDraft) { setSel(null); setDoneAt(null); } }, [hasDraft]);
-  useEffect(() => { if (hasDraft && !p.loading) setDoneAt(new Date()); }, [hasDraft, p.loading]);
+  // Adjust state while rendering when the draft appears, clears or finishes (no effect round trip).
+  const phase = !hasDraft ? "none" : p.loading ? "writing" : "done";
+  const [seenPhase, setSeenPhase] = useState(phase);
+  if (phase !== seenPhase) {
+    setSeenPhase(phase);
+    if (phase === "none") { setTab("setup"); setSel(null); setDoneAt(null); }
+    else { if (seenPhase === "none") setTab("suggest"); if (phase === "done") setDoneAt(new Date()); }
+  }
   useEffect(() => { if (p.loading && p.text) bottomRef.current?.scrollIntoView({ block: "end" }); }, [p.text, p.loading]);
 
   const blocks = useMemo(() => splitDraft(p.text), [p.text]);
