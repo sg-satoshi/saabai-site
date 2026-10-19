@@ -9,6 +9,7 @@ import { z } from "zod";
 import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 import { saveLead, saveConversation } from "../../../lib/redis";
+import { CTA_STEPS } from "../../../lib/mia-cta";
 import { miaGlobalGate, safeFetchText, sanitizeMessages, sanitizePageContext, sanitizeVisitorProfile, urlWasShared } from "../../../lib/chat-safety";
 
 export const runtime = "nodejs";
@@ -216,6 +217,7 @@ export async function POST(req: Request) {
     };
     hotLeadFired: boolean;
     qualSummary?: string;
+    nextStep?: string;
   } = { visitorFacts: {}, hotLeadFired: false };
 
   const cachedSystem: SystemModelMessage = {
@@ -462,6 +464,23 @@ export async function POST(req: Request) {
           }
 
           return { shown: true, ...args };
+        },
+      }),
+
+      suggest_next_step: tool({
+        description:
+          "Show ONE call-to-action button matched to how ready the visitor is: " +
+          "'score' (free AI score, early or curious), 'blueprint' (clear problem, wants a plan), " +
+          "'websites' (wants a website), 'call' (wants a person, or custom/complex need). " +
+          "Use once you've been genuinely helpful and the step fits. Never two in a row. For 'call' you may use show_booking_cta instead.",
+        inputSchema: z.object({
+          step: z.enum(CTA_STEPS),
+          reason: z.string().describe("One short sentence on why this step fits."),
+        }),
+        execute: async ({ step, reason }) => {
+          sessionData.nextStep = step;
+          if (step === "call") sessionData.outcome = sessionData.outcome ?? "qualified";
+          return { shown: true, step, reason };
         },
       }),
 
