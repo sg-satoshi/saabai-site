@@ -172,7 +172,6 @@
 /* ── Empty state ─────────────────────────────────────── */
 .lx-hero{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 0}
 .lx-hero > div{width:100%;max-width:720px;text-align:center}
-.lx-hero img{width:44px;height:44px;margin-bottom:14px}
 .lx-hero h1{font-family:var(--serif);font-weight:600;font-size:32px;letter-spacing:-.01em;margin:0;color:var(--ink);line-height:1.25}
 .lx-hero > div > p{color:var(--muted);margin:8px 0 26px;font-size:15px}
 .lx-hero .lx-cbox{text-align:left}

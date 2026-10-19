@@ -103,8 +103,6 @@ export function EmptyState({ firmName, onPick, composer }: { firmName?: string; 
   return (
     <div className="lx-hero">
       <div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/favicon.svg" alt="" />
         <h1>What are we researching today?</h1>
         <p>Lex searches Australian case law, legislation and ATO material, and cites every claim with a pinpoint.</p>
         {composer}
