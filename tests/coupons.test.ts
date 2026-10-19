@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brisbaneEndOfDay, buildStripeParams, parseCouponInput, redemptionFrom, TARGETS, normaliseCode } from "../lib/coupons/core";
+import { brisbaneEndOfDay, buildStripeParams, parseCouponInput, redemptionFrom, TARGETS, normaliseCode, shareLinks } from "../lib/coupons/core";
 
 test("expiry is 11:59:59 pm Brisbane on the chosen day", () => {
   const ts = brisbaneEndOfDay("2026-10-31")!;
@@ -107,4 +107,33 @@ test("picker search matches label or group; blank returns all six", () => {
   assert.deepEqual(searchProductTargets("blueprint").map((t) => t.id), ["blueprint_starter", "blueprint_pro", "blueprint_business"]);
   assert.deepEqual(searchProductTargets("GROWTH").map((t) => t.id), ["care_growth"]);
   assert.equal(searchProductTargets("zzz").length, 0);
+});
+
+test("share links: All products offers every Blueprint tier with the code", () => {
+  const s = shareLinks("newclient50", []);
+  assert.deepEqual(s.links.map((l) => l.id), ["blueprint_starter", "blueprint_pro", "blueprint_business"]);
+  assert.equal(s.links[1].url, "https://www.saabai.ai/blueprint/checkout?tier=pro&code=NEWCLIENT50");
+  assert.equal(s.careNote, true);
+  assert.equal(s.paySuffix, "?code=NEWCLIENT50");
+});
+
+test("share links: single, multi and mixed coverage", () => {
+  assert.deepEqual(shareLinks("A1B", ["blueprint_pro"]).links.map((l) => l.id), ["blueprint_pro"]);
+  const multi = shareLinks("A1B", ["blueprint_starter", "blueprint_business", "care_growth"]);
+  assert.deepEqual(multi.links.map((l) => l.id), ["blueprint_starter", "blueprint_business"]);
+  assert.equal(multi.careNote, true);
+});
+
+test("share links: care-only code has no URL, only the pay-link suffix; unknown restriction offers none", () => {
+  const care = shareLinks("CARE20", ["care_presence", "care_signature"]);
+  assert.equal(care.links.length, 0);
+  assert.equal(care.careNote, true);
+  const unk = shareLinks("DASH", [], 2);
+  assert.equal(unk.links.length, 0);
+  assert.equal(unk.careNote, false);
+});
+
+test("share links: code is normalised and URL-encoded, custom base respected", () => {
+  const s = shareLinks("save 10&x=1", ["blueprint_starter"], 0, "http://localhost:3000");
+  assert.equal(s.links[0].url, "http://localhost:3000/blueprint/checkout?tier=starter&code=SAVE10X1");
 });

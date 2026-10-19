@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from "../../ui/Card";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { confirmDialog, notify } from "../../ui/Feedback";
-import { brisbaneLabel, describeCoverage, normaliseCode } from "@/lib/coupons/core";
+import { brisbaneLabel, describeCoverage, normaliseCode, shareLinks } from "@/lib/coupons/core";
 import ProductPicker from "./ProductPicker";
 
 interface Code {
@@ -17,6 +17,28 @@ interface Target { id: string; label: string; productId: string | null; ready: b
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-AU", { minimumFractionDigits: c % 100 ? 2 : 0 })}`;
 const SITE = "https://www.saabai.ai";
+
+type ShareInfoT = ReturnType<typeof shareLinks>;
+/** One Copy link control per coupon: a product choice appears only when the code covers several linkable products. */
+function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?: string; onPick: (id: string) => void; onCopy: (t: string) => void }) {
+  if (!info.links.length) {
+    return info.careNote
+      ? <Button size="sm" variant="gh" title="Care plan pay links are per client. Add this to the end of a client's pay link." onClick={() => onCopy(info.paySuffix)}>Copy ?code= for pay link</Button>
+      : null;
+  }
+  const current = info.links.find((l) => l.id === picked) ?? info.links[0];
+  return (
+    <>
+      {info.links.length > 1 && (
+        <select aria-label="Product for the link" className="of-linksel" value={current.id} onChange={(e) => onPick(e.target.value)}>
+          {info.links.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+        </select>
+      )}
+      <Button size="sm" variant="gh" title={current.url} onClick={() => onCopy(current.url)}>Copy link</Button>
+      {info.careNote && <Button size="sm" variant="gh" title="Care plan pay links are per client. Add this to the end of a client's pay link." onClick={() => onCopy(info.paySuffix)}>Copy ?code= for pay link</Button>}
+    </>
+  );
+}
 
 const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
 
@@ -87,7 +109,7 @@ export default function OffersClient() {
   }
 
   async function copy(text: string) {
-    try { await navigator.clipboard.writeText(text); notify.success("Link copied"); } catch { notify.error("Couldn't copy"); }
+    try { await navigator.clipboard.writeText(text); notify.success("Link copied"); } catch { window.prompt("Copy this link (Ctrl+C)", text); }
   }
 
   const off = (c: Code) => (c.percentOff != null ? `${c.percentOff}% off` : c.amountOff != null ? `${money(c.amountOff)} off` : "");
@@ -98,10 +120,9 @@ export default function OffersClient() {
     if (c.maxRedemptions && c.timesRedeemed >= c.maxRedemptions) return <Badge tone="warn">Used up</Badge>;
     return <Badge tone="ok">Active</Badge>;
   };
-  // Blueprint links: a code covering All or any Blueprint tier. Link goes to the first covered tier.
-  const bpTiers = (c: Code) => (c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target])).filter((t) => t.startsWith("blueprint_")).map((t) => t.slice(10));
-  const hasBlueprint = (c: Code) => ((c.targets ?? []).length === 0 && (c.target === "all" || c.target === "product") ? (c.unknownProducts ?? 0) === 0 : bpTiers(c).length > 0);
-  const tierOf = (c: Code) => bpTiers(c)[0] ?? "starter";
+  // Which product's link is chosen per code (only matters when a code covers several).
+  const [linkPick, setLinkPick] = useState<Record<string, string>>({});
+  const shareOf = (c: Code) => shareLinks(c.code, c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target]), c.unknownProducts ?? 0, SITE);
 
   return (
     <div className="pg">
@@ -219,7 +240,7 @@ export default function OffersClient() {
                 </div>
                 {c.active && (
                   <div className="r2 of-acts">
-                    {hasBlueprint(c) && <Button size="sm" variant="gh" onClick={() => copy(`${SITE}/blueprint/checkout?tier=${tierOf(c)}&code=${c.code}`)}>Copy Blueprint link</Button>}
+                    <CopyLink info={shareOf(c)} picked={linkPick[c.id]} onPick={(id) => setLinkPick({ ...linkPick, [c.id]: id })} onCopy={copy} />
                     <Button size="sm" variant="dg" onClick={() => deactivate(c)}>Turn off</Button>
                   </div>
                 )}
