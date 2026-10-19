@@ -48,7 +48,7 @@ export function Sidebar(props: {
   rename: Rename; setRename: (r: Rename) => void; onRenameThread: (id: string, v: string) => void; onRenameProject: (id: string, v: string) => void;
   onNewProject: () => void; onMoveThread: (threadId: string, projectId: string | null) => void;
   expanded: Set<string>; toggleProject: (id: string) => void;
-  firmName: string; firmLogo: string | null; userEmail: string | null; isAdmin: boolean;
+  firmName: string; firmLogo: string | null; userEmail: string | null;
   onFirmSettings: () => void; onIntake: () => void;
 }) {
   const { mode, setMode, threads, projects, activeId } = props;
@@ -130,7 +130,6 @@ export function Sidebar(props: {
         <div className="lx-label">Firm</div>
         <a className="lx-nav" href="/client-portal"><Icon name="dashboard" />Firm dashboard</a>
         <button type="button" className="lx-nav" onClick={props.onIntake}><Icon name="matters" />New matter intake</button>
-        {props.isAdmin && <a className="lx-nav" href="/saabai-admin/lex-settings"><Icon name="chip" />AI model settings</a>}
         <button type="button" className="lx-nav" onClick={props.onFirmSettings}><Icon name="settings" />Firm settings</button>
       </div>
 
