@@ -1,7 +1,7 @@
 import { streamText, stepCountIs, type SystemModelMessage } from "ai";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
-import { buildLexResearchTools, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
+import { buildLexResearchTools, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
@@ -85,6 +85,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       system: cachedSystem,
       messages: tokenizedMessages,
       stopWhen: stepCountIs(LEX_RESEARCH_MAX_STEPS),
+      prepareStep: finalStepAnswers(LEX_RESEARCH_MAX_STEPS),
       tools: buildLexResearchTools(config),
     });
 
