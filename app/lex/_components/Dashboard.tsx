@@ -51,7 +51,7 @@ export function FirmDashboard(props: {
           <button type="button" onClick={props.onNewResearch}><Icon name="research" /><b>New research</b><span>Ask a tax or legal question</span></button>
           <button type="button" onClick={props.onDraft}><Icon name="draft" /><b>Draft a document</b><span>Agreements, letters, advice</span></button>
           <button type="button" onClick={props.onReview}><Icon name="review" /><b>Review a document</b><span>Risks, redlines, compare</span></button>
-          <button type="button" onClick={props.onIntake}><Icon name="matters" /><b>New matter intake</b><span>Capture a new client matter</span></button>
+          <button type="button" onClick={props.onIntake}><Icon name="matters" /><b>New matter</b><span>Shared with your whole firm</span></button>
         </div>
 
         <div className="lxh-grid">

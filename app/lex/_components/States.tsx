@@ -90,7 +90,6 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
         </button>
         <input ref={fileRef} type="file" hidden accept=".pdf,.docx,.doc,.txt"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) onAttach?.(f); e.target.value = ""; }} />
-        <span className="lx-chip off" title="Matter context arrives with matters (coming soon)" aria-disabled="true">Matter context: soon</span>
         <button type="button" className="lx-send" onClick={onSend} disabled={disabled || attaching || !value.trim()} aria-label="Send">
           <Icon name="send" />
         </button>

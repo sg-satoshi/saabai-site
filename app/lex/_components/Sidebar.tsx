@@ -49,15 +49,15 @@ export function Sidebar(props: {
   onNewProject: () => void; onMoveThread: (threadId: string, projectId: string | null) => void;
   expanded: Set<string>; toggleProject: (id: string) => void;
   firmName: string; firmLogo: string | null; userEmail: string | null;
-  onFirmSettings: () => void; onIntake: () => void;
+  onFirmSettings: () => void; onIntake: () => void; matterCount?: number;
 }) {
   const { mode, setMode, threads, projects, activeId } = props;
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const loose = threads.filter((t) => !t.projectId || !projects.some((p) => p.id === t.projectId));
-  const nav = (m: Mode, icon: string, label: string) => (
+  const nav = (m: Mode, icon: string, label: string, count?: number) => (
     <button type="button" className={`lx-nav${mode === m ? " on" : ""}`} onClick={() => setMode(m)} aria-current={mode === m || undefined}>
-      <Icon name={icon} />{label}
+      <Icon name={icon} />{label}{count ? <small>{count}</small> : null}
     </button>
   );
   const item = (t: Thread, colour?: string) => (
@@ -86,6 +86,7 @@ export function Sidebar(props: {
       {nav("research", "research", "Research")}
       {nav("draft", "draft", "Drafting")}
       {nav("review", "review", "Doc review")}
+      {nav("matters", "matters", "Matters", props.matterCount)}
 
       <div className="lx-scroll">
         <div className="lx-label">Projects<button type="button" onClick={props.onNewProject} aria-label="New project">+ New</button></div>
@@ -129,7 +130,7 @@ export function Sidebar(props: {
 
         <div className="lx-label">Firm</div>
         {nav("dashboard", "dashboard", "Firm dashboard")}
-        <button type="button" className="lx-nav" onClick={props.onIntake}><Icon name="matters" />New matter intake</button>
+        <button type="button" className="lx-nav" onClick={props.onIntake}><Icon name="plus" />New matter</button>
         <button type="button" className="lx-nav" onClick={props.onFirmSettings}><Icon name="settings" />Firm settings</button>
       </div>
 
