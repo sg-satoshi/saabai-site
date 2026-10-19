@@ -491,7 +491,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
       : defaultAccess(),
   );
   const [adminExpiry] = useState(initial?.role === "admin" ? initial.access?.expiresAt : undefined);
-  const [sites, setSites] = useState<{ id: string; name: string }[]>([]);
+  const [sites, setSites] = useState<{ id: string; name: string; slug?: string; domain?: string; status?: string; createdAt?: number }[]>([]);
 
   useEffect(() => {
     fetch("/api/admin/client-sites")
@@ -563,7 +563,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
         >
           <option value="">No website linked</option>
           {siteId && !sites.some(x => x.id === siteId) && <option value={siteId}>{siteId}</option>}
-          {sites.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+          {sites.map(x => <option key={x.id} value={x.id}>{siteLabel(x)}</option>)}
         </select>
       </Field>
 
@@ -1782,4 +1782,13 @@ export default function UsersClient() {
       </Modal>
     </div>
   );
+}
+
+/** "Name (domain or slug), draft, added 3 Oct 2026" so same-named sites can be told apart. */
+function siteLabel(x: { name: string; slug?: string; domain?: string; status?: string; createdAt?: number }): string {
+  const where = x.domain && !x.domain.endsWith("saabai.ai") ? x.domain : x.slug || x.domain || "";
+  const bits = [where ? `${x.name} (${where})` : x.name];
+  if (x.status && x.status !== "live") bits.push(x.status);
+  if (x.createdAt) bits.push(`added ${new Date(x.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Brisbane" })}`);
+  return bits.join(", ");
 }
