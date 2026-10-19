@@ -480,7 +480,7 @@ export default function LexPage() {
             const localSaved = JSON.parse(localStorage.getItem(userKey) ?? "[]") as Thread[];
             if (localSaved.length > 0) { setThreads(localSaved); setActiveId(localSaved[0].id); }
           } catch {}
-          // Load from Redis — authoritative, works across devices
+          // Load from Redis: authoritative, works across devices
           const res = await fetch("/api/lex-threads");
           if (res.ok) {
             const data = await res.json();
@@ -496,7 +496,7 @@ export default function LexPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist threads — localStorage always, Redis (debounced 2s) when authenticated
+  // Persist threads: localStorage always, Redis (debounced 2s) when authenticated
   useEffect(() => {
     const storageKey = userEmail ? `lex_threads_${userEmail}` : "lex_threads";
     try { localStorage.setItem(storageKey, JSON.stringify(threads)); } catch {}
@@ -1016,7 +1016,7 @@ export default function LexPage() {
               const isExpanded = expandedProjects.has(project.id);
               return (
                 <div key={project.id} style={{ marginBottom: 4 }}>
-                  {/* Project header — also a drop target */}
+                  {/* Project header, also a drop target */}
                   <div style={{
                     display: "flex", alignItems: "center", gap: 5, padding: "5px 6px",
                     borderRadius: 7, cursor: "pointer",
@@ -1333,7 +1333,7 @@ export default function LexPage() {
               }}>
                 Export to Word
               </button>
-              <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI — ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }} style={{
+              <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }} style={{
                 background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
                 color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
               }}>
@@ -1558,7 +1558,7 @@ export default function LexPage() {
                       <div style={{ display: "flex", gap: 4 }}>
                         {[0,1,2].map(i => <span key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: C.gold, display: "block", animation: `lexDot 1.2s ease-in-out ${i*0.2}s infinite` }} />)}
                       </div>
-                      <span style={{ fontSize: 12, color: C.textMuted }}>Running QA verification — checking every citation and clause...</span>
+                      <span style={{ fontSize: 12, color: C.textMuted }}>Running QA verification, checking every citation and clause...</span>
                     </div>
                   )}
 
@@ -1601,7 +1601,7 @@ export default function LexPage() {
                       {draftQA.criticalIssues.length > 0 && (
                         <div style={{ padding: "16px 24px", background: "rgba(239,68,68,0.06)", borderBottom: `1px solid rgba(239,68,68,0.15)` }}>
                           <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: "#ef4444", letterSpacing: 0.5, textTransform: "uppercase" }}>
-                            Critical Issues — Must Review Before Use
+                            Critical Issues: Must Review Before Use
                           </p>
                           {draftQA.criticalIssues.map((issue, i) => (
                             <div key={i} style={{ display: "flex", gap: 8, marginTop: i > 0 ? 8 : 0 }}>
@@ -1675,7 +1675,7 @@ export default function LexPage() {
               <div style={{ textAlign: "center", paddingTop: 40 }}>
                 <LexMark size={56} />
                 <h1 style={{ margin: "16px 0 8px", fontSize: 26, fontWeight: 800, color: C.text }}>
-                  Lex — Australian Legal Research
+                  Lex: Australian Legal Research
                 </h1>
                 <p style={{ margin: "0 0 32px", fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>
                   Real-time research across AustLII, ATO, Federal Legislation, and international databases.
@@ -1752,7 +1752,7 @@ export default function LexPage() {
         </div>
         )}
 
-        {/* Input area — research mode only */}
+        {/* Input area, research mode only */}
         {mode === "research" && <div style={{
           borderTop: `1px solid ${C.border}`, background: C.surface,
           padding: "14px 24px 18px", flexShrink: 0,
@@ -1992,7 +1992,7 @@ export default function LexPage() {
                         </svg>
                         <p style={{ margin: 0, fontSize: 12, color: "#22c55e", fontWeight: 600 }}>{reviewFile.name}</p>
                         <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>
-                          {(reviewFile.size / 1024).toFixed(0)} KB — click to change
+                          {(reviewFile.size / 1024).toFixed(0)} KB, click to change
                         </p>
                       </>
                     ) : (
@@ -2001,7 +2001,7 @@ export default function LexPage() {
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                         <p style={{ margin: 0, fontSize: 12, color: C.textMuted, fontWeight: 500 }}>Drop file or click to browse</p>
-                        <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PDF, DOCX, DOC, TXT — max 10MB</p>
+                        <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PDF, DOCX, DOC or TXT, max 10MB</p>
                       </>
                     )}
                   </div>
@@ -2219,7 +2219,7 @@ export default function LexPage() {
                         {submitError && <p style={{ margin: "4px 0 0", fontSize: 11, color: "#f87171" }}>{submitError}</p>}
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI — ${reviewReport.documentType}`); }} style={{
+                        <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI: ${reviewReport.documentType}`); }} style={{
                           padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, cursor: "pointer", whiteSpace: "nowrap",
                         }}>
@@ -2546,7 +2546,7 @@ export default function LexPage() {
                   onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = "transparent"; }}
                 >
                   <p style={{ margin: 0, fontSize: 12, color: C.textDim, fontWeight: 500 }}>Click to upload logo</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PNG, JPG, SVG — max 2MB</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PNG, JPG or SVG, max 2MB</p>
                 </div>
               )}
             </div>
