@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { saveNurtureRecord } from "../../../lib/redis";
+import { claimVisitorEmail, clientIp, deepEscape, ipLimited, isInternalCall, safeLogLine, sanitizeLead } from "../../../lib/leads-guard";
 
 export const runtime = "nodejs";
 
@@ -62,7 +63,7 @@ Return this exact JSON structure:
     });
 
     const json = text.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
-    return JSON.parse(json) as ConversationAnalysis;
+    return deepEscape(JSON.parse(json) as ConversationAnalysis);
   } catch {
     return null;
   }
@@ -950,9 +951,24 @@ function buildHotLeadEmail(lead: {
 
 export async function POST(req: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const lead = await req.json();
 
-  console.log("[lead captured]", JSON.stringify(lead));
+  // Guard: size, rate limit, validation, HTML escaping. See lib/leads-guard.ts.
+  const internal = isInternalCall(req);
+  if (!internal && (await ipLimited(clientIp(req)))) {
+    return Response.json({ ok: false, error: "Too many requests" }, { status: 429 });
+  }
+  const rawText = await req.text();
+  if (rawText.length > 200_000) return Response.json({ ok: false, error: "Too large" }, { status: 413 });
+  let parsed: unknown;
+  try { parsed = JSON.parse(rawText); } catch { return Response.json({ ok: false, error: "Invalid JSON" }, { status: 400 }); }
+  const checked = sanitizeLead(parsed, internal);
+  if (!checked.ok) return Response.json({ ok: false, error: checked.error }, { status: 400 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lead: any = checked.lead;
+  // Visitor-facing email (transcript, follow-up, nurture) only once per address per day.
+  const visitorMailOk = lead.email ? await claimVisitorEmail(lead.email) : false;
+
+  console.log(safeLogLine(lead));
 
   if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator")) {
     const { recordConversion } = await import("@/lib/exp/track");
@@ -981,7 +997,7 @@ export async function POST(req: Request) {
       }
 
       // Customer transcript — only if they opted in
-      if (lead.sendTranscript && lead.email) {
+      if (lead.sendTranscript && lead.email && visitorMailOk) {
         const { subject: txSubject, html: txHtml } = buildPeteCustomerTranscriptEmail(lead);
         try {
           await resend.emails.send({
@@ -1030,7 +1046,7 @@ export async function POST(req: Request) {
       }
 
       // Customer transcript — if they opted in via the end panel
-      if (lead.sendTranscript && lead.email) {
+      if (lead.sendTranscript && lead.email && visitorMailOk) {
         const { subject: txSubject, html: txHtml } = buildCustomerTranscriptEmail(lead);
         try {
           await resend.emails.send({
@@ -1077,7 +1093,7 @@ export async function POST(req: Request) {
       }
 
       // Customer emails
-      if (isCalculator && lead.email) {
+      if (isCalculator && lead.email && visitorMailOk) {
         const { subject: custSubject, html: custHtml } = buildCalculatorCustomerEmail(lead);
         try {
           await resend.emails.send({
@@ -1092,7 +1108,7 @@ export async function POST(req: Request) {
         }
       }
 
-      if (!isCalculator && lead.email && lead.sendTranscript) {
+      if (!isCalculator && lead.email && lead.sendTranscript && visitorMailOk) {
         const { subject: txSubject, html: txHtml } = buildCustomerTranscriptEmail(lead);
         try {
           await resend.emails.send({
@@ -1108,7 +1124,7 @@ export async function POST(req: Request) {
       }
 
       // Visitor follow-up — send when they didn't request a transcript (fills the gap)
-      if (!isCalculator && lead.email && !lead.sendTranscript) {
+      if (!isCalculator && lead.email && !lead.sendTranscript && visitorMailOk) {
         const analysis = await analyseConversation(lead.conversation ?? []);
         const { subject: fuSubject, html: fuHtml } = buildVisitorFollowUpEmail({ ...lead, analysis });
         try {
@@ -1125,7 +1141,7 @@ export async function POST(req: Request) {
       }
 
       // Enroll in nurture sequence — Day 2 and Day 5 emails via cron
-      if (!isCalculator && lead.email) {
+      if (!isCalculator && lead.email && visitorMailOk) {
         saveNurtureRecord({
           email: lead.email,
           name: lead.name,
