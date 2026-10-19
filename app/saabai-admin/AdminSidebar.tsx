@@ -274,9 +274,12 @@ export default function AdminShell({
           <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>Shane Goldberg</div>
           <div style={{ fontSize: 12, color: "#8f95c0" }}>Owner · 2FA on</div>
         </div>
-        <a href="/api/auth/logout" style={{ color: "#8f95c0", fontSize: 12, textDecoration: "none" }}>
-          Sign out
-        </a>
+        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
+          <input type="hidden" name="next" value="admin" />
+          <button type="submit" style={{ color: "#8f95c0", fontSize: 12, background: "none", border: 0, padding: 0, cursor: "pointer" }}>
+            Sign out
+          </button>
+        </form>
       </div>
     </>
   );
