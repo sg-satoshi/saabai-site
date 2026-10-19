@@ -7,7 +7,7 @@
  * - per-IP and per-recipient rate limits (Redis, in-memory fallback)
  * - a safe log line that never contains names, emails or transcripts
  */
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { getRedis } from "./redis";
 
 export const PUBLIC_SOURCES = [
@@ -196,6 +196,76 @@ export async function ipLimited(ip: string): Promise<boolean> {
  */
 export async function claimVisitorEmail(email: string): Promise<boolean> {
   return (await hit(`lead-mail:${email.toLowerCase()}:${new Date().toISOString().slice(0, 10)}`, 26 * 3600)) === 1;
+}
+
+// ── Alert gating and dedupe ──────────────────────────────────────────────────
+
+/** Sources that are a contact capture: they only make sense with a valid email. */
+export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_homepage"] as const;
+
+/**
+ * Decide whether a sanitised lead is worth acting on at all. Empty or contactless
+ * payloads (for example a QA probe POSTing `{}`) are rejected with a 400 so they
+ * never reach the operator inbox as "New Lead via Mia: undefined".
+ *
+ * - chat_widget and calculator_*: a valid email is required (phone is not an
+ *   accepted contact on any form today).
+ * - chat_closed, chat_ended, chat_ended_short, pete_ended: a valid email or at
+ *   least one real visitor message.
+ * - mia_qualified (server only): at least one visitor message or a qualification summary.
+ */
+export function leadAlertCheck(lead: CleanLead): { ok: true } | { ok: false; error: string } {
+  const hasEmail = isValidEmail(lead.email);
+  const visitorMsgs = lead.conversation.filter((m) => m.role === "user" && m.content.trim()).length;
+  if ((CONTACT_SOURCES as readonly string[]).includes(lead.source)) {
+    return hasEmail ? { ok: true } : { ok: false, error: "Email required" };
+  }
+  if (lead.source === INTERNAL_SOURCE) {
+    return visitorMsgs > 0 || !!lead.qualification_summary ? { ok: true } : { ok: false, error: "Empty lead" };
+  }
+  return hasEmail || visitorMsgs > 0 ? { ok: true } : { ok: false, error: "Empty lead" };
+}
+
+/** Stable fingerprint of a lead: source + email + transcript. No PII leaves this function. */
+export function leadFingerprint(lead: CleanLead): string {
+  const h = createHash("sha256");
+  h.update(lead.source);
+  h.update("\u0000");
+  h.update(lead.email ?? "");
+  h.update("\u0000");
+  // Contact captures dedupe on the address alone, so a double click or retry with
+  // one more message still counts as the same lead. Transcripts dedupe on content.
+  if (!(CONTACT_SOURCES as readonly string[]).includes(lead.source) || !lead.email) {
+    for (const m of lead.conversation) h.update(`${m.role}:${m.content}\u0000`);
+  }
+  return h.digest("hex").slice(0, 32);
+}
+
+export const ALERT_DEDUPE_SECONDS = 10 * 60;
+const memOnce = new Map<string, number>();
+
+/**
+ * Claim the one operator alert for this lead fingerprint. Returns false when the
+ * same lead already alerted within ALERT_DEDUPE_SECONDS. Redis SET NX EX, with an
+ * in-memory fallback when Redis is not configured or errors.
+ */
+export async function claimLeadAlert(fingerprint: string, ttlSec = ALERT_DEDUPE_SECONDS): Promise<boolean> {
+  const key = `lead-alert:${fingerprint}`;
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const r = await redis.set(key, "1", { nx: true, ex: ttlSec });
+      return r === "OK";
+    } catch {
+      /* fall through to memory */
+    }
+  }
+  const now = Date.now();
+  const exp = memOnce.get(key);
+  if (exp && exp > now) return false;
+  memOnce.set(key, now + ttlSec * 1000);
+  if (memOnce.size > 5000) for (const [k, v] of memOnce) if (v < now) memOnce.delete(k);
+  return true;
 }
 
 /** Log line with no names, emails or transcript text. */
