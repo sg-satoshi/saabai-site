@@ -26,3 +26,10 @@ test("nurture cron checks suppression and adds footer + headers to both emails",
   assert.equal((src.match(/\$\{footer\}/g) ?? []).length, 2);
   assert.ok(!/errors\.push\(`day[25] \$\{record\.email\}/.test(src), "no emails in error output");
 });
+
+test("no em or en dashes in Mia email copy (comments aside)", () => {
+  for (const f of ["app/api/cron/mia-nurture/route.ts", "app/api/leads/route.ts", "lib/growth/consent.ts"]) {
+    const code = readFileSync(f, "utf8").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.ok(!/[\u2013\u2014]/.test(code), f);
+  }
+});
