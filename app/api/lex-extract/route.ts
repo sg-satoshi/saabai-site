@@ -45,8 +45,8 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({ text, wordCount, fileName: file.name, clauses });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-extract]", err);
+    return Response.json({ error: "extract_failed" }, { status: 500 });
   }
 }
 
