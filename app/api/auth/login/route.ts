@@ -2,10 +2,11 @@ import { type NextRequest } from "next/server";
 import { createSessionToken, sessionCookieHeader } from "../../../../lib/auth";
 import { authenticateWithPassword } from "../../../../lib/password-auth";
 import { safeRedirect } from "../../../../lib/safe-redirect";
-import { isAdminSession } from "../../../../lib/auth";
+import { resolveStaff } from "../../../../lib/auth";
+import { recordLogin } from "../../../../lib/login-stamp";
 import { getRedis } from "../../../../lib/redis";
 import { createHash } from "crypto";
-import { isTwoFactorEnabled, createPendingToken, pendingCookieHeader, TRUST_COOKIE, verifyTrustToken } from "../../../../lib/admin-2fa";
+import { isTwoFactorEnabled, isTotpEnrolled, createPendingToken, pendingCookieHeader, TRUST_COOKIE, verifyTrustToken } from "../../../../lib/admin-2fa";
 
 const MAX_ATTEMPTS = 10;
 const WINDOW_SECONDS = 15 * 60;
@@ -54,7 +55,8 @@ export async function POST(req: NextRequest) {
   }
 
   let auth = await authenticateWithPassword(email, password);
-  if (auth && adminOnly && !(await isAdminSession(auth.clientId))) auth = null;
+  const staff = auth ? await resolveStaff(auth.clientId) : null; // null for disabled / expired / non-staff
+  if (auth && adminOnly && !staff) auth = null;
 
   if (!auth) {
     await tooManyAttempts(email, ip, true);
@@ -65,20 +67,27 @@ export async function POST(req: NextRequest) {
   }
 
   // Admins with 2FA get a code step unless this browser is trusted for 30 days.
-  if ((await isAdminSession(auth.clientId)) && (await isTwoFactorEnabled(auth.clientId))) {
-    const trusted = verifyTrustToken(req.cookies.get(TRUST_COOKIE)?.value, auth.clientId);
-    if (!trusted) {
-      const verifyUrl = new URL("/saabai-admin/login/verify", req.url);
-      return new Response(null, {
-        status: 303,
-        headers: {
-          Location: verifyUrl.toString(),
-          "Set-Cookie": pendingCookieHeader(createPendingToken(auth.clientId, redirect || "/saabai-admin")),
-        },
-      });
+  // Restricted staff: the code step is mandatory once enrolled (no trusted-device skip, no env break-glass).
+  // Unenrolled restricted staff still get a session, but proxy.ts confines it to the enrol page.
+  if (staff) {
+    const restricted = staff.grant.role !== "admin";
+    const needsCode = restricted ? await isTotpEnrolled(auth.clientId) : await isTwoFactorEnabled(auth.clientId);
+    if (needsCode) {
+      const trusted = !restricted && verifyTrustToken(req.cookies.get(TRUST_COOKIE)?.value, auth.clientId);
+      if (!trusted) {
+        const verifyUrl = new URL("/saabai-admin/login/verify", req.url);
+        return new Response(null, {
+          status: 303,
+          headers: {
+            Location: verifyUrl.toString(),
+            "Set-Cookie": pendingCookieHeader(createPendingToken(auth.clientId, redirect || "/saabai-admin")),
+          },
+        });
+      }
     }
   }
 
+  await recordLogin(auth.clientId);
   const token = await createSessionToken(auth.clientId);
 
   // If there's an explicit redirect (user came from a protected page), honour it.

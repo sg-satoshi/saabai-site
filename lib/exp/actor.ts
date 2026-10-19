@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
 import { CHIEF_COOKIE, verifyChiefToken } from "../chief";
-import { COOKIE_NAME, isAdminSession, verifySessionToken } from "../auth";
+import { COOKIE_NAME, verifySessionToken } from "../auth";
+import { isAdminOrGranted } from "../auth-acl";
 
 /** Returns the admin's session id (for audit rows) or null. Defense in depth on top of proxy.ts (/api/admin is admin-only). */
 export async function adminActor(): Promise<string | null> {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   const s = await verifySessionToken(token);
-  if (!s || !(await isAdminSession(s.clientId))) return null;
+  if (!s || !(await isAdminOrGranted(s.clientId))) return null;
   return s.clientId;
 }
 

@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import QRCode from "qrcode";
-import { COOKIE_NAME, verifySessionToken, isAdminSession } from "../../../../lib/auth";
+import { COOKIE_NAME, verifySessionToken, isStaffSession } from "../../../../lib/auth";
 import { startSetup, confirmSetup, twoFactorStatus, otpauthUri } from "../../../../lib/admin-2fa";
 
 export const runtime = "nodejs";
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 async function adminId(req: NextRequest): Promise<string | null> {
   const t = req.cookies.get(COOKIE_NAME)?.value;
   const s = t ? await verifySessionToken(t) : null;
-  return s && (await isAdminSession(s.clientId)) ? s.clientId : null;
+  return s && (await isStaffSession(s.clientId)) ? s.clientId : null;
 }
 
 /** GET: current 2FA status. */

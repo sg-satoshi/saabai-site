@@ -1,4 +1,5 @@
 "use client";
+import AccessEditor, { defaultAccess, type AccessValue } from "./AccessEditor";
 import { notify } from "../ui/Feedback";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -26,6 +27,8 @@ interface User {
   createdAt?: string | number;
   lastActive?: string | number;
   status?: string;
+  access?: { role: "admin" | "viewer" | "custom"; areas?: Partial<Record<string, "none" | "read" | "write">>; expiresAt?: string; disabled?: boolean };
+  lastLoginAt?: string;
 }
 
 type BulkTarget = { bulk: true; count: number; items: User[] };
@@ -152,7 +155,16 @@ function StatusDot({ status }: { status?: string }) {
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
+/** " · last login 2h ago · DISABLED · expires 3 Nov". Kept outside render so the clock read stays a plain helper. */
+function accessNote(user: User): string {
+  const now = Date.now();
+  let t = ` · last login ${user.lastLoginAt ? ago(now - tsOf(user.lastLoginAt)) : "never"}`;
+  if (user.access?.disabled) t += " · DISABLED";
+  if (user.access?.expiresAt) t += Date.parse(user.access.expiresAt) <= now ? " · EXPIRED" : ` · expires ${fmtDate(user.access.expiresAt)}`;
+  return t;
+}
+
+function RoleBadge({ role, label }: { role: string; label?: string }) {
   const isAdmin = role === "admin";
   return (
     <span style={{
@@ -166,7 +178,7 @@ function RoleBadge({ role }: { role: string }) {
       letterSpacing: "0.06em", textTransform: "uppercase",
     }}>
       <span style={{ width: 4, height: 4, borderRadius: "50%", background: isAdmin ? C.teal : C.green }} />
-      {role}
+      {label ?? role}
     </span>
   );
 }
@@ -264,6 +276,7 @@ function TextInput({ value, onChange, placeholder, type = "text", autoFocus }: {
 function RoleSegment({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const options = [
     { value: "user",  hint: "Portal access only" },
+    { value: "staff", hint: "Restricted admin" },
     { value: "admin", hint: "Full Saabai admin" },
   ];
   return (
@@ -460,7 +473,7 @@ function Modal({ open, onClose, title, subtitle, width = 480, children, danger }
 // ── User form (Add / Edit) ───────────────────────────────────────────────
 function UserForm({ initial, mode, onSubmit, onCancel }: {
   initial?: User; mode: "add" | "edit";
-  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean }) => void | Promise<void>;
+  onSubmit: (data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean; access?: AccessValue }) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initial?.name || "");
@@ -472,6 +485,12 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   const [sendInvite, setSendInvite] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [siteId, setSiteId] = useState(initial?.siteId || "");
+  const [access, setAccess] = useState<AccessValue>(
+    initial?.role === "staff" && initial.access && initial.access.role !== "admin"
+      ? { role: initial.access.role, areas: initial.access.areas ?? {}, expiresAt: initial.access.expiresAt }
+      : defaultAccess(),
+  );
+  const [adminExpiry] = useState(initial?.role === "admin" ? initial.access?.expiresAt : undefined);
   const [sites, setSites] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
@@ -489,7 +508,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
     if (!valid || submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit({ name, email, password, role, dashboardUrl, products: selectedProducts, siteId, sendInvite });
+      await onSubmit({ name, email, password, role, dashboardUrl, products: selectedProducts, siteId, sendInvite, access: role === "staff" ? access : role === "admin" && adminExpiry ? { role: "custom", areas: {}, expiresAt: adminExpiry } : undefined });
     } finally {
       setSubmitting(false);
     }
@@ -521,6 +540,12 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
       <Field label="Role">
         <RoleSegment value={role} onChange={setRole} />
       </Field>
+
+      {role === "staff" && (
+        <Field label="Access" hint="Choose exactly what this person can see and change.">
+          <AccessEditor value={access} onChange={setAccess} />
+        </Field>
+      )}
 
       <Field label="Dashboard route" hint="Which surface this user lands on after signing in.">
         <DashboardPicker value={dashboardUrl} onChange={setDashboardUrl} />
@@ -804,13 +829,14 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
 }
 
 // ── Table ────────────────────────────────────────────────────────────────
-function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete }: {
+function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete, onToggleDisabled }: {
   users: User[]; density: "compact" | "comfortable";
   showLastActive: boolean; showCreated: boolean;
   selected: Record<string, boolean>;
   setSelected: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   onEdit: (u: User) => void;
   onDelete: (u: User) => void;
+  onToggleDisabled: (u: User) => void;
 }) {
   const rowH = density === "compact" ? 44 : 56;
   const allSelected = users.length > 0 && users.every(u => selected[keyOf(u)]);
@@ -883,7 +909,7 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
           showLastActive={showLastActive} showCreated={showCreated}
           selected={!!selected[keyOf(u)]}
           toggle={() => toggleRow(keyOf(u))}
-          onEdit={onEdit} onDelete={onDelete}
+          onEdit={onEdit} onDelete={onDelete} onToggleDisabled={onToggleDisabled}
           isLast={i === users.length - 1}
         />
       ))}
@@ -893,11 +919,11 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
 
 function keyOf(u: User): string { return u.id || u.email; }
 
-function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, isLast }: {
+function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, onToggleDisabled, isLast }: {
   user: User; density: "compact" | "comfortable"; rowH: number; cols: string;
   showLastActive: boolean; showCreated: boolean;
   selected: boolean; toggle: () => void;
-  onEdit: (u: User) => void; onDelete: (u: User) => void;
+  onEdit: (u: User) => void; onDelete: (u: User) => void; onToggleDisabled: (u: User) => void;
   isLast: boolean;
 }) {
   const [hover, setHover] = useState(false);
@@ -947,12 +973,12 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             color: density === "compact" ? C.muted : C.textDim,
             marginTop: density === "compact" ? 0 : 1,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>{user.email}</div>
+          }}>{user.email}{(user.role === "admin" || user.role === "staff") && accessNote(user)}</div>
         </div>
       </div>
 
       <div style={{ padding: "0 16px", display: "flex", alignItems: "center" }}>
-        <RoleBadge role={user.role} />
+        <RoleBadge role={user.role} label={user.role === "staff" ? `staff · ${user.access?.role ?? "?"}` : undefined} />
       </div>
 
       <div style={{ padding: "0 16px", display: "flex", alignItems: "center" }}>
@@ -993,7 +1019,7 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             </svg>
           </IconBtn>
         )}
-        {user.role !== "admin" && (
+        {user.role === "user" && (
           <IconBtn
             title="View as client"
             onClick={() => {
@@ -1021,6 +1047,14 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M1 7s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.4" />
               <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </IconBtn>
+        )}
+        {!isEnv && (user.role === "admin" || user.role === "staff") && (
+          <IconBtn title={user.access?.disabled ? "Enable account" : "Disable account (instant)"} danger={!user.access?.disabled} onClick={() => onToggleDisabled(user)}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="5.2" stroke="currentColor" strokeWidth="1.4" />
+              {!user.access?.disabled && <path d="M3.4 3.4l7.2 7.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />}
             </svg>
           </IconBtn>
         )}
@@ -1287,7 +1321,7 @@ export default function UsersClient() {
     setLoading(false);
   }
 
-  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean }) {
+  async function createUser(data: { name: string; email: string; password: string; role: string; dashboardUrl: string; products: string[]; siteId: string; sendInvite: boolean; access?: AccessValue }) {
     try {
       const res = await fetch("/api/user-directory", {
         method: "POST",
@@ -1298,6 +1332,7 @@ export default function UsersClient() {
           products: data.products,
           siteId: data.siteId,
           sendInvite: data.sendInvite,
+          access: data.role === "staff" ? data.access : undefined,
         }),
       });
       const out = await res.json();
@@ -1313,6 +1348,21 @@ export default function UsersClient() {
     }
   }
 
+  async function toggleDisabled(u: User) {
+    const next = !u.access?.disabled;
+    if (next && !window.confirm(`Disable ${u.name}? They are signed out immediately and cannot sign in until re-enabled.`)) return;
+    try {
+      const res = await fetch("/api/user-directory", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ originalEmail: u.email, disabled: next }),
+      });
+      const out = await res.json();
+      if (out.success) { fetchUsers(); showToast(`${next ? "Disabled" : "Enabled"} ${u.name}`); }
+      else showToast(out.error || "Failed to update", false);
+    } catch { showToast("Error updating user", false); }
+  }
+
   async function saveUser(updated: User & { password?: string }) {
     if (!editUser) return;
     try {
@@ -1324,6 +1374,7 @@ export default function UsersClient() {
         dashboardUrl: updated.dashboardUrl,
         products: updated.products || [],
         siteId: updated.siteId ?? "",
+        ...(updated.role === "staff" || updated.role === "admin" ? { access: (updated as { access?: unknown }).access } : {}),
       };
       if (updated.password && updated.password.trim()) body.password = updated.password;
       const res = await fetch("/api/user-directory", {
@@ -1526,6 +1577,7 @@ export default function UsersClient() {
             setSelected={setSelected}
             onEdit={u => setEditUser(u)}
             onDelete={u => setDeleteTarget(u)}
+            onToggleDisabled={toggleDisabled}
           />
         )}
       </div>
