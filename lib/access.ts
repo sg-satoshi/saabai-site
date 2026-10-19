@@ -12,7 +12,7 @@
  * See docs/access-model.md for the extension path.
  */
 
-export const AREAS = ["coupons", "products", "chatbots", "experiments", "orders", "customers", "announcements", "billing", "users"] as const;
+export const AREAS = ["coupons", "products", "chatbots", "experiments", "orders", "customers", "announcements", "billing", "roadmap", "users"] as const;
 export type Area = (typeof AREAS)[number];
 export type Level = "none" | "read" | "write";
 export type AccessRole = "admin" | "viewer" | "custom";
@@ -38,7 +38,7 @@ export interface AccessGrant {
 /** Highest level an area may ever be granted to a non-admin. users: never (admin only). billing: read only. */
 export const MAX_LEVEL: Record<Area, Level> = {
   coupons: "write", products: "write", chatbots: "write", experiments: "write", orders: "write",
-  customers: "write", announcements: "write", billing: "read", users: "none",
+  customers: "write", announcements: "write", billing: "read", roadmap: "write", users: "none",
 };
 
 const RANK: Record<Level, number> = { none: 0, read: 1, write: 2 };
@@ -54,6 +54,7 @@ const AREA_PREFIXES: Record<Area, string[]> = {
   customers: ["/saabai-admin/customers", "/api/admin/customers"],
   announcements: ["/saabai-admin/announcements", "/api/admin/announcements"],
   billing: ["/saabai-admin/payments", "/saabai-admin/plans", "/api/admin/billing", "/api/admin/invoices", "/api/admin/invoice-clients", "/api/admin/payments"],
+  roadmap: ["/saabai-admin/roadmap", "/api/admin/roadmap"],
   users: ["/saabai-admin/users", "/api/user-directory", "/api/admin/portal-users", "/api/admin/portal-invite", "/api/admin/migrate-user"],
 };
 

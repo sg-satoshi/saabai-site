@@ -51,6 +51,7 @@ const NAV: NavGroup[] = [
       { label: "Dashboard", href: "/saabai-admin", icon: "grid" },
       { label: "Analytics", href: "/saabai-admin/analytics", icon: "chart" },
       { label: "Split testing", href: "/saabai-admin/experiments", icon: "flow" },
+      { label: "Roadmap", href: "/saabai-admin/roadmap", icon: "list" },
     ],
   },
   {

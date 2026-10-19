@@ -14,7 +14,7 @@ export const defaultAccess = (): AccessValue => ({ role: "viewer", areas: {} });
 
 const LABEL: Record<Area, string> = {
   coupons: "Coupons / offers", products: "Products", chatbots: "Chatbots", experiments: "Experiments", orders: "Orders",
-  customers: "Customers", announcements: "Announcements", billing: "Billing (read only)", users: "Users",
+  customers: "Customers", announcements: "Announcements", billing: "Billing (read only)", roadmap: "Roadmap", users: "Users",
 };
 // users is admin-only by design: never offered here.
 const GRANTABLE = AREAS.filter((a) => MAX_LEVEL[a] !== "none");
