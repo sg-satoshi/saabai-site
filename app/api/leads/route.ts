@@ -3,7 +3,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { saveNurtureRecord } from "../../../lib/redis";
 import { isSuppressed, miaFooterHtml, unsubHeaders } from "../../../lib/growth/consent";
-import { claimVisitorEmail, clientIp, deepEscape, ipLimited, isInternalCall, safeLogLine, sanitizeLead } from "../../../lib/leads-guard";
+import { claimLeadAlert, claimVisitorEmail, clientIp, deepEscape, ipLimited, isInternalCall, leadAlertCheck, leadFingerprint, safeLogLine, sanitizeLead } from "../../../lib/leads-guard";
 
 export const runtime = "nodejs";
 
@@ -193,7 +193,7 @@ function buildMiaEmail(lead: {
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
             <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 120px;">Name</td><td style="padding: 6px 0; font-size: 14px; font-weight: 500;">${name || "Not provided"}</td></tr>
             <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${email}" style="color: #62c5d1;">${email}</a></td></tr>
-            <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Time</td><td style="padding: 6px 0; font-size: 14px;">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney" })}</td></tr>
+            <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Time</td><td style="padding: 6px 0; font-size: 14px;">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}</td></tr>
           </table>
           ${conversation.length > 0 ? `
             <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Conversation</h2>
@@ -382,7 +382,7 @@ function buildCalculatorOperatorEmail(lead: {
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
             <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 180px;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${email}" style="color: #62c5d1;">${email}</a></td></tr>
             <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Source</td><td style="padding: 6px 0; font-size: 14px;">${page}</td></tr>
-            <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Time</td><td style="padding: 6px 0; font-size: 14px;">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney" })}</td></tr>
+            <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">Time</td><td style="padding: 6px 0; font-size: 14px;">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}</td></tr>
           </table>
 
           <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Calculator Inputs</h2>
@@ -912,7 +912,7 @@ function buildHotLeadEmail(lead: {
             <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Industry</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${industry || "-"}</td></tr>
             <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Team size</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${team_size || "-"}</td></tr>
             <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Page</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${page}</td></tr>
-            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Time</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Sydney" })}</td></tr>
+            <tr><td style="padding: 5px 0; color: rgba(255,255,255,0.45); font-size: 12px;">Time</td><td style="padding: 5px 0; font-size: 13px; color: rgba(255,255,255,0.85);">${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}</td></tr>
           </table>
         </div>
 
@@ -951,8 +951,6 @@ function buildHotLeadEmail(lead: {
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
   // Guard: size, rate limit, validation, HTML escaping. See lib/leads-guard.ts.
   const internal = isInternalCall(req);
   if (!internal && (await ipLimited(clientIp(req)))) {
@@ -966,6 +964,17 @@ export async function POST(req: Request) {
   if (!checked.ok) return Response.json({ ok: false, error: checked.error }, { status: 400 });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lead: any = checked.lead;
+  // No contact and no conversation means nothing to alert on. Reject before any email.
+  const alertable = leadAlertCheck(checked.lead);
+  if (!alertable.ok) {
+    console.log(`${safeLogLine(checked.lead)} rejected=${alertable.error}`);
+    return Response.json({ ok: false, error: alertable.error }, { status: 400 });
+  }
+  // The same lead can only alert once per window (double submit, retries, replays).
+  if (!(await claimLeadAlert(leadFingerprint(checked.lead)))) {
+    console.log(`${safeLogLine(checked.lead)} deduped=true`);
+    return Response.json({ ok: true, deduped: true });
+  }
   // Visitor-facing email (transcript, follow-up, nurture) only once per address per day.
   const visitorMailOk = lead.email ? await claimVisitorEmail(lead.email) : false;
 
@@ -982,6 +991,7 @@ export async function POST(req: Request) {
   const isPeteClosed = lead.source === "pete_ended";
 
   if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     if (isPeteClosed) {
       // Operator transcript, always send for Pete (client onboarding context)
