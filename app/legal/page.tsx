@@ -225,34 +225,6 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* ── 2. SOCIAL PROOF BAR ────────────────────────────────────────────── */}
-      <section style={{
-        padding: "36px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-        textAlign: "center",
-      }}>
-        <p style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase",
-          color: C.textDim, marginBottom: 24, marginTop: 0,
-        }}>
-          Trusted by forward-thinking Australian law firms
-        </p>
-        <div style={{
-          display: "flex", gap: 48, justifyContent: "center", alignItems: "center",
-          flexWrap: "wrap",
-        }}>
-          {["Smith & Partners", "Chen Legal", "Burke Chambers", "Meridian Law Group", "Coastal Legal"].map((firm) => (
-            <span key={firm} style={{
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              fontSize: 15, color: C.text, opacity: 0.4,
-              letterSpacing: "0.04em",
-            }}>
-              {firm}
-            </span>
-          ))}
-        </div>
-      </section>
-
       {/* ── 3. FEATURE GRID ────────────────────────────────────────────────── */}
       <section style={{
         padding: "88px 32px",
