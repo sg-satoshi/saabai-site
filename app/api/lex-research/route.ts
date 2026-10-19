@@ -10,7 +10,7 @@ import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
 // firm's own model when one is saved. Never route legal research to a cheap model.
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120; // Sonnet 4.6 research with tool steps can take up to a minute
 
 export async function POST(req: Request) {
   try {
