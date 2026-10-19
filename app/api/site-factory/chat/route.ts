@@ -1,6 +1,7 @@
 import { getDefaultModel } from "../../../../lib/chat-config";
 import { generateText } from "ai";
 import { cleanMessages } from "../../../../lib/chat-origin";
+import { NO_DASH_RULE, noDashes } from "../../../../lib/no-dashes";
 
 export const runtime = "nodejs";
 
@@ -19,12 +20,12 @@ export async function POST(req: Request) {
 
     const { text } = await generateText({
       model: getDefaultModel(),
-      system: `You are a helpful assistant for ${name || "this business"}. Only answer questions about this business and its services. Keep responses under 120 words.`,
+      system: `You are a helpful assistant for ${name || "this business"}. Only answer questions about this business and its services. Keep responses under 120 words. ${NO_DASH_RULE}`,
       messages,
       maxOutputTokens: 600,
     });
 
-    return Response.json({ content: text });
+    return Response.json({ content: noDashes(text) });
   } catch (error) {
     console.error("Site factory chat error:", error);
     return Response.json({ error: "Failed to generate response" }, { status: 500 });
