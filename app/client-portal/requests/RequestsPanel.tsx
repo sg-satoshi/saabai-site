@@ -1,7 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
+import {
+  pickPortalRequestFiles,
+  PORTAL_REQUEST_FILE_TYPES,
+  PORTAL_REQUEST_MAX_BYTES,
+  PORTAL_REQUEST_MAX_FILES,
+} from "../../../lib/portal-request-files";
 import "./rq.css";
 
 type RequestType = "text_change" | "new_feature" | "bug" | "other";
@@ -65,9 +71,9 @@ const STATUS_LABEL: Record<string, string> = {
   done: "Done",
 };
 
-const MAX_FILES = 5;
-const MAX_BYTES = 10 * 1024 * 1024;
-const FILE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"];
+const MAX_FILES = PORTAL_REQUEST_MAX_FILES;
+const MAX_BYTES = PORTAL_REQUEST_MAX_BYTES;
+const FILE_TYPES = [...PORTAL_REQUEST_FILE_TYPES];
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleString("en-AU", {
@@ -268,26 +274,16 @@ function NewRequestForm({
     return () => urls.forEach((u) => u && URL.revokeObjectURL(u));
   }, [files]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   function addFiles(list: FileList | null) {
-    if (!list) return;
-    setError("");
-    const next = [...files];
-    for (const f of Array.from(list)) {
-      if (!FILE_TYPES.includes(f.type)) {
-        setError("Files need to be PNG, JPG, WebP, GIF or PDF.");
-        continue;
-      }
-      if (f.size > MAX_BYTES) {
-        setError(`${f.name} is over 10 MB.`);
-        continue;
-      }
-      if (next.length >= MAX_FILES) {
-        setError(`You can attach up to ${MAX_FILES} files.`);
-        break;
-      }
-      next.push(f);
-    }
-    setFiles(next);
+    const result = pickPortalRequestFiles(files, list);
+    setFiles(result.files);
+    setError(result.ok ? "" : result.error);
+  }
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
   }
 
   async function submit(e: React.FormEvent) {
@@ -430,19 +426,23 @@ function NewRequestForm({
                 </div>
               ))}
               {files.length < MAX_FILES && (
-                <label className="rq-add">
-                  + Add
+                <div className="rq-add-wrap">
+                  <button type="button" className="rq-add" onClick={openFilePicker}>
+                    Add Screenshot
+                  </button>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept={FILE_TYPES.join(",")}
                     multiple
-                    style={{ display: "none" }}
+                    className="rq-file-input"
+                    aria-label="Add screenshot"
                     onChange={(e) => {
                       addFiles(e.target.files);
                       e.target.value = "";
                     }}
                   />
-                </label>
+                </div>
               )}
             </div>
           </div>

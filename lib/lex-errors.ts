@@ -1,3 +1,4 @@
+import { PORTAL_REQUESTS_HREF } from "./portal-pages";
 /**
  * Lex error handling shared by the /lex page and the Lex API routes.
  *
@@ -16,6 +17,8 @@ export type LexError = {
   canRetry: boolean;
   /** Show a "Sign in" link back to this page. */
   signIn: boolean;
+  /** Optional "Contact Saabai" link (portal Requests). */
+  contactHref?: string;
 };
 
 /** Error text older versions of Lex saved into threads as if it were an answer. */
@@ -51,10 +54,10 @@ export function lexErrorFromStatus(status: number, body?: { error?: unknown; mes
     return { kind: "auth", title: "Please sign in", message: "Your session has ended. Sign in again to keep working.", canRetry: false, signIn: true };
   }
   if (status === 403) {
-    return { kind: "forbidden", title: "Not available on this account", message: serverMsg || `Your login does not have access to Lex ${task}. Contact Saabai if you think this is wrong.`, canRetry: false, signIn: false };
+    return { kind: "forbidden", title: "Not available on this account", message: serverMsg || `Your login does not have access to Lex ${task}. Contact Saabai if you think this is wrong.`, canRetry: false, signIn: false, contactHref: PORTAL_REQUESTS_HREF };
   }
   if (status === 429) {
-    return { kind: "limit", title: "Daily limit reached", message: serverMsg || "Your firm has reached today's limit. It resets tomorrow.", canRetry: false, signIn: false };
+    return { kind: "limit", title: "Daily limit reached", message: serverMsg || "Your firm has reached today's limit. It resets tomorrow. Contact Saabai if you need more.", canRetry: false, signIn: false, contactHref: PORTAL_REQUESTS_HREF };
   }
   const clientMsg = body && typeof body.error === "string" ? body.error : "";
   if (status >= 400 && status < 500 && clientMsg && !/^(unauthori[sz]ed|forbidden)$/i.test(clientMsg)) {

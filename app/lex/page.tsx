@@ -5,6 +5,7 @@ import {
   LEX_INTAKE_MATTER_TYPE_DEFAULT,
   type LexIntakeMatterType,
 } from "@/lib/lex-intake-matter-types";
+import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
@@ -95,13 +96,19 @@ function LexErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: Lex
     }}>
       <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#fca5a5" }}>{error.title}</p>
       <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "#fecaca" }}>{error.message}</p>
-      {(error.signIn || (error.canRetry && onRetry)) && (
+      {(error.signIn || error.contactHref || (error.canRetry && onRetry)) && (
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
           {error.signIn && (
             <a href={signInHref(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/lex")} style={{
               padding: "7px 14px", borderRadius: 8, background: C.gold, color: C.bg,
               fontSize: 12, fontWeight: 700, textDecoration: "none",
             }}>Sign in</a>
+          )}
+          {error.contactHref && (
+            <a href={error.contactHref} style={{
+              padding: "7px 14px", borderRadius: 8, background: C.gold, color: C.bg,
+              fontSize: 12, fontWeight: 700, textDecoration: "none",
+            }}>Contact Saabai</a>
           )}
           {error.canRetry && onRetry && (
             <button type="button" onClick={onRetry} data-no-feedback style={{
@@ -1071,6 +1078,7 @@ export default function LexPage() {
               <button type="button" className="lx-btn sm" onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }}><Icon name="share" />Send to client</button>
             </>
           )}
+          <a className="lx-btn sm" href={PORTAL_REQUESTS_HREF}>Contact Saabai</a>
         </div>
 
         {mode === "research" && (

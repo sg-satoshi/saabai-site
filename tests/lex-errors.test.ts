@@ -34,10 +34,13 @@ test("401 asks the user to sign in and offers no retry", () => {
 });
 
 test("403, 429 and 5xx map to clear states; server text and raw errors never leak", () => {
-  assert.equal(lexErrorFromStatus(403, { error: "Forbidden" }).kind, "forbidden");
-  assert.ok(!lexErrorFromStatus(403, { error: "Forbidden" }).message.includes("Forbidden"));
+  const forbidden = lexErrorFromStatus(403, { error: "Forbidden" });
+  assert.equal(forbidden.kind, "forbidden");
+  assert.ok(!forbidden.message.includes("Forbidden"));
+  assert.equal(forbidden.contactHref, "/client-portal?page=requests");
   const cap = lexErrorFromStatus(429, { error: "daily_limit", message: "Your firm has used all 20 reviews for today." }, "review");
   assert.equal(cap.kind, "limit");
+  assert.equal(cap.contactHref, "/client-portal?page=requests");
   assert.equal(cap.message, "Your firm has used all 20 reviews for today.");
   assert.ok(!cap.canRetry);
   const s = lexErrorFromStatus(500, { error: "Error: 401 Incorrect API key provided: sk-abc" });
