@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import QRCode from "qrcode";
-import { COOKIE_NAME, verifySessionToken, isStaffSession } from "../../../../lib/auth";
+import { COOKIE_NAME, verifySessionToken, isStaffSession, resolveStaff } from "../../../../lib/auth";
 import { startSetup, confirmSetup, twoFactorStatus, otpauthUri } from "../../../../lib/admin-2fa";
 
 export const runtime = "nodejs";
@@ -15,7 +15,14 @@ async function adminId(req: NextRequest): Promise<string | null> {
 export async function GET(req: NextRequest) {
   const id = await adminId(req);
   if (!id) return Response.json({ error: "Forbidden" }, { status: 403 });
-  return Response.json(await twoFactorStatus(id), { headers: { "Cache-Control": "no-store" } });
+  const status = await twoFactorStatus(id);
+  // Sidebar identity: only display name, own email, role label and the 2FA flag (no id, grant details or secrets).
+  const staff = await resolveStaff(id);
+  const g = staff?.grant.role;
+  const owner = id === (process.env.SAABAI_ADMIN_ID ?? "saabai");
+  const roleLabel = owner ? "Owner" : g === "admin" ? "Admin" : g === "viewer" ? "Viewer" : "Staff · Custom";
+  const me = { name: staff?.name?.trim() || "", email: staff?.email || "", roleLabel, twoFactor: status.enabled };
+  return Response.json({ ...status, me }, { headers: { "Cache-Control": "no-store" } });
 }
 
 /** POST {action:"start"} returns QR + secret; {action:"confirm", code} enables 2FA and returns backup codes once. */

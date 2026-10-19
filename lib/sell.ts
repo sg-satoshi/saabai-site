@@ -10,6 +10,8 @@
  */
 import type Stripe from "stripe";
 import type { CatalogueProduct } from "./product-catalogue";
+import { ONCE_MESSAGE, promoIsOnce, promoNotStartedMessage } from "./coupons/core";
+import { hasUsed } from "./coupons/once";
 import { feeDisplay, normalizeDiscounts } from "./product-pricing";
 
 export interface ResolvedCoupon {
@@ -17,6 +19,8 @@ export interface ResolvedCoupon {
   code: string;
   percentOff: number | null;
   amountOff: number | null; // cents
+  /** Code carries the one-use-per-customer rule; callers record the use once the sale is created. */
+  oncePerCustomer?: boolean;
 }
 
 /** Look up + validate a customer coupon code for this product. Empty code -> no coupon, no error. */
@@ -24,6 +28,7 @@ export async function resolveCoupon(
   stripe: Stripe,
   codeInput: string | undefined,
   product: CatalogueProduct,
+  customerEmail?: string,
 ): Promise<{ coupon?: ResolvedCoupon; error?: string }> {
   const code = (codeInput || "").trim();
   if (!code) return {};
@@ -31,6 +36,8 @@ export async function resolveCoupon(
   const list = await stripe.promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
   const pc = list.data[0];
   if (!pc) return { error: "Coupon code not found or inactive" };
+  const notStarted = promoNotStartedMessage(pc);
+  if (notStarted) return { error: notStarted };
   if (pc.expires_at && pc.expires_at * 1000 < Date.now()) return { error: "Coupon code has expired" };
   if (pc.max_redemptions && pc.times_redeemed >= pc.max_redemptions) return { error: "Coupon code has reached its redemption limit" };
 
@@ -43,12 +50,16 @@ export async function resolveCoupon(
     return { error: "This code does not apply to this product" };
   }
 
+  const once = promoIsOnce(pc as never);
+  if (once && customerEmail && (await hasUsed(pc.id, customerEmail))) return { error: ONCE_MESSAGE };
+
   return {
     coupon: {
       promotionCodeId: pc.id,
       code: pc.code,
       percentOff: c.percent_off ?? null,
       amountOff: c.amount_off ?? null,
+      ...(once ? { oncePerCustomer: true } : {}),
     },
   };
 }
@@ -61,6 +72,7 @@ export async function resolveCoupon(
 export async function resolveCouponForManual(
   stripe: Stripe,
   codeInput: string | undefined,
+  customerEmail?: string,
 ): Promise<{ coupon?: ResolvedCoupon; error?: string }> {
   const code = (codeInput || "").trim();
   if (!code) return {};
@@ -68,6 +80,8 @@ export async function resolveCouponForManual(
   const list = await stripe.promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
   const pc = list.data[0];
   if (!pc) return { error: "Coupon code not found or inactive" };
+  const notStarted = promoNotStartedMessage(pc);
+  if (notStarted) return { error: notStarted };
   if (pc.expires_at && pc.expires_at * 1000 < Date.now()) return { error: "Coupon code has expired" };
   if (pc.max_redemptions && pc.times_redeemed >= pc.max_redemptions) return { error: "Coupon code has reached its redemption limit" };
 
@@ -77,12 +91,16 @@ export async function resolveCouponForManual(
     return { error: "This code only applies to a specific product. Use the Sell button on that product instead." };
   }
 
+  const once = promoIsOnce(pc as never);
+  if (once && customerEmail && (await hasUsed(pc.id, customerEmail))) return { error: ONCE_MESSAGE };
+
   return {
     coupon: {
       promotionCodeId: pc.id,
       code: pc.code,
       percentOff: c.percent_off ?? null,
       amountOff: c.amount_off ?? null,
+      ...(once ? { oncePerCustomer: true } : {}),
     },
   };
 }

@@ -2,8 +2,9 @@ import { ATTR_COOKIE, attrMetadata, parseAttr } from "@/lib/growth/attribution";
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
-import { findActivePromo } from "@/lib/coupons/stripe";
-import { normaliseCode } from "@/lib/coupons/core";
+import { findActivePromo, productOfPrice, promoCoversProducts } from "@/lib/coupons/stripe";
+import { ONCE_MESSAGE, normaliseCode, promoIsOnce, promoNotStartedMessage } from "@/lib/coupons/core";
+import { hasUsed } from "@/lib/coupons/once";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,24 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get("origin") ?? "https://saabai.ai";
   const attr = parseAttr(req.cookies.get(ATTR_COOKIE)?.value);
-  const promo = body.code ? await findActivePromo(normaliseCode(body.code)) : null;
+  let promo = body.code ? await findActivePromo(normaliseCode(body.code)) : null;
+  // A code limited to certain products (one or several) must cover this tier. Otherwise it is
+  // not pre-applied and the customer is told, rather than Stripe quietly ignoring it.
+  let couponError: string | undefined;
+  const notStarted = promo ? promoNotStartedMessage(promo) : null;
+  if (promo && notStarted) {
+    couponError = notStarted;
+    promo = null;
+  } else if (promo && !promoCoversProducts(promo, [await productOfPrice(price)])) {
+    couponError = `The code ${promo.code} doesn't apply to the ${TIERS[tier].name} Blueprint.`;
+    promo = null;
+  }
+  // One use per customer: only checkable when we already know the email (hosted form or prefilled).
+  // The embedded form collects it inside Stripe, so there the webhook records the use and flags repeats.
+  if (promo && email && promoIsOnce(promo) && (await hasUsed(promo.id, email))) {
+    couponError = ONCE_MESSAGE;
+    promo = null;
+  }
   const metadata: Record<string, string> = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };
   if (promo) metadata.coupon_code = promo.code;
   const embedded = body.ui_mode !== "hosted";
@@ -106,7 +124,7 @@ export async function POST(req: NextRequest) {
       if (!session.client_secret) {
         return NextResponse.json({ error: "Could not start checkout", fallback: true }, { status: 502 });
       }
-      return NextResponse.json({ clientSecret: session.client_secret, sessionId: session.id });
+      return NextResponse.json({ clientSecret: session.client_secret, sessionId: session.id, ...(couponError ? { couponError } : {}) });
     }
 
     if (!name || !email || !business) {
@@ -119,7 +137,7 @@ export async function POST(req: NextRequest) {
       success_url: `${origin}/blueprint/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/blueprint/checkout?tier=${tier}&cancelled=1`,
     });
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, ...(couponError ? { couponError } : {}) });
   } catch (err) {
     console.error("[blueprint checkout]", err);
     return NextResponse.json({ error: "Could not start checkout", fallback: true }, { status: 502 });

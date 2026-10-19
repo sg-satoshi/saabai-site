@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual, couponOff } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
@@ -33,9 +34,11 @@ export async function POST(req: NextRequest) {
     // Apply an optional coupon to the one-time amount (server-authoritative).
     let chargeAmount = Math.round(amount);
     let appliedCode: string | null = null;
+    let onceUse: string | null = null; // promo id when the one-per-customer rule applies
     if (promotionCode) {
-      const { coupon, error } = await resolveCouponForManual(stripe, promotionCode);
+      const { coupon, error } = await resolveCouponForManual(stripe, promotionCode, typeof customerEmail === "string" ? customerEmail : undefined);
       if (error) return NextResponse.json({ error }, { status: 400 });
+      if (coupon?.oncePerCustomer) onceUse = coupon.promotionCodeId;
       if (coupon) {
         chargeAmount = couponOff(chargeAmount, coupon);
         appliedCode = coupon.code;
@@ -76,6 +79,7 @@ export async function POST(req: NextRequest) {
       automatic_payment_methods: { enabled: true },
     });
 
+    if (onceUse) await markUsed(onceUse, customerEmail, "admin:create-intent:" + Date.now());
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       id: paymentIntent.id,

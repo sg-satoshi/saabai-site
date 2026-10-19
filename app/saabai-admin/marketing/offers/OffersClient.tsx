@@ -5,19 +5,43 @@ import { Card, CardBody, CardHeader } from "../../ui/Card";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { confirmDialog, notify } from "../../ui/Feedback";
-import { TARGETS, brisbaneLabel, normaliseCode, targetLabel } from "@/lib/coupons/core";
+import { describeCoverage, normaliseCode, shareLinks } from "@/lib/coupons/core";
+import { formatInstant, localInputToIso, zoneAbbr } from "@/lib/coupons/time";
+import ProductPicker from "./ProductPicker";
 
 interface Code {
-  id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null;
+  id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null; startsAt?: number | null;
   percentOff: number | null; amountOff: number | null; duration: string; durationMonths: number | null;
-  target: string; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
+  target: string; targets?: string[]; unknownProducts?: number; firstTimeOnly: boolean; oncePerCustomer?: boolean; minimumSpend: number | null; created: number;
 }
 interface Target { id: string; label: string; productId: string | null; ready: boolean; note?: string }
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-AU", { minimumFractionDigits: c % 100 ? 2 : 0 })}`;
 const SITE = "https://www.saabai.ai";
 
-const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", target: "all", duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
+type ShareInfoT = ReturnType<typeof shareLinks>;
+/** One Copy link control per coupon: a product choice appears only when the code covers several linkable products. */
+function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?: string; onPick: (id: string) => void; onCopy: (t: string) => void }) {
+  if (!info.links.length) {
+    return info.careNote
+      ? <Button size="sm" variant="gh" title="Care plan pay links are per client. Add this to the end of a client's pay link." onClick={() => onCopy(info.paySuffix)}>Copy ?code= for pay link</Button>
+      : null;
+  }
+  const current = info.links.find((l) => l.id === picked) ?? info.links[0];
+  return (
+    <>
+      {info.links.length > 1 && (
+        <select aria-label="Product for the link" className="of-linksel" value={current.id} onChange={(e) => onPick(e.target.value)}>
+          {info.links.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
+        </select>
+      )}
+      <Button size="sm" variant="gh" title={current.url} onClick={() => onCopy(current.url)}>Copy link</Button>
+      {info.careNote && <Button size="sm" variant="gh" title="Care plan pay links are per client. Add this to the end of a client's pay link." onClick={() => onCopy(info.paySuffix)}>Copy ?code= for pay link</Button>}
+    </>
+  );
+}
+
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, oncePerCustomer: false, minimumSpend: "", maxRedemptions: "", startsAt: "", startsTime: "", expiresAt: "", expiresTime: "" };
 
 export default function OffersClient() {
   const [codes, setCodes] = useState<Code[] | null>(null);
@@ -28,6 +52,11 @@ export default function OffersClient() {
   const [formErr, setFormErr] = useState<string | null>(null);
   const [settingUp, setSettingUp] = useState(false);
   const [filter, setFilter] = useState<"active" | "all">("active");
+  const [tz, setTz] = useState<{ name: string; abbr: string } | null>(null);
+  useEffect(() => {
+    const name = Intl.DateTimeFormat().resolvedOptions().timeZone || "Australia/Brisbane";
+    setTz({ name, abbr: zoneAbbr(Date.now(), name) });
+  }, []);
 
   const load = useCallback(async () => {
     setErr(null);
@@ -44,7 +73,6 @@ export default function OffersClient() {
   useEffect(() => { load(); }, [load]);
 
   const careMissing = targets.some((t) => t.id.startsWith("care_") && !t.ready);
-  const tStatus = (id: string) => targets.find((t) => t.id === id);
   const shown = useMemo(() => (codes ?? []).filter((c) => filter === "all" || c.active), [codes, filter]);
   const activeCount = (codes ?? []).filter((c) => c.active).length;
   const redeemed = (codes ?? []).reduce((n, c) => n + c.timesRedeemed, 0);
@@ -54,7 +82,7 @@ export default function OffersClient() {
     try {
       const res = await fetch("/api/admin/coupons", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...f, value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
+        body: JSON.stringify({ ...f, startsTime: undefined, expiresTime: undefined, startsAt: localInputToIso(f.startsAt, f.startsTime, "start", tz?.name ?? "Australia/Brisbane"), expiresAt: localInputToIso(f.expiresAt, f.expiresTime, "end", tz?.name ?? "Australia/Brisbane"), targetMode: undefined, targets: f.targetMode === "selected" ? f.targets : [], value: parseFloat(f.value), durationMonths: f.duration === "repeating" ? f.durationMonths : undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Couldn't create the code");
@@ -87,19 +115,21 @@ export default function OffersClient() {
   }
 
   async function copy(text: string) {
-    try { await navigator.clipboard.writeText(text); notify.success("Link copied"); } catch { notify.error("Couldn't copy"); }
+    try { await navigator.clipboard.writeText(text); notify.success("Link copied"); } catch { window.prompt("Copy this link (Ctrl+C)", text); }
   }
 
   const off = (c: Code) => (c.percentOff != null ? `${c.percentOff}% off` : c.amountOff != null ? `${money(c.amountOff)} off` : "");
   const durationLabel = (c: Code) => (c.duration === "repeating" ? `first ${c.durationMonths} months` : c.duration === "forever" ? "every payment" : "first payment");
   const status = (c: Code) => {
     if (!c.active) return <Badge tone="neutral">Off</Badge>;
+    if (c.startsAt && c.startsAt * 1000 > Date.now()) return <Badge tone="info">Scheduled</Badge>;
     if (c.expiresAt && c.expiresAt * 1000 < Date.now()) return <Badge tone="neutral">Expired</Badge>;
     if (c.maxRedemptions && c.timesRedeemed >= c.maxRedemptions) return <Badge tone="warn">Used up</Badge>;
     return <Badge tone="ok">Active</Badge>;
   };
-  const isBlueprintTarget = (t: string) => t === "all" || t.startsWith("blueprint");
-  const tierOf = (t: string) => (t.startsWith("blueprint_") ? t.slice(10) : "starter");
+  // Which product's link is chosen per code (only matters when a code covers several).
+  const [linkPick, setLinkPick] = useState<Record<string, string>>({});
+  const shareOf = (c: Code) => shareLinks(c.code, c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target]), c.unknownProducts ?? 0, SITE);
 
   return (
     <div className="pg">
@@ -152,21 +182,8 @@ export default function OffersClient() {
                   <input aria-label="Discount amount" type="number" inputMode="decimal" min="0" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder={f.kind === "percent" ? "50" : "100"} />
                 </div>
               </div>
-              <div className="of-f">
-                <label htmlFor="of-target">Works on</label>
-                <select id="of-target" value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })}>
-                  {["All", "Blueprint", "Website care"].map((g) => (
-                    <optgroup key={g} label={g}>
-                      {TARGETS.filter((t) => t.group === g).map((t) => {
-                        const s = tStatus(t.id);
-                        const ready = t.id === "all" || !!s?.ready;
-                        return <option key={t.id} value={t.id} disabled={!ready}>{t.label}{ready ? "" : " (not ready)"}</option>;
-                      })}
-                    </optgroup>
-                  ))}
-                </select>
-                {f.target.startsWith("care_") && <p className="hint">Discounts the monthly fee. Setup fees aren&apos;t discounted by a care plan code.</p>}
-              </div>
+              <ProductPicker mode={f.targetMode} value={f.targets} statuses={targets} onChange={(targetMode, t) => setF({ ...f, targetMode, targets: t })} />
+              {f.targets.some((t) => t.startsWith("care_")) && <p className="hint">Care plan codes discount the monthly fee. Setup fees aren&apos;t discounted. Minimum spend is checked against the whole order.</p>}
               <div className="of-f">
                 <label htmlFor="of-dur">How long (care plans)</label>
                 <select id="of-dur" value={f.duration} onChange={(e) => setF({ ...f, duration: e.target.value as typeof f.duration })}>
@@ -183,6 +200,10 @@ export default function OffersClient() {
                 <input type="checkbox" checked={f.firstTimeOnly} onChange={(e) => setF({ ...f, firstTimeOnly: e.target.checked })} />
                 <span>First-time customers only<span className="muted of-meta" style={{ display: "block" }}>Stripe blocks it for anyone who has paid you before.</span></span>
               </label>
+              <label className="of-tog">
+                <input type="checkbox" checked={f.oncePerCustomer} onChange={(e) => setF({ ...f, oncePerCustomer: e.target.checked })} />
+                <span>One use per customer<span className="muted of-meta" style={{ display: "block" }}>We remember each customer by their email (stored scrambled, never in plain text) and refuse a second use. Checked on Sell, Payments, care plan pay links and Blueprint when we know the email. A second use made in Stripe&apos;s own checkout box is flagged afterwards rather than blocked.</span></span>
+              </label>
               <div className="of-row">
                 <div className="of-f">
                   <label htmlFor="of-min">Minimum spend ($)</label>
@@ -194,12 +215,24 @@ export default function OffersClient() {
                 </div>
               </div>
               <div className="of-f">
+                <label htmlFor="of-start">Starts</label>
+                <div className="of-row">
+                  <input id="of-start" type="date" value={f.startsAt} onChange={(e) => setF({ ...f, startsAt: e.target.value })} />
+                  <input id="of-start-time" type="time" aria-label="Start time" value={f.startsTime} onChange={(e) => setF({ ...f, startsTime: e.target.value })} disabled={!f.startsAt} />
+                </div>
+                <p className="hint">Not live until this exact date and time. Time left blank means 12:00 am. Leave the date blank to start now. Applies to links we send and to Sell and Payments. A customer typing the code into Stripe&apos;s own promo box can&apos;t be held back, so for a hard launch create the code at launch time.</p>
+              </div>
+              <div className="of-f">
                 <label htmlFor="of-exp">Expires</label>
-                <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
-                <p className="hint">Works until 11:59 pm Brisbane time on this day. Leave blank for no expiry.</p>
+                <div className="of-row">
+                  <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
+                  <input id="of-exp-time" type="time" aria-label="Expiry time" value={f.expiresTime} onChange={(e) => setF({ ...f, expiresTime: e.target.value })} disabled={!f.expiresAt} />
+                </div>
+                <p className="hint">Works until the end of this minute. Time left blank means 11:59 pm. Leave the date blank for no expiry.</p>
+                {tz && <p className="hint" data-testid="of-tz">Times are in {tz.name} ({tz.abbr}), your browser&apos;s timezone. Customers see start times in Brisbane time.</p>}
               </div>
               {formErr && <p className="of-err" role="alert">{formErr}</p>}
-              <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value}>{saving ? "Creating…" : "Create code"}</Button>
+              <Button variant="pri" className="of-btn-full" onClick={create} disabled={saving || !f.code || !f.value || (f.targetMode === "selected" && f.targets.length === 0)}>{saving ? "Creating…" : "Create code"}</Button>
             </div>
           </CardBody>
         </Card>
@@ -221,16 +254,17 @@ export default function OffersClient() {
                 <div className="r1"><span className="of-code">{c.code}</span>{status(c)}</div>
                 <div className="of-tags">
                   <span className="tag bp">{off(c)}</span>
-                  <span className="tag">{c.target === "product" ? "1 product" : targetLabel(c.target)}</span>
+                  <span className="tag" title={(c.targets ?? []).length > 1 ? (c.targets ?? []).map((t) => describeCoverage([t])).join(", ") : undefined}>{describeCoverage(c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target]), c.unknownProducts)}</span>
                   {c.firstTimeOnly && <span className="tag ws">First-time only</span>}
+                  {c.oncePerCustomer && <span className="tag ws">One use per customer</span>}
                   {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
                 </div>
                 <div className="muted of-meta">
-                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.expiresAt ? ` · until ${brisbaneLabel(c.expiresAt)}` : " · no expiry"}
+                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.startsAt && c.startsAt * 1000 > Date.now() ? ` · starts ${formatInstant(c.startsAt)}` : ""}{c.expiresAt ? ` · until ${formatInstant(c.expiresAt)}` : " · no expiry"}
                 </div>
                 {c.active && (
                   <div className="r2 of-acts">
-                    {isBlueprintTarget(c.target) && <Button size="sm" variant="gh" onClick={() => copy(`${SITE}/blueprint/checkout?tier=${tierOf(c.target)}&code=${c.code}`)}>Copy Blueprint link</Button>}
+                    <CopyLink info={shareOf(c)} picked={linkPick[c.id]} onPick={(id) => setLinkPick({ ...linkPick, [c.id]: id })} onCopy={copy} />
                     <Button size="sm" variant="dg" onClick={() => deactivate(c)}>Turn off</Button>
                   </div>
                 )}

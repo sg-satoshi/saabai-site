@@ -11,7 +11,7 @@ import { dueDunningStep, dunningDays, isLinkExpired, LINK_TTL_DAYS, linkExpiresA
 import { findBySubscription, getSiteBilling, listSiteBilling, saveSiteBilling, setPayToken, type SiteBillingRecord } from "./store";
 import { BILLING_SOURCE, periodOf, siteUrl } from "./stripe-ops";
 import { redemptionFrom } from "../coupons/core";
-import { resolveRedemptionCode } from "../coupons/stripe";
+import { recordRedemptionUse, resolveRedemptionCode } from "../coupons/stripe";
 
 export interface SetupInput {
   siteId: string;
@@ -137,8 +137,9 @@ export async function handleBillingEvent(event: { type: string; data: { object: 
       if (!rec) return "no-record";
       if (o.metadata.kind === "setup") {
         const red = await resolveRedemptionCode(redemptionFrom(o));
+        const useResult = await recordRedemptionUse(red, o.customer_details?.email || rec.contact?.email, o.id);
         const coupon = red ? { couponCode: red.code ?? red.promotionCodeId, discountCents: red.discountCents } : {};
-        await saveSiteBilling({ ...rec, ...coupon, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, red ? `Paid, subscription active (code ${coupon.couponCode})` : "Paid, subscription active");
+        await saveSiteBilling({ ...rec, ...coupon, status: "active", stripeCustomerId: o.customer || rec.stripeCustomerId, stripeSubscriptionId: o.subscription || rec.stripeSubscriptionId, failedAt: undefined, dunningSent: 0 }, red ? `Paid, subscription active (code ${coupon.couponCode})${useResult === "repeat" ? ". Review: this email had already used this one-per-customer code" : ""}` : "Paid, subscription active");
         return "setup-active";
       }
       if (o.metadata.kind === "addon") {
