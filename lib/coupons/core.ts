@@ -193,3 +193,30 @@ export function describeCoverage(targets: string[], unknownProducts = 0): string
   if (targets.length === 1) return targetLabel(targets[0]);
   return `${targets.length} products`;
 }
+
+export interface ShareLink { id: string; label: string; url: string }
+export interface ShareInfo {
+  /** Ready-to-copy checkout URLs, one per linkable product the code covers. */
+  links: ShareLink[];
+  /** True when the code also covers care plans, which have no public URL (the pay link is per client). */
+  careNote: boolean;
+  /** The suffix to append to a client pay link. */
+  paySuffix: string;
+}
+
+/**
+ * Share URLs for a code. Only Blueprint has a public checkout URL, so that is what gets a link;
+ * a code covering All products offers every Blueprint tier. A restriction we couldn't map to
+ * our products (made in the Stripe dashboard) offers none rather than a link that may not apply.
+ */
+export function shareLinks(code: string, targets: string[], unknownProducts = 0, base = "https://www.saabai.ai"): ShareInfo {
+  const c = encodeURIComponent(normaliseCode(code));
+  const paySuffix = `?code=${c}`;
+  const allProducts = targets.length === 0 && unknownProducts === 0;
+  const covered = allProducts ? PRODUCT_TARGETS.map((t) => t.id as string) : targets;
+  const links: ShareLink[] = PRODUCT_TARGETS
+    .filter((t) => "tier" in t && covered.includes(t.id))
+    .map((t) => ({ id: t.id, label: t.label, url: `${base}/blueprint/checkout?tier=${(t as { tier: string }).tier}&code=${c}` }));
+  const careNote = covered.some((id) => id.startsWith("care_"));
+  return { links, careNote, paySuffix };
+}
