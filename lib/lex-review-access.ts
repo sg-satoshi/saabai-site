@@ -1,5 +1,5 @@
 /**
- * Who may run Lex Doc review and "send for review", and the per-firm daily cap.
+ * Who may run Lex Doc review, "send for review", and document compare, with per-firm daily caps.
  *
  * Allowed:
  *   - full Saabai admins (uncapped)
@@ -7,9 +7,14 @@
  *   - Saabai directory users with the "lex" product
  * Everyone else (other client logins, restricted staff, legacy dashboard cookie): 403.
  *
- * Cap: LEX_REVIEW_DAILY_CAP (default 20) document reviews per firm per day, Brisbane time.
+ * Review cap: LEX_REVIEW_DAILY_CAP (default 20) document reviews per firm per day, Brisbane time.
  * A per-firm override lives in Redis hash lex:review:caps (set via /api/admin/lex-review-caps).
  * Send-for-review has its own counter with the same cap. A review that fails is refunded.
+ *
+ * Compare cap: LEX_COMPARE_DAILY_CAP (default 20) compares per firm per day, Brisbane time.
+ * Own Redis counter (lex:compare:used:{firm}:{day}), separate from reviews. Failed compares are refunded.
+ * Optional per-firm overrides in Redis hash lex:compare:caps.
+ *
  * A firm is the user's email domain, or the full email for free-mail addresses.
  */
 import { getRedis } from "./redis";
@@ -18,7 +23,9 @@ import { verifySession } from "./portal-session";
 import { isKnownLexPortalClient } from "./lex-portal-access";
 
 export const DEFAULT_REVIEW_DAILY_CAP = 20;
+export const DEFAULT_COMPARE_DAILY_CAP = 20;
 export const CAPS_KEY = "lex:review:caps";
+export const COMPARE_CAPS_KEY = "lex:compare:caps";
 export type ReviewAction = "review" | "submit";
 
 export type LexReviewActor =
@@ -123,6 +130,51 @@ export async function gateReview(req: Request, action: ReviewAction, now = new D
   if (n > cap) {
     await redis.incrby(key, -1);
     const message = limitMessage(action, cap);
+    return { ok: false, response: json(429, { error: message, message, limit: cap }) };
+  }
+  return { ok: true, actor, refund: async () => { try { await redis.incrby(key, -1); } catch { /* best effort */ } } };
+}
+
+
+
+export function defaultCompareCap(): number {
+  const n = parseInt((process.env.LEX_COMPARE_DAILY_CAP ?? "").trim(), 10);
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_COMPARE_DAILY_CAP;
+}
+
+const compareUsedKey = (firm: string, day: string) => `lex:compare:used:${firm}:${day}`;
+
+export async function compareCapForFirm(firm: string): Promise<number> {
+  const redis = getRedis();
+  if (redis) {
+    const v = await redis.hget<number | string>(COMPARE_CAPS_KEY, firm);
+    const n = typeof v === "number" ? v : parseInt(String(v ?? ""), 10);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return defaultCompareCap();
+}
+
+export function compareLimitMessage(cap: number): string {
+  return cap === 0
+    ? `Document compare is turned off for your firm. Contact Saabai to turn it on.`
+    : `Your firm has used all ${cap} document compares for today. The limit resets at midnight Brisbane time. Contact Saabai if you need more.`;
+}
+
+/** Checks who is calling and takes one unit of today's compare allowance. Call refund() if the work fails. */
+export async function gateCompare(req: Request, now = new Date()): Promise<Gate> {
+  const actor = await resolveReviewActor(req);
+  if (!actor) return { ok: false, response: json(403, { error: "Forbidden", message: "Document compare is available to Lex firm accounts. Sign in with your firm login." }) };
+  if (actor.kind === "admin") return { ok: true, actor, refund: async () => {} };
+
+  const redis = getRedis();
+  if (!redis) return { ok: false, response: json(503, { error: "compare_unavailable" }) };
+  const cap = await compareCapForFirm(actor.firm);
+  const key = compareUsedKey(actor.firm, brisbaneDay(now));
+  const n = await redis.incr(key);
+  if (n === 1) await redis.expire(key, 2 * 86400);
+  if (n > cap) {
+    await redis.incrby(key, -1);
+    const message = compareLimitMessage(cap);
     return { ok: false, response: json(429, { error: message, message, limit: cap }) };
   }
   return { ok: true, actor, refund: async () => { try { await redis.incrby(key, -1); } catch { /* best effort */ } } };
