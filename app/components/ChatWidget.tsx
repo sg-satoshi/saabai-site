@@ -5,6 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 
 const STORAGE_KEY = "saabai-conversation";
@@ -74,7 +75,7 @@ const INITIAL_MESSAGES: UIMessage[] = [
   },
 ];
 
-// Pages where Mia proactively opens after a delay, with a page-specific opener
+// Page-specific first message, used only when the visitor opens the chat themselves
 const PROACTIVE_PAGES: Record<string, string> = {
   "/calculator": "Hi, I'm Mia, Saabai's AI assistant. Looks like you've been running some numbers. What came up for you?",
   "/services": "Hey, I'm Mia, Saabai's AI assistant. Anything on the services page I can help clarify?",
@@ -153,6 +154,7 @@ export default function ChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
+  const [nudgeText, setNudgeText] = useState<string | null>(null);
   const [pulsing, setPulsing] = useState(false);
   const [returningVisitor, setReturningVisitor] = useState(false);
 
@@ -372,16 +374,30 @@ export default function ChatWidget() {
   const splitInProgress = !!(splitProgress && splitProgress.count < splitProgress.total);
   const showTypingIndicator = isLoading || thinkingDelay || splitInProgress;
 
-  // ── Proactive bubble ─────────────────────────────────────────────────
+  // ── Nudge bubble: pricing and Blueprint pages only, once per session, never auto-opens ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (localStorage.getItem("saabai-chat-seen")) return;
-    const timer = setTimeout(() => {
+    const text = nudgeFor(pathname);
+    if (!text || isOpen) return;
+    try { if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return; } catch { return; }
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      try { sessionStorage.setItem(NUDGE_SESSION_KEY, "1"); } catch {}
+      setNudgeText(text);
       setShowBubble(true);
-      track("bubble_shown");
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+      track("bubble_shown", { page: pathname });
+    };
+    const onScroll = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      if (h > 0 && window.scrollY / h >= NUDGE_SCROLL_RATIO) show();
+    };
+    const timer = setTimeout(show, NUDGE_DELAY_MS);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { done = true; clearTimeout(timer); window.removeEventListener("scroll", onScroll); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // ── Pulse launcher ───────────────────────────────────────────────────
   useEffect(() => {
@@ -392,29 +408,6 @@ export default function ChatWidget() {
     }, 10000);
     return () => clearInterval(interval);
   }, [isOpen]);
-
-  // ── Proactive trigger — auto-opens on high-intent pages ──────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const proactiveMsg = PROACTIVE_PAGES[pathname];
-    if (!proactiveMsg) return;
-    if (isOpen) return;
-    if (returningVisitor) return;
-    if (sessionStorage.getItem("saabai-proactive-shown")) return;
-    if (localStorage.getItem("saabai-chat-seen")) return;
-
-    const timer = setTimeout(() => {
-      sessionStorage.setItem("saabai-proactive-shown", "1");
-      localStorage.setItem("saabai-chat-seen", "1");
-      setMessages([{ id: "initial", role: "assistant", parts: [{ type: "text", text: proactiveMsg }] }]);
-      setIsOpen(true);
-      setShowBubble(false);
-      track("proactive_trigger", { page: pathname });
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, isOpen, returningVisitor]);
 
   // ── Auto-scroll ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -458,6 +451,11 @@ export default function ChatWidget() {
   // ── Handlers ─────────────────────────────────────────────────────────
 
   function openWidget() {
+    // Page-specific opener when the visitor opens a fresh chat (never auto-opened).
+    const opener = PROACTIVE_PAGES[pathname];
+    if (opener && messages.length <= 1 && !returningVisitor) {
+      setMessages([{ id: "initial", role: "assistant", parts: [{ type: "text", text: opener }] }]);
+    }
     setIsOpen(true);
     setChatMode("text");
     setShowBubble(false);
@@ -698,7 +696,7 @@ export default function ChatWidget() {
     <div className="fixed bottom-6 md:bottom-14 right-6 z-[60] flex flex-col items-end gap-3">
 
       {/* ── Proactive bubble ─────────────────────────────────────────── */}
-      {showBubble && !isOpen && (
+      {showBubble && nudgeText && !isOpen && (
         <div className="w-80 border border-saabai-teal/25 rounded-2xl relative overflow-hidden" style={{ background: "#1c1a52", boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 32px rgba(98,197,209,0.2)" }}>
           <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-teal/15">
@@ -713,8 +711,8 @@ export default function ChatWidget() {
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
           </div>
           <div className="p-4">
-            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">Hey — what does your team spend the most time on that isn&apos;t really your core work?</p>
-            <button onClick={openWidget} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Tell me about it →</button>
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">{nudgeText}</p>
+            <button onClick={() => { track("bubble_clicked", { page: pathname }); openWidget(); }} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Ask Mia →</button>
           </div>
         </div>
       )}
