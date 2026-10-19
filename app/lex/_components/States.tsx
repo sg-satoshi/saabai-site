@@ -170,14 +170,18 @@ export function NoResultsCard({ narrowed, onWiden, onRephrase }: { narrowed: boo
 }
 
 export function ErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: LexError; onRetry?: () => void; retryLabel?: string }) {
+  const showActions = error.signIn || error.contactHref || (error.canRetry && onRetry);
   return (
     <div className="lx-err" role="alert" data-lex-error={error.kind}>
       <b>{error.title}</b>
       <p>{error.message}</p>
-      {(error.signIn || (error.canRetry && onRetry)) && (
+      {showActions && (
         <div className="row">
           {error.signIn && (
             <a className="lx-btn primary" href={signInHref(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/lex")}>Sign in</a>
+          )}
+          {error.contactHref && (
+            <a className="lx-btn primary" href={error.contactHref}>Contact Saabai</a>
           )}
           {error.canRetry && onRetry && (
             <button type="button" className="lx-btn primary" onClick={onRetry} data-no-feedback>{retryLabel}</button>

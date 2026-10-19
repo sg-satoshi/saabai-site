@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  LEX_INTAKE_MATTER_TYPES,
+  LEX_INTAKE_MATTER_TYPE_DEFAULT,
+  type LexIntakeMatterType,
+} from "@/lib/lex-intake-matter-types";
+import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
+
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
 import {
@@ -149,7 +156,7 @@ export default function LexPage() {
   // ── Client intake state ───────────────────────────────────────────────
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [intakeClientName, setIntakeClientName] = useState("");
-  const [intakeMatterType, setIntakeMatterType] = useState("Property");
+  const [intakeMatterType, setIntakeMatterType] = useState(LEX_INTAKE_MATTER_TYPE_DEFAULT);
   const [intakeUrgency, setIntakeUrgency] = useState<"low" | "medium" | "high">("medium");
   const [intakeDescription, setIntakeDescription] = useState("");
 
@@ -900,6 +907,7 @@ export default function LexPage() {
           {mode === "research" && !showWelcome && !panelOpen && (
             <button type="button" className="lx-btn sm" onClick={() => setPanelOpen(true)}><Icon name="book" />Sources{panelMeta ? ` ${citedSources(panelMeta).cited.length}` : ""}</button>
           )}
+          <a className="lx-btn sm" href={PORTAL_REQUESTS_HREF}>Contact Saabai</a>
         </div>
 
         {mode === "research" && (
@@ -1014,8 +1022,8 @@ export default function LexPage() {
             </div>
             <div className="field">
               <label htmlFor="lx-intake-type">Matter Type</label>
-              <select id="lx-intake-type" value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value)}>
-                {["Property", "Family Law", "Corporate / Commercial", "Litigation", "Employment", "Wills & Estates", "Criminal", "Other"].map(t => <option key={t} value={t}>{t}</option>)}
+              <select id="lx-intake-type" value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value as LexIntakeMatterType)}>
+                {LEX_INTAKE_MATTER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div className="field">
@@ -1053,7 +1061,7 @@ export default function LexPage() {
                   setActiveId(id);
                   setMode("research");
                   setIntakeOpen(false);
-                  setIntakeClientName(""); setIntakeMatterType("Property"); setIntakeUrgency("medium"); setIntakeDescription("");
+                  setIntakeClientName(""); setIntakeMatterType(LEX_INTAKE_MATTER_TYPE_DEFAULT); setIntakeUrgency("medium"); setIntakeDescription("");
                 }}
               >
                 Create Matter
