@@ -440,7 +440,10 @@ export default function ChatWidget() {
         if (toolName === "remember_visitor") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const profileData = (part as any).input ?? {};
-          const merged = mergeVisitorProfile(profileData);
+          // Never keep the email in localStorage; it lives on the lead record only.
+          const { email: _email, ...profileFacts } = profileData as Record<string, unknown>;
+          void _email;
+          const merged = mergeVisitorProfile(profileFacts);
           if (merged) setVisitorProfile(merged);
         }
         if (toolName === "qualify_lead") {
@@ -556,7 +559,7 @@ export default function ChatWidget() {
         }),
       });
       if (!skipEmail && endEmail.trim()) {
-        track("transcript_requested", { email: endEmail.trim() });
+        track("transcript_requested");
       }
       setEndSubmitted(true);
     } finally {
@@ -662,7 +665,7 @@ export default function ChatWidget() {
   }
 
   async function submitLeadCapture() {
-    if (!leadForm.name.trim() || !leadForm.email.trim()) return;
+    if (!leadForm.email.trim()) return;
     setLeadSubmitting(true);
     transcriptSentRef.current = true;
     try {
@@ -678,7 +681,7 @@ export default function ChatWidget() {
           conversation: messages.map((m) => ({ role: m.role, content: getMessageText(m) })),
         }),
       });
-      track("lead_captured", { email: leadForm.email });
+      track("lead_captured", { hasName: !!leadForm.name.trim(), sendTranscript: leadForm.sendTranscript });
       setLeadSubmitted(true);
     } finally {
       setLeadSubmitting(false);
@@ -980,6 +983,19 @@ export default function ChatWidget() {
               </div>
             )}
 
+            {/* ── Low-friction capture: offer a summary after a few messages ── */}
+            {userMessages.length >= 3 && !showLeadCapture && !leadSubmitted && !isEnded && !isLoading && (
+              <div className="flex justify-start mt-1">
+                <button
+                  onClick={() => { setShowLeadCapture(true); track("summary_offer_clicked"); }}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"
+                  style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.25)", color: "rgba(255,255,255,0.65)" }}
+                >
+                  Email me a summary of this chat
+                </button>
+              </div>
+            )}
+
             {/* ── Next-step CTA (tool-triggered: score, blueprint, websites or call) ── */}
             {ctaStep && !isEnded && (
               <div className="mx-1 mt-1">
@@ -1002,10 +1018,11 @@ export default function ChatWidget() {
               <div className="mx-1 mt-1 bg-saabai-surface-raised border border-saabai-border rounded-xl overflow-hidden">
                 <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
                 <div className="p-4 flex flex-col gap-3">
-                  <p className="text-[10px] font-medium tracking-[0.15em] text-saabai-text-dim uppercase">Your Details</p>
+                  <p className="text-[13px] text-saabai-text-muted leading-snug">Pop your email in and I&apos;ll send you a summary of this chat, so Shane can follow up if there&apos;s a next step.</p>
                   <input
                     type="text"
-                    placeholder="Your name"
+                    placeholder="First name (optional)"
+                    autoComplete="given-name"
                     value={leadForm.name}
                     onChange={(e) => setLeadForm((f) => ({ ...f, name: e.target.value }))}
                     className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
@@ -1013,6 +1030,8 @@ export default function ChatWidget() {
                   <input
                     type="email"
                     placeholder="Email address"
+                    autoComplete="email"
+                    inputMode="email"
                     value={leadForm.email}
                     onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))}
                     onKeyDown={(e) => { if (e.key === "Enter") submitLeadCapture(); }}
@@ -1029,11 +1048,15 @@ export default function ChatWidget() {
                   </label>
                   <button
                     onClick={submitLeadCapture}
-                    disabled={!leadForm.name.trim() || !leadForm.email.trim() || leadSubmitting}
+                    disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadForm.email.trim()) || leadSubmitting}
                     className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-sm hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                   >
-                    {leadSubmitting ? <BouncingDots /> : "Send my details"}
+                    {leadSubmitting ? <BouncingDots /> : "Send it to me"}
                   </button>
+                  <p className="text-[10px] text-saabai-text-dim leading-relaxed">
+                    We&apos;ll only use your email to reply, send what you asked for and up to two short follow-ups. Unsubscribe anytime.{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-saabai-teal">Privacy</a>. Please don&apos;t share sensitive info in the chat.
+                  </p>
                 </div>
               </div>
             )}
@@ -1045,7 +1068,7 @@ export default function ChatWidget() {
                     <path d="M1 6l3.5 3.5L11 2" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm text-saabai-text-muted leading-relaxed">Got it — we&apos;ll be in touch within 24 hours.</p>
+                <p className="text-sm text-saabai-text-muted leading-relaxed">Thanks. Check your inbox shortly, and Shane will be in touch if there&apos;s a next step.</p>
               </div>
             )}
 
