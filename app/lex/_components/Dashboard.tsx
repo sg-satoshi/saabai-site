@@ -5,6 +5,7 @@ import { PORTAL_REQUESTS_HREF } from "../../../lib/portal-pages";
 import type { Project, Thread } from "./types";
 import { Icon } from "./icons";
 import "./dashboard.css";
+import "./account.css";
 
 const day = (ms: number) =>
   new Date(ms).toLocaleDateString("en-AU", { day: "numeric", month: "short", timeZone: "Australia/Brisbane" });
@@ -28,6 +29,7 @@ export function FirmDashboard(props: {
   threads: Thread[]; projects: Project[]; usage: FirmUsage | null; admin: boolean;
   onNewResearch: () => void; onDraft: () => void; onReview: () => void; onIntake: () => void;
   onOpenThread: (id: string) => void; onFirmSettings: () => void;
+  onAccount: () => void; onInvoices: () => void;
 }) {
   const recent = props.threads.filter((t) => t.messages.length > 0).sort((a, b) => b.createdAt - a.createdAt).slice(0, 6);
   const weekAgo = Date.now() - 7 * 86400000;
@@ -108,13 +110,13 @@ export function FirmDashboard(props: {
             <section className="lxh-card" aria-labelledby="lxh-help-h">
               <div className="lxh-card-h"><h2 id="lxh-help-h">Help and account</h2></div>
               <a className="lxh-link" href={PORTAL_REQUESTS_HREF}>Contact Saabai<span>Raise a request or ask for more capacity</span></a>
-              <a className="lxh-link" href="/client-portal?page=account">Account<span>Your login and details</span></a>
-              <a className="lxh-link" href="/client-portal?page=invoices">Invoices<span>Billing history</span></a>
+              <button type="button" className="lxh-link lxa-linkbtn" onClick={props.onAccount}>Account<span>Your login and details</span></button>
+              <button type="button" className="lxh-link lxa-linkbtn" onClick={props.onInvoices}>Invoices<span>Billing history</span></button>
             </section>
           </div>
         </div>
 
-        <p className="lxh-note">Research threads are saved to your account for 90 days. Shared firm matters are coming in a later update.</p>
+        <p className="lxh-note">Research threads are saved to your account for 90 days. Matters are shared with your whole firm.</p>
       </div>
     </div>
   );

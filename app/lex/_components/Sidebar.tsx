@@ -132,6 +132,7 @@ export function Sidebar(props: {
         {nav("dashboard", "dashboard", "Firm dashboard")}
         <button type="button" className="lx-nav" onClick={props.onIntake}><Icon name="plus" />New matter</button>
         <button type="button" className="lx-nav" onClick={props.onFirmSettings}><Icon name="settings" />Firm settings</button>
+        {nav("account", "chip", "Account")}
       </div>
 
       <div className="lx-foot">

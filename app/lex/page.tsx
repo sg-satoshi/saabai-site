@@ -23,6 +23,7 @@ import { Icon } from "./_components/icons";
 import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
+import { AccountView, InvoicesView } from "./_components/Account";
 import { FirmDashboard } from "./_components/Dashboard";
 import { MattersView, MatterDetail, MatterBar, NewMatterDialog } from "./_components/Matters";
 import type { Matter, MatterItem } from "../../lib/lex-matters";
@@ -211,6 +212,9 @@ export default function LexPage() {
       }).catch(() => null);
       try { const am = localStorage.getItem("lex:matter"); if (am) setActiveMatterIdState(am); } catch {}
       if (new URLSearchParams(window.location.search).get("view") === "matters") setMode("matters");
+      // Deep links: /lex?view=account and /lex?view=invoices open those pages inside the Lex shell.
+      if (new URLSearchParams(window.location.search).get("view") === "account") setMode("account");
+      if (new URLSearchParams(window.location.search).get("view") === "invoices") setMode("invoices");
       // Deep link: /lex?view=dashboard opens the firm dashboard inside the Lex shell.
       if (new URLSearchParams(window.location.search).get("view") === "dashboard") setMode("dashboard");
       // Narrow screens start with the sources panel closed (it opens as a bottom sheet).
@@ -1036,6 +1040,8 @@ export default function LexPage() {
           {mode === "draft" && <div className="lx-ctx"><span className="k">Drafting</span><b>{DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document"}</b></div>}
           {mode === "review" && <div className="lx-ctx"><span className="k">Doc review</span><b>{reviewFile?.name ?? "Review a document"}</b></div>}
           {mode === "dashboard" && <div className="lx-ctx"><span className="k">Firm</span><b>Dashboard</b></div>}
+          {mode === "account" && <div className="lx-ctx"><span className="k">Account</span><b>Your login</b></div>}
+          {mode === "invoices" && <div className="lx-ctx"><span className="k">Billing</span><b>Invoices</b></div>}
           {mode === "matters" && <div className="lx-ctx"><span className="k">Matters</span><b>{openMatter ? `${openMatter.id}: ${openMatter.name}` : "All matters"}</b></div>}
           <span className="lx-sp" />
           {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
@@ -1127,6 +1133,12 @@ export default function LexPage() {
           </>
         )}
 
+        {mode === "account" && (
+          <AccountView firmName={firmName} email={userEmail ?? displayEmail} admin={isAdmin} usage={firmUsage}
+            onInvoices={() => setMode("invoices")} onFirmSettings={() => setSettingsOpen(true)} />
+        )}
+        {mode === "invoices" && <InvoicesView onAccount={() => setMode("account")} />}
+
         {mode === "dashboard" && (
           <FirmDashboard
             firmName={firmName} firmLogo={firmLogo} email={userEmail ?? displayEmail}
@@ -1134,6 +1146,7 @@ export default function LexPage() {
             onNewResearch={() => { newThread(); setTimeout(() => inputRef.current?.focus(), 0); }}
             onDraft={() => setMode("draft")} onReview={() => setMode("review")}
             onIntake={() => setIntakeOpen(true)} onFirmSettings={() => setSettingsOpen(true)}
+            onAccount={() => setMode("account")} onInvoices={() => setMode("invoices")}
             onOpenThread={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setMode("research"); }}
           />
         )}
