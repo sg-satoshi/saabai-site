@@ -15,9 +15,9 @@ const C = {
   border: "rgba(0,0,0,0.08)",
   text:   "#111827",
   muted:  "#9ca3af",
-  gold:   "#C9A84C",
-  goldBg: "rgba(201,168,76,0.10)",
-  goldBdr: "rgba(201,168,76,0.22)",
+  gold:   "#11707c" /* Lex teal */,
+  goldBg: "rgba(98,197,209,0.12)",
+  goldBdr: "rgba(98,197,209,0.38)",
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {

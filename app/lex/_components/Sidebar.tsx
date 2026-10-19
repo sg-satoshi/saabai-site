@@ -138,9 +138,13 @@ export function Sidebar(props: {
       <div className="lx-foot">
         <div className="lx-avatar">{initials(props.userEmail)}</div>
         <div style={{ minWidth: 0 }}>
-          <b>{props.userEmail ?? "Signed in"}</b>
+          <b title={props.userEmail ?? undefined}>{props.userEmail ?? "Signed in"}</b>
           <span>{props.firmName || "Lex workspace"}</span>
         </div>
+        {/* Same sign-out as Account: clears the session cookie and returns to /login. */}
+        <form method="post" action="/api/auth/logout" className="lx-signout">
+          <button type="submit" aria-label="Sign out">Sign out</button>
+        </form>
       </div>
       <a className="lx-powered" href="https://saabai.ai" target="_blank" rel="noopener noreferrer">Powered by Saabai.ai</a>
     </aside>
