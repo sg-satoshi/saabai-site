@@ -99,7 +99,7 @@ const results = [
   {
     stat: "90s",
     label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for Tributum Law, a Brisbane tax law firm. Previously 2 to 14 hours.",
+    detail: "Every enquiry answered within 90 seconds, day or night, for Tributum Law, an Adelaide tax law firm. Previously 2 to 14 hours.",
   },
   {
     stat: "12 hrs",
