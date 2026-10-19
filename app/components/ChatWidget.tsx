@@ -69,17 +69,17 @@ const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "initial",
     role: "assistant",
-    parts: [{ type: "text", text: "Hey, I'm Mia. What brings you to Saabai today?" }],
+    parts: [{ type: "text", text: "Hey, I'm Mia, Saabai's AI assistant. What brings you to Saabai today?" }],
   },
 ];
 
 // Pages where Mia proactively opens after a delay, with a page-specific opener
 const PROACTIVE_PAGES: Record<string, string> = {
-  "/calculator": "Looks like you've been running some numbers. What came up for you?",
-  "/services": "Hey, Mia here. Anything on the services page I can help clarify?",
-  "/use-cases": "Seeing anything in there that looks familiar for your business?",
-  "/process": "Checking out how it all works? Happy to walk you through it.",
-  "/about": "Hey, Mia here. Any questions about the team or how Saabai works?",
+  "/calculator": "Hi, I'm Mia, Saabai's AI assistant. Looks like you've been running some numbers. What came up for you?",
+  "/services": "Hey, I'm Mia, Saabai's AI assistant. Anything on the services page I can help clarify?",
+  "/use-cases": "Hi, I'm Mia, Saabai's AI assistant. Seeing anything in there that looks familiar for your business?",
+  "/process": "Hi, I'm Mia, Saabai's AI assistant. Checking out how it all works? Happy to walk you through it.",
+  "/about": "Hey, I'm Mia, Saabai's AI assistant. Any questions about the team or how Saabai works?",
 };
 
 function getMessageText(message: UIMessage): string {
@@ -683,7 +683,7 @@ export default function ChatWidget() {
               <MiaAvatar size={36} dotSize={10} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies within a minute</p>
               </div>
             </div>
@@ -705,7 +705,7 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">Saabai&apos;s AI assistant</p>
               </div>
             </div>
             <button onClick={closeWidget} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1" aria-label="Close">
@@ -831,7 +831,7 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} showDot={!isEnded} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide">
                   {isEnded ? "Conversation ended" : "Usually replies within a minute"}
                 </p>
