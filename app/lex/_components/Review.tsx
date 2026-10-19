@@ -80,7 +80,8 @@ function ModeToggle({ mode, setMode, disabled }: { mode: InputMode; setMode: (m:
 }
 
 export function ReviewView(p: ReviewProps) {
-  const [tab, setTab] = useState<"issues" | "setup">("setup");
+  // A report that is already there on mount (reopened from a matter) opens on its issues.
+  const [tab, setTab] = useState<"issues" | "setup">(() => (p.report ? "issues" : "setup"));
   const [panelOpen, setPanelOpen] = useState(true);
   const [sel, setSel] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | ReviewSeverity>("all");
