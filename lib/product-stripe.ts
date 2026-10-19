@@ -4,7 +4,8 @@
  */
 import type Stripe from "stripe";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./auth";
+import { verifySessionToken, COOKIE_NAME, } from "./auth";
+import { isAdminOrGranted } from "./auth-acl";
 import {
   INTERVAL_MAP,
   type ProductInput,
@@ -59,7 +60,7 @@ export async function isAdminRequest(): Promise<boolean> {
   if (!token) return false;
   const session = await verifySessionToken(token);
   if (!session) return false;
-  return isAdminSession(session.clientId);
+  return isAdminOrGranted(session.clientId);
 }
 
 // ── Validation ────────────────────────────────────────────────────────────

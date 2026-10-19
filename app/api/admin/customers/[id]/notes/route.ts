@@ -5,7 +5,8 @@
  */
 
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME } from "../../../../../../lib/auth";
+import { isAdminOrGranted } from "../../../../../../lib/auth-acl";
 import { getCustomerNotes, addCustomerNote, deleteCustomerNote } from "../../../../../../lib/customer-notes";
 
 export const runtime = "nodejs";
@@ -21,7 +22,7 @@ export async function GET(
   if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const session = await verifySessionToken(token);
-  if (!session || !(await isAdminSession(session.clientId))) {
+  if (!session || !(await isAdminOrGranted(session.clientId))) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -39,7 +40,7 @@ export async function POST(
   if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const session = await verifySessionToken(token);
-  if (!session || !(await isAdminSession(session.clientId))) {
+  if (!session || !(await isAdminOrGranted(session.clientId))) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -66,7 +67,7 @@ export async function DELETE(
   if (!token) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const session = await verifySessionToken(token);
-  if (!session || !(await isAdminSession(session.clientId))) {
+  if (!session || !(await isAdminOrGranted(session.clientId))) {
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 

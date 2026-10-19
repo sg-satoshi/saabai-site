@@ -6,7 +6,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { isAdminOrGranted } from "../../../../lib/auth-acl";
 import { createSite } from "../../../../lib/site-registry";
 import { createInvoice, nextInvoiceNumber } from "../../../../lib/invoice-store";
 
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const session = await verifySessionToken(token);
-  if (!session || !(await isAdminSession(session.clientId))) {
+  if (!session || !(await isAdminOrGranted(session.clientId))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

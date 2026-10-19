@@ -8,6 +8,8 @@
  *   SAABAI_SESSION_SECRET — random 32+ char secret for signing sessions
  */
 
+import { grantActive, type AccessGrant } from "./access";
+
 const COOKIE_NAME = "saabai_session";
 const SESSION_DAYS = 7;
 
@@ -103,24 +105,43 @@ export function clearSessionCookieHeader(): string {
 export { COOKIE_NAME };
 
 /**
- * Check if the current session belongs to an admin-level user.
- * Supports both env-var admins (SAABAI_ADMIN_ID) and Redis directory admins.
+ * Who is this signed-in staff member? Env admin and legacy directory admins resolve to a full-admin grant
+ * (unchanged behaviour). Restricted staff resolve to their stored grant. Disabled, revoked or expired
+ * accounts resolve to null, on every request, so a disable is instant.
  */
-export async function isAdminSession(clientId: string): Promise<boolean> {
-  if (!clientId) return false;
-  // Check env-var admin first
+export async function resolveStaff(clientId: string): Promise<{ id: string; email?: string; name?: string; grant: AccessGrant } | null> {
+  if (!clientId) return null;
   const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
-  if (clientId === ADMIN_ID) return true;
-  // Namespaced or legacy sessions (portal:*, rex-dashboard) are never admin.
-  if (clientId.includes(":") || clientId === "rex-dashboard") return false;
-
-  // Check Redis directory for admin role
+  if (clientId === ADMIN_ID) return { id: clientId, grant: { role: "admin", kind: "internal" } };
+  if (clientId.includes(":") || clientId === "rex-dashboard") return null;
   try {
     const { listDirectoryUsers } = await import("../lib/user-directory");
-    const allUsers = await listDirectoryUsers();
-    const user = allUsers.find((u) => u.id === clientId);
-    return user?.role === "admin";
+    const user = (await listDirectoryUsers()).find((u) => u.id === clientId);
+    if (!user) return null;
+    if (user.role === "admin") {
+      if (!grantActive(user.access)) return null;
+      if (user.access && user.access.role !== "admin") return null; // contradictory record: fail closed
+      return { id: user.id, email: user.email, name: user.name, grant: { ...(user.access ?? {}), role: "admin" } };
+    }
+    if (user.role === "staff" && user.access && user.access.role !== "admin" && grantActive(user.access)) {
+      return { id: user.id, email: user.email, name: user.name, grant: user.access };
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/** Any active internal staff account (full admin or restricted). Used by the admin sign-in and 2FA flow. */
+export async function isStaffSession(clientId: string): Promise<boolean> {
+  return !!(await resolveStaff(clientId));
+}
+
+/**
+ * Check if the current session belongs to a FULL admin (SAABAI_ADMIN_ID, or a directory user with role=admin
+ * that is not disabled/expired). Restricted staff are never admin here, so every handler that calls this
+ * stays admin-only by default.
+ */
+export async function isAdminSession(clientId: string): Promise<boolean> {
+  return (await resolveStaff(clientId))?.grant.role === "admin";
 }

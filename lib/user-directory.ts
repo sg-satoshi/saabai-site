@@ -1,12 +1,17 @@
 import { getRedis } from "./redis";
 import type { ProductId } from "./user-products";
+import type { AccessGrant } from "./access";
 
 export interface DirectoryUser {
   id: string;
   name: string;
   email: string;
   password: string;
-  role: "admin" | "user";
+  /** "admin" = full admin (legacy default). "staff" = restricted admin, powers come only from `access`. */
+  role: "admin" | "user" | "staff";
+  /** Granular access (viewer / per-area). Absent on legacy records: role "admin" then means full admin, unchanged. */
+  access?: AccessGrant;
+  lastLoginAt?: string;
   dashboardUrl: string;
   products?: ProductId[];
   /** Site Factory site this client owns (links requests + plan to their website). */

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
+import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
+import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } from "./lib/access";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
@@ -217,6 +218,45 @@ async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse
   return res;
 }
 
+/** Append-only admin audit (Redis list, newest first, capped). Actor comes from the signed session, never the body. No bodies, no query strings, no secrets. */
+async function adminAudit(entry: Record<string, string | number | boolean | undefined>): Promise<void> {
+  try {
+    await redis.lpush(ADMIN_AUDIT_KEY, JSON.stringify({ t: new Date().toISOString(), ...entry }));
+    await redis.ltrim(ADMIN_AUDIT_KEY, 0, ADMIN_AUDIT_MAX - 1);
+  } catch { /* auditing never blocks */ }
+}
+
+type Staff = NonNullable<Awaited<ReturnType<typeof resolveStaff>>>;
+
+/**
+ * Central enforcement for signed-in staff on admin pages and ADMIN_API. Full admins pass unchanged (writes are audited).
+ * Restricted staff (viewer / per-area) are decided by lib/access.ts: deny by default, 2FA enrolment required first.
+ * Returns a response to short-circuit, or null to continue.
+ */
+async function staffGate(req: NextRequest, pathname: string, staff: Staff | null, kind: "api" | "page"): Promise<NextResponse | null> {
+  if (!staff) return null;
+  const method = req.method.toUpperCase();
+  const write = method !== "GET" && method !== "HEAD";
+  const full = staff.grant.role === "admin";
+  const enrolled = full ? true : !!(await redis.get(`admin2fa:${staff.id}`).catch(() => null));
+  const g = gate(staff.grant, method, pathname, enrolled);
+  const base = { actor: staff.id, email: staff.email, role: staff.grant.role, m: method, p: pathname.slice(0, 160), area: g.decision.area };
+  if (g.action === "allow") {
+    if (write) await adminAudit({ ...base, result: "allow" });
+    if (full) return null;
+    const headers = new Headers(req.headers);
+    headers.set(ACL_HEADER, await aclHeaderValue(staff.id));
+    return NextResponse.next({ request: { headers } });
+  }
+  if (kind === "api" || write) await adminAudit({ ...base, result: g.action === "enrol" ? "enrol-required" : `deny:${g.decision.reason}` });
+  if (g.action === "enrol") {
+    if (kind === "page") return NextResponse.redirect(new URL("/saabai-admin/security?enrol=required", req.url));
+    return NextResponse.json({ error: "Two-factor enrolment required" }, { status: 403 });
+  }
+  if (kind === "page") return NextResponse.redirect(new URL("/saabai-admin?denied=1", req.url));
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
 async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextResponse> {
   if (matches(pathname, PUBLIC_API)) return NextResponse.next();
 
@@ -224,8 +264,10 @@ async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextRes
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (matches(pathname, ADMIN_API) && !(await isAdminSession(session.clientId))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (matches(pathname, ADMIN_API)) {
+    const staff = await resolveStaff(session.clientId);
+    if (!staff) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return (await staffGate(req, pathname, staff, "api")) ?? NextResponse.next();
   }
   return NextResponse.next();
 }
@@ -434,7 +476,15 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
 
   const session = await getSession(req);
-  if (session) return NextResponse.next();
+  if (session) {
+    // Staff on admin pages go through the central access gate (full admins pass; restricted roles are deny-by-default).
+    if (matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"])) {
+      const staff = await resolveStaff(session.clientId);
+      const r = await staffGate(req, pathname, staff, "page");
+      if (r) return r;
+    }
+    return NextResponse.next();
+  }
 
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);

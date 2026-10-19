@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { list, del } from "@vercel/blob";
 import { deleteSite, listSites } from "../../../../lib/site-registry";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
+import { verifySessionToken, COOKIE_NAME } from "../../../../lib/auth";
+import { isAdminOrGranted } from "../../../../lib/auth-acl";
 
 export const runtime = "nodejs";
 
@@ -11,7 +12,7 @@ export async function DELETE(req: NextRequest) {
   // client's site, so verify the admin session here too.
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const session = token ? await verifySessionToken(token) : null;
-  if (!session || !(await isAdminSession(session.clientId))) {
+  if (!session || !(await isAdminOrGranted(session.clientId))) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
