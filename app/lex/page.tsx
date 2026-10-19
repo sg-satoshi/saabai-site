@@ -6,7 +6,19 @@ import {
   type LexError, cleanThreads, stripErrorAnswers, isStreamErrorPart, signInHref,
   lexErrorFromResponse, lexErrorFromStatus, lexNetworkError, lexEmptyError,
 } from "../../lib/lex-errors";
-import { type LexAnswerMeta, renderMarkers, CITE_MARKER } from "../../lib/lex-sources";
+import type { LexAnswerMeta } from "../../lib/lex-sources";
+import { answerWithSources, citedSources } from "../../lib/lex-cite-display";
+import { type ChatMessage, type Thread, type Project, type Mode, ATTACH_MARK } from "./_components/types";
+import { Sidebar, initials } from "./_components/Sidebar";
+import { AnswerSheet, brisbaneStamp } from "./_components/Answer";
+import { SourcesPanel } from "./_components/SourcesPanel";
+import { Composer, EmptyState, SearchingSteps, ErrorCard, NoResultsCard, FOLLOW_UPS, type Attachment } from "./_components/States";
+import { CommandPalette, FlagDialog, ShareMenu } from "./_components/Extras";
+import { type LexStep, applyStepPart, stepSummary, mailtoHref } from "../../lib/lex-steps";
+import { ALL_SCOPES, isFullScope, normalizeScope, type LexScopeKey } from "../../lib/lex-scope";
+import type { FlagReason } from "../../lib/lex-flag";
+import { Icon } from "./_components/icons";
+import { exportAnswerToWord } from "./_components/exportAnswer";
 import { Document, Packer, Paragraph, TextRun, Header, Footer, AlignmentType } from "docx";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
@@ -31,12 +43,8 @@ const C = {
   aiBubble:     "#1B2B4B",
 };
 
-type ChatMessage  = { role: "user" | "assistant"; content: string; meta?: LexAnswerMeta };
-type Thread       = { id: string; title: string; messages: ChatMessage[]; createdAt: number; projectId?: string };
-type Project      = { id: string; name: string; createdAt: number; colour: string };
-type Mode         = "research" | "draft" | "review";
 
-const PROJECT_COLOURS = ["#C9A84C","#5b8dee","#25c986","#f97316","#a78bfa","#f472b6"];
+const PROJECT_COLOURS = ["#62c5d1","#5b8dee","#25c986","#f97316","#a78bfa","#f472b6"];
 
 type QASection  = { id: string; clause: string; status: "verified" | "flagged" | "unverified"; note: string };
 type QAReport   = { overallConfidence: number; sections: QASection[]; criticalIssues: string[]; recommendedChecks: string[] };
@@ -59,14 +67,17 @@ type ReviewReport = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function threadTitle(msgs: ChatMessage[]): string {
-  const first = msgs.find(m => m.role === "user")?.content ?? "New research";
-  return first.length > 52 ? first.slice(0, 52) + "…" : first;
+/** The question as typed, without any attached document text. */
+function shownQuestion(content: string): string {
+  return content.split(ATTACH_MARK)[0];
 }
 
-function fmtDate(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+const ATTACH_MAX_CHARS = 12000;
+
+function threadTitle(msgs: ChatMessage[]): string {
+  const firstMsg = msgs.find(m => m.role === "user")?.content;
+  const first = firstMsg ? shownQuestion(firstMsg) : "New research";
+  return first.length > 52 ? first.slice(0, 52) + "…" : first;
 }
 
 // ── Error card: failures are shown as a state, never as an answer ─────────────
@@ -99,89 +110,6 @@ function LexErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: Lex
   );
 }
 
-// ── Citations (phase B0: plain rendering until the redesigned sources panel lands) ──
-/** Answer text for display and copy: markers become [1] at [41]; while streaming they are hidden. */
-function answerText(msg: ChatMessage): string {
-  if (msg.role !== "assistant") return msg.content;
-  if (msg.meta) return renderMarkers(msg.content, msg.meta.citations);
-  return msg.content.replace(CITE_MARKER, "").replace(/\[\[cite:[^\]]*$/i, "").replace(/[ \t]+([.,;:])/g, "$1");
-}
-
-const CITE_STATUS: Record<string, { label: string; colour: string }> = {
-  verified:           { label: "Verified in source", colour: "#22c55e" },
-  not_checked:        { label: "Not checked",        colour: "#eab308" },
-  pinpoint_not_found: { label: "Pinpoint not found", colour: "#f97316" },
-  unknown_source:     { label: "Unknown source",     colour: "#ef4444" },
-};
-const CONF: Record<string, { label: string; colour: string }> = {
-  high: { label: "High confidence", colour: "#22c55e" },
-  moderate: { label: "Moderate confidence", colour: "#eab308" },
-  low: { label: "Low confidence", colour: "#f97316" },
-};
-
-function AnswerSources({ meta }: { meta: LexAnswerMeta }) {
-  const cited = meta.citations.filter(c => c.id);
-  const firstStatus = (id: string) => (cited.find(c => c.id === id && c.status === "verified") ?? cited.find(c => c.id === id))?.status;
-  const number = (id: string) => cited.find(c => c.id === id)?.n;
-  const sources = meta.sources.filter(s => number(s.id));
-  if (!sources.length && !meta.conclusions.length && !meta.verify.length) return null;
-  return (
-    <div data-lex-sources style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 12.5, lineHeight: 1.55 }}>
-      {meta.conclusions.length > 0 && (
-        <div style={{ marginBottom: 12 }}>
-          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Conclusions</p>
-          {meta.conclusions.map((c, i) => (
-            <div key={i} style={{ marginBottom: 6 }}>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: CONF[c.confidence].colour, marginRight: 6 }}>{CONF[c.confidence].label}</span>
-              <span style={{ color: C.text }}>{c.text}</span>
-              {c.citeIds.length > 0 && <span style={{ color: C.textMuted, fontFamily: "ui-monospace, monospace" }}> {c.citeIds.map(id => number(id) ? `[${number(id)}]` : "").join("")}</span>}
-              <div style={{ color: C.textMuted, fontSize: 11.5 }}>{c.basis}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {sources.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            Sources: {meta.counts.verified} verified, {meta.counts.notChecked} not checked{meta.counts.problems ? `, ${meta.counts.problems} to fix` : ""}
-          </p>
-          {sources.map(s => {
-            const st = CITE_STATUS[firstStatus(s.id) ?? "not_checked"];
-            return (
-              <div key={s.id} style={{ marginBottom: 6 }}>
-                <span style={{ fontFamily: "ui-monospace, monospace", color: C.text }}>[{number(s.id)}]</span>{" "}
-                <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#8ab4ff" }}>{s.title || s.url}</a>
-                <span style={{ color: C.textMuted }}> · {s.typeLabel}</span>
-                <span style={{ color: st.colour, marginLeft: 6, fontSize: 11 }}>{st.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {meta.verify.length > 0 && (
-        <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)" }}>
-          <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, color: "#eab308" }}>Verify before relying</p>
-          {meta.verify.map((v, i) => <div key={i} style={{ color: C.text, fontSize: 12 }}>{v}</div>)}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Lex avatar ────────────────────────────────────────────────────────────────
-function LexMark({ size = 32 }: { size?: number }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: "50%",
-      background: `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0, border: `1.5px solid ${C.goldDim}`,
-    }}>
-      <span style={{ fontSize: size * 0.42, fontWeight: 900, color: C.bg, fontFamily: "Georgia, serif" }}>L</span>
-    </div>
-  );
-}
-
 // ── Thinking dots ─────────────────────────────────────────────────────────────
 function ThinkingDots({ label }: { label: string }) {
   return (
@@ -201,42 +129,6 @@ function ThinkingDots({ label }: { label: string }) {
   );
 }
 
-// ── Render message content (markdown-lite) ────────────────────────────────────
-function renderLex(text: string): React.ReactNode[] {
-  // Fix period-space
-  text = text.replace(/([a-z\)])\. ?([A-Z])/g, "$1. $2");
-  const paragraphs = text.split(/\n{2,}/);
-  const out: React.ReactNode[] = [];
-  const linkRe = /(\*\*([^*]+)\*\*|\[([^\]]+)\]\(((?:https?|mailto):\/\/[^\)]+)\))/g;
-
-  paragraphs.forEach((para, pi) => {
-    if (pi > 0) out.push(<div key={`gap-${pi}`} style={{ height: 8 }} />);
-    para.split("\n").forEach((line, li) => {
-      if (li > 0) out.push(<br key={`br-${pi}-${li}`} />);
-      const nodes: React.ReactNode[] = [];
-      let last = 0, key = 0, m: RegExpExecArray | null;
-      linkRe.lastIndex = 0;
-      while ((m = linkRe.exec(line)) !== null) {
-        if (m.index > last) nodes.push(line.slice(last, m.index));
-        if (m[0].startsWith("**")) {
-          nodes.push(<strong key={`b-${pi}-${li}-${key++}`} style={{ color: C.goldBright }}>{m[2]}</strong>);
-        } else {
-          nodes.push(
-            <a key={`a-${pi}-${li}-${key++}`} href={m[4]} target="_blank" rel="noopener noreferrer"
-              style={{ color: C.gold, textDecoration: "underline", fontWeight: 600 }}>
-              {m[3]}
-            </a>
-          );
-        }
-        last = m.index + m[0].length;
-      }
-      if (last < line.length) nodes.push(line.slice(last));
-      out.push(...nodes);
-    });
-  });
-  return out;
-}
-
 // ── Thinking label from query ─────────────────────────────────────────────────
 function thinkingFor(msg: string): string {
   const l = msg.toLowerCase();
@@ -246,61 +138,6 @@ function thinkingFor(msg: string): string {
   if (/uk|england|new zealand|nz|ireland|international/.test(l)) return "Searching international databases…";
   if (/draft|write|letter|advice|memo/.test(l)) return "Drafting…";
   return "Researching…";
-}
-
-// ── Quick replies ──────────────────────────────────────────────────────────
-const QUICK_REPLIES_GENERAL = [
-  "What are the elements of negligence under Australian law?",
-  "Summarise the duty of care test from Donoghue v Stevenson",
-  "What does s 180 Corporations Act say about director duties?",
-  "Search AustLII for recent unfair dismissal cases",
-  "What are the CGT implications of a trust distribution?",
-  "What is the test for unconscionable conduct under the ACL?",
-  "Draft a short letter of advice on a breach of contract",
-  "Search ATO rulings on Division 7A and loan repayments",
-  "What is the reasonable person standard in negligence?",
-  "Explain the difference between binding and persuasive authority",
-];
-
-const QUICK_REPLIES_PROPERTY = [
-  "What are the standard special conditions in a NSW contract for sale?",
-  "Explain the 66W certificate and when it's used",
-  "What stamp duty concessions apply to first home buyers in Victoria?",
-  "Search for recent adverse possession cases in Queensland",
-  "What are the vendor disclosure requirements under s 52A Conveyancing Act?",
-  "Explain strata by-law enforcement procedures",
-  "What is the difference between joint tenancy and tenancy in common?",
-  "Search PEXA eligibility and mandatory e-conveyancing requirements",
-];
-
-const QUICK_REPLIES_FAMILY = [
-  "What factors does the court consider in parenting orders?",
-  "Explain the presumption of equal shared parental responsibility",
-  "What is the four-step process for property settlement?",
-  "Search for recent spousal maintenance cases",
-  "What are the requirements for a binding financial agreement?",
-  "Explain contravention of parenting orders and penalties",
-  "What is the test for de facto relationship under the Family Law Act?",
-  "Search for recent cases on superannuation splitting",
-];
-
-const QUICK_REPLIES_COMMERCIAL = [
-  "What are the essential terms of a valid contract under Australian law?",
-  "Explain the doctrine of privity and its exceptions",
-  "What is the difference between a warranty and a condition?",
-  "Search for recent unfair contract terms cases under the ACL",
-  "What are the director's duties under the Corporations Act?",
-  "Explain the piercing the corporate veil doctrine",
-  "What is required for a valid deed of company arrangement?",
-  "Search for recent insolvent trading cases",
-];
-
-function pickReplies(matterType?: string) {
-  let pool = QUICK_REPLIES_GENERAL;
-  if (matterType?.toLowerCase().includes("property")) pool = QUICK_REPLIES_PROPERTY;
-  else if (matterType?.toLowerCase().includes("family")) pool = QUICK_REPLIES_FAMILY;
-  else if (matterType?.toLowerCase().includes("commercial") || matterType?.toLowerCase().includes("corporate")) pool = QUICK_REPLIES_COMMERCIAL;
-  return [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
 }
 
 // ── Export draft to Word ──────────────────────────────────────────────────────
@@ -365,90 +202,6 @@ async function exportDraftToWord(draftText: string, documentType: string, jurisd
   URL.revokeObjectURL(url);
 }
 
-// ── Context menu item ─────────────────────────────────────────────────────────
-function ContextMenuItem({ icon, label, onClick, danger = false }: { icon: string; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button onClick={onClick} style={{
-      width: "100%", padding: "8px 14px", background: "none", border: "#23344f",
-      color: danger ? "#f87171" : C.text, fontSize: 12, textAlign: "left", cursor: "pointer",
-      display: "flex", alignItems: "center", gap: 8,
-    }}
-      onMouseEnter={e => (e.currentTarget.style.background = danger ? "rgba(248,113,113,0.08)" : C.bg)}
-      onMouseLeave={e => (e.currentTarget.style.background = "none")}
-    >
-      <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>{icon}</span>
-      {label}
-    </button>
-  );
-}
-
-// ── Thread row (sidebar) ──────────────────────────────────────────────────────
-function ThreadRow({
-  thread, activeId, onSelect, onMenu, renameState, setRenameState, renameThread,
-  onDragStart, onDragEnd, isDragging,
-}: {
-  thread: Thread; activeId: string | null;
-  onSelect: () => void;
-  onMenu: (e: React.MouseEvent) => void;
-  renameState: { type: "thread" | "project"; id: string; value: string } | null;
-  setRenameState: React.Dispatch<React.SetStateAction<typeof renameState>>;
-  renameThread: (id: string, title: string) => void;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
-  isDragging: boolean;
-}) {
-  const isActive = activeId === thread.id;
-  const isRenaming = renameState?.type === "thread" && renameState.id === thread.id;
-  return (
-    <div onClick={onSelect}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      style={{
-        padding: "7px 8px 7px 10px", borderRadius: 7, cursor: isDragging ? "grabbing" : "grab", marginBottom: 1,
-        background: isActive ? C.surfaceRaised : "#16253d",
-        border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
-        display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4,
-        opacity: isDragging ? 0.4 : 1, transition: "opacity 0.15s",
-      }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {isRenaming ? (
-          <input
-            data-menu="rename"
-            autoFocus
-            value={renameState!.value}
-            onChange={e => setRenameState(s => s ? { ...s, value: e.target.value } : null)}
-            onBlur={() => { renameThread(thread.id, renameState!.value || thread.title); setRenameState(null); }}
-            onKeyDown={e => {
-              if (e.key === "Enter") { renameThread(thread.id, renameState!.value || thread.title); setRenameState(null); }
-              if (e.key === "Escape") setRenameState(null);
-              e.stopPropagation();
-            }}
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: "100%", fontSize: 12, fontWeight: 500, color: C.text, background: C.bg,
-              border: `1px solid ${C.borderAccent}`, borderRadius: 4, padding: "1px 5px", outline: "none",
-            }}
-          />
-        ) : (
-          <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: isActive ? C.text : C.textMuted,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {thread.title}
-          </p>
-        )}
-        <p style={{ margin: "2px 0 0", fontSize: 10, color: C.textDim }}>{fmtDate(thread.createdAt)}</p>
-      </div>
-      <button
-        data-menu="trigger"
-        onClick={onMenu}
-        style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer",
-          padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1, opacity: 0.7 }}
-        title="Thread options"
-      >⋯</button>
-    </div>
-  );
-}
-
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function LexPage() {
   const clientId = "lex-internal";
@@ -461,15 +214,30 @@ export default function LexPage() {
   const [projectMenu, setProjectMenu] = useState<{ projectId: string; x: number; y: number } | null>(null);
   const [renameState, setRenameState] = useState<{ type: "thread" | "project"; id: string; value: string } | null>(null);
   const [moveDialog, setMoveDialog] = useState<string | null>(null); // threadId being moved
-  const [dragThreadId, setDragThreadId] = useState<string | null>(null);
-  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null); // projectId or "unorganised"
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkLabel, setThinkLabel] = useState("Researching…");
-  const [chips, setChips] = useState<string[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [steps, setSteps] = useState<LexStep[]>([]);
+  const [scope, setScopeState] = useState<LexScopeKey[]>(ALL_SCOPES);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [flagFor, setFlagFor] = useState<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  // True from send until the stream ends (loading only covers the wait for the first words).
+  const [researchActive, setResearchActive] = useState(false);
+  // Sources panel: which answer it shows (message index) and which citation is selected.
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelMsg, setPanelMsg] = useState<number | null>(null);
+  const [selectedCite, setSelectedCite] = useState<number | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  // Shown in the sidebar only; thread sync still keys on userEmail from the portal session.
+  const [displayEmail, setDisplayEmail] = useState<string | null>(null);
+  const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
 
   // ── Draft mode state ───────────────────────────────────────────────────────
   const [mode, setMode] = useState<Mode>("research");
@@ -562,6 +330,7 @@ export default function LexPage() {
         if (saved.length > 0) { setThreads(saved); setActiveId(saved[0].id); }
       } catch {}
       try {
+        try { const sc = localStorage.getItem("lex:scope"); if (sc) setScopeState(normalizeScope(JSON.parse(sc))); } catch {}
         const savedProjects = JSON.parse(localStorage.getItem("lex_projects") ?? "[]") as Project[];
         if (savedProjects.length > 0) {
           setProjects(savedProjects);
@@ -574,7 +343,11 @@ export default function LexPage() {
         if (savedLogo) setFirmLogo(savedLogo);
         if (savedName) setFirmName(savedName);
       } catch {}
-      setChips(pickReplies());
+
+      // Admins only see the AI model settings link (the page itself is admin-only).
+      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => { setIsAdmin(!!d?.admin); if (typeof d?.email === "string") setDisplayEmail(d.email); }).catch(() => {});
+      // Narrow screens start with the sources panel closed (it opens as a bottom sheet).
+      if (window.matchMedia("(max-width: 980px)").matches) setPanelOpen(false);
 
       // 2. Check auth and load user-scoped data from Redis
       try {
@@ -664,12 +437,22 @@ export default function LexPage() {
   }, []);
 
   function newThread() {
+    // Starting new research stops any answer still in flight (its thread keeps just the question).
+    abortRef.current?.abort();
+    setLoading(false);
+    setResearchActive(false);
     const id = `t_${Date.now()}`;
     const thread: Thread = { id, title: "New research", messages: [], createdAt: Date.now() };
     setThreads(prev => [thread, ...prev]);
     setActiveId(id);
     setInput("");
-    setChips(pickReplies());
+    setAttachment(null);
+    setAttachError(null);
+    setMode("research");
+    setNavOpen(false);
+    setPanelMsg(null);
+    setSelectedCite(null);
+    setTimeout(() => inputRef.current?.focus(), 0);
   }
 
   function deleteThread(id: string) {
@@ -718,8 +501,9 @@ export default function LexPage() {
     ));
   }
 
-  const sendMessage = useCallback(async (text: string, opts?: { retry?: boolean }) => {
-    if (!text.trim() || loading) return;
+  const sendMessage = useCallback(async (text: string, opts?: { retry?: boolean; scope?: LexScopeKey[] }) => {
+    if (!text.trim() || loading || researchActive || attaching) return;
+    const useScope = opts?.scope ?? scope;
 
     let tid = activeId;
     // Create a new thread if none active
@@ -730,7 +514,12 @@ export default function LexPage() {
       setActiveId(tid);
     }
 
-    const userMsg: ChatMessage = { role: "user", content: text.trim() };
+    const attach = !opts?.retry ? attachment : null;
+    const userMsg: ChatMessage = {
+      role: "user", at: Date.now(),
+      content: attach ? `${text.trim()}${ATTACH_MARK}${attach.name}\n\n${attach.text.slice(0, ATTACH_MAX_CHARS)}` : text.trim(),
+      ...(attach ? { attachment: attach.name } : {}),
+    };
     const prevMsgs = stripErrorAnswers(threads.find(t => t.id === tid)?.messages ?? []);
     const last = prevMsgs[prevMsgs.length - 1];
     // Retry re-sends the question already in the thread instead of adding it twice.
@@ -739,10 +528,12 @@ export default function LexPage() {
       : [...prevMsgs, userMsg];
 
     updateThreadMessages(tid, updated);
-    if (!opts?.retry) setInput("");
+    if (!opts?.retry) { setInput(""); setAttachment(null); setAttachError(null); }
     setResearchError(null);
     setLoading(true);
-    setChips([]);
+    setSteps([]);
+    setResearchActive(true);
+    setSelectedCite(null);
     setThinkLabel(thinkingFor(text));
 
     abortRef.current?.abort();
@@ -759,7 +550,7 @@ export default function LexPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId }),
+        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId, scope: useScope }),
         signal: abortRef.current.signal,
       });
 
@@ -775,6 +566,7 @@ export default function LexPage() {
       let started = false;
       let streamFailed = false;
       let answerMeta: LexAnswerMeta | undefined;
+      let stepList: LexStep[] = [];
 
       while (!streamFailed) {
         const { done, value } = await reader.read();
@@ -788,6 +580,11 @@ export default function LexPage() {
             const parsed = JSON.parse(line.slice(6));
             if (isStreamErrorPart(parsed)) { streamFailed = true; break; }
             if (parsed.type === "data-lex-sources" && parsed.data) { answerMeta = parsed.data as LexAnswerMeta; continue; }
+            if (typeof parsed.type === "string" && parsed.type.startsWith("tool-")) {
+              const next = applyStepPart(stepList, parsed);
+              if (next !== stepList) { stepList = next; setSteps(next); }
+              continue;
+            }
             if (parsed.type === "text-delta" && parsed.delta) {
               fullText += parsed.delta;
               const withAI: ChatMessage[] = [...updated, { role: "assistant", content: fullText }];
@@ -807,25 +604,120 @@ export default function LexPage() {
       } else if (!fullText.trim()) {
         fail(lexEmptyError("research"));
       } else {
-        const final: ChatMessage[] = [...updated, { role: "assistant", content: fullText.trim(), ...(answerMeta ? { meta: answerMeta } : {}) }];
+        const sum = stepSummary(stepList);
+        const citedNone = !answerMeta || citedSources(answerMeta).cited.length === 0;
+        const final: ChatMessage[] = [...updated, {
+          role: "assistant", content: fullText.trim(), at: Date.now(), ...(answerMeta ? { meta: answerMeta } : {}),
+          ...(sum.failed ? { failedSearches: stepList.filter(s => s.status === "failed" && s.tool !== "readSource").length } : {}),
+          ...(sum.noResults && citedNone ? { noResults: true } : {}),
+        }];
         updateThreadMessages(finalId, final);
-        // Follow-up chips
-        setChips(pickReplies());
+        setPanelMsg(final.length - 1);
       }
     } catch (e: unknown) {
       if ((e as Error)?.name !== "AbortError") fail(lexNetworkError("research"));
     } finally {
       setLoading(false);
+      setResearchActive(false);
     }
-  }, [activeId, threads, loading, clientId]);
+  }, [activeId, threads, loading, researchActive, clientId, scope, attachment, attaching]);
 
-  function copyLast() {
-    const last = [...messages].reverse().find(m => m.role === "assistant");
-    if (!last) return;
-    navigator.clipboard.writeText(answerText(last)).then(() => {
-      setCopyFeedback("Copied!");
-      setTimeout(() => setCopyFeedback(null), 1500);
-    });
+  // Ctrl K (or Cmd K) opens the command palette: new research or jump to a thread.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setMode("research"); setPaletteOpen(o => !o); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  function copyAnswer(idx: number) {
+    const msg = messages[idx];
+    if (!msg) return;
+    navigator.clipboard.writeText(answerWithSources(msg.content, msg.meta)).then(() => {
+      setCopiedMsg(idx);
+      setTimeout(() => setCopiedMsg(null), 1500);
+    }).catch(() => {});
+  }
+
+  function questionFor(idx: number): string {
+    for (let i = idx - 1; i >= 0; i--) if (messages[i].role === "user") return shownQuestion(messages[i].content);
+    return "";
+  }
+
+  function exportAnswer(idx: number) {
+    const msg = messages[idx];
+    if (!msg) return;
+    exportAnswerToWord({ question: questionFor(idx), answer: msg.content, meta: msg.meta, firmName, stamp: msg.at ? brisbaneStamp(msg.at) : undefined }).catch(() => {});
+  }
+
+  function draftFrom(idx: number) {
+    const msg = messages[idx];
+    if (!msg) return;
+    const research = answerWithSources(msg.content, msg.meta);
+    setDraftInstructions(`Base the document on this research.\n\nQuestion: ${questionFor(idx)}\n\n${research}`.slice(0, 6000));
+    setMode("draft");
+  }
+
+  function setScope(next: LexScopeKey[]) {
+    setScopeState(next);
+    try { localStorage.setItem("lex:scope", JSON.stringify(next)); } catch {}
+  }
+
+  async function attachFile(file: File) {
+    setAttachError(null);
+    if (file.size > 10 * 1024 * 1024) { setAttachError("That file is over 10 MB. Attach a smaller file."); return; }
+    setAttaching(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/lex-extract", { method: "POST", body: fd });
+      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string } | null;
+      if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && res.status === 400 ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
+      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length });
+      inputRef.current?.focus();
+    } catch {
+      setAttachError("Lex could not read that file. Check your connection and try again.");
+    } finally {
+      setAttaching(false);
+    }
+  }
+
+  async function submitFlag(idx: number, reason: FlagReason, note: string): Promise<boolean> {
+    const msg = messages[idx];
+    if (!msg || !activeId) return false;
+    try {
+      const res = await fetch("/api/lex-flag", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, note, question: shownQuestion(questionFor(idx)), answer: msg.content, threadId: activeId }),
+      });
+      if (!res.ok) return false;
+      updateThreadMessages(activeId, messages.map((m, i) => (i === idx ? { ...m, flagged: true } : m)));
+      return true;
+    } catch { return false; }
+  }
+
+  function threadText(): string {
+    const title = activeThread?.title ?? "Lex research";
+    const parts = [`${title}\nResearch by Lex for ${firmName || "your firm"}. Research assistance, not legal advice.`];
+    for (const m of messages) {
+      if (m.role === "user") parts.push(`Question: ${shownQuestion(m.content)}${m.attachment ? ` (with ${m.attachment})` : ""}`);
+      else parts.push(answerWithSources(m.content, m.meta));
+    }
+    return parts.join("\n\n");
+  }
+
+  function copyThread() {
+    navigator.clipboard.writeText(threadText()).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    }).catch(() => {});
+  }
+
+  function selectCite(idx: number, n: number) {
+    setPanelMsg(idx);
+    setSelectedCite(prev => (prev === n && panelMsg === idx ? null : n));
+    setPanelOpen(true);
   }
 
   // ── Send email ──────────────────────────────────────────────────────────
@@ -1055,442 +947,188 @@ export default function LexPage() {
 
   const showWelcome = messages.length === 0;
 
+  // Sources panel follows the selected answer, or the latest answer that has checked sources.
+  const lastMetaIdx = (() => { for (let i = messages.length - 1; i >= 0; i--) if (messages[i].role === "assistant" && messages[i].meta) return i; return null; })();
+  const panelIdx = panelMsg != null && messages[panelMsg]?.meta ? panelMsg : lastMetaIdx;
+  const panelMeta = panelIdx != null ? messages[panelIdx]?.meta : undefined;
+  const showPanel = mode === "research" && panelOpen && !showWelcome;
+  const lastAssistant = (() => { for (let i = messages.length - 1; i >= 0; i--) if (messages[i].role === "assistant") return i; return -1; })();
+  const streamingIdx = loading ? -1 : (researchActive ? lastAssistant : -1);
+  const activeProject = activeThread?.projectId ? projects.find(p => p.id === activeThread.projectId) : undefined;
+  const contextLabel = activeProject ? `Project: ${activeProject.name}` : undefined;
+  const firstAt = messages.find(m => m.at)?.at ?? activeThread?.createdAt;
+
+  const composer = (hero: boolean) => (
+    <Composer ref={inputRef} value={input} onChange={setInput} onSend={() => sendMessage(input)} disabled={loading || researchActive}
+      placeholder={hero ? "Ask a legal research question, or paste facts from the matter..." : "Ask a follow-up about this research..."}
+      contextLabel={contextLabel} autoFocus={hero}
+      scope={scope} onScope={setScope}
+      attachment={attachment} attaching={attaching} attachError={attachError}
+      onAttach={attachFile} onClearAttachment={() => { setAttachment(null); setAttachError(null); }} />
+  );
+
   return (
-    <div style={{
-      display: "flex", height: "100dvh", overflow: "hidden",
-      background: C.bg, color: C.text,
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif",
-    }}>
-      <style>{`
-        @keyframes lexDot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
-        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:${C.border};border-radius:4px}
-        * { box-sizing: border-box; }
-      `}</style>
+    <div className={`lx${showPanel ? " lx-panel" : ""}${navOpen ? " nav-open" : ""}`}>
+      <div className="lx-scrim" onClick={() => setNavOpen(false)} />
+      <Sidebar
+        mode={mode} setMode={(m) => { setMode(m); setNavOpen(false); }} onNew={newThread}
+        threads={threads} projects={projects} activeId={activeId}
+        onSelect={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setNavOpen(false); }}
+        onThreadMenu={(id, e) => { setThreadMenu(m => m?.threadId === id ? null : { threadId: id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
+        onProjectMenu={(id, e) => { setProjectMenu(m => m?.projectId === id ? null : { projectId: id, x: e.clientX, y: e.clientY }); setThreadMenu(null); }}
+        rename={renameState} setRename={setRenameState} onRenameThread={renameThread} onRenameProject={renameProject}
+        onNewProject={newProject} onMoveThread={moveThreadToProject}
+        expanded={expandedProjects}
+        toggleProject={(id) => setExpandedProjects(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
+        firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail} isAdmin={isAdmin}
+        onFirmSettings={() => { setSettingsOpen(true); setNavOpen(false); }} onIntake={() => { setIntakeOpen(true); setNavOpen(false); }}
+      />
 
-      {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
-      {sidebarOpen && (
-        <aside style={{
-          width: 264, flexShrink: 0, display: "flex", flexDirection: "column",
-          background: C.surface, borderRight: `1px solid ${C.border}`, position: "relative",
-        }}>
-          {/* Brand */}
-          <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${C.border}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {firmLogo ? (
-                <img src={firmLogo} alt="Firm logo" style={{ width: 34, height: 34, borderRadius: 6, objectFit: "contain", flexShrink: 0 }} />
-              ) : (
-                <LexMark size={34} />
-              )}
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: C.text, letterSpacing: 0.2 }}>
-                  {firmName || "Lex"}
-                </p>
-                <p style={{ margin: 0, fontSize: 10, color: C.textMuted }}>Australian Legal Research</p>
-              </div>
-              <a
-                href="/saabai-admin/lex-settings"
-                title="LLM Settings"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 30, height: 30, borderRadius: 8,
-                  background: "rgba(201,168,76,0.07)",
-                  border: `1px solid ${C.border}`,
-                  color: C.textMuted, textDecoration: "none", fontSize: 14,
-                  flexShrink: 0,
-                  transition: "background 0.15s, color 0.15s",
-                }}
-                onMouseEnter={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "rgba(201,168,76,0.14)"; a.style.color = C.gold; }}
-                onMouseLeave={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "rgba(201,168,76,0.07)"; a.style.color = C.textMuted; }}
-              >
-                ⚙
-              </a>
-            </div>
+      {/* ── Menus ─────────────────────────────────────────────────────────── */}
+      {threadMenu && (() => {
+        const thread = threads.find(t => t.id === threadMenu.threadId);
+        if (!thread) return null;
+        return (
+          <div className="lx-menu" data-menu="context" role="menu"
+            style={{ top: Math.min(threadMenu.y, window.innerHeight - 200), left: Math.min(threadMenu.x + 4, window.innerWidth - 200) }}>
+            <button type="button" onClick={() => { setRenameState({ type: "thread", id: thread.id, value: thread.title }); setThreadMenu(null); }}>Rename</button>
+            <button type="button" onClick={() => { setMoveDialog(thread.id); setThreadMenu(null); }}>Move to project</button>
+            {thread.projectId && <button type="button" onClick={() => { moveThreadToProject(thread.id, null); setThreadMenu(null); }}>Remove from project</button>}
+            <hr />
+            <button type="button" className="danger" onClick={() => { deleteThread(thread.id); setThreadMenu(null); }}>Delete thread</button>
           </div>
-
-          {/* Action buttons row */}
-          <div style={{ padding: "10px 10px 6px", display: "flex", gap: 6 }}>
-            <button onClick={newThread} style={{
-              flex: 1, padding: "8px 10px", borderRadius: 8,
-              background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-              color: C.gold, fontSize: 11, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-            }}>
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              New Thread
-            </button>
-            <button onClick={() => setIntakeOpen(true)} style={{
-              flex: 1, padding: "8px 10px", borderRadius: 8,
-              background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
-              color: "#22c55e", fontSize: 11, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-            }}>
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M5.5 1C7.5 1 9 2.5 9 4.5C9 6.5 7.5 8 5.5 8C3.5 8 2 6.5 2 4.5C2 2.5 3.5 1 5.5 1Z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                <path d="M8 8l2 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              New Matter
-            </button>
-            <button onClick={newProject} style={{
-              flex: 1, padding: "8px 10px", borderRadius: 8,
-              background: "rgba(91,141,238,0.08)", border: "#23344f",
-              color: "#5b8dee", fontSize: 11, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-            }}>
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                <path d="M1 2.5C1 1.95 1.45 1.5 2 1.5h2.5l1 1H9c.55 0 1 .45 1 1v5c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1v-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none"/>
-                <path d="M5.5 4.5v3M4 6h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              New Project
-            </button>
+        );
+      })()}
+      {projectMenu && (() => {
+        const project = projects.find(p => p.id === projectMenu.projectId);
+        if (!project) return null;
+        return (
+          <div className="lx-menu" data-menu="context" role="menu"
+            style={{ top: Math.min(projectMenu.y, window.innerHeight - 140), left: Math.min(projectMenu.x + 4, window.innerWidth - 200) }}>
+            <button type="button" onClick={() => { setRenameState({ type: "project", id: project.id, value: project.name }); setProjectMenu(null); }}>Rename project</button>
+            <hr />
+            <button type="button" className="danger" onClick={() => { deleteProject(project.id); setProjectMenu(null); }}>Delete project</button>
           </div>
-
-          {/* Thread + Project list */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "2px 8px 8px" }}>
-            {threads.length === 0 && projects.length === 0 && (
-              <p style={{ textAlign: "center", color: C.textDim, fontSize: 11, marginTop: 24, padding: "0 12px" }}>
-                No threads yet. Start a new research session above.
-              </p>
-            )}
-
-            {/* Projects (each as a collapsible folder) */}
-            {projects.map(project => {
-              const projectThreads = threads.filter(t => t.projectId === project.id);
-              const isExpanded = expandedProjects.has(project.id);
-              return (
-                <div key={project.id} style={{ marginBottom: 4 }}>
-                  {/* Project header, also a drop target */}
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 5, padding: "5px 6px",
-                    borderRadius: 7, cursor: "pointer",
-                    background: dragOverTarget === project.id ? `${project.colour}18` : "transparent",
-                    border: dragOverTarget === project.id ? `1px dashed ${project.colour}` : "1px solid transparent",
-                    transition: "background 0.1s, border 0.1s",
-                  }}
-                    onClick={() => setExpandedProjects(prev => {
-                      const next = new Set(prev);
-                      isExpanded ? next.delete(project.id) : next.add(project.id);
-                      return next;
-                    })}
-                    onDragOver={e => { if (dragThreadId) { e.preventDefault(); setDragOverTarget(project.id); } }}
-                    onDragLeave={() => setDragOverTarget(null)}
-                    onDrop={e => {
-                      e.preventDefault();
-                      if (dragThreadId) {
-                        moveThreadToProject(dragThreadId, project.id);
-                        setExpandedProjects(prev => new Set([...prev, project.id]));
-                        setDragThreadId(null); setDragOverTarget(null);
-                      }
-                    }}
-                  >
-                    {/* Chevron */}
-                    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ flexShrink: 0, transition: "transform 0.15s", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>
-                      <path d="M3 2l3 2.5L3 7" stroke={C.textDim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    {/* Folder icon */}
-                    <svg width="13" height="12" viewBox="0 0 13 12" fill="none" style={{ flexShrink: 0 }}>
-                      <path d="M1 3C1 2.45 1.45 2 2 2h3l1 1.5H11c.55 0 1 .45 1 1V10c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1V3z" fill={project.colour} opacity="0.25"/>
-                      <path d="M1 3C1 2.45 1.45 2 2 2h3l1 1.5H11c.55 0 1 .45 1 1V10c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1V3z" stroke={project.colour} strokeWidth="1.2" strokeLinejoin="round" fill="none"/>
-                    </svg>
-                    {/* Name (inline rename) */}
-                    {renameState?.type === "project" && renameState.id === project.id ? (
-                      <input
-                        data-menu="rename"
-                        autoFocus
-                        value={renameState.value}
-                        onChange={e => setRenameState(s => s ? { ...s, value: e.target.value } : null)}
-                        onBlur={() => { renameProject(project.id, renameState.value || project.name); setRenameState(null); }}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") { renameProject(project.id, renameState.value || project.name); setRenameState(null); }
-                          if (e.key === "Escape") setRenameState(null);
-                          e.stopPropagation();
-                        }}
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                          flex: 1, fontSize: 12, fontWeight: 600, color: C.text, background: C.bg,
-                          border: `1px solid ${C.borderAccent}`, borderRadius: 4, padding: "1px 5px", outline: "none",
-                        }}
-                      />
-                    ) : (
-                      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {project.name}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 10, color: C.textDim, flexShrink: 0 }}>{projectThreads.length}</span>
-                    {/* 3-dot menu button */}
-                    <button
-                      data-menu="trigger"
-                      onClick={e => { e.stopPropagation(); setProjectMenu(m => m?.projectId === project.id ? null : { projectId: project.id, x: e.clientX, y: e.clientY }); setThreadMenu(null); }}
-                      style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", padding: "1px 3px", borderRadius: 4, flexShrink: 0, lineHeight: 1, fontSize: 15, letterSpacing: 1 }}
-                    >⋯</button>
-                  </div>
-                  {/* Threads inside project */}
-                  {isExpanded && projectThreads.map(thread => (
-                    <ThreadRow key={thread.id} thread={thread} activeId={activeId}
-                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies(thread.title)); }}
-                      onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
-                      renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
-                      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
-                      onDragEnd={() => { setDragThreadId(null); setDragOverTarget(null); }}
-                      isDragging={dragThreadId === thread.id}
-                    />
-                  ))}
-                  {isExpanded && projectThreads.length === 0 && (
-                    <p style={{ margin: "2px 0 4px 28px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>
-                      {dragOverTarget === project.id ? "Drop here" : "Empty project"}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Unorganised threads */}
-            {(() => {
-              const unorganised = threads.filter(t => !t.projectId);
-              if (unorganised.length === 0 && projects.length === 0) return null;
-              const isDropTarget = dragOverTarget === "unorganised";
-              return (
-                <div style={{ marginTop: projects.length > 0 ? 6 : 0 }}
-                  onDragOver={e => { if (dragThreadId) { e.preventDefault(); setDragOverTarget("unorganised"); } }}
-                  onDragLeave={() => setDragOverTarget(null)}
-                  onDrop={e => {
-                    e.preventDefault();
-                    if (dragThreadId) { moveThreadToProject(dragThreadId, null); setDragThreadId(null); setDragOverTarget(null); }
-                  }}
-                >
-                  {projects.length > 0 && (
-                    <p style={{
-                      margin: "2px 6px 4px", fontSize: 10, fontWeight: 600, letterSpacing: 0.5,
-                      textTransform: "uppercase", padding: "3px 6px", borderRadius: 5,
-                      color: isDropTarget ? C.textMuted : C.textDim,
-                      background: isDropTarget ? C.surfaceRaised : "#16253d",
-                      border: isDropTarget ? `1px dashed ${C.border}` : "1px solid transparent",
-                      transition: "all 0.1s",
-                    }}>Unorganised</p>
-                  )}
-                  {unorganised.map(thread => (
-                    <ThreadRow key={thread.id} thread={thread} activeId={activeId}
-                      onSelect={() => { setActiveId(thread.id); setChips(pickReplies(thread.title)); }}
-                      onMenu={(e) => { e.stopPropagation(); setThreadMenu(m => m?.threadId === thread.id ? null : { threadId: thread.id, x: e.clientX, y: e.clientY }); setProjectMenu(null); }}
-                      renameState={renameState} setRenameState={setRenameState} renameThread={renameThread}
-                      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; setDragThreadId(thread.id); }}
-                      onDragEnd={() => { setDragThreadId(null); setDragOverTarget(null); }}
-                      isDragging={dragThreadId === thread.id}
-                    />
-                  ))}
-                  {unorganised.length === 0 && isDropTarget && (
-                    <p style={{ margin: "2px 0 4px 6px", fontSize: 10, color: C.textDim, fontStyle: "italic" }}>Drop here to unorganise</p>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Footer */}
-          <div style={{ padding: "10px 10px 12px", borderTop: `1px solid ${C.border}` }}>
-            <a
-              href="/client-portal"
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "7px 8px", borderRadius: 7, marginBottom: 2,
-                textDecoration: "none", fontSize: 12, color: C.textMuted,
-                transition: "background 0.12s, color 0.12s",
-              }}
-              onMouseEnter={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = C.surfaceRaised; a.style.color = C.text; }}
-              onMouseLeave={e => { const a = e.currentTarget as HTMLAnchorElement; a.style.background = "transparent"; a.style.color = C.textMuted; }}
-            >
-              <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>⊞</span>
-              Firm Dashboard
-            </a>
-            <a
-              href="/saabai-admin/lex-settings"
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "7px 8px", borderRadius: 7, marginBottom: 2,
-                textDecoration: "none", fontSize: 12,
-                color: C.gold,
-                background: C.goldBg,
-                border: `1px solid ${C.goldBorder}`,
-                fontWeight: 600,
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(201,168,76,0.14)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = C.goldBg; }}
-            >
-              <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>⚙</span>
-              AI Model Settings
-            </a>
-            <button
-              onClick={() => setSettingsOpen(true)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, width: "100%",
-                padding: "7px 8px", borderRadius: 7, marginBottom: 6,
-                fontSize: 12, color: C.textMuted, cursor: "pointer",
-                background: "transparent", border: "#23344f",
-                textAlign: "left",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.surfaceRaised; e.currentTarget.style.color = C.text; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.textMuted; }}
-            >
-              <span style={{ fontSize: 13, width: 16, textAlign: "center", flexShrink: 0 }}>🏢</span>
-              Firm Settings
-            </button>
-            <a href="https://saabai.ai" target="_blank" rel="noopener noreferrer"
-              style={{ display: "block", fontSize: 10, color: C.textDim, textDecoration: "none", padding: "2px 8px" }}>
-              Powered by Saabai.ai
-            </a>
-          </div>
-
-          {/* ── Thread context menu ─────────────────────────────────────── */}
-          {threadMenu && (() => {
-            const thread = threads.find(t => t.id === threadMenu.threadId);
-            if (!thread) return null;
-            return (
-              <div data-menu="context" style={{
-                position: "fixed", top: Math.min(threadMenu.y, window.innerHeight - 180), left: Math.min(threadMenu.x + 4, window.innerWidth - 180),
-                background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 10,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 9999, minWidth: 168, overflow: "hidden",
-              }}>
-                <ContextMenuItem icon="✎" label="Rename" onClick={() => { setRenameState({ type: "thread", id: thread.id, value: thread.title }); setThreadMenu(null); }} />
-                <ContextMenuItem icon="⇢" label="Move to Project" onClick={() => { setMoveDialog(thread.id); setThreadMenu(null); }} />
-                {thread.projectId && (
-                  <ContextMenuItem icon="⊘" label="Remove from Project" onClick={() => { moveThreadToProject(thread.id, null); setThreadMenu(null); }} />
-                )}
-                <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
-                <ContextMenuItem icon="×" label="Delete Thread" danger onClick={() => { deleteThread(thread.id); setThreadMenu(null); }} />
-              </div>
-            );
-          })()}
-
-          {/* ── Project context menu ────────────────────────────────────── */}
-          {projectMenu && (() => {
-            const project = projects.find(p => p.id === projectMenu.projectId);
-            if (!project) return null;
-            return (
-              <div data-menu="context" style={{
-                position: "fixed", top: Math.min(projectMenu.y, window.innerHeight - 160), left: Math.min(projectMenu.x + 4, window.innerWidth - 180),
-                background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 10,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 9999, minWidth: 168, overflow: "hidden",
-              }}>
-                <ContextMenuItem icon="✎" label="Rename Project" onClick={() => { setRenameState({ type: "project", id: project.id, value: project.name }); setProjectMenu(null); }} />
-                <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
-                <ContextMenuItem icon="×" label="Delete Project" danger onClick={() => { deleteProject(project.id); setProjectMenu(null); }} />
-              </div>
-            );
-          })()}
-
-          {/* ── Move to Project dialog ──────────────────────────────────── */}
-          {moveDialog && (
-            <div data-menu="context" style={{
-              position: "fixed",
-              top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-              background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`, borderRadius: 12,
-              boxShadow: "0 16px 48px rgba(0,0,0,0.5)", zIndex: 9999, minWidth: 220, padding: "14px 0 10px",
-            }}>
-              <p style={{ margin: "0 0 8px", padding: "0 16px", fontSize: 12, fontWeight: 700, color: C.text }}>Move to Project</p>
-              {projects.length === 0 ? (
-                <p style={{ padding: "0 16px", fontSize: 11, color: C.textDim }}>No projects yet. Create one first.</p>
-              ) : projects.map(p => (
-                <button key={p.id} onClick={() => { moveThreadToProject(moveDialog, p.id); setMoveDialog(null); }}
-                  style={{
-                    width: "100%", padding: "8px 16px", background: "none", border: "#23344f",
-                    color: C.text, fontSize: 12, textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
-                  onMouseLeave={e => (e.currentTarget.style.background = "none")}
-                >
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: p.colour, flexShrink: 0 }} />
-                  {p.name}
-                </button>
-              ))}
-              <div style={{ height: 1, background: C.border, margin: "8px 0 4px" }} />
-              <button onClick={() => { moveThreadToProject(moveDialog, null); setMoveDialog(null); }}
-                style={{ width: "100%", padding: "8px 16px", background: "none", border: "#23344f", color: C.textMuted, fontSize: 12, textAlign: "left", cursor: "pointer" }}
-                onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
-                onMouseLeave={e => (e.currentTarget.style.background = "none")}
-              >
-                ⊘ Remove from project
+        );
+      })()}
+      {moveDialog && (
+        <div className="lx-menu" data-menu="context" role="dialog" aria-label="Move to project"
+          style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", minWidth: 240 }}>
+          <p>Move to project</p>
+          {projects.length === 0
+            ? <div style={{ padding: "4px 10px 8px", color: "var(--muted)", fontSize: 12.5 }}>No projects yet. Create one in the sidebar first.</div>
+            : projects.map(p => (
+              <button type="button" key={p.id} onClick={() => { moveThreadToProject(moveDialog, p.id); setMoveDialog(null); }}>
+                <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: p.colour, marginRight: 8 }} />{p.name}
               </button>
-            </div>
-          )}
-        </aside>
+            ))}
+          <hr />
+          <button type="button" onClick={() => { moveThreadToProject(moveDialog, null); setMoveDialog(null); }}>No project</button>
+        </div>
       )}
 
-      {/* ── Main panel ───────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+      {paletteOpen && (
+        <CommandPalette threads={threads} onClose={() => setPaletteOpen(false)}
+          onNew={(q) => { newThread(); if (q) setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
+          onOpen={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setNavOpen(false); }} />
+      )}
+      {flagFor != null && <FlagDialog onClose={() => setFlagFor(null)} onSubmit={(r, n) => submitFlag(flagFor, r, n)} />}
 
-        {/* Toolbar */}
-        <div style={{
-          height: 52, borderBottom: `1px solid ${C.border}`, padding: "0 20px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: C.surface, flexShrink: 0,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button onClick={() => setSidebarOpen(v => !v)}
-              style={{ background: "none", border: "#23344f", color: C.textMuted, cursor: "pointer", padding: 4 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </button>
-            {!sidebarOpen && <LexMark size={26} />}
-            {/* Mode tabs */}
-            <div style={{ display: "flex", background: C.bg, borderRadius: 8, padding: 3, border: `1px solid ${C.border}` }}>
-              {([["research", "Research"], ["draft", "Draft Document"], ["review", "Doc Review"]] as [Mode, string][]).map(([m, label]) => (
-                <button key={m} onClick={() => setMode(m)} style={{
-                  padding: "4px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600,
-                  cursor: "pointer", border: "#23344f", transition: "all 0.15s",
-                  background: mode === m ? C.gold : "transparent",
-                  color: mode === m ? C.bg : C.textMuted,
-                }}>
-                  {label}
-                </button>
-              ))}
+      {/* ── Main ──────────────────────────────────────────────────────────── */}
+      <main className="lx-main">
+        <div className="lx-top">
+          <button type="button" className="burger" aria-label="Open navigation" onClick={() => setNavOpen(true)}><Icon name="menu" size={20} /></button>
+          {mode === "research" && (
+            <div className="lx-ctx">
+              <span className="k">{activeProject ? "Project" : "Research"}</span>
+              {firstAt && <span className="id">{new Date(firstAt).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric", timeZone: "Australia/Brisbane" })}</span>}
+              <b>{activeProject ? `${activeProject.name}: ` : ""}{activeThread && !showWelcome ? activeThread.title : "New research"}</b>
             </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {mode === "research" && messages.some(m => m.role === "assistant") && (
-              <button onClick={copyLast} style={{
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
-                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
-              }}>
-                {copyFeedback ?? "Copy last response"}
+          )}
+          {mode === "draft" && <div className="lx-ctx"><span className="k">Drafting</span><b>{DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document"}</b></div>}
+          {mode === "review" && <div className="lx-ctx"><span className="k">Doc review</span><b>{reviewFile?.name ?? "Review a document"}</b></div>}
+          <span className="lx-sp" />
+          {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
+            <div className="lx-share-wrap">
+              <button type="button" className="lx-btn sm" aria-haspopup="menu" aria-expanded={shareOpen} onClick={() => setShareOpen(o => !o)}><Icon name="share" />Share</button>
+              {shareOpen && <ShareMenu onCopy={copyThread} copied={shareCopied} onClose={() => setShareOpen(false)}
+                emailHref={mailtoHref(`Research: ${activeThread?.title ?? "Lex research"}`, threadText())} />}
+            </div>
+          )}
+          {mode === "research" && !showWelcome && !panelOpen && (
+            <button type="button" className="lx-btn sm" onClick={() => setPanelOpen(true)}><Icon name="book" />Sources{panelMeta ? ` ${citedSources(panelMeta).cited.length}` : ""}</button>
+          )}
+          {mode === "draft" && draftText && (
+            <>
+              <button type="button" className="lx-btn sm" onClick={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }}>
+                <Icon name="copy" />{draftCopied ? "Copied" : "Copy draft"}
               </button>
-            )}
-            {mode === "research" && (
-              <button onClick={newThread} style={{
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-                borderRadius: 6, color: C.gold, fontSize: 11, fontWeight: 700,
-                cursor: "pointer", padding: "4px 12px",
-              }}>+ New Thread</button>
-            )}
-            {mode === "draft" && draftText && (
-              <>
-              <button onClick={() => { navigator.clipboard.writeText(draftText); setDraftCopied(true); setTimeout(() => setDraftCopied(false), 1500); }} style={{
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
-                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
-              }}>
-                {draftCopied ? "✓ Copied!" : "Copy draft"}
-              </button>
-              <button onClick={() => exportDraftToWord(draftText, draftTypeId, draftJurisdiction, firmName, firmLogo)} style={{
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
-                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
-              }}>
-                Export to Word
-              </button>
-              <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }} style={{
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: 6,
-                color: C.gold, fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 10px",
-              }}>
-                Send to Client
-              </button>
-              </>
-            )}
-          </div>
+              <button type="button" className="lx-btn sm" onClick={() => exportDraftToWord(draftText, draftTypeId, draftJurisdiction, firmName, firmLogo)}><Icon name="word" />Export to Word</button>
+              <button type="button" className="lx-btn sm" onClick={() => { setEmailOpen(true); setEmailSubject(`Document from Lex AI: ${DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Legal Document"}`); }}><Icon name="share" />Send to client</button>
+            </>
+          )}
         </div>
 
-        {/* ── Draft mode ─────────────────────────────────────────────────────── */}
+        {mode === "research" && (
+          <>
+            <div className="lx-body">
+              {showWelcome ? (
+                <EmptyState firmName={firmName} onPick={(q) => sendMessage(q)} composer={composer(true)} />
+              ) : (
+                <div className="lx-col">
+                  {messages.map((msg, i) => msg.role === "user" ? (
+                    <div className="lx-q" key={i}>
+                      <div className="lx-avatar" aria-hidden="true">{userEmail ?? displayEmail ? initials(userEmail ?? displayEmail) : "Me"}</div>
+                      <div className="qt">
+                        <p>{shownQuestion(msg.content)}</p>
+                        {msg.attachment && <span className="lx-chip"><Icon name="attach" size={12} />{msg.attachment}</span>}
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={i} onClick={() => { if (msg.meta && panelIdx !== i) { setPanelMsg(i); setSelectedCite(null); } }}>
+                      <AnswerSheet
+                        text={msg.content} meta={msg.meta} at={msg.at} streaming={i === streamingIdx}
+                        selected={panelIdx === i ? selectedCite : null}
+                        onCite={(n) => selectCite(i, n)}
+                        onExport={() => exportAnswer(i)} onCopy={() => copyAnswer(i)} onDraft={() => draftFrom(i)}
+                        onSources={() => { setPanelMsg(i); setPanelOpen(true); }}
+                        copied={copiedMsg === i}
+                        onFlag={() => setFlagFor(i)} flagged={msg.flagged} failedSearches={msg.failedSearches}
+                      />
+                      {msg.noResults && i === messages.length - 1 && !researchActive && (
+                        <NoResultsCard narrowed={!isFullScope(scope)}
+                          onWiden={() => { setScope(ALL_SCOPES); sendMessage(questionFor(i), { scope: ALL_SCOPES }); }}
+                          onRephrase={() => { setInput(questionFor(i)); inputRef.current?.focus(); }} />
+                      )}
+                    </div>
+                  ))}
+
+                  {!loading && researchError && researchError.threadId === activeId && (
+                    <ErrorCard error={researchError.error} onRetry={() => sendMessage(researchError.retryText, { retry: true })} />
+                  )}
+
+                  {loading && <SearchingSteps steps={steps} label={thinkLabel} />}
+
+                  {!loading && !researchActive && !researchError && messages[messages.length - 1]?.role === "assistant" && !messages[messages.length - 1]?.noResults && (
+                    <div className="lx-follow">
+                      {FOLLOW_UPS.map(f => <button type="button" key={f} onClick={() => sendMessage(f)}>{f}</button>)}
+                    </div>
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+              )}
+            </div>
+            {!showWelcome && (
+              <div className="lx-compose">
+                {composer(false)}
+                <div className="lx-fine">Lex cites every claim and flags what it could not check. Always check primary sources before advising a client.</div>
+              </div>
+            )}
+          </>
+        )}
+
         {mode === "draft" && (
+          <div className="lx-legacy-mode">
           <div style={{ flex: 1, overflowY: "auto", display: "flex", minHeight: 0 }}>
 
             {/* Form panel */}
@@ -1815,155 +1453,11 @@ export default function LexPage() {
               )}
             </div>
           </div>
+          </div>
         )}
 
-        {/* ── Research mode ───────────────────────────────────────────────────── */}
-        {mode === "research" && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 0" }}>
-          <div style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px" }}>
-
-            {/* Welcome screen */}
-            {showWelcome && (
-              <div style={{ textAlign: "center", paddingTop: 40 }}>
-                <LexMark size={56} />
-                <h1 style={{ margin: "16px 0 8px", fontSize: 26, fontWeight: 800, color: C.text }}>
-                  Lex: Australian Legal Research
-                </h1>
-                <p style={{ margin: "0 0 32px", fontSize: 14, color: C.textMuted, lineHeight: 1.6 }}>
-                  Real-time research across AustLII, ATO, Federal Legislation, and international databases.
-                  <br/>Every response cites its source.
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 560, margin: "0 auto 32px" }}>
-                  {chips.map(chip => (
-                    <button key={chip} onClick={() => sendMessage(chip)}
-                      style={{
-                        padding: "12px 14px", borderRadius: 10, cursor: "pointer", textAlign: "left",
-                        background: C.surface, border: `1px solid ${C.border}`,
-                        color: C.textMuted, fontSize: 12, lineHeight: 1.4, fontWeight: 400,
-                      }}>
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
-                  flexWrap: "wrap", fontSize: 11, color: C.textDim }}>
-                  {["AustLII case law", "ATO rulings", "Federal legislation", "International law"].map(tag => (
-                    <span key={tag} style={{
-                      padding: "4px 10px", borderRadius: 20,
-                      background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold,
-                    }}>{tag}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Messages */}
-            {messages.map((msg, i) => (
-              <div key={i} style={{
-                display: "flex", gap: 12, marginBottom: 20,
-                flexDirection: msg.role === "user" ? "row-reverse" : "row",
-              }}>
-                {msg.role === "assistant" && <LexMark size={28} />}
-                <div style={{
-                  maxWidth: msg.role === "user" ? "70%" : "100%",
-                  padding: "12px 16px",
-                  borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                  background: msg.role === "user" ? C.userBubble : C.aiBubble,
-                  border: `1px solid ${C.border}`,
-                  fontSize: 14, lineHeight: 1.7, color: C.text,
-                }}>
-                  {renderLex(answerText(msg))}
-                  {msg.role === "assistant" && msg.meta && <AnswerSources meta={msg.meta} />}
-                </div>
-              </div>
-            ))}
-
-            {!loading && researchError && researchError.threadId === activeId && (
-              <div style={{ display: "flex", gap: 12, marginBottom: 20, marginLeft: 40 }}>
-                <LexErrorCard error={researchError.error} onRetry={() => sendMessage(researchError.retryText, { retry: true })} />
-              </div>
-            )}
-
-            {loading && (
-              <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                <LexMark size={28} />
-                <ThinkingDots label={thinkLabel} />
-              </div>
-            )}
-
-            {/* Follow-up chips after response */}
-            {!loading && !showWelcome && chips.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16, marginLeft: 40 }}>
-                {chips.map(chip => (
-                  <button key={chip} onClick={() => sendMessage(chip)} style={{
-                    padding: "6px 14px", borderRadius: 20, cursor: "pointer",
-                    background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-                    color: C.gold, fontSize: 11, fontWeight: 500,
-                  }}>
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-        </div>
-        )}
-
-        {/* Input area, research mode only */}
-        {mode === "research" && <div style={{
-          borderTop: `1px solid ${C.border}`, background: C.surface,
-          padding: "14px 24px 18px", flexShrink: 0,
-        }}>
-          <div style={{ maxWidth: 780, margin: "0 auto" }}>
-            <div style={{
-              display: "flex", gap: 10, alignItems: "center",
-              background: C.bg, border: `1.5px solid ${C.borderAccent}`,
-              borderRadius: 14, padding: "10px 12px",
-            }}>
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
-                }}
-                placeholder="Ask a legal research question… (Shift+Enter for new line)"
-                disabled={loading}
-                rows={1}
-                style={{
-                  flex: 1, background: "none", border: "#23344f", outline: "none",
-                  color: C.text, fontSize: 14, resize: "none", lineHeight: 1.6,
-                }}
-              />
-              <button
-                onClick={() => sendMessage(input)}
-                disabled={!input.trim() || loading}
-                style={{
-                  width: 36, height: 36, borderRadius: 10, border: "#23344f", flexShrink: 0,
-                  background: input.trim() && !loading ? C.gold : C.goldBg,
-                  cursor: input.trim() && !loading ? "pointer" : "not-allowed",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M14 2L7 9" stroke={C.bg} strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M14 2L9.5 14L7 9L2 6.5L14 2z" stroke={C.bg} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-            <p style={{ margin: "6px 0 0", fontSize: 10.5, color: C.textDim, textAlign: "center" }}>
-              Lex searches AustLII, ATO, and legislation.gov.au in real-time. Always cite-check before use in practice. •{" "}
-              <a href="https://austlii.edu.au" target="_blank" rel="noopener noreferrer" style={{ color: C.textDim }}>AustLII</a>{" "}
-              <a href="https://ato.gov.au" target="_blank" rel="noopener noreferrer" style={{ color: C.textDim }}>ATO</a>{" "}
-              <a href="https://legislation.gov.au" target="_blank" rel="noopener noreferrer" style={{ color: C.textDim }}>legislation.gov.au</a>
-            </p>
-          </div>
-        </div>}
-
-        {/* ── Doc Review mode ─────────────────────────────────────────────── */}
         {mode === "review" && (
+          <div className="lx-legacy-mode">
           <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
 
             {/* Left: config panel */}
@@ -2551,6 +2045,7 @@ export default function LexPage() {
               })()}
             </div>
           </div>
+          </div>
         )}
 
       {/* ── Intake form modal ─────────────────────────────────────────────── */}
@@ -2621,6 +2116,7 @@ export default function LexPage() {
                   };
                   setThreads(prev => [thread, ...prev]);
                   setActiveId(id);
+                  setMode("research");
                   setIntakeOpen(false);
                   setIntakeClientName(""); setIntakeMatterType("Property"); setIntakeUrgency("medium"); setIntakeDescription("");
                 }}
@@ -2788,6 +2284,11 @@ export default function LexPage() {
       )}
 
       </main>
+
+      {showPanel && (
+        <SourcesPanel meta={panelMeta} selected={selectedCite} onSelect={setSelectedCite}
+          onClose={() => { setPanelOpen(false); setSelectedCite(null); }} />
+      )}
     </div>
   );
 }
