@@ -340,6 +340,14 @@ export default function EngagementClient({ id }: { id: string }) {
                     ? `Sent ${new Date(eng.factFindSentAt).toLocaleString("en-AU")} - awaiting completion (${answeredCount} answers so far).`
                     : "Not yet sent to the client."}
               </p>
+              {eng.factFindCompletedAt && (
+                <p style={{ fontSize: 13, color: C.dim, margin: "0 0 12px" }}>
+                  Anonymous quote consent:{" "}
+                  <strong style={{ color: eng.quoteConsent ? C.gold : C.text }}>
+                    {eng.quoteConsent ? "Yes, their words may be used without name or business" : "No, do not reuse their words"}
+                  </strong>
+                </p>
+              )}
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button onClick={sendQuestionnaire} disabled={busy === "send"} style={btn}>
                   {busy === "send" ? "Sending…" : eng.factFindSentAt ? "Re-send questionnaire email" : "Email questionnaire to client"}
@@ -525,6 +533,18 @@ export default function EngagementClient({ id }: { id: string }) {
                       <p style={{ margin: 0, fontSize: 13.5, color: C.text, lineHeight: 1.6 }}>{eng.assessment.risks}</p>
                     </>
                   )}
+                  {eng.assessment.avoidRepeating && (
+                    <>
+                      <h4 style={{ margin: "16px 0 8px", fontSize: 13.5, color: C.gold, textTransform: "uppercase", letterSpacing: 0.5 }}>Not repeating (from answer 2)</h4>
+                      <p style={{ margin: 0, fontSize: 13.5, color: C.text, lineHeight: 1.6 }}>{eng.assessment.avoidRepeating}</p>
+                    </>
+                  )}
+                  {eng.assessment.concernsNote && (
+                    <>
+                      <h4 style={{ margin: "16px 0 8px", fontSize: 13.5, color: C.gold, textTransform: "uppercase", letterSpacing: 0.5 }}>Response to answer 3</h4>
+                      <p style={{ margin: 0, fontSize: 13.5, color: C.text, lineHeight: 1.6 }}>{eng.assessment.concernsNote}</p>
+                    </>
+                  )}
                   <p style={{ margin: "14px 0 0", fontSize: 11.5, color: C.muted }}>
                     Generated {new Date(eng.assessment.generatedAt).toLocaleString("en-AU")} · {eng.assessment.modelNotes}
                   </p>
@@ -535,6 +555,9 @@ export default function EngagementClient({ id }: { id: string }) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                       <h4 style={{ margin: 0, fontSize: 14.5, color: C.text }}>
                         #{o.rank} - {o.title}
+                        {o.fixesMainFrustration && (
+                          <span style={{ marginLeft: 8, fontSize: 11.5, fontWeight: 500, color: C.gold }}>Fixes their #1 frustration</span>
+                        )}
                       </h4>
                       <span style={{ fontSize: 12, color: C.muted }}>
                         {o.patternId && o.patternId !== "custom" ? `pattern: ${o.patternId}` : "custom"}

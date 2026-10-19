@@ -9,6 +9,7 @@
  */
 
 import { AuditTier, FirmType } from "./audit-types";
+import { noDashes } from "./no-dashes";
 
 export type QuestionType =
   | "text"
@@ -43,7 +44,36 @@ const ALL: AuditTier[] = ["starter", "pro", "business"];
 const PRO_ENT: AuditTier[] = ["pro", "business"];
 const ENT: AuditTier[] = ["business"];
 
+/**
+ * Fact-find v2 (19 Oct 2026): the customer's own words come first.
+ * Copy is plain Australian English with no em dashes.
+ */
+export const FACTFIND_INTRO =
+  "Hi, I'm Shane. Before we look at tools or automation, I want to understand your business the way you see it. There are no wrong answers and plain words are perfect. Most people finish in about 15 minutes.";
+
+export const FACTFIND_CONSENT_LABEL =
+  "You can use my words, without my name or business, to help explain what Saabai does.";
+
+export const FACTFIND_SUBMIT_LABEL = "Send my answers";
+
+export const FACTFIND_THANKS_HEADING = "Thanks";
+export const FACTFIND_THANKS_BODY =
+  "Your answers go straight into your Blueprint. On Pro and Business, I read every one myself before we talk.";
+
+/** The three "Start here" question ids, in order. Answer 1 drives opportunity ranking. */
+export const START_QUESTION_IDS = {
+  frustration: "start_frustration",
+  tried: "start_tried",
+  wish: "start_wish",
+} as const;
+
 export const FACTFIND_SECTIONS: FactFindSection[] = [
+  {
+    id: "start",
+    title: "Start here",
+    description: "Three questions, in your own words. These shape everything that follows.",
+    tiers: ALL,
+  },
   {
     id: "firm",
     title: "Your Firm",
@@ -150,6 +180,41 @@ function workflowBlock(n: number): FactFindQuestion[] {
 }
 
 export const FACTFIND_QUESTIONS: FactFindQuestion[] = [
+  // ── Start here (v2, required, all tiers) ─────────────────────────────
+  {
+    id: START_QUESTION_IDS.frustration,
+    section: "start",
+    label: "What's frustrating you most in your business right now?",
+    help: "The task, delay or headache you'd fix tomorrow if you could.",
+    type: "textarea",
+    tiers: ALL,
+    required: true,
+    interviewPrompt:
+      "This leads the Blueprint. Quote it back in their words, and rank opportunities that fix it first.",
+  },
+  {
+    id: START_QUESTION_IDS.tried,
+    section: "start",
+    label: "What have you already tried to fix it, and how did it go?",
+    help: "Software, extra staff, an agency, a spreadsheet, or nothing yet. It all helps.",
+    type: "textarea",
+    tiers: ALL,
+    required: true,
+    interviewPrompt:
+      "Note what did not work so the Blueprint does not recommend the same thing again.",
+  },
+  {
+    id: START_QUESTION_IDS.wish,
+    section: "start",
+    label: "What do you wish people selling AI or tech understood about your situation?",
+    help: "Anything you're wary of, have been burned by, or are tired of hearing.",
+    type: "textarea",
+    tiers: ALL,
+    required: true,
+    interviewPrompt:
+      "Address this directly: on the walkthrough call for Pro and Business, or in a short note for Starter.",
+  },
+
   // ── Firm ──────────────────────────────────────────────────────────────
   {
     id: "firm_overview",
@@ -471,4 +536,49 @@ export function questionsForTier(
 
 export function sectionsForTier(tier: AuditTier): FactFindSection[] {
   return FACTFIND_SECTIONS.filter((s) => s.tiers.includes(tier));
+}
+
+/**
+ * Client-facing copy must never show an em dash. Existing question text is kept
+ * as written in the source; this cleans it at the public boundary only.
+ * En dashes in ranges (e.g. "$15k–$30k") are left alone.
+ */
+export function publicCopy(text: string): string;
+export function publicCopy(text: string | undefined): string | undefined;
+export function publicCopy(text: string | undefined): string | undefined {
+  if (typeof text !== "string" || !text.includes("\u2014")) return text;
+  return noDashes(text);
+}
+
+/** A question as the public form sees it: no interview prompt, no em dashes. */
+export function toPublicQuestion(q: FactFindQuestion): Omit<FactFindQuestion, "interviewPrompt"> {
+  const { interviewPrompt, ...rest } = q;
+  void interviewPrompt;
+  return {
+    ...rest,
+    label: publicCopy(rest.label),
+    help: publicCopy(rest.help),
+    options: rest.options?.map((o) => publicCopy(o)),
+  };
+}
+
+export function toPublicSection(s: FactFindSection): FactFindSection {
+  return { ...s, title: publicCopy(s.title), description: publicCopy(s.description) };
+}
+
+/** Map a stored answer onto the public option text so resumed select answers still match. */
+export function toPublicValue<T>(v: T): T {
+  if (typeof v === "string") return publicCopy(v) as T;
+  if (Array.isArray(v)) return v.map((x) => (typeof x === "string" ? publicCopy(x) : x)) as T;
+  return v;
+}
+
+/** Ids of the required "Start here" questions that are still blank. */
+export function missingStartAnswers(
+  values: Record<string, unknown>
+): string[] {
+  return Object.values(START_QUESTION_IDS).filter((id) => {
+    const v = values[id];
+    return typeof v !== "string" || v.trim() === "";
+  });
 }
