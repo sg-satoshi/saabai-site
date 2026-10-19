@@ -1,4 +1,5 @@
 import { renderOffersForPrompt, LINKS } from "./mia-offers";
+import { NO_DASH_RULE } from "./no-dashes";
 
 /**
  * Saabai website chat agent (Mia): system prompt.
@@ -159,6 +160,7 @@ ${renderOffersForPrompt()}
 
 ## Hard rules
 
+- ${NO_DASH_RULE}
 - Never quote a price, discount, inclusion, timeframe, refund term or guarantee that is not in the Approved Offers. Never estimate custom build costs.
 - Always say "GST not applicable" when quoting a price. Never say prices include or exclude GST.
 - Never claim to be human or deny being AI.

@@ -10,6 +10,7 @@ import { getSaabaiModel } from "../../../lib/chat-config";
 import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 import { saveLead, saveConversation } from "../../../lib/redis";
 import { CTA_STEPS } from "../../../lib/mia-cta";
+import { noDashesTransform } from "../../../lib/no-dashes";
 import { miaGlobalGate, safeFetchText, sanitizeMessages, sanitizePageContext, sanitizeVisitorProfile, urlWasShared } from "../../../lib/chat-safety";
 
 export const runtime = "nodejs";
@@ -73,7 +74,7 @@ function buildSystemPrompt(
 ## Live Session Context
 
 The visitor is currently on this page: ${pageContext}
-Use this to shape how you open and what you reference — but do not announce that you know this.`;
+Use this to shape how you open and what you reference, but do not announce that you know this.`;
   }
 
   if (returningVisitor) {
@@ -81,7 +82,7 @@ Use this to shape how you open and what you reference — but do not announce th
 
 ## Returning Visitor
 
-This visitor has chatted with Mia before. Their previous conversation is in the message history. Acknowledge them naturally — you remember the conversation. Don't start from scratch or re-introduce yourself fully.`;
+This visitor has chatted with Mia before. Their previous conversation is in the message history. Acknowledge them naturally. You remember the conversation. Don't start from scratch or re-introduce yourself fully.`;
   }
 
   if (
@@ -95,7 +96,7 @@ This visitor has chatted with Mia before. Their previous conversation is in the 
 
 ## Known Visitor Facts
 
-You already know the following about this visitor from a previous conversation. Use it naturally — don't re-ask things you already know, and reference these details as if you've always known them:
+You already know the following about this visitor from a previous conversation. Use it naturally. Don't re-ask things you already know, and reference these details as if you've always known them:
 ${JSON.stringify(facts, null, 2)}`;
   }
 
@@ -235,6 +236,8 @@ export async function POST(req: Request) {
       normalizedMessages as Parameters<typeof convertToModelMessages>[0]
     ),
     stopWhen: stepCountIs(4),
+    // House rule: no em or en dashes in anything Mia says, including streamed text.
+    experimental_transform: noDashesTransform(),
     onFinish: async (event) => {
       const msgCount = messages.length + 1;
       const hasData =
@@ -341,7 +344,7 @@ export async function POST(req: Request) {
         description:
           "Calculate the estimated annual cost of manual work once you have the three numbers from the conversation: " +
           "team members in this process, hours per person per week, and their hourly rate. " +
-          "Call this after discovery — it gives you the exact figures to quote to the visitor and stores them on the lead record. " +
+          "Call this after discovery. It gives you the exact figures to quote to the visitor and stores them on the lead record. " +
           "Use an estimated rate if the visitor doesn't know it (admin/coordinator: $45/hr, professional staff: $90/hr, fee earner: $180/hr).",
         inputSchema: z.object({
           team_members: z
@@ -404,7 +407,7 @@ export async function POST(req: Request) {
           automation_potential: z
             .boolean()
             .describe(
-              "True if the described pain is clearly automatable — recurring, rule-based, or volume-driven."
+              "True if the described pain is clearly automatable: recurring, rule-based, or volume-driven."
             ),
         }),
         execute: async (args) => {
