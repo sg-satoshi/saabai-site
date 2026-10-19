@@ -3,7 +3,7 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Case Study: PlasticOnline and Rex, AI Sales Agent for Cut-to-Size Quoting",
+  title: "PlasticOnline Case Study: Rex, AI Quoting Agent",
   description:
     "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
   alternates: {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: "https://www.saabai.ai/case-studies/rex-plastics-online",
-    title: "Case Study: PlasticOnline and Rex, AI Sales Agent for Cut-to-Size Quoting | Saabai",
+    title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
     description:
       "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
   },
