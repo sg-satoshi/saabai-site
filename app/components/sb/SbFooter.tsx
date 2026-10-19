@@ -19,7 +19,7 @@ const COMPANY = [
 ];
 
 const PRODUCTS = [
-  { label: "Lex", href: "/lex" },
+  { label: "Lex", href: "/legal" },
   { label: "Rex", href: "/case-studies" },
 ];
 
