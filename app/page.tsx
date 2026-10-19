@@ -50,7 +50,7 @@ export default function Home() {
             <ul className="tick">
               <li>Built in about two weeks</li>
               <li>Hosting, updates and fixes included</li>
-              <li>Optional chatbot and Google reviews</li>
+              <li>AI enquiry chatbot and Google reviews on every plan</li>
             </ul>
             <div className="price">From <b>$2,000</b> + $100/mo care</div>
             <a className="btn ghost" href="/websites" style={{ marginTop: 22 }}>See websites →</a>
@@ -62,7 +62,7 @@ export default function Home() {
             <ul className="tick">
               <li>Ranked opportunities with hours and $ saved</li>
               <li>Delivered as a PDF and in your client portal</li>
-              <li>Fee credited if you build with us in 30 days</li>
+              <li>Full fee credited if you book a build within 30 days of delivery</li>
             </ul>
             <div className="price">From <b>$497</b> · start with a free score</div>
             <a className="btn" href="/score" style={{ marginTop: 22 }}>Get your free AI score →</a>
@@ -170,6 +170,7 @@ export default function Home() {
               <ul className="tick"><li>Portals, bookings, integrations</li><li>Multi-location sites</li><li>Dedicated build plan</li></ul>
             </div>
           </div>
+          <p className="dim" style={{ fontSize: 14, textAlign: "center", marginTop: 24, maxWidth: 640, marginLeft: "auto", marginRight: "auto" }}>The price only goes above the &apos;from&apos; figure for custom integrations or other additional work, and we quote that in writing before any work starts.</p>
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <a className="btn ghost" href="/websites">Compare website packages →</a>
           </div>

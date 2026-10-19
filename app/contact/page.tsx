@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const ROWS: [string, string][] = [
   ["Email", "hello@saabai.ai"],
-  ["Address", "Merrimac"],
+  ["Address", "Merrimac QLD 4226 (home office, visits by appointment)"],
   ["ABN", "71 889 082 572"],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
@@ -31,7 +31,8 @@ export default function ContactPage() {
           <span className="eyebrow">Saabai</span>
           <h1 style={{ marginTop: 16 }}>Contact</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
-            The best way to reach us is email. We reply within one business day.
+            The best way to reach us is email. We reply within one business day. Prefer to talk?{" "}
+            <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>Book a free 30 minute call with Shane.</a>
           </p>
 
           <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>

@@ -114,7 +114,7 @@ export const QUESTIONS: QuizQuestion[] = [
     { label: "Trade or service business", hint: "Mechanics, builders, cleaners, mobile services", points: 2 },
     { label: "Retail, hospitality or e-commerce", hint: "Shops, cafes, online stores", points: 2 },
     { label: "Professional practice", hint: "Accounting, legal, health, advisory", points: 2 },
-    { label: "Something else", hint: "We will tailor the questions as best we can", points: 2 },
+    { label: "Something else", hint: "We'll adjust the questions to suit", points: 2 },
   ]},
   { id: "size", category: "business", q: "How many people work in the business?", options: [
     { label: "Just me", hint: "Owner operator", points: 2 },

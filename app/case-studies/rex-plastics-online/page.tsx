@@ -3,17 +3,17 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 
 export const metadata: Metadata = {
-  title: "Case Study: Rex Plastics — AI Sales Agent Recovers 60% of Sales Day",
+  title: "Case Study: PlasticOnline and Rex, AI Sales Agent for Cut-to-Size Quoting",
   description:
-    "How a national plastics supplier deployed an AI sales agent (Rex) and recovered 60% of their sales team's day: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
+    "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
   alternates: {
     canonical: "https://www.saabai.ai/case-studies/rex-plastics-online",
   },
   openGraph: {
     url: "https://www.saabai.ai/case-studies/rex-plastics-online",
-    title: "Case Study: Rex Plastics — AI Sales Agent Recovers 60% of Sales Day | Saabai",
+    title: "Case Study: PlasticOnline and Rex, AI Sales Agent for Cut-to-Size Quoting | Saabai",
     description:
-      "How a national plastics supplier deployed an AI sales agent and recovered 60% of their sales day: 344 leads in 30 days, $218K quoted pipeline.",
+      "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
   },
 };
 
@@ -61,9 +61,9 @@ export default function RexPlasticsCaseStudy() {
         </div>
 
         <h1 className="relative text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          How a National Plastics Supplier
+          How PlasticOnline (Holland Plastics)
           <br />
-          <span className="text-gradient">Recovered 60% of Their Sales Day</span>
+          <span className="text-gradient">Took Repetitive Quoting Off Their Sales Team</span>
         </h1>
 
         <div
@@ -104,11 +104,11 @@ export default function RexPlasticsCaseStudy() {
                   Company
                 </p>
             <h2 className="text-3xl font-semibold tracking-tight mb-3">
-              National Plastics Supplier
+              PlasticOnline (Holland Plastics)
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A large national plastics supplier serving trade and retail
-              customers across Australia. Name withheld on request.
+              A cut-to-size plastics supplier serving trade and retail
+              customers across Australia.
             </p>
           </div>
           <div>
@@ -250,9 +250,8 @@ export default function RexPlasticsCaseStudy() {
               344
             </div>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Leads captured in the first 30 days of Rex going live. These
-              are qualified enquiries, not spam — every lead engaged with Rex
-              about a genuine product or pricing need. Previously, the
+              Leads captured in the first 30 days of Rex going live. Each one
+              is a genuine product or pricing conversation with Rex. Previously, the
               majority of these would have been hours-long turnaround or lost
               after hours.
             </p>
@@ -297,10 +296,7 @@ export default function RexPlasticsCaseStudy() {
               $1,316
             </div>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Average quote value across all Rex-generated leads. At 344
-              leads, the implied addressable pipeline at average quote is over
-              $450K — and that&apos;s before factoring in repeat trade
-              customers who now use Rex as their primary quoting channel.
+              Average quote value across all Rex-generated leads.
             </p>
           </div>
         </div>
@@ -338,7 +334,7 @@ export default function RexPlasticsCaseStudy() {
             before. The numbers speak for themselves.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-            Operations Manager, National Plastics Supplier
+            Operations Manager, PlasticOnline (Holland Plastics)
           </p>
         </blockquote>
       </section>
@@ -370,8 +366,8 @@ export default function RexPlasticsCaseStudy() {
           <span className="text-gradient">your team can recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          The same approach that recovered 60% of a sales team&apos;s day can
-          work for your business. Start with a Saabai Blueprint. Plans start at $497, credited if you book a build within 30 days.
+          The same approach that took repetitive quoting off PlasticOnline&apos;s
+          sales team can work for your business. Start with a Saabai Blueprint. Plans start at $497, credited if you book a build within 30 days.
         </p>
 
         <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4">

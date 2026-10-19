@@ -27,7 +27,7 @@ const FAQS = [
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
   ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST not applicable. You get an invoice by email straight after payment."],
-  ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
+  ["Can I get a refund?", "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply."],
 ];
 
 const SITE = "https://www.saabai.ai";
@@ -82,7 +82,7 @@ export default function BlueprintPage() {
         <div className="wrap" style={{ position: "relative" }}>
           <span className="eyebrow">Saabai Blueprint · for small businesses and professional practices</span>
           <h1 style={{ marginTop: 18 }}>Know exactly what to<br /> <span className="grad">automate first</span></h1>
-          <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it saves and what it costs to build.</p>
+          <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it could save. Pro and Business add a build cost estimate for each.</p>
           <div style={{ marginTop: 32, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn" href="/score">Not sure which? Take the free score →</a>
           </div>

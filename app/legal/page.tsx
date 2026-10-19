@@ -207,7 +207,7 @@ export default function LegalPage() {
             display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap",
             animation: "fadeUp 0.7s ease 0.4s both",
           }}>
-            {["No hallucinations", "Australian law only", "Clause-by-clause QA"].map((badge) => (
+            {["Every answer cites its source", "Australian law only", "Clause-by-clause QA"].map((badge) => (
               <div key={badge} style={{
                 display: "flex", alignItems: "center", gap: 7,
                 fontSize: 12, color: C.textMuted, letterSpacing: "0.04em",
@@ -696,7 +696,7 @@ export default function LegalPage() {
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
                 <span style={{ fontSize: 42, fontWeight: 800, color: C.text }}>$299</span>
-                <span style={{ fontSize: 14, color: C.textMuted }}>/month</span>
+                <span style={{ fontSize: 14, color: C.textMuted }}>a month (AUD, GST not applicable)</span>
               </div>
               <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 28px" }}>
                 Perfect for small-to-mid sized firms.
@@ -729,7 +729,7 @@ export default function LegalPage() {
                   textDecoration: "none",
                 }}
               >
-                Start 14-Day Trial
+                Book a demo to start your 14-day trial
               </a>
             </div>
 
