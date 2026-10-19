@@ -17,8 +17,9 @@ export default function ProductPicker({ mode, value, statuses, onChange }: {
   onChange: (mode: "all" | "selected", value: string[]) => void;
 }) {
   const [q, setQ] = useState("");
+  // Remember the selection while "All products" is on, so switching back restores it.
+  const [stash, setStash] = useState<string[]>([]);
   const ready = (id: string) => !!statuses.find((s) => s.id === id)?.ready;
-  const note = (id: string) => statuses.find((s) => s.id === id)?.note;
   const visible = useMemo(() => searchProductTargets(q), [q]);
   const readyIds = PRODUCT_TARGETS.map((t) => t.id).filter(ready);
   const toggle = (id: string) => onChange("selected", value.includes(id) ? value.filter((v) => v !== id) : PRODUCT_TARGETS.map((t) => t.id).filter((x) => x === id || value.includes(x)));
@@ -28,8 +29,8 @@ export default function ProductPicker({ mode, value, statuses, onChange }: {
     <div className="of-f">
       <span className="lb" id="of-works-lb">Works on</span>
       <div className="of-seg" role="group" aria-labelledby="of-works-lb">
-        <button type="button" className={mode === "all" ? "on" : ""} onClick={() => onChange("all", [])}>All products</button>
-        <button type="button" className={mode === "selected" ? "on" : ""} onClick={() => onChange("selected", value)}>Choose products</button>
+        <button type="button" className={mode === "all" ? "on" : ""} onClick={() => { if (value.length) setStash(value); onChange("all", []); }}>All products</button>
+        <button type="button" className={mode === "selected" ? "on" : ""} onClick={() => onChange("selected", value.length ? value : stash)}>Choose products</button>
       </div>
       {mode === "selected" && (
         <div className="of-pick">
@@ -45,7 +46,7 @@ export default function ProductPicker({ mode, value, statuses, onChange }: {
           )}
           <input aria-label="Search products" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products" />
           <div className="of-pick-acts">
-            <button type="button" onClick={() => onChange("selected", readyIds)} disabled={!readyIds.length}>Select all ({readyIds.length})</button>
+            <button type="button" onClick={() => onChange("selected", readyIds)} disabled={!readyIds.length}>Select all Blueprint ({readyIds.length})</button>
             <button type="button" onClick={() => onChange("selected", [])} disabled={!value.length}>Clear</button>
             <span className="muted">{value.length} selected</span>
           </div>
@@ -56,7 +57,7 @@ export default function ProductPicker({ mode, value, statuses, onChange }: {
               return (
                 <label key={t.id} className={`of-opt${ok ? "" : " off"}`}>
                   <input type="checkbox" checked={value.includes(t.id)} disabled={!ok} onChange={() => toggle(t.id)} />
-                  <span>{t.label}{!ok && <em> (not ready{note(t.id) ? `: ${note(t.id)}` : ""})</em>}</span>
+                  <span>{t.label}{!ok && <em> (set up coupon products first)</em>}</span>
                 </label>
               );
             })}
