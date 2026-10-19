@@ -212,8 +212,6 @@
 .lx-pempty{padding:28px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.55}
 .lx-sheet-handle{display:none}
 
-/* ── Legacy modes (drafting, doc review) keep their own look until phases C and D ── */
-.lx-legacy-mode{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#08111f;color:#e8edf5}
 
 /* ── Overlay (mobile nav) ────────────────────────────── */
 .lx-scrim{display:none}

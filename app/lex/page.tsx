@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DOCUMENT_TYPES } from "../../lib/lex-document-types";
 import {
-  type LexError, cleanThreads, stripErrorAnswers, isStreamErrorPart, signInHref,
+  type LexError, cleanThreads, stripErrorAnswers, isStreamErrorPart,
   lexErrorFromResponse, lexErrorFromStatus, lexNetworkError, lexEmptyError,
 } from "../../lib/lex-errors";
 import type { LexAnswerMeta } from "../../lib/lex-sources";
@@ -22,50 +22,15 @@ import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
 import type { QAReport } from "../../lib/lex-draft-display";
+import type { ReviewReport } from "../../lib/lex-review-display";
+import { ReviewView } from "./_components/Review";
+import { exportReviewToWord } from "./_components/exportReview";
 
-// ── Brand ─────────────────────────────────────────────────────────────────────
-const C = {
-  bg:           "#08111f",   // deep navy background
-  surface:      "#101b2d",   // card/panel surface
-  surfaceRaised:"#16253d",   // elevated surfaces
-  border:       "#23344f",   // subtle border
-  borderAccent: "#32527f",   // stronger border on focus
-  navy:         "#1B2B4B",
-  gold:         "#C9A84C",   // primary gold accent
-  goldBright:   "#E0BC6A",
-  goldDim:      "#8a6e30",
-  goldBg:       "rgba(201,168,76,0.08)",
-  goldBorder:   "rgba(201,168,76,0.2)",
-  text:         "#e8edf5",   // primary text
-  textMuted:    "#8fa3c0",   // secondary text
-  textDim:      "#4a6080",   // tertiary / placeholders
-  white:        "#ffffff",
-  green:        "#22c55e",
-  userBubble:   "#1e3050",
-  aiBubble:     "#1B2B4B",
-};
 
 
 const PROJECT_COLOURS = ["#62c5d1","#5b8dee","#25c986","#f97316","#a78bfa","#f472b6"];
 
 
-
-// ── Doc Review types ──────────────────────────────────────────────────────────
-type ReviewSeverity = "critical" | "moderate" | "minor";
-type ReviewFinding = {
-  id: string; severity: ReviewSeverity;
-  axis: "risk" | "missing" | "legislation" | "market" | "accuracy" | "completeness" | "compliance" | "tone";
-  clauseRef: string; title: string; issue: string; recommendation: string; redline?: string;
-};
-type ReviewMissingClause = { clause: string; reason: string; severity: ReviewSeverity };
-type ReviewLegislationConflict = { ref: string; clauseRef: string; issue: string };
-type ReviewReport = {
-  documentType: string; direction: "incoming" | "outgoing"; actingFor?: string; jurisdiction: string;
-  overallScore: number; riskLevel: "low" | "medium" | "high" | "critical";
-  summary: string; findings: ReviewFinding[];
-  missingClauses: ReviewMissingClause[]; legislationConflicts: ReviewLegislationConflict[];
-  recommendedActions: string[]; wordCount: number; clauseCount: number;
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 /** The question as typed, without any attached document text. */
@@ -82,35 +47,6 @@ function threadTitle(msgs: ChatMessage[]): string {
 }
 
 // ── Error card: failures are shown as a state, never as an answer ─────────────
-function LexErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: LexError; onRetry?: () => void; retryLabel?: string }) {
-  return (
-    <div role="alert" data-lex-error={error.kind} style={{
-      padding: "14px 18px", borderRadius: 10, background: "rgba(239,68,68,0.07)",
-      border: "1px solid rgba(239,68,68,0.35)", maxWidth: 560,
-    }}>
-      <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#fca5a5" }}>{error.title}</p>
-      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "#fecaca" }}>{error.message}</p>
-      {(error.signIn || (error.canRetry && onRetry)) && (
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          {error.signIn && (
-            <a href={signInHref(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/lex")} style={{
-              padding: "7px 14px", borderRadius: 8, background: C.gold, color: C.bg,
-              fontSize: 12, fontWeight: 700, textDecoration: "none",
-            }}>Sign in</a>
-          )}
-          {error.canRetry && onRetry && (
-            <button type="button" onClick={onRetry} data-no-feedback style={{
-              padding: "7px 14px", borderRadius: 8, cursor: "pointer",
-              background: "transparent", border: `1px solid ${C.borderAccent}`, color: C.text,
-              fontSize: 12, fontWeight: 600,
-            }}>{retryLabel}</button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Thinking dots ─────────────────────────────────────────────────────────────
 // ── Thinking label from query ─────────────────────────────────────────────────
 function thinkingFor(msg: string): string {
@@ -186,8 +122,7 @@ export default function LexPage() {
   const [reviewStage, setReviewStage]             = useState("Extracting document...");
   const [reviewReport, setReviewReport]           = useState<ReviewReport | null>(null);
   const [reviewError, setReviewError]             = useState<LexError | null>(null);
-  const reviewFileRef = useRef<HTMLInputElement>(null);
-  const [reviewDragOver, setReviewDragOver]       = useState(false);
+  const [reviewDocText, setReviewDocText]         = useState("");
   // Matter context fields
   const [reviewSubmittedBy, setReviewSubmittedBy] = useState("");
   const [reviewMatterNo, setReviewMatterNo]       = useState("");
@@ -197,15 +132,6 @@ export default function LexPage() {
   const [submitDone, setSubmitDone]               = useState(false);
   const [submitError, setSubmitError]             = useState<LexError | null>(null);
   // Comparison state
-  const [reviewCompareMode, setReviewCompareMode] = useState(false);
-  const [reviewCompareInputMode, setReviewCompareInputMode] = useState<"upload" | "paste">("upload");
-  const [reviewComparePasteText, setReviewComparePasteText] = useState("");
-  const [reviewCompareFile, setReviewCompareFile] = useState<File | null>(null);
-  const [reviewCompareDragOver, setReviewCompareDragOver] = useState(false);
-  const [reviewCompareText, setReviewCompareText] = useState("");
-  const [reviewComparisonAnalysis, setReviewComparisonAnalysis] = useState("");
-  const [reviewComparisonLoading, setReviewComparisonLoading] = useState(false);
-  const reviewCompareFileRef = useRef<HTMLInputElement>(null);
 
   const bottomRef    = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLTextAreaElement>(null);
@@ -794,6 +720,7 @@ export default function LexPage() {
     setReviewLoading(true);
     setReviewReport(null);
     setReviewError(null);
+    setReviewDocText("");
     setSubmitDone(false);
     setSubmitError(null);
 
@@ -850,6 +777,7 @@ export default function LexPage() {
       if (!reviewRes.ok) { setReviewError(await lexErrorFromResponse(reviewRes, "review")); return; }
       const report = await reviewRes.json() as ReviewReport;
       report.wordCount = report.wordCount || wordCount;
+      setReviewDocText(documentText);
       setReviewReport(report);
     } catch {
       setReviewError(lexNetworkError("review"));
@@ -1050,595 +978,24 @@ export default function LexPage() {
         )}
 
         {mode === "review" && (
-          <div className="lx-legacy-mode">
-          <div style={{ flex: 1, display: "flex", minHeight: 0, overflow: "hidden" }}>
-
-            {/* Left: config panel */}
-            <div style={{ width: 320, flexShrink: 0, borderRight: `1px solid ${C.border}`, background: C.surface, overflowY: "auto", padding: "24px 20px" }}>
-
-              <p style={{ margin: "0 0 18px", fontSize: 13, fontWeight: 700, color: C.gold, letterSpacing: 0.3 }}>Document Review</p>
-
-              {/* Matter context */}
-              <div style={{ marginBottom: 18, padding: "12px 14px", borderRadius: 10, background: C.bg, border: `1px solid ${C.border}` }}>
-                <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Matter Details</p>
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Submitted By</label>
-                  <input value={reviewSubmittedBy} onChange={e => setReviewSubmittedBy(e.target.value)}
-                    placeholder="Your name" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Matter No.</label>
-                    <input value={reviewMatterNo} onChange={e => setReviewMatterNo(e.target.value)}
-                      placeholder="e.g. 2024-0142" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: "block", fontSize: 10, color: C.textDim, marginBottom: 4 }}>Client Name</label>
-                    <input value={reviewClientName} onChange={e => setReviewClientName(e.target.value)}
-                      placeholder="e.g. Smith Holdings" style={{ width: "100%", padding: "7px 10px", borderRadius: 6, background: C.surface, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Direction toggle */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>Review Type</label>
-                <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: `1px solid ${C.border}` }}>
-                  {(["incoming", "outgoing"] as const).map(d => (
-                    <button key={d} onClick={() => setReviewDirection(d)} style={{
-                      flex: 1, padding: "8px 0", fontSize: 12, fontWeight: 600, cursor: "pointer", border: "#23344f",
-                      background: reviewDirection === d ? C.gold : "transparent",
-                      color: reviewDirection === d ? C.bg : C.textMuted,
-                      transition: "all 0.15s",
-                    }}>
-                      {d === "incoming" ? "Incoming" : "Outgoing"}
-                    </button>
-                  ))}
-                </div>
-                <p style={{ margin: "6px 0 0", fontSize: 10, color: C.textDim, lineHeight: 1.5 }}>
-                  {reviewDirection === "incoming"
-                    ? "Contracts/agreements received from counterparties"
-                    : "Your firm's work product before sending to clients"}
-                </p>
-              </div>
-
-              {/* Document type */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>Document Type</label>
-                <select value={reviewDocType} onChange={e => setReviewDocType(e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
-                  <option value="auto-detect">⚡ Auto-detect (Lex identifies the document)</option>
-                  <optgroup label="Commercial">
-                    <option value="service-agreement">Service Agreement</option>
-                    <option value="nda">Non-Disclosure Agreement (NDA)</option>
-                    <option value="shareholders-agreement">Shareholders Agreement</option>
-                    <option value="share-purchase-agreement">Share Purchase Agreement</option>
-                    <option value="commercial-lease">Commercial Lease</option>
-                    <option value="supply-agreement">Supply Agreement</option>
-                    <option value="distribution-agreement">Distribution Agreement</option>
-                    <option value="licensing-agreement">Licensing Agreement</option>
-                    <option value="joint-venture">Joint Venture Agreement</option>
-                  </optgroup>
-                  <optgroup label="Employment">
-                    <option value="employment-contract">Employment Contract</option>
-                    <option value="contractor-agreement">Contractor Agreement</option>
-                    <option value="enterprise-agreement">Enterprise Agreement</option>
-                  </optgroup>
-                  <optgroup label="Trusts &amp; Estates">
-                    <option value="discretionary-trust-deed">Discretionary Trust Deed</option>
-                    <option value="unit-trust-deed">Unit Trust Deed</option>
-                    <option value="will">Will &amp; Testament</option>
-                  </optgroup>
-                  <optgroup label="Family Law">
-                    <option value="bfa">Binding Financial Agreement (BFA)</option>
-                    <option value="consent-orders">Consent Orders</option>
-                    <option value="parenting-plan">Parenting Plan</option>
-                  </optgroup>
-                  <optgroup label="Correspondence &amp; Advice">
-                    <option value="letter-of-advice">Letter of Advice</option>
-                    <option value="demand-letter">Letter of Demand</option>
-                    <option value="settlement-deed">Deed of Settlement &amp; Release</option>
-                    <option value="court-submissions">Court Submissions / Pleadings</option>
-                  </optgroup>
-                  <optgroup label="Property">
-                    <option value="contract-for-sale">Contract for Sale of Land</option>
-                    <option value="lease-residential">Residential Lease</option>
-                    <option value="easement">Easement / Covenant</option>
-                  </optgroup>
-                  <optgroup label="Other">
-                    <option value="other">Other / Custom document</option>
-                  </optgroup>
-                </select>
-                {reviewDocType === "auto-detect" && (
-                  <p style={{ margin: "6px 0 0", fontSize: 10, color: C.textDim, lineHeight: 1.5 }}>
-                    Lex will identify the document type from the content and apply the appropriate review criteria automatically.
-                  </p>
-                )}
-              </div>
-
-              {/* Acting for (incoming only) */}
-              {reviewDirection === "incoming" && (
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>Acting For</label>
-                  <select value={reviewActingFor} onChange={e => setReviewActingFor(e.target.value)}
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
-                    <option value="vendor">Vendor / Seller</option>
-                    <option value="purchaser">Purchaser / Buyer</option>
-                    <option value="landlord">Landlord / Lessor</option>
-                    <option value="tenant">Tenant / Lessee</option>
-                    <option value="employer">Employer</option>
-                    <option value="employee">Employee</option>
-                    <option value="licensor">Licensor</option>
-                    <option value="licensee">Licensee</option>
-                    <option value="service-provider">Service Provider</option>
-                    <option value="client">Client / Customer</option>
-                    <option value="lender">Lender</option>
-                    <option value="borrower">Borrower</option>
-                    <option value="both-parties">Both Parties / Neutral</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Jurisdiction */}
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 6, letterSpacing: 0.5, textTransform: "uppercase" }}>Jurisdiction</label>
-                <select value={reviewJurisdiction} onChange={e => setReviewJurisdiction(e.target.value)}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
-                  <option>All Australian jurisdictions</option>
-                  <option>New South Wales (NSW)</option>
-                  <option>Victoria (VIC)</option>
-                  <option>Queensland (QLD)</option>
-                  <option>Western Australia (WA)</option>
-                  <option>South Australia (SA)</option>
-                  <option>Tasmania (TAS)</option>
-                  <option>Australian Capital Territory (ACT)</option>
-                  <option>Northern Territory (NT)</option>
-                  <option>Cross-border / International</option>
-                </select>
-              </div>
-
-              {/* Input mode toggle */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                  {(["upload", "paste"] as const).map(m => (
-                    <button key={m} onClick={() => setReviewInputMode(m)} style={{
-                      padding: "5px 14px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer",
-                      border: `1px solid ${reviewInputMode === m ? C.gold : C.border}`,
-                      background: reviewInputMode === m ? C.goldBg : "transparent",
-                      color: reviewInputMode === m ? C.gold : C.textMuted,
-                    }}>
-                      {m === "upload" ? "Upload file" : "Paste text"}
-                    </button>
-                  ))}
-                </div>
-
-                {/* File upload zone */}
-                {reviewInputMode === "upload" && (
-                  <div
-                    onClick={() => reviewFileRef.current?.click()}
-                    onDragOver={e => { e.preventDefault(); setReviewDragOver(true); }}
-                    onDragLeave={() => setReviewDragOver(false)}
-                    onDrop={e => {
-                      e.preventDefault(); setReviewDragOver(false);
-                      const f = e.dataTransfer.files[0];
-                      if (f) setReviewFile(f);
-                    }}
-                    style={{
-                      border: `2px dashed ${reviewDragOver ? C.gold : reviewFile ? "#22c55e" : C.border}`,
-                      borderRadius: 10, padding: "20px 16px", textAlign: "center", cursor: "pointer",
-                      background: reviewDragOver ? C.goldBg : reviewFile ? "rgba(34,197,94,0.04)" : "transparent",
-                      transition: "all 0.15s",
-                    }}>
-                    <input ref={reviewFileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: "none" }}
-                      onChange={e => { const f = e.target.files?.[0]; if (f) setReviewFile(f); }} />
-                    {reviewFile ? (
-                      <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" style={{ margin: "0 auto 8px", display: "block" }}>
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        <p style={{ margin: 0, fontSize: 12, color: "#22c55e", fontWeight: 600 }}>{reviewFile.name}</p>
-                        <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>
-                          {(reviewFile.size / 1024).toFixed(0)} KB, click to change
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.textDim} strokeWidth="1.5" strokeLinecap="round" style={{ margin: "0 auto 8px", display: "block" }}>
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                        <p style={{ margin: 0, fontSize: 12, color: C.textMuted, fontWeight: 500 }}>Drop file or click to browse</p>
-                        <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PDF, DOCX, DOC or TXT, max 10MB</p>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Paste textarea */}
-                {reviewInputMode === "paste" && (
-                  <textarea value={reviewPasteText} onChange={e => setReviewPasteText(e.target.value)}
-                    placeholder="Paste the document text here..."
-                    rows={8}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 8, resize: "vertical", background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, lineHeight: 1.6, outline: "none", fontFamily: "inherit" }}
-                  />
-                )}
-              </div>
-
-              {/* Document comparison toggle */}
-              <div style={{ marginBottom: 16, padding: "10px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}` }}>
-                <button onClick={() => setReviewCompareMode(v => !v)} style={{
-                  width: "100%", background: "none", border: "#23344f", color: C.textMuted,
-                  fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}>
-                  <span>Compare with another document</span>
-                  <span style={{ color: C.gold, fontSize: 11 }}>{reviewCompareMode ? "▼" : "▶"}</span>
-                </button>
-
-                {reviewCompareMode && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                      {(["upload", "paste"] as const).map(m => (
-                        <button key={m} onClick={() => setReviewCompareInputMode(m)} style={{
-                          padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer",
-                          border: `1px solid ${reviewCompareInputMode === m ? C.gold : C.border}`,
-                          background: reviewCompareInputMode === m ? C.goldBg : "transparent",
-                          color: reviewCompareInputMode === m ? C.gold : C.textMuted,
-                        }}>
-                          {m === "upload" ? "Upload" : "Paste"}
-                        </button>
-                      ))}
-                    </div>
-
-                    {reviewCompareInputMode === "upload" && (
-                      <div
-                        onClick={() => reviewCompareFileRef.current?.click()}
-                        onDragOver={e => { e.preventDefault(); setReviewCompareDragOver(true); }}
-                        onDragLeave={() => setReviewCompareDragOver(false)}
-                        onDrop={e => { e.preventDefault(); setReviewCompareDragOver(false); const f = e.dataTransfer.files[0]; if (f) setReviewCompareFile(f); }}
-                        style={{
-                          border: `2px dashed ${reviewCompareDragOver ? C.gold : reviewCompareFile ? "#22c55e" : C.border}`,
-                          borderRadius: 8, padding: "12px 10px", textAlign: "center", cursor: "pointer",
-                          background: reviewCompareDragOver ? C.goldBg : reviewCompareFile ? "rgba(34,197,94,0.04)" : "transparent",
-                        }}>
-                        <input ref={reviewCompareFileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: "none" }}
-                          onChange={e => { const f = e.target.files?.[0]; if (f) setReviewCompareFile(f); }} />
-                        {reviewCompareFile ? (
-                          <p style={{ margin: 0, fontSize: 11, color: "#22c55e", fontWeight: 600 }}>{reviewCompareFile.name}</p>
-                        ) : (
-                          <p style={{ margin: 0, fontSize: 11, color: C.textDim }}>Drop or click to select comparison doc</p>
-                        )}
-                      </div>
-                    )}
-
-                    {reviewCompareInputMode === "paste" && (
-                      <textarea value={reviewComparePasteText} onChange={e => setReviewComparePasteText(e.target.value)}
-                        placeholder="Paste comparison document text..."
-                        rows={4}
-                        style={{ width: "100%", padding: "8px 10px", borderRadius: 6, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 12, outline: "none", resize: "vertical" }} />
-                    )}
-
-                    <button
-                      onClick={async () => {
-                        setReviewComparisonLoading(true);
-                        setReviewComparisonAnalysis("");
-                        try {
-                          let compareText = "";
-                          if (reviewCompareInputMode === "upload" && reviewCompareFile) {
-                            const form = new FormData();
-                            form.append("file", reviewCompareFile);
-                            const res = await fetch("/api/lex-extract", { method: "POST", body: form });
-                            if (res.ok) { const data = await res.json(); compareText = data.text; }
-                          } else {
-                            compareText = reviewComparePasteText;
-                          }
-                          const originalText = reviewInputMode === "paste" ? reviewPasteText : reviewReport?.summary ?? "";
-                          const res = await fetch("/api/lex-review", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ documentText: `ORIGINAL DOCUMENT:\n${originalText}\n\nCOMPARISON DOCUMENT:\n${compareText}`, documentType: "comparison", direction: "incoming", jurisdiction: reviewJurisdiction }),
-                          });
-                          if (res.ok) {
-                            const data = await res.json();
-                            setReviewComparisonAnalysis(data.summary || JSON.stringify(data, null, 2));
-                          }
-                        } catch {}
-                        setReviewComparisonLoading(false);
-                      }}
-                      disabled={reviewComparisonLoading || (reviewCompareInputMode === "upload" ? !reviewCompareFile : !reviewComparePasteText.trim())}
-                      style={{
-                        width: "100%", marginTop: 10, padding: "8px 0", borderRadius: 8,
-                        background: reviewComparisonLoading ? C.goldDim : C.goldBg,
-                        border: `1px solid ${C.goldBorder}`, color: C.gold,
-                        fontSize: 11, fontWeight: 700, cursor: reviewComparisonLoading ? "wait" : "pointer",
-                      }}>
-                      {reviewComparisonLoading ? "Analyzing..." : "Analyze Differences"}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* What Lex checks */}
-              <div style={{ marginBottom: 20, padding: "10px 12px", borderRadius: 8, background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
-                <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                  {reviewDirection === "incoming" ? "Lex checks for" : "Lex verifies"}
-                </p>
-                {(reviewDirection === "incoming"
-                  ? ["Risk flags & unfavorable clauses", "Missing clauses (what's NOT there)", "Australian legislation conflicts", "Market position & standard terms", "Suggested redlines"]
-                  : ["Legal citation accuracy", "Completeness of advice", "LPUL compliance obligations", "Professional tone", "PI exposure risks"]
-                ).map((item, i) => (
-                  <p key={i} style={{ margin: i > 0 ? "4px 0 0" : 0, fontSize: 11, color: C.textMuted, lineHeight: 1.4 }}>
-                    <span style={{ color: C.gold }}>→</span> {item}
-                  </p>
-                ))}
-              </div>
-
-              <button
-                onClick={sendReview}
-                disabled={reviewLoading || (reviewInputMode === "upload" ? !reviewFile : !reviewPasteText.trim())}
-                style={{
-                  width: "100%", padding: "12px 0", borderRadius: 10, border: "#23344f",
-                  background: (reviewLoading || (reviewInputMode === "upload" ? !reviewFile : !reviewPasteText.trim()))
-                    ? C.goldDim
-                    : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-                  color: C.bg, fontSize: 13, fontWeight: 800, cursor: "pointer",
-                  letterSpacing: 0.3, boxShadow: reviewLoading ? "none" : `0 0 20px rgba(201,168,76,0.3)`,
-                }}>
-                {reviewLoading ? reviewStage : "Review Document"}
-              </button>
-            </div>
-
-            {/* Right: results panel */}
-            <div style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
-
-              {/* Empty state */}
-              {!reviewReport && !reviewLoading && !reviewError && (
-                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, textAlign: "center" }}>
-                  <div style={{ width: 72, height: 72, borderRadius: 18, background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                  </div>
-                  <p style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: C.text }}>Ready to Review</p>
-                  <p style={{ margin: "0 0 24px", fontSize: 13, color: C.textMuted, maxWidth: 420, lineHeight: 1.7 }}>
-                    Upload or paste a document on the left. Lex will analyse it across risk, missing clauses, Australian legislation compliance, and market position.
-                  </p>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, maxWidth: 440, width: "100%" }}>
-                    {[
-                      { icon: "⚠", label: "Risk flags", desc: "Unfavorable clauses & exposure" },
-                      { icon: "○", label: "Missing clauses", desc: "What should be there but isn't" },
-                      { icon: "⚖", label: "Legislation check", desc: "ACL, Fair Work, Corporations Act" },
-                      { icon: "↗", label: "Market position", desc: "Standard vs aggressive terms" },
-                    ].map(({ icon, label, desc }) => (
-                      <div key={label} style={{ padding: "14px 16px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`, textAlign: "left" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 16 }}>{icon}</p>
-                        <p style={{ margin: "0 0 2px", fontSize: 12, fontWeight: 700, color: C.text }}>{label}</p>
-                        <p style={{ margin: 0, fontSize: 11, color: C.textDim }}>{desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Loading state */}
-              {reviewLoading && (
-                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48 }}>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-                    {[0,1,2,3].map(i => (
-                      <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: C.gold, display: "block", animation: `lexDot 1.4s ease-in-out ${i*0.15}s infinite` }} />
-                    ))}
-                  </div>
-                  <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 700, color: C.text }}>{reviewStage}</p>
-                  <p style={{ margin: 0, fontSize: 12, color: C.textDim }}>Checking all five review axes against Australian law...</p>
-                </div>
-              )}
-
-              {/* Error state */}
-              {reviewError && !reviewLoading && (
-                <div style={{ padding: 32 }}>
-                  <LexErrorCard error={reviewError} onRetry={() => sendReview()} />
-                </div>
-              )}
-
-              {/* Results */}
-              {reviewReport && !reviewLoading && (() => {
-                const { overallScore, riskLevel, summary, findings, missingClauses, legislationConflicts, recommendedActions } = reviewReport;
-                const scoreColor = overallScore <= 30 ? "#22c55e" : overallScore <= 60 ? "#f59e0b" : "#ef4444";
-                const criticalCount = findings.filter(f => f.severity === "critical").length;
-                const moderateCount = findings.filter(f => f.severity === "moderate").length;
-                const minorCount = findings.filter(f => f.severity === "minor").length;
-                const severityColor = (s: ReviewSeverity) => s === "critical" ? "#ef4444" : s === "moderate" ? "#f59e0b" : "#8fa3c0";
-                const severityBg = (s: ReviewSeverity) => s === "critical" ? "rgba(239,68,68,0.06)" : s === "moderate" ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)";
-                const severityBorder = (s: ReviewSeverity) => s === "critical" ? "rgba(239,68,68,0.2)" : s === "moderate" ? "rgba(245,158,11,0.15)" : C.border;
-
-                return (
-                  <div style={{ padding: "28px 32px" }}>
-
-                    {/* Submit for Supervision + Send to Client */}
-                    <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 12, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-                      <div>
-                        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>Actions</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 11, color: C.textMuted }}>
-                          {submitDone ? "Submitted to supervisor." : "Send to client or submit for partner review."}
-                        </p>
-                        {submitError && <div style={{ marginTop: 8 }}><LexErrorCard error={submitError} onRetry={() => submitForSupervision()} /></div>}
-                      </div>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button onClick={() => { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI: ${reviewReport.documentType}`); }} style={{
-                          padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                          background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, cursor: "pointer", whiteSpace: "nowrap",
-                        }}>
-                          Send to Client
-                        </button>
-                        {submitDone ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, background: "rgba(34,197,94,0.1)", border: "#23344f" }}>
-                            <span style={{ fontSize: 13 }}>✓</span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>Submitted</span>
-                          </div>
-                        ) : (
-                          <button onClick={submitForSupervision} disabled={submitLoading} style={{
-                            padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: submitLoading ? "wait" : "pointer",
-                            background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold, flexShrink: 0, whiteSpace: "nowrap",
-                            opacity: submitLoading ? 0.6 : 1,
-                          }}>
-                            {submitLoading ? "Submitting…" : "Submit for Review"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Risk dashboard */}
-                    <div style={{ marginBottom: 24, padding: "20px 24px", borderRadius: 14, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
-                      {/* Score ring */}
-                      <div style={{ textAlign: "center", flexShrink: 0 }}>
-                        <div style={{
-                          width: 84, height: 84, borderRadius: "50%",
-                          background: `conic-gradient(${scoreColor} ${overallScore * 3.6}deg, ${C.bg} 0deg)`,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          boxShadow: `0 0 20px ${overallScore <= 30 ? "rgba(34,197,94,0.2)" : overallScore <= 60 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
-                        }}>
-                          <div style={{ width: 62, height: 62, borderRadius: "50%", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ fontSize: 18, fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{overallScore}</span>
-                            <span style={{ fontSize: 8, color: C.textDim, lineHeight: 1, marginTop: 1 }}>RISK</span>
-                          </div>
-                        </div>
-                        <p style={{ margin: "6px 0 0", fontSize: 9, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: scoreColor }}>
-                          {riskLevel === "low" ? "Low Risk" : riskLevel === "medium" ? "Medium Risk" : riskLevel === "high" ? "High Risk" : "Critical"}
-                        </p>
-                      </div>
-
-                      {/* Counts */}
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 700, color: C.text }}>Review complete</p>
-                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                          {[
-                            { count: criticalCount, label: "Critical", color: "#ef4444" },
-                            { count: moderateCount, label: "Moderate", color: "#f59e0b" },
-                            { count: minorCount, label: "Minor", color: C.textMuted },
-                            { count: missingClauses.length, label: "Missing", color: C.gold },
-                            { count: legislationConflicts.length, label: "Legislation", color: "#818cf8" },
-                          ].map(({ count, label, color }) => (
-                            <div key={label} style={{ textAlign: "center" }}>
-                              <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>{count}</p>
-                              <p style={{ margin: "2px 0 0", fontSize: 10, color: C.textDim }}>{label}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <p style={{ margin: "10px 0 0", fontSize: 11, color: C.textMuted, lineHeight: 1.5 }}>
-                          {reviewReport.wordCount.toLocaleString()} words · {reviewReport.clauseCount} clauses · {reviewDirection === "incoming" ? `Acting for ${reviewActingFor}` : "Outgoing review"} · {reviewJurisdiction}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Comparison analysis */}
-                    {reviewComparisonAnalysis && (
-                      <div style={{ marginBottom: 20, padding: "16px 20px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}` }}>
-                        <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>Document Comparison</p>
-                        <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{reviewComparisonAnalysis}</p>
-                      </div>
-                    )}
-
-                    {/* Summary */}
-                    <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}` }}>
-                      <p style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>Executive Summary</p>
-                      <p style={{ margin: 0, fontSize: 13, color: C.text, lineHeight: 1.7 }}>{summary}</p>
-                    </div>
-
-                    {/* Missing clauses */}
-                    {missingClauses.length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, display: "inline-block" }} />
-                          Missing Clauses ({missingClauses.length})
-                        </p>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          {missingClauses.map((mc, i) => (
-                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(201,168,76,0.06)", border: "#23344f" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, background: "rgba(201,168,76,0.15)", color: C.gold, fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase" }}>{mc.severity}</span>
-                                <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.text }}>{mc.clause}</p>
-                              </div>
-                              <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>{mc.reason}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Findings */}
-                    {findings.length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                          Findings ({findings.length})
-                        </p>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                          {findings.map((f, i) => (
-                            <div key={i} style={{ borderRadius: 10, background: severityBg(f.severity), border: `1px solid ${severityBorder(f.severity)}`, overflow: "hidden" }}>
-                              <div style={{ padding: "12px 16px" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                                  <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, background: `${severityColor(f.severity)}20`, color: severityColor(f.severity), fontWeight: 700, letterSpacing: 0.3, textTransform: "uppercase", border: `1px solid ${severityColor(f.severity)}40` }}>
-                                    {f.severity}
-                                  </span>
-                                  <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.04)", color: C.textDim, fontWeight: 600, letterSpacing: 0.3, textTransform: "uppercase" }}>
-                                    {f.axis}
-                                  </span>
-                                  <span style={{ fontSize: 10, color: C.textDim }}>{f.clauseRef}</span>
-                                </div>
-                                <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 700, color: C.text }}>{f.title}</p>
-                                <p style={{ margin: "0 0 8px", fontSize: 12, color: C.textMuted, lineHeight: 1.6 }}>{f.issue}</p>
-                                <p style={{ margin: 0, fontSize: 12, color: C.text, lineHeight: 1.5 }}>
-                                  <span style={{ color: C.gold, fontWeight: 600 }}>Recommendation: </span>{f.recommendation}
-                                </p>
-                              </div>
-                              {f.redline && (
-                                <div style={{ padding: "10px 16px", borderTop: `1px solid ${severityBorder(f.severity)}`, background: "rgba(0,0,0,0.15)" }}>
-                                  <p style={{ margin: "0 0 4px", fontSize: 9, fontWeight: 700, color: C.gold, letterSpacing: 0.5, textTransform: "uppercase" }}>Suggested redline</p>
-                                  <p style={{ margin: 0, fontSize: 11, color: "#a5b4fc", lineHeight: 1.6, fontFamily: "Georgia, serif", fontStyle: "italic" }}>{f.redline}</p>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Legislation conflicts */}
-                    {legislationConflicts.length > 0 && (
-                      <div style={{ marginBottom: 20 }}>
-                        <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: "#818cf8", letterSpacing: 0.5, textTransform: "uppercase" }}>
-                          Legislation Conflicts ({legislationConflicts.length})
-                        </p>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          {legislationConflicts.map((lc, i) => (
-                            <div key={i} style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(129,140,248,0.06)", border: "#23344f" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, background: "rgba(129,140,248,0.15)", color: "#818cf8", fontWeight: 700 }}>{lc.ref}</span>
-                                <span style={{ fontSize: 10, color: C.textDim }}>{lc.clauseRef}</span>
-                              </div>
-                              <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.5 }}>{lc.issue}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Recommended actions */}
-                    {recommendedActions.length > 0 && (
-                      <div style={{ padding: "16px 20px", borderRadius: 10, background: C.surface, border: `1px solid ${C.border}` }}>
-                        <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: 0.5, textTransform: "uppercase" }}>Recommended Actions</p>
-                        {recommendedActions.map((action, i) => (
-                          <div key={i} style={{ display: "flex", gap: 10, marginTop: i > 0 ? 10 : 0 }}>
-                            <span style={{ color: C.gold, fontSize: 13, fontWeight: 700, flexShrink: 0, lineHeight: 1.6 }}>{i + 1}.</span>
-                            <p style={{ margin: 0, fontSize: 12, color: C.textMuted, lineHeight: 1.6 }}>{action}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-          </div>
+          <ReviewView
+            direction={reviewDirection} setDirection={setReviewDirection}
+            docType={reviewDocType} setDocType={setReviewDocType}
+            actingFor={reviewActingFor} setActingFor={setReviewActingFor}
+            jurisdiction={reviewJurisdiction} setJurisdiction={setReviewJurisdiction}
+            inputMode={reviewInputMode} setInputMode={setReviewInputMode}
+            pasteText={reviewPasteText} setPasteText={setReviewPasteText}
+            file={reviewFile} setFile={setReviewFile}
+            submittedBy={reviewSubmittedBy} setSubmittedBy={setReviewSubmittedBy}
+            matterNo={reviewMatterNo} setMatterNo={setReviewMatterNo}
+            clientName={reviewClientName} setClientName={setReviewClientName}
+            report={reviewReport} docText={reviewDocText} loading={reviewLoading} stage={reviewStage} error={reviewError} onReview={() => sendReview()}
+            submitLoading={submitLoading} submitDone={submitDone} submitError={submitError} onSubmit={() => submitForSupervision()}
+            onSend={() => { if (reviewReport) { setEmailOpen(true); setEmailSubject(`Document Review from Lex AI: ${reviewReport.documentType}`); } }}
+            onExport={(comparison) => { if (reviewReport) exportReviewToWord({ report: reviewReport, fileName: reviewInputMode === "upload" ? reviewFile?.name : undefined, firmName, comparison }); }}
+            onResearch={(q) => { setMode("research"); newThread(); setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
+            onReset={() => { setReviewReport(null); setReviewDocText(""); setReviewError(null); setSubmitDone(false); setSubmitError(null); }}
+          />
         )}
 
       {/* ── Intake form modal ─────────────────────────────────────────────── */}
