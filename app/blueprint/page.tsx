@@ -24,7 +24,7 @@ const ROWS: [string, string, string, string][] = [
 
 const FAQS = [
   ["What do I need to provide?", "After checkout we email a short fact-find about your team, tools and busiest tasks. It takes about 15 minutes."],
-  ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build."],
+  ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days."],
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
   ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST not applicable. You get an invoice by email straight after payment."],
@@ -121,6 +121,7 @@ export default function BlueprintPage() {
             <div className="big">100% credited</div>
             <div>
               <h3>Build within 30 days and your Blueprint is free</h3>
+              <p style={{ fontSize: 14, marginTop: 4 }}>Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.</p>
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>
           </div>
