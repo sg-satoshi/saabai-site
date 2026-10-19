@@ -910,15 +910,15 @@ export default function LexPage() {
           <span className="lx-sp" />
           {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
             <div className="lx-share-wrap">
-              <button type="button" className="lx-btn sm" aria-haspopup="menu" aria-expanded={shareOpen} onClick={() => setShareOpen(o => !o)}><Icon name="share" />Share</button>
+              <button type="button" className="lx-btn sm ico" aria-label="Share" aria-haspopup="menu" aria-expanded={shareOpen} onClick={() => setShareOpen(o => !o)}><Icon name="share" /><span className="lbl">Share</span></button>
               {shareOpen && <ShareMenu onCopy={copyThread} copied={shareCopied} onClose={() => setShareOpen(false)}
                 emailHref={mailtoHref(`Research: ${activeThread?.title ?? "Lex research"}`, threadText())} />}
             </div>
           )}
           {mode === "research" && !showWelcome && !panelOpen && (
-            <button type="button" className="lx-btn sm" onClick={() => setPanelOpen(true)}><Icon name="book" />Sources{panelMeta ? ` ${citedSources(panelMeta).cited.length}` : ""}</button>
+            <button type="button" className="lx-btn sm" aria-label="Open sources" onClick={() => setPanelOpen(true)}><Icon name="book" /><span className="lbl">Sources</span>{panelMeta ? ` ${citedSources(panelMeta).cited.length}` : ""}</button>
           )}
-          <a className="lx-btn sm" href={PORTAL_REQUESTS_HREF}>Contact Saabai</a>
+          <a className="lx-btn sm" href={PORTAL_REQUESTS_HREF} aria-label="Contact Saabai"><span className="lbl-long">Contact Saabai</span><span className="lbl-short">Contact</span></a>
         </div>
 
         {mode === "research" && (

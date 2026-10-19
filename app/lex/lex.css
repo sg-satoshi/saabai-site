@@ -348,3 +348,40 @@
 @media (max-width:560px){.lx-dialog .reasons{grid-template-columns:1fr}.lx-chip.off{display:none}.lx-modal-wrap{padding-top:8vh}}
 /* The composer box and palette draw their own focus ring; drop the global input outline inside them. */
 .lx .lx-cbox textarea:focus-visible,.lx .lx-palette .in input:focus-visible{outline:none !important;box-shadow:none !important}
+
+/* ── Phase E: mobile polish (375px and 768px). Tap targets at least 44px on touch-size screens. ── */
+@media (hover:none){.lx-thread .more{opacity:1}}
+.lx-top .lbl-short{display:none}
+@media (max-width:980px){
+  .lx button:not(.lx-cite):not(.lx-pill),.lx-modal-wrap button,
+  .lx a.lx-btn,.lx a.lx-nav,.lx .lx-src .f a,.lx a.lx-powered,
+  .lx select,.lx input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=color]),.lx-dialog textarea{min-height:44px}
+  .lx-top .burger,.lx-send,.lx-dialog .x,.lx-thread .more,.lx-label button{min-width:44px;min-height:44px;display:inline-grid;place-items:center}
+  .lx-send{width:44px;height:44px;border-radius:10px}
+  .lx-btn,.lx-btn.sm{padding-top:0;padding-bottom:0;justify-content:center}
+  .lx-src .f a,.lx-powered{display:inline-flex;align-items:center}
+  .lx-powered{display:flex}
+  .lx-cbox textarea{min-height:44px}
+  .lx-seg{gap:2px}
+  .lx-seg button{padding:0 10px;min-width:44px}
+  .lx-src.other .t a{display:flex;align-items:center;min-height:44px}
+  .lx-label{min-height:32px}
+  /* Inline chips stay inline in the prose; an invisible 44px box makes them easy to tap. */
+  .lx-cite,button.lx-pill{position:relative}
+  .lx-cite::after,button.lx-pill::after{content:"";position:absolute;left:-3px;right:-3px;top:50%;height:44px;transform:translateY(-50%)}
+  .lx-modal-wrap{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .lx-top{gap:8px}
+  .lx-ctx{min-width:0;flex:1 1 auto;overflow:hidden}
+  .lx-ctx b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .lx-sp{display:none}
+  .lx-top > .lx-btn,.lx-top > .lx-share-wrap{flex:none}
+}
+@media (max-width:560px){
+  .lx-top{padding:0 10px 0 6px}
+  .lx-top .lx-btn .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .lx-top .lx-btn.ico{width:44px;padding:0}
+  .lx-top .lbl-long{display:none}
+  .lx-top .lbl-short{display:inline}
+  .lx-dialog{padding:16px}
+  .lx-modal-wrap{padding:4vh 10px 16px}
+}
