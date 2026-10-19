@@ -10,7 +10,8 @@
  */
 import type Stripe from "stripe";
 import type { CatalogueProduct } from "./product-catalogue";
-import { promoNotStartedMessage } from "./coupons/core";
+import { ONCE_MESSAGE, promoIsOnce, promoNotStartedMessage } from "./coupons/core";
+import { hasUsed } from "./coupons/once";
 import { feeDisplay, normalizeDiscounts } from "./product-pricing";
 
 export interface ResolvedCoupon {
@@ -18,6 +19,8 @@ export interface ResolvedCoupon {
   code: string;
   percentOff: number | null;
   amountOff: number | null; // cents
+  /** Code carries the one-use-per-customer rule; callers record the use once the sale is created. */
+  oncePerCustomer?: boolean;
 }
 
 /** Look up + validate a customer coupon code for this product. Empty code -> no coupon, no error. */
@@ -25,6 +28,7 @@ export async function resolveCoupon(
   stripe: Stripe,
   codeInput: string | undefined,
   product: CatalogueProduct,
+  customerEmail?: string,
 ): Promise<{ coupon?: ResolvedCoupon; error?: string }> {
   const code = (codeInput || "").trim();
   if (!code) return {};
@@ -46,12 +50,16 @@ export async function resolveCoupon(
     return { error: "This code does not apply to this product" };
   }
 
+  const once = promoIsOnce(pc as never);
+  if (once && customerEmail && (await hasUsed(pc.id, customerEmail))) return { error: ONCE_MESSAGE };
+
   return {
     coupon: {
       promotionCodeId: pc.id,
       code: pc.code,
       percentOff: c.percent_off ?? null,
       amountOff: c.amount_off ?? null,
+      ...(once ? { oncePerCustomer: true } : {}),
     },
   };
 }
@@ -64,6 +72,7 @@ export async function resolveCoupon(
 export async function resolveCouponForManual(
   stripe: Stripe,
   codeInput: string | undefined,
+  customerEmail?: string,
 ): Promise<{ coupon?: ResolvedCoupon; error?: string }> {
   const code = (codeInput || "").trim();
   if (!code) return {};
@@ -82,12 +91,16 @@ export async function resolveCouponForManual(
     return { error: "This code only applies to a specific product. Use the Sell button on that product instead." };
   }
 
+  const once = promoIsOnce(pc as never);
+  if (once && customerEmail && (await hasUsed(pc.id, customerEmail))) return { error: ONCE_MESSAGE };
+
   return {
     coupon: {
       promotionCodeId: pc.id,
       code: pc.code,
       percentOff: c.percent_off ?? null,
       amountOff: c.amount_off ?? null,
+      ...(once ? { oncePerCustomer: true } : {}),
     },
   };
 }

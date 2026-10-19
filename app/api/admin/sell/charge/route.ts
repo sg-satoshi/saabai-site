@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { getProduct, INTERVAL_MAP } from "../../../../../lib/product-catalogue";
 import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCoupon, bakedAmounts, couponOff, createOrFindCustomer } from "../../../../../lib/sell";
 import { ensureClientAccount } from "../../../../../lib/client-account";
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
 
-    const { coupon, error } = await resolveCoupon(stripe, body?.code, product);
+    const { coupon, error } = await resolveCoupon(stripe, body?.code, product, customerEmail);
     if (error) return NextResponse.json({ error }, { status: 400 });
 
     const customerId = await createOrFindCustomer(stripe, customerName, customerEmail);
@@ -88,6 +89,9 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // One use per customer: the sale exists now, so record this email against the code.
+    if (coupon?.oncePerCustomer) await markUsed(coupon.promotionCodeId, customerEmail, `admin:charge:${product.id}:${Date.now()}`);
 
     // Create the client login + welcome email (idempotent).
     await ensureClientAccount({ name: customerName, email: customerEmail, productName: product.name });

@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual } from "../../../../../lib/sell";
 
 export const runtime = "nodejs";
@@ -36,9 +37,11 @@ export async function POST(req: NextRequest) {
     // Validate an optional coupon (applied to the whole invoice below).
     let appliedCode: string | null = null;
     const invoiceDiscounts: { promotion_code: string }[] = [];
+    let onceUse: string | null = null; // promo id when the one-per-customer rule applies
     if (promotionCode) {
-      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode);
+      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode, customerEmail);
       if (couponErr) return NextResponse.json({ error: couponErr }, { status: 400 });
+      if (coupon?.oncePerCustomer) onceUse = coupon.promotionCodeId;
       if (coupon) {
         invoiceDiscounts.push({ promotion_code: coupon.promotionCodeId });
         appliedCode = coupon.code;
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
     const sent = await stripe.invoices.sendInvoice(finalized.id);
 
+    if (onceUse) await markUsed(onceUse, customerEmail, "admin:create-invoice:" + Date.now());
     return NextResponse.json({
       id: sent.id,
       amount: sent.amount_due,

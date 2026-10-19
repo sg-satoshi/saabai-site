@@ -10,6 +10,8 @@ import type Stripe from "stripe";
 import { getStripe } from "../stripe";
 import { getRedis } from "../redis";
 import { TIERS, type BlueprintTier } from "../blueprint";
+import { markUsed, type MarkResult } from "./once";
+import { promoIsOnce } from "./core";
 import { CARE_PLAN_IDS, TARGETS, couponCoversProducts, type CarePlanId, type Redemption, type TargetId } from "./core";
 
 export const CARE_PRODUCTS_KEY = "saabai:coupons:care-products";
@@ -123,4 +125,21 @@ export async function productOfPrice(priceId: string): Promise<string | null> {
 export async function resolveRedemptionCode(r: Redemption | null): Promise<Redemption | null> {
   if (!r || r.code || !r.promotionCodeId) return r;
   try { const p = await getStripe().promotionCodes.retrieve(r.promotionCodeId); return { ...r, code: p.code }; } catch { return r; }
+}
+
+/**
+ * Called from the completed-checkout webhooks. If the code used carries the one-per-customer
+ * rule, record this customer's use (hashed). Returns "repeat" when this email had already used it,
+ * so the caller can flag it for review. Never throws.
+ */
+export async function recordRedemptionUse(r: Redemption | null, email: string | null | undefined, sessionId: string): Promise<MarkResult> {
+  if (!r?.promotionCodeId || !email) return "skipped";
+  try {
+    const p = await getStripe().promotionCodes.retrieve(r.promotionCodeId, { expand: ["promotion.coupon"] });
+    if (!promoIsOnce(p as never)) return "skipped";
+    return await markUsed(p.id, email, sessionId);
+  } catch (e) {
+    console.error("[coupon once] webhook record failed", e instanceof Error ? e.message : e);
+    return "skipped";
+  }
 }

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "../../../../lib/stripe";
 import { isAdminRequest } from "../../../../lib/product-stripe";
-import { buildStripeParams, codeStartsAt, parseCouponInput, targetsFromMetadata } from "../../../../lib/coupons/core";
+import { buildStripeParams, codeStartsAt, isOncePerCustomer, parseCouponInput, targetsFromMetadata } from "../../../../lib/coupons/core";
 import { targetStatuses } from "../../../../lib/coupons/stripe";
 
 export const runtime = "nodejs";
@@ -44,6 +44,7 @@ export async function GET() {
         targets: covered.targets,
         unknownProducts: covered.unknownProducts,
         target: (pc.metadata?.target as string) || (c?.metadata?.target as string) || (c?.applies_to?.products?.length ? "product" : "all"),
+        oncePerCustomer: isOncePerCustomer(meta),
         firstTimeOnly: !!pc.restrictions?.first_time_transaction,
         minimumSpend: pc.restrictions?.minimum_amount ?? null,
         created: pc.created,

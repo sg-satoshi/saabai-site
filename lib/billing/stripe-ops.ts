@@ -7,7 +7,8 @@
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
-import { normaliseCode, promoNotStartedMessage } from "../coupons/core";
+import { normaliseCode, promoIsOnce, promoNotStartedMessage } from "../coupons/core";
+import { hasUsed } from "../coupons/once";
 
 export const BILLING_SOURCE = "saabai-billing";
 export const stripeConfigured = () => !!process.env.STRIPE_SECRET_KEY;
@@ -46,6 +47,8 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   if (promo && !promoCoversProducts(promo, [fixedProduct])) promo = null;
   // A code with a start date still in the future isn't pre-applied (Stripe itself has no start date).
   if (promo && promoNotStartedMessage(promo)) promo = null;
+  // One use per customer: the client's email is on the billing record, so check it before pre-applying.
+  if (promo && promoIsOnce(promo) && (await hasUsed(promo.id, rec.contact?.email))) promo = null;
   const line_items: any[] = [
     {
       quantity: 1,
