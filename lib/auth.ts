@@ -41,8 +41,8 @@ async function getKey(usage: "sign" | "verify"): Promise<CryptoKey> {
   );
 }
 
-export async function createSessionToken(clientId: string): Promise<string> {
-  const expiry = Math.floor(Date.now() / 1000) + SESSION_DAYS * 24 * 3600;
+export async function createSessionToken(clientId: string, ttlSeconds: number = SESSION_DAYS * 24 * 3600): Promise<string> {
+  const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
   // Base64url-encode clientId to prevent delimiter collisions (dots in emails)
   const encodedId = b64url(new TextEncoder().encode(clientId).buffer);
   const payload = `${encodedId}.${expiry}`;

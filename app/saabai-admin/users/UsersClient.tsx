@@ -829,7 +829,8 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
 }
 
 // ── Table ────────────────────────────────────────────────────────────────
-function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete, onToggleDisabled }: {
+function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete, onToggleDisabled, canLoginAs }: {
+  canLoginAs?: boolean;
   users: User[]; density: "compact" | "comfortable";
   showLastActive: boolean; showCreated: boolean;
   selected: Record<string, boolean>;
@@ -909,7 +910,7 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
           showLastActive={showLastActive} showCreated={showCreated}
           selected={!!selected[keyOf(u)]}
           toggle={() => toggleRow(keyOf(u))}
-          onEdit={onEdit} onDelete={onDelete} onToggleDisabled={onToggleDisabled}
+          onEdit={onEdit} onDelete={onDelete} onToggleDisabled={onToggleDisabled} canLoginAs={canLoginAs}
           isLast={i === users.length - 1}
         />
       ))}
@@ -919,7 +920,8 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
 
 function keyOf(u: User): string { return u.id || u.email; }
 
-function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, onToggleDisabled, isLast }: {
+function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, onToggleDisabled, isLast, canLoginAs }: {
+  canLoginAs?: boolean;
   user: User; density: "compact" | "comfortable"; rowH: number; cols: string;
   showLastActive: boolean; showCreated: boolean;
   selected: boolean; toggle: () => void;
@@ -1047,6 +1049,26 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M1 7s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.4" />
               <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </IconBtn>
+        )}
+        {canLoginAs && !isEnv && user.role === "user" && (
+          <IconBtn
+            title={`Login as ${user.name || user.email} (1 hour)`}
+            onClick={() => {
+              if (!window.confirm(`Login as ${user.name || user.email}? You will see exactly what they see for up to 1 hour. Password and billing changes are blocked. Use Exit in the banner to come back.`)) return;
+              fetch("/api/admin/login-as", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: user.id }) })
+                .then(async (res) => {
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) { notify.error(data.error || "Could not start Login as."); return; }
+                  window.location.href = data.redirect || "/dashboard";
+                })
+                .catch(() => notify.error("Network error starting Login as."));
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="4.6" r="2.4" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M2.2 12.4c.6-2.5 2.5-3.8 4.8-3.8s4.2 1.3 4.8 3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
           </IconBtn>
         )}
@@ -1269,7 +1291,7 @@ function downloadCsv(rows: User[], filename: string) {
 }
 
 // ── Main client ──────────────────────────────────────────────────────────
-export default function UsersClient() {
+export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boolean } = {}) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -1570,6 +1592,7 @@ export default function UsersClient() {
         ) : (
           <UsersTable
             users={visible}
+            canLoginAs={canLoginAs}
             density="comfortable"
             showLastActive={true}
             showCreated={true}

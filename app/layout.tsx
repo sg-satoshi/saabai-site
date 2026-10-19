@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
 import ButtonFeedback from "./components/ui/ButtonFeedback";
+import LoginAsBanner from "./components/LoginAsBanner";
 import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
 import GoogleAnalytics from "./components/GoogleAnalytics";
@@ -112,6 +113,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SaabaiJsonLd />
+        <LoginAsBanner />
         <ButtonFeedback />
         {children}
         <ConditionalWidgets />
