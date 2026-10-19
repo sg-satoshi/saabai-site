@@ -5,6 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 
 const STORAGE_KEY = "saabai-conversation";
 const PROFILE_KEY = "saabai-visitor-profile";
@@ -162,7 +163,21 @@ export default function ChatWidget() {
   const [endSubmitted, setEndSubmitted] = useState(false);
 
   // Mia tool-triggered states
-  const [showBookingCTA, setShowBookingCTA] = useState(false);
+  const [, setShowBookingCTA] = useState(false);
+  // Which call-to-action Mia is showing (score, blueprint, websites, call)
+  const [ctaStep, setCtaStep] = useState<CtaStep | null>(null);
+  // Per-session chat id, sent as threadId and carried on CTA links (utm_term) for attribution
+  const [sid] = useState<string>(() => {
+    try {
+      const existing = sessionStorage.getItem("mia-sid");
+      if (existing) return existing;
+      const fresh = newSessionId();
+      sessionStorage.setItem("mia-sid", fresh);
+      return fresh;
+    } catch {
+      return newSessionId();
+    }
+  });
   const [showLeadCapture, setShowLeadCapture] = useState(false);
 
   // Lead capture form
@@ -197,7 +212,7 @@ export default function ChatWidget() {
   const recognitionRef = useRef<any>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile } };
+  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile, threadId: sid } };
   const { messages, sendMessage, status, error, setMessages } = useChat(chatOptions);
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -416,7 +431,11 @@ export default function ChatWidget() {
         if (!id || processedTools.current.has(id)) continue;
         processedTools.current.add(id);
         const toolName = part.type.slice(5);
-        if (toolName === "show_booking_cta") { setShowBookingCTA(true); track("cta_shown"); }
+        if (toolName === "show_booking_cta") { setShowBookingCTA(true); setCtaStep("call"); track("cta_shown", { step: "call" }); }
+        if (toolName === "suggest_next_step") {
+          const step = (part as { input?: { step?: unknown } }).input?.step;
+          if (isCtaStep(step)) { setCtaStep(step); if (step === "call") setShowBookingCTA(true); track("cta_shown", { step }); }
+        }
         if (toolName === "capture_lead") setShowLeadCapture(true);
         if (toolName === "remember_visitor") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -493,6 +512,7 @@ export default function ChatWidget() {
     setMessages(INITIAL_MESSAGES);
     setIsEnded(false);
     setShowBookingCTA(false);
+    setCtaStep(null);
     setShowLeadCapture(false);
     setLeadSubmitted(false);
     setLeadForm({ name: "", email: "", sendTranscript: true });
@@ -838,6 +858,18 @@ export default function ChatWidget() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Talk to Shane: always available */}
+              {!isEnded && (
+                <a
+                  href={ctaHref("call", { page: pathname, sid })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("cta_clicked", { step: "call", from: "header" })}
+                  className="text-[10px] font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
+                >
+                  Talk to Shane
+                </a>
+              )}
               {/* New chat — always visible so user can reset */}
               {hasEnoughForTranscript && (
                 <button
@@ -897,7 +929,7 @@ export default function ChatWidget() {
             {/* Quick reply chips — shown before first user message */}
             {userMessages.length === 0 && !isLoading && !thinkingDelay && (
               <div className="flex flex-wrap gap-2 mt-1">
-                {["What can you automate?", "How does it work?", "What does it cost?", "Show me examples"].map((chip) => (
+                {["What does Saabai do?", "What does it cost?"].map((chip) => (
                   <button
                     key={chip}
                     onClick={() => {
@@ -912,6 +944,19 @@ export default function ChatWidget() {
                   >
                     {chip}
                   </button>
+                ))}
+                {(["score", "call"] as const).map((step) => (
+                  <a
+                    key={step}
+                    href={ctaHref(step, { page: pathname, sid })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => track("cta_clicked", { step, from: "quick_reply" })}
+                    className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"
+                    style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.25)", color: "rgba(255,255,255,0.65)" }}
+                  >
+                    {step === "score" ? "Get my free AI score" : "Talk to Shane"}
+                  </a>
                 ))}
               </div>
             )}
@@ -935,20 +980,20 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {/* ── Booking CTA (tool-triggered) ── */}
-            {showBookingCTA && !isEnded && (
+            {/* ── Next-step CTA (tool-triggered: score, blueprint, websites or call) ── */}
+            {ctaStep && !isEnded && (
               <div className="mx-1 mt-1">
                 <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent mb-3" />
                 <a
-                  href="https://calendly.com/shanegoldberg/30min"
+                  href={ctaHref(ctaStep, { page: pathname, sid })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("cta_clicked")}
+                  onClick={() => track("cta_clicked", { step: ctaStep })}
                   className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_20px_var(--saabai-glow-mid)]"
                 >
-                  Book a Free Strategy Call →
+                  {CTA_META[ctaStep].label} →
                 </a>
-                <p className="text-[10px] text-saabai-text-dim text-center mt-2 tracking-wide">Free · 30 minutes · No obligation</p>
+                <p className="text-[10px] text-saabai-text-dim text-center mt-2 tracking-wide">{CTA_META[ctaStep].sub}</p>
               </div>
             )}
 
@@ -1031,7 +1076,7 @@ export default function ChatWidget() {
                     <div className="h-px bg-saabai-border" />
                     <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to see what automation could look like for your business?</p>
                     <a
-                      href="https://calendly.com/shanegoldberg/30min"
+                      href={ctaHref("call", { page: pathname, sid })}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => track("cta_clicked_end")}
