@@ -25,17 +25,22 @@ import type { LanguageModel } from "ai";
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 
-function resolveModel(envKey: string, fallback: string): LanguageModel {
-  const value = process.env[envKey] ?? fallback;
+/**
+ * Parse a "provider:model-id" env value. Trims spaces, tabs and newlines
+ * (a value pasted with a trailing newline once broke Mia in production:
+ * xAI got "grok-3-mini\n" and answered 404). Blank values use the fallback.
+ * No provider prefix means Anthropic.
+ */
+export function parseModelSpec(raw: string | undefined, fallback: string): { provider: string; modelId: string; value: string } {
+  const trimmed = (raw ?? "").trim();
+  const value = trimmed || fallback.trim();
   const sep = value.indexOf(":");
+  if (sep === -1) return { provider: "anthropic", modelId: value, value };
+  return { provider: value.slice(0, sep).trim().toLowerCase(), modelId: value.slice(sep + 1).trim(), value };
+}
 
-  if (sep === -1) {
-    // No provider prefix — assume Anthropic
-    return anthropic(value);
-  }
-
-  const provider = value.slice(0, sep);
-  const modelId = value.slice(sep + 1);
+function resolveModel(envKey: string, fallback: string): LanguageModel {
+  const { provider, modelId, value } = parseModelSpec(process.env[envKey], fallback);
 
   switch (provider) {
     case "anthropic":
