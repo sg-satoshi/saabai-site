@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AnnouncementView from "./AnnouncementView";
+import { isFocusedFormPath } from "@/lib/focused-paths";
 import { countShown, EMPTY_STATE, pickAnnouncement, type PublicAnnouncement, type VisitorState } from "@/lib/announce/core";
 
 const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$/i;
@@ -84,7 +85,8 @@ export default function AnnouncementBar() {
   }, []);
 
   // One bar per page view: the highest priority one that this page, device and visitor history allow.
-  const ann = list.length ? pickAnnouncement(list, { path, mobile, session: sessionId(), state: (x) => readState(x, list.find((l) => l.id === x.id)) }) : null;
+  // Blueprint fact-find: no promo bar for paid customers (and no impression is counted).
+  const ann = list.length && !isFocusedFormPath(path) ? pickAnnouncement(list, { path, mobile, session: sessionId(), state: (x) => readState(x, list.find((l) => l.id === x.id)) }) : null;
   const annKey = ann ? `${ann.id}:${ann.version}` : "";
 
   useEffect(() => {

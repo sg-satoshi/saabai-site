@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ChatWidget from "./ChatWidget";
 import MobileCtaBar from "./MobileCtaBar";
 import NewsTicker from "./NewsTicker";
+import { isFocusedFormPath } from "@/lib/focused-paths";
 
 // Pages where Mia (ChatWidget) should be suppressed — they have their own experience
 const SUPPRESS_PATHS = [
@@ -48,7 +49,9 @@ export default function ConditionalWidgets() {
 
   const suppress =
     SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
-    SUPPRESS_HOSTNAMES.includes(hostname);
+    SUPPRESS_HOSTNAMES.includes(hostname) ||
+    // Blueprint fact-find: paid customers, no sales widgets
+    isFocusedFormPath(pathname);
 
   if (suppress) return null;
 

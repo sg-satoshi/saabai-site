@@ -120,6 +120,8 @@ export interface AuditOpportunity {
   roiNotes?: string;
   rank?: number;
   status?: "proposed" | "approved" | "cut";
+  /** Fact-find v2: true when this opportunity directly fixes the client's answer 1 (main frustration). */
+  fixesMainFrustration?: boolean;
 }
 
 export interface AuditAssessment {
@@ -129,6 +131,10 @@ export interface AuditAssessment {
   risks?: string;
   quickWins?: string;
   modelNotes?: string;
+  /** Fact-find v2: what we will not repeat, drawn from answer 2 (what they already tried). */
+  avoidRepeating?: string;
+  /** Fact-find v2: a short, direct response to answer 3 (what they wish tech sellers understood). */
+  concernsNote?: string;
 }
 
 export interface AuditNote {
@@ -196,6 +202,12 @@ export interface AuditEngagement {
   factFindSentAt?: string;
   factFindCompletedAt?: string;
   responses: Record<string, FactFindResponse>;
+  /**
+   * Fact-find v2 optional consent: may we reuse their words, without name or
+   * business, to explain what Saabai does. Unticked by default; absent = no.
+   */
+  quoteConsent?: boolean;
+  quoteConsentAt?: string;
 
   assessment?: AuditAssessment;
   reports?: AuditReport[];
