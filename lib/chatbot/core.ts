@@ -1,3 +1,4 @@
+import { noDashes } from "../no-dashes";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -243,7 +244,7 @@ export function toPublicConfig(opts: { active: boolean; config: Pick<ChatbotConf
     v: 1,
     active: opts.active,
     botName: bot,
-    greeting: sk.greeting || `Hi! I'm ${bot}. How can I help you today?`,
+    greeting: noDashes(sk.greeting || `Hi! I'm ${bot}. How can I help you today?`),
     avatarUrl: sk.avatarUrl,
     primary: sk.primary,
     accent: sk.accent,
