@@ -9,6 +9,7 @@
  * - NO_DASH_RULE: the matching system prompt rule.
  */
 import type { StreamTextTransform, TextStreamPart, ToolSet } from "ai";
+import { formatPrices } from "./money";
 
 export const NO_DASH_RULE =
   "Never use em dashes or en dashes (the long dash characters) in your replies. Use a comma, a full stop or a plain hyphen instead.";
@@ -35,21 +36,30 @@ export function noDashes(input: string): string {
   return s;
 }
 
+export type FilterOptions = {
+  /** Also rewrite "$2000" as "$2,000" (Mia's price house style). */
+  prices?: boolean;
+};
+
 /** Stateful filter for streamed deltas. Call push() per delta and flush() at the end. */
-export function createDashFilter() {
-  let held = ""; // trailing run of digits/spaces/dashes not yet safe to emit
+export function createDashFilter(opts: FilterOptions = {}) {
+  const clean = (t: string) => (opts.prices ? formatPrices(noDashes(t)) : noDashes(t));
+  // Trailing run not yet safe to emit. With prices on, "$" and "," are held too,
+  // so an amount split across chunks ("$20" + "00") is formatted as one.
+  const tail = opts.prices ? /[\d $,\t\u2012-\u2015]*$/ : /[\d \t\u2012-\u2015]*$/;
+  let held = "";
   let ctx = ""; // last raw character emitted, so a dash at the start of a segment keeps its context
   const emit = (seg: string): string => {
     if (!seg) return "";
-    const out = noDashes(ctx + seg);
-    const res = ctx && out.startsWith(ctx) ? out.slice(ctx.length) : noDashes(seg);
+    const out = clean(ctx + seg);
+    const res = ctx && out.startsWith(ctx) ? out.slice(ctx.length) : clean(seg);
     ctx = seg.slice(-1);
     return res;
   };
   return {
     push(delta: string): string {
       const text = held + delta;
-      const run = text.match(/[\d \t\u2012-\u2015]*$/)?.[0] ?? "";
+      const run = text.match(tail)?.[0] ?? "";
       const cut = text.length - run.length;
       held = text.slice(cut);
       return emit(text.slice(0, cut));
@@ -63,14 +73,14 @@ export function createDashFilter() {
 }
 
 /** AI SDK transform: strips dashes from every streamed text delta (per text block). */
-export function noDashesTransform<TOOLS extends ToolSet>(): StreamTextTransform<TOOLS> {
+export function noDashesTransform<TOOLS extends ToolSet>(opts: FilterOptions = {}): StreamTextTransform<TOOLS> {
   return () => {
     const filters = new Map<string, ReturnType<typeof createDashFilter>>();
     return new TransformStream<TextStreamPart<TOOLS>, TextStreamPart<TOOLS>>({
       transform(part, controller) {
         if (part.type === "text-delta") {
           let f = filters.get(part.id);
-          if (!f) { f = createDashFilter(); filters.set(part.id, f); }
+          if (!f) { f = createDashFilter(opts); filters.set(part.id, f); }
           const text = f.push(part.text);
           if (text) controller.enqueue({ ...part, text });
           return;

@@ -69,7 +69,7 @@ test("Mia: prompt rule, stream transform wired, no dashes in static copy", async
   const { SYSTEM_PROMPT } = await import("../lib/chat-prompt");
   assert.ok(SYSTEM_PROMPT.includes(NO_DASH_RULE));
   assert.ok(!/[\u2013\u2014]/.test(SYSTEM_PROMPT));
-  assert.match(readFileSync("app/api/chat/route.ts", "utf8"), /experimental_transform: noDashesTransform\(\)/);
+  assert.match(readFileSync("app/api/chat/route.ts", "utf8"), /experimental_transform: noDashesTransform\((\{ prices: true \})?\)/);
   const strip = (src: string) => src.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
   for (const f of ["app/components/ChatWidget.tsx", "app/api/chat/route.ts", "lib/mia-offers.ts", "lib/mia-cta.ts", "lib/mia-nudge.ts"]) {
     assert.ok(!/[\u2013\u2014]/.test(strip(readFileSync(f, "utf8"))), f);
