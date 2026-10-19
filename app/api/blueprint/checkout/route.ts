@@ -3,7 +3,8 @@ import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
 import { findActivePromo, productOfPrice, promoCoversProducts } from "@/lib/coupons/stripe";
-import { normaliseCode, promoNotStartedMessage } from "@/lib/coupons/core";
+import { ONCE_MESSAGE, normaliseCode, promoIsOnce, promoNotStartedMessage } from "@/lib/coupons/core";
+import { hasUsed } from "@/lib/coupons/once";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,12 @@ export async function POST(req: NextRequest) {
     promo = null;
   } else if (promo && !promoCoversProducts(promo, [await productOfPrice(price)])) {
     couponError = `The code ${promo.code} doesn't apply to the ${TIERS[tier].name} Blueprint.`;
+    promo = null;
+  }
+  // One use per customer: only checkable when we already know the email (hosted form or prefilled).
+  // The embedded form collects it inside Stripe, so there the webhook records the use and flags repeats.
+  if (promo && email && promoIsOnce(promo) && (await hasUsed(promo.id, email))) {
+    couponError = ONCE_MESSAGE;
     promo = null;
   }
   const metadata: Record<string, string> = { product: "blueprint", tier, name, business, phone, website, abn, ...attrMetadata(attr) };

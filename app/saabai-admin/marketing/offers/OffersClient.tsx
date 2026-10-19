@@ -11,7 +11,7 @@ import ProductPicker from "./ProductPicker";
 interface Code {
   id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null; startsAt?: number | null;
   percentOff: number | null; amountOff: number | null; duration: string; durationMonths: number | null;
-  target: string; targets?: string[]; unknownProducts?: number; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
+  target: string; targets?: string[]; unknownProducts?: number; firstTimeOnly: boolean; oncePerCustomer?: boolean; minimumSpend: number | null; created: number;
 }
 interface Target { id: string; label: string; productId: string | null; ready: boolean; note?: string }
 
@@ -40,7 +40,7 @@ function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?:
   );
 }
 
-const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", startsAt: "", expiresAt: "" };
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, oncePerCustomer: false, minimumSpend: "", maxRedemptions: "", startsAt: "", expiresAt: "" };
 
 export default function OffersClient() {
   const [codes, setCodes] = useState<Code[] | null>(null);
@@ -194,6 +194,10 @@ export default function OffersClient() {
                 <input type="checkbox" checked={f.firstTimeOnly} onChange={(e) => setF({ ...f, firstTimeOnly: e.target.checked })} />
                 <span>First-time customers only<span className="muted of-meta" style={{ display: "block" }}>Stripe blocks it for anyone who has paid you before.</span></span>
               </label>
+              <label className="of-tog">
+                <input type="checkbox" checked={f.oncePerCustomer} onChange={(e) => setF({ ...f, oncePerCustomer: e.target.checked })} />
+                <span>One use per customer<span className="muted of-meta" style={{ display: "block" }}>We remember each customer by their email (stored scrambled, never in plain text) and refuse a second use. Checked on Sell, Payments, care plan pay links and Blueprint when we know the email. A second use made in Stripe&apos;s own checkout box is flagged afterwards rather than blocked.</span></span>
+              </label>
               <div className="of-row">
                 <div className="of-f">
                   <label htmlFor="of-min">Minimum spend ($)</label>
@@ -239,6 +243,7 @@ export default function OffersClient() {
                   <span className="tag bp">{off(c)}</span>
                   <span className="tag" title={(c.targets ?? []).length > 1 ? (c.targets ?? []).map((t) => describeCoverage([t])).join(", ") : undefined}>{describeCoverage(c.targets ?? (c.target === "all" || c.target === "product" ? [] : [c.target]), c.unknownProducts)}</span>
                   {c.firstTimeOnly && <span className="tag ws">First-time only</span>}
+                  {c.oncePerCustomer && <span className="tag ws">One use per customer</span>}
                   {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
                 </div>
                 <div className="muted of-meta">

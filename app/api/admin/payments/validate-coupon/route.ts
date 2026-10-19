@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = getStripe();
-    const { coupon, error } = await resolveCouponForManual(stripe, body?.code);
+    const { coupon, error } = await resolveCouponForManual(stripe, body?.code, typeof body?.customerEmail === "string" ? body.customerEmail : undefined);
     if (error) return NextResponse.json({ error }, { status: 400 });
     if (!coupon) return NextResponse.json({ error: "Enter a coupon code" }, { status: 400 });
 

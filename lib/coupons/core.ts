@@ -92,6 +92,8 @@ export interface CouponInput {
   expiresAt?: number;
   /** Active-from (unix). Enforced by us; Stripe promotion codes have no start date. */
   startsAt?: number;
+  /** One use per customer, tracked by us (hashed email). Stripe has no per-customer limit. */
+  oncePerCustomer: boolean;
 }
 
 /**
@@ -165,6 +167,7 @@ export function parseCouponInput(body: Record<string, unknown>): CouponInput | s
     durationMonths: duration === "repeating" ? Math.max(1, months || 1) : undefined,
     target,
     targets: picked,
+    oncePerCustomer: body.oncePerCustomer === true || body.oncePerCustomer === "true",
     firstTimeOnly: body.firstTimeOnly === true || body.firstTimeOnly === "true",
     minimumSpendCents: minSpend > 0 ? Math.round(minSpend * 100) : undefined,
     maxRedemptions: max > 0 ? max : undefined,
@@ -183,7 +186,7 @@ export function buildStripeParams(i: CouponInput, productIds: string | string[] 
   const coupon: Record<string, unknown> = {
     duration: i.duration,
     name: i.code,
-    metadata: { source: "saabai-admin", target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), first_time_only: String(i.firstTimeOnly), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}) },
+    metadata: { source: "saabai-admin", target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), first_time_only: String(i.firstTimeOnly), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}), ...(i.oncePerCustomer ? { once_per_customer: "true" } : {}) },
   };
   if (i.kind === "percent") coupon.percent_off = i.value;
   else { coupon.amount_off = Math.round(i.value * 100); coupon.currency = "aud"; }
@@ -195,7 +198,7 @@ export function buildStripeParams(i: CouponInput, productIds: string | string[] 
   const restrictions: Record<string, unknown> = {};
   if (i.firstTimeOnly) restrictions.first_time_transaction = true;
   if (i.minimumSpendCents) { restrictions.minimum_amount = i.minimumSpendCents; restrictions.minimum_amount_currency = "aud"; }
-  const promo: Record<string, unknown> = { code: i.code, metadata: { target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}) } };
+  const promo: Record<string, unknown> = { code: i.code, metadata: { target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}), ...(i.oncePerCustomer ? { once_per_customer: "true" } : {}) } };
   if (Object.keys(restrictions).length) promo.restrictions = restrictions;
   if (i.maxRedemptions) promo.max_redemptions = i.maxRedemptions;
   if (i.expiresAt) promo.expires_at = i.expiresAt;
@@ -266,3 +269,32 @@ export function shareLinks(code: string, targets: string[], unknownProducts = 0,
   const careNote = covered.some((id) => id.startsWith("care_"));
   return { links, careNote, paySuffix };
 }
+
+// ---------- one use per customer (our own tracking) ----------
+
+export const ONCE_MESSAGE = "This code has already been used with this email address. It can only be used once per customer.";
+
+/** Does this code carry the one-use-per-customer rule? Reads promo metadata, then coupon metadata. */
+export function isOncePerCustomer(meta: Record<string, string | undefined> | null | undefined): boolean {
+  return meta?.once_per_customer === "true";
+}
+
+/** Same rule for a Stripe promotion code with its coupon expanded. */
+export function promoIsOnce(promo: { metadata?: Record<string, string> | null; promotion?: { coupon?: string | { metadata?: Record<string, string> | null } | null } | null }): boolean {
+  const c = promo.promotion?.coupon;
+  return isOncePerCustomer({ ...(c && typeof c === "object" ? c.metadata ?? {} : {}), ...(promo.metadata ?? {}) });
+}
+
+/**
+ * Email as we compare it: trimmed, lowercased, and the +tag dropped from the local part
+ * (name+offer@x.com is the same person as name@x.com). Null when it isn't an email.
+ */
+export function normaliseEmail(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const e = v.trim().toLowerCase();
+  const m = /^([^\s@+]+)(?:\+[^\s@]*)?@([^\s@]+\.[^\s@]+)$/.exec(e);
+  return m ? `${m[1]}@${m[2]}` : null;
+}
+
+/** Redis key for one (promotion code, customer hash) pair. Never contains an email. */
+export const onceKey = (promotionCodeId: string, customerHash: string) => `coupon:once:${promotionCodeId}:${customerHash}`;

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brisbaneEndOfDay, brisbaneStartOfDay, brisbaneStartOfToday, buildStripeParams, codeStartsAt, notStartedMessage, parseCouponInput, promoNotStartedMessage, redemptionFrom, TARGETS, normaliseCode, shareLinks } from "../lib/coupons/core";
+import { brisbaneEndOfDay, brisbaneStartOfDay, brisbaneStartOfToday, buildStripeParams, codeStartsAt, isOncePerCustomer, normaliseEmail, notStartedMessage, onceKey, parseCouponInput, promoIsOnce, promoNotStartedMessage, redemptionFrom, TARGETS, normaliseCode, shareLinks } from "../lib/coupons/core";
 
 test("expiry is 11:59:59 pm Brisbane on the chosen day", () => {
   const ts = brisbaneEndOfDay("2026-10-31")!;
@@ -188,4 +188,78 @@ test("start date: promo helper reads promo metadata first, falls back to coupon 
   assert.ok(promoNotStartedMessage({ code: "A", metadata: {}, promotion: { coupon: { metadata: { starts_at: String(t) } } } }));
   assert.equal(promoNotStartedMessage({ code: "A", metadata: {}, promotion: { coupon: "cou_1" } }), null);
   assert.equal(promoNotStartedMessage({ code: "A", metadata: { starts_at: String(t - 86400 * 10) } }), null);
+});
+
+import { hashCustomer, hasUsed, markUsed, type OnceStore } from "../lib/coupons/once";
+
+const memStore = (): OnceStore & { data: Map<string, unknown> } => {
+  const data = new Map<string, unknown>();
+  return {
+    data,
+    async get(k) { return data.get(k) ?? null; },
+    async set(k, v, o) { if (o?.nx && data.has(k)) return null; data.set(k, v); return "OK"; },
+  };
+};
+const KEY = "test-secret";
+
+test("once per customer: flag is parsed and stamped on coupon + promo metadata; off by default", () => {
+  const on = parseCouponInput({ code: "ONCE10", kind: "percent", value: 10, oncePerCustomer: true });
+  assert.ok(typeof on !== "string" && on.oncePerCustomer);
+  const p = buildStripeParams(on, null);
+  assert.equal((p.coupon.metadata as Record<string, string>).once_per_customer, "true");
+  assert.equal((p.promo.metadata as Record<string, string>).once_per_customer, "true");
+  const off = parseCouponInput({ code: "ONCE10", kind: "percent", value: 10 });
+  assert.ok(typeof off !== "string" && !off.oncePerCustomer);
+  assert.equal("once_per_customer" in (buildStripeParams(off as never, null).promo.metadata as object), false);
+});
+
+test("once per customer: reads the flag from promo or coupon metadata; legacy codes have none", () => {
+  assert.equal(isOncePerCustomer({}), false);
+  assert.equal(isOncePerCustomer(undefined), false);
+  assert.equal(promoIsOnce({ metadata: {}, promotion: { coupon: { metadata: { once_per_customer: "true" } } } }), true);
+  assert.equal(promoIsOnce({ metadata: { once_per_customer: "true" } }), true);
+  assert.equal(promoIsOnce({ metadata: { target: "all" }, promotion: { coupon: "cou_1" } }), false);
+});
+
+test("once per customer: email normalisation (case, spaces, +tag) and rejects non-emails", () => {
+  assert.equal(normaliseEmail("  Jane.Doe+Offer@Example.COM "), "jane.doe@example.com");
+  assert.equal(normaliseEmail("a@b.co"), "a@b.co");
+  assert.equal(normaliseEmail("not-an-email"), null);
+  assert.equal(normaliseEmail(""), null);
+  assert.equal(normaliseEmail(undefined), null);
+});
+
+test("once per customer: privacy, hash is keyed, stable across variants and never contains the email", () => {
+  const h1 = hashCustomer("Jane+x@Example.com", KEY)!;
+  assert.equal(h1, hashCustomer("jane@example.com", KEY));
+  assert.match(h1, /^[0-9a-f]{32}$/);
+  assert.ok(!h1.includes("jane") && !onceKey("promo_1", h1).includes("example"));
+  assert.notEqual(h1, hashCustomer("jane@example.com", "other-secret"));
+  assert.equal(hashCustomer("jane@example.com", ""), null); // no secret -> no tracking (fail open)
+});
+
+test("once per customer: first use allowed, second blocked, other email allowed, variants collide", async () => {
+  const st = memStore();
+  assert.equal(await hasUsed("promo_1", "jane@example.com", st, KEY), false);
+  assert.equal(await markUsed("promo_1", "jane@example.com", "cs_1", st, KEY), "new");
+  assert.equal(await hasUsed("promo_1", "Jane+deal@example.com", st, KEY), true);
+  assert.equal(await hasUsed("promo_1", "sam@example.com", st, KEY), false);
+  assert.equal(await hasUsed("promo_2", "jane@example.com", st, KEY), false); // per code
+  // no raw email anywhere in storage
+  for (const [k, v] of st.data) assert.ok(!k.includes("jane") && !JSON.stringify(v).includes("jane"));
+});
+
+test("once per customer: webhook retry is idempotent; a different session is flagged as a repeat", async () => {
+  const st = memStore();
+  assert.equal(await markUsed("promo_1", "jane@example.com", "cs_1", st, KEY), "new");
+  assert.equal(await markUsed("promo_1", "jane@example.com", "cs_1", st, KEY), "same");
+  assert.equal(await markUsed("promo_1", "jane@example.com", "cs_2", st, KEY), "repeat");
+});
+
+test("once per customer: fails open when storage or email is missing or broken", async () => {
+  const broken: OnceStore = { async get() { throw new Error("down"); }, async set() { throw new Error("down"); } };
+  assert.equal(await hasUsed("promo_1", "jane@example.com", broken, KEY), false);
+  assert.equal(await markUsed("promo_1", "jane@example.com", "cs_1", broken, KEY), "skipped");
+  assert.equal(await hasUsed("promo_1", "", memStore(), KEY), false);
+  assert.equal(await markUsed("promo_1", undefined, "cs_1", memStore(), KEY), "skipped");
 });
