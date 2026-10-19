@@ -172,7 +172,6 @@
 /* ── Empty state ─────────────────────────────────────── */
 .lx-hero{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 0}
 .lx-hero > div{width:100%;max-width:720px;text-align:center}
-.lx-hero img{width:44px;height:44px;margin-bottom:14px}
 .lx-hero h1{font-family:var(--serif);font-weight:600;font-size:32px;letter-spacing:-.01em;margin:0;color:var(--ink);line-height:1.25}
 .lx-hero > div > p{color:var(--muted);margin:8px 0 26px;font-size:15px}
 .lx-hero .lx-cbox{text-align:left}
@@ -316,6 +315,38 @@
 .lx-share a:hover{background:var(--hover)}
 .lx-share small{grid-column:2;font-size:11.5px;color:var(--muted)}
 .lx-share .fine{text-transform:none;letter-spacing:0;font-weight:400;margin:4px 10px 6px;font-size:11.5px;color:var(--subtle)}
+
+/* Form dialogs (matter intake, firm settings, send to client) */
+.lx-dialog .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.lx-dialog .head h3{margin:0;font-size:16px;font-weight:600;color:var(--ink)}
+.lx-dialog .x{background:none;border:0;color:var(--muted);font-size:20px;line-height:1;padding:2px 6px;border-radius:6px}
+.lx-dialog .x:hover{background:var(--hover);color:var(--ink)}
+.lx-dialog .field{margin-bottom:12px}
+.lx-dialog .field > label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.lx-dialog .field input,.lx-dialog .field select,.lx-dialog .field textarea{
+  width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;border:1px solid var(--line-2);
+  border-radius:8px;padding:9px 12px;color:var(--ink);background:#fff;
+}
+.lx-dialog .field input::placeholder,.lx-dialog .field textarea::placeholder{color:var(--subtle)}
+.lx-dialog .field input:focus,.lx-dialog .field select:focus,.lx-dialog .field textarea:focus{
+  outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(98,197,209,.2)
+}
+.lx-dialog .field textarea{resize:vertical;min-height:72px}
+.lx-dialog .segs{display:flex;gap:6px}
+.lx-dialog .segs button{flex:1;padding:7px 0;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);background:#fff;color:var(--muted);text-transform:capitalize}
+.lx-dialog .segs button.on{border-color:var(--navy);background:var(--bg);color:var(--ink)}
+.lx-dialog .segs button:hover{background:var(--hover);color:var(--ink)}
+.lx-dialog .drop{border:2px dashed var(--line-2);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;background:transparent;transition:border-color .15s,background .15s}
+.lx-dialog .drop:hover{border-color:var(--teal);background:var(--acc-bg)}
+.lx-dialog .drop p{margin:0;font-size:12.5px;color:var(--muted);font-weight:500}
+.lx-dialog .drop small{display:block;margin-top:4px;font-size:11px;color:var(--subtle)}
+.lx-dialog .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.lx-dialog .logo-row img{width:48px;height:48px;border-radius:8px;object-fit:contain;border:1px solid var(--line-2);background:#fff}
+.lx-dialog .btn-danger{display:inline-flex;align-items:center;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;background:var(--bad-bg);border:1px solid #f3c0bb;color:var(--bad-fg)}
+.lx-dialog .btn-danger:hover{background:#fadad7}
+.lx-dialog .primary.ok{background:var(--ok-fg);border-color:var(--ok-fg);color:#fff}
+.lx-modal-wrap.center{align-items:center;padding:16px}
+@media (max-width:560px){.lx-dialog .segs{flex-direction:column}.lx-dialog{max-width:100%}}
 @media (max-width:560px){.lx-dialog .reasons{grid-template-columns:1fr}.lx-chip.off{display:none}.lx-modal-wrap{padding-top:8vh}}
 /* The composer box and palette draw their own focus ring; drop the global input outline inside them. */
 .lx .lx-cbox textarea:focus-visible,.lx .lx-palette .in input:focus-visible{outline:none !important;box-shadow:none !important}
