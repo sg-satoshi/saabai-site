@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     const existing = await getDirectoryUser(email);
     if (existing) {
-      return Response.json({ error: "User already exists" }, { status: 409 });
+      return Response.json({ error: "A user with this email already exists. Find them in the list and use Edit." }, { status: 409 });
     }
 
     const user = {

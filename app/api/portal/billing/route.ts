@@ -5,6 +5,7 @@
  */
 import { after } from "next/server";
 import { rejectIfImpersonatingReadOnly } from "../../../../lib/impersonation";
+import { rejectIfLoginAs } from "../../../../lib/login-as";
 import { resolvePortalBilling } from "../../../../lib/billing/portal-auth";
 import { getCatalog, visibleAddons, visiblePlans } from "../../../../lib/billing/catalog";
 import { planChangeKind, prorate, STATUS_LABELS } from "../../../../lib/billing/state";
@@ -41,6 +42,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const loginAs = rejectIfLoginAs(req);
+  if (loginAs) return loginAs;
   const blocked = rejectIfImpersonatingReadOnly(req);
   if (blocked) return blocked;
   const who = await resolvePortalBilling(req);
