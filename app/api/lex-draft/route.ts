@@ -14,11 +14,14 @@ import { lexErrorResponse } from "../../../lib/lex-errors";
  *     returns a structured JSON confidence report with flagged issues.
  *     Triggered when requestQA is true and a completed draft is provided.
  *
- * Always uses the premium model — legal accuracy is non-negotiable.
+ * Uses LEX_RESEARCH_MODEL (or the firm's own model). Legal accuracy is non-negotiable.
  */
 
 import { streamText, generateText, tool, jsonSchema, stepCountIs } from "ai";
-import { getPremiumModel } from "../../../lib/chat-config";
+import type { LanguageModel } from "ai";
+import { getLexConfig } from "../../../lib/lex-config";
+import { getLexModelForFirm } from "../../../lib/lex-model";
+import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
@@ -179,12 +182,17 @@ export async function POST(req: Request) {
       messages,
       requestQA,
       completedDraft,
+      clientId,
     } = await req.json();
+
+    // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
+    // (which falls back to PREMIUM_CHAT_MODEL).
+    const model = await getLexModelForFirm(getLexConfig(clientId).id);
 
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────
     // If a completed draft is provided and QA is requested, run QA and return.
     if (requestQA && completedDraft) {
-      const qaResult = await runQAPass(completedDraft, documentType);
+      const qaResult = await runQAPass(model, completedDraft, documentType);
       return new Response(JSON.stringify(qaResult), {
         headers: { "Content-Type": "application/json" },
       });
@@ -273,10 +281,11 @@ export async function POST(req: Request) {
           ];
 
     const result = streamText({
-      model: getPremiumModel(),
+      model,
       system: systemPrompt,
       messages: finalMessages,
       stopWhen: stepCountIs(10), // More steps needed for document drafting
+      prepareStep: finalStepAnswers(10),
       tools: {
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -427,6 +436,7 @@ export async function POST(req: Request) {
 // ── QA Pass (Pass 2) ──────────────────────────────────────────────────────────
 
 async function runQAPass(
+  model: LanguageModel,
   draftText: string,
   documentTypeId?: string
 ): Promise<QAVerificationReport> {
@@ -445,7 +455,7 @@ async function runQAPass(
 
   try {
     const qaResult = await generateText({
-      model: getPremiumModel(),
+      model,
       system: QA_SYSTEM_PROMPT,
       messages: [{ role: "user", content: qaUserPrompt }],
       tools: {
@@ -489,6 +499,7 @@ async function runQAPass(
         }),
       },
       stopWhen: stepCountIs(6),
+      prepareStep: finalStepAnswers(6),
     });
 
     // Parse the JSON response

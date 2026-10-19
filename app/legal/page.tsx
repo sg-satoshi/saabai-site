@@ -277,7 +277,7 @@ export default function LegalPage() {
               {
                 icon: <IconSearch />,
                 title: "Instant Legal Research",
-                desc: "Search AustLII, ATO rulings, Federal and State legislation, ASIC, AAT, Fair Work Commission, and Family Law databases simultaneously, in seconds.",
+                desc: "Search AustLII, ATO rulings, Federal and State legislation, ASIC, the ART (formerly AAT), Fair Work Commission, and Family Law databases simultaneously, in seconds.",
               },
               {
                 icon: <IconDocument />,
@@ -418,7 +418,7 @@ export default function LegalPage() {
                 { db: "Federal Register of Legislation", note: "Acts, Regulations, Determinations" },
                 { db: "State legislation", note: "all 8 jurisdictions" },
                 { db: "ASIC", note: "corporate law guidance" },
-                { db: "AAT", note: "administrative tribunal decisions" },
+                { db: "ART", note: "Administrative Review Tribunal, plus former AAT decisions" },
                 { db: "Fair Work Commission", note: "employment law" },
                 { db: "Family Law", note: "Full Court + Federal Circuit" },
               ].map((item) => (
