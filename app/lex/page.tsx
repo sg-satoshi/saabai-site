@@ -234,7 +234,6 @@ export default function LexPage() {
   const [panelMsg, setPanelMsg] = useState<number | null>(null);
   const [selectedCite, setSelectedCite] = useState<number | null>(null);
   const [navOpen, setNavOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   // Shown in the sidebar only; thread sync still keys on userEmail from the portal session.
   const [displayEmail, setDisplayEmail] = useState<string | null>(null);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
@@ -344,8 +343,7 @@ export default function LexPage() {
         if (savedName) setFirmName(savedName);
       } catch {}
 
-      // Admins only see the AI model settings link (the page itself is admin-only).
-      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => { setIsAdmin(!!d?.admin); if (typeof d?.email === "string") setDisplayEmail(d.email); }).catch(() => {});
+      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => { if (typeof d?.email === "string") setDisplayEmail(d.email); }).catch(() => {});
       // Narrow screens start with the sources panel closed (it opens as a bottom sheet).
       if (window.matchMedia("(max-width: 980px)").matches) setPanelOpen(false);
 
@@ -980,7 +978,7 @@ export default function LexPage() {
         onNewProject={newProject} onMoveThread={moveThreadToProject}
         expanded={expandedProjects}
         toggleProject={(id) => setExpandedProjects(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
-        firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail} isAdmin={isAdmin}
+        firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail}
         onFirmSettings={() => { setSettingsOpen(true); setNavOpen(false); }} onIntake={() => { setIntakeOpen(true); setNavOpen(false); }}
       />
 
@@ -2050,59 +2048,44 @@ export default function LexPage() {
 
       {/* ── Intake form modal ─────────────────────────────────────────────── */}
       {intakeOpen && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.6)", zIndex: 9998,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }} onClick={() => setIntakeOpen(false)}>
-          <div style={{
-            background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`,
-            borderRadius: 14, padding: "24px 28px", width: 420, maxWidth: "90vw",
-            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: C.text }}>New Matter Intake</p>
-              <button onClick={() => setIntakeOpen(false)} style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", fontSize: 18 }}>×</button>
+        <div className="lx-modal-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setIntakeOpen(false); }}
+          onKeyDown={(e) => { if (e.key === "Escape") setIntakeOpen(false); }}>
+          <div className="lx-dialog" role="dialog" aria-label="New Matter Intake" data-no-feedback>
+            <div className="head">
+              <h3>New Matter Intake</h3>
+              <button type="button" className="x" aria-label="Close" onClick={() => setIntakeOpen(false)}>×</button>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Client Name</label>
-              <input value={intakeClientName} onChange={e => setIntakeClientName(e.target.value)}
-                placeholder="e.g. Smith Holdings Pty Ltd"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            <div className="field">
+              <label htmlFor="lx-intake-client">Client Name</label>
+              <input id="lx-intake-client" value={intakeClientName} onChange={e => setIntakeClientName(e.target.value)}
+                placeholder="e.g. Smith Holdings Pty Ltd" autoFocus />
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Matter Type</label>
-              <select value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value)}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, cursor: "pointer", outline: "none" }}>
+            <div className="field">
+              <label htmlFor="lx-intake-type">Matter Type</label>
+              <select id="lx-intake-type" value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value)}>
                 {["Property", "Family Law", "Corporate / Commercial", "Litigation", "Employment", "Wills & Estates", "Criminal", "Other"].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Urgency</label>
-              <div style={{ display: "flex", gap: 6 }}>
+            <div className="field">
+              <label>Urgency</label>
+              <div className="segs" role="group" aria-label="Urgency">
                 {(["low", "medium", "high"] as const).map(u => (
-                  <button key={u} onClick={() => setIntakeUrgency(u)} style={{
-                    flex: 1, padding: "7px 0", borderRadius: 7, fontSize: 12, fontWeight: 700,
-                    cursor: "pointer", border: `1px solid ${intakeUrgency === u ? C.gold : C.border}`,
-                    background: intakeUrgency === u ? C.goldBg : "transparent",
-                    color: intakeUrgency === u ? C.gold : C.textDim, textTransform: "capitalize",
-                  }}>{u}</button>
+                  <button type="button" key={u} className={intakeUrgency === u ? "on" : ""}
+                    aria-pressed={intakeUrgency === u} onClick={() => setIntakeUrgency(u)}>{u}</button>
                 ))}
               </div>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Brief Description</label>
-              <textarea value={intakeDescription} onChange={e => setIntakeDescription(e.target.value)}
-                placeholder="Briefly describe the matter..."
-                rows={3}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+            <div className="field">
+              <label htmlFor="lx-intake-desc">Brief Description</label>
+              <textarea id="lx-intake-desc" value={intakeDescription} onChange={e => setIntakeDescription(e.target.value)}
+                placeholder="Briefly describe the matter..." rows={3} />
             </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setIntakeOpen(false)} style={{
-                padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
-              }}>Cancel</button>
+            <div className="row">
+              <button type="button" className="lx-btn" onClick={() => setIntakeOpen(false)}>Cancel</button>
               <button
+                type="button"
+                className="lx-btn primary"
+                disabled={!intakeClientName.trim()}
                 onClick={() => {
                   const title = `${intakeMatterType}: ${intakeClientName || "New matter"}`;
                   const id = `t_${Date.now()}`;
@@ -2120,13 +2103,6 @@ export default function LexPage() {
                   setIntakeOpen(false);
                   setIntakeClientName(""); setIntakeMatterType("Property"); setIntakeUrgency("medium"); setIntakeDescription("");
                 }}
-                disabled={!intakeClientName.trim()}
-                style={{
-                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                  background: `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-                  border: "#23344f", color: C.bg, cursor: "pointer",
-                  opacity: !intakeClientName.trim() ? 0.6 : 1,
-                }}
               >
                 Create Matter
               </button>
@@ -2137,40 +2113,31 @@ export default function LexPage() {
 
       {/* ── Firm settings modal ─────────────────────────────────────────────── */}
       {settingsOpen && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.6)", zIndex: 9998,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }} onClick={() => setSettingsOpen(false)}>
-          <div style={{
-            background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`,
-            borderRadius: 14, padding: "24px 28px", width: 420, maxWidth: "90vw",
-            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: C.text }}>Firm Settings</p>
-              <button onClick={() => setSettingsOpen(false)} style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", fontSize: 18 }}>×</button>
+        <div className="lx-modal-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setSettingsOpen(false); }}
+          onKeyDown={(e) => { if (e.key === "Escape") setSettingsOpen(false); }}>
+          <div className="lx-dialog" role="dialog" aria-label="Firm Settings" data-no-feedback>
+            <div className="head">
+              <h3>Firm Settings</h3>
+              <button type="button" className="x" aria-label="Close" onClick={() => setSettingsOpen(false)}>×</button>
             </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Firm Name</label>
-              <input value={firmName} onChange={e => setFirmName(e.target.value)}
-                placeholder="e.g. Goldberg & Associates"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            <div className="field">
+              <label htmlFor="lx-firm-name">Firm Name</label>
+              <input id="lx-firm-name" value={firmName} onChange={e => setFirmName(e.target.value)}
+                placeholder="e.g. Goldberg & Associates" />
             </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 8 }}>Firm Logo</label>
+            <div className="field">
+              <label>Firm Logo</label>
               {firmLogo ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                  <img src={firmLogo} alt="Firm logo" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "contain", border: `1px solid ${C.border}` }} />
-                  <button onClick={() => { setFirmLogo(null); localStorage.removeItem("lex_firm_logo"); }} style={{
-                    padding: "6px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-                    background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", cursor: "pointer",
-                  }}>Remove</button>
+                <div className="logo-row">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={firmLogo} alt="Firm logo" />
+                  <button type="button" className="btn-danger" onClick={() => { setFirmLogo(null); localStorage.removeItem("lex_firm_logo"); }}>Remove</button>
                 </div>
               ) : (
                 <div
+                  className="drop"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     const input = document.createElement("input");
                     input.type = "file";
@@ -2189,34 +2156,21 @@ export default function LexPage() {
                     };
                     input.click();
                   }}
-                  style={{
-                    border: `2px dashed ${C.border}`, borderRadius: 10, padding: "24px 16px",
-                    textAlign: "center", cursor: "pointer",
-                    background: "transparent", transition: "all 0.15s",
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = C.goldBg; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = "transparent"; }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") (e.currentTarget as HTMLDivElement).click(); }}
                 >
-                  <p style={{ margin: 0, fontSize: 12, color: C.textDim, fontWeight: 500 }}>Click to upload logo</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 10, color: C.textDim }}>PNG, JPG or SVG, max 2MB</p>
+                  <p>Click to upload logo</p>
+                  <small>PNG, JPG or SVG, max 2MB</small>
                 </div>
               )}
             </div>
-
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setSettingsOpen(false)} style={{
-                padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
-              }}>Cancel</button>
+            <div className="row">
+              <button type="button" className="lx-btn" onClick={() => setSettingsOpen(false)}>Cancel</button>
               <button
+                type="button"
+                className="lx-btn primary"
                 onClick={() => {
                   localStorage.setItem("lex_firm_name", firmName);
                   setSettingsOpen(false);
-                }}
-                style={{
-                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                  background: `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-                  border: "#23344f", color: C.bg, cursor: "pointer",
                 }}
               >
                 Save
@@ -2228,53 +2182,35 @@ export default function LexPage() {
 
       {/* ── Email form modal ─────────────────────────────────────────────── */}
       {emailOpen && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.6)", zIndex: 9998,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }} onClick={() => setEmailOpen(false)}>
-          <div style={{
-            background: C.surfaceRaised, border: `1px solid ${C.borderAccent}`,
-            borderRadius: 14, padding: "24px 28px", width: 440, maxWidth: "90vw",
-            boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: C.text }}>Send to Client</p>
-              <button onClick={() => setEmailOpen(false)} style={{ background: "none", border: "#23344f", color: C.textDim, cursor: "pointer", fontSize: 18 }}>×</button>
+        <div className="lx-modal-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setEmailOpen(false); }}
+          onKeyDown={(e) => { if (e.key === "Escape") setEmailOpen(false); }}>
+          <div className="lx-dialog" role="dialog" aria-label="Send to Client" data-no-feedback>
+            <div className="head">
+              <h3>Send to Client</h3>
+              <button type="button" className="x" aria-label="Close" onClick={() => setEmailOpen(false)}>×</button>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>To</label>
-              <input type="email" value={emailTo} onChange={e => setEmailTo(e.target.value)}
-                placeholder="client@example.com"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            <div className="field">
+              <label htmlFor="lx-email-to">To</label>
+              <input id="lx-email-to" type="email" value={emailTo} onChange={e => setEmailTo(e.target.value)}
+                placeholder="client@example.com" />
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Subject</label>
-              <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
-                placeholder="Document from Lex AI"
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none" }} />
+            <div className="field">
+              <label htmlFor="lx-email-subject">Subject</label>
+              <input id="lx-email-subject" value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
+                placeholder="Document from Lex AI" />
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>Message (optional)</label>
-              <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)}
-                placeholder="Please find the attached document..."
-                rows={3}
-                style={{ width: "100%", padding: "9px 12px", borderRadius: 8, background: C.bg, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+            <div className="field">
+              <label htmlFor="lx-email-body">Message (optional)</label>
+              <textarea id="lx-email-body" value={emailBody} onChange={e => setEmailBody(e.target.value)}
+                placeholder="Please find the attached document..." rows={3} />
             </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-              <button onClick={() => setEmailOpen(false)} style={{
-                padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                background: "transparent", border: `1px solid ${C.border}`, color: C.textMuted, cursor: "pointer",
-              }}>Cancel</button>
+            <div className="row">
+              <button type="button" className="lx-btn" onClick={() => setEmailOpen(false)}>Cancel</button>
               <button
-                onClick={() => sendEmail(mode === "draft" ? draftText : reviewReport?.summary ?? "", mode as "draft" | "review")}
+                type="button"
+                className={`lx-btn primary${emailSent ? " ok" : ""}`}
                 disabled={emailSending || !emailTo.trim() || !emailSubject.trim()}
-                style={{
-                  padding: "8px 18px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                  background: emailSent ? "#22c55e" : `linear-gradient(135deg, ${C.goldBright} 0%, ${C.gold} 100%)`,
-                  border: "#23344f", color: emailSent ? "#fff" : C.bg, cursor: emailSending ? "wait" : "pointer",
-                  opacity: emailSending || !emailTo.trim() || !emailSubject.trim() ? 0.6 : 1,
-                }}
+                onClick={() => sendEmail(mode === "draft" ? draftText : reviewReport?.summary ?? "", mode as "draft" | "review")}
               >
                 {emailSent ? "Sent!" : emailSending ? "Sending..." : "Send Email"}
               </button>
