@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  LEX_INTAKE_MATTER_TYPES,
-  LEX_INTAKE_MATTER_TYPE_DEFAULT,
-  type LexIntakeMatterType,
-} from "@/lib/lex-intake-matter-types";
 import { PORTAL_REQUESTS_HREF } from "@/lib/portal-pages";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -29,6 +24,8 @@ import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
 import { FirmDashboard } from "./_components/Dashboard";
+import { MattersView, MatterDetail, MatterBar, NewMatterDialog } from "./_components/Matters";
+import type { Matter, MatterItem } from "../../lib/lex-matters";
 import type { FirmUsage } from "../../lib/lex-review-access";
 import type { QAReport } from "../../lib/lex-draft-display";
 import type { ReviewReport } from "../../lib/lex-review-display";
@@ -159,10 +156,16 @@ export default function LexPage() {
 
   // ── Client intake state ───────────────────────────────────────────────
   const [intakeOpen, setIntakeOpen] = useState(false);
-  const [intakeClientName, setIntakeClientName] = useState("");
-  const [intakeMatterType, setIntakeMatterType] = useState(LEX_INTAKE_MATTER_TYPE_DEFAULT);
-  const [intakeUrgency, setIntakeUrgency] = useState<"low" | "medium" | "high">("medium");
-  const [intakeDescription, setIntakeDescription] = useState("");
+  // ── Matters (firm-wide, by email domain) ─────────────────────────────
+  const [matters, setMatters] = useState<Matter[]>([]);
+  const [mattersLoading, setMattersLoading] = useState(false);
+  const [mattersError, setMattersError] = useState<string | null>(null);
+  const [activeMatterId, setActiveMatterIdState] = useState<string | null>(null);
+  const [openMatterId, setOpenMatterId] = useState<string | null>(null);
+  const [matterItems, setMatterItems] = useState<MatterItem[] | null>(null);
+  const [matterBusy, setMatterBusy] = useState(false);
+  const [matterError, setMatterError] = useState<string | null>(null);
+  const syncedRef = useRef<Record<string, string>>({});
 
   // ── Firm settings state ───────────────────────────────────────────────
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -200,11 +203,14 @@ export default function LexPage() {
         if (savedName) setFirmName(savedName);
       } catch {}
 
-      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => {
+      const lexMe: Promise<string | null> = fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => {
         if (typeof d?.email === "string") setDisplayEmail(d.email);
         setIsAdmin(d?.admin === true);
         if (d?.usage && typeof d.usage.reviews === "number") setFirmUsage(d.usage as FirmUsage);
-      }).catch(() => {});
+        return typeof d?.email === "string" ? d.email : null;
+      }).catch(() => null);
+      try { const am = localStorage.getItem("lex:matter"); if (am) setActiveMatterIdState(am); } catch {}
+      if (new URLSearchParams(window.location.search).get("view") === "matters") setMode("matters");
       // Deep link: /lex?view=dashboard opens the firm dashboard inside the Lex shell.
       if (new URLSearchParams(window.location.search).get("view") === "dashboard") setMode("dashboard");
       // Narrow screens start with the sources panel closed (it opens as a bottom sheet).
@@ -212,7 +218,9 @@ export default function LexPage() {
 
       // 2. Check auth and load user-scoped data from Redis
       try {
-        const me = await fetch("/api/portal/me").then(r => r.json());
+        const portalMe = await fetch("/api/portal/me").then(r => r.json()).catch(() => null);
+        // Firm users signed in through /login have no portal session; /api/lex-me knows them.
+        const me = portalMe?.authenticated && portalMe.email ? portalMe : { authenticated: !!(await lexMe), email: await lexMe };
         if (me.authenticated && me.email) {
           setUserEmail(me.email);
           // Prefer user-scoped localStorage (quick win while Redis loads)
@@ -297,13 +305,132 @@ export default function LexPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Matters ───────────────────────────────────────────────────────────
+  const loadMatters = useCallback(async () => {
+    setMattersLoading(true); setMattersError(null);
+    try {
+      const r = await fetch("/api/lex-matters");
+      if (!r.ok) throw new Error(r.status === 401 ? "You are signed out. Sign in again to see your firm's matters." : "Lex could not reach the matters service. Try again.");
+      const d = await r.json();
+      setMatters(Array.isArray(d.matters) ? d.matters : []);
+    } catch (e) { setMattersError(e instanceof Error ? e.message : "Could not load matters."); }
+    setMattersLoading(false);
+  }, []);
+  useEffect(() => { loadMatters(); }, [loadMatters]);
+  const activeMatter = matters.find(m => m.id === activeMatterId) ?? null;
+  const openMatter = matters.find(m => m.id === openMatterId) ?? null;
+  function setActiveMatterId(id: string | null) {
+    setActiveMatterIdState(id);
+    try { if (id) localStorage.setItem("lex:matter", id); else localStorage.removeItem("lex:matter"); } catch {}
+  }
+  async function openMatterDetail(id: string) {
+    setOpenMatterId(id); setMatterItems(null); setMatterError(null); setMode("matters"); setNavOpen(false);
+    try {
+      const r = await fetch(`/api/lex-matters/${encodeURIComponent(id)}`);
+      if (!r.ok) throw new Error();
+      const d = await r.json();
+      setMatterItems(Array.isArray(d.items) ? d.items : []);
+      if (d.matter) setMatters(prev => prev.map(m => m.id === id ? d.matter : m));
+    } catch { setMatterItems([]); setMatterError("The items in this matter could not load. Try again."); }
+  }
+  async function createMatterFromDialog(f: Record<string, unknown>) {
+    setMatterBusy(true); setMatterError(null);
+    try {
+      const r = await fetch("/api/lex-matters", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.matter) throw new Error(d.error || "The matter could not be created.");
+      setMatters(prev => [d.matter, ...prev]);
+      setActiveMatterId(d.matter.id);
+      setIntakeOpen(false);
+      openMatterDetail(d.matter.id);
+    } catch (e) { setMatterError(e instanceof Error ? e.message : "The matter could not be created."); }
+    setMatterBusy(false);
+  }
+  async function updateOpenMatter(f: Partial<Matter>) {
+    if (!openMatterId) return;
+    setMatterBusy(true); setMatterError(null);
+    try {
+      const r = await fetch(`/api/lex-matters/${encodeURIComponent(openMatterId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.matter) throw new Error(d.error || "The changes could not be saved.");
+      setMatters(prev => prev.map(m => m.id === d.matter.id ? d.matter : m));
+    } catch (e) { setMatterError(e instanceof Error ? e.message : "The changes could not be saved."); }
+    setMatterBusy(false);
+  }
+  /** Saves a snapshot to a matter. Skips when nothing changed since the last save. */
+  async function attachToMatter(matterId: string, item: { ref: string; kind: MatterItem["kind"]; title: string; data: unknown }) {
+    const sig = JSON.stringify(item).length + ":" + item.title;
+    const key = `${matterId}|${item.ref}`;
+    if (syncedRef.current[key] === sig) return;
+    syncedRef.current[key] = sig;
+    try {
+      const r = await fetch(`/api/lex-matters/${encodeURIComponent(matterId)}/items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(item) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { delete syncedRef.current[key]; return; }
+      if (d.matter) setMatters(prev => prev.map(m => m.id === d.matter.id ? d.matter : m));
+      if (d.item && openMatterId === matterId) setMatterItems(prev => prev ? [d.item, ...prev.filter(i => i.ref !== d.item.ref)] : prev);
+    } catch { delete syncedRef.current[key]; }
+  }
+  async function removeMatterItem(ref: string) {
+    if (!openMatterId) return;
+    const r = await fetch(`/api/lex-matters/${encodeURIComponent(openMatterId)}/items?ref=${encodeURIComponent(ref)}`, { method: "DELETE" }).catch(() => null);
+    if (r?.ok) { setMatterItems(prev => prev?.filter(i => i.ref !== ref) ?? prev); loadMatters(); }
+    else setMatterError("That item could not be removed. Try again.");
+  }
+  function openMatterItem(i: MatterItem) {
+    const d = (i.data ?? {}) as Record<string, unknown>;
+    if (i.kind === "research" && Array.isArray(d.messages)) {
+      const id = `m_${i.ref.replace(/^research:/, "")}`;
+      const t: Thread = { id, title: i.title, messages: d.messages as ChatMessage[], createdAt: i.at, matterId: openMatterId ?? undefined };
+      setThreads(prev => [t, ...prev.filter(x => x.id !== id && x.id !== i.ref.replace(/^research:/, ""))]);
+      setActiveId(id); setPanelMsg(null); setSelectedCite(null); setMode("research");
+    } else if (i.kind === "draft" && typeof d.text === "string") {
+      if (typeof d.docType === "string") setDraftTypeId(d.docType);
+      setDraftText(d.text); setDraftQA((d.qa as QAReport) ?? null); setDraftError(null); setMode("draft");
+    } else if (i.kind === "review" && d.report) {
+      setReviewReport(d.report as ReviewReport); setReviewDocText(typeof d.docText === "string" ? d.docText : ""); setReviewError(null); setMode("review");
+    }
+    if (openMatterId) setActiveMatterId(openMatterId);
+  }
+
+  // Work done while a matter is active is saved to it, so the whole firm can open it.
+  const hashText = (t: string) => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+  useEffect(() => {
+    if (loading && activeMatterId && activeId) setThreads(prev => prev.map(t => t.id === activeId && !t.matterId ? { ...t, matterId: activeMatterId } : t));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+  useEffect(() => {
+    const t = activeThread;
+    if (loading || researchActive || !t?.matterId || !matters.some(m => m.id === t.matterId)) return;
+    const last = t.messages[t.messages.length - 1];
+    if (last?.role !== "assistant" || !last.content.trim()) return;
+    attachToMatter(t.matterId, {
+      ref: `research:${t.id.replace(/^m_/, "")}`, kind: "research", title: t.title,
+      data: { messages: t.messages.map(m => ({ ...m, content: m.content.slice(0, 20000) })) },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, researchActive, activeThread?.messages.length, activeThread?.title, matters.length]);
+  useEffect(() => {
+    if (draftLoading || draftQALoading || !draftText.trim() || !activeMatterId || mode !== "draft") return;
+    const name = DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document";
+    attachToMatter(activeMatterId, { ref: `draft:${hashText(draftText.slice(0, 400))}`, kind: "draft", title: name, data: { text: draftText, docType: draftTypeId, qa: draftQA } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftLoading, draftQALoading]);
+  useEffect(() => {
+    if (reviewLoading || !reviewReport || !activeMatterId || mode !== "review") return;
+    const title = `${reviewReport.documentType || "Document"} review${reviewFile?.name ? `: ${reviewFile.name}` : ""}`;
+    attachToMatter(activeMatterId, { ref: `review:${hashText((reviewDocText || reviewReport.summary || "").slice(0, 600))}`, kind: "review", title,
+      data: { report: reviewReport, docText: reviewDocText.slice(0, 120000), fileName: reviewFile?.name ?? null } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewLoading, reviewReport]);
+
   function newThread() {
     // Starting new research stops any answer still in flight (its thread keeps just the question).
     abortRef.current?.abort();
     setLoading(false);
     setResearchActive(false);
     const id = `t_${Date.now()}`;
-    const thread: Thread = { id, title: "New research", messages: [], createdAt: Date.now() };
+    const thread: Thread = { id, title: "New research", messages: [], createdAt: Date.now(), ...(activeMatterId ? { matterId: activeMatterId } : {}) };
     setThreads(prev => [thread, ...prev]);
     setActiveId(id);
     setInput("");
@@ -814,7 +941,8 @@ export default function LexPage() {
   const lastAssistant = (() => { for (let i = messages.length - 1; i >= 0; i--) if (messages[i].role === "assistant") return i; return -1; })();
   const streamingIdx = loading ? -1 : (researchActive ? lastAssistant : -1);
   const activeProject = activeThread?.projectId ? projects.find(p => p.id === activeThread.projectId) : undefined;
-  const contextLabel = activeProject ? `Project: ${activeProject.name}` : undefined;
+  const threadMatter = activeThread?.matterId ? matters.find(m => m.id === activeThread.matterId) : (showWelcome && activeMatter ? activeMatter : undefined);
+  const contextLabel = threadMatter ? `Matter: ${threadMatter.id}` : activeProject ? `Project: ${activeProject.name}` : undefined;
   const firstAt = messages.find(m => m.at)?.at ?? activeThread?.createdAt;
 
   const composer = (hero: boolean) => (
@@ -840,6 +968,7 @@ export default function LexPage() {
         expanded={expandedProjects}
         toggleProject={(id) => setExpandedProjects(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
         firmName={firmName} firmLogo={firmLogo} userEmail={userEmail ?? displayEmail}
+        matterCount={matters.filter(m => m.status !== "closed").length}
         onFirmSettings={() => { setSettingsOpen(true); setNavOpen(false); }} onIntake={() => { setIntakeOpen(true); setNavOpen(false); }}
       />
 
@@ -907,6 +1036,7 @@ export default function LexPage() {
           {mode === "draft" && <div className="lx-ctx"><span className="k">Drafting</span><b>{DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document"}</b></div>}
           {mode === "review" && <div className="lx-ctx"><span className="k">Doc review</span><b>{reviewFile?.name ?? "Review a document"}</b></div>}
           {mode === "dashboard" && <div className="lx-ctx"><span className="k">Firm</span><b>Dashboard</b></div>}
+          {mode === "matters" && <div className="lx-ctx"><span className="k">Matters</span><b>{openMatter ? `${openMatter.id}: ${openMatter.name}` : "All matters"}</b></div>}
           <span className="lx-sp" />
           {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
             <div className="lx-share-wrap">
@@ -920,6 +1050,24 @@ export default function LexPage() {
           )}
           <a className="lx-btn sm" href={PORTAL_REQUESTS_HREF} aria-label="Contact Saabai"><span className="lbl-long">Contact Saabai</span><span className="lbl-short">Contact</span></a>
         </div>
+        {activeMatter && (mode === "research" || mode === "draft" || mode === "review") && (
+          <MatterBar matter={activeMatter} onOpen={() => openMatterDetail(activeMatter.id)} onLeave={() => setActiveMatterId(null)} />
+        )}
+
+        {mode === "matters" && (openMatter ? (
+          <MatterDetail key={openMatter.id} matter={openMatter} items={matterItems} active={activeMatterId === openMatter.id}
+            busy={matterBusy} error={matterError}
+            onBack={() => { setOpenMatterId(null); loadMatters(); }}
+            onWorkIn={() => setActiveMatterId(openMatter.id)} onLeave={() => setActiveMatterId(null)}
+            onUpdate={updateOpenMatter} onOpenItem={openMatterItem} onRemoveItem={removeMatterItem}
+            onNewResearch={() => { setActiveMatterId(openMatter.id); newThread(); setTimeout(() => inputRef.current?.focus(), 0); }}
+            onDraft={() => { setActiveMatterId(openMatter.id); setMode("draft"); }}
+            onReview={() => { setActiveMatterId(openMatter.id); setMode("review"); }} />
+        ) : (
+          <MattersView matters={matters} loading={mattersLoading} error={mattersError} activeId={activeMatterId}
+            onNew={() => { setMatterError(null); setIntakeOpen(true); }} onOpen={openMatterDetail} onRetry={loadMatters} />
+        ))}
+
 
         {mode === "research" && (
           <>
@@ -1028,69 +1176,9 @@ export default function LexPage() {
           />
         )}
 
-      {/* ── Intake form modal ─────────────────────────────────────────────── */}
+      {/* ── New matter ───────────────────────────────────────────────────── */}
       {intakeOpen && (
-        <div className="lx-modal-wrap center" onMouseDown={(e) => { if (e.target === e.currentTarget) setIntakeOpen(false); }}
-          onKeyDown={(e) => { if (e.key === "Escape") setIntakeOpen(false); }}>
-          <div className="lx-dialog" role="dialog" aria-label="New Matter Intake" data-no-feedback>
-            <div className="head">
-              <h3>New Matter Intake</h3>
-              <button type="button" className="x" aria-label="Close" onClick={() => setIntakeOpen(false)}>×</button>
-            </div>
-            <div className="field">
-              <label htmlFor="lx-intake-client">Client Name</label>
-              <input id="lx-intake-client" value={intakeClientName} onChange={e => setIntakeClientName(e.target.value)}
-                placeholder="e.g. Smith Holdings Pty Ltd" autoFocus />
-            </div>
-            <div className="field">
-              <label htmlFor="lx-intake-type">Matter Type</label>
-              <select id="lx-intake-type" value={intakeMatterType} onChange={e => setIntakeMatterType(e.target.value as LexIntakeMatterType)}>
-                {LEX_INTAKE_MATTER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div className="field">
-              <label>Urgency</label>
-              <div className="segs" role="group" aria-label="Urgency">
-                {(["low", "medium", "high"] as const).map(u => (
-                  <button type="button" key={u} className={intakeUrgency === u ? "on" : ""}
-                    aria-pressed={intakeUrgency === u} onClick={() => setIntakeUrgency(u)}>{u}</button>
-                ))}
-              </div>
-            </div>
-            <div className="field">
-              <label htmlFor="lx-intake-desc">Brief Description</label>
-              <textarea id="lx-intake-desc" value={intakeDescription} onChange={e => setIntakeDescription(e.target.value)}
-                placeholder="Briefly describe the matter..." rows={3} />
-            </div>
-            <div className="row">
-              <button type="button" className="lx-btn" onClick={() => setIntakeOpen(false)}>Cancel</button>
-              <button
-                type="button"
-                className="lx-btn primary"
-                disabled={!intakeClientName.trim()}
-                onClick={() => {
-                  const title = `${intakeMatterType}: ${intakeClientName || "New matter"}`;
-                  const id = `t_${Date.now()}`;
-                  const thread: Thread = {
-                    id, title,
-                    messages: [{
-                      role: "user",
-                      content: `Matter: ${intakeMatterType} for ${intakeClientName || "client"}. Urgency: ${intakeUrgency}. ${intakeDescription}`,
-                    }],
-                    createdAt: Date.now(),
-                  };
-                  setThreads(prev => [thread, ...prev]);
-                  setActiveId(id);
-                  setMode("research");
-                  setIntakeOpen(false);
-                  setIntakeClientName(""); setIntakeMatterType(LEX_INTAKE_MATTER_TYPE_DEFAULT); setIntakeUrgency("medium"); setIntakeDescription("");
-                }}
-              >
-                Create Matter
-              </button>
-            </div>
-          </div>
-        </div>
+        <NewMatterDialog busy={matterBusy} error={matterError} onClose={() => setIntakeOpen(false)} onCreate={createMatterFromDialog} />
       )}
 
       {/* ── Firm settings modal ─────────────────────────────────────────────── */}

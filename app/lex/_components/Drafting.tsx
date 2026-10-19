@@ -51,7 +51,8 @@ function DraftText({ text }: { text: string }) {
 export function DraftingView(p: DraftingProps) {
   const doc = DOCUMENT_TYPES.find((d) => d.id === p.typeId);
   const docName = doc?.name ?? (p.typeId === "custom" ? "Custom document" : "Document");
-  const [tab, setTab] = useState<"setup" | "suggest">("setup");
+  // A draft that is already there on mount (reopened from a matter) opens on its suggestions.
+  const [tab, setTab] = useState<"setup" | "suggest">(() => (p.text ? "suggest" : "setup"));
   const [panelOpen, setPanelOpen] = useState(true);
   const [sel, setSel] = useState<string | null>(null);
   const [why, setWhy] = useState<string | null>(null);
