@@ -865,7 +865,7 @@ export default function ChatWidget() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => track("cta_clicked", { step: "call", from: "header" })}
-                  className="text-[10px] font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
+                  className="text-[10px] font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
                 >
                   Talk to Shane
                 </a>
