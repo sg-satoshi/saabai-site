@@ -11,6 +11,7 @@
  * Saabai is not GST registered: always "GST not applicable".
  */
 import { TIERS, TIER_ORDER } from "./blueprint";
+import { formatAud } from "./money";
 
 export const SITE = "https://www.saabai.ai";
 export const LINKS = {
@@ -48,7 +49,7 @@ export const WEBSITE_PLANS = [
   },
 ] as const;
 
-const aud = (n: number) => `$${n.toLocaleString("en-AU")}`;
+const aud = formatAud;
 
 /** Prompt block listing every approved price and policy. */
 export function renderOffersForPrompt(): string {

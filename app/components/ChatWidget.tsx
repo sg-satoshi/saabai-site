@@ -704,8 +704,7 @@ export default function ChatWidget() {
               <MiaAvatar size={36} dotSize={10} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies within a minute</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none">Saabai&apos;s AI assistant</p>
               </div>
             </div>
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
@@ -852,10 +851,10 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} showDot={!isEnded} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">
-                  {isEnded ? "Conversation ended" : "Usually replies within a minute"}
-                </p>
+                <p className={`text-[10px] text-saabai-text-dim tracking-wide leading-none${isEnded ? " mb-1" : ""}`}>Saabai&apos;s AI assistant</p>
+                {isEnded && (
+                  <p className="text-[10px] text-saabai-text-dim tracking-wide">Conversation ended</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">

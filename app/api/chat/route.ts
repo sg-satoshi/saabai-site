@@ -11,6 +11,7 @@ import { SYSTEM_PROMPT } from "../../../lib/chat-prompt";
 import { saveLead, saveConversation } from "../../../lib/redis";
 import { CTA_STEPS } from "../../../lib/mia-cta";
 import { noDashesTransform } from "../../../lib/no-dashes";
+import { formatAud } from "../../../lib/money";
 import { miaGlobalGate, safeFetchText, sanitizeMessages, sanitizePageContext, sanitizeVisitorProfile, urlWasShared } from "../../../lib/chat-safety";
 
 export const runtime = "nodejs";
@@ -237,7 +238,7 @@ export async function POST(req: Request) {
     ),
     stopWhen: stepCountIs(4),
     // House rule: no em or en dashes in anything Mia says, including streamed text.
-    experimental_transform: noDashesTransform(),
+    experimental_transform: noDashesTransform({ prices: true }),
     onFinish: async (event) => {
       const msgCount = messages.length + 1;
       const hasData =
@@ -385,6 +386,10 @@ export async function POST(req: Request) {
             monthlyCost,
             savingsLow,
             savingsHigh,
+            // Quote these exactly ("$12,480" house style).
+            annualCostLabel: formatAud(annualCost),
+            monthlyCostLabel: formatAud(monthlyCost),
+            savingsRangeLabel: `${formatAud(savingsLow)} to ${formatAud(savingsHigh)}`,
           };
         },
       }),
