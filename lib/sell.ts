@@ -10,6 +10,7 @@
  */
 import type Stripe from "stripe";
 import type { CatalogueProduct } from "./product-catalogue";
+import { promoNotStartedMessage } from "./coupons/core";
 import { feeDisplay, normalizeDiscounts } from "./product-pricing";
 
 export interface ResolvedCoupon {
@@ -31,6 +32,8 @@ export async function resolveCoupon(
   const list = await stripe.promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
   const pc = list.data[0];
   if (!pc) return { error: "Coupon code not found or inactive" };
+  const notStarted = promoNotStartedMessage(pc);
+  if (notStarted) return { error: notStarted };
   if (pc.expires_at && pc.expires_at * 1000 < Date.now()) return { error: "Coupon code has expired" };
   if (pc.max_redemptions && pc.times_redeemed >= pc.max_redemptions) return { error: "Coupon code has reached its redemption limit" };
 
@@ -68,6 +71,8 @@ export async function resolveCouponForManual(
   const list = await stripe.promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
   const pc = list.data[0];
   if (!pc) return { error: "Coupon code not found or inactive" };
+  const notStarted = promoNotStartedMessage(pc);
+  if (notStarted) return { error: notStarted };
   if (pc.expires_at && pc.expires_at * 1000 < Date.now()) return { error: "Coupon code has expired" };
   if (pc.max_redemptions && pc.times_redeemed >= pc.max_redemptions) return { error: "Coupon code has reached its redemption limit" };
 

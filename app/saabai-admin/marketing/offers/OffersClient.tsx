@@ -9,7 +9,7 @@ import { brisbaneLabel, describeCoverage, normaliseCode, shareLinks } from "@/li
 import ProductPicker from "./ProductPicker";
 
 interface Code {
-  id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null;
+  id: string; code: string; active: boolean; timesRedeemed: number; maxRedemptions: number | null; expiresAt: number | null; startsAt?: number | null;
   percentOff: number | null; amountOff: number | null; duration: string; durationMonths: number | null;
   target: string; targets?: string[]; unknownProducts?: number; firstTimeOnly: boolean; minimumSpend: number | null; created: number;
 }
@@ -40,7 +40,7 @@ function CopyLink({ info, picked, onPick, onCopy }: { info: ShareInfoT; picked?:
   );
 }
 
-const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", expiresAt: "" };
+const blank = { code: "", kind: "percent" as "percent" | "fixed", value: "", targetMode: "all" as "all" | "selected", targets: [] as string[], duration: "once" as "once" | "forever" | "repeating", durationMonths: "3", firstTimeOnly: true, minimumSpend: "", maxRedemptions: "", startsAt: "", expiresAt: "" };
 
 export default function OffersClient() {
   const [codes, setCodes] = useState<Code[] | null>(null);
@@ -116,6 +116,7 @@ export default function OffersClient() {
   const durationLabel = (c: Code) => (c.duration === "repeating" ? `first ${c.durationMonths} months` : c.duration === "forever" ? "every payment" : "first payment");
   const status = (c: Code) => {
     if (!c.active) return <Badge tone="neutral">Off</Badge>;
+    if (c.startsAt && c.startsAt * 1000 > Date.now()) return <Badge tone="info">Scheduled</Badge>;
     if (c.expiresAt && c.expiresAt * 1000 < Date.now()) return <Badge tone="neutral">Expired</Badge>;
     if (c.maxRedemptions && c.timesRedeemed >= c.maxRedemptions) return <Badge tone="warn">Used up</Badge>;
     return <Badge tone="ok">Active</Badge>;
@@ -204,6 +205,11 @@ export default function OffersClient() {
                 </div>
               </div>
               <div className="of-f">
+                <label htmlFor="of-start">Starts</label>
+                <input id="of-start" type="date" value={f.startsAt} onChange={(e) => setF({ ...f, startsAt: e.target.value })} />
+                <p className="hint">Not live until 12:00 am Brisbane time on this day. Leave blank to start now. Applies to links we send and to Sell and Payments. A customer typing the code into Stripe&apos;s own promo box can&apos;t be held back, so for a hard launch date create the code on the day.</p>
+              </div>
+              <div className="of-f">
                 <label htmlFor="of-exp">Expires</label>
                 <input id="of-exp" type="date" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} />
                 <p className="hint">Works until 11:59 pm Brisbane time on this day. Leave blank for no expiry.</p>
@@ -236,7 +242,7 @@ export default function OffersClient() {
                   {c.minimumSpend ? <span className="tag cr">Min {money(c.minimumSpend)}</span> : null}
                 </div>
                 <div className="muted of-meta">
-                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.expiresAt ? ` · until ${brisbaneLabel(c.expiresAt)}` : " · no expiry"}
+                  <span className="num">{c.timesRedeemed}</span> used{c.maxRedemptions ? <> of <span className="num">{c.maxRedemptions}</span></> : ""} · {durationLabel(c)}{c.startsAt && c.startsAt * 1000 > Date.now() ? ` · starts ${brisbaneLabel(c.startsAt)}` : ""}{c.expiresAt ? ` · until ${brisbaneLabel(c.expiresAt)}` : " · no expiry"}
                 </div>
                 {c.active && (
                   <div className="r2 of-acts">

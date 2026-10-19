@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { brisbaneEndOfDay, buildStripeParams, parseCouponInput, redemptionFrom, TARGETS, normaliseCode, shareLinks } from "../lib/coupons/core";
+import { brisbaneEndOfDay, brisbaneStartOfDay, brisbaneStartOfToday, buildStripeParams, codeStartsAt, notStartedMessage, parseCouponInput, promoNotStartedMessage, redemptionFrom, TARGETS, normaliseCode, shareLinks } from "../lib/coupons/core";
 
 test("expiry is 11:59:59 pm Brisbane on the chosen day", () => {
   const ts = brisbaneEndOfDay("2026-10-31")!;
@@ -136,4 +136,56 @@ test("share links: care-only code has no URL, only the pay-link suffix; unknown 
 test("share links: code is normalised and URL-encoded, custom base respected", () => {
   const s = shareLinks("save 10&x=1", ["blueprint_starter"], 0, "http://localhost:3000");
   assert.equal(s.links[0].url, "http://localhost:3000/blueprint/checkout?tier=starter&code=SAVE10X1");
+});
+
+const futureDay = (daysAhead: number) => new Date(Date.now() + (daysAhead * 86400 + 10 * 3600) * 1000).toISOString().slice(0, 10);
+
+test("start date is Brisbane midnight at the start of the chosen day", () => {
+  assert.equal(new Date(brisbaneStartOfDay("2026-11-12")! * 1000).toISOString(), "2026-11-11T14:00:00.000Z");
+  assert.equal(brisbaneStartOfDay("12/11/2026"), null);
+  // 2026-10-19 11:00 Brisbane -> start of that day
+  assert.equal(new Date(brisbaneStartOfToday(Date.parse("2026-10-19T01:00:00Z")) * 1000).toISOString(), "2026-10-18T14:00:00.000Z");
+  // 23:30 Brisbane is still the same Brisbane day
+  assert.equal(new Date(brisbaneStartOfToday(Date.parse("2026-10-19T13:30:00Z")) * 1000).toISOString(), "2026-10-18T14:00:00.000Z");
+});
+
+test("start date: future date is stored in coupon + promo metadata; blank/today means no start date", () => {
+  const i = parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, target: "all", startsAt: futureDay(5) });
+  assert.ok(typeof i !== "string" && i.startsAt);
+  const p = buildStripeParams(i, null);
+  assert.equal((p.promo.metadata as Record<string, string>).starts_at, String(i.startsAt));
+  assert.equal((p.coupon.metadata as Record<string, string>).starts_at, String(i.startsAt));
+  const blank = parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: "" });
+  assert.ok(typeof blank !== "string" && blank.startsAt === undefined);
+  assert.equal("starts_at" in (buildStripeParams(blank as never, null).promo.metadata as object), false);
+  const today = parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: futureDay(0) });
+  assert.ok(typeof today !== "string" && today.startsAt === undefined);
+});
+
+test("start date: invalid, past and after-expiry are rejected with clear errors", () => {
+  assert.equal(parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: "soon" }), "Start date isn't valid");
+  assert.equal(parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: futureDay(-3) }), "Start date can't be in the past");
+  assert.equal(parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: futureDay(10), expiresAt: futureDay(5) }), "Start date must be before the expiry date");
+  const ok = parseCouponInput({ code: "LAUNCH", kind: "percent", value: 20, startsAt: futureDay(5), expiresAt: futureDay(5) });
+  assert.notEqual(typeof ok, "string"); // same day: start (midnight) is before expiry (end of day), allowed
+});
+
+test("start date: metadata read and not-started message (legacy codes and boundary)", () => {
+  assert.equal(codeStartsAt({}), null);
+  assert.equal(codeStartsAt({ starts_at: "garbage" }), null);
+  assert.equal(codeStartsAt(undefined), null);
+  assert.equal(codeStartsAt({ starts_at: "1800000000" }), 1800000000);
+  const t = Date.parse("2026-11-12T00:00:00+10:00") / 1000;
+  const before = (t - 1) * 1000;
+  assert.match(notStartedMessage("LAUNCH", t, before)!, /isn't active yet.*12 Nov 2026/);
+  assert.equal(notStartedMessage("LAUNCH", t, t * 1000), null); // live at the exact start second
+  assert.equal(notStartedMessage("LAUNCH", null), null);
+});
+
+test("start date: promo helper reads promo metadata first, falls back to coupon metadata", () => {
+  const t = Math.floor(Date.now() / 1000) + 86400 * 3;
+  assert.ok(promoNotStartedMessage({ code: "A", metadata: { starts_at: String(t) } }));
+  assert.ok(promoNotStartedMessage({ code: "A", metadata: {}, promotion: { coupon: { metadata: { starts_at: String(t) } } } }));
+  assert.equal(promoNotStartedMessage({ code: "A", metadata: {}, promotion: { coupon: "cou_1" } }), null);
+  assert.equal(promoNotStartedMessage({ code: "A", metadata: { starts_at: String(t - 86400 * 10) } }), null);
 });

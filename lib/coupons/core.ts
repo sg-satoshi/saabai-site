@@ -32,6 +32,41 @@ export function brisbaneEndOfDay(date: string): number | null {
   return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
 }
 
+/** Start of the given day (YYYY-MM-DD) in Brisbane, as a unix timestamp. */
+export function brisbaneStartOfDay(date: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const ms = Date.parse(`${date}T00:00:00+10:00`);
+  return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+}
+
+/** Start of "today" in Brisbane (UTC+10, no daylight saving) as a unix timestamp. */
+export function brisbaneStartOfToday(nowMs = Date.now()): number {
+  const DAY = 86400;
+  return Math.floor((Math.floor(nowMs / 1000) + 10 * 3600) / DAY) * DAY - 10 * 3600;
+}
+
+/** Start date (unix) stamped on a code's metadata. Null when none, missing or garbage (= starts immediately). */
+export function codeStartsAt(meta: Record<string, string | undefined> | null | undefined): number | null {
+  const n = parseInt(meta?.starts_at ?? "", 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Clear customer-facing message when a code hasn't started yet, otherwise null. */
+export function notStartedMessage(code: string, startsAt: number | null, nowMs = Date.now()): string | null {
+  if (!startsAt || startsAt * 1000 <= nowMs) return null;
+  const day = new Date(startsAt * 1000).toLocaleDateString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric" });
+  return `The code ${code} isn't active yet. It starts on ${day}.`;
+}
+
+type PromoLike = { code: string; metadata?: Record<string, string> | null; promotion?: { coupon?: string | { metadata?: Record<string, string> | null } | null } | null };
+
+/** Message when a Stripe promotion code (coupon expanded) has a start date still in the future, else null. */
+export function promoNotStartedMessage(promo: PromoLike, nowMs = Date.now()): string | null {
+  const c = promo.promotion?.coupon;
+  const meta = { ...(c && typeof c === "object" ? c.metadata ?? {} : {}), ...(promo.metadata ?? {}) };
+  return notStartedMessage(promo.code, codeStartsAt(meta), nowMs);
+}
+
 /** Format a unix expiry as a Brisbane date + time label. */
 export function brisbaneLabel(unix: number): string {
   return new Date(unix * 1000).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -55,6 +90,8 @@ export interface CouponInput {
   minimumSpendCents?: number;
   maxRedemptions?: number;
   expiresAt?: number;
+  /** Active-from (unix). Enforced by us; Stripe promotion codes have no start date. */
+  startsAt?: number;
 }
 
 /**
@@ -115,6 +152,14 @@ export function parseCouponInput(body: Record<string, unknown>): CouponInput | s
     if (ts * 1000 <= Date.now()) return "Expiry must be today or later";
     expiresAt = ts;
   }
+  let startsAt: number | undefined;
+  if (typeof body.startsAt === "string" && body.startsAt.trim()) {
+    const ts = brisbaneStartOfDay(body.startsAt.trim());
+    if (ts == null) return "Start date isn't valid";
+    if (ts < brisbaneStartOfToday()) return "Start date can't be in the past";
+    if (ts * 1000 > Date.now()) startsAt = ts; // starting today = starts now, nothing to schedule
+    if (startsAt && expiresAt && startsAt >= expiresAt) return "Start date must be before the expiry date";
+  }
   return {
     code, kind, value, duration,
     durationMonths: duration === "repeating" ? Math.max(1, months || 1) : undefined,
@@ -124,6 +169,7 @@ export function parseCouponInput(body: Record<string, unknown>): CouponInput | s
     minimumSpendCents: minSpend > 0 ? Math.round(minSpend * 100) : undefined,
     maxRedemptions: max > 0 ? max : undefined,
     expiresAt,
+    startsAt,
   };
 }
 
@@ -137,7 +183,7 @@ export function buildStripeParams(i: CouponInput, productIds: string | string[] 
   const coupon: Record<string, unknown> = {
     duration: i.duration,
     name: i.code,
-    metadata: { source: "saabai-admin", target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), first_time_only: String(i.firstTimeOnly) },
+    metadata: { source: "saabai-admin", target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), first_time_only: String(i.firstTimeOnly), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}) },
   };
   if (i.kind === "percent") coupon.percent_off = i.value;
   else { coupon.amount_off = Math.round(i.value * 100); coupon.currency = "aud"; }
@@ -149,7 +195,7 @@ export function buildStripeParams(i: CouponInput, productIds: string | string[] 
   const restrictions: Record<string, unknown> = {};
   if (i.firstTimeOnly) restrictions.first_time_transaction = true;
   if (i.minimumSpendCents) { restrictions.minimum_amount = i.minimumSpendCents; restrictions.minimum_amount_currency = "aud"; }
-  const promo: Record<string, unknown> = { code: i.code, metadata: { target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}) } };
+  const promo: Record<string, unknown> = { code: i.code, metadata: { target: i.target, ...(i.targets?.length ? { targets: i.targets.join(",") } : {}), ...(i.startsAt ? { starts_at: String(i.startsAt) } : {}) } };
   if (Object.keys(restrictions).length) promo.restrictions = restrictions;
   if (i.maxRedemptions) promo.max_redemptions = i.maxRedemptions;
   if (i.expiresAt) promo.expires_at = i.expiresAt;
