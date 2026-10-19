@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
+import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -113,7 +114,19 @@ The overallScore should be 0-100 where 0 = perfectly clean, 100 = critical issue
 Generate at least 4 findings and check carefully for missing clauses.`;
 }
 
+/**
+ * Lex firm users and admins only (lib/lex-review-access), with a per-firm daily cap.
+ * A request that fails is refunded so it doesn't use up the firm's allowance.
+ */
 export async function POST(request: Request): Promise<Response> {
+  const gate = await gateReview(request, "review");
+  if (!gate.ok) return gate.response;
+  const res = await runReview(request, gate.actor);
+  if (!res.ok) await gate.refund();
+  return res;
+}
+
+async function runReview(request: Request, _actor: LexReviewActor): Promise<Response> {
   try {
     const body: ReviewRequest = await request.json();
 
@@ -145,7 +158,7 @@ export async function POST(request: Request): Promise<Response> {
       report = JSON.parse(text);
     } catch {
       return Response.json(
-        { error: "Analysis failed — could not parse review output" },
+        { error: "Analysis failed, could not parse review output" },
         { status: 500 }
       );
     }
@@ -158,7 +171,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json(report);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-review]", err);
+    return Response.json({ error: "review_failed" }, { status: 500 });
   }
 }

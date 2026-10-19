@@ -20,7 +20,7 @@ export type LexTool =
   | "verifySection"
   | "searchStateLegislation"
   | "searchASIC"
-  | "searchAAT"
+  | "searchAAT" // Administrative Review Tribunal (ART) and former AAT; id kept for saved configs
   | "searchFairWork"
   | "searchCorporationsLaw"
   | "searchFamilyLaw"
@@ -86,7 +86,9 @@ Primary jurisdiction: Commonwealth and all States and Territories.
 
 Common law applies generally; note when State law diverges.
 
-Key courts: High Court of Australia (binding all), Federal Court, State Supreme Courts, specialist tribunals (AAT, VCAT, NCAT, QCAT etc.).
+Key courts: High Court of Australia (binding all), Federal Court, State Supreme Courts, specialist tribunals (ART, VCAT, NCAT, QCAT etc.).
+
+The Administrative Review Tribunal (ART) replaced the Administrative Appeals Tribunal (AAT) on 14 October 2024. Reviews of ATO objection decisions now go to the ART (Taxation and Commercial jurisdiction). Cite decisions made before that date as AAT decisions (AATA) and later ones as ART decisions (ARTA). Never describe the AAT as the current tribunal.
 
 INTERNATIONAL LAW:
 For comparative law, treaty obligations, or international arbitration: use searchInternational.

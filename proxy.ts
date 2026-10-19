@@ -148,9 +148,9 @@ const ADMIN_API = [
   "/api/growth",
   "/api/mission-control",
   "/api/lex-settings",
-  "/api/lex-review-queue",
-  "/api/lex-review-submit",
-  "/api/lex-review",
+  "/api/lex-review-queue",   // supervisor queue across firms: genuinely admin
+  // /api/lex-review and /api/lex-review-submit are NOT admin-only: signed-in Lex firm users run them,
+  // and each route checks the caller and the firm's daily cap (lib/lex-review-access).
   "/api/rex-woo-backfill",
   "/api/rex-price-test",
   "/api/rex-pipedrive-sync",
