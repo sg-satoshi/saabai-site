@@ -7,7 +7,7 @@
 import { getStripe } from "../stripe";
 import type { SiteBillingRecord } from "./store";
 import { careProductFor, findActivePromo, promoCoversProducts } from "../coupons/stripe";
-import { normaliseCode } from "../coupons/core";
+import { normaliseCode, promoNotStartedMessage } from "../coupons/core";
 
 export const BILLING_SOURCE = "saabai-billing";
 export const stripeConfigured = () => !!process.env.STRIPE_SECRET_KEY;
@@ -44,6 +44,8 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
   // A product-restricted code (one or several products) only pre-applies if it covers this care plan.
   // Otherwise skip the pre-apply so the customer still reaches Stripe, where they can retry a code.
   if (promo && !promoCoversProducts(promo, [fixedProduct])) promo = null;
+  // A code with a start date still in the future isn't pre-applied (Stripe itself has no start date).
+  if (promo && promoNotStartedMessage(promo)) promo = null;
   const line_items: any[] = [
     {
       quantity: 1,

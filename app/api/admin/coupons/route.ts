@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "../../../../lib/stripe";
 import { isAdminRequest } from "../../../../lib/product-stripe";
-import { buildStripeParams, parseCouponInput, targetsFromMetadata } from "../../../../lib/coupons/core";
+import { buildStripeParams, codeStartsAt, parseCouponInput, targetsFromMetadata } from "../../../../lib/coupons/core";
 import { targetStatuses } from "../../../../lib/coupons/stripe";
 
 export const runtime = "nodejs";
@@ -34,6 +34,7 @@ export async function GET() {
         timesRedeemed: pc.times_redeemed,
         maxRedemptions: pc.max_redemptions ?? null,
         expiresAt: pc.expires_at ?? null,
+        startsAt: codeStartsAt(meta),
         percentOff: c?.percent_off ?? null,
         amountOff: c?.amount_off ?? null,
         duration: c?.duration ?? "once",
