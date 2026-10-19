@@ -23,7 +23,8 @@ export async function GET() {
       if (all.length >= 500) break;
     }
     const codes = all.map((pc) => {
-      const c = pc.promotion.coupon as Stripe.Coupon;
+      // Read-only display: older promotion codes can come back without `promotion`.
+      const c = (pc.promotion?.coupon ?? (pc as unknown as { coupon?: Stripe.Coupon }).coupon) as Stripe.Coupon | undefined;
       const restrictedProducts = c?.applies_to?.products ?? [];
       const meta = { ...(c?.metadata ?? {}), ...(pc.metadata ?? {}) } as Record<string, string>;
       const covered = targetsFromMetadata(meta, restrictedProducts);
