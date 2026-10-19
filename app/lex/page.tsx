@@ -6,6 +6,7 @@ import {
   type LexError, cleanThreads, stripErrorAnswers, isStreamErrorPart, signInHref,
   lexErrorFromResponse, lexErrorFromStatus, lexNetworkError, lexEmptyError,
 } from "../../lib/lex-errors";
+import { type LexAnswerMeta, renderMarkers, CITE_MARKER } from "../../lib/lex-sources";
 import { Document, Packer, Paragraph, TextRun, Header, Footer, AlignmentType } from "docx";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ const C = {
   aiBubble:     "#1B2B4B",
 };
 
-type ChatMessage  = { role: "user" | "assistant"; content: string };
+type ChatMessage  = { role: "user" | "assistant"; content: string; meta?: LexAnswerMeta };
 type Thread       = { id: string; title: string; messages: ChatMessage[]; createdAt: number; projectId?: string };
 type Project      = { id: string; name: string; createdAt: number; colour: string };
 type Mode         = "research" | "draft" | "review";
@@ -92,6 +93,75 @@ function LexErrorCard({ error, onRetry, retryLabel = "Try again" }: { error: Lex
               fontSize: 12, fontWeight: 600,
             }}>{retryLabel}</button>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Citations (phase B0: plain rendering until the redesigned sources panel lands) ──
+/** Answer text for display and copy: markers become [1] at [41]; while streaming they are hidden. */
+function answerText(msg: ChatMessage): string {
+  if (msg.role !== "assistant") return msg.content;
+  if (msg.meta) return renderMarkers(msg.content, msg.meta.citations);
+  return msg.content.replace(CITE_MARKER, "").replace(/\[\[cite:[^\]]*$/i, "").replace(/[ \t]+([.,;:])/g, "$1");
+}
+
+const CITE_STATUS: Record<string, { label: string; colour: string }> = {
+  verified:           { label: "Verified in source", colour: "#22c55e" },
+  not_checked:        { label: "Not checked",        colour: "#eab308" },
+  pinpoint_not_found: { label: "Pinpoint not found", colour: "#f97316" },
+  unknown_source:     { label: "Unknown source",     colour: "#ef4444" },
+};
+const CONF: Record<string, { label: string; colour: string }> = {
+  high: { label: "High confidence", colour: "#22c55e" },
+  moderate: { label: "Moderate confidence", colour: "#eab308" },
+  low: { label: "Low confidence", colour: "#f97316" },
+};
+
+function AnswerSources({ meta }: { meta: LexAnswerMeta }) {
+  const cited = meta.citations.filter(c => c.id);
+  const firstStatus = (id: string) => (cited.find(c => c.id === id && c.status === "verified") ?? cited.find(c => c.id === id))?.status;
+  const number = (id: string) => cited.find(c => c.id === id)?.n;
+  const sources = meta.sources.filter(s => number(s.id));
+  if (!sources.length && !meta.conclusions.length && !meta.verify.length) return null;
+  return (
+    <div data-lex-sources style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}`, fontSize: 12.5, lineHeight: 1.55 }}>
+      {meta.conclusions.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Conclusions</p>
+          {meta.conclusions.map((c, i) => (
+            <div key={i} style={{ marginBottom: 6 }}>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: CONF[c.confidence].colour, marginRight: 6 }}>{CONF[c.confidence].label}</span>
+              <span style={{ color: C.text }}>{c.text}</span>
+              {c.citeIds.length > 0 && <span style={{ color: C.textMuted, fontFamily: "ui-monospace, monospace" }}> {c.citeIds.map(id => number(id) ? `[${number(id)}]` : "").join("")}</span>}
+              <div style={{ color: C.textMuted, fontSize: 11.5 }}>{c.basis}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {sources.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            Sources: {meta.counts.verified} verified, {meta.counts.notChecked} not checked{meta.counts.problems ? `, ${meta.counts.problems} to fix` : ""}
+          </p>
+          {sources.map(s => {
+            const st = CITE_STATUS[firstStatus(s.id) ?? "not_checked"];
+            return (
+              <div key={s.id} style={{ marginBottom: 6 }}>
+                <span style={{ fontFamily: "ui-monospace, monospace", color: C.text }}>[{number(s.id)}]</span>{" "}
+                <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: "#8ab4ff" }}>{s.title || s.url}</a>
+                <span style={{ color: C.textMuted }}> · {s.typeLabel}</span>
+                <span style={{ color: st.colour, marginLeft: 6, fontSize: 11 }}>{st.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {meta.verify.length > 0 && (
+        <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)" }}>
+          <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, color: "#eab308" }}>Verify before relying</p>
+          {meta.verify.map((v, i) => <div key={i} style={{ color: C.text, fontSize: 12 }}>{v}</div>)}
         </div>
       )}
     </div>
@@ -689,7 +759,7 @@ export default function LexPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated, clientId }),
+        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId }),
         signal: abortRef.current.signal,
       });
 
@@ -704,6 +774,7 @@ export default function LexPage() {
       let buffer = "";
       let started = false;
       let streamFailed = false;
+      let answerMeta: LexAnswerMeta | undefined;
 
       while (!streamFailed) {
         const { done, value } = await reader.read();
@@ -716,6 +787,7 @@ export default function LexPage() {
           try {
             const parsed = JSON.parse(line.slice(6));
             if (isStreamErrorPart(parsed)) { streamFailed = true; break; }
+            if (parsed.type === "data-lex-sources" && parsed.data) { answerMeta = parsed.data as LexAnswerMeta; continue; }
             if (parsed.type === "text-delta" && parsed.delta) {
               fullText += parsed.delta;
               const withAI: ChatMessage[] = [...updated, { role: "assistant", content: fullText }];
@@ -735,7 +807,7 @@ export default function LexPage() {
       } else if (!fullText.trim()) {
         fail(lexEmptyError("research"));
       } else {
-        const final: ChatMessage[] = [...updated, { role: "assistant", content: fullText.trim() }];
+        const final: ChatMessage[] = [...updated, { role: "assistant", content: fullText.trim(), ...(answerMeta ? { meta: answerMeta } : {}) }];
         updateThreadMessages(finalId, final);
         // Follow-up chips
         setChips(pickReplies());
@@ -750,7 +822,7 @@ export default function LexPage() {
   function copyLast() {
     const last = [...messages].reverse().find(m => m.role === "assistant");
     if (!last) return;
-    navigator.clipboard.writeText(last.content).then(() => {
+    navigator.clipboard.writeText(answerText(last)).then(() => {
       setCopyFeedback("Copied!");
       setTimeout(() => setCopyFeedback(null), 1500);
     });
@@ -1800,7 +1872,8 @@ export default function LexPage() {
                   border: `1px solid ${C.border}`,
                   fontSize: 14, lineHeight: 1.7, color: C.text,
                 }}>
-                  {renderLex(msg.content)}
+                  {renderLex(answerText(msg))}
+                  {msg.role === "assistant" && msg.meta && <AnswerSources meta={msg.meta} />}
                 </div>
               </div>
             ))}

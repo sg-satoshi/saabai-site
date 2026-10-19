@@ -1,8 +1,11 @@
+import { streamText, stepCountIs, createUIMessageStream, createUIMessageStreamResponse, type SystemModelMessage } from "ai";
 import { lexErrorResponse, stripErrorAnswers } from "../../../lib/lex-errors";
-import { streamText, stepCountIs, type SystemModelMessage } from "ai";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
-import { buildLexResearchTools, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
+import { buildLexResearchTools, withSourceRegistry, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
+import { SourceRegistry, CITATION_RULES, stripMarkers } from "../../../lib/lex-sources";
+import { buildAnswerMeta } from "../../../lib/lex-answer-meta";
+import { noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
@@ -11,7 +14,7 @@ import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
 // firm's own model when one is saved. Never route legal research to a cheap model.
 
 export const runtime = "nodejs";
-export const maxDuration = 120; // Sonnet 4.6 research with tool steps can take up to a minute
+export const maxDuration = 120; // search, up to 4 source reads, answer, then the confidence check
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +23,7 @@ export async function POST(req: Request) {
     const config = getLexConfig(clientId);
 
     // Load portal settings for the logged-in user.
-    // Use the session cookie email (the firm's login) — settings are saved per login email.
+    // Use the session cookie email (the firm's login): settings are saved per login email.
     // Fall back to config.email.teamEmail for non-browser callers.
     let systemPromptContent = config.systemPrompt;
     try {
@@ -38,14 +41,15 @@ export async function POST(req: Request) {
         systemPromptContent = config.systemPrompt + buildSystemPromptAddition(portalSettings);
       }
     } catch {
-      // Non-fatal — fall back to base system prompt if Redis is unavailable
+      // Non-fatal: fall back to base system prompt if Redis is unavailable
     }
 
     if (!Array.isArray(messages)) return lexErrorResponse(400, "messages required");
     // Old threads may hold a saved error message; it is not an answer and never goes to the model.
     const coreMessages = stripErrorAnswers(messages as Array<{ role: string; content: string }>)
       .filter(m => m.role !== "system" && typeof m.content === "string" && m.content.trim())
-      .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+      // Citation markers in earlier answers point at an old request's sources: drop them.
+      .map(m => ({ role: m.role as "user" | "assistant", content: m.role === "assistant" ? stripMarkers(m.content) : m.content }));
 
     // ── PRIVACY MODE: Tokenize PII before sending to LLM ──
     let tokenMap: Record<string, string> = {};
@@ -69,8 +73,12 @@ export async function POST(req: Request) {
       systemPromptContent += `
 
 ---
-PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeholder tokens like {{PERSON_1}}, {{TRUST_1}}, {{EMAIL_1}}, etc. You MUST preserve these exact tokens in your responses. Do not expand, guess, or replace them with real names or values. Treat all {{TYPE_N}} tokens as opaque placeholders. Your tools will receive tokenized queries — search using legal doctrine and general terms, not personal identifiers.`;
+PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeholder tokens like {{PERSON_1}}, {{TRUST_1}}, {{EMAIL_1}}, etc. You MUST preserve these exact tokens in your responses. Do not expand, guess, or replace them with real names or values. Treat all {{TYPE_N}} tokens as opaque placeholders. Your tools will receive tokenized queries, so search using legal doctrine and general terms, not personal identifiers.`;
     }
+
+    // Internal research mode cites by source id; the external intake bot has no research tools.
+    const citeMode = config.mode === "internal";
+    if (citeMode) systemPromptContent += CITATION_RULES;
 
     const cachedSystem: SystemModelMessage = {
       role: "system",
@@ -83,19 +91,26 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
     // The firm's own API key + model if configured; otherwise Lex's research model.
     const model = await getLexModelForFirm(config.id);
 
+    // Server-side source list: every search result gets an id and a type decided here, not by the model.
+    const registry = new SourceRegistry();
+    const tools = citeMode ? withSourceRegistry(buildLexResearchTools(config), registry) : buildLexResearchTools(config);
+
+    const steps = LEX_RESEARCH_MAX_STEPS + (citeMode ? 2 : 0); // room for readSource calls
     const result = streamText({
       model,
       system: cachedSystem,
       messages: tokenizedMessages,
-      stopWhen: stepCountIs(LEX_RESEARCH_MAX_STEPS),
-      prepareStep: finalStepAnswers(LEX_RESEARCH_MAX_STEPS),
-      tools: buildLexResearchTools(config),
+      stopWhen: stepCountIs(steps),
+      prepareStep: finalStepAnswers(steps),
+      tools,
+      experimental_transform: noDashesTransform(),
     });
 
     // ── PRIVACY MODE: Buffer stream, detokenize, re-stream ──
     if (privacyMode) {
       const fullText = await result.text;
       const detokenized = rehydrateTokens(fullText, tokenMap);
+      const meta = citeMode ? await buildAnswerMeta(model, fullText, registry) : null;
 
       // Emit as SSE compatible with the Lex widget client
       const encoder = new TextEncoder();
@@ -106,6 +121,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
           let i = 0;
           function send() {
             if (i >= chunks.length) {
+              if (meta) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "data-lex-sources", data: meta })}\n\n`));
               controller.close();
               return;
             }
@@ -128,7 +144,22 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       });
     }
 
-    return result.toUIMessageStreamResponse();
+    if (!citeMode) return result.toUIMessageStreamResponse();
+
+    // Stream the answer, then send the checked source list, citations and confidence as one data part.
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        writer.merge(result.toUIMessageStream({ sendFinish: false }));
+        const text = await result.text;
+        const meta = await buildAnswerMeta(model, text, registry);
+        writer.write({ type: "data-lex-sources", data: meta });
+      },
+      onError: (err) => {
+        console.error("[lex-research stream]", err);
+        return "research_failed";
+      },
+    });
+    return createUIMessageStreamResponse({ stream });
   } catch (err) {
     console.error("[lex-research]", err);
     return lexErrorResponse(500, "research_failed");
