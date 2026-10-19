@@ -292,3 +292,33 @@ test("hash key: store receives only the hash key, never the raw email", async ()
   await markUsed("promo_1", "Jane@Example.com", "cs_1", store, key);
   assert.ok(seen.length > 0 && seen.every((x) => !/jane|example/i.test(x)));
 });
+
+import { couponSummary, pickerItems } from "../lib/coupons/picker";
+
+test("payments picker: labels, scheduled greyed with start, product-only flagged, dead codes dropped", () => {
+  const now = Date.parse("2026-10-19T00:00:00Z");
+  const future = Math.floor(now / 1000) + 86400 * 5;
+  const mk = (id: string, code: string, coupon: object, extra: object = {}) => ({ id, code, active: true, times_redeemed: 0, promotion: { coupon }, ...extra });
+  const items = pickerItems([
+    mk("p5", "ONLYBP", { percent_off: 10, duration: "once", applies_to: { products: ["prod_x"] } }),
+    mk("p4", "LATER", { amount_off: 5000, duration: "once" }, { metadata: { starts_at: String(future) } }),
+    mk("p1", "20STARTER", { percent_off: 20, duration: "forever" }),
+    mk("p2", "WELCOME", { percent_off: 15, duration: "repeating", duration_in_months: 3 }),
+    mk("d1", "OFF", { percent_off: 5 }, { active: false }),
+    mk("d2", "OLD", { percent_off: 5 }, { expires_at: Math.floor(now / 1000) - 1 }),
+    mk("d3", "FULL", { percent_off: 5 }, { max_redemptions: 2, times_redeemed: 2 }),
+  ], now);
+  assert.deepEqual(items.map((i) => [i.code, i.state]), [["20STARTER", "selectable"], ["WELCOME", "selectable"], ["LATER", "scheduled"], ["ONLYBP", "product"]]);
+  assert.equal(items[0].label, "20STARTER - 20% off, recurring");
+  assert.equal(items[1].label, "WELCOME - 15% off for 3 months");
+  assert.equal(items[2].startsAt, future);
+  assert.equal(items[0].startsAt, null);
+  assert.equal(couponSummary({ amount_off: 5050, duration: "once" }), "$50.50 off, once");
+  assert.equal(couponSummary({ amount_off: 5000 }), "$50 off, once");
+});
+
+test("a code whose start time has passed is selectable", () => {
+  const now = Date.parse("2026-10-19T00:00:00Z");
+  const [i] = pickerItems([{ id: "a", code: "GO", active: true, times_redeemed: 0, metadata: { starts_at: String(Math.floor(now / 1000) - 10) }, promotion: { coupon: { percent_off: 10, duration: "once" } } }], now);
+  assert.equal(i.state, "selectable");
+});
