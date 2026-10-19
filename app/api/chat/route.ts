@@ -379,9 +379,8 @@ export async function POST(req: Request) {
 
       qualify_lead: tool({
         description:
-          "Record your assessment of the 3 qualification signals for this visitor. " +
-          "Call this before routing to show_booking_cta or capture_lead. " +
-          "Only call show_booking_cta afterward if the score (number of true values) is 2 or 3.",
+          "Record your internal read of the 3 qualification signals for this visitor once you have enough context. " +
+          "Never mention scores to the visitor.",
         inputSchema: z.object({
           business_fit: z
             .boolean()
@@ -417,9 +416,9 @@ export async function POST(req: Request) {
 
       show_booking_cta: tool({
         description:
-          "Show the Calendly booking button to the visitor. " +
-          "Only call this after qualify_lead has confirmed a score of 2 or 3. " +
-          "Do not call this if qualification score is ≤1.",
+          "Show the 'book a call with Shane' button. " +
+          "Call immediately whenever the visitor asks for a person, a call, a demo or a quote. " +
+          "Otherwise only when they are a good fit with clear intent and a call is the right next step. Once per conversation unless they ask again.",
         inputSchema: z.object({
           qualification_summary: z
             .string()
@@ -497,8 +496,8 @@ export async function POST(req: Request) {
 
       capture_lead: tool({
         description:
-          "Trigger the lead capture form. " +
-          "Use when the visitor is warm but not ready to book, or when qualification score is ≤1.",
+          "Show a short name and email form. " +
+          "Use when you have something to send them (a summary, the score link, Blueprint details) or Shane needs to reply by email. Always tell them why you're asking.",
         inputSchema: z.object({
           reason: z
             .string()
