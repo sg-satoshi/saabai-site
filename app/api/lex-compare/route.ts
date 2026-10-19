@@ -60,7 +60,7 @@ Keep the analysis concise but thorough.`;
 
     return Response.json({ analysis: text });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-compare]", err);
+    return Response.json({ error: "compare_failed" }, { status: 500 });
   }
 }
