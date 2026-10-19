@@ -187,7 +187,7 @@ export default function LegalPage() {
               Book a Demo
             </a>
             <a
-              href="/lex"
+              href="#how-it-works"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 background: "transparent", color: C.gold,
@@ -334,7 +334,7 @@ export default function LegalPage() {
       </section>
 
       {/* ── 4. HOW IT WORKS ────────────────────────────────────────────────── */}
-      <section style={{
+      <section id="how-it-works" style={{
         padding: "88px 32px",
         borderBottom: `1px solid rgba(255,255,255,0.06)`,
         background: C.surface,
@@ -831,7 +831,7 @@ export default function LegalPage() {
                 Book a Free Demo
               </a>
               <a
-                href="/lex"
+                href="#how-it-works"
                 style={{
                   display: "inline-flex", alignItems: "center",
                   background: "transparent", color: C.gold,
@@ -841,7 +841,7 @@ export default function LegalPage() {
                   border: `1.5px solid ${C.goldBorder}`,
                 }}
               >
-                Try Lex Now
+                See How It Works
               </a>
             </div>
           </div>
