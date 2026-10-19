@@ -187,3 +187,17 @@ export async function usageFor(firm: string, now = new Date()): Promise<{ review
   const get = async (a: ReviewAction) => Number((await redis?.get<number | string>(usedKey(a, firm, day))) ?? 0) || 0;
   return { reviews: await get("review"), submits: await get("submit"), cap: await capForFirm(firm) };
 }
+
+export type FirmUsage = { reviews: number; reviewCap: number; submits: number; compares: number; compareCap: number };
+
+/** Today's usage for a firm's own dashboard (Brisbane day). Read-only. */
+export async function firmUsageToday(firm: string, now = new Date()): Promise<FirmUsage> {
+  const redis = getRedis();
+  const day = brisbaneDay(now);
+  const num = async (key: string) => Number((await redis?.get<number | string>(key)) ?? 0) || 0;
+  const [reviews, submits, compares, reviewCap, compareCap] = await Promise.all([
+    num(usedKey("review", firm, day)), num(usedKey("submit", firm, day)), num(compareUsedKey(firm, day)),
+    capForFirm(firm), compareCapForFirm(firm),
+  ]);
+  return { reviews, reviewCap, submits, compares, compareCap };
+}

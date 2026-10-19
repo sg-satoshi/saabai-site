@@ -28,6 +28,8 @@ import { Icon } from "./_components/icons";
 import { exportAnswerToWord } from "./_components/exportAnswer";
 import { exportDraftToWord } from "./_components/exportDraft";
 import { DraftingView } from "./_components/Drafting";
+import { FirmDashboard } from "./_components/Dashboard";
+import type { FirmUsage } from "../../lib/lex-review-access";
 import type { QAReport } from "../../lib/lex-draft-display";
 import type { ReviewReport } from "../../lib/lex-review-display";
 import { ReviewView } from "./_components/Review";
@@ -100,6 +102,8 @@ export default function LexPage() {
   const [navOpen, setNavOpen] = useState(false);
   // Shown in the sidebar only; thread sync still keys on userEmail from the portal session.
   const [displayEmail, setDisplayEmail] = useState<string | null>(null);
+  const [firmUsage, setFirmUsage] = useState<FirmUsage | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState<number | null>(null);
 
   // ── Draft mode state ───────────────────────────────────────────────────────
@@ -196,7 +200,13 @@ export default function LexPage() {
         if (savedName) setFirmName(savedName);
       } catch {}
 
-      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => { if (typeof d?.email === "string") setDisplayEmail(d.email); }).catch(() => {});
+      fetch("/api/lex-me").then(r => (r.ok ? r.json() : null)).then(d => {
+        if (typeof d?.email === "string") setDisplayEmail(d.email);
+        setIsAdmin(d?.admin === true);
+        if (d?.usage && typeof d.usage.reviews === "number") setFirmUsage(d.usage as FirmUsage);
+      }).catch(() => {});
+      // Deep link: /lex?view=dashboard opens the firm dashboard inside the Lex shell.
+      if (new URLSearchParams(window.location.search).get("view") === "dashboard") setMode("dashboard");
       // Narrow screens start with the sources panel closed (it opens as a bottom sheet).
       if (window.matchMedia("(max-width: 980px)").matches) setPanelOpen(false);
 
@@ -896,6 +906,7 @@ export default function LexPage() {
           )}
           {mode === "draft" && <div className="lx-ctx"><span className="k">Drafting</span><b>{DOCUMENT_TYPES.find(d => d.id === draftTypeId)?.name ?? "Document"}</b></div>}
           {mode === "review" && <div className="lx-ctx"><span className="k">Doc review</span><b>{reviewFile?.name ?? "Review a document"}</b></div>}
+          {mode === "dashboard" && <div className="lx-ctx"><span className="k">Firm</span><b>Dashboard</b></div>}
           <span className="lx-sp" />
           {mode === "research" && !showWelcome && messages.some(m => m.role === "assistant") && (
             <div className="lx-share-wrap">
@@ -966,6 +977,17 @@ export default function LexPage() {
               </div>
             )}
           </>
+        )}
+
+        {mode === "dashboard" && (
+          <FirmDashboard
+            firmName={firmName} firmLogo={firmLogo} email={userEmail ?? displayEmail}
+            threads={threads} projects={projects} usage={firmUsage} admin={isAdmin}
+            onNewResearch={() => { newThread(); setTimeout(() => inputRef.current?.focus(), 0); }}
+            onDraft={() => setMode("draft")} onReview={() => setMode("review")}
+            onIntake={() => setIntakeOpen(true)} onFirmSettings={() => setSettingsOpen(true)}
+            onOpenThread={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setMode("research"); }}
+          />
         )}
 
         {mode === "draft" && (
