@@ -16,12 +16,12 @@ export async function GET(req: NextRequest) {
   const id = await adminId(req);
   if (!id) return Response.json({ error: "Forbidden" }, { status: 403 });
   const status = await twoFactorStatus(id);
-  // Sidebar identity: only display name, role label and the 2FA flag (no id, grant details or secrets).
+  // Sidebar identity: only display name, own email, role label and the 2FA flag (no id, grant details or secrets).
   const staff = await resolveStaff(id);
   const g = staff?.grant.role;
   const owner = id === (process.env.SAABAI_ADMIN_ID ?? "saabai");
   const roleLabel = owner ? "Owner" : g === "admin" ? "Admin" : g === "viewer" ? "Viewer" : "Staff · Custom";
-  const me = { name: staff?.name?.trim() || staff?.email || "", roleLabel, twoFactor: status.enabled };
+  const me = { name: staff?.name?.trim() || "", email: staff?.email || "", roleLabel, twoFactor: status.enabled };
   return Response.json({ ...status, me }, { headers: { "Cache-Control": "no-store" } });
 }
 
