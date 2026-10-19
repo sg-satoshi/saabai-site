@@ -16,6 +16,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
   const [enabled, setEnabled] = useState<Record<BlueprintTier, boolean> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingPay, setLoadingPay] = useState(true);
+  const [couponNote, setCouponNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(cancelled ? "Payment was cancelled. You have not been charged." : null);
   const t = TIERS[tier];
   const stripePromise = useMemo(() => (PUBLISHABLE ? loadStripe(PUBLISHABLE) : null), []);
@@ -40,6 +41,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
     setClientSecret(null);
     setLoadingPay(true);
     setError(null);
+    setCouponNote(null);
 
     if (enabled === null) return;
     const online = (enabled[tier] ?? false) && Boolean(PUBLISHABLE);
@@ -60,6 +62,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
         if (cancelledFetch) return;
         if (res.ok && d.clientSecret) {
           setClientSecret(d.clientSecret);
+          setCouponNote(typeof d.couponError === "string" ? d.couponError : null);
           gaEvent("begin_checkout", { currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] });
           setLoadingPay(false);
           return;
@@ -157,6 +160,11 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
                 <li>Card, Apple Pay, Google Pay</li>
                 <li>Invoice emailed instantly</li>
               </ul>
+              {couponNote && (
+                <div className="err" role="status">
+                  {couponNote} You can still pay the standard price below.
+                </div>
+              )}
               {error && (
                 <div className="err" role="alert">
                   {error}

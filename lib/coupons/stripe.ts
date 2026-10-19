@@ -10,7 +10,7 @@ import type Stripe from "stripe";
 import { getStripe } from "../stripe";
 import { getRedis } from "../redis";
 import { TIERS, type BlueprintTier } from "../blueprint";
-import { CARE_PLAN_IDS, TARGETS, type CarePlanId, type Redemption, type TargetId } from "./core";
+import { CARE_PLAN_IDS, TARGETS, couponCoversProducts, type CarePlanId, type Redemption, type TargetId } from "./core";
 
 export const CARE_PRODUCTS_KEY = "saabai:coupons:care-products";
 const CARE_NAMES: Record<CarePlanId, string> = { presence: "Presence", growth: "Growth", signature: "Signature" };
@@ -91,11 +91,31 @@ export async function targetStatuses(): Promise<TargetStatus[]> {
 export async function findActivePromo(code: string): Promise<Stripe.PromotionCode | null> {
   if (!code) return null;
   try {
-    const res = await getStripe().promotionCodes.list({ code, active: true, limit: 1 });
+    const res = await getStripe().promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
     const p = res.data[0];
     if (!p || (p.expires_at && p.expires_at * 1000 < Date.now())) return null;
     if (p.max_redemptions && p.times_redeemed >= p.max_redemptions) return null;
     return p;
+  } catch { return null; }
+}
+
+/**
+ * Does this promotion code discount at least one of the Stripe products being bought?
+ * Stripe silently skips a product-restricted coupon when nothing matches (or errors at
+ * session creation), so checkout calls this first and refuses the code clearly.
+ * Codes with no product restriction always pass.
+ */
+export function promoCoversProducts(promo: Stripe.PromotionCode, productIds: (string | null | undefined)[]): boolean {
+  const c = promo.promotion?.coupon;
+  const restricted = c && typeof c === "object" ? c.applies_to?.products : undefined;
+  return couponCoversProducts(restricted, productIds);
+}
+
+/** Stripe product behind a price id (null when it can't be read). */
+export async function productOfPrice(priceId: string): Promise<string | null> {
+  try {
+    const price = await getStripe().prices.retrieve(priceId);
+    return typeof price.product === "string" ? price.product : price.product.id;
   } catch { return null; }
 }
 

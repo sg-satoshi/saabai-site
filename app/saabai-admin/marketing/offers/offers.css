@@ -26,3 +26,19 @@
  .of-setup .btn{width:100%;justify-content:center;min-height:44px}
  .of-btn-full{height:44px}
 }
+.of-pick{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.of-chips{display:flex;flex-wrap:wrap;gap:6px}
+.of-chip{display:inline-flex;align-items:center;gap:6px;background:var(--n-100);border-radius:999px;padding:4px 6px 4px 10px;font-size:12.5px;color:var(--n-900)}
+.of-chip button{border:0;background:transparent;cursor:pointer;font-size:16px;line-height:1;color:var(--n-600);width:22px;height:22px;border-radius:50%}
+.of-chip button:hover{background:var(--n-200)}
+.of-pick-acts{display:flex;gap:12px;align-items:center;font-size:13px}
+.of-pick-acts button{border:0;background:transparent;color:var(--teal-700,var(--navy-900));font:inherit;font-weight:500;cursor:pointer;padding:4px 0}
+.of-pick-acts button:disabled{opacity:.4;cursor:default}
+.of-pick-acts .muted{margin-left:auto}
+.of-list{border:1px solid var(--n-200);border-radius:var(--r-md);max-height:220px;overflow:auto;padding:4px}
+.of-opt{display:flex;gap:10px;align-items:center;padding:8px;border-radius:6px;font-size:14px;cursor:pointer;margin:0!important}
+.of-opt:hover{background:var(--n-50)}
+.of-opt.off{opacity:.55;cursor:not-allowed}
+.of-opt em{font-style:normal;font-size:12px;color:var(--n-500)}
+.of-opt input{width:18px!important;height:18px!important;flex:none;accent-color:var(--navy-900);padding:0}
+@media (max-width:760px){.of-opt{min-height:44px}.of-chip button{width:30px;height:30px}.of-pick-acts button{min-height:44px}}
