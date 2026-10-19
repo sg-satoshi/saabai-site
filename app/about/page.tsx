@@ -146,7 +146,7 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-5">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Systems currently running in production include a 24/7 AI quoting and lead capture agent for PlasticOnline (Holland Plastics), and an after-hours intake agent for Tributum Law, a Brisbane tax law firm, plus websites on our care plans. Saabai is based on the Gold Coast, Queensland, with head office in Merrimac QLD 4226 (ABN 71 889 082 572).
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for PlasticOnline (Holland Plastics), and an after-hours intake agent for Tributum Law, an Adelaide tax law firm, plus websites on our care plans. Saabai is based on the Gold Coast, Queensland, with head office in Merrimac QLD 4226 (ABN 71 889 082 572).
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Neither client had to rip out their existing tools. Both were live within weeks.
