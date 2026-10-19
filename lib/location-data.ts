@@ -20,6 +20,11 @@ export interface LocationCaseStudy {
   industry: string;
   context: string;
   outcome: string;
+  /** Internal case study page, if there is one. */
+  caseStudyHref?: string;
+  caseStudyLabel?: string;
+  /** The client's own website. */
+  website?: { href: string; label: string };
 }
 
 export interface LocationIndustryLink {
@@ -83,7 +88,7 @@ export const BRISBANE: LocationConfig = {
     "Growth Corridor Businesses",
   ],
   marketContext: [
-    "Brisbane is in the middle of a once-in-a-generation build-up. With the 2032 Olympics anchoring more than a decade of infrastructure and venue investment, the city's construction, professional services and property sectors are expanding faster than most local teams can hire. That growth is good news, but it also means more quoting, more compliance paperwork and more client correspondence landing on the same number of people.",
+    "Brisbane is heading into a big decade of building ahead of the 2032 Olympics. With the 2032 Olympics anchoring more than a decade of infrastructure and venue investment, the city's construction, professional services and property sectors are expanding faster than most local teams can hire. That growth is good news, but it also means more quoting, more compliance paperwork and more client correspondence landing on the same number of people.",
     "The southeast growth corridor (Ipswich, Logan, Moreton Bay and the western suburbs) is where a lot of this expansion is happening. Trades businesses, building suppliers and sub-contractors here are taking on more work than ever, often while still running quotes, invoices and supplier orders through spreadsheets and email. The admin load grows in lockstep with the job book, and it tends to land on the owner after hours.",
     "Brisbane's local service businesses are growing up alongside the boom. Clinics, studios, agencies, retailers and service businesses that once won work on word of mouth now win it on responsiveness and on being found. Customers expect a fast website, same-day replies and to see you when they ask Google or ChatGPT for a recommendation, whatever size you are.",
     "What ties these sectors together is a familiar bottleneck: skilled people doing low-value administrative work because there was never time to build a better system. That is exactly where targeted AI automation pays off. The goal is not to replace anyone. It is to take the repetitive, rules-based parts of the day and hand them to software, so the experienced staff you fought to hire can focus on judgement, relationships and delivery.",
@@ -153,6 +158,9 @@ export const BRISBANE: LocationConfig = {
   ],
   caseStudy: {
     client: "PlasticOnline (Holland Plastics)",
+    caseStudyHref: "/case-studies/rex-plastics-online",
+    caseStudyLabel: "Read the PlasticOnline case study →",
+    website: { href: "https://plasticonline.com.au", label: "Visit PlasticOnline" },
     industry: "Manufacturing & Industrial Supply",
     context:
       "Holland Plastics sells cut-to-size plastics where every order needs individual pricing based on material, dimensions and finishing. Quoting was a manual, expert-dependent task that capped how many enquiries the team could handle in a day.",
@@ -176,7 +184,7 @@ export const BRISBANE: LocationConfig = {
       industry: "Free AI Score",
       href: "/score",
       context:
-        "Not sure where to start? A few quick questions show how ready your Brisbane business is for AI and what to do first. Free, about 5 minutes.",
+        "Not sure where to start? A few quick questions show how ready your Brisbane business is for AI and what to do first. Free, about 3 minutes.",
     },
   ],
   faqs: [
@@ -213,12 +221,12 @@ export const BRISBANE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for where automation saves your Brisbane business the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Brisbane",
+    title: "AI Automation and Websites, Brisbane",
     description:
-      "Brisbane websites from $2,000 plus $100/mo and AI automation plans from $497. Built for small businesses and trades. Free AI score. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Brisbane | Saabai",
+      "Websites with AI chatbots for Brisbane small businesses from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497. Free AI score.",
+    ogTitle: "AI Automation and Websites, Brisbane | Saabai",
     ogDescription:
-      "Brisbane small businesses: managed websites and a Saabai Blueprint for AI automation. Take the free AI Readiness Score.",
+      "Websites with AI chatbots for Brisbane small businesses from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497. Free AI score.",
     canonical: `${BASE_URL}/brisbane`,
   },
 };
@@ -313,6 +321,9 @@ export const GOLD_COAST: LocationConfig = {
   ],
   caseStudy: {
     client: "PlasticOnline (Holland Plastics)",
+    caseStudyHref: "/case-studies/rex-plastics-online",
+    caseStudyLabel: "Read the PlasticOnline case study →",
+    website: { href: "https://plasticonline.com.au", label: "Visit PlasticOnline" },
     industry: "Manufacturing & Industrial Supply",
     context:
       "Gold Coast-based Holland Plastics sells cut-to-size plastics, where every order is individually priced on material, size and finishing. Manual quoting limited how many enquiries the small team could process and tied up expert staff in routine pricing.",
@@ -336,7 +347,7 @@ export const GOLD_COAST: LocationConfig = {
       industry: "Free AI Score",
       href: "/score",
       context:
-        "Not sure where to start? A few quick questions show how ready your Gold Coast business is for AI and what to do first. Free, about 5 minutes.",
+        "Not sure where to start? A few quick questions show how ready your Gold Coast business is for AI and what to do first. Free, about 3 minutes.",
     },
   ],
   faqs: [
@@ -358,7 +369,7 @@ export const GOLD_COAST: LocationConfig = {
     },
     {
       q: "We're a trades business losing jobs because quotes take too long. Can you fix that?",
-      a: "That's a core use case. We build AI quoting agents that price jobs from your own rules and rate cards in minutes instead of hours, so you respond while the lead is still warm. Faster quotes routinely translate directly into a higher win rate.",
+      a: "That's a core use case. We build AI quoting agents that price jobs from your own rules and rate cards in minutes instead of hours, so you respond while the lead is still warm. Faster quotes help you reach the customer while they're still deciding.",
     },
     {
       q: "How quickly will we see a return?",
@@ -373,12 +384,12 @@ export const GOLD_COAST: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "Websites & AI Automation Gold Coast | Local Team",
+    title: "AI Automation and Websites, Gold Coast",
     description:
-      "Gold Coast based. Websites built, hosted and managed from $2,000 plus $100/mo, and Saabai Blueprint AI plans from $497 for small businesses. Free AI score.",
-    ogTitle: "Websites & AI Automation Gold Coast | Local Team | Saabai",
+      "Gold Coast based websites with AI chatbots from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497 for local small businesses.",
+    ogTitle: "AI Automation and Websites, Gold Coast | Saabai",
     ogDescription:
-      "Saabai is a Gold Coast team building websites and AI systems for local small businesses. Take the free AI Readiness Score.",
+      "Gold Coast based websites with AI chatbots from $2,000 plus $100 a month, and Saabai Blueprint AI plans from $497 for local small businesses.",
     canonical: `${BASE_URL}/gold-coast`,
   },
 };

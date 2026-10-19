@@ -4,12 +4,13 @@ import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/blueprint.css";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 import JsonLd from "../components/JsonLd";
+import { pageMeta } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Saabai Blueprint: your AI plan, ranked by dollars saved",
-  description: "A clear, ranked AI plan for small businesses and professional practices. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.",
-  alternates: { canonical: "/blueprint" },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/blueprint",
+  title: "AI Audit for Small Business, from $497 | Saabai Blueprint",
+  description: "A fixed-price AI audit for Australian small businesses and practices. Starter $497, Pro $1,497, Business $3,500 AUD. Fee credited if you build within 30 days.",
+});
 
 const ROWS: [string, string, string, string][] = [
   ["Ranked opportunities with $ saved", "✓", "✓", "✓"],
@@ -27,7 +28,13 @@ const FAQS = [
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
   ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST not applicable. You get an invoice by email straight after payment."],
-  ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
+  ["Can I get a refund?", "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply."],
+];
+
+// Shown first on the page and in the FAQPage schema. Kept separate from FAQS so the credit PR's edits to FAQS merge cleanly.
+const FAQ_LIST: string[][] = [
+  ["What is an AI audit?", "An AI audit looks at how your business runs and ranks which tasks are worth automating, with the hours and dollars each could save. The Saabai Blueprint is a fixed-price AI audit from $497, delivered as a PDF and in your client portal."],
+  ...FAQS,
 ];
 
 const SITE = "https://www.saabai.ai";
@@ -56,7 +63,7 @@ const blueprintSchema = {
     },
     {
       "@type": "FAQPage",
-      mainEntity: FAQS.map(([q, a]) => ({
+      mainEntity: FAQ_LIST.map(([q, a]) => ({
         "@type": "Question",
         name: q,
         acceptedAnswer: { "@type": "Answer", text: a },
@@ -82,7 +89,7 @@ export default function BlueprintPage() {
         <div className="wrap" style={{ position: "relative" }}>
           <span className="eyebrow">Saabai Blueprint · for small businesses and professional practices</span>
           <h1 style={{ marginTop: 18 }}>Know exactly what to<br /> <span className="grad">automate first</span></h1>
-          <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it saves and what it costs to build.</p>
+          <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it could save. Pro and Business add a build cost estimate for each.</p>
           <div style={{ marginTop: 32, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn" href="/score">Not sure which? Take the free score →</a>
           </div>
@@ -119,12 +126,16 @@ export default function BlueprintPage() {
             </div>
           </div>
           <p className="dim" style={{ fontSize: 13, marginTop: 14, textAlign: "center" }}>Prices in AUD. GST not applicable.</p>
+          <p style={{ fontSize: 15, marginTop: 18, textAlign: "center", display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href="/case-studies" style={{ color: "var(--teal)" }}>See real results →</a>
+            <a href="/process" style={{ color: "var(--teal)" }}>What happens after your Blueprint →</a>
+          </p>
         </div>
       </section>
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap" style={{ maxWidth: 960 }}>
-          <div className="head"><h2>Compare tiers</h2></div>
+          <div className="head"><h2>Compare Blueprint tiers and prices</h2></div>
           <div className="cmpwrap">
             <table>
               <thead><tr><th></th><th>Starter</th><th>Pro</th><th>Business</th></tr></thead>
@@ -142,8 +153,8 @@ export default function BlueprintPage() {
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap" style={{ maxWidth: 860 }}>
-          <div className="head"><h2>Questions</h2></div>
-          {FAQS.map(([q, a]) => (
+          <div className="head"><h2>Saabai Blueprint questions</h2></div>
+          {FAQ_LIST.map(([q, a]) => (
             <details className="faq" key={q}>
               <summary>{q}<span aria-hidden>+</span></summary>
               <p>{a}</p>

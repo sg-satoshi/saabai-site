@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { pageMeta, breadcrumbSchema } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
 
-export const metadata: Metadata = {
-  title: "Insights, AI for Australian Small Businesses",
+export const metadata: Metadata = pageMeta({
+  path: "/insights",
+  title: "Insights, AI for Australian Small Businesses | Saabai",
   description:
     "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
-  alternates: { canonical: "https://www.saabai.ai/insights" },
-  openGraph: {
-    url: "https://www.saabai.ai/insights",
-    title: "Insights, AI for Australian Small Businesses | Saabai",
-    description:
-      "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
-  },
-};
+});
 
 const articles = [
   {
@@ -57,6 +53,7 @@ const articles = [
 export default function InsightsPage() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={breadcrumbSchema([{ name: "Insights", path: "/insights" }])} />
       <Nav />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}

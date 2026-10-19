@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
+export const metadata: Metadata = pageMeta({
+  path: "/privacy",
+  title: "Privacy Policy | Saabai",
   description: "How Saabai collects, uses and protects your personal information.",
-  alternates: { canonical: "https://www.saabai.ai/privacy" },
-};
+});
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
@@ -40,6 +42,7 @@ const SECTIONS: { heading: string; body: string }[] = [
 export default function PrivacyPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#fff", color: "#14202b", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <JsonLd data={breadcrumbSchema([{ name: "Privacy", path: "/privacy" }])} />
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 80px" }}>
         <a href="/" style={{ color: "#5c6670", fontSize: 14, textDecoration: "none" }}>← Back to Saabai</a>
         <h1 style={{ fontSize: 34, fontWeight: 800, margin: "24px 0 8px" }}>Privacy Policy</h1>

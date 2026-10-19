@@ -7,19 +7,23 @@ const OFFERS = [
   { label: "Web Solutions", href: "/websites" },
   { label: "Saabai Blueprint", href: "/blueprint" },
   { label: "Free AI score", href: "/score" },
+  { label: "Services", href: "/services" },
 ];
 
 const COMPANY = [
   { label: "Work", href: "/case-studies" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+  { label: "Use cases", href: "/use-cases" },
+  { label: "How we work", href: "/process" },
+  { label: "Cost calculator", href: "/calculator" },
   { label: "FAQ", href: "/faq" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];
 
 const PRODUCTS = [
-  { label: "Lex", href: "/lex" },
+  { label: "Lex", href: "/legal" },
   { label: "Rex", href: "/case-studies" },
 ];
 

@@ -71,6 +71,7 @@ export default function ScorePage() {
         <div className="glow" style={{ opacity: 0.6 }} />
         <div className="qwrap">
           <span className="eyebrow">AI Readiness Score · small businesses and professional practices</span>
+          <h1 style={{ marginTop: 14, fontSize: 30, lineHeight: 1.15 }}>Free AI Readiness Score</h1>
           <div className="prog" style={{ marginTop: 18 }}>
             <span>Question {step + 1} of {total}</span>
             <span>About {left} minute{left > 1 ? "s" : ""} left</span>

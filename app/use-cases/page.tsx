@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { pageMeta } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "AI Automation Use Cases for Small Businesses",
-  description:
-    "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
-  alternates: { canonical: "https://www.saabai.ai/use-cases" },
-  openGraph: {
-    url: "https://www.saabai.ai/use-cases",
-    title: "AI Automation Use Cases for Small Businesses | Saabai",
-    description:
-      "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
-  },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/use-cases",
+  title: "AI Automation Examples for Small Businesses | Saabai",
+  description: "Real examples of what AI can automate in trades, clinics, real estate, retail and e-commerce: enquiries, quotes, bookings, follow-up and admin.",
+});
 
 const useCases = [
   {
@@ -89,19 +85,27 @@ const useCases = [
       "Audit trail documentation",
       "Regulatory deadline tracking and escalation",
     ],
-    outcome: "Compliance runs to schedule. Documentation is consistent. Audit risk is reduced.",
+    outcome: "Compliance runs to schedule. Documentation is consistent. Fewer missed deadlines and gaps in your records.",
   },
 ];
 
+const CASE_LINKS: Record<string, { label: string; href: string }> = {
+  "Trade & E-commerce": { label: "See the PlasticOnline case study →", href: "/case-studies/rex-plastics-online" },
+  "Real Estate Agencies": { label: "Read the FAQ →", href: "/faq" },
+  "Clinics, Studios & Salons": { label: "Read the FAQ →", href: "/faq" },
+};
+
 const inlineCta = {
   headline: "See this in your business?",
-  body: "Book a free 30-minute call. We'll identify the highest-value automation opportunities in your specific operation.",
+  body: "Take the free 3 minute AI score, or book a free 30 minute call. We'll help you find the highest-value opportunities in your business.",
   cta: "Book Your Free Strategy Call",
 };
 
 export default function UseCases() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "Use cases", path: "/use-cases" }])} />
 
       <Nav activePage="/use-cases" />
 
@@ -134,9 +138,8 @@ export default function UseCases() {
           actually requires expertise.
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-14 leading-relaxed">
-          If your business runs on expertise, there&apos;s almost always a layer of
-          operational work that can be automated, without changing how you
-          deliver value to clients.
+          In most small businesses there&apos;s a layer of repeat admin that can
+          be automated, without changing how you look after your customers.
         </p>
 
         <a
@@ -182,6 +185,14 @@ export default function UseCases() {
                     {outcome}
                   </p>
                 </div>
+                {CASE_LINKS[category] && (
+                  <a
+                    href={CASE_LINKS[category].href}
+                    className="inline-block mt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
+                  >
+                    {CASE_LINKS[category].label}
+                  </a>
+                )}
               </div>
 
               {/* Right, examples card */}
@@ -216,14 +227,22 @@ export default function UseCases() {
                   <p className="text-lg font-semibold tracking-tight mb-1">{inlineCta.headline}</p>
                   <p className="text-sm text-saabai-text-muted max-w-md leading-relaxed">{inlineCta.body}</p>
                 </div>
-                <a
-                  href="https://calendly.com/shanegoldberg/30min"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 bg-saabai-teal text-saabai-bg px-7 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
-                >
-                  {inlineCta.cta}
-                </a>
+                <div className="shrink-0 flex flex-col items-start sm:items-end gap-3">
+                  <a
+                    href="https://calendly.com/shanegoldberg/30min"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-saabai-teal text-saabai-bg px-7 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+                  >
+                    {inlineCta.cta}
+                  </a>
+                  <a
+                    href="/score"
+                    className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+                  >
+                    Take the free AI score →
+                  </a>
+                </div>
               </div>
             </div>
           )}

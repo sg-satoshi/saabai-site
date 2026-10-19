@@ -3,19 +3,14 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import { pageMeta } from "@/lib/seo-meta";
+import LinkedText from "../components/LinkedText";
 
-export const metadata: Metadata = {
-  title: "Websites and Care Plans for Small Businesses",
-  description:
-    "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  alternates: { canonical: "https://www.saabai.ai/websites" },
-  openGraph: {
-    url: "https://www.saabai.ai/websites",
-    title: "Website Care Plans for Small Businesses | Saabai",
-    description:
-      "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/websites",
+  title: "Small Business Websites with an AI Chatbot | Saabai",
+  description: "Websites for Australian small businesses with an AI enquiry chatbot built in. Builds from $2,000, care plans from $100 a month. Gold Coast based.",
+});
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
@@ -104,6 +99,7 @@ const faqs = [
 
 const SITE = "https://www.saabai.ai";
 const CARE: Record<string, number> = { Presence: 100, Growth: 200, Signature: 300 };
+const BUILD: Record<string, number> = { Presence: 2000, Growth: 4000, Signature: 6500 };
 
 const websitesSchema = {
   "@context": "https://schema.org",
@@ -126,13 +122,21 @@ const websitesSchema = {
         priceCurrency: "AUD",
         availability: "https://schema.org/InStock",
         url: `${SITE}/websites`,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: CARE[t.name],
-          priceCurrency: "AUD",
-          unitCode: "MON",
-          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
-        },
+        priceSpecification: [
+          {
+            "@type": "UnitPriceSpecification",
+            price: CARE[t.name],
+            priceCurrency: "AUD",
+            unitCode: "MON",
+            referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
+          },
+          {
+            "@type": "UnitPriceSpecification",
+            minPrice: BUILD[t.name],
+            priceCurrency: "AUD",
+            description: "One-off build, from. Above this only for custom integrations or other additional work, quoted in writing first.",
+          },
+        ],
       })),
     },
     {
@@ -269,7 +273,7 @@ export default function WebsitesPage() {
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <div className="text-center mb-14">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-4">
-            Three ways to work with us
+            Website packages and prices
           </h2>
           <p className="text-saabai-text-muted max-w-2xl mx-auto leading-relaxed">
             Every tier ships with a trained chatbot. You climb the tiers as you
@@ -350,19 +354,19 @@ export default function WebsitesPage() {
                 Book a Consult
               </a>
               <a
-                href={CALENDLY}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@saabai.ai"
                 className="text-center text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
               >
-                Ask a question →
+                Email a question →
               </a>
             </div>
           ))}
         </div>
         <p className="text-center text-xs text-saabai-text-dim mt-8">
-          Build fees are quoted from these figures and scoped to your project.
-          Monthly care keeps your site and AI running.
+          Build fees start from these figures. The price only goes above the
+          &apos;from&apos; figure for custom integrations or other additional work,
+          and we quote that in writing before any work starts. Monthly care keeps
+          your site and AI running.
         </p>
       </section>
 
@@ -389,7 +393,13 @@ export default function WebsitesPage() {
             rel="noopener noreferrer"
             className="inline-block text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
           >
-            See what your AI could sound like →
+            Book a call to hear a sample of your AI →
+          </a>
+          <a
+            href="/case-studies"
+            className="block mt-4 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
+          >
+            See it working for real clients →
           </a>
         </div>
       </section>
@@ -397,7 +407,7 @@ export default function WebsitesPage() {
       {/* FAQ */}
       <section className="py-24 px-6 max-w-3xl mx-auto border-t border-saabai-border">
         <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-10 text-center">
-          Common questions
+          Website and care plan questions
         </h2>
         <div className="flex flex-col gap-3">
           {faqs.map((item) => (
@@ -412,7 +422,7 @@ export default function WebsitesPage() {
                 </span>
               </summary>
               <p className="text-sm text-saabai-text-muted leading-relaxed mt-4">
-                {item.a}
+                <LinkedText text={item.a} links={[{ phrase: "free AI score", href: "/score" }]} />
               </p>
             </details>
           ))}

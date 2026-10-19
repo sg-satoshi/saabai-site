@@ -9,6 +9,7 @@ export const founderSchema = {
   jobTitle: "Founder",
   worksFor: { "@id": ORG_ID },
   url: `${SITE_URL}/about`,
+  image: `${SITE_URL}/shane-goldberg.png`,
   sameAs: ["https://www.linkedin.com/in/shanegoldberg-ai"],
 };
 
@@ -37,10 +38,11 @@ export const organizationSchema = {
       },
       areaServed: [
         { "@type": "City", name: "Gold Coast" },
+        { "@type": "City", name: "Brisbane" },
         { "@type": "State", name: "Queensland" },
         { "@type": "Country", name: "Australia" },
       ],
-      priceRange: "$100-$3,500",
+      priceRange: "$$",
       founder: { "@id": FOUNDER_ID },
       sameAs: ["https://www.linkedin.com/in/shanegoldberg-ai"],
     },

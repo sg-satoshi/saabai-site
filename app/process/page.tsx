@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { pageMeta } from "@/lib/seo-meta";
+import JsonLd from "../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Our AI Automation Process, Blueprint to Deployment",
-  description:
-    "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  alternates: { canonical: "https://www.saabai.ai/process" },
-  openGraph: {
-    url: "https://www.saabai.ai/process",
-    title: "Our AI Automation Process, Blueprint to Deployment | Saabai",
-    description:
-      "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/process",
+  title: "How Saabai Works: Blueprint to Live Automation | Saabai",
+  description: "Four steps: Saabai Blueprint, system design, build and deploy, ongoing care. Most clients have a first automation live 2 to 4 weeks after the Blueprint.",
+});
 
 const steps = [
   {
@@ -54,6 +50,8 @@ export default function Process() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
 
+      <JsonLd data={breadcrumbSchema([{ name: "How we work", path: "/process" }])} />
+
       <Nav activePage="/process" />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
@@ -74,9 +72,9 @@ export default function Process() {
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          From Blueprint to
+          From plan to
           <br />
-          <span className="text-gradient">operating advantage.</span>
+          <span className="text-gradient">working automation, in weeks.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
@@ -148,7 +146,7 @@ export default function Process() {
             Typical Timeline
           </p>
           <p className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
-            Most firms have their first automations live within 2–4 weeks of the Blueprint.
+            Most clients have their first automation live within 2 to 4 weeks of their Blueprint.
           </p>
           <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
             The Saabai Blueprint is the starting point, from $497, a fixed-price plan that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.

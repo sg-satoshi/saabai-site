@@ -22,7 +22,7 @@ const C = {
 
 // ── Mock / demo data (replace with real API calls) ─────────────────────────────
 const MOCK = {
-  firmName:       "Smith & Partners",
+  firmName:       "Demo Law Firm",
   clientId:       "demo-client-001",
   agentName:      "Lex",
   plan:           "Professional",

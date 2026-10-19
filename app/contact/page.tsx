@@ -2,19 +2,20 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/sb.css";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema, orgRef } from "@/lib/seo-meta";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Contact Saabai by email or book a call. Merrimac, working across the Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
-  alternates: { canonical: "https://www.saabai.ai/contact" },
-};
+export const metadata: Metadata = pageMeta({
+  path: "/contact",
+  title: "Contact Saabai, Gold Coast AI and Websites | Saabai",
+  description: "Email hello@saabai.ai or book a free 30 minute call with Shane. Based in Merrimac QLD, working with the Gold Coast, Brisbane and Australia-wide.",
+});
 
 const ROWS: [string, string][] = [
   ["Email", "hello@saabai.ai"],
-  ["Address", "Merrimac"],
+  ["Address", "Merrimac QLD 4226 (home office, visits by appointment)"],
   ["ABN", "71 889 082 572"],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
@@ -23,6 +24,8 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "ContactPage", url: "https://www.saabai.ai/contact", name: "Contact Saabai", about: orgRef, mainEntity: orgRef }} />
+      <JsonLd data={breadcrumbSchema([{ name: "Contact", path: "/contact" }])} />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>
@@ -31,7 +34,8 @@ export default function ContactPage() {
           <span className="eyebrow">Saabai</span>
           <h1 style={{ marginTop: 16 }}>Contact</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
-            The best way to reach us is email. We reply within one business day.
+            The best way to reach us is email. We reply within one business day. Prefer to talk?{" "}
+            <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>Book a free 30 minute call with Shane.</a>
           </p>
 
           <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>

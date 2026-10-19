@@ -300,15 +300,15 @@ export default function Calculator() {
               operational leverage.
             </p>
             <p className="text-sm text-saabai-text-dim leading-relaxed">
-              Even automating 25%–50% of this workload could unlock{" "}
+              If 25% to 50% of this work could be automated, that would free up{" "}
               <span className="text-saabai-teal font-medium">
-                {formatHours(annualHours * 0.25)}–{formatHours(annualHours * 0.5)} hours
+                {formatHours(annualHours * 0.25)} to {formatHours(annualHours * 0.5)} hours
               </span>{" "}
               and{" "}
               <span className="text-saabai-teal font-medium">
-                {formatCurrency(annualCost * 0.25)}–{formatCurrency(annualCost * 0.5)}
+                {formatCurrency(annualCost * 0.25)} to {formatCurrency(annualCost * 0.5)}
               </span>{" "}
-              in annual savings.
+              a year. A Blueprint shows which parts are realistic for your business.
             </p>
           </div>
         </div>
@@ -330,7 +330,7 @@ export default function Calculator() {
         <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-2xl mx-auto leading-[1.08]">
           Find out how much of this
           <br />
-          <span className="text-gradient">your firm could recover.</span>
+          <span className="text-gradient">your business could recover.</span>
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
           Book a free 30-minute strategy call. We&apos;ll map the highest-value

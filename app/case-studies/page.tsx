@@ -2,23 +2,34 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, breadcrumbSchema, orgRef } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Case Studies, AI Results for Australian Businesses",
-  description:
-    "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  alternates: { canonical: "https://www.saabai.ai/case-studies" },
-  openGraph: {
-    url: "https://www.saabai.ai/case-studies",
-    title: "Case Studies, AI Results for Australian Businesses | Saabai",
-    description:
-      "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  },
+export const metadata: Metadata = pageMeta({
+  path: "/case-studies",
+  title: "AI Chatbot and Automation Case Studies, Australia | Saabai",
+  // Meta description held (batch 2 item 34) until the Tributum case study is confirmed. Current wording kept.
+  description: "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
+});
+
+// Article schema for the PlasticOnline case study only. The Tributum Law article is held until that case study is confirmed.
+const plasticOnlineArticle = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "PlasticOnline (Holland Plastics)",
+  about: { "@type": "Organization", name: "PlasticOnline (Holland Plastics)", url: "https://plasticonline.com.au" },
+  author: orgRef,
+  publisher: orgRef,
+  url: "https://www.saabai.ai/case-studies#plasticonline",
+  mainEntityOfPage: "https://www.saabai.ai/case-studies",
 };
 
 export default function CaseStudies() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "Case studies", path: "/case-studies" }])} />
+      <JsonLd data={plasticOnlineArticle} />
 
       <Nav />
 
@@ -52,9 +63,10 @@ export default function CaseStudies() {
         </p>
         <InShort>
           Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
-          live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12
-          hours a week recovered) and a national plastics supplier (instant quotes,
-          40% of enquiries resolved without staff). Most projects start with a{" "}
+          live for an Adelaide tax law firm (enquiries answered in 90 seconds, 12
+          hours a week recovered) and PlasticOnline (Holland Plastics), a
+          cut-to-size plastics supplier (instant quotes, 40% of enquiries resolved
+          without staff). Most projects start with a{" "}
           <a href="/blueprint">Saabai Blueprint from $497</a>.
         </InShort>
 
@@ -85,7 +97,7 @@ export default function CaseStudies() {
           Tributum Law
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Specialist ATO dispute and tax law firm, Brisbane
+          Specialist ATO dispute and tax law firm, Adelaide
         </p>
 
         {/* Problem / Solution */}
@@ -171,14 +183,14 @@ export default function CaseStudies() {
             difference it&apos;s made to our conversion rate has been significant.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Principal, Tributum Law
+            Principal, Tributum Law
           </p>
         </blockquote>
 
       </section>
 
-      {/* ── Case Study 2, National Plastics Supplier ───────────────────── */}
-      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
+      {/* ── Case Study 2, PlasticOnline (Holland Plastics) ───────────────────── */}
+      <section id="plasticonline" className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 mb-12">
@@ -195,11 +207,10 @@ export default function CaseStudies() {
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          National Plastics Supplier
+          PlasticOnline (Holland Plastics)
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Large national plastics supplier (name withheld on request), trade and retail
-          customers across Australia
+          Cut-to-size plastics supplier, trade and retail customers across Australia
         </p>
 
         {/* Problem / Solution */}
@@ -266,7 +277,7 @@ export default function CaseStudies() {
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">24/7</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              After-hours enquiries now captured and quoted automatically, zero lost
+              After-hours enquiries now captured and quoted automatically
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
@@ -285,9 +296,18 @@ export default function CaseStudies() {
             after-hours enquiries, we were just losing those before.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Operations Manager, National Plastics Supplier
+            Operations Manager, PlasticOnline (Holland Plastics)
           </p>
         </blockquote>
+
+        <p className="mt-10">
+          <a href="/case-studies/rex-plastics-online" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+            Read the full PlasticOnline case study →
+          </a>
+          <a href="https://plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="ml-8 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">
+            Visit PlasticOnline
+          </a>
+        </p>
 
       </section>
 

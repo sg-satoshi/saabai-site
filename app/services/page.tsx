@@ -2,21 +2,21 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import JsonLd from "../components/JsonLd";
+import { pageMeta, faqSchema, breadcrumbSchema } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: "Websites, AI Audits and Automation for Small Businesses",
-  description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  alternates: { canonical: "https://www.saabai.ai/services" },
-  openGraph: {
-    url: "https://www.saabai.ai/services",
-    title: "Websites, AI Audits and Automation for Small Businesses | Saabai",
-    description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  },
+export const metadata: Metadata = pageMeta({
+  path: "/services",
+  title: "AI Automation Services for Small Businesses | Saabai",
+  description: "Websites with AI chatbots, a fixed-price AI audit and custom automations for Australian small businesses. Care from $100 a month, Blueprint from $497.",
+});
+
+const AI_SEARCH_FAQ = {
+  q: "What is AI search visibility?",
+  a: "It is whether ChatGPT, Claude, Perplexity and Gemini mention your business when someone asks for a recommendation. Every Saabai Blueprint checks this and compares you with local competitors.",
 };
 
-const services: { title: string; description: string; benefits: string[]; href?: string; price?: string }[] = [
+const services: { title: string; description: string; benefits: string[]; href?: string; price?: string; faq?: { q: string; a: string } }[] = [
   {
     title: "Website Care Plans",
     price: "$100, $200 or $300 a month",
@@ -55,11 +55,12 @@ const services: { title: string; description: string; benefits: string[]; href?:
       "Side-by-side competitor comparison",
       "Copy-paste fixes for your site",
     ],
+    faq: AI_SEARCH_FAQ,
   },
   {
     title: "AI Chat Agents & Automations",
     price: "Scoped from your Blueprint",
-    href: "/blueprint",
+    href: "/use-cases",
     description:
       "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
     benefits: [
@@ -98,7 +99,7 @@ const results = [
   {
     stat: "90s",
     label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for a Brisbane law firm. Previously 2 to 14 hours.",
+    detail: "Every enquiry answered within 90 seconds, day or night, for Tributum Law, an Adelaide tax law firm. Previously 2 to 14 hours.",
   },
   {
     stat: "12 hrs",
@@ -108,7 +109,7 @@ const results = [
   {
     stat: "40%",
     label: "Enquiries resolved by AI",
-    detail: "Share of a national supplier's inbound enquiries fully handled without staff, with instant quotes.",
+    detail: "Share of PlasticOnline (Holland Plastics) inbound enquiries fully handled without staff, with instant quotes.",
   },
   {
     stat: "3 wks",
@@ -120,6 +121,9 @@ const results = [
 export default function Services() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+
+      <JsonLd data={breadcrumbSchema([{ name: "Services", path: "/services" }])} />
+      <JsonLd data={faqSchema([AI_SEARCH_FAQ])} />
 
       <Nav activePage="/services" />
 
@@ -183,7 +187,7 @@ export default function Services() {
           What We Do
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-6 max-w-2xl mx-auto leading-snug">
-          Four things, done properly.
+          Our services: websites, AI audits, AI search visibility and automation
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-20 leading-relaxed">
           Most small businesses don&apos;t need an &ldquo;AI transformation&rdquo;.
@@ -192,7 +196,7 @@ export default function Services() {
         </p>
 
         <div className="grid md:grid-cols-2 md:auto-rows-fr gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {services.map(({ title, description, benefits, href, price }) => (
+          {services.map(({ title, description, benefits, href, price, ...rest }) => (
             <div
               key={title}
               className="bg-saabai-surface p-8 md:p-12 hover:bg-saabai-surface-raised transition-colors relative group flex flex-col"
@@ -211,6 +215,12 @@ export default function Services() {
                   </li>
                 ))}
               </ul>
+              {"faq" in rest && rest.faq ? (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-saabai-text mb-1">{rest.faq.q}</h4>
+                  <p className="text-sm text-saabai-text-muted leading-relaxed">{rest.faq.a}</p>
+                </div>
+              ) : null}
               {href && (
                 <a href={href} className="mt-auto pt-6 text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">
                   Learn more →
@@ -222,7 +232,7 @@ export default function Services() {
 
         <div className="mt-6 flex flex-col md:flex-row md:items-center gap-6 md:gap-8 rounded-2xl border border-saabai-border-accent bg-saabai-surface p-7 md:px-10 md:py-9 shadow-[0_0_40px_var(--saabai-glow-mid)]" style={{ background: "radial-gradient(ellipse 60% 120% at 100% 0%, rgba(98,197,209,.16), transparent 60%), var(--saabai-surface)" }}>
           <div className="flex-1">
-            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 5 MIN</span>
+            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 3 MIN</span>
             <h3 className="text-[22px] font-semibold tracking-tight mt-2 mb-2">Not sure where to start? Take the free AI score.</h3>
             <p className="text-base text-saabai-text-muted leading-relaxed">
               A few quick questions and you&apos;ll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.
@@ -248,9 +258,9 @@ export default function Services() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "a few days" },
-            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "3 business days", highlight: true },
-            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "2 to 3 weeks" },
+            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "within 48 hours" },
+            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "in 3 business days", highlight: true },
+            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "in 2 to 3 weeks" },
           ].map((t) => (
             <div
               key={t.name}
@@ -269,7 +279,7 @@ export default function Services() {
                 {t.price}
               </div>
               <p className="text-xs text-saabai-text-dim tracking-wide">
-                AUD · Delivered in {t.duration}
+                AUD · Delivered {t.duration}
               </p>
             </div>
           ))}
@@ -321,7 +331,7 @@ export default function Services() {
           Results From Live Client Systems
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
-          Time recovered. Costs reduced. Capacity unlocked.
+          Results from live client systems
         </h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
@@ -338,6 +348,9 @@ export default function Services() {
             </div>
           ))}
         </div>
+        <p className="text-center mt-10">
+          <a href="/case-studies" className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright">See the case studies →</a>
+        </p>
       </section>
 
       {/* ── Final CTA ───────────────────────────────────────────────────── */}
