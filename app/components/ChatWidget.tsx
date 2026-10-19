@@ -5,6 +5,8 @@ import { useChat } from "@ai-sdk/react";
 import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
+import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 
 const STORAGE_KEY = "saabai-conversation";
 const PROFILE_KEY = "saabai-visitor-profile";
@@ -69,17 +71,17 @@ const INITIAL_MESSAGES: UIMessage[] = [
   {
     id: "initial",
     role: "assistant",
-    parts: [{ type: "text", text: "Hey, I'm Mia. What brings you to Saabai today?" }],
+    parts: [{ type: "text", text: "Hey, I'm Mia, Saabai's AI assistant. What brings you to Saabai today?" }],
   },
 ];
 
-// Pages where Mia proactively opens after a delay, with a page-specific opener
+// Page-specific first message, used only when the visitor opens the chat themselves
 const PROACTIVE_PAGES: Record<string, string> = {
-  "/calculator": "Looks like you've been running some numbers. What came up for you?",
-  "/services": "Hey, Mia here. Anything on the services page I can help clarify?",
-  "/use-cases": "Seeing anything in there that looks familiar for your business?",
-  "/process": "Checking out how it all works? Happy to walk you through it.",
-  "/about": "Hey, Mia here. Any questions about the team or how Saabai works?",
+  "/calculator": "Hi, I'm Mia, Saabai's AI assistant. Looks like you've been running some numbers. What came up for you?",
+  "/services": "Hey, I'm Mia, Saabai's AI assistant. Anything on the services page I can help clarify?",
+  "/use-cases": "Hi, I'm Mia, Saabai's AI assistant. Seeing anything in there that looks familiar for your business?",
+  "/process": "Hi, I'm Mia, Saabai's AI assistant. Checking out how it all works? Happy to walk you through it.",
+  "/about": "Hey, I'm Mia, Saabai's AI assistant. Any questions about the team or how Saabai works?",
 };
 
 function getMessageText(message: UIMessage): string {
@@ -152,6 +154,7 @@ export default function ChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
+  const [nudgeText, setNudgeText] = useState<string | null>(null);
   const [pulsing, setPulsing] = useState(false);
   const [returningVisitor, setReturningVisitor] = useState(false);
 
@@ -162,7 +165,21 @@ export default function ChatWidget() {
   const [endSubmitted, setEndSubmitted] = useState(false);
 
   // Mia tool-triggered states
-  const [showBookingCTA, setShowBookingCTA] = useState(false);
+  const [, setShowBookingCTA] = useState(false);
+  // Which call-to-action Mia is showing (score, blueprint, websites, call)
+  const [ctaStep, setCtaStep] = useState<CtaStep | null>(null);
+  // Per-session chat id, sent as threadId and carried on CTA links (utm_term) for attribution
+  const [sid] = useState<string>(() => {
+    try {
+      const existing = sessionStorage.getItem("mia-sid");
+      if (existing) return existing;
+      const fresh = newSessionId();
+      sessionStorage.setItem("mia-sid", fresh);
+      return fresh;
+    } catch {
+      return newSessionId();
+    }
+  });
   const [showLeadCapture, setShowLeadCapture] = useState(false);
 
   // Lead capture form
@@ -197,7 +214,7 @@ export default function ChatWidget() {
   const recognitionRef = useRef<any>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile } };
+  const chatOptions: any = { messages: INITIAL_MESSAGES, body: { pageContext: pathname, returningVisitor, visitorProfile, threadId: sid } };
   const { messages, sendMessage, status, error, setMessages } = useChat(chatOptions);
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -357,16 +374,30 @@ export default function ChatWidget() {
   const splitInProgress = !!(splitProgress && splitProgress.count < splitProgress.total);
   const showTypingIndicator = isLoading || thinkingDelay || splitInProgress;
 
-  // ── Proactive bubble ─────────────────────────────────────────────────
+  // ── Nudge bubble: pricing and Blueprint pages only, once per session, never auto-opens ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (localStorage.getItem("saabai-chat-seen")) return;
-    const timer = setTimeout(() => {
+    const text = nudgeFor(pathname);
+    if (!text || isOpen) return;
+    try { if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return; } catch { return; }
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      try { sessionStorage.setItem(NUDGE_SESSION_KEY, "1"); } catch {}
+      setNudgeText(text);
       setShowBubble(true);
-      track("bubble_shown");
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
+      track("bubble_shown", { page: pathname });
+    };
+    const onScroll = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      if (h > 0 && window.scrollY / h >= NUDGE_SCROLL_RATIO) show();
+    };
+    const timer = setTimeout(show, NUDGE_DELAY_MS);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { done = true; clearTimeout(timer); window.removeEventListener("scroll", onScroll); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // ── Pulse launcher ───────────────────────────────────────────────────
   useEffect(() => {
@@ -377,29 +408,6 @@ export default function ChatWidget() {
     }, 10000);
     return () => clearInterval(interval);
   }, [isOpen]);
-
-  // ── Proactive trigger — auto-opens on high-intent pages ──────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const proactiveMsg = PROACTIVE_PAGES[pathname];
-    if (!proactiveMsg) return;
-    if (isOpen) return;
-    if (returningVisitor) return;
-    if (sessionStorage.getItem("saabai-proactive-shown")) return;
-    if (localStorage.getItem("saabai-chat-seen")) return;
-
-    const timer = setTimeout(() => {
-      sessionStorage.setItem("saabai-proactive-shown", "1");
-      localStorage.setItem("saabai-chat-seen", "1");
-      setMessages([{ id: "initial", role: "assistant", parts: [{ type: "text", text: proactiveMsg }] }]);
-      setIsOpen(true);
-      setShowBubble(false);
-      track("proactive_trigger", { page: pathname });
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, isOpen, returningVisitor]);
 
   // ── Auto-scroll ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -416,12 +424,19 @@ export default function ChatWidget() {
         if (!id || processedTools.current.has(id)) continue;
         processedTools.current.add(id);
         const toolName = part.type.slice(5);
-        if (toolName === "show_booking_cta") { setShowBookingCTA(true); track("cta_shown"); }
+        if (toolName === "show_booking_cta") { setShowBookingCTA(true); setCtaStep("call"); track("cta_shown", { step: "call" }); }
+        if (toolName === "suggest_next_step") {
+          const step = (part as { input?: { step?: unknown } }).input?.step;
+          if (isCtaStep(step)) { setCtaStep(step); if (step === "call") setShowBookingCTA(true); track("cta_shown", { step }); }
+        }
         if (toolName === "capture_lead") setShowLeadCapture(true);
         if (toolName === "remember_visitor") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const profileData = (part as any).input ?? {};
-          const merged = mergeVisitorProfile(profileData);
+          // Never keep the email in localStorage; it lives on the lead record only.
+          const { email: _email, ...profileFacts } = profileData as Record<string, unknown>;
+          void _email;
+          const merged = mergeVisitorProfile(profileFacts);
           if (merged) setVisitorProfile(merged);
         }
         if (toolName === "qualify_lead") {
@@ -436,6 +451,11 @@ export default function ChatWidget() {
   // ── Handlers ─────────────────────────────────────────────────────────
 
   function openWidget() {
+    // Page-specific opener when the visitor opens a fresh chat (never auto-opened).
+    const opener = PROACTIVE_PAGES[pathname];
+    if (opener && messages.length <= 1 && !returningVisitor) {
+      setMessages([{ id: "initial", role: "assistant", parts: [{ type: "text", text: opener }] }]);
+    }
     setIsOpen(true);
     setChatMode("text");
     setShowBubble(false);
@@ -493,6 +513,7 @@ export default function ChatWidget() {
     setMessages(INITIAL_MESSAGES);
     setIsEnded(false);
     setShowBookingCTA(false);
+    setCtaStep(null);
     setShowLeadCapture(false);
     setLeadSubmitted(false);
     setLeadForm({ name: "", email: "", sendTranscript: true });
@@ -536,7 +557,7 @@ export default function ChatWidget() {
         }),
       });
       if (!skipEmail && endEmail.trim()) {
-        track("transcript_requested", { email: endEmail.trim() });
+        track("transcript_requested");
       }
       setEndSubmitted(true);
     } finally {
@@ -642,7 +663,7 @@ export default function ChatWidget() {
   }
 
   async function submitLeadCapture() {
-    if (!leadForm.name.trim() || !leadForm.email.trim()) return;
+    if (!leadForm.email.trim()) return;
     setLeadSubmitting(true);
     transcriptSentRef.current = true;
     try {
@@ -658,7 +679,7 @@ export default function ChatWidget() {
           conversation: messages.map((m) => ({ role: m.role, content: getMessageText(m) })),
         }),
       });
-      track("lead_captured", { email: leadForm.email });
+      track("lead_captured", { hasName: !!leadForm.name.trim(), sendTranscript: leadForm.sendTranscript });
       setLeadSubmitted(true);
     } finally {
       setLeadSubmitting(false);
@@ -675,7 +696,7 @@ export default function ChatWidget() {
     <div className="fixed bottom-6 md:bottom-14 right-6 z-[60] flex flex-col items-end gap-3">
 
       {/* ── Proactive bubble ─────────────────────────────────────────── */}
-      {showBubble && !isOpen && (
+      {showBubble && nudgeText && !isOpen && (
         <div className="w-80 border border-saabai-teal/25 rounded-2xl relative overflow-hidden" style={{ background: "#1c1a52", boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 32px rgba(98,197,209,0.2)" }}>
           <div className="h-px absolute top-0 left-8 right-8 bg-gradient-to-r from-transparent via-saabai-teal/40 to-transparent" />
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-saabai-teal/15">
@@ -683,15 +704,15 @@ export default function ChatWidget() {
               <MiaAvatar size={36} dotSize={10} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies within a minute</p>
               </div>
             </div>
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
           </div>
           <div className="p-4">
-            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">Hey — what does your team spend the most time on that isn&apos;t really your core work?</p>
-            <button onClick={openWidget} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Tell me about it →</button>
+            <p className="text-sm text-saabai-text-muted leading-relaxed mb-3">{nudgeText}</p>
+            <button onClick={() => { track("bubble_clicked", { page: pathname }); openWidget(); }} className="text-xs font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide">Ask Mia →</button>
           </div>
         </div>
       )}
@@ -705,7 +726,7 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide">Saabai&apos;s AI assistant</p>
               </div>
             </div>
             <button onClick={closeWidget} className="text-saabai-text-dim hover:text-saabai-text transition-colors p-1" aria-label="Close">
@@ -831,13 +852,25 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} showDot={!isEnded} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">AI Automation Advisor</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
                 <p className="text-[10px] text-saabai-text-dim tracking-wide">
                   {isEnded ? "Conversation ended" : "Usually replies within a minute"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Talk to Shane: always available */}
+              {!isEnded && (
+                <a
+                  href={ctaHref("call", { page: pathname, sid })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => track("cta_clicked", { step: "call", from: "header" })}
+                  className="text-[10px] font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+                >
+                  Talk to Shane
+                </a>
+              )}
               {/* New chat — always visible so user can reset */}
               {hasEnoughForTranscript && (
                 <button
@@ -897,7 +930,7 @@ export default function ChatWidget() {
             {/* Quick reply chips — shown before first user message */}
             {userMessages.length === 0 && !isLoading && !thinkingDelay && (
               <div className="flex flex-wrap gap-2 mt-1">
-                {["What can you automate?", "How does it work?", "What does it cost?", "Show me examples"].map((chip) => (
+                {["What does Saabai do?", "What does it cost?"].map((chip) => (
                   <button
                     key={chip}
                     onClick={() => {
@@ -912,6 +945,19 @@ export default function ChatWidget() {
                   >
                     {chip}
                   </button>
+                ))}
+                {(["score", "call"] as const).map((step) => (
+                  <a
+                    key={step}
+                    href={ctaHref(step, { page: pathname, sid })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => track("cta_clicked", { step, from: "quick_reply" })}
+                    className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"
+                    style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.25)", color: "rgba(255,255,255,0.65)" }}
+                  >
+                    {step === "score" ? "Get my free AI score" : "Talk to Shane"}
+                  </a>
                 ))}
               </div>
             )}
@@ -935,20 +981,33 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {/* ── Booking CTA (tool-triggered) ── */}
-            {showBookingCTA && !isEnded && (
+            {/* ── Low-friction capture: offer a summary after a few messages ── */}
+            {userMessages.length >= 3 && !showLeadCapture && !leadSubmitted && !isEnded && !isLoading && (
+              <div className="flex justify-start mt-1">
+                <button
+                  onClick={() => { setShowLeadCapture(true); track("summary_offer_clicked"); }}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"
+                  style={{ background: "#272466", border: "1px solid rgba(98,197,209,0.25)", color: "rgba(255,255,255,0.65)" }}
+                >
+                  Email me a summary of this chat
+                </button>
+              </div>
+            )}
+
+            {/* ── Next-step CTA (tool-triggered: score, blueprint, websites or call) ── */}
+            {ctaStep && !isEnded && (
               <div className="mx-1 mt-1">
                 <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent mb-3" />
                 <a
-                  href="https://calendly.com/shanegoldberg/30min"
+                  href={ctaHref(ctaStep, { page: pathname, sid })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("cta_clicked")}
+                  onClick={() => track("cta_clicked", { step: ctaStep })}
                   className="block w-full text-center bg-saabai-teal text-saabai-bg px-4 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_20px_var(--saabai-glow-mid)]"
                 >
-                  Book a Free Strategy Call →
+                  {CTA_META[ctaStep].label} →
                 </a>
-                <p className="text-[10px] text-saabai-text-dim text-center mt-2 tracking-wide">Free · 30 minutes · No obligation</p>
+                <p className="text-[10px] text-saabai-text-dim text-center mt-2 tracking-wide">{CTA_META[ctaStep].sub}</p>
               </div>
             )}
 
@@ -957,10 +1016,11 @@ export default function ChatWidget() {
               <div className="mx-1 mt-1 bg-saabai-surface-raised border border-saabai-border rounded-xl overflow-hidden">
                 <div className="h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
                 <div className="p-4 flex flex-col gap-3">
-                  <p className="text-[10px] font-medium tracking-[0.15em] text-saabai-text-dim uppercase">Your Details</p>
+                  <p className="text-[13px] text-saabai-text-muted leading-snug">Pop your email in and I&apos;ll send you a summary of this chat, so Shane can follow up if there&apos;s a next step.</p>
                   <input
                     type="text"
-                    placeholder="Your name"
+                    placeholder="First name (optional)"
+                    autoComplete="given-name"
                     value={leadForm.name}
                     onChange={(e) => setLeadForm((f) => ({ ...f, name: e.target.value }))}
                     className="w-full bg-saabai-bg border border-saabai-border rounded-lg px-3 py-2 text-sm text-saabai-text placeholder:text-saabai-text-dim focus:outline-none focus:border-saabai-teal/60 transition-colors"
@@ -968,6 +1028,8 @@ export default function ChatWidget() {
                   <input
                     type="email"
                     placeholder="Email address"
+                    autoComplete="email"
+                    inputMode="email"
                     value={leadForm.email}
                     onChange={(e) => setLeadForm((f) => ({ ...f, email: e.target.value }))}
                     onKeyDown={(e) => { if (e.key === "Enter") submitLeadCapture(); }}
@@ -984,11 +1046,15 @@ export default function ChatWidget() {
                   </label>
                   <button
                     onClick={submitLeadCapture}
-                    disabled={!leadForm.name.trim() || !leadForm.email.trim() || leadSubmitting}
+                    disabled={!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadForm.email.trim()) || leadSubmitting}
                     className="w-full bg-saabai-teal text-saabai-bg px-4 py-2.5 rounded-lg font-semibold text-sm hover:bg-saabai-teal-bright transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                   >
-                    {leadSubmitting ? <BouncingDots /> : "Send my details"}
+                    {leadSubmitting ? <BouncingDots /> : "Send it to me"}
                   </button>
+                  <p className="text-[10px] text-saabai-text-dim leading-relaxed">
+                    We&apos;ll only use your email to reply, send what you asked for and up to two short follow-ups. Unsubscribe anytime.{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-saabai-teal">Privacy</a>. Please don&apos;t share sensitive info in the chat.
+                  </p>
                 </div>
               </div>
             )}
@@ -1000,7 +1066,7 @@ export default function ChatWidget() {
                     <path d="M1 6l3.5 3.5L11 2" stroke="var(--saabai-teal)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm text-saabai-text-muted leading-relaxed">Got it — we&apos;ll be in touch within 24 hours.</p>
+                <p className="text-sm text-saabai-text-muted leading-relaxed">Thanks. Check your inbox shortly, and Shane will be in touch if there&apos;s a next step.</p>
               </div>
             )}
 
@@ -1031,7 +1097,7 @@ export default function ChatWidget() {
                     <div className="h-px bg-saabai-border" />
                     <p className="text-xs text-saabai-text-dim leading-relaxed">Ready to see what automation could look like for your business?</p>
                     <a
-                      href="https://calendly.com/shanegoldberg/30min"
+                      href={ctaHref("call", { page: pathname, sid })}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => track("cta_clicked_end")}
