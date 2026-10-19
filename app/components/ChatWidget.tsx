@@ -767,7 +767,7 @@ export default function ChatWidget() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-saabai-text leading-none mb-1">Talk {!speechSupported && <span className="text-[10px] font-normal text-saabai-text-dim ml-1">(not supported in this browser)</span>}</p>
-                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Voice conversation — speak naturally with Mia</p>
+                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Voice conversation. Speak naturally with Mia</p>
               </div>
             </button>
           </div>
@@ -802,7 +802,7 @@ export default function ChatWidget() {
             </div>
             {/* Status */}
             <p className="text-sm text-saabai-text-muted tracking-wide text-center">
-              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong — tap mic to retry" : "Mia is ready…"}
+              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong. Tap mic to retry" : "Mia is ready…"}
             </p>
             {voiceError && <p className="text-[10px] text-red-400 text-center">{voiceError}</p>}
           </div>
@@ -1091,7 +1091,7 @@ export default function ChatWidget() {
                         </svg>
                       </div>
                       <p className="text-sm text-saabai-text-muted leading-relaxed">
-                        {endEmail.trim() ? "Transcript sent — check your inbox." : "Thanks for chatting with Mia."}
+                        {endEmail.trim() ? "Transcript sent. Check your inbox." : "Thanks for chatting with Mia."}
                       </p>
                     </div>
                     <div className="h-px bg-saabai-border" />
@@ -1230,7 +1230,7 @@ export default function ChatWidget() {
                   if (!newState) stopAudio();
                 }}
                 aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
-                title={voiceError ? "Voice error — click to retry" : voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
+                title={voiceError ? "Voice error. Click to retry" : voiceEnabled ? "Voice on. Click to mute" : "Click to hear Mia"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                 style={{
                   background: voiceError ? "rgba(239,68,68,0.12)" : voiceEnabled ? "rgba(98,197,209,0.15)" : "transparent",
