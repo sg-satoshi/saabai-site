@@ -4,6 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { getRedis } from "../../../lib/redis";
 import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
+import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -19,12 +20,15 @@ function parseCookie(header: string | null, name: string): string | undefined {
   return undefined;
 }
 
-type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 export async function POST(req: Request) {
-  const body = await req.json() as { messages?: Msg[]; clientId?: string };
-  const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
-  const clientId: string | undefined = body.clientId;
+  const body = (await req.json().catch(() => null)) as { messages?: unknown; clientId?: unknown } | null;
+  const normalized = normalizeLexChatMessages(body?.messages);
+  // Nothing to answer: a clean 400 instead of the model throwing (was a 500).
+  if (normalized.length === 0 || normalized[normalized.length - 1].role !== "user") {
+    return Response.json({ error: "messages required" }, { status: 400 });
+  }
+  const clientId: string | undefined = typeof body?.clientId === "string" ? body.clientId : undefined;
 
   // Base formatting rules applied to every Lex response regardless of client config
   const BASE_RULES = `
@@ -68,10 +72,7 @@ Formatting rules (always follow these):
     }
   }
 
-  // 3. Normalise messages — strip any system messages from client (we set system above)
-  const normalized = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role, content: m.content }));
+  // 3. Messages were normalised at the top (system messages from the client are dropped).
 
   const result = streamText({
     model,
