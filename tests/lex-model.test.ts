@@ -105,3 +105,10 @@ test("eval: 20 questions and the scorer counts key points, errors and ungrounded
   assert.equal(bad.accuracy, 0);
   assert.deepEqual(bad.ungroundedUrls, ["https://made.up/case"]);
 });
+
+test("last research step must answer, not call another tool", async () => {
+  const { finalStepAnswers, LEX_RESEARCH_MAX_STEPS } = await import("../lib/lex-research-tools");
+  const f = finalStepAnswers(LEX_RESEARCH_MAX_STEPS);
+  assert.equal(f({ stepNumber: 0 }), undefined);
+  assert.deepEqual(f({ stepNumber: LEX_RESEARCH_MAX_STEPS - 1 }), { toolChoice: "none" });
+});

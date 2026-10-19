@@ -21,6 +21,7 @@ import { streamText, generateText, tool, jsonSchema, stepCountIs } from "ai";
 import type { LanguageModel } from "ai";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
+import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
@@ -284,6 +285,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: finalMessages,
       stopWhen: stepCountIs(10), // More steps needed for document drafting
+      prepareStep: finalStepAnswers(10),
       tools: {
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -497,6 +499,7 @@ async function runQAPass(
         }),
       },
       stopWhen: stepCountIs(6),
+      prepareStep: finalStepAnswers(6),
     });
 
     // Parse the JSON response

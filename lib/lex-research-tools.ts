@@ -358,3 +358,12 @@ export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, 
   });
   return out as T & { readSource: unknown };
 }
+
+/**
+ * Last step answers instead of searching again. Without this a run that spends every step on
+ * tool calls ends with no text at all (seen in the model eval on a penalty remission question).
+ */
+export function finalStepAnswers(maxSteps: number) {
+  return ({ stepNumber }: { stepNumber: number }) =>
+    stepNumber >= maxSteps - 1 ? { toolChoice: "none" as const } : undefined;
+}

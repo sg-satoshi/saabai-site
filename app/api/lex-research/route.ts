@@ -2,7 +2,7 @@ import { streamText, stepCountIs, createUIMessageStream, createUIMessageStreamRe
 import { lexErrorResponse, stripErrorAnswers } from "../../../lib/lex-errors";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
-import { buildLexResearchTools, withSourceRegistry, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
+import { buildLexResearchTools, withSourceRegistry, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
 import { SourceRegistry, CITATION_RULES, stripMarkers } from "../../../lib/lex-sources";
 import { buildAnswerMeta } from "../../../lib/lex-answer-meta";
 import { noDashesTransform } from "../../../lib/no-dashes";
@@ -95,11 +95,13 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
     const registry = new SourceRegistry();
     const tools = citeMode ? withSourceRegistry(buildLexResearchTools(config), registry) : buildLexResearchTools(config);
 
+    const steps = LEX_RESEARCH_MAX_STEPS + (citeMode ? 2 : 0); // room for readSource calls
     const result = streamText({
       model,
       system: cachedSystem,
       messages: tokenizedMessages,
-      stopWhen: stepCountIs(LEX_RESEARCH_MAX_STEPS + (citeMode ? 2 : 0)), // room for readSource calls
+      stopWhen: stepCountIs(steps),
+      prepareStep: finalStepAnswers(steps),
       tools,
       experimental_transform: noDashesTransform(),
     });
