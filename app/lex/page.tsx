@@ -1029,7 +1029,7 @@ export default function LexPage() {
 
       {paletteOpen && (
         <CommandPalette threads={threads} onClose={() => setPaletteOpen(false)}
-          onNew={() => { newThread(); setTimeout(() => inputRef.current?.focus(), 0); }}
+          onNew={(q) => { newThread(); if (q) setInput(q); setTimeout(() => inputRef.current?.focus(), 0); }}
           onOpen={(id) => { setActiveId(id); setPanelMsg(null); setSelectedCite(null); setNavOpen(false); }} />
       )}
       {flagFor != null && <FlagDialog onClose={() => setFlagFor(null)} onSubmit={(r, n) => submitFlag(flagFor, r, n)} />}

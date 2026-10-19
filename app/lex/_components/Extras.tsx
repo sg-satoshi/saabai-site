@@ -8,7 +8,7 @@ import { Icon } from "./icons";
 
 /** Ctrl K palette: start new research or jump to a thread by title or content. */
 export function CommandPalette({ threads, onNew, onOpen, onClose }: {
-  threads: Thread[]; onNew: () => void; onOpen: (id: string) => void; onClose: () => void;
+  threads: Thread[]; onNew: (q: string) => void; onOpen: (id: string) => void; onClose: () => void;
 }) {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
@@ -16,7 +16,7 @@ export function CommandPalette({ threads, onNew, onOpen, onClose }: {
   useEffect(() => { inputRef.current?.focus(); }, []);
   const hits = searchThreads(threads, q);
   const total = hits.length + 1;
-  const pick = (i: number) => { if (i === 0) onNew(); else onOpen(hits[i - 1].id); onClose(); };
+  const pick = (i: number) => { if (i === 0) onNew(q.trim()); else onOpen(hits[i - 1].id); onClose(); };
   return (
     <div className="lx-modal-wrap" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="lx-palette" role="dialog" aria-label="Search research">
@@ -34,7 +34,7 @@ export function CommandPalette({ threads, onNew, onOpen, onClose }: {
         </div>
         <ul role="listbox">
           <li role="option" aria-selected={sel === 0} className={sel === 0 ? "on" : ""} onMouseEnter={() => setSel(0)} onClick={() => pick(0)}>
-            <Icon name="plus" size={15} /><div><b>New research</b>{q.trim() && <small>Start fresh, then ask: {q.trim()}</small>}</div>
+            <Icon name="plus" size={15} /><div><b>New research</b>{q.trim() && <small>Start a new thread with: {q.trim()}</small>}</div>
           </li>
           {hits.length > 0 && <li className="hd" aria-hidden="true">{q.trim() ? "Matching threads" : "Recent threads"}</li>}
           {hits.map((t, i) => (
@@ -57,7 +57,7 @@ export function FlagDialog({ onSubmit, onClose }: { onSubmit: (reason: FlagReaso
   const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   return (
     <div className="lx-modal-wrap" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}>
-      <div className="lx-dialog" role="dialog" aria-label="Flag an issue">
+      <div className="lx-dialog" role="dialog" aria-label="Flag an issue" data-no-feedback>
         <h3>Flag an issue with this answer</h3>
         <p className="sub">This goes to the Saabai team to review. It is not sent to anyone else.</p>
         <div className="reasons">
@@ -71,7 +71,7 @@ export function FlagDialog({ onSubmit, onClose }: { onSubmit: (reason: FlagReaso
         {state === "error" && <div className="bad">Could not send the flag. Try again.</div>}
         <div className="row">
           <button type="button" className="lx-btn" onClick={onClose}>Cancel</button>
-          <button type="button" className="lx-btn primary" disabled={!reason || state === "sending"}
+          <button type="button" className="lx-btn primary" data-no-feedback disabled={!reason || state === "sending"}
             onClick={async () => { if (!reason) return; setState("sending"); const ok = await onSubmit(reason, note); if (ok) onClose(); else setState("error"); }}>
             {state === "sending" ? "Sending..." : "Send flag"}
           </button>

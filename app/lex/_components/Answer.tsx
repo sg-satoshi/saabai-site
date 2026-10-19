@@ -181,13 +181,13 @@ export function AnswerSheet({ text, meta, at, streaming, selected, onCite, onExp
           <button type="button" className="lx-btn" onClick={onExport}><Icon name="word" />Export to Word</button>
           <button type="button" className="lx-btn" onClick={onCopy}><Icon name="copy" />{copied ? "Copied" : <>Copy<span className="lbl-long">{" with citations"}</span></>}</button>
           <button type="button" className="lx-btn" onClick={onDraft}><Icon name="draft" />Draft<span className="lbl-long">{" from this"}</span></button>
+          {meta && cited.length > 0 && <button type="button" className="lx-btn" onClick={onSources}><Icon name="book" />Sources</button>}
           <span className="lx-sp" />
           {onFlag && (
-            <button type="button" className={`lx-btn ghost${flagged ? " flagged" : ""}`} onClick={onFlag} disabled={flagged} title="Tell the Saabai team something is wrong">
-              <Icon name="flag" />{flagged ? "Flagged" : <>Flag<span className="lbl-long">{" an issue"}</span></>}
+            <button type="button" className={`lx-btn ghost${flagged ? " flagged" : ""}`} data-no-feedback onClick={onFlag} disabled={flagged} title="Flag an issue: tell the Saabai team something is wrong" aria-label={flagged ? "Flagged" : "Flag an issue"}>
+              <Icon name="flag" />{flagged ? "Flagged" : "Flag"}
             </button>
           )}
-          {meta && cited.length > 0 && <button type="button" className="lx-btn" onClick={onSources}><Icon name="book" />Sources</button>}
         </div>
       )}
     </article>
