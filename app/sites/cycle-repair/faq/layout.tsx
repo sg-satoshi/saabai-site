@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const DESC = "Answers about Stu's mobile bike servicing on the Gold Coast and Tweed Coast: where Stu travels, service prices, e-bikes, call-out fee and how to book.";
+const DESC = "Answers about Stu's mobile bike servicing from the Northern Rivers to Coomera and Ormeau: suburbs, prices, e-bikes, punctures and how to book.";
 
 export const metadata: Metadata = {
   title: "FAQ",

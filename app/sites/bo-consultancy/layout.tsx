@@ -38,11 +38,6 @@ export const metadata: Metadata = {
   authors: [{ name: "BO Consulting" }],
   creator: "BO Consulting",
   publisher: "BO Consulting",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
-  },
   openGraph: {
     type: "website",
     locale: "en_AU",

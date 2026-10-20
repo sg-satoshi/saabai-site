@@ -6,8 +6,10 @@ import ChatWidget from "./ChatWidget";
 import MobileCtaBar from "./MobileCtaBar";
 import NewsTicker from "./NewsTicker";
 import { isFocusedFormPath } from "@/lib/focused-paths";
+import { showsSaabaiChrome } from "@/lib/client-site-surface";
 
-// Pages where Mia (ChatWidget) should be suppressed — they have their own experience
+// Saabai pages where Mia, the mobile CTA and the news ticker stay off.
+// Client sites are not listed here: showsSaabaiChrome reads the site registry.
 const SUPPRESS_PATHS = [
   "/onboarding/plon", "/mission-control", "/plon", "/rex-widget", "/lex-widget",
   // Lex platform — has its own full-page experience
@@ -18,21 +20,12 @@ const SUPPRESS_PATHS = [
   "/testimonial", "/unsubscribe",
   // Admin pages have their own nav
   "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/login", "/saabai-admin",
-  // Client demo sites — their own experience
-  "/sites/tributum-law-v2",
-  "/sites/bo-consultancy",
-  "/sites/cycle-repair",
   // LeadGen — has its own dedicated widget
   "/leadgen", "/leadgen-widget",
-  // Wholesale Homes — has its own chat widget
-  "/sites/wholesale-homes",
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget", "/sites/bo-consultancy", "/sites/wholesale-homes"];
-
-// Custom domains that have their own widgets — suppress all Saabai widgets
-const SUPPRESS_HOSTNAMES = ["boconsulting.com.au", "www.boconsulting.com.au", "wholesalehomes.com.au", "www.wholesalehomes.com.au", "stuscyclerepairs.com", "www.stuscyclerepairs.com"];
+const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();
@@ -48,8 +41,8 @@ export default function ConditionalWidgets() {
   if (hostname === null) return null;
 
   const suppress =
+    !showsSaabaiChrome(hostname, pathname) ||
     SUPPRESS_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
-    SUPPRESS_HOSTNAMES.includes(hostname) ||
     // Blueprint fact-find: paid customers, no sales widgets
     isFocusedFormPath(pathname);
 

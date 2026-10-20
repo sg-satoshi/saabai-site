@@ -5,6 +5,7 @@ import { CLICK_KINDS, IMAGE_PATH_RE } from "@/lib/exp/core";
 import { OV_COOKIE, decodeOverlay, fingerprint, pageKey, type OvItem } from "@/lib/exp/overlay";
 import { findTarget, sigOf } from "@/lib/exp/overlay-dom";
 import { captureOrig, previewInto } from "@/lib/exp/editor-dom";
+import { showsSaabaiChrome } from "@/lib/client-site-surface";
 import ExpBeacon from "./ExpBeacon";
 
 /**
@@ -18,6 +19,7 @@ export default function ExpOverlay() {
 
   useEffect(() => {
     const done = () => document.documentElement.classList.remove("sb-af");
+    if (!showsSaabaiChrome(window.location.hostname, pathname)) { done(); setLive([]); return; }
     const m = document.cookie.match(new RegExp(`(?:^|; )${OV_COOKIE}=([^;]+)`));
     const payload = decodeOverlay(m?.[1]);
     if (!payload || payload.p !== pageKey(pathname)) { done(); setLive([]); return; }
