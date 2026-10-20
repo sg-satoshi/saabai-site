@@ -7,6 +7,7 @@ import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
+import { MiaReplyText } from "../../lib/mia-reply-format";
 
 const STORAGE_KEY = "saabai-conversation";
 const PROFILE_KEY = "saabai-visitor-profile";
@@ -89,25 +90,6 @@ function getMessageText(message: UIMessage): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("\n\n");
-}
-
-function renderMessageText(text: string): React.ReactNode[] {
-  const parts = text.split(/(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g);
-  return parts.map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline break-all opacity-80 hover:opacity-100 transition-opacity"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    )
-  );
 }
 
 function MiaAvatar({ size = 36, dotSize = 10, showDot = true }: { size?: number; dotSize?: number; showDot?: boolean }) {
@@ -921,7 +903,7 @@ export default function ChatWidget() {
                   }`}
                   style={item.role !== "user" ? { background: "#272466" } : {}}
                 >
-                  {renderMessageText(item.text)}
+                  <MiaReplyText text={item.text} />
                 </div>
               </div>
             ))}
