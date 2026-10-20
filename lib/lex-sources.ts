@@ -145,6 +145,34 @@ export const MAX_READS_PER_ANSWER = 4;
 const MAX_BYTES = 1_500_000;
 const READ_TIMEOUT_MS = 9000;
 
+/**
+ * ATO's edge blocks the old bot UA (HTTP 403). A normal browser UA gets through
+ * more often; when it still does not, public rulings are read from AustLII.
+ */
+export const SOURCE_BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+const AUSTLII_RULING_DB: Record<string, string> = {
+  TR: "ATOTR", TD: "ATOTD", GSTR: "ATOGSTR", GSTD: "ATOGSTD", SGR: "ATOSGR", SGD: "ATOSGD",
+  SMSFR: "ATOSMSFR", SMSFD: "ATOSMSFD", FTR: "ATOFTR", FTD: "ATOFTD", MT: "ATOMTR",
+  CR: "ATOCR", PR: "ATOPR", WETR: "ATOWETR", WETD: "ATOWETD", LCTD: "ATOLCTD",
+};
+// Longer series names first so GSTR is not read as TR.
+const RULING_ID = /\b(GSTR|GSTD|SMSFR|SMSFD|WETR|WETD|LCTD|SGR|SGD|FTR|FTD|TR|TD|CR|PR|MT)(\d{4})(D)?(\d+)\b/;
+
+/** AustLII copy of an ATO ruling page, or null when the URL is not a known public ruling. */
+export function austliiMirrorUrl(raw: string): string | null {
+  let decoded = raw;
+  try { decoded = decodeURIComponent(raw); } catch { /* keep the raw url */ }
+  if (!/ato\.gov\.au/i.test(decoded)) return null;
+  const m = decoded.toUpperCase().match(RULING_ID);
+  if (!m) return null;
+  const db = AUSTLII_RULING_DB[m[1]];
+  if (!db) return null;
+  const file = `${m[1]}${m[2]}${m[3] ?? ""}${m[4]}`;
+  return `https://www.austlii.edu.au/au/other/rulings/ato/${db}/${m[2]}/${file}.html`;
+}
+
 export function isAllowedSourceUrl(raw: string): boolean {
   try {
     const u = new URL(raw);
@@ -167,22 +195,31 @@ export function htmlToText(html: string): string {
 
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 
-/** Fetches one allowlisted page as text. Redirects are followed only to allowlisted hosts. */
-export async function fetchSourceText(url: string, fetcher: Fetcher = fetch): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+type FetchResult = { ok: true; text: string } | { ok: false; error: string; status?: number };
+
+async function fetchAllowlisted(url: string, fetcher: Fetcher): Promise<FetchResult> {
   let current = url;
   for (let hop = 0; hop < 3; hop++) {
     if (!isAllowedSourceUrl(current)) return { ok: false, error: "That site is not on Lex's list of sources it can read." };
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), READ_TIMEOUT_MS);
     try {
-      const res = await fetcher(current, { redirect: "manual", signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; SaabaiLex/1.0; +https://saabai.ai/legal)", Accept: "text/html,text/plain" } });
+      const res = await fetcher(current, {
+        redirect: "manual",
+        signal: ctrl.signal,
+        headers: {
+          "User-Agent": SOURCE_BROWSER_UA,
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.7",
+          "Accept-Language": "en-AU,en;q=0.9",
+        },
+      });
       if (res.status >= 300 && res.status < 400) {
         const loc = res.headers.get("location");
-        if (!loc) return { ok: false, error: `Redirect without a location (${res.status})` };
+        if (!loc) return { ok: false, error: `Redirect without a location (${res.status})`, status: res.status };
         current = new URL(loc, current).toString();
         continue;
       }
-      if (!res.ok) return { ok: false, error: `The source returned HTTP ${res.status}` };
+      if (!res.ok) return { ok: false, error: `The source returned HTTP ${res.status}`, status: res.status };
       const len = Number(res.headers.get("content-length") ?? 0);
       if (len > MAX_BYTES) return { ok: false, error: "The source is too large to read" };
       const type = res.headers.get("content-type") ?? "";
@@ -197,6 +234,18 @@ export async function fetchSourceText(url: string, fetcher: Fetcher = fetch): Pr
     }
   }
   return { ok: false, error: "Too many redirects" };
+}
+
+/** Fetches one allowlisted page as text. Redirects stay on the allowlist. ATO 403s fall back to AustLII. */
+export async function fetchSourceText(url: string, fetcher: Fetcher = fetch): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  const first = await fetchAllowlisted(url, fetcher);
+  if (first.ok) return first;
+  const mirror = first.status === 403 ? austliiMirrorUrl(url) : null;
+  if (mirror) {
+    const second = await fetchAllowlisted(mirror, fetcher);
+    if (second.ok) return second;
+  }
+  return { ok: false, error: first.error };
 }
 
 // ── Pinpoints ─────────────────────────────────────────────────────────────────

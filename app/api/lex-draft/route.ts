@@ -1,15 +1,15 @@
 import { lexErrorResponse } from "../../../lib/lex-errors";
 /**
- * Lex Document Drafting API — /api/lex-draft
+ * Lex Document Drafting API: /api/lex-draft
  *
  * Two-pass architecture:
  *
- *   Pass 1 — Drafter (streaming)
+ *   Pass 1: Drafter (streaming)
  *     An elite Australian legal drafter that searches for governing legislation
  *     BEFORE drafting, cites every substantive proposition, and marks anything
  *     unverifiable with [VERIFY: ...]. Returns the full draft as a stream.
  *
- *   Pass 2 — QA Verifier (non-streaming, optional)
+ *   Pass 2: QA Verifier (non-streaming, optional)
  *     An independent legal reviewer that checks every clause in the draft,
  *     returns a structured JSON confidence report with flagged issues.
  *     Triggered when requestQA is true and a completed draft is provided.
@@ -22,6 +22,8 @@ import type { LanguageModel } from "ai";
 import { getLexConfig } from "../../../lib/lex-config";
 import { getLexModelForFirm } from "../../../lib/lex-model";
 import { finalStepAnswers } from "../../../lib/lex-research-tools";
+import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
+import { noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
@@ -40,7 +42,7 @@ import {
 } from "../../../lib/lex-document-types";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // Legal documents need extended time — searches + full draft
+export const maxDuration = 300; // Legal documents need extended time: searches + full draft
 
 // ── Type definitions ─────────────────────────────────────────────────────────
 
@@ -69,12 +71,16 @@ export interface QAVerificationReport {
 
 const DRAFTING_SYSTEM_PROMPT = `You are an elite Australian legal drafter with the equivalent expertise of a senior partner at a top-tier firm. You draft precise, enforceable legal documents grounded in current Australian law.
 
+TODAY'S DATE: {{TODAY}} (Australia/Brisbane).
+Date the document with this date. Do not use 2025, or any other date, unless the instructing lawyer gives a different one.
+
 ABSOLUTE RULES:
 1. SEARCH BEFORE YOU DRAFT. For every document, first search for the governing legislation and key cases. Do not rely on memory alone.
 2. CITE EVERYTHING. Every substantive legal proposition must cite the specific Act, the exact section number, and where relevant the case. Format: [Act Name Year (Cth/State) s XX].
 3. FLAG UNCERTAINTY. If you cannot find or verify a legal proposition via search, mark it: [VERIFY: what needs checking and why]. Do not invent citations.
 4. JURISDICTION PRECISION. Australian law varies significantly by state. Always specify which jurisdiction's law applies and note where state law diverges.
 5. NEVER HALLUCINATE. If a section number is uncertain, search for it. If you cannot find it, say so explicitly.
+6. WRITE ONLY THE DOCUMENT. Do not narrate your process. Never write "Let me run all searches", "Good. I have enough", or any other plan before or between tool calls. Call the tools, then write the document and nothing else.
 
 DOCUMENT QUALITY STANDARDS:
 - Use proper legal drafting conventions: defined terms in capitals, operative provisions in present tense, schedules for detailed matters.
@@ -83,14 +89,13 @@ DOCUMENT QUALITY STANDARDS:
 - Flag stamp duty and registration requirements.
 
 ALWAYS INCLUDE AT TOP OF EVERY DOCUMENT:
----
-DRAFT -- [Document Type] -- [Date]
+DRAFT: [Document Type]: {{TODAY}}
 Prepared using Lex by Saabai. For review by a qualified Australian lawyer before execution.
 This document is a draft only and does not constitute legal advice.
----
 
 FORMATTING:
-- Plain text only. No markdown symbols, no asterisks, no em dashes.
+- Plain text only. No markdown symbols, no asterisks, no em dashes, no spaced double hyphen.
+- No divider lines of equals signs, hyphens, or box-drawing characters.
 - Number every clause (1., 1.1, 1.1.1).
 - New paragraph after every clause.
 - Section headings in CAPITALS.
@@ -114,7 +119,7 @@ Return your assessment as a JSON object with this exact structure:
       "id": "<clause number or section heading>",
       "clause": "<brief description of what the clause does>",
       "status": "<verified|flagged|unverified>",
-      "note": "<your assessment — what is correct, what needs checking>"
+      "note": "<your assessment: what is correct, what needs checking>"
     }
   ],
   "criticalIssues": ["<issue 1>", "<issue 2>"],
@@ -200,12 +205,12 @@ export async function POST(req: Request) {
 
     // ── Drafting Pass (Pass 1) ──────────────────────────────────────────────
 
-    // Look up document type from registry (optional — enhances the system prompt)
+    // Look up document type from registry (optional: enhances the system prompt)
     // "custom" means free-form: skip the preset document context
     const docTypeEntry = (documentType && documentType !== "custom") ? getDocumentType(documentType) : undefined;
 
     // Build the full system prompt
-    let systemPrompt = DRAFTING_SYSTEM_PROMPT;
+    let systemPrompt = DRAFTING_SYSTEM_PROMPT.replaceAll("{{TODAY}}", brisbaneLongDate());
 
     if (docTypeEntry && jurisdiction) {
       systemPrompt += buildDocumentContextAddition(docTypeEntry, jurisdiction);
@@ -241,9 +246,9 @@ export async function POST(req: Request) {
     }
     if (responseLength) {
       const lengthMap: Record<string, string> = {
-        concise:  "RESPONSE LENGTH: Concise — produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
-        balanced: "RESPONSE LENGTH: Balanced — standard professional length. Include all required elements without padding.",
-        detailed: "RESPONSE LENGTH: Detailed — produce a thorough, comprehensive document. Include full explanations, recitals, and all optional protective clauses.",
+        concise:  "RESPONSE LENGTH: Concise. Produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
+        balanced: "RESPONSE LENGTH: Balanced. Standard professional length. Include all required elements without padding.",
+        detailed: "RESPONSE LENGTH: Detailed. Produce a thorough, comprehensive document. Include full explanations, recitals, and all optional protective clauses.",
       };
       if (lengthMap[responseLength]) {
         systemPrompt += `\n\n${lengthMap[responseLength]}`;
@@ -286,6 +291,7 @@ export async function POST(req: Request) {
       messages: finalMessages,
       stopWhen: stepCountIs(10), // More steps needed for document drafting
       prepareStep: finalStepAnswers(10),
+      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
       tools: {
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -297,11 +303,11 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Legal query — e.g. 'discretionary trust deed valid certainty of objects' or 'binding financial agreement s90G requirements'",
+                description: "Legal query: e.g. 'discretionary trust deed valid certainty of objects' or 'binding financial agreement s90G requirements'",
               },
               jurisdiction: {
                 type: "string",
-                description: "Optional court filter — HCA, FCA, NSWSC, VSC, QSC, WASC",
+                description: "Optional court filter: HCA, FCA, NSWSC, VSC, QSC, WASC",
               },
             },
             required: ["query"],
@@ -319,7 +325,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Tax query — e.g. 'discretionary trust streaming rules Subdivision 207-B' or 'Division 7A trustee loan'",
+                description: "Tax query: e.g. 'discretionary trust streaming rules Subdivision 207-B' or 'Division 7A trustee loan'",
               },
             },
             required: ["query"],
@@ -336,7 +342,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Act name and section — e.g. 'Family Law Act 1975 section 90G binding financial agreement requirements'",
+                description: "Act name and section: e.g. 'Family Law Act 1975 section 90G binding financial agreement requirements'",
               },
             },
             required: ["query"],
@@ -353,7 +359,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Family law query — e.g. 'section 90G certificate independent legal advice binding' or 'property settlement just equitable s79'",
+                description: "Family law query: e.g. 'section 90G certificate independent legal advice binding' or 'property settlement just equitable s79'",
               },
             },
             required: ["query"],
@@ -370,7 +376,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Corporations law query — e.g. 'shareholders agreement drag along oppression remedy s232' or 'unit trust MIS registration threshold'",
+                description: "Corporations law query: e.g. 'shareholders agreement drag along oppression remedy s232' or 'unit trust MIS registration threshold'",
               },
             },
             required: ["query"],
@@ -387,7 +393,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "State legislation query — e.g. 'Retail Leases Act disclosure statement requirements' or 'Duties Act trust deed stamp duty exemption'",
+                description: "State legislation query: e.g. 'Retail Leases Act disclosure statement requirements' or 'Duties Act trust deed stamp duty exemption'",
               },
               state: {
                 type: "string",
@@ -404,18 +410,18 @@ export async function POST(req: Request) {
         verifySection: tool<VerifySectionInput, LegalSearchResponse>({
           description:
             "Verify the exact text of a specific section on legislation.gov.au. " +
-            "ALWAYS call this before including a specific section number in a draft — " +
+            "ALWAYS call this before including a specific section number in a draft: " +
             "this is the primary anti-hallucination tool for statutory citations.",
           inputSchema: jsonSchema<VerifySectionInput>({
             type: "object",
             properties: {
               act: {
                 type: "string",
-                description: "Full Act name — e.g. 'Family Law Act 1975' or 'Corporations Act 2001'",
+                description: "Full Act name: e.g. 'Family Law Act 1975' or 'Corporations Act 2001'",
               },
               section: {
                 type: "string",
-                description: "Section number — e.g. '90G' or '180' or '102AG'",
+                description: "Section number: e.g. '90G' or '180' or '102AG'",
               },
             },
             required: ["act", "section"],

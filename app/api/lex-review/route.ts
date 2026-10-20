@@ -1,6 +1,7 @@
-import { generateText } from "ai";
+import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
+import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -80,11 +81,11 @@ function buildUserPrompt(body: ReviewRequest): string {
 Review this document as ${actingFor ?? "your client"}'s solicitor in ${jurisdiction}.
 
 Analyse across these axes:
-1. RISK FLAGS — clauses that create unfavorable exposure for your client (unlimited liability, one-sided indemnities, unilateral variation rights, unusual termination triggers, IP assignment, auto-renewal traps)
-2. MISSING CLAUSES — clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.) — tailor this to the identified document type
-3. LEGISLATION CONFLICTS — clauses that may conflict with Australian legislation relevant to this document type (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, Family Law Act, etc.)
-4. MARKET POSITION — terms that are unusually aggressive or non-standard for this document type
-5. NEGOTIATION — for each critical/moderate finding, suggest a redline (replacement clause language)
+1. RISK FLAGS: clauses that create unfavorable exposure for your client (unlimited liability, one-sided indemnities, unilateral variation rights, unusual termination triggers, IP assignment, auto-renewal traps)
+2. MISSING CLAUSES: clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.): tailor this to the identified document type
+3. LEGISLATION CONFLICTS: clauses that may conflict with Australian legislation relevant to this document type (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, Family Law Act, etc.)
+4. MARKET POSITION: terms that are unusually aggressive or non-standard for this document type
+5. NEGOTIATION: for each critical/moderate finding, suggest a redline (replacement clause language)
 
 Return a JSON ReviewReport object.`;
   } else {
@@ -93,11 +94,11 @@ Return a JSON ReviewReport object.`;
 Review this document prepared for a client in ${jurisdiction} as outgoing work product from a law firm.
 
 Analyse across these axes:
-1. ACCURACY — are legal citations correct? Are case references valid? Are legislation section numbers accurate for the identified document type?
-2. COMPLETENESS — has the lawyer addressed all material issues relevant to this document type? What has been missed?
-3. COMPLIANCE — does this comply with Legal Profession Uniform Law obligations (costs disclosure, conflict disclosure)?
-4. TONE — is the language professionally appropriate? Too aggressive? Too tentative?
-5. RISK TO FIRM — anything that could expose the firm to professional indemnity liability?
+1. ACCURACY: are legal citations correct? Are case references valid? Are legislation section numbers accurate for the identified document type?
+2. COMPLETENESS: has the lawyer addressed all material issues relevant to this document type? What has been missed?
+3. COMPLIANCE: does this comply with Legal Profession Uniform Law obligations (costs disclosure, conflict disclosure)?
+4. TONE: is the language professionally appropriate? Too aggressive? Too tentative?
+5. RISK TO FIRM: anything that could expose the firm to professional indemnity liability?
 
 Return a JSON ReviewReport object.`;
   }
@@ -142,25 +143,36 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
     const systemPrompt =
       "You are Lex, an expert AI legal document reviewer specialising in Australian law.\n" +
       "You review documents with the precision of a senior partner conducting a pre-execution review.\n" +
-      "You MUST respond with valid JSON only — no prose, no markdown, no code fences. Raw JSON object only.";
+      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop.";
 
     const userPrompt = buildUserPrompt(body);
 
-    const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
-      system: systemPrompt,
-      prompt: userPrompt,
-      maxOutputTokens: 4000,
-    });
-
     let report: ReviewReport;
     try {
-      report = JSON.parse(text);
-    } catch {
-      return Response.json(
-        { error: "Analysis failed, could not parse review output" },
-        { status: 500 }
-      );
+      const { object } = await generateObject({
+        model: anthropic("claude-sonnet-4-6"),
+        schema: ReviewReportSchema,
+        schemaName: "ReviewReport",
+        system: systemPrompt,
+        prompt: userPrompt,
+        // A full review (findings, missing clauses, redlines) was truncated at 4000 and then failed JSON.parse.
+        maxOutputTokens: 8000,
+        maxRetries: 1,
+        // jsonTool, not native outputFormat: outputFormat rejects schemas like this one.
+        providerOptions: { anthropic: { structuredOutputMode: "jsonTool" } },
+      });
+      report = normaliseReview(object);
+    } catch (err) {
+      const text = (err as { text?: string })?.text;
+      if (typeof text === "string" && text.includes("{")) {
+        try { report = normaliseReview(parseReviewOutput(text)); }
+        catch {
+          return Response.json({ error: "Analysis failed, could not parse review output" }, { status: 500 });
+        }
+      } else {
+        console.error("[lex-review] parse", err);
+        return Response.json({ error: "Analysis failed, could not parse review output" }, { status: 500 });
+      }
     }
 
     // Ensure top-level metadata is populated from the request in case the model omits them

@@ -161,7 +161,7 @@ test("buildAnswerMeta: schema-checked output from the model; bad output degrades
 
 test("route wiring: citation rules in the prompt, registry, meta part, em dash filter, longer time limit", () => {
   const src = readFileSync("app/api/lex-research/route.ts", "utf8");
-  for (const s of ["CITATION_RULES", "withSourceRegistry", "data-lex-sources", "buildAnswerMeta", "noDashesTransform", "stripMarkers", "maxDuration = 120"]) assert.ok(src.includes(s), s);
+  for (const s of ["CITATION_RULES", "withSourceRegistry", "data-lex-sources", "buildAnswerMeta", "noDashesTransform", "stripMarkers", "maxDuration = 180"]) assert.ok(src.includes(s), s);
   assert.ok(!/[\u2012-\u2015]/.test(CITATION_RULES));
   for (const f of ["lib/lex-sources.ts", "lib/lex-answer-meta.ts"]) assert.ok(!/[\u2014\u2013]/.test(readFileSync(f, "utf8")), f);
 });

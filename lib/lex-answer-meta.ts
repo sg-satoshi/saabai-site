@@ -44,6 +44,15 @@ export function tightenConclusions(raw: z.infer<typeof ConclusionsSchema>["concl
   });
 }
 
+/**
+ * Confidence pass. Production was AbortError on every answer: native Anthropic
+ * structured output (outputFormat) on this schema did not finish inside 20s,
+ * so the timer aborted and every conclusion was left unchecked. jsonTool skips
+ * the grammar compile, and the limit is long enough for a full research answer.
+ * An earlier AI_APICallError was the same schema with maxItems, which outputFormat rejects.
+ */
+export const CONFIDENCE_TIMEOUT_MS = 45_000;
+
 export async function buildAnswerMeta(model: LanguageModel, answerText: string, reg: SourceRegistry, opts: { timeoutMs?: number } = {}): Promise<LexAnswerMeta> {
   const citations = verifyCitations(answerText, reg);
   const problems = citations.filter((c) => c.status !== "verified").map((c) =>
@@ -57,18 +66,20 @@ export async function buildAnswerMeta(model: LanguageModel, answerText: string, 
 
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 20000);
+    const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? CONFIDENCE_TIMEOUT_MS);
     const { object } = await generateObject({
       model,
       schema: ConclusionsSchema,
       abortSignal: ctrl.signal,
-      maxOutputTokens: 1200,
+      maxOutputTokens: 2500,
+      maxRetries: 1,
+      providerOptions: { anthropic: { structuredOutputMode: "jsonTool" } },
       system:
         "You check a legal research answer written for an Australian lawyer. List its main conclusions (at most 8), each with a confidence level and the reason, " +
         "and the specific checks the lawyer should do. high = settled rule supported by a binding or primary source that was read and verified. " +
         "moderate = supported but fact dependent, discretionary, or only by persuasive or unread sources. low = unsupported, contested, or from model knowledge. " +
         "Only use source ids from the list. Plain English, Australian spelling, no em dashes.",
-      prompt: `SOURCES (id | type | title | citation check):\n${sourceList || "(none)"}\n\nANSWER:\n${renderMarkers(answerText, citations).slice(0, 12000)}`,
+      prompt: `SOURCES (id | type | title | citation check):\n${sourceList || "(none)"}\n\nANSWER:\n${renderMarkers(answerText, citations).slice(0, 8000)}`,
     }).finally(() => clearTimeout(timer));
     const conclusions = tightenConclusions(object.conclusions.slice(0, 8), reg, citations);
     const verify = [...new Set([...problems, ...object.verify.slice(0, 8).map((v) => noDashes(v.trim()).slice(0, 300))])].slice(0, 10);

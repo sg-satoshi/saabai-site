@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateCompare } from "../../../lib/lex-review-access";
+import { cleanLexOutput } from "../../../lib/lex-output";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -38,8 +39,10 @@ async function runCompare(request: Request): Promise<Response> {
     const systemPrompt =
       "You are Lex, an expert AI legal document reviewer specialising in Australian law.\n" +
       "You compare two legal documents with the precision of a senior partner.\n" +
-      "Provide a clear, structured comparison analysis in plain text.\n" +
-      "Use concise paragraphs with clear headings. No markdown formatting.";
+      "Write plain prose. Put each heading on its own line, then short paragraphs.\n" +
+      "No markdown: no asterisks, hashes, or backticks.\n" +
+      "No decorative dividers or rules. Do not draw lines of equals signs, hyphens, or box-drawing characters.\n" +
+      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop.";
 
     const userPrompt = `Compare the following two legal documents and identify key differences, risks, and recommendations.
 
@@ -71,7 +74,7 @@ Keep the analysis concise but thorough.`;
       maxOutputTokens: 4000,
     });
 
-    return Response.json({ analysis: text });
+    return Response.json({ analysis: cleanLexOutput(text) });
   } catch (err) {
     console.error("[lex-compare]", err);
     return Response.json({ error: "compare_failed" }, { status: 500 });
