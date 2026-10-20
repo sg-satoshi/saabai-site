@@ -90,6 +90,97 @@ test("a client still gets a row when only a folded copy has a chatbot", () => {
   assert.deepEqual(rows[0].slugs.sort(), ["quiet-co", "quiet-co-old"]);
 });
 
+test("live screenshot: Heaven Thai Massage (heaven-thai-massage) is a single row", async () => {
+  const { nameKey } = await import("../lib/site-dedupe");
+  // Two stored records Shane saw twice. Same display name and slug, different business names,
+  // so a business-name-only dedupe leaves both rows.
+  const a = site("heaven_live_a", "heaven-thai-massage", "Heaven Thai Massage", 20, { business: { name: "Heaven Thai Massage" }, source: "redis" });
+  const b = site("heaven_live_b", "heaven-thai-massage", "Heaven Thai Massage", 21, { business: { name: "Heaven Thai Massage Pty Ltd" }, source: "external" });
+  assert.notEqual(nameKey(a), nameKey(b));
+  assert.equal(a.name, "Heaven Thai Massage");
+  assert.equal(b.name, "Heaven Thai Massage");
+  assert.equal(a.slug, "heaven-thai-massage");
+  assert.equal(b.slug, "heaven-thai-massage");
+  const rows = chatbotCanonicalRows([a, b], () => none);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].site.name, "Heaven Thai Massage");
+  assert.equal(rows[0].site.slug, "heaven-thai-massage");
+  assert.deepEqual(rows[0].slugs, ["heaven-thai-massage"]);
+  assert.deepEqual([rows[0].site.id, ...rows[0].folded.map((f) => f.id)].sort(), ["heaven_live_a", "heaven_live_b"]);
+});
+
+test("same slug is one row when the business names do not match", async () => {
+  const { nameKey, normaliseSlug } = await import("../lib/site-dedupe");
+  const redis = site("site_heaven_redis", "heaven-thai-massage", "Heaven Thai Massage", 2);
+  const other = site("site_heaven_named", "heaven-thai-massage", "Heaven Thai Massage", 9, { business: { name: "Heaven Thai Massage Pty Ltd" }, source: "external" });
+  assert.notEqual(nameKey(redis), nameKey(other));
+  assert.equal(normaliseSlug(redis.slug), normaliseSlug(other.slug));
+  const rows = chatbotCanonicalRows([redis, other], () => none);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].site.id, "site_heaven_named");
+  assert.deepEqual(rows[0].slugs, ["heaven-thai-massage"]);
+  assert.deepEqual(rows[0].folded.map((f) => f.id), ["site_heaven_redis"]);
+});
+
+test("live screenshot: one Nico row, one Tributum row, singles for Cycle Repair and Wholesale Homes", async () => {
+  const { APP_ROUTER_SITES } = await import("../lib/site-registry");
+  const { nameKey } = await import("../lib/site-dedupe");
+  const { BESPOKE_SLUGS } = await import("../lib/chatbot/core");
+  const v2 = APP_ROUTER_SITES.find((s) => s.id === "tributum-law-v2")!;
+  const cycle = APP_ROUTER_SITES.find((s) => s.id === "cycle-repair")!;
+  const wholesale = APP_ROUTER_SITES.find((s) => s.id === "wholesale-homes")!;
+  // Same labels Shane saw. Business names differ, so a name-only dedupe leaves them split.
+  const nicoA = site("nico_a", "nico-moretti", "Nico Moretti", 10, { business: { name: "Nico Moretti" } });
+  const nicoB = site("nico_b", "nico-moretti", "Nico Moretti", 11, { business: { name: "Nico Moretti Companionship" } });
+  const tribSpace = site("trib_space", "Tributum Law", "Tributum Law", 12, { business: { name: "Tributum Law Adelaide" } });
+  const tribA = site("trib_a", "tributum-law", "Tributum Law", 13, { business: { name: "Tributum" } });
+  const tribB = site("trib_b", "tributum-law", "Tributum Law", 14, { business: { name: "Tributum Law Pty Ltd" } });
+  assert.notEqual(nameKey(nicoA), nameKey(nicoB));
+  assert.notEqual(nameKey(tribSpace), nameKey(tribA));
+  assert.notEqual(nameKey(tribA), nameKey(tribB));
+  assert.ok(BESPOKE_SLUGS.includes("nico-moretti"));
+  assert.ok(BESPOKE_SLUGS.includes("tributum-law-v2"));
+
+  const rows = chatbotCanonicalRows(
+    [nicoA, nicoB, tribSpace, tribA, tribB, cycle, wholesale, v2],
+    () => none,
+    new Set([v2.id, cycle.id, wholesale.id]),
+  );
+  const covers = (slug: string) => rows.filter((r) => r.site.slug === slug || r.slugs.includes(slug) || r.folded.some((f) => f.slug === slug));
+
+  assert.equal(rows.length, 4);
+  assert.equal(covers("nico-moretti").length, 1);
+  const nico = covers("nico-moretti")[0];
+  assert.equal(nico.site.name, "Nico Moretti");
+  assert.equal(nico.site.slug, "nico-moretti");
+  assert.deepEqual(nico.slugs, ["nico-moretti"]);
+  assert.equal(nico.folded.length, 1);
+  assert.equal(BESPOKE_SLUGS.includes(nico.site.slug), true);
+
+  assert.equal(covers("Tributum Law").length, 1);
+  assert.equal(covers("tributum-law").length, 1);
+  assert.equal(covers("tributum-law-v2").length, 1);
+  const trib = covers("tributum-law")[0];
+  assert.equal(trib, covers("Tributum Law")[0]);
+  assert.equal(trib, covers("tributum-law-v2")[0]);
+  assert.equal(trib.folded.length + 1, 4);
+  assert.ok(trib.slugs.includes("Tributum Law"));
+  assert.ok(trib.slugs.includes("tributum-law"));
+  assert.ok(trib.slugs.includes("tributum-law-v2"));
+
+  assert.equal(covers("cycle-repair").length, 1);
+  assert.equal(covers("cycle-repair")[0].site.name, "Stu's Cycle Repairs");
+  assert.equal(covers("cycle-repair")[0].folded.length, 0);
+  assert.equal(covers("wholesale-homes").length, 1);
+  assert.equal(covers("wholesale-homes")[0].site.slug, "wholesale-homes");
+  assert.equal(covers("wholesale-homes")[0].folded.length, 0);
+});
+
+test("heaven-thai-massage is not in the hardcoded app router list", async () => {
+  const { APP_ROUTER_SITES } = await import("../lib/site-registry");
+  assert.equal(APP_ROUTER_SITES.some((s) => s.slug === "heaven-thai-massage" || s.name === "Heaven Thai Massage"), false);
+});
+
 test("conversation and message counts add across distinct slugs, and a shared slug is counted once", () => {
   const usage = sumUsage([
     { conversations: 4, messages: 10, inputTokens: 1, outputTokens: 2 },

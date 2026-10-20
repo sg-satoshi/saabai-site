@@ -84,6 +84,23 @@ test("migrate-sites no longer ships a slug with a space", async () => {
   assert.match(src, /Upsert by client/);
 });
 
+test("same slug is one client when the business names differ", async () => {
+  const { planDedupe, nameKey } = await import("../lib/site-dedupe");
+  const redis = site("site_heaven_redis", "heaven-thai-massage", "Heaven Thai Massage", 2);
+  const other = site("site_heaven_named", "heaven-thai-massage", "Heaven Thai Massage", 9, { business: { name: "Heaven Thai Massage Pty Ltd" }, source: "external" });
+  assert.notEqual(nameKey(redis as never), nameKey(other as never));
+  const plan = planDedupe([redis, other] as never[], () => ({ users: [], billing: false }));
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].keep.id, "site_heaven_named");
+  assert.deepEqual(plan[0].merge.map((m) => m.id), ["site_heaven_redis"]);
+
+  const factory = site("site_heaven_factory", "heaven-thai-massage", "Heaven Thai Massage", 1, { domains: ["heaventhai.com.au"], externalUrl: "https://heaventhai.com.au" });
+  const migrated = site("site_heaven_migrated", "heaven-thai-massage", "Heaven Thai Massage", 30, { business: { name: "Heaven Thai Massage Pty Ltd" } });
+  const withDomain = planDedupe([factory, migrated] as never[], () => ({ users: [], billing: false }));
+  assert.equal(withDomain[0].keep.id, "site_heaven_factory");
+  assert.equal(withDomain[0].keep.why, "factory record with a custom domain");
+});
+
 test("dropdown keeps hardcoded v2 only when it is the canonical record", async () => {
   const { canonicalOnly } = await import("../lib/site-dedupe");
   const { APP_ROUTER_SITES } = await import("../lib/site-registry");
