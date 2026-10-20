@@ -301,3 +301,72 @@ export async function purgeExpiredChatLogs(days = CHAT_LOG_RETENTION_DAYS, rpc?:
     cutoff: typeof row.cutoff === "string" ? row.cutoff : cutoff,
   };
 }
+
+export type ChatHistoryTurn = {
+  id: string;
+  bot: string;
+  conversationId: string;
+  role: string;
+  content: string;
+  createdAt: string;
+  model: string | null;
+};
+
+export type ChatHistoryResult = {
+  configured: boolean;
+  error: boolean;
+  turns: ChatHistoryTurn[];
+};
+
+type HistoryReader = (bots: string[], limit: number) => Promise<ChatHistoryTurn[]>;
+let historyReaderForTests: HistoryReader | null = null;
+
+/** Test hook. Production leaves this unset. */
+export function setChatHistoryReaderForTests(reader: HistoryReader | null): void {
+  historyReaderForTests = reader;
+}
+
+/** Recent logged turns for these bot ids, newest first. Does not throw. */
+export async function listChatHistory(bots: string[], limit = 40): Promise<ChatHistoryResult> {
+  const ids = [...new Set(bots.map((b) => b.trim()).filter(Boolean))].slice(0, 20);
+  const empty = (configured: boolean, error = false): ChatHistoryResult => ({ configured, error, turns: [] });
+  if (!ids.length) return empty(chatLogConfigured() || historyReaderForTests !== null);
+  if (historyReaderForTests) {
+    try {
+      return { configured: true, error: false, turns: await historyReaderForTests(ids, limit) };
+    } catch (err) {
+      console.error("[chat-log] history", err instanceof Error ? err.message : err);
+      return empty(true, true);
+    }
+  }
+  if (!chatLogConfigured()) return empty(false);
+  try {
+    const { serviceClient } = await import("./agent-supabase");
+    const { data, error } = await serviceClient()
+      .from("messages")
+      .select("id, bot_slug, conversation_id, role, content, created_at, model")
+      .in("bot_slug", ids)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("[chat-log] history", error.message);
+      return empty(true, true);
+    }
+    const turns = (Array.isArray(data) ? data : []).map((row) => {
+      const r = row as Record<string, unknown>;
+      return {
+        id: String(r.id ?? ""),
+        bot: String(r.bot_slug ?? ""),
+        conversationId: String(r.conversation_id ?? ""),
+        role: String(r.role ?? ""),
+        content: String(r.content ?? ""),
+        createdAt: String(r.created_at ?? ""),
+        model: r.model == null ? null : String(r.model),
+      };
+    }).filter((t) => t.id);
+    return { configured: true, error: false, turns };
+  } catch (err) {
+    console.error("[chat-log] history", err instanceof Error ? err.message : err);
+    return empty(true, true);
+  }
+}
