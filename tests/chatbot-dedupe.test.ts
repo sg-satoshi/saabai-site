@@ -90,6 +90,25 @@ test("a client still gets a row when only a folded copy has a chatbot", () => {
   assert.deepEqual(rows[0].slugs.sort(), ["quiet-co", "quiet-co-old"]);
 });
 
+test("live screenshot: Heaven Thai Massage (heaven-thai-massage) is a single row", async () => {
+  const { nameKey } = await import("../lib/site-dedupe");
+  // Two stored records Shane saw twice. Same display name and slug, different business names,
+  // so a business-name-only dedupe leaves both rows.
+  const a = site("heaven_live_a", "heaven-thai-massage", "Heaven Thai Massage", 20, { business: { name: "Heaven Thai Massage" }, source: "redis" });
+  const b = site("heaven_live_b", "heaven-thai-massage", "Heaven Thai Massage", 21, { business: { name: "Heaven Thai Massage Pty Ltd" }, source: "external" });
+  assert.notEqual(nameKey(a), nameKey(b));
+  assert.equal(a.name, "Heaven Thai Massage");
+  assert.equal(b.name, "Heaven Thai Massage");
+  assert.equal(a.slug, "heaven-thai-massage");
+  assert.equal(b.slug, "heaven-thai-massage");
+  const rows = chatbotCanonicalRows([a, b], () => none);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].site.name, "Heaven Thai Massage");
+  assert.equal(rows[0].site.slug, "heaven-thai-massage");
+  assert.deepEqual(rows[0].slugs, ["heaven-thai-massage"]);
+  assert.deepEqual([rows[0].site.id, ...rows[0].folded.map((f) => f.id)].sort(), ["heaven_live_a", "heaven_live_b"]);
+});
+
 test("same slug is one row when the business names do not match", async () => {
   const { nameKey, normaliseSlug } = await import("../lib/site-dedupe");
   const redis = site("site_heaven_redis", "heaven-thai-massage", "Heaven Thai Massage", 2);

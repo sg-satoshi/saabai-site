@@ -12,30 +12,9 @@ export function chatbotPlanPath(slug: string): string {
   return `${chatbotPagePath(slug)}#plan`;
 }
 
+/** Chat history lives at /saabai-admin/chat-history and filters with ?bot=. */
 export function chatbotHistoryPath(slug: string): string {
-  return `/saabai-admin/chatbots/history?bot=${encodeURIComponent(slug)}`;
-}
-
-/** Bespoke routes log under a short bot id, not the site slug. */
-const LOG_ALIASES: Record<string, string[]> = {
-  "bo-consultancy": ["bo"],
-  "lmm-site": ["lmm"],
-  "nico-moretti": ["nico"],
-  "tributum-law": ["tributum"],
-  "tributum-law-v2": ["tributum"],
-  "Tributum Law": ["tributum"],
-};
-
-/** Bot ids to read when the history page is filtered to this site. */
-export function historyBotIds(slug: string, extraSlugs: string[] = []): string[] {
-  const ids = new Set<string>();
-  for (const s of [slug, ...extraSlugs]) {
-    const t = s.trim();
-    if (!t) continue;
-    ids.add(t);
-    for (const alias of LOG_ALIASES[t] ?? []) ids.add(alias);
-  }
-  return [...ids];
+  return `/saabai-admin/chat-history?bot=${encodeURIComponent(slug)}`;
 }
 
 export function rowForSlug<T extends { slug: string; folded?: { slug: string }[] }>(rows: T[], slug: string): T | null {
