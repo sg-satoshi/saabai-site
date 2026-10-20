@@ -3,34 +3,26 @@ import { tiers, additionalServiceWork, specialist } from "./services";
 import { Logo } from "./Logo";
 import { ReviewsCarousel } from "./ReviewsCarousel";
 import PoweredBySaabai from "../../components/PoweredBySaabai";
-import { googleRating, googleReviewCount, googleMapsUrl } from "./reviews";
+import { googleBusinessUrl, googleRating, googleReviewCount } from "./reviews";
+import { AREA_SERVED, FACEBOOK_URL } from "./seo";
 
-const drivetrainImg = "/sites/cycle-repair/drivetrain.jpg";
-const mechanicImg = "/sites/cycle-repair/stu.jpg";
+const drivetrainImg = "/sites/cycle-repair/drivetrain.webp";
+const mechanicImg = "/sites/cycle-repair/stu.webp";
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": ["LocalBusiness", "BicycleStore"],
   "@id": "https://stuscyclerepairs.com/#business",
   name: "Stu's Cycle Repairs",
-  image: "https://stuscyclerepairs.com/sites/cycle-repair/stu.jpg",
-  logo: "https://stuscyclerepairs.com/sites/cycle-repair/stus-logo-v2.png",
+  image: "https://stuscyclerepairs.com/sites/cycle-repair/stu.webp",
+  logo: "https://stuscyclerepairs.com/sites/cycle-repair/stus-logo.webp",
   description:
-    "Mobile bicycle repairs, servicing, wheel builds and E-Bike work across the Gold Coast and Tweed Coast.",
+    "Mobile bike mechanic for the Gold Coast and Tweed Coast. Servicing, repairs, wheel builds and e-bikes at your home or work, from the Northern Rivers to Coomera and Ormeau. Services from $119.",
   telephone: "+61405225721",
   email: "stuscyclerepairs@gmail.com",
-  url: "https://stuscyclerepairs.com",
-  sameAs: [googleMapsUrl],
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: googleRating,
-    reviewCount: googleReviewCount,
-    bestRating: 5,
-  },
-  areaServed: [
-    { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
-    { "@type": "Place", name: "Tweed Coast, New South Wales, Australia" },
-  ],
+  url: "https://stuscyclerepairs.com/",
+  sameAs: [FACEBOOK_URL, googleBusinessUrl],
+  areaServed: AREA_SERVED,
   address: { "@type": "PostalAddress", addressRegion: "QLD", addressCountry: "AU" },
   priceRange: "$$",
   makesOffer: [
@@ -47,10 +39,7 @@ const jsonLd = {
       name: o.name,
       serviceType: "Bicycle repair and servicing",
       provider: { "@type": "LocalBusiness", name: "Stu's Cycle Repairs" },
-      areaServed: [
-        { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
-        { "@type": "Place", name: "Tweed Coast, New South Wales, Australia" },
-      ],
+      areaServed: AREA_SERVED,
     },
   })),
 };
@@ -69,6 +58,7 @@ const marqueeItems = [
 export default function Index() {
   return (
     <div className="min-h-screen bg-bg text-fg font-sans">
+      <link rel="canonical" href="https://stuscyclerepairs.com/" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -98,6 +88,8 @@ export default function Index() {
             <a href="#how" className="hover:text-brand transition-colors">How it Works</a>
             <a href="#about" className="hover:text-brand transition-colors">About</a>
             <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="hover:text-brand transition-colors">E-bikes</Link>
+            <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="hover:text-brand transition-colors">Punctures</Link>
             <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
 
@@ -121,7 +113,7 @@ export default function Index() {
                 Gold Coast Mobile Workshop
               </div>
               <h1 className="text-5xl lg:text-7xl font-display font-semibold tracking-tighter leading-[0.95] text-balance mb-8">
-                Expert-level mobile bicycle repairs, delivered to your Gold Coast driveway.
+                Mobile bike repairs and servicing across the Gold Coast
               </h1>
               <p className="text-muted-foreground text-lg max-w-[48ch] text-pretty mb-10">
                 Stu brings 37 years of elite mechanical experience directly to your home or
@@ -158,8 +150,8 @@ export default function Index() {
                 <img
                   src={drivetrainImg}
                   alt="Close-up of a freshly serviced bicycle drivetrain"
-                  width={1200}
-                  height={1200}
+                  width={800}
+                  height={800}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -221,7 +213,7 @@ export default function Index() {
             <div className="mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
               <div>
                 <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-3">
-                  Service Tiers
+                  Bike service prices
                 </h2>
                 <p className="text-4xl md:text-5xl font-display font-semibold tracking-tighter">
                   The Mechanic&apos;s Menu
@@ -307,7 +299,7 @@ export default function Index() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
               <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-3">
-                Additional Service Work
+                Extra repairs and call-out fees
               </h2>
               <p className="text-3xl md:text-4xl font-display font-semibold tracking-tighter">
                 Fast fixes and precision adjustments
@@ -324,6 +316,12 @@ export default function Index() {
                 </div>
               ))}
             </div>
+            <p className="mt-6 text-sm text-muted-foreground">
+              Flat tyre? See{" "}
+              <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="text-brand hover:underline">puncture repair</Link>.
+              {" "}E-bike work is on the{" "}
+              <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="text-brand hover:underline">e-bike repair page</Link>.
+            </p>
           </div>
         </section>
 
@@ -332,10 +330,29 @@ export default function Index() {
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-4 gap-12">
             <div>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.22em] mb-6">
-                Specialist Care
+                E-bike servicing
               </h2>
               <ul className="space-y-3">
-                {specialist.map((s) => (
+                {specialist.filter((s) => /e-bike/i.test(s.label)).map((s) => (
+                  <li
+                    key={s.label}
+                    className="text-sm font-medium border-b border-muted-line pb-2 flex justify-between gap-4"
+                  >
+                    <span>{s.label}</span>
+                    <span className="text-brand whitespace-nowrap">{s.price}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-sm">
+                <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="text-brand hover:underline">
+                  E-bike repair on the Gold Coast
+                </Link>
+              </p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.22em] mt-10 mb-6">
+                Other specialist work
+              </p>
+              <ul className="space-y-3">
+                {specialist.filter((s) => !/e-bike/i.test(s.label)).map((s) => (
                   <li
                     key={s.label}
                     className="text-sm font-medium border-b border-muted-line pb-2 flex justify-between gap-4"
@@ -361,12 +378,12 @@ export default function Index() {
                 {
                   n: "03",
                   title: "Gold Coast Native",
-                  body: "Servicing riders both professional and recreational from all over the Gold Coast and now including the Tweed Coast, with local knowledge of terrain, means your set-up is dialled for GC and Tweed conditions.",
+                  body: "Stu services professional and recreational riders from the Northern Rivers to Coomera and Ormeau. Local knowledge of the terrain means the set-up suits those roads.",
                 },
                 {
                   n: "04",
                   title: "E-Bike",
-                  body: "Diagnostics and servicing for modern high-torque E-Bike systems. Motors, drivetrains, brakes and firmware checks.",
+                  body: "Diagnostics and servicing for motors, drivetrains, brakes and firmware checks. Stu works on all e-bike brands.",
                 },
               ].map((c) => (
                 <div
@@ -402,7 +419,7 @@ export default function Index() {
             </div>
             <div>
               <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-4">
-                About Stu
+                About Stu, your mobile bike mechanic
               </h2>
               <p className="text-4xl md:text-5xl font-display font-semibold tracking-tighter mb-8 leading-tight">
                 37 years of grease &amp; gears.
@@ -459,7 +476,7 @@ export default function Index() {
                     <span className="text-[11px] text-muted-foreground uppercase tracking-[0.22em]">
                       Service area
                     </span>
-                    <p className="text-lg font-medium mt-1">Gold Coast, QLD (all of the Gold Coast)<br />Tweed Coast, NSW</p>
+                    <p className="text-lg font-medium mt-1">From the Northern Rivers to Coomera and Ormeau<br />Gold Coast, Tweed Coast and Northern Rivers NSW</p>
                   </div>
                 </div>
               </div>
@@ -489,7 +506,7 @@ export default function Index() {
       <footer className="bg-surface/50 border-t border-muted-line pt-16 pb-28 md:pb-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-col items-center md:items-start gap-3">
-            <Logo width={118} height={50} className="h-[50px] w-auto opacity-90" />
+            <Logo width={118} height={50} loading="lazy" className="h-[50px] w-auto opacity-90" />
             <span className="text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
               Stu&apos;s Cycle Repairs © {new Date().getFullYear()}
             </span>
@@ -502,6 +519,8 @@ export default function Index() {
             <a href="#services" className="hover:text-brand transition-colors">Services</a>
             <a href="#about" className="hover:text-brand transition-colors">About</a>
             <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="hover:text-brand transition-colors">E-bikes</Link>
+            <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="hover:text-brand transition-colors">Punctures</Link>
             <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
             <a href="tel:0405225721" className="hover:text-brand transition-colors">Call Stu</a>

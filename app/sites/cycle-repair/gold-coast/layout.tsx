@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const DESC = "Mobile bike mechanic servicing all of the Gold Coast, QLD. Stu brings a fully equipped workshop to your home or work. Bronze, Silver and Gold services from $119.";
+const DESC = "Mobile bike mechanic from the Northern Rivers to Coomera and Ormeau. Suburb coverage across the Gold Coast, Tweed Coast and Northern Rivers. Services from $119.";
 
 export const metadata: Metadata = {
   title: "Mobile Bike Repairs Gold Coast",

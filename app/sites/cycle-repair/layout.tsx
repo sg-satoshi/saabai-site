@@ -19,25 +19,32 @@ const ibmPlexSans = IBM_Plex_Sans({
 });
 
 const SITE_URL = "https://stuscyclerepairs.com";
-const DESCRIPTION =
-  "Mobile bike repairs across the Gold Coast and Tweed Coast. 37+ years experience. Bronze, Silver & Gold servicing, delivered to your driveway.";
+const HOME_TITLE = "Mobile Bike Repairs Gold Coast | Stu's Cycle Repairs";
+const HOME_DESCRIPTION =
+  "Mobile bike mechanic for the Gold Coast and Tweed Coast. Servicing, repairs, wheel builds and e-bikes at your home or work. Services from $119.";
+
+const homeMeta = clientSiteMetadata({
+  siteUrl: SITE_URL,
+  name: "Stu's Cycle Repairs",
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  keywords: [
+    "mobile bike mechanic Gold Coast",
+    "bike repairs Gold Coast",
+    "bicycle servicing Tweed Coast",
+    "e-bike repairs Gold Coast",
+    "mobile bicycle repair",
+  ],
+  icon: "/sites/cycle-repair/favicon.png",
+  ogImage: { url: "/sites/cycle-repair/stu.webp", width: 800, height: 1000, alt: "Stu, mobile bicycle mechanic" },
+});
 
 export const metadata: Metadata = {
-  ...clientSiteMetadata({
-    siteUrl: SITE_URL,
-    name: "Stu's Cycle Repairs",
-    title: "Stu's Cycle Repairs, Mobile Bicycle Mechanic, Gold Coast",
-    description: DESCRIPTION,
-    keywords: [
-      "mobile bike mechanic Gold Coast",
-      "bike repairs Gold Coast",
-      "bicycle servicing Tweed Coast",
-      "e-bike repairs Gold Coast",
-      "mobile bicycle repair",
-    ],
-    icon: "/sites/cycle-repair/favicon.png",
-    ogImage: { url: "/sites/cycle-repair/stu.jpg", alt: "Stu, mobile bicycle mechanic" },
-  }),
+  ...homeMeta,
+  // Next strips a root canonical down to the origin, so the home page emits
+  // the trailing-slash tag itself. Child routes set their own canonicals.
+  alternates: { canonical: null },
+  openGraph: { ...homeMeta.openGraph, url: "https://stuscyclerepairs.com/" },
 };
 
 export default function CycleRepairLayout({
