@@ -48,23 +48,31 @@ export function pageMeta(o: {
   };
 }
 
-/** BreadcrumbList: Home first, then each crumb. */
-export function breadcrumbSchema(crumbs: { name: string; path: string }[]) {
+/** BreadcrumbList node, without @context, so it can sit inside a @graph. */
+export function breadcrumbNode(crumbs: { name: string; path: string }[]) {
   const all = [{ name: "Home", path: "/" }, ...crumbs];
   return {
-    "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: all.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: pageUrl(c.path) })),
   };
 }
 
-/** FAQPage from visible question and answer pairs (text must match the page word for word). */
-export function faqSchema(items: { q: string; a: string }[]) {
+/** BreadcrumbList: Home first, then each crumb. */
+export function breadcrumbSchema(crumbs: { name: string; path: string }[]) {
+  return { "@context": "https://schema.org", ...breadcrumbNode(crumbs) };
+}
+
+/** FAQPage node from visible question and answer pairs. Text must match the page. */
+export function faqNode(items: { q: string; a: string }[]) {
   return {
-    "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: items.map(({ q, a }) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
   };
+}
+
+/** FAQPage from visible question and answer pairs (text must match the page word for word). */
+export function faqSchema(items: { q: string; a: string }[]) {
+  return { "@context": "https://schema.org", ...faqNode(items) };
 }
 
 export const orgRef = { "@id": ORG_ID };

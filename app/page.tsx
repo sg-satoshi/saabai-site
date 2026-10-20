@@ -3,15 +3,14 @@ import Nav from "./components/Nav";
 import HeroHeadline from "./components/exp/HeroHeadline";
 import HeroCta from "./components/exp/HeroCta";
 import SbFooter from "./components/sb/SbFooter";
+import JsonLd from "./components/JsonLd";
+import { miaServiceSchema } from "@/lib/seo-entity";
+import { faqSchema } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
-export const metadata: Metadata = {
-  title: { absolute: "AI Chatbots for Australian Businesses | Saabai, Gold Coast" },
-  description:
-    "Custom AI chatbots and websites for Australian small businesses and law firms. Gold Coast based. Alerts by email, SMS, WhatsApp or Telegram.",
-  alternates: { canonical: "/" },
-};
+export const metadata: Metadata = publicPageMeta.home;
 
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
@@ -25,6 +24,8 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
+      <JsonLd data={miaServiceSchema} />
+      <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div className="hero">

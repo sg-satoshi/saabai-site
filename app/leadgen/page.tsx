@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
-  description:
-    "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you via email, SMS, or WhatsApp the moment a lead comes in — 24/7, automatically.",
-  alternates: { canonical: "https://www.saabai.ai/leadgen" },
-  openGraph: {
-    url: "https://www.saabai.ai/leadgen",
-    title: "AI Lead Conversion for Service Businesses | Saabai LeadGen",
-    description:
-      "Turn every website visitor into a booked job. Saabai LeadGen captures, qualifies, and alerts you via email, SMS, or WhatsApp the moment a lead comes in — 24/7, automatically.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.leadgen;
 
 const DEMO_SLUG = "bne-emergency-plumbing";
 

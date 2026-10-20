@@ -4,12 +4,11 @@ import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/blueprint.css";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 import JsonLd from "../components/JsonLd";
+import { schemaGraph, serviceSchema } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Saabai Blueprint: your AI plan, ranked by dollars saved",
-  description: "A clear, ranked AI plan for small businesses and professional practices. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.",
-  alternates: { canonical: "/blueprint" },
-};
+export const metadata: Metadata = publicPageMeta.blueprint;
 
 const ROWS: [string, string, string, string][] = [
   ["Ranked opportunities with $ saved", "✓", "✓", "✓"],
@@ -30,47 +29,26 @@ const FAQS = [
   ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
 ];
 
-const SITE = "https://www.saabai.ai";
-
-const blueprintSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${SITE}/blueprint#service`,
-      name: "Saabai Blueprint AI audit",
-      serviceType: "AI audit",
-      description: metadata.description,
-      url: `${SITE}/blueprint`,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "Country", name: "Australia" },
-      offers: TIER_ORDER.map((id) => ({
-        "@type": "Offer",
-        name: `Blueprint ${TIERS[id].name}`,
-        description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
-        price: TIERS[id].price,
-        priceCurrency: "AUD",
-        availability: "https://schema.org/InStock",
-        url: `${SITE}/blueprint`,
-      })),
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: FAQS.map(([q, a]) => ({
-        "@type": "Question",
-        name: q,
-        acceptedAnswer: { "@type": "Answer", text: a },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "Blueprint", item: `${SITE}/blueprint` },
-      ],
-    },
-  ],
-};
+const blueprintSchema = schemaGraph([
+  serviceSchema({
+    id: "https://www.saabai.ai/blueprint#service",
+    name: "Saabai Blueprint AI audit",
+    serviceType: "AI audit",
+    description: String(publicPageMeta.blueprint.description),
+    url: "https://www.saabai.ai/blueprint",
+    offers: TIER_ORDER.map((id) => ({
+      "@type": "Offer",
+      name: `Blueprint ${TIERS[id].name}`,
+      description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
+      price: TIERS[id].price,
+      priceCurrency: "AUD",
+      availability: "https://schema.org/InStock",
+      url: "https://www.saabai.ai/blueprint",
+    })),
+  }),
+  faqNode(FAQS.map(([q, a]) => ({ q, a }))),
+  breadcrumbNode([{ name: "Blueprint", path: "/blueprint" }]),
+]);
 
 export default function BlueprintPage() {
   return (

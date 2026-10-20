@@ -2,14 +2,12 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import JsonLd from "../components/JsonLd";
-import { pageMeta, breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
+import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
+import { lexServiceSchema } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "./legal.css";
 
-export const metadata: Metadata = pageMeta({
-  path: "/legal",
-  title: "Lex: AI Legal Research for Australian Law Firms | Saabai",
-  description: "Lex searches AustLII, ATO rulings and Australian legislation and cites every source. Drafting with clause-by-clause QA. Firm plan $299 a month.",
-});
+export const metadata: Metadata = publicPageMeta.legal;
 
 const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
 
@@ -126,6 +124,7 @@ function AnswerIllustration() {
 export default function LegalPage() {
   return (
     <div className="lx">
+      <JsonLd data={lexServiceSchema} />
       <JsonLd data={lexSchema} />
       <JsonLd data={faqSchema(LEX_FAQS)} />
       <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />

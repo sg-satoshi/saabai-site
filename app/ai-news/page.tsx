@@ -3,14 +3,11 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { getNewsData } from "../../lib/news";
 import AiNewsClient from "./AiNewsClient";
+import { publicPageMeta } from "@/lib/seo-pages";
 
 export const revalidate = 1800;
 
-export const metadata: Metadata = {
-  title: "Latest AI News & Discussions",
-  description:
-    "Live AI news, research and community discussions updated every 30 minutes. Curated from the top AI subreddits, TechCrunch, VentureBeat, The Verge, MIT Technology Review, and the biggest voices on X.",
-};
+export const metadata: Metadata = publicPageMeta.aiNews;
 
 export default async function AINewsPage() {
   const { reddit, news, x, updatedAt } = await getNewsData({ redditLimit: 6, newsLimit: 6 });
