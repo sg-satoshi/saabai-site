@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import { xai } from "@ai-sdk/xai";
+import { getBotModel } from "../../../../lib/chat-config";
 import { getEdgeProfile, getEdgeSessions } from "../../../../lib/redis";
 import type { EdgeProfile, EdgeSession } from "../../../../lib/redis";
 
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: xai("grok-4"),
+    model: getBotModel("edge"),
     system: buildSystem(profile, sessions),
     messages: coreMessages,
   });

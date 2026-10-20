@@ -7,7 +7,7 @@
 
 import { NextRequest } from "next/server";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../../lib/chat-config";
 import {
   getClientBySlug,
   saveLead,
@@ -24,9 +24,6 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
-
-// Use Claude Haiku for cost efficiency — picks up ANTHROPIC_API_KEY from env
-const leadgenModel = anthropic("claude-haiku-4-5-20251001");
 
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS });
@@ -55,7 +52,7 @@ export async function POST(req: NextRequest) {
       }));
 
     const { text } = await generateText({
-      model: leadgenModel,
+      model: getBotModel("leadgen"),
       system,
       messages: chatMessages,
     });

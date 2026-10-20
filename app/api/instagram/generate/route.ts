@@ -1,3 +1,5 @@
+import { resolveBotModel } from "../../../../lib/chat-config";
+
 export const runtime = "nodejs";
 
 const SYSTEM_PROMPT = `You are Shane Goldberg's Instagram content writer. Shane runs Saabai.ai — AI automation for law firms, accounting firms, and real estate agencies in Australia.
@@ -49,7 +51,7 @@ Write the complete caption now.`;
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: resolveBotModel("instagram").modelId,
         max_tokens: 800,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],

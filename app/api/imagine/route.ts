@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { resolveBotModel } from "../../../lib/chat-config";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "grok-imagine-image",
+        model: resolveBotModel("imagine").modelId,
         prompt,
         n: 1,
         response_format: "b64_json",

@@ -1,3 +1,5 @@
+import { resolveBotModel } from "../../../../lib/chat-config";
+
 export const runtime = "nodejs";
 
 const SYSTEM_PROMPT = `You are Shane Goldberg's LinkedIn ghostwriter. Shane runs Saabai.ai — an AI automation firm for professional services firms (law, accounting, real estate) in Australia.
@@ -56,7 +58,7 @@ Write the complete post now.`;
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
+          model: resolveBotModel("linkedin").modelId,
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userMessage }],

@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../lib/chat-config";
 import { saveNurtureRecord } from "../../../lib/redis";
 import { isSuppressed, miaFooterHtml, unsubHeaders } from "../../../lib/growth/consent";
 import { claimLeadAlert, claimVisitorEmail, clientIp, deepEscape, ipLimited, isInternalCall, leadAlertCheck, leadFingerprint, safeLogLine, sanitizeLead } from "../../../lib/leads-guard";
@@ -42,7 +42,7 @@ async function analyseConversation(
 
   try {
     const { text } = await generateText({
-      model: anthropic("claude-haiku-4-5-20251001"),
+      model: getBotModel("leads"),
       prompt: `You are analysing a sales conversation between Mia (Saabai's AI assistant) and a website visitor. Saabai sells AI automation to professional services businesses. The goal of each conversation is to book a free strategy call.
 
 Analyse the conversation below and return a JSON object only, no other text.

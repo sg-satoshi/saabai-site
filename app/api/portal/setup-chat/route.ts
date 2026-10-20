@@ -1,5 +1,5 @@
 import { streamText, stepCountIs, tool } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../../lib/chat-config";
 import { z } from "zod";
 import { verifySession } from "../../../../lib/portal-session";
 
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     ? [{ role: "user", content: "Hello" }]
     : messages;
 
-  const model = anthropic("claude-sonnet-4-6");
+  const model = getBotModel("portal-setup");
 
   const result = streamText({
     model,
