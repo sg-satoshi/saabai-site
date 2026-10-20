@@ -8,7 +8,9 @@ export const maxDuration = 60;
  * Vercel sends Authorization: Bearer CRON_SECRET.
  */
 export async function GET(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  // An unset secret must not match the header "Bearer undefined".
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

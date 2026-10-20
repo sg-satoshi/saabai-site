@@ -6,8 +6,9 @@
  *   Anthropic: https://platform.claude.com/docs/en/about-claude/pricing
  *     Haiku 4.5 $1 / $5, Sonnet 4.6 $3 / $15, Opus 4.6 $5 / $25
  *   xAI: grok-3-mini $0.30 / $0.50, grok-4 $3 / $15
- *   DeepSeek API docs (off-peak cache miss; peak hours are double):
- *     deepseek-v4-flash $0.15 / $0.60, deepseek-v4-pro $0.66 / $1.98
+ *   DeepSeek API docs. The DeepSeek rates below are off-peak cache-miss prices.
+ *   Peak hours (weekday 01:00-04:00 and 06:00-10:00 UTC) cost double:
+ *     deepseek-v4-flash $0.15 / $0.60 off-peak, deepseek-v4-pro $0.66 / $1.98 off-peak
  *
  * An unknown model still logs its tokens. Its cost is 0 until a rate is added here.
  */
@@ -28,6 +29,7 @@ export const MODEL_PRICES: Record<string, ModelPrice> = {
   "grok-4": { input: 3, output: 15 },
   "grok-4-0709": { input: 3, output: 15 },
   "grok-4-latest": { input: 3, output: 15 },
+  // DeepSeek rates are off-peak (cache miss). Peak hours cost double.
   "deepseek-v4-flash": { input: 0.15, output: 0.6 },
   "deepseek-flash": { input: 0.15, output: 0.6 },
   "deepseek-v4-pro": { input: 0.66, output: 1.98 },

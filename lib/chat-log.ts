@@ -1,10 +1,14 @@
 /**
  * Shared chat logger. Writes one conversation and its latest turn to Supabase.
- * Fire-and-forget: callers do not await it, and a failure never throws into the chat route.
+ * The chat reply is not blocked. The write promise is handed to Vercel waitUntil
+ * (or Next after() when that context is missing) so the function stays alive
+ * until the insert finishes. A failure never throws into the chat route.
  * Does nothing when SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.
  *
  * Redis conversation storage is not touched here.
  */
+import { waitUntil } from "@vercel/functions";
+import { after } from "next/server";
 import { costUsd } from "./model-prices";
 
 export const CHAT_LOG_RETENTION_DAYS = 90;
@@ -196,6 +200,39 @@ async function persistChatTurn(turn: ChatTurn): Promise<void> {
   if (inserted.error) throw new Error(inserted.error.message);
 }
 
+const VERCEL_REQUEST_CONTEXT = Symbol.for("@vercel/request-context");
+
+/** True when this invocation can extend its lifetime with Vercel waitUntil. */
+function vercelWaitUntilAvailable(): boolean {
+  try {
+    const holder = (globalThis as Record<symbol, { get?: () => { waitUntil?: unknown } } | undefined>)[VERCEL_REQUEST_CONTEXT];
+    return typeof holder?.get?.()?.waitUntil === "function";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Keep the serverless function alive for this promise without blocking the reply.
+ * Vercel waitUntil first, then Next after(). If neither context exists (tests, scripts),
+ * the promise still runs and flushChatLog can await it.
+ */
+function handOff(promise: Promise<unknown>): void {
+  if (vercelWaitUntilAvailable()) {
+    try {
+      waitUntil(promise);
+      return;
+    } catch (err) {
+      console.error("[chat-log] waitUntil failed", err instanceof Error ? err.message : err);
+    }
+  }
+  try {
+    after(promise);
+  } catch {
+    // No request context. The promise is already running.
+  }
+}
+
 /** Schedule a write. Returns immediately. Never throws. */
 export function logChatTurn(turn: ChatTurn): void {
   if (!shouldLog()) return;
@@ -207,6 +244,7 @@ export function logChatTurn(turn: ChatTurn): void {
     });
   inflight.add(job);
   void job.finally(() => inflight.delete(job));
+  handOff(job);
 }
 
 type FinishEvent = {

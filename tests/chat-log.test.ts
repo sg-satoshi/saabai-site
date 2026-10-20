@@ -106,6 +106,43 @@ test("logger does nothing when supabase env is missing", async () => {
   assert.equal(chatLogAttemptsForTests(), before);
 });
 
+test("DeepSeek rates are noted as off-peak", () => {
+  const src = readFileSync("lib/model-prices.ts", "utf8");
+  assert.match(src, /DeepSeek rates are off-peak/);
+  assert.match(src, /deepseek-v4-flash \$0\.15 \/ \$0\.60 off-peak/);
+  assert.match(src, /deepseek-v4-pro \$0\.66 \/ \$1\.98 off-peak/);
+});
+
+test("the write promise is handed to Vercel waitUntil when that context exists", async () => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const seen: Promise<unknown>[] = [];
+  const symbol = Symbol.for("@vercel/request-context");
+  const previous = (globalThis as Record<symbol, unknown>)[symbol];
+  (globalThis as Record<symbol, unknown>)[symbol] = {
+    get: () => ({ waitUntil: (promise: Promise<unknown>) => { seen.push(promise); } }),
+  };
+  setChatLogStoreForTests({
+    async upsertConversation() { return { error: null }; },
+    async insertMessages() { return { error: null }; },
+  });
+  try {
+    logChatTurn({
+      bot: "mia",
+      model: "grok-3-mini",
+      usage: { inputTokens: 1, outputTokens: 1 },
+      userText: "hi",
+      assistantText: "hello",
+    });
+    assert.equal(seen.length, 1);
+    await flushChatLog();
+    await seen[0];
+  } finally {
+    if (previous === undefined) delete (globalThis as Record<symbol, unknown>)[symbol];
+    else (globalThis as Record<symbol, unknown>)[symbol] = previous;
+  }
+});
+
 test("logger writes the turn with cost and does not block the caller", async () => {
   delete process.env.SUPABASE_URL;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -226,4 +263,10 @@ test("retention cron requires CRON_SECRET and skips when supabase is unset", asy
   const body = await ok.json();
   assert.equal(body.ok, true);
   assert.equal(body.skipped, true);
+
+  delete process.env.CRON_SECRET;
+  const unset = await GET(new Request("https://www.saabai.ai/api/cron/chat-log-retention", {
+    headers: { authorization: "Bearer undefined" },
+  }));
+  assert.equal(unset.status, 401);
 });
