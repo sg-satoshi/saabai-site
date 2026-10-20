@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+
 const FAQS = [
   { q: "What is the AI Readiness Score?", a: "A free 3 minute quiz with 12 questions about how your business runs. You get an instant score out of 100, a breakdown by area and three quick wins you can use this week." },
   { q: "Do I need a new website to get a Blueprint?", a: "No. The Blueprint looks at your whole business, including your current website and tools. Many clients start with a Blueprint and decide on a website later." },
@@ -31,7 +33,7 @@ export default function Home() {
           <span className="pill">New: Saabai Blueprint, your AI plan in 48 hours</span>
           <HeroHeadline />
           <p className="lead">
-            Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you'll save. Start with the free 3 minute AI score.
+            Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.
           </p>
           <div className="ctas">
             <HeroCta />
@@ -172,6 +174,27 @@ export default function Home() {
           </div>
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <a className="btn ghost" href="/websites">Compare website packages →</a>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <div className="card">
+            <h2>AI chatbots for Australian small businesses and law firms</h2>
+            <p style={{ marginTop: 16, fontSize: 17, maxWidth: 900 }}>
+              Saabai is a <a href="/ai-receptionist-gold-coast" style={copyLink}>Gold Coast</a> business based in Merrimac, Queensland, and we work remotely with clients across Australia. We build custom AI chatbots for business websites, trained on your own services, hours and policies. Your chatbot answers visitors day and night, so enquiries that come in after hours get a reply instead of sitting in an inbox until morning. It captures the person&apos;s details and what they need, then alerts you straight away. Email enquiry alerts come with every plan, and we can also send alerts to Telegram, WhatsApp or SMS. Want to see one working? Chat with Mia, our own AI assistant, right here on saabai.ai. For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/ai-chatbot-law-firms" style={copyLink}>Lex</a>, an AI workspace made for legal practices.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <div className="card">
+            <p style={{ fontSize: 17, maxWidth: 900 }}>
+              Every Saabai chatbot sends new enquiry alerts by email on all plans, so nothing gets lost. If you would rather hear about leads on your phone, we can also send alerts to Telegram, WhatsApp or SMS. You choose where each enquiry goes, so the right person sees it quickly and can follow up while the customer is still keen.
+            </p>
           </div>
         </div>
       </section>
