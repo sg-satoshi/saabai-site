@@ -3,9 +3,10 @@
  *
  * Client key: a real custom domain (not *.saabai.ai / *.vercel.app) when there is one, else the
  * normalised business name ("Tributum Law", "tributum-law", "tributum-law-v2" all become "tributumlaw").
- * Records that share a custom domain, a name key, or a normalised slug are one client.
- * The slug link matters when two copies use the same address but different business names
- * (a Redis record and another factory or external record).
+ * Records that share a custom domain, a business-name key, the visible name, or a normalised
+ * slug are one client. A trailing version on the slug (tributum-law-v2) is the same client
+ * as tributum-law, including a bot that still uses its own chat route.
+ * The slug link matters when two copies use the same address but different business names.
  *
  * Canonical pick: factory record with a real custom domain, then one with linked users or billing,
  * then the newest. Everything else in the group is a duplicate.
@@ -18,9 +19,18 @@ export function normaliseSlug(s: string): string {
   return (s || "").trim().toLowerCase().replace(/%20/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+/** tributum-law, "Tributum Law", and tributum-law-v2 are one client slug. */
+export function clientSlug(slug: string): string {
+  return normaliseSlug(slug).replace(/-v\d+$/, "");
+}
+
+export function visibleNameKey(name: string): string {
+  return (name || "").toLowerCase().replace(/%20/g, " ").replace(/\bv\d+\b/g, "").replace(/[^a-z0-9]/g, "");
+}
+
 export function nameKey(s: Pick<SiteConfig, "name" | "slug" | "business">): string {
   const base = s.business?.name || s.name || s.slug || "";
-  return base.toLowerCase().replace(/%20/g, " ").replace(/\bv\d+\b/g, "").replace(/[^a-z0-9]/g, "");
+  return visibleNameKey(base);
 }
 
 function host(u?: string): string {
@@ -43,15 +53,15 @@ export type DedupeGroup = {
 };
 
 export function planDedupe(sites: SiteConfig[], links: (siteId: string) => SiteLinks, hardcodedIds: Set<string> = new Set()): DedupeGroup[] {
-  // Union-find over shared name keys, shared slugs, and shared custom domains.
+  // Union-find over business names, visible names, client slugs, and custom domains.
   const parent = new Map<string, string>();
   const find = (x: string): string => { const p = parent.get(x) ?? x; if (p === x) return x; const r = find(p); parent.set(x, r); return r; };
   const union = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(rb, ra); };
   const seen = new Map<string, string>();
   for (const s of sites) {
     parent.set(s.id, s.id);
-    for (const k of [`n:${nameKey(s)}`, `s:${normaliseSlug(s.slug)}`, ...customDomains(s).map((d) => `d:${d}`)]) {
-      if (k === "n:" || k === "s:") continue;
+    for (const k of [`n:${nameKey(s)}`, `v:${visibleNameKey(s.name)}`, `s:${clientSlug(s.slug)}`, ...customDomains(s).map((d) => `d:${d}`)]) {
+      if (k === "n:" || k === "v:" || k === "s:") continue;
       const prev = seen.get(k);
       if (prev) union(prev, s.id); else seen.set(k, s.id);
     }
