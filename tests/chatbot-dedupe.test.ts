@@ -90,6 +90,24 @@ test("a client still gets a row when only a folded copy has a chatbot", () => {
   assert.deepEqual(rows[0].slugs.sort(), ["quiet-co", "quiet-co-old"]);
 });
 
+test("same slug is one row when the business names do not match", async () => {
+  const { nameKey, normaliseSlug } = await import("../lib/site-dedupe");
+  const redis = site("site_heaven_redis", "heaven-thai-massage", "Heaven Thai Massage", 2);
+  const other = site("site_heaven_named", "heaven-thai-massage", "Heaven Thai Massage", 9, { business: { name: "Heaven Thai Massage Pty Ltd" }, source: "external" });
+  assert.notEqual(nameKey(redis), nameKey(other));
+  assert.equal(normaliseSlug(redis.slug), normaliseSlug(other.slug));
+  const rows = chatbotCanonicalRows([redis, other], () => none);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].site.id, "site_heaven_named");
+  assert.deepEqual(rows[0].slugs, ["heaven-thai-massage"]);
+  assert.deepEqual(rows[0].folded.map((f) => f.id), ["site_heaven_redis"]);
+});
+
+test("heaven-thai-massage is not in the hardcoded app router list", async () => {
+  const { APP_ROUTER_SITES } = await import("../lib/site-registry");
+  assert.equal(APP_ROUTER_SITES.some((s) => s.slug === "heaven-thai-massage" || s.name === "Heaven Thai Massage"), false);
+});
+
 test("conversation and message counts add across distinct slugs, and a shared slug is counted once", () => {
   const usage = sumUsage([
     { conversations: 4, messages: 10, inputTokens: 1, outputTokens: 2 },

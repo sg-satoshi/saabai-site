@@ -3,7 +3,9 @@
  *
  * Client key: a real custom domain (not *.saabai.ai / *.vercel.app) when there is one, else the
  * normalised business name ("Tributum Law", "tributum-law", "tributum-law-v2" all become "tributumlaw").
- * Records that share a custom domain or a name key are one client.
+ * Records that share a custom domain, a name key, or a normalised slug are one client.
+ * The slug link matters when two copies use the same address but different business names
+ * (a Redis record and another factory or external record).
  *
  * Canonical pick: factory record with a real custom domain, then one with linked users or billing,
  * then the newest. Everything else in the group is a duplicate.
@@ -41,15 +43,15 @@ export type DedupeGroup = {
 };
 
 export function planDedupe(sites: SiteConfig[], links: (siteId: string) => SiteLinks, hardcodedIds: Set<string> = new Set()): DedupeGroup[] {
-  // Union-find over shared name keys and shared custom domains.
+  // Union-find over shared name keys, shared slugs, and shared custom domains.
   const parent = new Map<string, string>();
   const find = (x: string): string => { const p = parent.get(x) ?? x; if (p === x) return x; const r = find(p); parent.set(x, r); return r; };
   const union = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(rb, ra); };
   const seen = new Map<string, string>();
   for (const s of sites) {
     parent.set(s.id, s.id);
-    for (const k of [`n:${nameKey(s)}`, ...customDomains(s).map((d) => `d:${d}`)]) {
-      if (k === "n:") continue;
+    for (const k of [`n:${nameKey(s)}`, `s:${normaliseSlug(s.slug)}`, ...customDomains(s).map((d) => `d:${d}`)]) {
+      if (k === "n:" || k === "s:") continue;
       const prev = seen.get(k);
       if (prev) union(prev, s.id); else seen.set(k, s.id);
     }
