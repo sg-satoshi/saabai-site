@@ -8,7 +8,9 @@
     accentColor: '#c49a3a',
     bgColor: '#f8faf7',
     textColor: '#102225',
-    apiEndpoint: 'https://www.saabai.ai/api/lmm-chat',
+    slug: 'lmm-site',
+    apiEndpoint: 'https://www.saabai.ai/api/chat-platform/message',
+    configEndpoint: 'https://www.saabai.ai/api/chat-platform/config?site=lmm-site',
     systemPrompt: `You are Zara, a knowledgeable and friendly Australian finance and mortgage broking specialist based in Adelaide. You work for Lifestyle Money Management (LMM), helping clients build long-term wealth through ethical, property-led strategy, financial analysis, and portfolio management. You serve clients across Australia with a deep focus on Adelaide and Queensland markets. You are warm, professional, and conversational. You help with: mortgage broking, investment strategy, financial analysis, portfolio management, property wealth planning, lending strategy, and retirement planning. You prioritise affordability, asset quality, downside protection, and whether purchases genuinely move clients closer to financial independence. Keep responses concise and actionable.`,
     greeting: "Hello! I'm Zara from Lifestyle Money Management. Ready to talk property wealth strategy? I'm here to help!",
     placeholder: "Ask about finance, strategy, or property wealth..."
@@ -18,6 +20,17 @@
   let messages = [];
   let isOpen = false;
   let isTyping = false;
+  let chatbotOff = false;
+  let offMessage = '';
+
+  fetch(CONFIG.configEndpoint)
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (c) {
+      if (!c || c.active !== false) return;
+      chatbotOff = true;
+      offMessage = c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+    })
+    .catch(function () {});
 
   // Load history
   try {
@@ -227,6 +240,11 @@
     input.value = '';
     sendBtn.disabled = true;
     addMessage('user', text);
+    if (chatbotOff) {
+      addMessage('bot', offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.");
+      sendBtn.disabled = input.value.trim() === '';
+      return;
+    }
     showTyping();
 
     try {
@@ -234,6 +252,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          slug: CONFIG.slug,
           messages: messages
             .filter(m => m.text !== CONFIG.greeting && m.role !== 'system')
             .slice(-10)
@@ -242,8 +261,12 @@
       });
 
       hideTyping();
-      if (response.ok || response.status === 429 || response.status === 413) {
+      if (response.ok || response.status === 429 || response.status === 403 || response.status === 404) {
         const data = await response.json();
+        if (data.chatbotOff) {
+          chatbotOff = true;
+          offMessage = data.content || offMessage;
+        }
         const reply = data.content || data.text || data.message?.content || "I'm sorry, I didn't catch that. Could you rephrase?";
         addMessage('bot', reply);
       } else if (response.status >= 500) {

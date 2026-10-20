@@ -2,6 +2,8 @@ import { generateText } from "ai";
 import { getDefaultModel } from "../../../lib/chat-config";
 import { lastUserText, logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
+// Fallback for widgets cached before the move to /api/chat-platform/message.
+// Delete this route after 27 October 2026 (one week).
 export const runtime = "nodejs";
 export const maxDuration = 30;
 

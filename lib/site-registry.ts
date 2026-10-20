@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { BO_SYSTEM_PROMPT } from "./chatbot/platform-bot-seed";
 
 const redis = Redis.fromEnv();
 
@@ -132,7 +133,7 @@ export const APP_ROUTER_SITES: SiteConfig[] = [
       enabled: true,
       name: "Christina",
       greeting: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?",
-      systemPrompt: "You are Christina, the BO Consulting assistant. Help visitors with blue-collar recruitment and labour hire inquiries.",
+      systemPrompt: BO_SYSTEM_PROMPT,
       avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg",
     },
     createdAt: 1745000000000,
