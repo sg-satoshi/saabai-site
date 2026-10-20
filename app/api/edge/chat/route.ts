@@ -1,4 +1,5 @@
 import { streamText } from "ai";
+import { lastUserText, logStreamFinish, modelIdFrom } from "../../../../lib/chat-log";
 import { xai } from "@ai-sdk/xai";
 import { getEdgeProfile, getEdgeSessions } from "../../../../lib/redis";
 import type { EdgeProfile, EdgeSession } from "../../../../lib/redis";
@@ -106,10 +107,19 @@ export async function POST(req: Request) {
       .map(m => ({ role: m.role, content: m.content }));
   }
 
+  const model = xai("grok-4");
   const result = streamText({
-    model: xai("grok-4"),
+    model,
     system: buildSystem(profile, sessions),
     messages: coreMessages,
+    onFinish: (event) => {
+      logStreamFinish(event, {
+        bot: "edge",
+        siteId: "shane",
+        model: modelIdFrom(model),
+        userText: lastUserText(coreMessages),
+      });
+    },
   });
 
   return result.toUIMessageStreamResponse();

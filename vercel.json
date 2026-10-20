@@ -39,6 +39,10 @@
     {
       "path": "/api/cron/exp-weekly-note",
       "schedule": "30 21 * * 0"
+    },
+    {
+      "path": "/api/cron/chat-log-retention",
+      "schedule": "15 3 * * *"
     }
   ]
 }

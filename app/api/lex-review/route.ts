@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
+import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -149,8 +150,9 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
 
     let report: ReviewReport;
     try {
-      const { object } = await generateObject({
-        model: anthropic("claude-sonnet-4-6"),
+      const model = anthropic("claude-sonnet-4-6");
+      const { object, usage } = await generateObject({
+        model,
         schema: ReviewReportSchema,
         schemaName: "ReviewReport",
         system: systemPrompt,
@@ -162,6 +164,13 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
         providerOptions: { anthropic: { structuredOutputMode: "jsonTool" } },
       });
       report = normaliseReview(object);
+      logChatTurn({
+        bot: "lex-review",
+        model: modelIdFrom(model),
+        usage,
+        userText: userPrompt,
+        assistantText: report.summary,
+      });
     } catch (err) {
       const text = (err as { text?: string })?.text;
       if (typeof text === "string" && text.includes("{")) {

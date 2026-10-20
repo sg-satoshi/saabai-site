@@ -6,6 +6,7 @@ import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-co
 import { verifySession } from "../../../lib/portal-session";
 import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
 import { createDashFilter } from "../../../lib/no-dashes";
+import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -80,6 +81,14 @@ Formatting rules (always follow these):
     system: systemPrompt,
     messages: normalized,
     stopWhen: stepCountIs(4),
+    onFinish: (event) => {
+      logStreamFinish(event, {
+        bot: "lex",
+        siteId: clientId,
+        model: modelIdFrom(model),
+        userText: lastUserText(normalized),
+      });
+    },
   });
 
   // 4. Stream in the SSE format both LexWidget and client portal expect:
