@@ -2,15 +2,13 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import JsonLd from "../components/JsonLd";
+import { lawFirmChatbotServiceNode, schemaGraph } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
 
-const SITE = "https://www.saabai.ai";
 const PATH = "/ai-chatbot-law-firms";
-const CANONICAL = `${SITE}${PATH}`;
-const TITLE = "AI Chatbot for Law Firms in Australia | Saabai";
-const DESCRIPTION =
-  "Custom AI chatbots and Lex, an AI workspace for Australian law firms. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.";
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
 const LEX_FEATURES = [
@@ -83,52 +81,13 @@ const FAQS: { q: string; a: string[] }[] = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: { absolute: TITLE },
-  description: DESCRIPTION,
-  alternates: { canonical: CANONICAL },
-  openGraph: {
-    url: CANONICAL,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
+export const metadata: Metadata = publicPageMeta.lawFirms;
 
-const schema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${CANONICAL}#service`,
-      name: "AI chatbot and AI legal assistant for Australian law firms",
-      serviceType: "AI chatbot for law firms",
-      description: DESCRIPTION,
-      url: CANONICAL,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "Country", name: "Australia" },
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: FAQS.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a.join(" ") },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "AI chatbot for law firms", item: CANONICAL },
-      ],
-    },
-  ],
-};
+const schema = schemaGraph([
+  lawFirmChatbotServiceNode,
+  faqNode(FAQS.map((f) => ({ q: f.q, a: f.a.join(" ") }))),
+  breadcrumbNode([{ name: "AI chatbot for law firms", path: PATH }]),
+]);
 
 function BookDemo() {
   return (

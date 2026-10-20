@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: "%s | Saabai",
   },
   description:
-    "Saabai builds, hosts and manages small business websites on care plans from $100/month, and the Saabai Blueprint AI audit (from $497) shows exactly where AI saves you hours and dollars.",
+    "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
   keywords: [
     "Saabai",
     "Saabai Blueprint",
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     siteName: "Saabai",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
+      "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
     images: [
       {
         url: "/og-image.png",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
+      "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
     images: ["/og-image.png"],
   },
   alternates: {

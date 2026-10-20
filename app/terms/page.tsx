@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
+import { NAP } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "../components/sb/sb.css";
 
-export const metadata: Metadata = {
-  title: "Terms",
-  description: "General terms for Saabai website care plans and the Saabai Blueprint.",
-  alternates: { canonical: "https://www.saabai.ai/terms" },
-};
+export const metadata: Metadata = publicPageMeta.terms;
 
 const SECTIONS: { heading: string; body: string }[] = [
-  { heading: "1. Who we are", body: "These terms apply to services supplied by Saabai (ABN 71 889 082 572, Merrimac QLD 4226, Australia), a sole trader business operated by Shane Goldberg. Contact: hello@saabai.ai." },
+  { heading: "1. Who we are", body: `These terms apply to services supplied by ${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}), a sole trader business operated by Shane Goldberg. Contact: ${NAP.email}.` },
   { heading: "2. Our services", body: "We provide website building, hosting and care plans, and the Saabai Blueprint AI audit. What is included in each is described on the relevant page of saabai.ai at the time you buy, or in a written quote we send you." },
   { heading: "3. Prices and payment", body: "Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices. If this changes we will update our prices and invoices. Payments are processed securely by Stripe. Care plans are billed monthly in advance until cancelled." },
   { heading: "4. Cancellation", body: "You can cancel a care plan at any time by emailing hello@saabai.ai. Cancellation takes effect at the end of the period you have already paid for, and we do not give part-month refunds unless the law requires it." },
@@ -43,7 +41,7 @@ export default function TermsPage() {
           </div>
 
           <p className="dim" style={{ marginTop: 28, fontSize: 14 }}>
-            Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia.{" "}
+            {NAP.name}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}.{" "}
             <a href="/contact" style={{ color: "var(--teal)", textDecoration: "underline" }}>Contact</a>
             {" · "}
             <a href="/privacy" style={{ color: "var(--teal)", textDecoration: "underline" }}>Privacy</a>

@@ -3,19 +3,11 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Websites and Care Plans for Small Businesses",
-  description:
-    "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  alternates: { canonical: "https://www.saabai.ai/websites" },
-  openGraph: {
-    url: "https://www.saabai.ai/websites",
-    title: "Website Care Plans for Small Businesses | Saabai",
-    description:
-      "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.websites;
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
@@ -102,56 +94,11 @@ const faqs = [
   },
 ];
 
-const SITE = "https://www.saabai.ai";
-const CARE: Record<string, number> = { Presence: 100, Growth: 200, Signature: 300 };
-
-const websitesSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${SITE}/websites#service`,
-      name: "Saabai website care plans",
-      serviceType: "Website build, hosting and care plan",
-      description:
-        "Saabai builds, hosts and manages small business websites with a trained AI enquiry chatbot built in. Monthly care covers hosting, security, updates and keeping the AI trained.",
-      url: `${SITE}/websites`,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "Country", name: "Australia" },
-      offers: tiers.map((t) => ({
-        "@type": "Offer",
-        name: `${t.name} care plan`,
-        description: `${t.tagline}. Build ${t.price}, ${t.monthly}.`,
-        price: CARE[t.name],
-        priceCurrency: "AUD",
-        availability: "https://schema.org/InStock",
-        url: `${SITE}/websites`,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: CARE[t.name],
-          priceCurrency: "AUD",
-          unitCode: "MON",
-          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
-        },
-      })),
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: faqs.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "Websites", item: `${SITE}/websites` },
-      ],
-    },
-  ],
-};
+const websitesSchema = schemaGraph([
+  websitesServiceNode,
+  faqNode(faqs),
+  breadcrumbNode([{ name: "Websites", path: "/websites" }]),
+]);
 
 export default function WebsitesPage() {
   return (
