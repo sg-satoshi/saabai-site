@@ -20,42 +20,66 @@ const LEX_FEATURES = [
   "matter management",
 ];
 
-const SECTIONS: { title: string; body: string; features?: string[] }[] = [
+const SECTIONS: { title: string; body: string[]; features?: string[] }[] = [
   {
     title: "Never miss a new client enquiry",
-    body: "People often look for a lawyer at night or on the weekend. A Saabai chatbot on your firm's website answers their first questions, collects their details and the type of matter, and sends the enquiry to your team straight away.",
+    body: [
+      "People often look for a lawyer at night or on the weekend.",
+      "A Saabai chatbot on your firm's website answers their first questions, collects their details and the type of matter, and sends the enquiry to your team straight away.",
+    ],
   },
   {
     title: "Built around your firm",
-    body: "Your chatbot is trained on your firm's own information: practice areas, locations, hours and how to book. It sounds like your firm, not a generic bot, and it hands enquiries to a person rather than giving legal advice.",
+    body: [
+      "Your chatbot is trained on your firm's own information: practice areas, locations, hours and how to book.",
+      "It sounds like your firm, not a generic bot, and it hands enquiries to a person rather than giving legal advice.",
+    ],
   },
   {
     title: "Lex, an AI workspace for law firms",
-    body: "Lex is Saabai's AI workspace made for legal practices. It gives your team one place to use AI in daily firm work. Talk to us about how Lex could fit how your firm runs.",
+    body: [
+      "Lex is Saabai's AI workspace made for legal practices.",
+      "It gives your team one place to use AI in daily firm work.",
+      "Talk to us about how Lex could fit how your firm runs.",
+    ],
     features: LEX_FEATURES,
   },
   {
     title: "Alerts where your team already works",
-    body: "Every new enquiry can arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS, so the right person sees it fast.",
+    body: [
+      "Every new enquiry can arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS, so the right person sees it fast.",
+    ],
   },
 ];
 
-const FAQS = [
+const FAQS: { q: string; a: string[] }[] = [
   {
     q: "What is the best AI chatbot for a law firm in Australia?",
-    a: "The best one is built for your firm and answers from your own information. Saabai builds custom chatbots for Australian law firms that capture enquiries around the clock and alert your team.",
+    a: [
+      "The best one is built for your firm and answers from your own information.",
+      "Saabai builds custom chatbots for Australian law firms that capture enquiries around the clock and alert your team.",
+    ],
   },
   {
     q: "Is there an AI legal assistant built for Australian law firms?",
-    a: "Yes. Saabai builds Lex, an AI workspace for law firms, and is based on the Gold Coast in Queensland.",
+    a: [
+      "Yes.",
+      "Saabai builds Lex, an AI workspace for law firms, and is based on the Gold Coast in Queensland.",
+    ],
   },
   {
     q: "Does the chatbot give legal advice?",
-    a: "No. It answers general questions about your firm, collects enquiry details and passes them to your team.",
+    a: [
+      "No.",
+      "It answers general questions about your firm, collects enquiry details and passes them to your team.",
+    ],
   },
   {
     q: "Can you work with firms outside Queensland?",
-    a: "Yes. We are based in Merrimac on the Gold Coast and work remotely with firms across Australia.",
+    a: [
+      "Yes.",
+      "We are based in Merrimac on the Gold Coast and work remotely with firms across Australia.",
+    ],
   },
 ];
 
@@ -93,7 +117,7 @@ const schema = {
       mainEntity: FAQS.map((f) => ({
         "@type": "Question",
         name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
+        acceptedAnswer: { "@type": "Answer", text: f.a.join(" ") },
       })),
     },
     {
@@ -137,7 +161,9 @@ export default function AiChatbotLawFirmsPage() {
           {SECTIONS.map((section) => (
             <div className={section.features ? "card feat" : "card"} key={section.title}>
               <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>{section.title}</h2>
-              <p style={{ marginTop: 12, fontSize: 17 }}>{section.body}</p>
+              <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
+                {section.body.map((para) => <p key={para}>{para}</p>)}
+              </div>
               {section.features && (
                 <ul className="tick">
                   {section.features.map((item) => (
@@ -156,7 +182,7 @@ export default function AiChatbotLawFirmsPage() {
           {FAQS.map((f) => (
             <details className="faq" key={f.q}>
               <summary>{f.q}<span aria-hidden>+</span></summary>
-              <p>{f.a}</p>
+              {f.a.map((para) => <p key={para}>{para}</p>)}
             </details>
           ))}
         </div>
