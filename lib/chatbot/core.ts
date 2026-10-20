@@ -12,7 +12,7 @@ export const CAPS: Record<Plan, number> = { presence: 200, growth: 600, signatur
 export const SEED_OFF = ["cycle-repair"];
 
 /** Sites that still use their own chat route. The platform switch does not control them yet. */
-export const BESPOKE_SLUGS = ["lmm-site", "bo-consultancy", "tributum-law-v2", "nextinvestment", "nico-moretti"];
+export const BESPOKE_SLUGS = ["tributum-law-v2", "nextinvestment", "nico-moretti"];
 
 export const POSITIONS = ["right", "left"] as const;
 export type Position = (typeof POSITIONS)[number];

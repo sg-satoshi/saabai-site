@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
 
+const SLUG = "bo-consultancy";
 const STORAGE_KEY = "bo-consultancy-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
 
@@ -53,7 +54,22 @@ export default function BOChatWidget() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chatOff, setChatOff] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/chat-platform/config?site=${SLUG}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c: { active?: boolean; offMessage?: string } | null) => {
+        if (cancelled || !c || c.active !== false) return;
+        setChatOff(c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const stored = loadStored();
@@ -73,16 +89,21 @@ export default function BOChatWidget() {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
+    if (chatOff) {
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", parts: [{ type: "text", text: chatOff }] }]);
+      return;
+    }
     setLoading(true);
 
     try {
-      const res = await fetch("/api/bo-chat", {
+      const res = await fetch("/api/chat-platform/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages.map((m) => ({ role: m.role, content: getText(m) })) }),
+        body: JSON.stringify({ slug: SLUG, messages: newMessages.map((m) => ({ role: m.role, content: getText(m) })) }),
       });
-      if (res.ok || res.status === 429 || res.status === 413) {
+      if (res.ok || res.status === 429 || res.status === 403 || res.status === 404) {
         const data = await res.json();
+        if (data.chatbotOff && data.content) setChatOff(data.content);
         const replyText = data.content || "Sorry, I didn't catch that. Try again or call us on info@boconsulting.com.au.";
         setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", parts: [{ type: "text", text: replyText }] }]);
       } else {
