@@ -90,3 +90,13 @@ export function canonicalOnly(sites: SiteConfig[], links: (siteId: string) => Si
   const drop = new Set(planDedupe(sites, links, hardcodedIds).flatMap((g) => g.merge.map((m) => m.id)));
   return sites.filter((s) => !drop.has(s.id));
 }
+
+/** Canonical record plus the copies folded into it. `copies` starts with the record that is shown. */
+export function canonicalGroups(sites: SiteConfig[], links: (siteId: string) => SiteLinks, hardcodedIds?: Set<string>): { site: SiteConfig; copies: SiteConfig[] }[] {
+  const byId = new Map(sites.map((s) => [s.id, s]));
+  const folded = new Map<string, SiteConfig[]>();
+  for (const g of planDedupe(sites, links, hardcodedIds)) {
+    folded.set(g.keep.id, g.merge.map((m) => byId.get(m.id)).filter((s): s is SiteConfig => !!s));
+  }
+  return canonicalOnly(sites, links, hardcodedIds).map((site) => ({ site, copies: [site, ...(folded.get(site.id) ?? [])] }));
+}
