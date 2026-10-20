@@ -1,3 +1,5 @@
+import { resolveBotModel } from "../../../lib/chat-config";
+
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
@@ -82,6 +84,8 @@ export async function POST(req: Request) {
       })),
     ];
 
+    // Model id comes from the resolver. The key stays DEEPSEEK_API_KEY
+    // (getBotModel's deepseek path prefers AGENT_DEEPSEEK_API_KEY).
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       console.error("DEEPSEEK_API_KEY is not set");
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek-v4-flash",
+        model: resolveBotModel("nico").modelId,
         messages: deepseekMessages,
         max_tokens: 500,
       }),

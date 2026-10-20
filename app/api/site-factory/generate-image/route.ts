@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { put } from "@vercel/blob";
+import { resolveBotModel } from "../../../../lib/chat-config";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
+        model: resolveBotModel("site-factory-image").modelId,
         prompt: fullPrompt,
         n: 1,
         size: imgSize,
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "No image returned from OpenAI" }, { status: 500 });
     }
 
-    // gpt-image-1 returns base64; fall back to URL download for other models
+    // This model returns base64; fall back to URL download for other models
     let buffer: Buffer;
     if (item.b64_json) {
       buffer = Buffer.from(item.b64_json, "base64");

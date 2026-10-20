@@ -12,9 +12,13 @@
  *   DEFAULT_CHAT_MODEL=google:gemini-2-0-flash-001
  *   PREMIUM_CHAT_MODEL=google:gemini-2-0-pro-001
  *
- * Supported providers: "anthropic", "openai", "google", "xai"
+ * Supported providers: "anthropic", "openai", "google", "xai", "deepseek", "openrouter"
  * The API route selects tier based on the `tier` field in the request body.
  * Default tier is "default" (cost-efficient). Use "premium" for qualified leads.
+ *
+ * Per-bot routing lives in getBotModel / resolveBotModel below. Each bot has its
+ * own env var (still "provider:model-id"). Unset, the bot keeps the model it
+ * used before the resolver existed.
  */
 
 import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
@@ -24,6 +28,7 @@ import { xai } from "@ai-sdk/xai";
 import type { LanguageModel } from "ai";
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
+const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 /**
  * Parse a "provider:model-id" env value. Trims spaces, tabs and newlines
@@ -70,10 +75,21 @@ export function modelFromSpec(raw: string, label: string, fallback = raw): Langu
       }
       return createOpenAI({ baseURL: DEEPSEEK_BASE_URL, apiKey: key })(modelId);
     }
+    case "openrouter": {
+      // Chat completions, not the OpenAI Responses API (OpenRouter does not serve that).
+      // Kept so a bot env can still name an OpenRouter model. Defaults do not use it.
+      const key = process.env.OPENROUTER_API_KEY;
+      if (!key) {
+        throw new Error(
+          "[chat-config] OPENROUTER_API_KEY is not set for provider \"openrouter\""
+        );
+      }
+      return createOpenAI({ baseURL: OPENROUTER_BASE_URL, apiKey: key }).chat(modelId);
+    }
     default:
       throw new Error(
         `[chat-config] Unknown provider "${provider}" in ${envKey}="${value}". ` +
-          `Supported: "anthropic", "openai", "google", "xai".`
+          `Supported: "anthropic", "openai", "google", "xai", "deepseek", "openrouter".`
       );
   }
 }
@@ -102,6 +118,121 @@ export function getPremiumModel(): LanguageModel {
  */
 export function getModel(tier: "default" | "premium" = "default"): LanguageModel {
   return tier === "premium" ? getPremiumModel() : getDefaultModel();
+}
+
+export type ModelTier = "default" | "premium";
+
+export type ModelSpec = { provider: string; modelId: string; value: string };
+
+/**
+ * Bots whose model used to be a string in the route (or, for the three
+ * OpenRouter-era widgets, getDefaultModel() after an unused OpenRouter client).
+ * Lex research/draft/review stay on their own helpers and are not listed here.
+ */
+export type BotId =
+  | "lex-chat"
+  | "lex-compare"
+  | "portal-setup"
+  | "portal-ingest"
+  | "leads"
+  | "leadgen"
+  | "edge"
+  | "edge-summarise"
+  | "instagram"
+  | "linkedin"
+  | "nico"
+  | "tributum"
+  | "lmm"
+  | "nextinvestment"
+  | "imagine"
+  | "site-factory-image";
+
+type BotModelRoute = {
+  /** "provider:model-id" env for the default tier. Blank counts as unset. */
+  env: string;
+  /** "provider:model-id" env for the premium tier. Blank counts as unset. */
+  premiumEnv: string;
+  /** Model in use today when the default-tier env is unset. */
+  fallback: string;
+  /** Model in use when the premium-tier env is unset. */
+  premiumFallback: string;
+  /**
+   * Unset tier env resolves through DEFAULT_CHAT_MODEL / PREMIUM_CHAT_MODEL,
+   * the same path as getDefaultModel / getPremiumModel. `fallback` is what
+   * that shared var falls back to.
+   */
+  inheritShared?: boolean;
+};
+
+const HAIKU_DATED = "anthropic:claude-haiku-4-5-20251001";
+const HAIKU_SHARED = "anthropic:claude-haiku-4-5";
+const SONNET = "anthropic:claude-sonnet-4-6";
+
+export const BOT_MODEL_ROUTES: Record<BotId, BotModelRoute> = {
+  // Dated Haiku id: these routes called anthropic("claude-haiku-4-5-20251001"),
+  // which is not the undated id getDefaultModel() falls back to.
+  "lex-chat": { env: "LEX_CHAT_MODEL", premiumEnv: "LEX_CHAT_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  "lex-compare": { env: "LEX_COMPARE_MODEL", premiumEnv: "LEX_COMPARE_PREMIUM_MODEL", fallback: SONNET, premiumFallback: SONNET },
+  "portal-setup": { env: "PORTAL_SETUP_MODEL", premiumEnv: "PORTAL_SETUP_PREMIUM_MODEL", fallback: SONNET, premiumFallback: SONNET },
+  "portal-ingest": { env: "PORTAL_INGEST_MODEL", premiumEnv: "PORTAL_INGEST_PREMIUM_MODEL", fallback: SONNET, premiumFallback: SONNET },
+  leads: { env: "LEADS_MODEL", premiumEnv: "LEADS_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  leadgen: { env: "LEADGEN_MODEL", premiumEnv: "LEADGEN_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  edge: { env: "EDGE_CHAT_MODEL", premiumEnv: "EDGE_CHAT_PREMIUM_MODEL", fallback: "xai:grok-4", premiumFallback: "xai:grok-4" },
+  "edge-summarise": { env: "EDGE_SUMMARISE_MODEL", premiumEnv: "EDGE_SUMMARISE_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  instagram: { env: "INSTAGRAM_MODEL", premiumEnv: "INSTAGRAM_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  linkedin: { env: "LINKEDIN_MODEL", premiumEnv: "LINKEDIN_PREMIUM_MODEL", fallback: HAIKU_DATED, premiumFallback: HAIKU_DATED },
+  nico: { env: "NICO_CHAT_MODEL", premiumEnv: "NICO_CHAT_PREMIUM_MODEL", fallback: "deepseek:deepseek-v4-flash", premiumFallback: "deepseek:deepseek-v4-flash" },
+  // These three called getDefaultModel(). The OpenRouter client in each route was never used.
+  tributum: { env: "TRIBUTUM_CHAT_MODEL", premiumEnv: "TRIBUTUM_CHAT_PREMIUM_MODEL", fallback: HAIKU_SHARED, premiumFallback: SONNET, inheritShared: true },
+  lmm: { env: "LMM_CHAT_MODEL", premiumEnv: "LMM_CHAT_PREMIUM_MODEL", fallback: HAIKU_SHARED, premiumFallback: SONNET, inheritShared: true },
+  nextinvestment: { env: "NEXTINVESTMENT_CHAT_MODEL", premiumEnv: "NEXTINVESTMENT_CHAT_PREMIUM_MODEL", fallback: HAIKU_SHARED, premiumFallback: SONNET, inheritShared: true },
+  imagine: { env: "IMAGINE_MODEL", premiumEnv: "IMAGINE_PREMIUM_MODEL", fallback: "xai:grok-imagine-image", premiumFallback: "xai:grok-imagine-image" },
+  "site-factory-image": { env: "SITE_FACTORY_IMAGE_MODEL", premiumEnv: "SITE_FACTORY_IMAGE_PREMIUM_MODEL", fallback: "openai:gpt-image-1", premiumFallback: "openai:gpt-image-1" },
+};
+
+function botRoute(botId: string): BotModelRoute {
+  const route = BOT_MODEL_ROUTES[botId as BotId];
+  if (!route) {
+    throw new Error(
+      `[chat-config] Unknown bot "${botId}". Known: ${Object.keys(BOT_MODEL_ROUTES).join(", ")}`
+    );
+  }
+  return route;
+}
+
+function tierEnv(route: BotModelRoute, tier: ModelTier): { envKey: string; fallback: string } {
+  if (tier === "premium") return { envKey: route.premiumEnv, fallback: route.premiumFallback };
+  return { envKey: route.env, fallback: route.fallback };
+}
+
+/**
+ * Which provider and model id a bot uses for this tier.
+ * Does not construct a client and does not need an API key.
+ * Own env wins. Otherwise a bot that inherits the shared chat model follows
+ * DEFAULT_CHAT_MODEL / PREMIUM_CHAT_MODEL. Everyone else keeps today's hardcoded model.
+ */
+export function resolveBotModel(botId: BotId, tier: ModelTier = "default"): ModelSpec {
+  const route = botRoute(botId);
+  const { envKey, fallback } = tierEnv(route, tier);
+  const own = (process.env[envKey] ?? "").trim();
+  if (own) return parseModelSpec(own, own);
+  if (route.inheritShared) {
+    const sharedKey = tier === "premium" ? "PREMIUM_CHAT_MODEL" : "DEFAULT_CHAT_MODEL";
+    return parseModelSpec(process.env[sharedKey], fallback);
+  }
+  return parseModelSpec(undefined, fallback);
+}
+
+/**
+ * Language model for a bot and tier. Same spec as resolveBotModel.
+ * Raw HTTP routes (Instagram, LinkedIn, Nico, image generation) should use
+ * resolveBotModel().modelId and keep their current endpoint and API key.
+ */
+export function getBotModel(botId: BotId, tier: ModelTier = "default"): LanguageModel {
+  const route = botRoute(botId);
+  const { envKey } = tierEnv(route, tier);
+  const spec = resolveBotModel(botId, tier);
+  return modelFromSpec(spec.value, envKey, spec.value);
 }
 
 /**

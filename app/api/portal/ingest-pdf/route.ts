@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "../../../../lib/portal-session";
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../../lib/chat-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: getBotModel("portal-ingest"),
       system:
         "You are extracting writing style and content from a legal document. Return the most representative excerpts of the author's writing voice — their sentence structure, word choice, formality level, and characteristic phrases. Focus on prose the lawyer actually wrote, not legal boilerplate. Return max 2000 words of the most style-revealing content.",
       messages: [

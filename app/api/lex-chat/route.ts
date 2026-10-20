@@ -1,6 +1,6 @@
 import { streamText, stepCountIs } from "ai";
 import type { LanguageModel } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../lib/chat-config";
 import { getRedis } from "../../../lib/redis";
 import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
@@ -58,8 +58,8 @@ Formatting rules (always follow these):
   const systemPrompt = clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES;
 
   // 2. Load client LLM model (API key + model) — keyed by clientId
-  //    Fall back to Haiku (fast, cheap) when no client key is saved
-  let model: LanguageModel = anthropic("claude-haiku-4-5-20251001");
+  //    Fall back to the lex-chat model (Haiku today) when no client key is saved
+  let model: LanguageModel = getBotModel("lex-chat");
   if (clientId) {
     try {
       const llmConfig = await getClientLLMConfig(clientId);

@@ -1,6 +1,5 @@
-import { getDefaultModel } from "../../../lib/chat-config";
+import { getBotModel } from "../../../lib/chat-config";
 import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -62,11 +61,7 @@ export async function POST(req: Request) {
         content: m.content,
       }));
 
-    const openrouter = createOpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
-    });
-    const model = getDefaultModel();
+    const model = getBotModel("tributum");
 
     const result = await generateText({
       model,

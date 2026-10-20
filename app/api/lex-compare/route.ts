@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { getBotModel } from "../../../lib/chat-config";
 import { gateCompare } from "../../../lib/lex-review-access";
 
 export const runtime = "nodejs";
@@ -65,7 +65,7 @@ Provide your analysis covering:
 Keep the analysis concise but thorough.`;
 
     const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
+      model: getBotModel("lex-compare"),
       system: systemPrompt,
       prompt: userPrompt,
       maxOutputTokens: 4000,

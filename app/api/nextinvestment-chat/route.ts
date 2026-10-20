@@ -1,6 +1,5 @@
-import { getDefaultModel } from "../../../lib/chat-config";
+import { getBotModel, resolveBotModel } from "../../../lib/chat-config";
 import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
 import { logAuditEvent } from "../../../lib/lex-audit";
 
 export const runtime = "nodejs";
@@ -50,16 +49,12 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: Request) {
+  const modelSpec = resolveBotModel("nextinvestment");
   try {
     const body = await req.json();
     const messages = body.messages || [];
-    
-    // Use OpenRouter for reliable access
-    const openrouter = createOpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY,
-    });
-    const model = getDefaultModel();
+
+    const model = getBotModel("nextinvestment");
 
     // Filter out system messages — we use the system parameter instead
     const chatMessages = messages
@@ -94,6 +89,6 @@ export async function POST(req: Request) {
       }
     );
   } finally {
-    logAuditEvent("research_start", { site: "nextinvestment", model: "claude-3.5-haiku" }).catch(() => {});
+    logAuditEvent("research_start", { site: "nextinvestment", model: modelSpec.value }).catch(() => {});
   }
 }
