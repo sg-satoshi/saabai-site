@@ -5,6 +5,7 @@ import { getRedis } from "../../../lib/redis";
 import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
 import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
+import { createDashFilter } from "../../../lib/no-dashes";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
   const BASE_RULES = `
 Formatting rules (always follow these):
 - Never use markdown asterisks for bold or italic. No **word** or *word*.
-- Never use em dashes (—). Use a comma, colon, or rewrite the sentence instead.
+- Never use em dashes or a spaced double hyphen. Use a comma, colon, or rewrite the sentence instead.
 - Never use hyphens as list bullets preceded by bold text. Use plain labels with a colon.
 - Write in plain conversational prose. No markdown formatting of any kind.
 `.trim();
@@ -87,10 +88,15 @@ Formatting rules (always follow these):
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        const dashes = createDashFilter();
         for await (const chunk of result.textStream) {
-          const line = `data: ${JSON.stringify({ type: "text-delta", delta: chunk })}\n\n`;
+          const clean = dashes.push(chunk);
+          if (!clean) continue;
+          const line = `data: ${JSON.stringify({ type: "text-delta", delta: clean })}\n\n`;
           controller.enqueue(encoder.encode(line));
         }
+        const rest = dashes.flush();
+        if (rest) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", delta: rest })}\n\n`));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[lex-chat] stream error:", msg);

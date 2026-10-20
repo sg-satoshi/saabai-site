@@ -19,6 +19,10 @@ test("end of sentence and bullets", () => {
   assert.equal(noDashes("Done —\nNext"), "Done.\nNext");
   assert.equal(noDashes("— first\n— second"), "- first\n- second");
   assert.equal(noDashes("Fair —."), "Fair.");
+  assert.equal(noDashes("CITATIONS -- NON-NEGOTIABLE"), "CITATIONS, NON-NEGOTIABLE");
+  assert.equal(noDashes("DRAFT -- Please review"), "DRAFT, Please review");
+  assert.equal(noDashes("9 -- 5"), "9-5");
+  assert.ok(!/[\u2012-\u2015]| -- /.test(noDashes("a -- b — c")));
 });
 
 test("text without dashes and plain hyphens is untouched", () => {

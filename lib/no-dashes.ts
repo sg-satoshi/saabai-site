@@ -16,10 +16,11 @@ export const NO_DASH_RULE =
 
 const DASH = "[\\u2014\\u2013\\u2015\\u2012]"; // em, en, horizontal bar, figure dash
 
-/** Replace em/en dashes with a comma, full stop or hyphen as fits. */
+/** Replace em/en dashes, and the spaced double hyphen models copy (" -- "), with a comma, full stop or hyphen as fits. */
 export function noDashes(input: string): string {
-  if (!input || !/[\u2012-\u2015]/.test(input)) return input;
-  let s = input;
+  if (!input || !/[\u2012-\u2015]| -- /.test(input)) return input;
+  // "CITATIONS -- RULE" is the ASCII form of an em dash. Fold it in so the rules below apply.
+  let s = input.replace(/ -- /g, " \u2014 ");
   // Number ranges: 2–4, 9am—5pm → hyphen
   s = s.replace(new RegExp(`(\\d)\\s*${DASH}\\s*(?=\\d)`, "g"), "$1-");
   // Compound words written with an unspaced en dash: Gold Coast–Brisbane → hyphen
@@ -46,7 +47,8 @@ export function createDashFilter(opts: FilterOptions = {}) {
   const clean = (t: string) => (opts.prices ? formatPrices(noDashes(t)) : noDashes(t));
   // Trailing run not yet safe to emit. With prices on, "$" and "," are held too,
   // so an amount split across chunks ("$20" + "00") is formatted as one.
-  const tail = opts.prices ? /[\d $,\t\u2012-\u2015]*$/ : /[\d \t\u2012-\u2015]*$/;
+  // Hold a trailing hyphen too, so " -- " split across chunks is still rewritten.
+  const tail = opts.prices ? /[\d $,\t\-\u2012-\u2015]*$/ : /[\d \t\-\u2012-\u2015]*$/;
   let held = "";
   let ctx = ""; // last raw character emitted, so a dash at the start of a segment keeps its context
   const emit = (seg: string): string => {

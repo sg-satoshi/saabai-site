@@ -6,7 +6,8 @@ import { normalizeScope, filterToolsByScope, scopePrompt } from "../../../lib/le
 import { buildLexResearchTools, withSourceRegistry, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
 import { SourceRegistry, CITATION_RULES, stripMarkers } from "../../../lib/lex-sources";
 import { buildAnswerMeta } from "../../../lib/lex-answer-meta";
-import { noDashesTransform } from "../../../lib/no-dashes";
+import { dropNarrationTransform, stripLeadingNarration } from "../../../lib/lex-output";
+import { noDashes, noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
@@ -15,7 +16,7 @@ import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
 // firm's own model when one is saved. Never route legal research to a cheap model.
 
 export const runtime = "nodejs";
-export const maxDuration = 120; // search, up to 4 source reads, answer, then the confidence check
+export const maxDuration = 180; // search, up to 4 source reads, answer, then the confidence check
 
 export async function POST(req: Request) {
   try {
@@ -106,12 +107,12 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       stopWhen: stepCountIs(steps),
       prepareStep: finalStepAnswers(steps),
       tools,
-      experimental_transform: noDashesTransform(),
+      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
     });
 
     // ── PRIVACY MODE: Buffer stream, detokenize, re-stream ──
     if (privacyMode) {
-      const fullText = await result.text;
+      const fullText = noDashes(stripLeadingNarration(await result.text));
       const detokenized = rehydrateTokens(fullText, tokenMap);
       const meta = citeMode ? await buildAnswerMeta(model, fullText, registry) : null;
 
@@ -153,7 +154,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
         writer.merge(result.toUIMessageStream({ sendFinish: false }));
-        const text = await result.text;
+        const text = noDashes(stripLeadingNarration(await result.text));
         const meta = await buildAnswerMeta(model, text, registry);
         writer.write({ type: "data-lex-sources", data: meta });
       },
