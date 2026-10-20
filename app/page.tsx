@@ -7,9 +7,9 @@ import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = {
-  title: { absolute: "AI Blueprint for Small Businesses | Saabai" },
+  title: { absolute: "AI Chatbots for Australian Businesses | Saabai, Gold Coast" },
   description:
-    "The Saabai Blueprint shows small businesses and professional practices exactly where AI can save hours every week, what each task costs to automate, and what you will save. Start with the free 3 minute AI score.",
+    "Custom AI chatbots and websites for Australian small businesses and law firms. Gold Coast based. Alerts by email, SMS, WhatsApp or Telegram.",
   alternates: { canonical: "/" },
 };
 
