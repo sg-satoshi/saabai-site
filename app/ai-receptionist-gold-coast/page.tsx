@@ -2,15 +2,13 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import JsonLd from "../components/JsonLd";
+import { receptionistServiceNode, schemaGraph } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
 
-const SITE = "https://www.saabai.ai";
 const PATH = "/ai-receptionist-gold-coast";
-const CANONICAL = `${SITE}${PATH}`;
-const TITLE = "AI Receptionist for Gold Coast Businesses | Saabai";
-const DESCRIPTION =
-  "A Gold Coast built AI receptionist for your website. Answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.";
 
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
@@ -42,52 +40,13 @@ const FAQS: { q: string; a: string[] }[] = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: { absolute: TITLE },
-  description: DESCRIPTION,
-  alternates: { canonical: CANONICAL },
-  openGraph: {
-    url: CANONICAL,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
+export const metadata: Metadata = publicPageMeta.receptionist;
 
-const schema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${CANONICAL}#service`,
-      name: "AI receptionist for Gold Coast businesses",
-      serviceType: "Website AI chatbot",
-      description: DESCRIPTION,
-      url: CANONICAL,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "City", name: "Gold Coast" },
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: FAQS.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a.join(" ") },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "AI receptionist for Gold Coast businesses", item: CANONICAL },
-      ],
-    },
-  ],
-};
+const schema = schemaGraph([
+  receptionistServiceNode,
+  faqNode(FAQS.map((f) => ({ q: f.q, a: f.a.join(" ") }))),
+  breadcrumbNode([{ name: "AI receptionist for Gold Coast businesses", path: PATH }]),
+]);
 
 export default function AiReceptionistGoldCoastPage() {
   return (

@@ -3,19 +3,10 @@ import Image from "next/image";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import { NAP } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "About Saabai and Founder Shane Goldberg",
-  description:
-    "Saabai is a Gold Coast AI business for Australian small businesses, founded by Shane Goldberg. Website care plans from $100 a month and the Saabai Blueprint AI audit from $497.",
-  alternates: { canonical: "https://www.saabai.ai/about" },
-  openGraph: {
-    url: "https://www.saabai.ai/about",
-    title: "About Saabai and Founder Shane Goldberg | Saabai",
-    description:
-      "Saabai is a Gold Coast AI business for Australian small businesses, founded by Shane Goldberg. Website care plans from $100 a month and the Saabai Blueprint AI audit from $497.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.about;
 
 export default function About() {
   return (
@@ -52,11 +43,13 @@ export default function About() {
           six-month projects, no mystery invoices.
         </p>
         <InShort>
-          Saabai is a Gold Coast, Queensland AI business founded by Shane Goldberg.
-          We build and look after small business websites on care plans from{" "}
-          <strong>$100 a month</strong>, and run the Saabai Blueprint, an AI audit
-          from <strong>$497</strong> that includes SEO and AI search visibility.
-          Head office Merrimac QLD 4226, ABN 71 889 082 572.
+          <p>Saabai is a Gold Coast, Queensland AI business founded by Shane Goldberg.</p>
+          <p>
+            We build and look after small business websites on care plans from{" "}
+            <strong>$100 a month</strong>, and run the Saabai Blueprint, an AI audit
+            from <strong>$497</strong> that includes SEO and AI search visibility.
+          </p>
+          <p>Saabai is based in {NAP.addressLine} (ABN {NAP.abn}). Email {NAP.email}.</p>
         </InShort>
 
 
@@ -146,7 +139,10 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-5">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a Brisbane tax law firm, plus websites on our care plans. Saabai is based on the Gold Coast, Queensland, with head office in Merrimac QLD 4226 (ABN 71 889 082 572).
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a Brisbane tax law firm.
+            </p>
+            <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
+              Websites on our care plans are live too. Saabai is based in {NAP.addressLine} (ABN {NAP.abn}).
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Neither client had to rip out their existing tools. Both were live within weeks.

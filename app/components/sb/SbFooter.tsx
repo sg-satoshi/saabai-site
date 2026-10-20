@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import { NAP } from "@/lib/seo-entity";
 import "./sb-footer.css";
 
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -58,9 +59,13 @@ export default function SbFooter() {
           <div className="brand">
             <a href="/" aria-label="Saabai home">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/saabai-logo.png" alt="Saabai.ai" width={132} height={36} />
+              <img src="/brand/saabai-logo.png" alt={NAP.name} width={132} height={36} />
             </a>
             <p>Websites and AI systems that run your business for you. Built in Australia.</p>
+            <p>
+              <a href={`mailto:${NAP.email}`}>{NAP.email}</a>
+            </p>
+            <p>{NAP.addressLine}</p>
           </div>
           <div className="stack">
             <Column id="f-offers" title="Offers" links={OFFERS} />
@@ -77,7 +82,10 @@ export default function SbFooter() {
           </nav>
         </div>
         <div className="legal">
-          <span>© 2026 Saabai. ABN 71 889 082 572. Merrimac QLD 4226. Prices in AUD. GST not applicable.</span>
+          <span>
+            © 2026 {NAP.name}. ABN {NAP.abn}. {NAP.addressLine}.{" "}
+            <a href={`mailto:${NAP.email}`}>{NAP.email}</a>. Prices in AUD. GST not applicable.
+          </span>
         </div>
       </div>
     </footer>

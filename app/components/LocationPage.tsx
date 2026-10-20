@@ -2,6 +2,9 @@
 
 import Nav from "./Nav";
 import Footer from "./Footer";
+import JsonLd from "./JsonLd";
+import { locationServiceSchema } from "../../lib/seo-entity";
+import { breadcrumbSchema, faqSchema } from "../../lib/seo-meta";
 import { type LocationConfig } from "../../lib/location-data";
 
 interface Props {
@@ -30,99 +33,12 @@ export default function LocationPage({ config }: Props) {
   } = config;
 
   const isHomeBase = slug === "gold-coast";
-  const areaServed = {
-    "@type": "City",
-    name: city,
-    containedInPlace: { "@type": "AdministrativeArea", name: `${config.state}, Australia` },
-  };
-
-  // ── JSON-LD Schemas ──────────────────────────────────────────────────────
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    "@id": "https://www.saabai.ai/#business",
-    name: "Saabai",
-    url: "https://www.saabai.ai",
-    description: seo.description,
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Gold Coast",
-      addressRegion: "QLD",
-      addressCountry: "AU",
-    },
-    areaServed: areaServed,
-  };
-
-  const serviceSchema = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: `Websites and AI automation in ${city}`,
-    url: seo.canonical,
-    provider: { "@id": "https://www.saabai.ai/#business" },
-    areaServed: areaServed,
-    hasOfferCatalog: {
-      "@type": "OfferCatalog",
-      name: "Saabai offers",
-      itemListElement: [
-        { "@type": "Offer", name: "Web Solutions", price: "2000", priceCurrency: "AUD", url: "https://www.saabai.ai/websites", description: "Website build, hosting and management from $2,000 plus $100 per month." },
-        { "@type": "Offer", name: "Saabai Blueprint Starter", price: "497", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
-        { "@type": "Offer", name: "Saabai Blueprint Pro", price: "1497", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
-        { "@type": "Offer", name: "Saabai Blueprint Business", price: "3500", priceCurrency: "AUD", url: "https://www.saabai.ai/blueprint" },
-        { "@type": "Offer", name: "AI Readiness Score", price: "0", priceCurrency: "AUD", url: "https://www.saabai.ai/score" },
-      ],
-    },
-  };
-
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.q,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.a,
-      },
-    })),
-  };
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: "https://www.saabai.ai",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: `Websites and AI ${city}`,
-        item: seo.canonical,
-      },
-    ],
-  };
 
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <JsonLd data={locationServiceSchema(city, seo.canonical, seo.description)} />
+      <JsonLd data={faqSchema(faqs)} />
+      <JsonLd data={breadcrumbSchema([{ name: `Websites and AI ${city}`, path: `/${slug}` }])} />
 
       <Nav />
 
