@@ -20,6 +20,8 @@ const COMPANY = [
 
 const PRODUCTS = [
   { label: "Lex", href: "/legal" },
+  { label: "Law firms", href: "/ai-chatbot-law-firms" },
+  { label: "AI receptionist", href: "/ai-receptionist-gold-coast" },
   { label: "Rex", href: "/case-studies" },
 ];
 

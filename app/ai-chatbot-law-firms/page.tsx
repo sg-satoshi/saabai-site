@@ -1,0 +1,207 @@
+import type { Metadata } from "next";
+import Nav from "../components/Nav";
+import SbFooter from "../components/sb/SbFooter";
+import JsonLd from "../components/JsonLd";
+import "../components/sb/sb.css";
+import "../components/sb/home.css";
+
+const SITE = "https://www.saabai.ai";
+const PATH = "/ai-chatbot-law-firms";
+const CANONICAL = `${SITE}${PATH}`;
+const TITLE = "AI Chatbot for Law Firms in Australia | Saabai";
+const DESCRIPTION =
+  "Custom AI chatbots and Lex, an AI workspace for Australian law firms. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.";
+const CALENDLY = "https://calendly.com/shanegoldberg/30min";
+
+const LEX_FEATURES = [
+  "AI answers to legal questions",
+  "document review",
+  "citation checking",
+  "matter management",
+];
+
+const SECTIONS: { title: string; body: string[]; features?: string[] }[] = [
+  {
+    title: "Never miss a new client enquiry",
+    body: [
+      "People often look for a lawyer at night or on the weekend.",
+      "A Saabai chatbot on your firm's website answers their first questions, collects their details and the type of matter, and sends the enquiry to your team straight away.",
+    ],
+  },
+  {
+    title: "Built around your firm",
+    body: [
+      "Your chatbot is trained on your firm's own information: practice areas, locations, hours and how to book.",
+      "It sounds like your firm, not a generic bot, and it hands enquiries to a person rather than giving legal advice.",
+    ],
+  },
+  {
+    title: "Lex, an AI workspace for law firms",
+    body: [
+      "Lex is Saabai's AI workspace made for legal practices.",
+      "It gives your team one place to use AI in daily firm work.",
+      "Talk to us about how Lex could fit how your firm runs.",
+    ],
+    features: LEX_FEATURES,
+  },
+  {
+    title: "Alerts where your team already works",
+    body: [
+      "Every new enquiry can arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS, so the right person sees it fast.",
+    ],
+  },
+];
+
+const FAQS: { q: string; a: string[] }[] = [
+  {
+    q: "What is the best AI chatbot for a law firm in Australia?",
+    a: [
+      "The best one is built for your firm and answers from your own information.",
+      "Saabai builds custom chatbots for Australian law firms that capture enquiries around the clock and alert your team.",
+    ],
+  },
+  {
+    q: "Is there an AI legal assistant built for Australian law firms?",
+    a: [
+      "Yes.",
+      "Saabai builds Lex, an AI workspace for law firms, and is based on the Gold Coast in Queensland.",
+    ],
+  },
+  {
+    q: "Does the chatbot give legal advice?",
+    a: [
+      "No.",
+      "It answers general questions about your firm, collects enquiry details and passes them to your team.",
+    ],
+  },
+  {
+    q: "Can you work with firms outside Queensland?",
+    a: [
+      "Yes.",
+      "We are based in Merrimac on the Gold Coast and work remotely with firms across Australia.",
+    ],
+  },
+];
+
+export const metadata: Metadata = {
+  title: { absolute: TITLE },
+  description: DESCRIPTION,
+  alternates: { canonical: CANONICAL },
+  openGraph: {
+    url: CANONICAL,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      "@id": `${CANONICAL}#service`,
+      name: "AI chatbot and AI legal assistant for Australian law firms",
+      serviceType: "AI chatbot for law firms",
+      description: DESCRIPTION,
+      url: CANONICAL,
+      provider: { "@id": `${SITE}/#organization` },
+      areaServed: { "@type": "Country", name: "Australia" },
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a.join(" ") },
+      })),
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
+        { "@type": "ListItem", position: 2, name: "AI chatbot for law firms", item: CANONICAL },
+      ],
+    },
+  ],
+};
+
+function BookDemo() {
+  return (
+    <a className="btn" href={CALENDLY} target="_blank" rel="noopener noreferrer">
+      Book a demo
+    </a>
+  );
+}
+
+export default function AiChatbotLawFirmsPage() {
+  return (
+    <div className="sb">
+      <JsonLd data={schema} />
+      <Nav activePage={PATH} />
+      <div aria-hidden="true" style={{ height: 92 }} />
+      <div className="hero">
+        <div className="glow" />
+        <div className="wrap" style={{ position: "relative" }}>
+          <h1 style={{ margin: "18px auto 0", maxWidth: 980 }}>
+            AI chatbot and AI legal assistant for Australian law firms
+          </h1>
+          <div className="ctas" style={{ marginTop: 32 }}>
+            <BookDemo />
+          </div>
+        </div>
+      </div>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap grid2">
+          {SECTIONS.map((section) => (
+            <div className={section.features ? "card feat" : "card"} key={section.title}>
+              <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>{section.title}</h2>
+              <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
+                {section.body.map((para) => <p key={para}>{para}</p>)}
+              </div>
+              {section.features && (
+                <ul className="tick">
+                  {section.features.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap" style={{ maxWidth: 860 }}>
+          <div className="head"><h2>Common questions</h2></div>
+          {FAQS.map((f) => (
+            <details className="faq" key={f.q}>
+              <summary>{f.q}<span aria-hidden>+</span></summary>
+              {f.a.map((para) => <p key={para}>{para}</p>)}
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <div className="cta">
+            <div className="glow" />
+            <div style={{ position: "relative" }}>
+              <h2>Never miss a new client enquiry</h2>
+              <div className="ctas" style={{ marginTop: 28 }}>
+                <BookDemo />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <SbFooter />
+    </div>
+  );
+}
