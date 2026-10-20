@@ -73,6 +73,7 @@ export default function ChatbotsClient() {
       <style>{css}</style>
       <h1>Chatbots</h1>
       <p style={{ color: "var(--n-500)", margin: "0 0 4px", maxWidth: 620 }}>One switch per site. When a bot is OFF, visitors get a polite message and no AI is used, so it costs nothing and does not count towards the monthly limit.</p>
+      <p style={{ margin: "0 0 4px" }}><a href="/saabai-admin/chat-history">Chat history</a></p>
       <div className="cb-tools">
         <input className="cb-search" type="search" data-testid="chatbots-search" aria-label="Search sites by name, slug or domain" placeholder="Search by name, slug or domain" value={q} onChange={(e) => setQ(e.target.value)} />
         <span className="cb-count" data-testid="chatbots-count" aria-live="polite">{loaded ? (q ? `${shown.length} of ${rows.length} sites` : `${rows.length} sites`) : "Loading"}</span>
