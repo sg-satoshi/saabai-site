@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateCompare } from "../../../lib/lex-review-access";
 import { cleanLexOutput } from "../../../lib/lex-output";
+import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -67,11 +68,20 @@ Provide your analysis covering:
 
 Keep the analysis concise but thorough.`;
 
-    const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
+    const model = anthropic("claude-sonnet-4-6");
+    const result = await generateText({
+      model,
       system: systemPrompt,
       prompt: userPrompt,
       maxOutputTokens: 4000,
+    });
+    const text = result.text;
+    logChatTurn({
+      bot: "lex-compare",
+      model: modelIdFrom(model),
+      usage: result.totalUsage ?? result.usage,
+      userText: userPrompt,
+      assistantText: text,
     });
 
     return Response.json({ analysis: cleanLexOutput(text) });

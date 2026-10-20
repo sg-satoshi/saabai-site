@@ -11,6 +11,7 @@ import { noDashes, noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
+import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 // Lex Research uses LEX_RESEARCH_MODEL (falls back to PREMIUM_CHAT_MODEL), or the
 // firm's own model when one is saved. Never route legal research to a cheap model.
@@ -108,6 +109,14 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       prepareStep: finalStepAnswers(steps),
       tools,
       experimental_transform: [dropNarrationTransform(), noDashesTransform()],
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "lex-research",
+          siteId: typeof clientId === "string" ? clientId : config.id,
+          model: modelIdFrom(model),
+          userText: lastUserText(tokenizedMessages),
+        });
+      },
     });
 
     // ── PRIVACY MODE: Buffer stream, detokenize, re-stream ──

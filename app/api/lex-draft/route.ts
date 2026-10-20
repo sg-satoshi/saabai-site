@@ -24,6 +24,7 @@ import { getLexModelForFirm } from "../../../lib/lex-model";
 import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
 import { noDashesTransform } from "../../../lib/no-dashes";
+import { lastUserText, logChatTurn, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
@@ -197,7 +198,7 @@ export async function POST(req: Request) {
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────
     // If a completed draft is provided and QA is requested, run QA and return.
     if (requestQA && completedDraft) {
-      const qaResult = await runQAPass(model, completedDraft, documentType);
+      const qaResult = await runQAPass(model, completedDraft, documentType, typeof clientId === "string" ? clientId : undefined);
       return new Response(JSON.stringify(qaResult), {
         headers: { "Content-Type": "application/json" },
       });
@@ -289,6 +290,14 @@ export async function POST(req: Request) {
       model,
       system: systemPrompt,
       messages: finalMessages,
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "lex-draft",
+          siteId: typeof clientId === "string" ? clientId : undefined,
+          model: modelIdFrom(model),
+          userText: lastUserText(finalMessages),
+        });
+      },
       stopWhen: stepCountIs(10), // More steps needed for document drafting
       prepareStep: finalStepAnswers(10),
       experimental_transform: [dropNarrationTransform(), noDashesTransform()],
@@ -444,7 +453,8 @@ export async function POST(req: Request) {
 async function runQAPass(
   model: LanguageModel,
   draftText: string,
-  documentTypeId?: string
+  documentTypeId?: string,
+  siteId?: string
 ): Promise<QAVerificationReport> {
   const docTypeEntry = documentTypeId ? getDocumentType(documentTypeId) : undefined;
 
@@ -509,6 +519,15 @@ async function runQAPass(
     });
 
     // Parse the JSON response
+    logChatTurn({
+      bot: "lex-draft",
+      siteId,
+      model: modelIdFrom(model),
+      usage: qaResult.totalUsage ?? qaResult.usage,
+      userText: qaUserPrompt,
+      assistantText: qaResult.text,
+    });
+
     const responseText = qaResult.text.trim();
     // Strip markdown code fences if the model added them despite instructions
     const jsonText = responseText

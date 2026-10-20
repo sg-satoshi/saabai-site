@@ -13,6 +13,7 @@ import { CTA_STEPS } from "../../../lib/mia-cta";
 import { noDashesTransform } from "../../../lib/no-dashes";
 import { formatAud } from "../../../lib/money";
 import { miaGlobalGate, safeFetchText, sanitizeMessages, sanitizePageContext, sanitizeVisitorProfile, urlWasShared } from "../../../lib/chat-safety";
+import { logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -240,6 +241,20 @@ export async function POST(req: Request) {
     // House rule: no em or en dashes in anything Mia says, including streamed text.
     experimental_transform: noDashesTransform({ prices: true }),
     onFinish: async (event) => {
+      let userText = "";
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === "user") {
+          userText = msgText(messages[i]);
+          break;
+        }
+      }
+      logStreamFinish(event, {
+        bot: "mia",
+        siteId: "saabai",
+        conversationId: threadId,
+        model: modelIdFrom(model),
+        userText,
+      });
       const msgCount = messages.length + 1;
       const hasData =
         Object.keys(sessionData.visitorFacts).length > 0 ||
