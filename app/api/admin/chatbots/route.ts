@@ -1,24 +1,35 @@
 import { adminActor, readActor } from "@/lib/exp/actor";
-import { listSites, getSiteBySlug } from "@/lib/site-registry";
-import { BESPOKE_SLUGS, SEED_OFF, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
+import { APP_ROUTER_SITES, getSiteBySlug } from "@/lib/site-registry";
+import { BESPOKE_SLUGS, canRemovePoweredBy, capState, isPlan, validateSkin, validateContent, toPublicConfig, PLAN_LABEL, PLANS, CAPS, type Plan } from "@/lib/chatbot/core";
 import { getConfig, getMeta, getUsage, isEnabled, saveConfig, setEnabled } from "@/lib/chatbot/store";
 import { addChangeLogEntry } from "@/lib/change-log";
+import { listChatbotCanonical } from "@/lib/chatbot/admin-list";
+import { sumUsage } from "@/lib/chatbot/canonical-rows";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Admin and Chief read-only: list every site that has (or is set up for) a chatbot. */
+/** Admin and Chief read-only: one row per client site that has (or is set up for) a chatbot. */
 export async function GET() {
   if (!(await readActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
-  const sites = (await listSites()).filter((s) => s.chatbot?.enabled || SEED_OFF.includes(s.slug) || BESPOKE_SLUGS.includes(s.slug));
+  // Display only. Duplicate copies stay in Redis. Conversation and message counts are added across their slugs.
+  const groups = await listChatbotCanonical();
   const rows = await Promise.all(
-    sites.map(async (s) => {
+    groups.map(async ({ site: s, slugs, domains, folded }) => {
       const bespoke = BESPOKE_SLUGS.includes(s.slug);
-      const [config, meta, usage, enabled] = await Promise.all([getConfig(s.slug), getMeta(s.slug), getUsage(s.slug), isEnabled(s.slug, s.chatbot?.enabled)]);
+      const [config, meta, parts, enabled] = await Promise.all([
+        getConfig(s.slug),
+        getMeta(s.slug),
+        Promise.all(slugs.map((slug) => getUsage(slug))),
+        isEnabled(s.slug, s.chatbot?.enabled),
+      ]);
+      const usage = sumUsage(parts);
       return {
+        id: s.id,
         slug: s.slug,
         name: s.name,
-        domains: s.domains ?? [],
+        domains,
+        folded,
         engine: bespoke ? "bespoke" : "platform",
         enabled: bespoke ? null : enabled,
         plan: config.plan,
@@ -45,7 +56,8 @@ export async function POST(req: Request) {
   if (!actor) return Response.json({ error: "Forbidden" }, { status: 403 });
   const b = (await req.json().catch(() => null)) as Body | null;
   if (!b || typeof b.slug !== "string" || typeof b.action !== "string") return Response.json({ error: "Bad request" }, { status: 400 });
-  const site = await getSiteBySlug(b.slug);
+  // A hardcoded site can be the canonical row even when a stored copy shares its name. listSites hides that hardcoded row, so fall back to the app-router record.
+  const site = (await getSiteBySlug(b.slug)) ?? APP_ROUTER_SITES.find((s) => s.slug === b.slug) ?? null;
   if (!site) return Response.json({ error: "Unknown site" }, { status: 404 });
   if (BESPOKE_SLUGS.includes(site.slug)) return Response.json({ error: "This site uses its own chat route. It moves to the platform in a later release." }, { status: 409 });
 

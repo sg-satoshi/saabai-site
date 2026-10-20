@@ -3,9 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import OnOff from "../ui/OnOff";
 import ChatbotEditor, { type EditorRow } from "./ChatbotEditor";
 import { matchesSite } from "../../../lib/chatbot/search";
+import { combinedCopyNote } from "../../../lib/chatbot/combined-note";
 
+type Folded = { id: string; slug: string; name: string };
 type Row = EditorRow & {
-  slug: string; name: string; domains: string[]; engine: "platform" | "bespoke"; enabled: boolean | null; plan: string; canRemovePoweredBy: boolean;
+  id?: string; slug: string; name: string; domains: string[]; folded?: Folded[]; engine: "platform" | "bespoke"; enabled: boolean | null; plan: string; canRemovePoweredBy: boolean;
   usage: { conversations: number; messages: number };
   cap: { state: "ok" | "near" | "over"; cap: number; pct: number };
   lastChange: { by?: string; at?: string; reason?: string };
@@ -64,7 +66,7 @@ export default function ChatbotsClient() {
     setBusy("");
   }
 
-  const shown = useMemo(() => rows.filter((r) => matchesSite(q, r)), [rows, q]);
+  const shown = useMemo(() => rows.filter((r) => matchesSite(q, { ...r, aliases: (r.folded ?? []).flatMap((f) => [f.name, f.slug]) })), [rows, q]);
   const when = (iso?: string) => (iso ? new Date(Date.parse(iso) + 10 * 3600_000).toISOString().slice(0, 16).replace("T", " ") + " Brisbane" : "");
   const note = (r: Row) => (r.enabled ? (r.cap.state === "near" ? `Near cap: ${r.usage.conversations} of ${r.cap.cap}` : r.cap.state === "over" ? `Over cap: ${r.usage.conversations} of ${r.cap.cap}` : "Answering visitors") : "Showing the break message");
 
@@ -82,11 +84,13 @@ export default function ChatbotsClient() {
       {loaded && shown.length === 0 && <div className="cb-row" data-testid="chatbots-empty"><span className="cb-muted">{rows.length ? "No sites match that search." : "No chatbots yet."}</span></div>}
       {shown.map((r) => {
         const bespoke = r.engine === "bespoke" || r.enabled === null;
+        const combined = combinedCopyNote(r.slug, r.folded ?? []);
         return (
-          <div key={r.slug} className={`cb-row${bespoke ? " bespoke" : ""}`} data-testid={`row-${r.slug}`}>
+          <div key={r.id || r.slug} className={`cb-row${bespoke ? " bespoke" : ""}`} data-testid={`row-${r.slug}`}>
             <div>
               <div className="cb-name"><b>{r.name}</b> <span className="cb-slug">({r.slug})</span></div>
               <div className="cb-last">{r.lastChange.at ? <>Last changed {when(r.lastChange.at)} by {r.lastChange.by}{r.lastChange.reason ? `. Reason: ${r.lastChange.reason}` : ""}</> : "No changes yet"}</div>
+              {combined && <div className="cb-last" data-testid={`folded-${r.slug}`}>{combined}</div>}
             </div>
             <div className="cb-right">
               {bespoke ? (
@@ -97,6 +101,11 @@ export default function ChatbotsClient() {
                   onToggle={(reason) => void post(r.slug, { action: "set_enabled", enabled: !r.enabled, reason: reason ?? "" })} />
               )}
             </div>
+            {bespoke && (r.folded?.length ?? 0) > 0 && (
+              <div className="cb-meta">
+                <span data-testid={`usage-${r.slug}`}>This month: <b>{r.usage.conversations}</b> conversations, {r.usage.messages} messages</span>
+              </div>
+            )}
             {!bespoke && (
               <div className="cb-meta">
                 <label>Plan{" "}
