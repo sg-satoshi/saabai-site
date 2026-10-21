@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LegalDocument from "../components/LegalDocument";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 
@@ -37,19 +38,10 @@ const SECTIONS: { heading: string; body: string }[] = [
 
 export default function PrivacyPage() {
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", color: "#14202b", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 80px" }}>
-        <a href="/" style={{ color: "#5c6670", fontSize: 14, textDecoration: "none" }}>← Back to Saabai</a>
-        <h1 style={{ fontSize: 34, fontWeight: 800, margin: "24px 0 8px" }}>Privacy Policy</h1>
-        <p style={{ color: "#5c6670", fontSize: 14, marginBottom: 40 }}>Last updated: October 2026</p>
-        {SECTIONS.map((s) => (
-          <section key={s.heading} style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.heading}</h2>
-            <p style={{ fontSize: 16, lineHeight: 1.7, margin: 0 }}>{s.body}</p>
-          </section>
-        ))}
-        <p style={{ color: "#5c6670", fontSize: 14, marginTop: 48 }}>{NAP.name}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}</p>
-      </div>
-    </main>
+    <LegalDocument
+      title="Privacy Policy"
+      lede="Last updated: October 2026"
+      sections={SECTIONS}
+    />
   );
 }
