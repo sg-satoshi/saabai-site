@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Nav from "../components/Nav";
-import SbFooter from "../components/sb/SbFooter";
+import LegalDocument from "../components/LegalDocument";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
-import "../components/sb/sb.css";
 
 export const metadata: Metadata = publicPageMeta.terms;
 
@@ -21,34 +19,14 @@ const SECTIONS: { heading: string; body: string }[] = [
 
 export default function TermsPage() {
   return (
-    <div className="sb">
-      <Nav />
-      <div aria-hidden="true" style={{ height: 92 }} />
-      <div style={{ position: "relative" }}>
-        <div className="glow" />
-        <div className="wrap" style={{ position: "relative", maxWidth: 760, paddingTop: 72, paddingBottom: 96 }}>
-          <span className="eyebrow">Saabai</span>
-          <h1 style={{ marginTop: 16 }}>Terms</h1>
-          <p className="dim" style={{ marginTop: 14, fontSize: 15 }}>General terms. Last updated: October 2026</p>
-
-          <div className="card" style={{ marginTop: 32, display: "grid", gap: 28 }}>
-            {SECTIONS.map((s) => (
-              <section key={s.heading} style={{ minWidth: 0 }}>
-                <h3>{s.heading}</h3>
-                <p style={{ marginTop: 8, overflowWrap: "break-word" }}>{s.body}</p>
-              </section>
-            ))}
-          </div>
-
-          <p className="dim" style={{ marginTop: 28, fontSize: 14 }}>
-            {NAP.name}, ABN {NAP.abn}, {NAP.addressLine}. {NAP.email}.{" "}
-            <a href="/contact" style={{ color: "var(--teal)", textDecoration: "underline" }}>Contact</a>
-            {" · "}
-            <a href="/privacy" style={{ color: "var(--teal)", textDecoration: "underline" }}>Privacy</a>
-          </p>
-        </div>
-      </div>
-      <SbFooter />
-    </div>
+    <LegalDocument
+      title="Terms"
+      lede="General terms. Last updated: October 2026"
+      sections={SECTIONS}
+      links={[
+        { href: "/contact", label: "Contact" },
+        { href: "/privacy", label: "Privacy" },
+      ]}
+    />
   );
 }
