@@ -48,14 +48,15 @@ test("Mia's model resolution is unchanged", async () => {
   assert.equal(id(getPremiumModel()), "xai:grok-4.20-non-reasoning");
 });
 
-test("research and draft both go through getLexModelForFirm; no direct premium model left", () => {
+test("research and draft both use the firm model via the Lex gateway; no direct premium model left", () => {
   for (const f of ["app/api/lex-research/route.ts", "app/api/lex-draft/route.ts"]) {
     const src = readFileSync(f, "utf8");
-    assert.ok(src.includes("getLexModelForFirm("), f);
+    assert.ok(/kind: "firm", configId/.test(src), f);
     assert.ok(!src.includes("getPremiumModel"), f);
   }
+  assert.ok(readFileSync("lib/lex-privacy/gateway.ts", "utf8").includes("getLexModelForFirm("), "gateway resolves the firm model");
   const draft = readFileSync("app/api/lex-draft/route.ts", "utf8");
-  assert.ok(/runQAPass\(model,/.test(draft), "QA pass uses the same model");
+  assert.ok(/runQAPass\(gw,/.test(draft), "QA pass uses the same gateway and model");
 });
 
 test("firm's own model wins when saved, Lex model otherwise (Redis unavailable here)", async () => {

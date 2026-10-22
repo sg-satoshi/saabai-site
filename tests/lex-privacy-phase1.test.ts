@@ -107,9 +107,9 @@ for (const r of ROUTES) {
   });
 }
 
-test("answer check (buildAnswerMeta) gets masked text in lex-research", () => {
+test("answer check (buildAnswerMeta) goes through the gateway in lex-research", () => {
   const src = readFileSync("app/api/lex-research/route.ts", "utf8");
-  assert.match(src, /buildAnswerMeta\(model, masker\.mask\(text\), registry\)/);
+  assert.match(src, /buildAnswerMeta\(gw\.child\("lex-answer-check"\), text, registry\)/);
 });
 
 test("masker: shared placeholders, rehydration and leak check", async () => {

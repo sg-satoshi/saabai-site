@@ -1,0 +1,228 @@
+/**
+ * Lex AI gateway: the only door from Lex code to a model provider.
+ *
+ * Every Lex model call (chat, research, drafting, the drafting QA pass, review, compare,
+ * the confidence check and the LLM settings test) goes through a LexGateway. The gateway:
+ *   - picks the model, so routes never import a provider or build a model themselves
+ *   - masks every prompt and message itself, and leak checks the system prompt, before sending
+ *   - fails closed: any masking problem throws LexPrivacyError and nothing is sent
+ *   - rehydrates replies (streamed text, text and structured objects) before the route sees them
+ *
+ * Masking is always on for every firm, including firms using their own API key. There is no switch.
+ */
+import {
+  streamText as aiStreamText,
+  generateText as aiGenerateText,
+  generateObject as aiGenerateObject,
+  type LanguageModel,
+  type ModelMessage,
+  type SystemModelMessage,
+  type ToolSet,
+} from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { getLexModelForFirm } from "../lex-model";
+import { buildModelFromConfig, getClientLLMConfig, type ClientLLMConfig } from "../client-config";
+import { modelIdFrom } from "../chat-log";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, rehydrateTransform } from "./mask";
+
+/** Test seam (same module instance the gateway uses). */
+export { __setTokenizerForTests, LexPrivacyError } from "./mask";
+
+export type LexRoute =
+  | "lex-chat"
+  | "lex-research"
+  | "lex-answer-check"
+  | "lex-draft"
+  | "lex-draft-qa"
+  | "lex-review"
+  | "lex-compare"
+  | "lex-settings-test";
+
+/** Where the model comes from. Routes describe it; only the gateway builds it. */
+export type LexModelSource =
+  /** The firm's own saved key and model, else Lex's research model (LEX_RESEARCH_MODEL). */
+  | { kind: "firm"; configId: string }
+  /** The firm's own saved key and model when a clientId is given, else Claude Haiku (intake chat). */
+  | { kind: "chat"; clientId?: string }
+  /** A fixed Saabai model (review and compare). */
+  | { kind: "saabai"; modelId: "claude-sonnet-4-6" | "claude-haiku-4-5-20251001" }
+  /** A firm config being tested from LLM settings (never saved by the gateway). */
+  | { kind: "config"; config: ClientLLMConfig };
+
+async function resolveModel(src: LexModelSource): Promise<LanguageModel | null> {
+  switch (src.kind) {
+    case "firm":
+      return getLexModelForFirm(src.configId);
+    case "chat": {
+      if (src.clientId) {
+        try {
+          const own = await getClientLLMConfig(src.clientId);
+          const built = own ? buildModelFromConfig(own) : null;
+          if (built) return built;
+        } catch {
+          // Broken saved config: use the default.
+        }
+      }
+      return anthropic("claude-haiku-4-5-20251001");
+    }
+    case "saabai":
+      return anthropic(src.modelId);
+    case "config":
+      return buildModelFromConfig(src.config);
+  }
+}
+
+type Msg = { role: string; content: unknown };
+
+export interface LexGatewayInit {
+  route: LexRoute;
+  /** Firm the request belongs to (for the redaction log). Never an email of a client. */
+  firm: string;
+  model: LexModelSource;
+  /** Share an existing masking session (e.g. a route that masked parties into its system prompt). */
+  masker?: LexMasker;
+}
+
+export class LexGateway {
+  readonly route: LexRoute;
+  readonly firm: string;
+  readonly masker: LexMasker;
+  private constructor(init: LexGatewayInit, private model: LanguageModel) {
+    this.route = init.route;
+    this.firm = init.firm;
+    this.masker = init.masker ?? new LexMasker();
+  }
+
+  /** Opens a gateway. Returns null when the model cannot be built (e.g. an unsupported provider). */
+  static async open(init: LexGatewayInit): Promise<LexGateway | null> {
+    const model = await resolveModel(init.model);
+    return model ? new LexGateway(init, model) : null;
+  }
+
+  /** Test seam only: a gateway around a mock model. Production code uses open(). */
+  static __forTests(model: LanguageModel, init: Omit<LexGatewayInit, "model">): LexGateway {
+    return new LexGateway({ ...init, model: { kind: "saabai", modelId: "claude-sonnet-4-6" } }, model);
+  }
+
+  /** "provider:model" style id for logs. Never includes a key. */
+  get modelId(): string {
+    return modelIdFrom(this.model);
+  }
+
+  /** A gateway for a second call in the same request, sharing placeholders (e.g. the confidence check). */
+  child(route: LexRoute): LexGateway {
+    return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, masker: this.masker }, this.model);
+  }
+
+  mask(text: string): string {
+    return this.masker.mask(text);
+  }
+  rehydrate(text: string): string {
+    return this.masker.rehydrate(text);
+  }
+  rehydrateDeep<T>(value: T): T {
+    return this.masker.rehydrateDeep(value);
+  }
+
+  // ── Outbound ─────────────────────────────────────────────────────────────
+
+  private maskContent(content: unknown): unknown {
+    if (typeof content === "string") return this.masker.mask(content);
+    if (Array.isArray(content)) {
+      return content.map((part) => {
+        if (part && typeof part === "object" && (part as { type?: string }).type === "text") {
+          const p = part as { text?: unknown };
+          return { ...part, text: this.masker.mask(String(p.text ?? "")) };
+        }
+        if (part && typeof part === "object" && (part as { type?: string }).type === "tool-result") return part; // already masked by the gateway
+        if (part && typeof part === "object" && (part as { type?: string }).type === "tool-call") return part;
+        throw new LexPrivacyError("unsupported message part");
+      });
+    }
+    throw new LexPrivacyError("unsupported message content");
+  }
+
+  /** Masks messages, drops any client-sent system message. */
+  maskMessages<M extends Msg>(messages: M[]): M[] {
+    if (!Array.isArray(messages)) throw new LexPrivacyError("messages not an array");
+    return messages.filter((m) => m.role !== "system").map((m) => ({ ...m, content: this.maskContent(m.content) }) as M);
+  }
+
+  /**
+   * The system prompt is written by Saabai code (and firm settings). It is not run through the detector,
+   * so legal instructions stay intact, but any value this session has masked is swapped for its
+   * placeholder. Routes that put client text in the system prompt (drafting parties) mask that part first.
+   */
+  private checkSystem(system: string | SystemModelMessage | undefined): string | SystemModelMessage {
+    const text = typeof system === "string" ? system : system?.content ?? "";
+    const withNote = this.masker.maskKnown(text.includes(PRIVACY_SYSTEM_NOTE.trim()) ? text : text + PRIVACY_SYSTEM_NOTE);
+    this.masker.assertClean(withNote);
+    return typeof system === "object" && system ? { ...system, content: withNote } : withNote;
+  }
+
+  private prepare(p: { system?: string | SystemModelMessage; prompt?: string; messages?: Msg[] }) {
+    const prompt = typeof p.prompt === "string" ? this.masker.mask(p.prompt) : undefined;
+    const messages = p.messages ? this.maskMessages(p.messages) : undefined;
+    const system = this.checkSystem(p.system);
+    // Final outbound leak check on the whole payload.
+    this.masker.assertClean(JSON.stringify({ system, prompt, messages }));
+    return { system, prompt, messages };
+  }
+
+  // ── Calls ────────────────────────────────────────────────────────────────
+
+  /** Streams a reply. Text is rehydrated before any route transform runs. Throws LexPrivacyError before sending. */
+  streamText<TOOLS extends ToolSet = ToolSet>(params: Omit<Parameters<typeof aiStreamText<TOOLS>>[0], "model" | "system" | "prompt" | "messages"> & {
+    system?: string | SystemModelMessage;
+    messages: Msg[];
+  }) {
+    const { system, messages } = this.prepare(params);
+    const transforms = params.experimental_transform
+      ? Array.isArray(params.experimental_transform) ? params.experimental_transform : [params.experimental_transform]
+      : [];
+    return aiStreamText<TOOLS>({
+      ...(params as object),
+      model: this.model,
+      system,
+      messages: messages as ModelMessage[],
+      experimental_transform: [rehydrateTransform<TOOLS>(this.masker.map), ...transforms],
+    } as Parameters<typeof aiStreamText<TOOLS>>[0]);
+  }
+
+  /** One-shot text. Returns rehydrated text plus usage. */
+  async generateText<TOOLS extends ToolSet = ToolSet>(params: Omit<Parameters<typeof aiGenerateText<TOOLS>>[0], "model" | "system" | "prompt" | "messages"> & {
+    system?: string;
+    prompt?: string;
+    messages?: Msg[];
+  }) {
+    const { system, prompt, messages } = this.prepare(params);
+    const res = await aiGenerateText<TOOLS>({
+      ...(params as object),
+      model: this.model,
+      system,
+      ...(messages ? { messages: messages as ModelMessage[] } : { prompt: prompt ?? "" }),
+    } as Parameters<typeof aiGenerateText<TOOLS>>[0]);
+    return { text: this.masker.rehydrate(res.text), maskedText: res.text, usage: res.usage, totalUsage: res.totalUsage };
+  }
+
+  /** Structured output. Every string in the object is rehydrated. */
+  async generateObject<T>(params: {
+    schema: Parameters<typeof aiGenerateObject>[0] extends infer P ? P extends { schema: infer S } ? S : never : never;
+    schemaName?: string;
+    system?: string;
+    prompt: string;
+    maxOutputTokens?: number;
+    maxRetries?: number;
+    abortSignal?: AbortSignal;
+    providerOptions?: Record<string, Record<string, unknown>>;
+  }): Promise<{ object: T; usage: unknown }> {
+    const { system, prompt } = this.prepare(params);
+    const res = await (aiGenerateObject as unknown as (p: Record<string, unknown>) => Promise<{ object: T; usage: unknown }>)({
+      ...params,
+      model: this.model,
+      system,
+      prompt,
+    });
+    return { object: this.masker.rehydrateDeep(res.object), usage: res.usage };
+  }
+}

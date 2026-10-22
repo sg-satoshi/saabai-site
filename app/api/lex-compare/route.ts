@@ -1,9 +1,9 @@
-import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { gateCompare } from "../../../lib/lex-review-access";
+import { gateCompare, type LexReviewActor } from "../../../lib/lex-review-access";
 import { cleanLexOutput } from "../../../lib/lex-output";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
-import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromActor } from "../../../lib/lex-privacy/firm";
+import { logChatTurn } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -15,12 +15,12 @@ export const maxDuration = 120;
 export async function POST(request: Request): Promise<Response> {
   const gate = await gateCompare(request);
   if (!gate.ok) return gate.response;
-  const res = await runCompare(request);
+  const res = await runCompare(request, gate.actor);
   if (!res.ok) await gate.refund();
   return res;
 }
 
-async function runCompare(request: Request): Promise<Response> {
+async function runCompare(request: Request, actor: LexReviewActor): Promise<Response> {
   try {
     const body = await request.json() as {
       documentA: string;
@@ -47,11 +47,12 @@ async function runCompare(request: Request): Promise<Response> {
       "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
     // Privacy: always on. Both documents share one placeholder map, masked before the model sees them. Fail closed.
-    const masker = new LexMasker();
+    const gw = await LexGateway.open({ route: "lex-compare", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" } });
+    if (!gw) return privacyFailResponse();
     let maskedA: string, maskedB: string;
     try {
-      maskedA = masker.mask(String(documentA).slice(0, 8000));
-      maskedB = masker.mask(String(documentB).slice(0, 8000));
+      maskedA = gw.mask(String(documentA).slice(0, 8000));
+      maskedB = gw.mask(String(documentB).slice(0, 8000));
     } catch (err) {
       if (err instanceof LexPrivacyError) return privacyFailResponse();
       throw err;
@@ -80,24 +81,22 @@ Provide your analysis covering:
 
 Keep the analysis concise but thorough.`;
 
-    const model = anthropic("claude-sonnet-4-6");
-    const result = await generateText({
-      model,
+    const result = await gw.generateText({
       system: systemPrompt,
       prompt: userPrompt,
       maxOutputTokens: 4000,
     });
-    const text = result.text;
     logChatTurn({
       bot: "lex-compare",
-      model: modelIdFrom(model),
+      model: gw.modelId,
       usage: result.totalUsage ?? result.usage,
       userText: userPrompt,
-      assistantText: text,
+      assistantText: result.maskedText,
     });
 
-    return Response.json({ analysis: cleanLexOutput(masker.rehydrate(text)) });
+    return Response.json({ analysis: cleanLexOutput(result.text) });
   } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-compare]", err);
     return Response.json({ error: "compare_failed" }, { status: 500 });
   }

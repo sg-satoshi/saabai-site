@@ -96,6 +96,15 @@ export class LexMasker {
     return out;
   }
 
+  /** Replaces only values this session already masked (no detector). Used on Saabai-written prompts. */
+  maskKnown(text: string): string {
+    let out = text;
+    for (const value of [...this.byValue.keys()].sort((a, b) => b.length - a.length)) {
+      if (value && out.includes(value)) out = out.split(value).join(this.byValue.get(value)!);
+    }
+    return out;
+  }
+
   /** Outbound leak check: no known real value may remain in a payload. */
   assertClean(payload: string): void {
     for (const value of this.byValue.keys()) {

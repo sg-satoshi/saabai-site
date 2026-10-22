@@ -3,7 +3,7 @@
  * server actually saw, then ask the model for per-conclusion confidence as
  * schema-checked JSON (generateObject + zod), and tighten it with deterministic rules.
  */
-import { generateObject, type LanguageModel } from "ai";
+import type { LexGateway } from "./lex-privacy/gateway";
 import { z } from "zod";
 import { noDashes } from "./no-dashes";
 import {
@@ -58,7 +58,7 @@ export const PLACEHOLDER_NOTE =
   "Tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}, {{PHONE_1}}, {{ABN_1}} or {{PARTY_1}} are deliberate privacy masks standing in for real client details. " +
   "Treat each as the real value. They are not unfilled template placeholders or missing content, and must never lower a confidence level or be listed as a check.";
 
-export async function buildAnswerMeta(model: LanguageModel, answerText: string, reg: SourceRegistry, opts: { timeoutMs?: number } = {}): Promise<LexAnswerMeta> {
+export async function buildAnswerMeta(gw: LexGateway, answerText: string, reg: SourceRegistry, opts: { timeoutMs?: number } = {}): Promise<LexAnswerMeta> {
   const citations = verifyCitations(answerText, reg);
   const problems = citations.filter((c) => c.status !== "verified").map((c) =>
     c.id ? `[${c.n}${c.pinpoint ? " " + pinpointLabel(c.pinpoint) : ""}] ${c.note}` : `A statement marked as unsupported: check it against a primary source`);
@@ -72,8 +72,8 @@ export async function buildAnswerMeta(model: LanguageModel, answerText: string, 
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? CONFIDENCE_TIMEOUT_MS);
-    const { object } = await generateObject({
-      model,
+    // The gateway masks the answer again (it was rehydrated for the user) and rehydrates the result.
+    const { object } = await gw.generateObject<z.infer<typeof ConclusionsSchema>>({
       schema: ConclusionsSchema,
       abortSignal: ctrl.signal,
       maxOutputTokens: 2500,

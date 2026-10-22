@@ -1,7 +1,6 @@
-import { streamText, stepCountIs, createUIMessageStream, createUIMessageStreamResponse, type SystemModelMessage } from "ai";
+import { stepCountIs, createUIMessageStream, createUIMessageStreamResponse, type SystemModelMessage } from "ai";
 import { lexErrorResponse, stripErrorAnswers } from "../../../lib/lex-errors";
 import { getLexConfig } from "../../../lib/lex-config";
-import { getLexModelForFirm } from "../../../lib/lex-model";
 import { normalizeScope, filterToolsByScope, scopePrompt } from "../../../lib/lex-scope";
 import { buildLexResearchTools, withSourceRegistry, finalStepAnswers, LEX_RESEARCH_MAX_STEPS } from "../../../lib/lex-research-tools";
 import { SourceRegistry, CITATION_RULES, stripMarkers } from "../../../lib/lex-sources";
@@ -10,8 +9,10 @@ import { dropNarrationTransform, stripLeadingNarration } from "../../../lib/lex-
 import { noDashes, noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, rehydrateTransform } from "../../../lib/lex-privacy/mask";
-import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { lastUserText, logStreamFinish } from "../../../lib/chat-log";
 
 // Lex Research uses LEX_RESEARCH_MODEL (falls back to PREMIUM_CHAT_MODEL), or the
 // firm's own model when one is saved. Never route legal research to a cheap model.
@@ -57,10 +58,12 @@ export async function POST(req: Request) {
       .map(m => ({ role: m.role as "user" | "assistant", content: m.role === "assistant" ? stripMarkers(m.content) : m.content }));
 
     // ── PRIVACY: always on. Mask client details before anything reaches the model. Fail closed. ──
-    const masker = new LexMasker();
+    // The gateway picks the model (the firm's own key and model if saved, else Lex's research model).
+    const gw = await LexGateway.open({ route: "lex-research", firm: lexFirmFromRequest(req, config.id), model: { kind: "firm", configId: config.id } });
+    if (!gw) return privacyFailResponse();
     let tokenizedMessages: typeof coreMessages;
     try {
-      tokenizedMessages = masker.maskMessages(coreMessages);
+      tokenizedMessages = gw.maskMessages(coreMessages);
     } catch (err) {
       if (err instanceof LexPrivacyError) return privacyFailResponse();
       throw err;
@@ -79,28 +82,24 @@ export async function POST(req: Request) {
       },
     };
 
-    // The firm's own API key + model if configured; otherwise Lex's research model.
-    const model = await getLexModelForFirm(config.id);
-
     // Server-side source list: every search result gets an id and a type decided here, not by the model.
     const registry = new SourceRegistry();
     const baseTools = filterToolsByScope(buildLexResearchTools(config), scope);
     const tools = citeMode ? withSourceRegistry(baseTools, registry) : baseTools;
 
     const steps = LEX_RESEARCH_MAX_STEPS + (citeMode ? 2 : 0); // room for readSource calls
-    const result = streamText({
-      model,
+    const result = gw.streamText({
       system: cachedSystem,
       messages: tokenizedMessages,
       stopWhen: stepCountIs(steps),
       prepareStep: finalStepAnswers(steps),
       tools,
-      experimental_transform: [rehydrateTransform(masker.map), dropNarrationTransform(), noDashesTransform()],
+      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
       onFinish: (event) => {
         logStreamFinish(event, {
           bot: "lex-research",
           siteId: typeof clientId === "string" ? clientId : config.id,
-          model: modelIdFrom(model),
+          model: gw.modelId,
           userText: lastUserText(tokenizedMessages),
         });
       },
@@ -113,8 +112,8 @@ export async function POST(req: Request) {
       execute: async ({ writer }) => {
         writer.merge(result.toUIMessageStream({ sendFinish: false }));
         const text = noDashes(stripLeadingNarration(await result.text));
-        // The streamed text is rehydrated, so mask it again before the confidence check sees it.
-        const meta = masker.rehydrateDeep(await buildAnswerMeta(model, masker.mask(text), registry));
+        // The streamed text is rehydrated. The confidence check goes through the gateway, which masks it again.
+        const meta = await buildAnswerMeta(gw.child("lex-answer-check"), text, registry);
         writer.write({ type: "data-lex-sources", data: meta });
       },
       onError: (err) => {

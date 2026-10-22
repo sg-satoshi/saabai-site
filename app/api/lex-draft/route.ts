@@ -17,15 +17,15 @@ import { lexErrorResponse } from "../../../lib/lex-errors";
  * Uses LEX_RESEARCH_MODEL (or the firm's own model). Legal accuracy is non-negotiable.
  */
 
-import { streamText, generateText, tool, jsonSchema, stepCountIs } from "ai";
-import type { LanguageModel } from "ai";
+import { tool, jsonSchema, stepCountIs } from "ai";
 import { getLexConfig } from "../../../lib/lex-config";
-import { getLexModelForFirm } from "../../../lib/lex-model";
 import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
 import { noDashesTransform } from "../../../lib/no-dashes";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, rehydrateTransform } from "../../../lib/lex-privacy/mask";
-import { lastUserText, logChatTurn, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { lastUserText, logChatTurn, logStreamFinish } from "../../../lib/chat-log";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
@@ -194,15 +194,17 @@ export async function POST(req: Request) {
 
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
     // (which falls back to PREMIUM_CHAT_MODEL).
-    const model = await getLexModelForFirm(getLexConfig(clientId).id);
-
-    // Privacy: always on. Every client-supplied text is masked before the model sees it. Fail closed.
-    const masker = new LexMasker();
+    // The gateway picks it and masks every client-supplied text before the model sees it. Fail closed.
+    const lexConfigId = getLexConfig(clientId).id;
+    const firm = lexFirmFromRequest(req, lexConfigId);
+    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId } });
+    if (!gw) return privacyFailResponse();
+    const masker = gw.masker;
 
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────
     // If a completed draft is provided and QA is requested, run QA and return.
     if (requestQA && completedDraft) {
-      const qaResult = masker.rehydrateDeep(await runQAPass(model, masker.mask(String(completedDraft)), documentType, typeof clientId === "string" ? clientId : undefined));
+      const qaResult = masker.rehydrateDeep(await runQAPass(gw, masker.mask(String(completedDraft)), documentType, typeof clientId === "string" ? clientId : undefined));
       return new Response(JSON.stringify(qaResult), {
         headers: { "Content-Type": "application/json" },
       });
@@ -291,21 +293,20 @@ export async function POST(req: Request) {
             },
           ];
 
-    const result = streamText({
-      model,
+    const result = gw.streamText({
       system: systemPrompt,
       messages: finalMessages,
       onFinish: (event) => {
         logStreamFinish(event, {
           bot: "lex-draft",
           siteId: typeof clientId === "string" ? clientId : undefined,
-          model: modelIdFrom(model),
+          model: gw.modelId,
           userText: lastUserText(finalMessages),
         });
       },
       stopWhen: stepCountIs(10), // More steps needed for document drafting
       prepareStep: finalStepAnswers(10),
-      experimental_transform: [rehydrateTransform(masker.map), dropNarrationTransform(), noDashesTransform()],
+      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
       tools: {
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -457,7 +458,7 @@ export async function POST(req: Request) {
 // ── QA Pass (Pass 2) ──────────────────────────────────────────────────────────
 
 async function runQAPass(
-  model: LanguageModel,
+  gw: LexGateway,
   draftText: string,
   documentTypeId?: string,
   siteId?: string
@@ -476,8 +477,7 @@ async function runQAPass(
     `Return ONLY the JSON verification report as specified in your instructions.`;
 
   try {
-    const qaResult = await generateText({
-      model,
+    const qaResult = await gw.generateText({
       system: QA_SYSTEM_PROMPT,
       messages: [{ role: "user", content: qaUserPrompt }],
       tools: {
@@ -528,13 +528,14 @@ async function runQAPass(
     logChatTurn({
       bot: "lex-draft",
       siteId,
-      model: modelIdFrom(model),
+      model: gw.modelId,
       usage: qaResult.totalUsage ?? qaResult.usage,
       userText: qaUserPrompt,
-      assistantText: qaResult.text,
+      assistantText: qaResult.maskedText,
     });
 
-    const responseText = qaResult.text.trim();
+    // Parse the masked text; the caller rehydrates the parsed report.
+    const responseText = qaResult.maskedText.trim();
     // Strip markdown code fences if the model added them despite instructions
     const jsonText = responseText
       .replace(/^```json\s*/i, "")

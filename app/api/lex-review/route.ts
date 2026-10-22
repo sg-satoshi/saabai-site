@@ -1,9 +1,9 @@
-import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
 import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
-import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromActor } from "../../../lib/lex-privacy/firm";
+import { logChatTurn } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -129,7 +129,7 @@ export async function POST(request: Request): Promise<Response> {
   return res;
 }
 
-async function runReview(request: Request, _actor: LexReviewActor): Promise<Response> {
+async function runReview(request: Request, actor: LexReviewActor): Promise<Response> {
   try {
     const body: ReviewRequest = await request.json();
 
@@ -148,7 +148,9 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
       "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
     // Privacy: always on. Uploaded document text and party names are masked before the model sees them. Fail closed.
-    const masker = new LexMasker();
+    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" } });
+    if (!gw) return privacyFailResponse();
+    const masker = gw.masker;
     let userPrompt: string;
     try {
       userPrompt = buildUserPrompt({
@@ -163,9 +165,7 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
 
     let report: ReviewReport;
     try {
-      const model = anthropic("claude-sonnet-4-6");
-      const { object, usage } = await generateObject({
-        model,
+      const { object, usage } = await gw.generateObject<Parameters<typeof normaliseReview>[0]>({
         schema: ReviewReportSchema,
         schemaName: "ReviewReport",
         system: systemPrompt,
@@ -179,12 +179,13 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
       report = normaliseReview(object);
       logChatTurn({
         bot: "lex-review",
-        model: modelIdFrom(model),
-        usage,
+        model: gw.modelId,
+        usage: usage as Parameters<typeof logChatTurn>[0]["usage"],
         userText: userPrompt,
-        assistantText: report.summary,
+        assistantText: masker.mask(String(report.summary ?? "")),
       });
     } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
       const text = (err as { text?: string })?.text;
       if (typeof text === "string" && text.includes("{")) {
         try { report = normaliseReview(parseReviewOutput(text)); }
