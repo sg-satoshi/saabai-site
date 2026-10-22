@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
 import ButtonFeedback from "./components/ui/ButtonFeedback";
@@ -11,15 +11,9 @@ import ExpOverlay from "./components/exp/ExpOverlay";
 import AnnouncementBar from "./components/AnnouncementBar";
 import { ANTI_FLICKER_SCRIPT } from "@/lib/exp/overlay";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = localFont({ src: "./fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-geist-sans" });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistMono = localFont({ src: "./fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-geist-mono" });
 
 export const viewport: Viewport = {
   themeColor: "#0e0c2e",

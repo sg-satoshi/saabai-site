@@ -1,8 +1,8 @@
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { NAP } from "@/lib/seo-entity";
 import "./sb-footer.css";
 
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
+const inter = localFont({ src: "../../fonts/inter-latin-wght-normal.woff2", weight: "100 900" });
 
 const OFFERS = [
   { label: "Web Solutions", href: "/websites" },
