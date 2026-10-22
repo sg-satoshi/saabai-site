@@ -12,10 +12,16 @@
 import type { StreamTextTransform, TextStreamPart, ToolSet } from "ai";
 import { tokenizePII, type TokenMap, type ScanResult } from "../pii-scanner";
 
+/** Bump when detection rules change, so the redaction log shows which masker handled a request. */
+export const MASKER_VERSION = "lex-mask-2.0";
+
 export class LexPrivacyError extends Error {
+  /** Short fixed reason code, safe to log (never contains input). */
+  readonly reason: string;
   constructor(reason: string) {
     super(`lex_privacy_check_failed: ${reason}`);
     this.name = "LexPrivacyError";
+    this.reason = reason;
   }
 }
 

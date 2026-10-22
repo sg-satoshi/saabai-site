@@ -23,7 +23,9 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { getLexModelForFirm } from "../lex-model";
 import { buildModelFromConfig, getClientLLMConfig, type ClientLLMConfig } from "../client-config";
 import { modelIdFrom } from "../chat-log";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, rehydrateTransform } from "./mask";
+import { randomBytes } from "node:crypto";
+import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, rehydrateTransform } from "./mask";
+import { recordRedaction, type RedactionOutcome } from "./redaction-log";
 
 /** Test seam (same module instance the gateway uses). */
 export { __setTokenizerForTests, LexPrivacyError } from "./mask";
@@ -81,7 +83,7 @@ type Msg = { role: string; content: unknown };
  */
 export const FIRST_PARTY_TOOLS = new Set(["captureMatter"]);
 
-export type ToolPrivacyStats = { calls: number; resultsMasked: number; argsScrubbed: number; errorsMasked: number };
+export type ToolPrivacyStats = { calls: number; resultsMasked: number; argsScrubbed: number; errorsMasked: number; resultsBlocked: number };
 
 export interface LexGatewayInit {
   route: LexRoute;
@@ -96,17 +98,54 @@ export class LexGateway {
   readonly route: LexRoute;
   readonly firm: string;
   readonly masker: LexMasker;
-  readonly toolStats: ToolPrivacyStats = { calls: 0, resultsMasked: 0, argsScrubbed: 0, errorsMasked: 0 };
-  private constructor(init: LexGatewayInit, private model: LanguageModel) {
+  readonly toolStats: ToolPrivacyStats = { calls: 0, resultsMasked: 0, argsScrubbed: 0, errorsMasked: 0, resultsBlocked: 0 };
+  readonly requestId: string;
+  private constructor(init: LexGatewayInit, private model: LanguageModel, requestId?: string) {
     this.route = init.route;
     this.firm = init.firm;
     this.masker = init.masker ?? new LexMasker();
+    this.requestId = requestId ?? randomBytes(8).toString("hex");
+  }
+
+  /** Writes one redaction log entry (types and counts only). Never throws. */
+  private log(outcome: RedactionOutcome, err?: unknown): void {
+    try {
+      const reason = err instanceof LexPrivacyError ? err.reason : outcome === "error" ? (err instanceof Error ? err.name : "error") : undefined;
+      void recordRedaction(this.firm, {
+        requestId: this.requestId,
+        ts: Date.now(),
+        route: this.route,
+        model: this.modelId,
+        masker: MASKER_VERSION,
+        outcome,
+        reason,
+        types: { ...this.masker.stats.types },
+        total: this.masker.stats.tokensReplaced,
+        tools: { ...this.toolStats },
+      });
+    } catch {
+      // logging never breaks a request
+    }
+  }
+
+  /** Runs a masking step; a privacy failure is logged as blocked and rethrown (nothing is sent). */
+  private guard<T>(fn: () => T): T {
+    try {
+      return fn();
+    } catch (err) {
+      if (err instanceof LexPrivacyError) this.log("blocked", err);
+      throw err;
+    }
   }
 
   /** Opens a gateway. Returns null when the model cannot be built (e.g. an unsupported provider). */
   static async open(init: LexGatewayInit): Promise<LexGateway | null> {
     const model = await resolveModel(init.model);
-    return model ? new LexGateway(init, model) : null;
+    if (!model) {
+      void recordRedaction(init.firm, { requestId: randomBytes(8).toString("hex"), ts: Date.now(), route: init.route, model: "unavailable", masker: MASKER_VERSION, outcome: "error", reason: "model unavailable", types: {}, total: 0, tools: { calls: 0, resultsMasked: 0, argsScrubbed: 0, errorsMasked: 0, resultsBlocked: 0 } });
+      return null;
+    }
+    return new LexGateway(init, model);
   }
 
   /** Test seam only: a gateway around a mock model. Production code uses open(). */
@@ -121,11 +160,11 @@ export class LexGateway {
 
   /** A gateway for a second call in the same request, sharing placeholders (e.g. the confidence check). */
   child(route: LexRoute): LexGateway {
-    return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, masker: this.masker }, this.model);
+    return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, masker: this.masker }, this.model, this.requestId);
   }
 
   mask(text: string): string {
-    return this.masker.mask(text);
+    return this.guard(() => this.masker.mask(text));
   }
   rehydrate(text: string): string {
     return this.masker.rehydrate(text);
@@ -154,6 +193,9 @@ export class LexGateway {
 
   /** Masks messages, drops any client-sent system message. */
   maskMessages<M extends Msg>(messages: M[]): M[] {
+    return this.guard(() => this.maskMessagesInner(messages));
+  }
+  private maskMessagesInner<M extends Msg>(messages: M[]): M[] {
     if (!Array.isArray(messages)) throw new LexPrivacyError("messages not an array");
     return messages.filter((m) => m.role !== "system").map((m) => ({ ...m, content: this.maskContent(m.content) }) as M);
   }
@@ -171,12 +213,14 @@ export class LexGateway {
   }
 
   private prepare(p: { system?: string | SystemModelMessage; prompt?: string; messages?: Msg[] }) {
-    const prompt = typeof p.prompt === "string" ? this.masker.mask(p.prompt) : undefined;
-    const messages = p.messages ? this.maskMessages(p.messages) : undefined;
-    const system = this.checkSystem(p.system);
-    // Final outbound leak check on the whole payload.
-    this.masker.assertClean(JSON.stringify({ system, prompt, messages }));
-    return { system, prompt, messages };
+    return this.guard(() => {
+      const prompt = typeof p.prompt === "string" ? this.masker.mask(p.prompt) : undefined;
+      const messages = p.messages ? this.maskMessagesInner(p.messages) : undefined;
+      const system = this.checkSystem(p.system);
+      // Final outbound leak check on the whole payload.
+      this.masker.assertClean(JSON.stringify({ system, prompt, messages }));
+      return { system, prompt, messages };
+    });
   }
 
   /**
@@ -213,10 +257,16 @@ export class LexGateway {
             const msg = err instanceof Error ? err.message : String(err);
             throw new Error(this.masker.mask(msg.slice(0, 2000)));
           }
-          const masked = this.masker.maskDeep(result);
-          this.toolStats.resultsMasked++;
-          this.masker.assertClean(JSON.stringify(masked ?? null));
-          return masked;
+          try {
+            const masked = this.masker.maskDeep(result);
+            this.masker.assertClean(JSON.stringify(masked ?? null));
+            this.toolStats.resultsMasked++;
+            return masked;
+          } catch (err) {
+            // The raw result is dropped. The model only sees a fixed privacy error for this tool call.
+            this.toolStats.resultsBlocked++;
+            throw err instanceof LexPrivacyError ? err : new LexPrivacyError("tool result masking failed");
+          }
         },
       };
     }
@@ -235,6 +285,18 @@ export class LexGateway {
       this.masker.assertClean(JSON.stringify(messages));
       return { ...base, messages };
     };
+  }
+
+  /** Logs the outcome of a one-shot call. */
+  private async track<R>(fn: () => Promise<R>): Promise<R> {
+    try {
+      const r = await fn();
+      this.log("pass");
+      return r;
+    } catch (err) {
+      this.log(err instanceof LexPrivacyError ? "blocked" : "error", err);
+      throw err;
+    }
   }
 
   // ── Calls ────────────────────────────────────────────────────────────────
@@ -256,6 +318,14 @@ export class LexGateway {
       system,
       messages: messages as ModelMessage[],
       experimental_transform: [rehydrateTransform<TOOLS>(this.masker.map), ...transforms],
+      onFinish: async (event: unknown) => {
+        this.log("pass");
+        await (params.onFinish as ((e: unknown) => unknown) | undefined)?.(event);
+      },
+      onError: async (event: { error: unknown }) => {
+        this.log(event?.error instanceof LexPrivacyError ? "blocked" : "error", event?.error);
+        await (params.onError as ((e: unknown) => unknown) | undefined)?.(event);
+      },
     } as Parameters<typeof aiStreamText<TOOLS>>[0]);
   }
 
@@ -266,14 +336,14 @@ export class LexGateway {
     messages?: Msg[];
   }) {
     const { system, prompt, messages } = this.prepare(params);
-    const res = await aiGenerateText<TOOLS>({
+    const res = await this.track(() => aiGenerateText<TOOLS>({
       ...(params as object),
       ...(params.tools ? { tools: this.wrapTools(params.tools) } : {}),
       prepareStep: this.prepareStepFor(params.prepareStep),
       model: this.model,
       system,
       ...(messages ? { messages: messages as ModelMessage[] } : { prompt: prompt ?? "" }),
-    } as Parameters<typeof aiGenerateText<TOOLS>>[0]);
+    } as Parameters<typeof aiGenerateText<TOOLS>>[0]));
     return { text: this.masker.rehydrate(res.text), maskedText: res.text, usage: res.usage, totalUsage: res.totalUsage };
   }
 
@@ -289,12 +359,12 @@ export class LexGateway {
     providerOptions?: Record<string, Record<string, unknown>>;
   }): Promise<{ object: T; usage: unknown }> {
     const { system, prompt } = this.prepare(params);
-    const res = await (aiGenerateObject as unknown as (p: Record<string, unknown>) => Promise<{ object: T; usage: unknown }>)({
+    const res = await this.track(() => (aiGenerateObject as unknown as (p: Record<string, unknown>) => Promise<{ object: T; usage: unknown }>)({
       ...params,
       model: this.model,
       system,
       prompt,
-    });
+    }));
     return { object: this.masker.rehydrateDeep(res.object), usage: res.usage };
   }
 }

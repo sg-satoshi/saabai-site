@@ -91,6 +91,7 @@ case "HMGET": return args.slice(1).map((f) => hashes.get(k)?.get(f) ?? null);
       case "LPUSH": case "RPUSH": { if (!lists.has(k)) lists.set(k, []); const l = lists.get(k); const v = args.slice(1); if (name === "LPUSH") l.unshift(...v.reverse()); else l.push(...v); return l.length; }
       case "LRANGE": { const l = lists.get(k) ?? []; const s = Number(args[1]); let e = Number(args[2]); if (e < 0) e = l.length + e; return l.slice(s, e + 1); }
       case "LLEN": return lists.get(k)?.length ?? 0;
+      case "LTRIM": { const l = lists.get(k); if (!l) return "OK"; const s = Number(args[1]); let e = Number(args[2]); if (e < 0) e = l.length + e; lists.set(k, l.slice(s, e + 1)); return "OK"; }
       case "LREM": {
         const l = lists.get(k);
         if (!l) return 0;
