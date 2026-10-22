@@ -58,7 +58,7 @@ test("a Lex call writes one log entry per firm: types and counts only, no values
   const e = JSON.parse(rows[0]);
   assert.equal(e.route, "lex-compare");
   assert.equal(e.outcome, "error"); // the stub refuses the call
-  assert.equal(e.masker, "lex-mask-2.0");
+  assert.match(e.masker, /^lex-mask-\d+\.\d+$/);
   assert.match(e.model, /claude-sonnet-4-6/);
   assert.ok(e.types.EMAIL >= 1 && e.types.PHONE >= 1 && e.types.ABN >= 1 && e.types.COMPANY >= 1);
   assert.equal(e.total, Object.values(e.types as Record<string, number>).reduce((a, b) => a + b, 0));

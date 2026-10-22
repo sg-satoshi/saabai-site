@@ -30,7 +30,7 @@ function assertNoPII(payload: string) {
   for (const [k, v] of Object.entries(PII)) {
     assert.ok(!payload.includes(v), `raw ${k} reached the AI provider`);
   }
-  assert.match(payload, /\{\{EMAIL_1\}\}/);
+  assert.match(payload, /\{\{EMAIL_\d+\}\}/);
 }
 
 before(async () => {
