@@ -94,21 +94,21 @@ export class LexMasker {
    * Seeds the session with a matter's known parties. Every variant of a party (surname, initials,
    * possessives, case variants) is replaced by that party's one placeholder before the detector runs.
    */
-  addParties(parties: MatterParty[] | undefined | null): void {
-    const add = partyMatchers(parties);
+  addParties(parties: MatterParty[] | undefined | null, source: "party" | "ner" = "party"): void {
+    const add = partyMatchers(parties, source).filter((m) => !this.parties.some((p) => p.type === m.type && p.canonical === m.canonical));
     if (!add.length) return;
     this.parties = [...this.parties, ...add].sort((a, b) => b.canonical.length - a.canonical.length);
   }
 
   get partyCount(): number {
-    return this.parties.length;
+    return this.parties.filter((p) => p.source === "party").length;
   }
 
   private replaceParties(text: string, wrap: (token: string) => string): string {
     let out = text;
     for (const m of this.parties) {
       if (!containsParty(out, m)) continue;
-      out = replaceParty(out, m, () => wrap(this.alloc(m.type, m.canonical, "party")));
+      out = replaceParty(out, m, () => wrap(this.alloc(m.type, m.canonical, m.source)));
     }
     return out;
   }
@@ -177,7 +177,9 @@ export class LexMasker {
   }
 
   /** Outbound leak check: no known real value may remain in a payload. */
-  assertClean(payload: string): void {
+  assertClean(raw: string): void {
+    // Placeholders themselves never count (a value like "ABN" is inside "{{ABN_1}}").
+    const payload = raw.replace(TOKEN_RE, " ");
     for (const value of this.byValue.keys()) {
       if (value && payload.includes(value)) throw new LexPrivacyError("known value present after masking");
     }

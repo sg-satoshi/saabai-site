@@ -202,6 +202,8 @@ export async function POST(req: Request) {
     const firm = lexFirmFromRequest(req, lexConfigId);
     const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined), parties: await matterPartiesFor(req, matterId) });
     if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([parties, specialInstructions, messages, completedDraft]);
     const masker = gw.masker;
 
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────

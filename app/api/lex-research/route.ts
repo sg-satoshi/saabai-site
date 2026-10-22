@@ -62,6 +62,8 @@ export async function POST(req: Request) {
     // The gateway picks the model (the firm's own key and model if saved, else Lex's research model).
     const gw = await LexGateway.open({ route: "lex-research", firm: lexFirmFromRequest(req, config.id), model: { kind: "firm", configId: config.id }, thread: threadSeed(threadId, coreMessages), parties: await matterPartiesFor(req, matterId) });
     if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([coreMessages]);
     let tokenizedMessages: typeof coreMessages;
     try {
       tokenizedMessages = gw.maskMessages(coreMessages);

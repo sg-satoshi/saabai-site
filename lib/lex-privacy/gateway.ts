@@ -27,6 +27,7 @@ import { randomBytes } from "node:crypto";
 import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, lexThreadKey, rehydrateTransform } from "./mask";
 import { recordRedaction, type RedactionOutcome } from "./redaction-log";
 import type { MatterParty } from "./parties";
+import { detectNames, type NerStatus } from "./ner";
 
 /** Test seam (same module instance the gateway uses). */
 export { __setTokenizerForTests, LexPrivacyError } from "./mask";
@@ -117,6 +118,8 @@ export class LexGateway {
   readonly masker: LexMasker;
   readonly toolStats: ToolPrivacyStats = { calls: 0, resultsMasked: 0, argsScrubbed: 0, errorsMasked: 0, resultsBlocked: 0 };
   readonly requestId: string;
+  /** Name model state for this request (set by scanNames). */
+  nerStatus?: NerStatus;
   private constructor(init: LexGatewayInit, private model: LanguageModel, requestId?: string) {
     this.route = init.route;
     this.firm = init.firm;
@@ -141,6 +144,7 @@ export class LexGateway {
         total: this.masker.stats.tokensReplaced,
         sources: { ...this.masker.stats.sources },
         parties: this.masker.partyCount,
+        ...(this.nerStatus ? { ner: this.nerStatus } : {}),
         tools: { ...this.toolStats },
       });
     } catch {
@@ -181,6 +185,37 @@ export class LexGateway {
   /** A gateway for a second call in the same request, sharing placeholders (e.g. the confidence check). */
   child(route: LexRoute): LexGateway {
     return new LexGateway({ route, firm: this.firm, model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, masker: this.masker }, this.model, this.requestId);
+  }
+
+  /**
+   * Runs the open-source name model over the request's own text (prompts, messages, documents) and
+   * adds the names it finds to this masking session. Never throws and never blocks the request:
+   * on any problem the patterns and matter parties still mask everything they know.
+   */
+  async scanNames(texts: Array<unknown>): Promise<NerStatus> {
+    try {
+      const flat: string[] = [];
+      const walk = (v: unknown, depth = 0) => {
+        if (depth > 6 || v == null) return;
+        if (typeof v === "string") flat.push(v);
+        else if (Array.isArray(v)) v.forEach((x) => walk(x, depth + 1));
+        else if (typeof v === "object") {
+          const o = v as { role?: unknown; content?: unknown; text?: unknown };
+          if (o.role === "system") return;
+          if ("content" in o) walk(o.content, depth + 1);
+          else if ("text" in o) walk(o.text, depth + 1);
+        }
+      };
+      walk(texts);
+      const r = await detectNames(flat);
+      this.masker.addParties(r.parties, "ner");
+      this.nerStatus = r.status;
+      // Timing only, never text or names.
+      console.log(`[lex-ner] ${this.route} ${r.status} ${r.ms}ms ${r.chars} chars ${r.parties.length} names`);
+    } catch {
+      this.nerStatus = "failed";
+    }
+    return this.nerStatus;
   }
 
   mask(text: string): string {

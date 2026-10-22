@@ -51,6 +51,8 @@ async function runCompare(request: Request, actor: LexReviewActor): Promise<Resp
     // Privacy: always on. Both documents share one placeholder map, masked before the model sees them. Fail closed.
     const gw = await LexGateway.open({ route: "lex-compare", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties: await matterPartiesFor(request, body.matterId) });
     if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([documentA, documentB]);
     let maskedA: string, maskedB: string;
     try {
       maskedA = gw.mask(String(documentA).slice(0, 8000));
