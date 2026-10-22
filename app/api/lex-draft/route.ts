@@ -544,7 +544,10 @@ async function runQAPass(
       .replace(/\s*```$/i, "")
       .trim();
 
-    const parsed = JSON.parse(jsonText) as QAVerificationReport;
+    // The model sometimes writes a sentence before the JSON ("Now I have..."). Parse the outermost object.
+    const start = jsonText.indexOf("{");
+    const end = jsonText.lastIndexOf("}");
+    const parsed = JSON.parse(start !== -1 && end > start ? jsonText.slice(start, end + 1) : jsonText) as QAVerificationReport;
     return parsed;
   } catch (err) {
     console.error("[lex-draft qa]", err);

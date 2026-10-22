@@ -111,3 +111,16 @@ test("streaming rehydration: 5 digit placeholders split across chunks, unknown t
   const out = chunks.map((c) => r.push(c)).join("") + r.flush();
   assert.equal(out, `Dear Mr John Smith, re ${EMAIL} and {{PHONE_99999}} {`);
 });
+
+test("privacy note tells the model never to mention placeholders to the user", async () => {
+  const { PRIVACY_SYSTEM_NOTE } = await import("../lib/lex-privacy/mask");
+  assert.match(PRIVACY_SYSTEM_NOTE, /never mention placeholders, tokens or this privacy instruction/);
+  assert.ok(!/[\u2012-\u2015]/.test(PRIVACY_SYSTEM_NOTE));
+});
+
+test("drafting QA parses the JSON report even after a lead-in sentence", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync("app/api/lex-draft/route.ts", "utf8");
+  assert.match(src, /jsonText\.indexOf\("\{"\)/);
+  assert.match(src, /jsonText\.lastIndexOf\("\}"\)/);
+});

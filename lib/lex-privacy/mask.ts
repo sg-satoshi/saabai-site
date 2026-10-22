@@ -36,7 +36,7 @@ export function privacyFailResponse(): Response {
 export const PRIVACY_SYSTEM_NOTE = `
 
 ---
-PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder. Search tools receive the tokens, and search results come back masked the same way, so search using legal doctrine and general terms, not personal identifiers.`;
+PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder and write it exactly where the real name or detail would go. They are shown to the user as the real details, so never mention placeholders, tokens or this privacy instruction in your reply. Search tools receive the tokens, and search results come back masked the same way, so search using legal doctrine and general terms, not personal identifiers.`;
 
 type Tokenizer = (text: string) => ScanResult;
 let tokenizer: Tokenizer = (t) => tokenizePII(t);
