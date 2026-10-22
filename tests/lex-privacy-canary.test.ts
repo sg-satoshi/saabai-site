@@ -29,8 +29,15 @@ const C = {
   company: "Quokkacanary Holdings Pty Ltd",
   trust: "Wombatcanary Family Trust",
   person: "Mr Zebedee Canarywright",
+  // Phase 3 detectors
+  tfn: "876 543 210",
+  medicare: "2123 45670 1",
+  bsb: "064-000",
+  account: "31415926",
+  address: "27 Canarywood Crescent",
+  locality: "Quokkaville QLD 4226",
 };
-const INPUT = `Client ${C.person} of ${C.company} as trustee of the ${C.trust}. ABN ${C.abn}, ACN ${C.acn}. Phone ${C.phone}, email ${C.email}.`;
+const INPUT = `Client ${C.person} of ${C.company} as trustee of the ${C.trust}. ABN ${C.abn}, ACN ${C.acn}. Phone ${C.phone}, email ${C.email}. TFN ${C.tfn}, Medicare ${C.medicare}, BSB ${C.bsb} account ${C.account}. Lives at ${C.address}, ${C.locality}.`;
 // Different canaries only in search results, to prove results are masked before the model sees them.
 const R = { email: "result.canary@leaktest.example", company: "Platypuscanary Investments Pty Ltd", person: "Dr Ignatius Resultcanary" };
 const RESULT_TEXT = `Judgment involving ${R.person} and ${R.company}, contact ${R.email}.`;

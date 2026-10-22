@@ -2,7 +2,7 @@
  * Lex privacy masking: always on, server enforced, fails closed.
  *
  * Every Lex route that calls a model masks its inputs here first. Client details
- * (emails, phones, ABNs, ACNs, company and trust names, titled names) become
+ * (emails, phones, ABNs, ACNs, TFNs, Medicare, BSB and account numbers, addresses, company and trust names, titled names) become
  * placeholders like {{EMAIL_1}}. Replies are rehydrated before the user sees them.
  *
  * Fail closed: if masking throws, or a known value is still present after masking,
@@ -14,7 +14,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { tokenizePII, type TokenMap, type ScanResult } from "../pii-scanner";
 
 /** Bump when detection rules change, so the redaction log shows which masker handled a request. */
-export const MASKER_VERSION = "lex-mask-2.1";
+export const MASKER_VERSION = "lex-mask-3.0";
 
 export class LexPrivacyError extends Error {
   /** Short fixed reason code, safe to log (never contains input). */
