@@ -14,9 +14,9 @@
  */
 import { COMMON_WORDS } from "../pii-scanner";
 
-export type PartyKind = "person" | "org";
+export type PartyKind = "person" | "org" | "place";
 export type MatterParty = { name: string; kind?: PartyKind; aliases?: string[] };
-export type PartyMatcher = { type: "PERSON" | "COMPANY"; canonical: string; anyCase: RegExp | null; exactCase: RegExp | null };
+export type PartyMatcher = { type: "PERSON" | "COMPANY" | "PLACE"; canonical: string; anyCase: RegExp | null; exactCase: RegExp | null; source: string };
 
 /** Ordinary words that are also surnames or short business names. Alone, they are not masked. */
 const ORDINARY = new Set([
@@ -70,7 +70,7 @@ export function parsePartiesText(text: string): MatterParty[] {
 }
 
 /** Builds the matchers for one party. Returns null when nothing is safe to match. */
-export function partyMatcher(p: MatterParty): PartyMatcher | null {
+export function partyMatcher(p: MatterParty, source = "party"): PartyMatcher | null {
   const name = String(p.name ?? "").replace(/\s+/g, " ").trim();
   if (name.length < 2) return null;
   const kind = p.kind ?? inferKind(name);
@@ -79,16 +79,21 @@ export function partyMatcher(p: MatterParty): PartyMatcher | null {
   const addName = (n: string) => {
     const parts = n.split(" ").filter(Boolean);
     if (parts.length >= 2) any.push(words(n));
-    else if (parts.length === 1 && parts[0].length >= 2) (isOrdinary(parts[0]) ? exact.push(titleOrUpper(parts[0])) : any.push(esc(parts[0])));
+    // Names found by the model are less certain than names a lawyer typed: single words match Title or UPPER case only.
+    else if (parts.length === 1 && parts[0].length >= 2) (isOrdinary(parts[0]) || source === "ner" ? exact.push(titleOrUpper(parts[0])) : any.push(esc(parts[0])));
   };
 
-  if (kind === "org") {
+  if (kind === "place") {
+    const parts = name.split(" ");
+    if (parts.length >= 2) any.push(words(name));
+    else exact.push(titleOrUpper(name));
+  } else if (kind === "org") {
     const core = name.replace(ORG_SUFFIX, "").replace(/^the\s+/i, "").trim();
     any.push(words(name));
     if (core && core !== name) {
       const cw = core.split(" ");
       if (cw.length >= 2) any.push(words(core) + SUFFIXES_ANY);
-      else if (!isOrdinary(core)) any.push(esc(core) + SUFFIXES_ANY);
+      else if (!isOrdinary(core)) (source === "ner" ? exact.push(titleOrUpper(core) + SUFFIXES_ANY) : any.push(esc(core) + SUFFIXES_ANY));
       else any.push(esc(core) + "\\s*,?\\s*(?:Pty\\.?\\s*Ltd\\.?|Limited|Ltd\\.?|Inc\\.?|P\\/L)");
     }
   } else {
@@ -99,8 +104,10 @@ export function partyMatcher(p: MatterParty): PartyMatcher | null {
     if (parts.length === 1) {
       addName(first);
     } else {
-      any.push(words(parts.join(" ")));
-      any.push(`${esc(first)}\\s+${esc(last)}`);
+      // An optional title goes with the name ("Mr John Smith" is one placeholder, not "Mr" plus one).
+      const tp = `(?:(?:${TITLES})\\.?\\s+)?`;
+      any.push(tp + words(parts.join(" ")));
+      any.push(`${tp}${esc(first)}\\s+${esc(last)}`);
       any.push(`${esc(last)}\\s*,\\s*${esc(first)}(?:\\s+${middles.map(esc).join("\\s+")})?`);
       const fi = first[0].toUpperCase();
       const mi = middles.map((m) => m[0].toUpperCase());
@@ -110,7 +117,7 @@ export function partyMatcher(p: MatterParty): PartyMatcher | null {
       if (inits.length > 1) exact.push(`${esc(inits.join(""))}\\s+${titleOrUpper(last)}`);
       exact.push(`${fi}\\.?\\s+${titleOrUpper(last)}`);
       exact.push(`(?:${TITLES})\\.?\\s+${titleOrUpper(last)}`);
-      if (!isOrdinary(last)) any.push(esc(last));
+      if (!isOrdinary(last)) (source === "ner" ? exact.push(titleOrUpper(last)) : any.push(esc(last)));
     }
   }
   for (const a of p.aliases ?? []) {
@@ -122,13 +129,13 @@ export function partyMatcher(p: MatterParty): PartyMatcher | null {
   const anyCase = build(any, "giu");
   const exactCase = build(exact, "gu");
   if (!anyCase && !exactCase) return null;
-  return { type: kind === "org" ? "COMPANY" : "PERSON", canonical: name, anyCase, exactCase };
+  return { type: kind === "org" ? "COMPANY" : kind === "place" ? "PLACE" : "PERSON", canonical: name, anyCase, exactCase, source };
 }
 
-export function partyMatchers(parties: MatterParty[] | undefined | null): PartyMatcher[] {
+export function partyMatchers(parties: MatterParty[] | undefined | null, source = "party"): PartyMatcher[] {
   const out: PartyMatcher[] = [];
   for (const p of parties ?? []) {
-    const m = partyMatcher(p);
+    const m = partyMatcher(p, source);
     if (m) out.push(m);
   }
   // Longer names first, so "John Smith Pty Ltd" wins over the person "John Smith".

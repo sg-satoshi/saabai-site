@@ -63,6 +63,8 @@ Formatting rules (always follow these):
   // masks every message before the model sees it and rehydrates the reply. Fail closed.
   const gw = await LexGateway.open({ route: "lex-chat", firm: lexFirmFromRequest(req, clientId), model: { kind: "chat", clientId }, thread: threadSeed(undefined, normalized) });
   if (!gw) return privacyFailResponse();
+  // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+  await gw.scanNames([normalized]);
   let result: ReturnType<LexGateway["streamText"]>;
   let masked: typeof normalized;
   try {

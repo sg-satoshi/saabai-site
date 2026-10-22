@@ -156,6 +156,8 @@ async function runReview(request: Request, actor: LexReviewActor): Promise<Respo
     const parties = [...(await matterPartiesFor(request, body.matterId)), ...(typeof actingFor === "string" ? parsePartiesText(actingFor) : [])];
     const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties });
     if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([documentText, actingFor]);
     const masker = gw.masker;
     let userPrompt: string;
     try {

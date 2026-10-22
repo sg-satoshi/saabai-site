@@ -34,11 +34,14 @@ export interface RedactionEntry {
   sources?: Record<string, number>;
   /** Matter parties loaded for this request (a count, never names). */
   parties?: number;
+  /** Name model state for this request: on, off, unavailable, failed or partial. */
+  ner?: string;
   tools: { calls: number; resultsMasked: number; argsScrubbed: number; errorsMasked: number; resultsBlocked: number };
 }
 
 const TYPE_RE = /^[A-Z]{1,24}$/;
 const SOURCE_KEYS = new Set(["pattern", "party", "ner"]);
+const NER_STATES = new Set(["on", "off", "unavailable", "failed", "partial"]);
 const SAFE_REASON = /^[a-z0-9 _:-]{1,80}$/i;
 const FIRM_RE = /^[a-z0-9.@_+-]{1,254}$/i;
 
@@ -58,6 +61,7 @@ export function cleanEntry(e: RedactionEntry): RedactionEntry {
     types,
     total: Object.values(types).reduce((a, b) => a + b, 0),
     ...(e.sources ? { sources: Object.fromEntries(Object.entries(e.sources).filter(([k, v]) => SOURCE_KEYS.has(k) && Number.isFinite(v)).map(([k, v]) => [k, Math.max(0, Math.floor(v))])) } : {}),
+    ...(e.ner && NER_STATES.has(e.ner) ? { ner: e.ner } : {}),
     ...(Number.isFinite(e.parties) ? { parties: Math.max(0, Math.floor(e.parties as number)) } : {}),
     tools: { calls: n(e.tools?.calls), resultsMasked: n(e.tools?.resultsMasked), argsScrubbed: n(e.tools?.argsScrubbed), errorsMasked: n(e.tools?.errorsMasked), resultsBlocked: n(e.tools?.resultsBlocked) },
   };
