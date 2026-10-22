@@ -213,15 +213,19 @@ export function tokenizePII(text: string, opts?: { aggressive?: boolean }): Scan
   });
 
   // 12. Party references: "client John Smith", "applicant ABC Pty Ltd" (already tokenized companies, so mainly people here)
+  // The role word is case-insensitive but the name must be Capitalised. (A "gi" flag here used to make
+  // [A-Z] match lowercase too, so "client is and their" became a PARTY token and the model echoed it in
+  // place of the real name.) Only the name is masked; the role word stays readable.
+  const roleAlt = PARTY_ROLES.map((r) => `[${r[0].toUpperCase()}${r[0]}]${r.slice(1)}`).join("|");
   const partyPattern = new RegExp(
-    "\\b(?:" + PARTY_ROLES.join("|") + ")\\s+([A-Z][a-zA-Z]+(?:\\s+[A-Z][a-zA-Z]+){0,2})\\b",
-    "gi"
+    "\\b((?:" + roleAlt + ")\\s+)([A-Z][a-zA-Z]+(?:\\s+[A-Z][a-zA-Z]+){0,2})\\b",
+    "g"
   );
-  result = result.replace(partyPattern, (match) => {
+  result = result.replace(partyPattern, (match, role: string, name: string) => {
     if (match.startsWith("{{")) return match;
     const t = getToken("PARTY");
-    tokenMap[t] = match;
-    return t;
+    tokenMap[t] = name;
+    return role + t;
   });
 
   // 13. Aggressive mode: bare capitalized name sequences (2-3 words)

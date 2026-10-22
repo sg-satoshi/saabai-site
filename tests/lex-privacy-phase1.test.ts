@@ -137,3 +137,69 @@ test("no privacy toggle left in Lex clients", () => {
     assert.ok(!/privacyMode/.test(readFileSync(f, "utf8").replace(/\/\/.*privacyMode.*$/gm, "")), `${f} still references privacyMode`);
   }
 });
+
+// ── Regression: PARTY false positive (live QA, 22 Oct) and placeholder-aware confidence check ──
+import { streamText as __streamText, simulateReadableStream as __sim } from "ai";
+import { MockLanguageModelV3 as __Mock } from "ai/test";
+import { dropNarrationTransform as __dropNarr } from "../lib/lex-output";
+import { noDashesTransform as __noDash } from "../lib/no-dashes";
+import { rehydrateTransform as __rehyd, LexMasker as __Masker } from "../lib/lex-privacy/mask";
+import { PLACEHOLDER_NOTE } from "../lib/lex-answer-meta";
+import { readFileSync as __read } from "node:fs";
+
+const __F = "Mr John Smith of Smith Holdings Pty Ltd, john@example.com, 0400 000 000, ABN 51 824 753 556";
+
+async function __runStream(map: Record<string, string>, deltas: string[]): Promise<string> {
+  const model = new __Mock({ doStream: async () => ({ stream: __sim({ chunks: [
+    { type: "stream-start", warnings: [] }, { type: "text-start", id: "0" },
+    ...deltas.map((delta) => ({ type: "text-delta", id: "0", delta })),
+    { type: "text-end", id: "0" },
+    { type: "finish", finishReason: { unified: "stop", raw: "stop" }, usage: { inputTokens: { total: 1 }, outputTokens: { total: 1 } } },
+  ] as never }) }) as never });
+  const r = __streamText({ model, prompt: "x", experimental_transform: [__rehyd(map), __dropNarr(), __noDash()] });
+  let s = "";
+  for await (const p of r.fullStream) if (p.type === "text-delta") s += p.text;
+  return s;
+}
+
+test("lowercase role phrases are not masked as a PARTY", () => {
+  const m = new __Masker();
+  m.mask(__F);
+  const draftAsk = m.mask("Draft a 2 sentence letter heading naming the client with their email, phone and ABN.");
+  assert.equal(draftAsk, "Draft a 2 sentence letter heading naming the client with their email, phone and ABN.");
+  const r = new __Masker();
+  const q = r.mask(`Repeat back exactly who my client is and their email, phone and ABN: ${__F}.`);
+  assert.ok(q.startsWith("Repeat back exactly who my client is and their email"), q);
+  assert.ok(!Object.values(r.map).includes("client is and their"));
+});
+
+test("a real party name after a role word is masked, the role word stays", () => {
+  const m = new __Masker();
+  const out = m.mask("Our client Jane Citizen and the respondent Bob Jones attended.");
+  assert.match(out, /^Our client \{\{(PARTY|PERSON)_1\}\} and the respondent \{\{(PARTY|PERSON)_\d\}\} attended\.$/);
+  assert.ok(!out.includes("Jane") && !out.includes("Bob"));
+  assert.equal(m.rehydrate(out), "Our client Jane Citizen and the respondent Bob Jones attended.");
+});
+
+test("stream: placeholders at sentence start, split across chunks, restored through all transforms", async () => {
+  const m = new __Masker();
+  m.mask(__F);
+  const s = await __runStream(m.map, ["{{PERS", "ON_1}} of {{COMPANY_1}}", ", {", "{EMAIL_1}} | {{PHONE_1}} | ABN {{ABN_1}}"]);
+  assert.equal(s, __F.replace(", john", ", john").replace("john@example.com, 0400 000 000, ABN", "john@example.com | 0400 000 000 | ABN"));
+  assert.ok(!/\{\{|\}\}/.test(s));
+});
+
+test("stream: placeholders right after a stripped narration paragraph are kept", async () => {
+  const m = new __Masker();
+  m.mask(__F);
+  const s = await __runStream(m.map, ["Let me check the details.\n\n", "{{PERSON_1}}", " of {{COMP", "ANY_1}} — email {{EMAIL_1}}."]);
+  assert.equal(s, "Mr John Smith of Smith Holdings Pty Ltd, email john@example.com.");
+});
+
+test("confidence check is told placeholders are deliberate privacy masks", () => {
+  assert.match(PLACEHOLDER_NOTE, /\{\{PERSON_1\}\}/);
+  assert.match(PLACEHOLDER_NOTE, /deliberate privacy masks/);
+  assert.match(PLACEHOLDER_NOTE, /not unfilled template placeholders/);
+  const src = __read(new URL("../lib/lex-answer-meta.ts", import.meta.url), "utf8");
+  assert.match(src, /no em dashes\. " \+\s*PLACEHOLDER_NOTE/);
+});
