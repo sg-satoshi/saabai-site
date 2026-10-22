@@ -74,6 +74,15 @@ async function resolveModel(src: LexModelSource): Promise<LanguageModel | null> 
 
 type Msg = { role: string; content: unknown };
 
+/**
+ * Tools that write to Saabai's own systems for the firm (not a third party). Their arguments are
+ * rehydrated so the firm's own admin keeps the real details. Every other tool (searches, source reads)
+ * gets placeholders only, so client details never reach a search provider.
+ */
+export const FIRST_PARTY_TOOLS = new Set(["captureMatter"]);
+
+export type ToolPrivacyStats = { calls: number; resultsMasked: number; argsScrubbed: number; errorsMasked: number };
+
 export interface LexGatewayInit {
   route: LexRoute;
   /** Firm the request belongs to (for the redaction log). Never an email of a client. */
@@ -87,6 +96,7 @@ export class LexGateway {
   readonly route: LexRoute;
   readonly firm: string;
   readonly masker: LexMasker;
+  readonly toolStats: ToolPrivacyStats = { calls: 0, resultsMasked: 0, argsScrubbed: 0, errorsMasked: 0 };
   private constructor(init: LexGatewayInit, private model: LanguageModel) {
     this.route = init.route;
     this.firm = init.firm;
@@ -169,6 +179,64 @@ export class LexGateway {
     return { system, prompt, messages };
   }
 
+  /**
+   * Wraps every tool so it is masked both ways:
+   *   in:  arguments from the model have any known real value swapped for its placeholder (first-party
+   *        tools get real values back, for the firm's own records)
+   *   out: every string in the result, or in an error message, is masked before the model sees it
+   * A masking failure in a result throws LexPrivacyError, so the step fails closed.
+   */
+  wrapTools<T>(tools: T): T {
+    if (!tools || typeof tools !== "object") return tools;
+    const out: Record<string, unknown> = {};
+    for (const [name, t] of Object.entries(tools as Record<string, unknown>)) {
+      const orig = t as { execute?: (input: unknown, opts: unknown) => unknown };
+      if (!orig || typeof orig.execute !== "function") { out[name] = t; continue; }
+      const exec = orig.execute.bind(orig);
+      out[name] = {
+        ...orig,
+        execute: async (input: unknown, opts: unknown) => {
+          this.toolStats.calls++;
+          let args: unknown;
+          if (FIRST_PARTY_TOOLS.has(name)) {
+            args = this.masker.rehydrateDeep(input);
+          } else {
+            args = this.masker.maskKnownDeep(input);
+            if (JSON.stringify(args) !== JSON.stringify(input)) this.toolStats.argsScrubbed++;
+            this.masker.assertClean(JSON.stringify(args ?? null));
+          }
+          let result: unknown;
+          try {
+            result = await exec(args, opts);
+          } catch (err) {
+            this.toolStats.errorsMasked++;
+            const msg = err instanceof Error ? err.message : String(err);
+            throw new Error(this.masker.mask(msg.slice(0, 2000)));
+          }
+          const masked = this.masker.maskDeep(result);
+          this.toolStats.resultsMasked++;
+          this.masker.assertClean(JSON.stringify(masked ?? null));
+          return masked;
+        },
+      };
+    }
+    return out as T;
+  }
+
+  /**
+   * Runs before every step: swaps known values out of the whole message history (e.g. a tool-call
+   * argument the model wrote with a real value) and leak checks it, then applies the route's own prepareStep.
+   */
+  private prepareStepFor(routeStep: unknown) {
+    return async (opts: { messages: unknown[] } & Record<string, unknown>) => {
+      const own = typeof routeStep === "function" ? await (routeStep as (o: unknown) => unknown)(opts) : undefined;
+      const base = (own && typeof own === "object" ? own : {}) as { messages?: unknown[] };
+      const messages = this.masker.maskKnownDeep(base.messages ?? opts.messages);
+      this.masker.assertClean(JSON.stringify(messages));
+      return { ...base, messages };
+    };
+  }
+
   // ── Calls ────────────────────────────────────────────────────────────────
 
   /** Streams a reply. Text is rehydrated before any route transform runs. Throws LexPrivacyError before sending. */
@@ -182,6 +250,8 @@ export class LexGateway {
       : [];
     return aiStreamText<TOOLS>({
       ...(params as object),
+      ...(params.tools ? { tools: this.wrapTools(params.tools) } : {}),
+      prepareStep: this.prepareStepFor(params.prepareStep),
       model: this.model,
       system,
       messages: messages as ModelMessage[],
@@ -198,6 +268,8 @@ export class LexGateway {
     const { system, prompt, messages } = this.prepare(params);
     const res = await aiGenerateText<TOOLS>({
       ...(params as object),
+      ...(params.tools ? { tools: this.wrapTools(params.tools) } : {}),
+      prepareStep: this.prepareStepFor(params.prepareStep),
       model: this.model,
       system,
       ...(messages ? { messages: messages as ModelMessage[] } : { prompt: prompt ?? "" }),
