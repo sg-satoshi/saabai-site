@@ -1,3 +1,4 @@
+import { slugify } from "./targets";
 import { randomUUID } from "node:crypto";
 import { CHECKS } from "./checks";
 import { safeFetch, type FetchResult } from "./safe-fetch";
@@ -27,8 +28,9 @@ const looksEmpty = (h: string) => {
 const SHARED_HOSTS = new Set(["saabai.ai"]);
 /** Slug of a sub-site served under a shared host, e.g. /sites/nico-moretti/ on saabai.ai. */
 export function subSitePath(t: URL): string | null {
-  const m = SHARED_HOSTS.has(t.hostname.replace(/^www\./, "")) ? t.pathname.match(/^\/sites\/([a-z0-9-]+)/i) : null;
-  return m ? `/sites/${m[1]}` : null;
+  const m = SHARED_HOSTS.has(t.hostname.toLowerCase().replace(/^www\./, "")) ? t.pathname.match(/^\/sites\/([^/]+)/i) : null;
+  const slug = m ? slugify(m[1]) : "";
+  return slug ? `/sites/${slug}` : null;
 }
 
 export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?: Fetcher; now?: Date } = {}): Promise<ScanReport> {
@@ -36,7 +38,7 @@ export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?:
   const target = parseTarget(rawUrl); // throws ScanUrlError on bad or unsafe input
   const id = randomUUID();
   const sub = subSitePath(target);
-  const host = target.hostname.replace(/^www\./, "");
+  const host = target.hostname.toLowerCase().replace(/^www\./, "");
   const domain = sub ? `${host}${sub}` : host;
   const origin = target.origin;
   const budget = 5000;
