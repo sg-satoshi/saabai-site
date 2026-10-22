@@ -10,7 +10,7 @@ import { noDashes, noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
-import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { LexGateway, threadSeed } from "../../../lib/lex-privacy/gateway";
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
 import { lastUserText, logStreamFinish } from "../../../lib/chat-log";
 
@@ -23,7 +23,7 @@ export const maxDuration = 180; // search, up to 4 source reads, answer, then th
 export async function POST(req: Request) {
   try {
     // Any privacyMode flag in the body is ignored: masking is always on.
-    const { messages, clientId, scope: rawScope } = await req.json();
+    const { messages, clientId, scope: rawScope, threadId } = await req.json();
     const scope = normalizeScope(rawScope);
 
     const config = getLexConfig(clientId);
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     // ── PRIVACY: always on. Mask client details before anything reaches the model. Fail closed. ──
     // The gateway picks the model (the firm's own key and model if saved, else Lex's research model).
-    const gw = await LexGateway.open({ route: "lex-research", firm: lexFirmFromRequest(req, config.id), model: { kind: "firm", configId: config.id } });
+    const gw = await LexGateway.open({ route: "lex-research", firm: lexFirmFromRequest(req, config.id), model: { kind: "firm", configId: config.id }, thread: threadSeed(threadId, coreMessages) });
     if (!gw) return privacyFailResponse();
     let tokenizedMessages: typeof coreMessages;
     try {

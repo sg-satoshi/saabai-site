@@ -4,7 +4,7 @@ import { verifySession } from "../../../lib/portal-session";
 import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
 import { createDashFilter } from "../../../lib/no-dashes";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
-import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { LexGateway, threadSeed } from "../../../lib/lex-privacy/gateway";
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
 import { lastUserText, logStreamFinish } from "../../../lib/chat-log";
 
@@ -61,7 +61,7 @@ Formatting rules (always follow these):
 
   // Privacy: always on. The gateway picks the model (the firm's own key if saved, else Haiku),
   // masks every message before the model sees it and rehydrates the reply. Fail closed.
-  const gw = await LexGateway.open({ route: "lex-chat", firm: lexFirmFromRequest(req, clientId), model: { kind: "chat", clientId } });
+  const gw = await LexGateway.open({ route: "lex-chat", firm: lexFirmFromRequest(req, clientId), model: { kind: "chat", clientId }, thread: threadSeed(undefined, normalized) });
   if (!gw) return privacyFailResponse();
   let result: ReturnType<LexGateway["streamText"]>;
   let masked: typeof normalized;

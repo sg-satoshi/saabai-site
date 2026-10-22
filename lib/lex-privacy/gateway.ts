@@ -24,7 +24,7 @@ import { getLexModelForFirm } from "../lex-model";
 import { buildModelFromConfig, getClientLLMConfig, type ClientLLMConfig } from "../client-config";
 import { modelIdFrom } from "../chat-log";
 import { randomBytes } from "node:crypto";
-import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, rehydrateTransform } from "./mask";
+import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, lexThreadKey, rehydrateTransform } from "./mask";
 import { recordRedaction, type RedactionOutcome } from "./redaction-log";
 
 /** Test seam (same module instance the gateway uses). */
@@ -92,6 +92,20 @@ export interface LexGatewayInit {
   model: LexModelSource;
   /** Share an existing masking session (e.g. a route that masked parties into its system prompt). */
   masker?: LexMasker;
+  /**
+   * Thread seed for stable placeholders across a whole thread: a thread id from the client, or the
+   * thread's first user message. Hashed with the firm and a server key, never stored. See threadSeed().
+   */
+  thread?: string;
+}
+
+const THREAD_ID_RE = /^[A-Za-z0-9_-]{6,80}$/;
+
+/** Picks the thread seed: a well-formed thread id if the client sent one, else the first user message. */
+export function threadSeed(threadId: unknown, messages: Array<{ role: string; content: unknown }> | undefined): string | undefined {
+  if (typeof threadId === "string" && THREAD_ID_RE.test(threadId)) return `id:${threadId}`;
+  const first = messages?.find((m) => m.role === "user" && typeof m.content === "string" && m.content.trim());
+  return first ? `first:${String(first.content).trim()}` : undefined;
 }
 
 export class LexGateway {
@@ -103,7 +117,7 @@ export class LexGateway {
   private constructor(init: LexGatewayInit, private model: LanguageModel, requestId?: string) {
     this.route = init.route;
     this.firm = init.firm;
-    this.masker = init.masker ?? new LexMasker();
+    this.masker = init.masker ?? new LexMasker(init.thread ? lexThreadKey(init.firm, init.thread) : undefined);
     this.requestId = requestId ?? randomBytes(8).toString("hex");
   }
 

@@ -23,7 +23,7 @@ import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
 import { noDashesTransform } from "../../../lib/no-dashes";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
-import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { LexGateway, threadSeed } from "../../../lib/lex-privacy/gateway";
 import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
 import { lastUserText, logChatTurn, logStreamFinish } from "../../../lib/chat-log";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
@@ -190,6 +190,7 @@ export async function POST(req: Request) {
       requestQA,
       completedDraft,
       clientId,
+      threadId,
     } = await req.json();
 
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
@@ -197,7 +198,7 @@ export async function POST(req: Request) {
     // The gateway picks it and masks every client-supplied text before the model sees it. Fail closed.
     const lexConfigId = getLexConfig(clientId).id;
     const firm = lexFirmFromRequest(req, lexConfigId);
-    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId } });
+    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined) });
     if (!gw) return privacyFailResponse();
     const masker = gw.masker;
 
@@ -543,7 +544,10 @@ async function runQAPass(
       .replace(/\s*```$/i, "")
       .trim();
 
-    const parsed = JSON.parse(jsonText) as QAVerificationReport;
+    // The model sometimes writes a sentence before the JSON ("Now I have..."). Parse the outermost object.
+    const start = jsonText.indexOf("{");
+    const end = jsonText.lastIndexOf("}");
+    const parsed = JSON.parse(start !== -1 && end > start ? jsonText.slice(start, end + 1) : jsonText) as QAVerificationReport;
     return parsed;
   } catch (err) {
     console.error("[lex-draft qa]", err);

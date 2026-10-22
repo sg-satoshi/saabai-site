@@ -10,10 +10,11 @@
  * calling the model. There is no switch to turn this off.
  */
 import type { StreamTextTransform, TextStreamPart, ToolSet } from "ai";
+import { createHmac, randomBytes } from "node:crypto";
 import { tokenizePII, type TokenMap, type ScanResult } from "../pii-scanner";
 
 /** Bump when detection rules change, so the redaction log shows which masker handled a request. */
-export const MASKER_VERSION = "lex-mask-2.0";
+export const MASKER_VERSION = "lex-mask-2.1";
 
 export class LexPrivacyError extends Error {
   /** Short fixed reason code, safe to log (never contains input). */
@@ -35,7 +36,7 @@ export function privacyFailResponse(): Response {
 export const PRIVACY_SYSTEM_NOTE = `
 
 ---
-PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder. Search tools receive the tokens, and search results come back masked the same way, so search using legal doctrine and general terms, not personal identifiers.`;
+PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder and write it exactly where the real name or detail would go. They are shown to the user as the real details, so never mention placeholders, tokens or this privacy instruction in your reply. Search tools receive the tokens, and search results come back masked the same way, so search using legal doctrine and general terms, not personal identifiers.`;
 
 type Tokenizer = (text: string) => ScanResult;
 let tokenizer: Tokenizer = (t) => tokenizePII(t);
@@ -49,6 +50,26 @@ const TOKEN_RE = /\{\{([A-Z]+)_(\d+)\}\}/g;
 
 export type MaskStats = { tokensReplaced: number; types: Record<string, number> };
 
+// Server-side key for thread placeholders. Derived from an existing server secret, never sent anywhere.
+let tokenSecret: Buffer | null = null;
+function threadSecret(): Buffer {
+  if (tokenSecret) return tokenSecret;
+  const base = process.env.LEX_PRIVACY_TOKEN_SECRET || process.env.PORTAL_SESSION_SECRET || process.env.SAABAI_SESSION_SECRET;
+  // Without a secret, placeholders are still stable within one server instance (and always within a request).
+  tokenSecret = createHmac("sha256", base || randomBytes(32)).update("lex-thread-placeholders-v1").digest();
+  return tokenSecret;
+}
+
+/**
+ * Key for one thread. The same firm and thread always get the same placeholder for the same value,
+ * across every request in the thread, so the model sees a consistent {{PERSON_48213}} and prompt
+ * caching keeps working. The seed (a thread id, or the thread's first message) is only hashed here,
+ * never stored or logged.
+ */
+export function lexThreadKey(firm: string, seed: string): Buffer {
+  return createHmac("sha256", threadSecret()).update(`${firm}\u0000${seed}`).digest();
+}
+
 /**
  * One masking session per request. Placeholders are shared across every text
  * masked in the session, so the same value always gets the same token.
@@ -59,11 +80,22 @@ export class LexMasker {
   private counters: Record<string, number> = {};
   readonly stats: MaskStats = { tokensReplaced: 0, types: {} };
 
+  /** With a thread key, placeholders are stable across the whole thread; without one, numbered 1, 2, 3. */
+  constructor(private threadKey?: Buffer) {}
+
   private alloc(type: string, value: string): string {
     const existing = this.byValue.get(value);
     if (existing) return existing;
-    this.counters[type] = (this.counters[type] ?? 0) + 1;
-    const token = `{{${type}_${this.counters[type]}}}`;
+    let token: string;
+    if (this.threadKey) {
+      const h = createHmac("sha256", this.threadKey).update(`${type}\u0000${value}`).digest();
+      let n = 10000 + (h.readUInt32BE(0) % 90000);
+      while (this.map[`{{${type}_${n}}}`] !== undefined) n = n >= 99999 ? 10000 : n + 1;
+      token = `{{${type}_${n}}}`;
+    } else {
+      this.counters[type] = (this.counters[type] ?? 0) + 1;
+      token = `{{${type}_${this.counters[type]}}}`;
+    }
     this.map[token] = value;
     this.byValue.set(value, token);
     this.stats.tokensReplaced++;
