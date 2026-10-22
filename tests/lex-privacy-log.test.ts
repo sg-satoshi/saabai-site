@@ -62,7 +62,7 @@ test("a Lex call writes one log entry per firm: types and counts only, no values
   assert.match(e.model, /claude-sonnet-4-6/);
   assert.ok(e.types.EMAIL >= 1 && e.types.PHONE >= 1 && e.types.ABN >= 1 && e.types.COMPANY >= 1);
   assert.equal(e.total, Object.values(e.types as Record<string, number>).reduce((a, b) => a + b, 0));
-  assert.deepEqual(Object.keys(e).sort(), ["masker", "model", "outcome", "reason", "requestId", "route", "tools", "total", "ts", "types"]);
+  assert.deepEqual(Object.keys(e).sort(), ["masker", "model", "outcome", "parties", "reason", "requestId", "route", "sources", "tools", "total", "ts", "types"]);
 });
 
 test("a privacy failure is logged as blocked, with a fixed reason code", async () => {

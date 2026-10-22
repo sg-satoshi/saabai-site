@@ -34,6 +34,8 @@ const CHECKS = {
 
 type InputMode = "upload" | "paste";
 export type ReviewProps = {
+  /** Active matter: its known parties are masked server side. */
+  matterId?: string;
   direction: "incoming" | "outgoing"; setDirection: (v: "incoming" | "outgoing") => void;
   docType: string; setDocType: (v: string) => void;
   actingFor: string; setActingFor: (v: string) => void;
@@ -145,7 +147,7 @@ export function ReviewView(p: ReviewProps) {
       if (!other) { setCmpError({ kind: "empty", title: "Add the second document", message: "Upload or paste the document to compare with.", canRetry: false, signIn: false }); return; }
       const res = await fetch("/api/lex-compare", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentA: original, documentB: other, documentType: p.docType === "auto-detect" ? undefined : p.docType, jurisdiction: p.jurisdiction }),
+        body: JSON.stringify({ documentA: original, documentB: other, documentType: p.docType === "auto-detect" ? undefined : p.docType, jurisdiction: p.jurisdiction, matterId: p.matterId }),
       });
       if (!res.ok) { setCmpError(await lexErrorFromResponse(res, "comparison")); return; }
       const data = await res.json() as { analysis?: string };

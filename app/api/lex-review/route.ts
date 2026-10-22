@@ -1,3 +1,5 @@
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
+import { parsePartiesText } from "../../../lib/lex-privacy/parties";
 import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
@@ -64,6 +66,8 @@ type ReviewRequest = {
   actingFor?: string;
   jurisdiction: string;
   fileName?: string;
+  /** Matter the review belongs to: its known parties are always masked. */
+  matterId?: string;
 };
 
 function buildUserPrompt(body: ReviewRequest): string {
@@ -148,7 +152,9 @@ async function runReview(request: Request, actor: LexReviewActor): Promise<Respo
       "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
     // Privacy: always on. Uploaded document text and party names are masked before the model sees them. Fail closed.
-    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" } });
+    // The matter's known parties, plus the party the firm acts for, are masked in every variant.
+    const parties = [...(await matterPartiesFor(request, body.matterId)), ...(typeof actingFor === "string" ? parsePartiesText(actingFor) : [])];
+    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties });
     if (!gw) return privacyFailResponse();
     const masker = gw.masker;
     let userPrompt: string;

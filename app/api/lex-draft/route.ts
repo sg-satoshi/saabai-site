@@ -1,3 +1,4 @@
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { lexErrorResponse } from "../../../lib/lex-errors";
 /**
  * Lex Document Drafting API: /api/lex-draft
@@ -191,6 +192,7 @@ export async function POST(req: Request) {
       completedDraft,
       clientId,
       threadId,
+      matterId,
     } = await req.json();
 
     // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
@@ -198,7 +200,7 @@ export async function POST(req: Request) {
     // The gateway picks it and masks every client-supplied text before the model sees it. Fail closed.
     const lexConfigId = getLexConfig(clientId).id;
     const firm = lexFirmFromRequest(req, lexConfigId);
-    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined) });
+    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined), parties: await matterPartiesFor(req, matterId) });
     if (!gw) return privacyFailResponse();
     const masker = gw.masker;
 

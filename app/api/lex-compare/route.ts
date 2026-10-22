@@ -1,3 +1,4 @@
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 import { gateCompare, type LexReviewActor } from "../../../lib/lex-review-access";
 import { cleanLexOutput } from "../../../lib/lex-output";
 import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
@@ -27,6 +28,7 @@ async function runCompare(request: Request, actor: LexReviewActor): Promise<Resp
       documentB: string;
       documentType?: string;
       jurisdiction?: string;
+      matterId?: string;
     };
 
     const { documentA, documentB, documentType, jurisdiction } = body;
@@ -47,7 +49,7 @@ async function runCompare(request: Request, actor: LexReviewActor): Promise<Resp
       "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
     // Privacy: always on. Both documents share one placeholder map, masked before the model sees them. Fail closed.
-    const gw = await LexGateway.open({ route: "lex-compare", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" } });
+    const gw = await LexGateway.open({ route: "lex-compare", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties: await matterPartiesFor(request, body.matterId) });
     if (!gw) return privacyFailResponse();
     let maskedA: string, maskedB: string;
     try {

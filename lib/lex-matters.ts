@@ -20,6 +20,8 @@ export type MatterItemKind = (typeof ITEM_KINDS)[number];
 export type Matter = {
   id: string; name: string; client: string; area: string; status: MatterStatus;
   urgency: "low" | "medium" | "high"; description: string;
+  /** Known parties and aliases, one per line (always masked before any AI call). Optional on old matters. */
+  parties?: string;
   deadline: string | null; deadlineLabel: string;
   createdBy: string; createdAt: number; updatedAt: number; updatedBy: string;
   itemCount: number;
@@ -42,7 +44,7 @@ const parse = <T>(v: unknown): T | null => {
 };
 const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
 
-export type MatterInput = Partial<Pick<Matter, "name" | "client" | "area" | "status" | "urgency" | "description" | "deadline" | "deadlineLabel">>;
+export type MatterInput = Partial<Pick<Matter, "name" | "client" | "area" | "status" | "urgency" | "description" | "deadline" | "deadlineLabel" | "parties">>;
 
 /** Validates user input. Returns an error message or the cleaned fields. */
 export function cleanMatterInput(body: MatterInput, creating: boolean): { error: string } | { fields: MatterInput } {
@@ -55,6 +57,7 @@ export function cleanMatterInput(body: MatterInput, creating: boolean): { error:
   if (body.description !== undefined) f.description = clean(body.description, 2000);
   if (body.deadline !== undefined) { if (body.deadline !== null && body.deadline !== "" && !isDate(body.deadline)) return { error: "Deadline must be a date." }; f.deadline = body.deadline || null; }
   if (body.deadlineLabel !== undefined) f.deadlineLabel = clean(body.deadlineLabel, 120);
+  if (body.parties !== undefined) f.parties = String(body.parties ?? "").split(/\r?\n/).map((l) => clean(l, 200)).filter(Boolean).slice(0, 50).join("\n");
   return { fields: f };
 }
 
@@ -88,7 +91,7 @@ export async function createMatter(firm: string, by: string, f: MatterInput, now
   const t = now.getTime();
   const m: Matter = {
     id, name: f.name ?? "Untitled matter", client: f.client ?? "", area: f.area ?? "Tax", status: f.status ?? "open",
-    urgency: f.urgency ?? "medium", description: f.description ?? "", deadline: f.deadline ?? null, deadlineLabel: f.deadlineLabel ?? "",
+    urgency: f.urgency ?? "medium", description: f.description ?? "", parties: f.parties ?? "", deadline: f.deadline ?? null, deadlineLabel: f.deadlineLabel ?? "",
     createdBy: by, createdAt: t, updatedAt: t, updatedBy: by, itemCount: 0,
   };
   await redis.hset(mattersKey(firm), { [id]: JSON.stringify(m) });
