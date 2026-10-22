@@ -1,4 +1,6 @@
 import mammoth from "mammoth";
+import { previewDocumentMasking } from "../../../lib/lex-privacy/document-preview";
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -43,7 +45,11 @@ export async function POST(request: Request): Promise<Response> {
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     const clauses = detectClauses(text.toLowerCase());
 
-    return Response.json({ text, wordCount, fileName: file.name, clauses });
+    // Privacy preview: counts of what will be masked before any model sees this file. Never the values.
+    // The text itself is returned only to the signed-in user who uploaded it; every Lex route masks it again server side.
+    const privacy = await previewDocumentMasking(text, await matterPartiesFor(request, formData.get("matterId")).catch(() => []), { budgetMs: 3000 });
+
+    return Response.json({ text, wordCount, fileName: file.name, clauses, privacy });
   } catch (err) {
     console.error("[lex-extract]", err);
     return Response.json({ error: "extract_failed" }, { status: 500 });

@@ -14,6 +14,7 @@ import { type ChatMessage, type Thread, type Project, type Mode, ATTACH_MARK } f
 import { Sidebar, initials } from "./_components/Sidebar";
 import { AnswerSheet, brisbaneStamp } from "./_components/Answer";
 import { SourcesPanel } from "./_components/SourcesPanel";
+import { describeDocumentPrivacy, type DocumentPrivacy } from "../../lib/lex-privacy/document-privacy-text";
 import { Composer, EmptyState, SearchingSteps, ErrorCard, NoResultsCard, FOLLOW_UPS, type Attachment } from "./_components/States";
 import { CommandPalette, FlagDialog, ShareMenu } from "./_components/Extras";
 import { type LexStep, applyStepPart, stepSummary, mailtoHref } from "../../lib/lex-steps";
@@ -667,9 +668,9 @@ export default function LexPage() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/lex-extract", { method: "POST", body: fd });
-      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string } | null;
+      const data = await res.json().catch(() => null) as { text?: string; wordCount?: number; error?: string; privacy?: DocumentPrivacy } | null;
       if (!res.ok || !data?.text?.trim()) { setAttachError(data?.error && res.status === 400 ? data.error : "Lex could not read that file. Try a PDF, Word or text file."); return; }
-      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length });
+      setAttachment({ name: file.name, text: data.text, words: data.wordCount ?? data.text.split(/\s+/).length, privacy: describeDocumentPrivacy(data.privacy) });
       inputRef.current?.focus();
     } catch {
       setAttachError("Lex could not read that file. Check your connection and try again.");
