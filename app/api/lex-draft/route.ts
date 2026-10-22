@@ -24,6 +24,7 @@ import { getLexModelForFirm } from "../../../lib/lex-model";
 import { finalStepAnswers } from "../../../lib/lex-research-tools";
 import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
 import { noDashesTransform } from "../../../lib/no-dashes";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, rehydrateTransform } from "../../../lib/lex-privacy/mask";
 import { lastUserText, logChatTurn, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
@@ -195,10 +196,13 @@ export async function POST(req: Request) {
     // (which falls back to PREMIUM_CHAT_MODEL).
     const model = await getLexModelForFirm(getLexConfig(clientId).id);
 
+    // Privacy: always on. Every client-supplied text is masked before the model sees it. Fail closed.
+    const masker = new LexMasker();
+
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────
     // If a completed draft is provided and QA is requested, run QA and return.
     if (requestQA && completedDraft) {
-      const qaResult = await runQAPass(model, completedDraft, documentType, typeof clientId === "string" ? clientId : undefined);
+      const qaResult = masker.rehydrateDeep(await runQAPass(model, masker.mask(String(completedDraft)), documentType, typeof clientId === "string" ? clientId : undefined));
       return new Response(JSON.stringify(qaResult), {
         headers: { "Content-Type": "application/json" },
       });
@@ -240,11 +244,12 @@ export async function POST(req: Request) {
 
     // Append parties and special instructions to the system prompt
     if (parties) {
-      systemPrompt += `\n\nPARTIES:\n${typeof parties === "string" ? parties : JSON.stringify(parties, null, 2)}`;
+      systemPrompt += `\n\nPARTIES:\n${masker.mask(typeof parties === "string" ? parties : JSON.stringify(parties, null, 2))}`;
     }
     if (specialInstructions) {
-      systemPrompt += `\n\nSPECIAL INSTRUCTIONS FROM INSTRUCTING LAWYER:\n${specialInstructions}`;
+      systemPrompt += `\n\nSPECIAL INSTRUCTIONS FROM INSTRUCTING LAWYER:\n${masker.mask(String(specialInstructions))}`;
     }
+    systemPrompt += PRIVACY_SYSTEM_NOTE;
     if (responseLength) {
       const lengthMap: Record<string, string> = {
         concise:  "RESPONSE LENGTH: Concise. Produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
@@ -268,7 +273,7 @@ export async function POST(req: Request) {
       )
       .map((m) => ({
         role: m.role as "user" | "assistant",
-        content: m.content,
+        content: masker.mask(m.content),
       }));
 
     // If no messages provided, create a drafting instruction
@@ -300,7 +305,7 @@ export async function POST(req: Request) {
       },
       stopWhen: stepCountIs(10), // More steps needed for document drafting
       prepareStep: finalStepAnswers(10),
-      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
+      experimental_transform: [rehydrateTransform(masker.map), dropNarrationTransform(), noDashesTransform()],
       tools: {
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -443,6 +448,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-draft]", err);
     return lexErrorResponse(500, "draft_failed");
   }

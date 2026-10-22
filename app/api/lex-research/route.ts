@@ -10,7 +10,7 @@ import { dropNarrationTransform, stripLeadingNarration } from "../../../lib/lex-
 import { noDashes, noDashesTransform } from "../../../lib/no-dashes";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
-import { tokenizePII, rehydrateTokens } from "../../../lib/pii-scanner";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, rehydrateTransform } from "../../../lib/lex-privacy/mask";
 import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 // Lex Research uses LEX_RESEARCH_MODEL (falls back to PREMIUM_CHAT_MODEL), or the
@@ -21,7 +21,8 @@ export const maxDuration = 180; // search, up to 4 source reads, answer, then th
 
 export async function POST(req: Request) {
   try {
-    const { messages, clientId, privacyMode, scope: rawScope } = await req.json();
+    // Any privacyMode flag in the body is ignored: masking is always on.
+    const { messages, clientId, scope: rawScope } = await req.json();
     const scope = normalizeScope(rawScope);
 
     const config = getLexConfig(clientId);
@@ -55,30 +56,16 @@ export async function POST(req: Request) {
       // Citation markers in earlier answers point at an old request's sources: drop them.
       .map(m => ({ role: m.role as "user" | "assistant", content: m.role === "assistant" ? stripMarkers(m.content) : m.content }));
 
-    // ── PRIVACY MODE: Tokenize PII before sending to LLM ──
-    let tokenMap: Record<string, string> = {};
-    let tokenizedMessages = coreMessages;
-    let privacyStats = { tokensReplaced: 0, types: {} as Record<string, number> };
-
-    if (privacyMode) {
-      const combinedTokenMap: Record<string, string> = {};
-      tokenizedMessages = coreMessages.map(m => {
-        const { tokenized, tokenMap: localMap, stats } = tokenizePII(m.content);
-        Object.assign(combinedTokenMap, localMap);
-        privacyStats.tokensReplaced += stats.tokensReplaced;
-        for (const [type, count] of Object.entries(stats.types)) {
-          privacyStats.types[type] = (privacyStats.types[type] ?? 0) + count;
-        }
-        return { ...m, content: tokenized };
-      });
-      tokenMap = combinedTokenMap;
-
-      // Add privacy instruction to system prompt
-      systemPromptContent += `
-
----
-PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeholder tokens like {{PERSON_1}}, {{TRUST_1}}, {{EMAIL_1}}, etc. You MUST preserve these exact tokens in your responses. Do not expand, guess, or replace them with real names or values. Treat all {{TYPE_N}} tokens as opaque placeholders. Your tools will receive tokenized queries, so search using legal doctrine and general terms, not personal identifiers.`;
+    // ── PRIVACY: always on. Mask client details before anything reaches the model. Fail closed. ──
+    const masker = new LexMasker();
+    let tokenizedMessages: typeof coreMessages;
+    try {
+      tokenizedMessages = masker.maskMessages(coreMessages);
+    } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
+      throw err;
     }
+    systemPromptContent += PRIVACY_SYSTEM_NOTE;
 
     // Internal research mode cites by source id; the external intake bot has no research tools.
     const citeMode = config.mode === "internal";
@@ -108,7 +95,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       stopWhen: stepCountIs(steps),
       prepareStep: finalStepAnswers(steps),
       tools,
-      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
+      experimental_transform: [rehydrateTransform(masker.map), dropNarrationTransform(), noDashesTransform()],
       onFinish: (event) => {
         logStreamFinish(event, {
           bot: "lex-research",
@@ -119,44 +106,6 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       },
     });
 
-    // ── PRIVACY MODE: Buffer stream, detokenize, re-stream ──
-    if (privacyMode) {
-      const fullText = noDashes(stripLeadingNarration(await result.text));
-      const detokenized = rehydrateTokens(fullText, tokenMap);
-      const meta = citeMode ? await buildAnswerMeta(model, fullText, registry) : null;
-
-      // Emit as SSE compatible with the Lex widget client
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          // Break into natural chunks (sentences / clauses) for streaming effect
-          const chunks = detokenized.split(/(?<=[.!?]\s+)/);
-          let i = 0;
-          function send() {
-            if (i >= chunks.length) {
-              if (meta) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "data-lex-sources", data: meta })}\n\n`));
-              controller.close();
-              return;
-            }
-            const payload = JSON.stringify({ type: "text-delta", delta: chunks[i] });
-            controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
-            i++;
-            // Small delay for visual streaming effect
-            setTimeout(send, 15);
-          }
-          send();
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-        },
-      });
-    }
-
     if (!citeMode) return result.toUIMessageStreamResponse();
 
     // Stream the answer, then send the checked source list, citations and confidence as one data part.
@@ -164,7 +113,8 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
       execute: async ({ writer }) => {
         writer.merge(result.toUIMessageStream({ sendFinish: false }));
         const text = noDashes(stripLeadingNarration(await result.text));
-        const meta = await buildAnswerMeta(model, text, registry);
+        // The streamed text is rehydrated, so mask it again before the confidence check sees it.
+        const meta = masker.rehydrateDeep(await buildAnswerMeta(model, masker.mask(text), registry));
         writer.write({ type: "data-lex-sources", data: meta });
       },
       onError: (err) => {
@@ -174,6 +124,7 @@ PRIVACY MODE ACTIVE: This conversation has been anonymized. You will see placeho
     });
     return createUIMessageStreamResponse({ stream });
   } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-research]", err);
     return lexErrorResponse(500, "research_failed");
   }

@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateCompare } from "../../../lib/lex-review-access";
 import { cleanLexOutput } from "../../../lib/lex-output";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
 import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
@@ -43,7 +44,18 @@ async function runCompare(request: Request): Promise<Response> {
       "Write plain prose. Put each heading on its own line, then short paragraphs.\n" +
       "No markdown: no asterisks, hashes, or backticks.\n" +
       "No decorative dividers or rules. Do not draw lines of equals signs, hyphens, or box-drawing characters.\n" +
-      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop.";
+      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
+
+    // Privacy: always on. Both documents share one placeholder map, masked before the model sees them. Fail closed.
+    const masker = new LexMasker();
+    let maskedA: string, maskedB: string;
+    try {
+      maskedA = masker.mask(String(documentA).slice(0, 8000));
+      maskedB = masker.mask(String(documentB).slice(0, 8000));
+    } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
+      throw err;
+    }
 
     const userPrompt = `Compare the following two legal documents and identify key differences, risks, and recommendations.
 
@@ -52,12 +64,12 @@ Jurisdiction: ${jurisdiction || "Australia"}
 
 DOCUMENT A:
 ---
-${documentA.slice(0, 8000)}
+${maskedA}
 ---
 
 DOCUMENT B:
 ---
-${documentB.slice(0, 8000)}
+${maskedB}
 ---
 
 Provide your analysis covering:
@@ -84,7 +96,7 @@ Keep the analysis concise but thorough.`;
       assistantText: text,
     });
 
-    return Response.json({ analysis: cleanLexOutput(text) });
+    return Response.json({ analysis: cleanLexOutput(masker.rehydrate(text)) });
   } catch (err) {
     console.error("[lex-compare]", err);
     return Response.json({ error: "compare_failed" }, { status: 500 });
