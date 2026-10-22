@@ -29,7 +29,7 @@ export function privacyFailResponse(): Response {
 export const PRIVACY_SYSTEM_NOTE = `
 
 ---
-PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder. Search tools receive the tokens, so search using legal doctrine and general terms, not personal identifiers.`;
+PRIVACY: Client details in this conversation have been replaced with placeholder tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}. Keep these exact tokens in your reply. Do not expand, guess or replace them. Treat every {{TYPE_N}} token as an opaque placeholder. Search tools receive the tokens, and search results come back masked the same way, so search using legal doctrine and general terms, not personal identifiers.`;
 
 type Tokenizer = (text: string) => ScanResult;
 let tokenizer: Tokenizer = (t) => tokenizePII(t);
@@ -110,6 +110,30 @@ export class LexMasker {
     for (const value of this.byValue.keys()) {
       if (value && payload.includes(value)) throw new LexPrivacyError("known value present after masking");
     }
+  }
+
+  /** Mask every string inside a JSON-like value (tool results). Throws LexPrivacyError on any failure. */
+  maskDeep<T>(value: T): T {
+    if (typeof value === "string") return this.mask(value) as T;
+    if (Array.isArray(value)) return value.map((v) => this.maskDeep(v)) as T;
+    if (value && typeof value === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value)) out[k] = this.maskDeep(v);
+      return out as T;
+    }
+    return value;
+  }
+
+  /** Swap known values for placeholders in every string inside a JSON-like value (no detector). */
+  maskKnownDeep<T>(value: T): T {
+    if (typeof value === "string") return this.maskKnown(value) as T;
+    if (Array.isArray(value)) return value.map((v) => this.maskKnownDeep(v)) as T;
+    if (value && typeof value === "object") {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value)) out[k] = this.maskKnownDeep(v);
+      return out as T;
+    }
+    return value;
   }
 
   maskMessages<M extends { content: string }>(messages: M[]): M[] {
