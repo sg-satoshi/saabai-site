@@ -60,7 +60,8 @@ async function load(): Promise<Classifier | null> {
   tf.env.allowLocalModels = true;
   tf.env.localModelPath = nerModelDir() + "/";
   tf.env.useFSCache = false;
-  const pipe = await tf.pipeline("token-classification", NER_MODEL, { dtype: "q8", device: "cpu" });
+  // One thread: Vercel functions get about one vCPU.
+  const pipe = await tf.pipeline("token-classification", NER_MODEL, { dtype: "q8", device: "cpu", session_options: { intraOpNumThreads: 1, interOpNumThreads: 1 } } as never);
   lastLoadMs = Date.now() - t0;
   return async (text: string) => (await pipe(text)) as unknown as Token[];
 }
@@ -159,6 +160,22 @@ export function keepEntity(e: NerEntity, text: string, cited: Set<string>, pub: 
   return new RegExp(`(?<![\\p{L}\\p{N}_])${esc}(?![\\p{L}\\p{N}_])`, "u").test(text);
 }
 
+/** Fixed made-up sentence with known names, run before each request's text (about 5 ms). */
+const SELF_CHECK = "Margaret Okafor met Brendan Walsh in Toowoomba.";
+/**
+ * The ONNX runtime gave wrong results under heavy CPU load on our build box. If the self-check
+ * sentence does not come back right, this request's model output is not trusted (status failed,
+ * patterns and matter parties still mask everything they know).
+ */
+export async function selfCheck(ner: Classifier): Promise<boolean> {
+  try {
+    const e = aggregate(await ner(SELF_CHECK)).map((x) => `${x.kind}:${x.text}`);
+    return e.includes("person:Margaret Okafor") && e.includes("person:Brendan Walsh") && e.includes("place:Toowoomba");
+  } catch {
+    return false;
+  }
+}
+
 export type NerResult = { status: NerStatus; parties: MatterParty[]; ms: number; chars: number };
 
 /** Finds names in the given texts. Never throws. */
@@ -169,6 +186,9 @@ export async function detectNames(texts: string[], opts?: { budgetMs?: number; m
   if (!all) return { status: "on", parties: [], ms: 0, chars: 0 };
   const ner = await getNer();
   if (!ner) return { status: "unavailable", parties: [], ms: Date.now() - t0, chars: 0 };
+  if (classifierForTests === undefined && !(await selfCheck(ner))) return { status: "failed", parties: [], ms: Date.now() - t0, chars: 0 };
+  // The time budget covers running the model, not the one-off load on a cold start.
+  const tRun = Date.now();
   const budget = opts?.budgetMs ?? NER_BUDGET_MS;
   const max = opts?.maxChars ?? NER_MAX_CHARS;
   const text = all.slice(0, max);
@@ -179,7 +199,7 @@ export async function detectNames(texts: string[], opts?: { budgetMs?: number; m
   let done = 0;
   try {
     for (const c of chunks(text)) {
-      if (Date.now() - t0 > budget) { status = "partial"; break; }
+      if (Date.now() - tRun > budget) { status = "partial"; break; }
       for (const e of aggregate(await ner(c))) {
         if (!keepEntity(e, c, cited, pub)) continue;
         const key = `${e.kind}:${e.text.toLowerCase()}`;

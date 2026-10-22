@@ -5,7 +5,7 @@
  */
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
-import { detectNames, nerLoadMs, NER_MODEL } from "../../../../lib/lex-privacy/ner";
+import { detectNames, getNer, nerLoadMs, selfCheck, NER_MODEL } from "../../../../lib/lex-privacy/ner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +26,10 @@ export async function GET() {
   const warm = nerLoadMs() > 0;
   const first = await detectNames([SAMPLE]);
   const second = await detectNames([SAMPLE.repeat(20)]);
+  // Consistency: the same sentence 30 times must give the same names every time.
+  const ner = await getNer();
+  let selfCheckFails = 0;
+  if (ner) for (let i = 0; i < 30; i++) if (!(await selfCheck(ner))) selfCheckFails++;
   return Response.json({
     model: NER_MODEL,
     status: first.status,
@@ -35,6 +39,7 @@ export async function GET() {
     firstRunMs: first.ms,
     run400WordsMs: second.ms,
     namesFound: first.parties.length,
+    selfCheckFailsOf30: ner ? selfCheckFails : null,
     region: process.env.VERCEL_REGION ?? "unknown",
     memoryMb: Math.round(process.memoryUsage().rss / 1e6),
   });
