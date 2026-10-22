@@ -6,6 +6,7 @@ import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-co
 import { verifySession } from "../../../lib/portal-session";
 import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
 import { createDashFilter } from "../../../lib/no-dashes";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, createRehydrator } from "../../../lib/lex-privacy/mask";
 import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
@@ -57,7 +58,17 @@ Formatting rules (always follow these):
     // non-fatal — proceed without client config
   }
 
-  const systemPrompt = clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES;
+  const systemPrompt = (clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES) + PRIVACY_SYSTEM_NOTE;
+
+  // Privacy: always on. Mask client details before the model sees them. Fail closed.
+  const masker = new LexMasker();
+  let masked: typeof normalized;
+  try {
+    masked = masker.maskMessages(normalized);
+  } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
+    throw err;
+  }
 
   // 2. Load client LLM model (API key + model) — keyed by clientId
   //    Fall back to Haiku (fast, cheap) when no client key is saved
@@ -79,14 +90,14 @@ Formatting rules (always follow these):
   const result = streamText({
     model,
     system: systemPrompt,
-    messages: normalized,
+    messages: masked,
     stopWhen: stepCountIs(4),
     onFinish: (event) => {
       logStreamFinish(event, {
         bot: "lex",
         siteId: clientId,
         model: modelIdFrom(model),
-        userText: lastUserText(normalized),
+        userText: lastUserText(masked),
       });
     },
   });
@@ -98,13 +109,14 @@ Formatting rules (always follow these):
     async start(controller) {
       try {
         const dashes = createDashFilter();
+        const names = createRehydrator(masker.map);
         for await (const chunk of result.textStream) {
-          const clean = dashes.push(chunk);
+          const clean = dashes.push(names.push(chunk));
           if (!clean) continue;
           const line = `data: ${JSON.stringify({ type: "text-delta", delta: clean })}\n\n`;
           controller.enqueue(encoder.encode(line));
         }
-        const rest = dashes.flush();
+        const rest = dashes.push(names.flush()) + dashes.flush();
         if (rest) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", delta: rest })}\n\n`));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

@@ -53,6 +53,11 @@ export function tightenConclusions(raw: z.infer<typeof ConclusionsSchema>["concl
  */
 export const CONFIDENCE_TIMEOUT_MS = 45_000;
 
+/** The answer is privacy-masked before this check. Placeholders are deliberate, never a defect. */
+export const PLACEHOLDER_NOTE =
+  "Tokens like {{PERSON_1}}, {{COMPANY_1}}, {{EMAIL_1}}, {{PHONE_1}}, {{ABN_1}} or {{PARTY_1}} are deliberate privacy masks standing in for real client details. " +
+  "Treat each as the real value. They are not unfilled template placeholders or missing content, and must never lower a confidence level or be listed as a check.";
+
 export async function buildAnswerMeta(model: LanguageModel, answerText: string, reg: SourceRegistry, opts: { timeoutMs?: number } = {}): Promise<LexAnswerMeta> {
   const citations = verifyCitations(answerText, reg);
   const problems = citations.filter((c) => c.status !== "verified").map((c) =>
@@ -78,7 +83,8 @@ export async function buildAnswerMeta(model: LanguageModel, answerText: string, 
         "You check a legal research answer written for an Australian lawyer. List its main conclusions (at most 8), each with a confidence level and the reason, " +
         "and the specific checks the lawyer should do. high = settled rule supported by a binding or primary source that was read and verified. " +
         "moderate = supported but fact dependent, discretionary, or only by persuasive or unread sources. low = unsupported, contested, or from model knowledge. " +
-        "Only use source ids from the list. Plain English, Australian spelling, no em dashes.",
+        "Only use source ids from the list. Plain English, Australian spelling, no em dashes. " +
+        PLACEHOLDER_NOTE,
       prompt: `SOURCES (id | type | title | citation check):\n${sourceList || "(none)"}\n\nANSWER:\n${renderMarkers(answerText, citations).slice(0, 8000)}`,
     }).finally(() => clearTimeout(timer));
     const conclusions = tightenConclusions(object.conclusions.slice(0, 8), reg, citations);

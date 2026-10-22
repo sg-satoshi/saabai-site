@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
+import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
 import { logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
@@ -144,9 +145,21 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
     const systemPrompt =
       "You are Lex, an expert AI legal document reviewer specialising in Australian law.\n" +
       "You review documents with the precision of a senior partner conducting a pre-execution review.\n" +
-      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop.";
+      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
-    const userPrompt = buildUserPrompt(body);
+    // Privacy: always on. Uploaded document text and party names are masked before the model sees them. Fail closed.
+    const masker = new LexMasker();
+    let userPrompt: string;
+    try {
+      userPrompt = buildUserPrompt({
+        ...body,
+        documentText: masker.mask(String(documentText)),
+        actingFor: actingFor ? masker.mask(String(actingFor)) : actingFor,
+      });
+    } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
+      throw err;
+    }
 
     let report: ReviewReport;
     try {
@@ -183,6 +196,8 @@ async function runReview(request: Request, _actor: LexReviewActor): Promise<Resp
         return Response.json({ error: "Analysis failed, could not parse review output" }, { status: 500 });
       }
     }
+
+    report = masker.rehydrateDeep(report);
 
     // Ensure top-level metadata is populated from the request in case the model omits them
     report.documentType = report.documentType ?? documentType;
