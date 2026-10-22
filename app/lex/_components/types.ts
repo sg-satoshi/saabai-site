@@ -5,6 +5,8 @@ export type ChatMessage = {
   role: "user" | "assistant"; content: string; meta?: LexAnswerMeta; at?: number;
   /** User turn: name of a file whose text is appended to content after ATTACH_MARK. */
   attachment?: string;
+  /** Set by the server once the attachment text has been masked for storage. */
+  attachmentMasked?: boolean;
   /** Assistant turn: searches that failed, whether every search came back empty, and whether the user flagged it. */
   failedSearches?: number; noResults?: boolean; flagged?: boolean;
 };

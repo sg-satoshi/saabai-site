@@ -3,15 +3,21 @@
  * PUT  /api/lex-threads  — save threads for authenticated user to Redis
  *
  * Threads are stored under  lex:threads:{email}  with a 90-day TTL.
+ * Chat attachment text is masked before it is stored (thread-stable placeholders), so no readable
+ * client details from an uploaded document are kept at rest.
  * Auth: the portal_session cookie, or a Lex firm user signed in through /login.
  */
 
 import { verifySession } from "../../../lib/portal-session";
 import { getRedis } from "../../../lib/redis";
 import { resolveReviewActor } from "../../../lib/lex-review-access";
+import { maskThreadAttachments } from "../../../lib/lex-privacy/thread-attachments";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 const TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 
@@ -61,7 +67,8 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const threads = Array.isArray(body.threads) ? body.threads : [];
+    const raw = Array.isArray(body.threads) ? body.threads : [];
+    const { threads } = await maskThreadAttachments(raw, lexFirmFromRequest(req, "lex-internal"), (matterId) => matterPartiesFor(req, matterId));
     await redis.set(`lex:threads:${session.email}`, JSON.stringify(threads), { ex: TTL_SECONDS });
     return Response.json({ ok: true });
   } catch (err) {
