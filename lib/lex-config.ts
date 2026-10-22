@@ -18,6 +18,7 @@ export type LexTool =
   | "searchLegislation"
   | "searchInternational"
   | "verifySection"
+  | "checkLegislationStatus"
   | "searchStateLegislation"
   | "searchASIC"
   | "searchAAT" // Administrative Review Tribunal (ART) and former AAT; id kept for saved configs
@@ -185,6 +186,7 @@ const LEX_INTERNAL: LexClientConfig = {
     "searchLegislation",
     "searchInternational",
     "verifySection",
+    "checkLegislationStatus",
     "searchStateLegislation",
     "searchASIC",
     "searchAAT",

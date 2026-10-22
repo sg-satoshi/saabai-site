@@ -36,7 +36,7 @@ const SOURCES = [
   { name: "ASIC", note: "Corporate law guidance" },
   { name: "Administrative Review Tribunal", note: "ART decisions, and former AAT" },
   { name: "Fair Work Commission", note: "Employment law" },
-  { name: "Family Court of Australia", note: "Family law decisions" },
+  { name: "Federal Circuit and Family Court of Australia", note: "Family law decisions, and the former Family Court (before Sept 2021)" },
 ];
 
 // The ten structured document types in lib/lex-document-types.ts (plus "Custom").
@@ -54,9 +54,9 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
-  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches AustLII, ATO rulings and Australian legislation, and every answer cites its source." },
+  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian legal sources, including AustLII, ATO rulings and Australian legislation, and every answer cites its source." },
   { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the sources it relies on and says when the law is uncertain, so checking is fast, and you should always check primary sources before advising a client." },
-  { q: "Which sources does Lex search?", a: "AustLII, ATO rulings and interpretive decisions, the Federal Register of Legislation, State and Territory legislation in all 8 jurisdictions, ASIC, Administrative Review Tribunal decisions (and former AAT decisions), the Fair Work Commission and Family Court of Australia decisions." },
+  { q: "Which sources does Lex search?", a: "Public Australian legal sources: AustLII, ATO rulings and interpretive decisions, the Federal Register of Legislation, State and Territory legislation in all 8 jurisdictions, ASIC, Administrative Review Tribunal decisions (and former AAT decisions), the Fair Work Commission, and Federal Circuit and Family Court of Australia decisions (and former Family Court of Australia decisions, before Sept 2021)." },
   { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside case law and legislation, so it suits objections, reviews and ruling work." },
   { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
@@ -145,7 +145,7 @@ export default function LegalPage() {
           <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal research for Australian firms</span></span>
           <h1>Legal research that <span className="lx-grad">shows its sources.</span></h1>
           <p className="lx-lead">
-            Lex searches AustLII, ATO rulings and Federal and State legislation, then answers with citations and links to
+            Lex searches public Australian legal sources, including AustLII, ATO rulings and Federal and State legislation. It answers with citations and links to
             the sources it used, so you can check them yourself. Draft documents in the same workspace.
           </p>
           <div className="lx-ctas">

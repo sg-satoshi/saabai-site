@@ -88,7 +88,7 @@ test("all research tools are still built", async () => {
   const { buildLexResearchTools } = await import("../lib/lex-research-tools");
   const { getLexConfig } = await import("../lib/lex-config");
   const keys = Object.keys(buildLexResearchTools(getLexConfig()));
-  assert.deepEqual(keys.sort(), ["searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
+  assert.deepEqual(keys.sort(), ["checkLegislationStatus", "searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
   assert.deepEqual(Object.keys(buildLexResearchTools(getLexConfig("lex-external"))), ["captureMatter"]);
 });
 

@@ -16,7 +16,9 @@ import {
   searchFairWork,
   searchCorporationsLaw,
   searchFamilyLaw,
+  checkLegislationStatus,
   type LegalSearchResponse,
+  type ActStatusResponse,
 } from "./lex-tools";
 import { SourceRegistry, fetchSourceText, isAllowedSourceUrl, findPinpoint, excerptFor, MAX_READS_PER_ANSWER } from "./lex-sources";
 
@@ -47,11 +49,11 @@ export function buildLexResearchTools(config: LexClientConfig) {
           properties: {
             query: {
               type: "string",
-              description: "Legal search query — include key legal terms, party names, or doctrine. E.g. 'duty of care negligence personal injury' or 'Donoghue v Stevenson'",
+              description: "Legal search query: include key legal terms, party names, or doctrine. E.g. 'duty of care negligence personal injury' or 'Donoghue v Stevenson'",
             },
             jurisdiction: {
               type: "string",
-              description: "Optional court filter — e.g. 'HCA' (High Court), 'FCA' (Federal Court), 'NSWSC', 'VSC', 'QSC', 'WASC'",
+              description: "Optional court filter: e.g. 'HCA' (High Court), 'FCA' (Federal Court), 'NSWSC', 'VSC', 'QSC', 'WASC'",
             },
           },
           required: ["query"],
@@ -70,7 +72,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
           properties: {
             query: {
               type: "string",
-              description: "Tax query — e.g. 'trust distribution CGT' or 'TR 2019/1 personal services income' or 'Division 7A loan deemed dividend'",
+              description: "Tax query: e.g. 'trust distribution CGT' or 'TR 2019/1 personal services income' or 'Division 7A loan deemed dividend'",
             },
           },
           required: ["query"],
@@ -89,7 +91,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
           properties: {
             query: {
               type: "string",
-              description: "Act or regulation name or topic — e.g. 'Corporations Act 2001 section 180 director duties' or 'Fair Work Act unfair dismissal'",
+              description: "Act or regulation name or topic: e.g. 'Corporations Act 2001 section 180 director duties' or 'Fair Work Act unfair dismissal'",
             },
           },
           required: ["query"],
@@ -109,12 +111,12 @@ export function buildLexResearchTools(config: LexClientConfig) {
           properties: {
             query: {
               type: "string",
-              description: "Legal query — e.g. 'Hedley Byrne negligent misstatement' or 'good faith implied duty employment'",
+              description: "Legal query: e.g. 'Hedley Byrne negligent misstatement' or 'good faith implied duty employment'",
             },
             source: {
               type: "string",
               enum: ["bailii", "nzlii", "worldlii"],
-              description: "Database — defaults to worldlii for broadest coverage",
+              description: "Database: defaults to worldlii for broadest coverage",
             },
           },
           required: ["query"],
@@ -127,16 +129,32 @@ export function buildLexResearchTools(config: LexClientConfig) {
       verifySection: tool<VerifySectionInput, LegalSearchResponse>({
         description:
           "Verify the exact text of a specific section from legislation.gov.au BEFORE citing it in any document or advice. " +
-          "Always call this before including a specific section number in a draft — prevents citation hallucinations.",
+          "Always call this before including a specific section number in a draft: prevents citation hallucinations.",
         inputSchema: jsonSchema<VerifySectionInput>({
           type: "object",
           properties: {
-            act:     { type: "string", description: "Full Act name — e.g. 'Corporations Act 2001' or 'Income Tax Assessment Act 1997'" },
-            section: { type: "string", description: "Section reference — e.g. '181' or '9' or '102AG'" },
+            act:     { type: "string", description: "Full Act name: e.g. 'Corporations Act 2001' or 'Income Tax Assessment Act 1997'" },
+            section: { type: "string", description: "Section reference: e.g. '181' or '9' or '102AG'" },
           },
           required: ["act", "section"],
         }),
         execute: async ({ act, section }) => verifySection(act, section),
+      }),
+    }),
+
+    // Saved firm configs predate this tool, so it also comes with verifySection.
+    ...((enabledTools.has("checkLegislationStatus") || enabledTools.has("verifySection")) && {
+      checkLegislationStatus: tool<{ act: string }, ActStatusResponse>({
+        description:
+          "Check whether a Commonwealth Act is in force, repealed or renamed, using the Federal Register of Legislation. " +
+          "Also flags commenced amendments not yet in the compiled text and scheduled future changes. " +
+          "Call this before relying on a Commonwealth Act. Pass the Act title only, e.g. 'Privacy Act 1988'. Not for State Acts.",
+        inputSchema: jsonSchema<{ act: string }>({
+          type: "object",
+          properties: { act: { type: "string", description: "Commonwealth Act title only, e.g. 'Corporations Act 2001'" } },
+          required: ["act"],
+        }),
+        execute: async ({ act }) => checkLegislationStatus(act),
       }),
     }),
 
@@ -148,7 +166,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
         inputSchema: jsonSchema<StateLegisInput>({
           type: "object",
           properties: {
-            query: { type: "string", description: "Legislation query — e.g. 'Succession Act spouse entitlement'" },
+            query: { type: "string", description: "Legislation query: e.g. 'Succession Act spouse entitlement'" },
             state: {
               type: "string",
               enum: ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"],
@@ -169,7 +187,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {
-            query: { type: "string", description: "ASIC regulatory query — e.g. 'RG 65 section 912A financial services licensee obligations'" },
+            query: { type: "string", description: "ASIC regulatory query: e.g. 'RG 65 section 912A financial services licensee obligations'" },
           },
           required: ["query"],
         }),
@@ -202,7 +220,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {
-            query: { type: "string", description: "Employment law query — e.g. 'unfair dismissal valid reason procedural fairness' or 'Legal Services Award 2020 rates'" },
+            query: { type: "string", description: "Employment law query: e.g. 'unfair dismissal valid reason procedural fairness' or 'Legal Services Award 2020 rates'" },
           },
           required: ["query"],
         }),
@@ -218,7 +236,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {
-            query: { type: "string", description: "Corporations law query — e.g. 'director duty of care section 180 business judgment rule'" },
+            query: { type: "string", description: "Corporations law query: e.g. 'director duty of care section 180 business judgment rule'" },
           },
           required: ["query"],
         }),
@@ -229,12 +247,12 @@ export function buildLexResearchTools(config: LexClientConfig) {
     ...(enabledTools.has("searchFamilyLaw") && {
       searchFamilyLaw: tool<SimpleQueryInput, LegalSearchResponse>({
         description:
-          "Search Family Court and Federal Circuit Court decisions. Use for property settlement, " +
+          "Search Federal Circuit and Family Court of Australia decisions, plus the former Family Court of Australia (before Sept 2021). Use for property settlement, " +
           "parenting orders, spousal maintenance, binding financial agreements, divorce, and de facto matters.",
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {
-            query: { type: "string", description: "Family law query — e.g. 'property settlement contributions assessment Stanford v Stanford'" },
+            query: { type: "string", description: "Family law query: e.g. 'property settlement contributions assessment Stanford v Stanford'" },
           },
           required: ["query"],
         }),
@@ -304,7 +322,7 @@ async function cachedRead(url: string): Promise<{ ok: true; text: string } | { o
  * Wraps the research tools so every search result is registered with an id and a
  * server-decided type, adds readSource, and makes verifySection actually read the section.
  */
-export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, reg: SourceRegistry, read = cachedRead) {
+export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, reg: SourceRegistry, read = cachedRead, checkStatus: (act: string) => Promise<ActStatusResponse> = checkLegislationStatus) {
   const out: Record<string, unknown> = {};
   for (const [name, t] of Object.entries(tools)) {
     const orig = t as AnyTool;
@@ -318,14 +336,15 @@ export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, 
         const registered = reg.register(res, name);
         if (name !== "verifySection") return registered;
         // verifySection used to be a search only. Now read the first legislation result and look for the section.
-        const { section } = (input ?? {}) as { section?: string };
+        const { section, act } = (input ?? {}) as { section?: string; act?: string };
+        const statusP = act ? checkStatus(act).then((r) => (r.acts[0] ? { name: r.acts[0].name, status: r.acts[0].status, isInForce: r.acts[0].isInForce, formerName: r.acts[0].formerName, hasCommencedUnincorporatedAmendments: r.acts[0].hasCommencedUnincorporatedAmendments, statusPossibleFuture: r.acts[0].statusPossibleFuture } : { checked: false, note: r.error ?? "not found" })).catch(() => ({ checked: false, note: "status check failed" })) : Promise.resolve(undefined);
         const first = registered.results.map((r) => ("id" in r ? reg.get(String(r.id)) : undefined)).find((s) => s && s.type === "legislation" && isAllowedSourceUrl(s.url));
-        if (!first || !section) return { ...registered, sectionCheck: { checked: false, note: "No readable legislation result to check" } };
+        if (!first || !section) return { ...registered, actStatus: await statusP, sectionCheck: { checked: false, note: "No readable legislation result to check" } };
         const page = await read(first.url);
-        if (!page.ok) { reg.setReadError(first.id, page.error); return { ...registered, sectionCheck: { checked: false, id: first.id, note: page.error } }; }
+        if (!page.ok) { reg.setReadError(first.id, page.error); return { ...registered, actStatus: await statusP, sectionCheck: { checked: false, id: first.id, note: page.error } }; }
         reg.setText(first.id, page.text);
         const f = findPinpoint(page.text, `s ${section}`);
-        return { ...registered, sectionCheck: { checked: true, id: first.id, found: f.found, excerpt: f.excerpt?.slice(0, 1500) ?? null } };
+        return { ...registered, actStatus: await statusP, sectionCheck: { checked: true, id: first.id, found: f.found, excerpt: f.excerpt?.slice(0, 1500) ?? null } };
       },
     };
   }
