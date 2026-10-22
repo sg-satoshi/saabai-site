@@ -18,6 +18,13 @@ const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
  * infrastructure) supports it. Not claimed on purpose: Australian hosting
  * (functions run in iad1), per-firm data workspaces (threads are per login),
  * uploaded-document review for firms (admin-only today) and a free trial.
+ *
+ * Client privacy claims are limited to what is live (Lex privacy Phases 1 and 2):
+ * masking in lib/lex-privacy/mask.ts and lib/pii-scanner.ts, the single gateway with no
+ * switch in lib/lex-privacy/gateway.ts (used by every app/api/lex-* model route), tool and
+ * search masking in LexGateway.wrapTools, the counts-only log in lib/lex-privacy/redaction-log.ts,
+ * and the leak tests in tests/lex-privacy-*.test.ts. Not claimed yet: AI-powered name detection,
+ * masking of uploaded documents, data residency, and provider retention or training terms.
  */
 
 // Sources Lex can search today (one tool each in lib/lex-tools.ts).
@@ -52,6 +59,8 @@ const LEX_FAQS = [
   { q: "Which sources does Lex search?", a: "AustLII, ATO rulings and interpretive decisions, the Federal Register of Legislation, State and Territory legislation in all 8 jurisdictions, ASIC, Administrative Review Tribunal decisions (and former AAT decisions), the Fair Work Commission and Family Court of Australia decisions." },
   { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside case law and legislation, so it suits objections, reviews and ruling work." },
   { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
+  { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
+  { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
   { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan, with no lock-in and cancel any time." },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
@@ -147,6 +156,7 @@ export default function LegalPage() {
             <span>Every answer cites its sources</span>
             <span>Built for Australian law</span>
             <span>Built for review by a lawyer</span>
+            <span>Client details masked before the AI sees them</span>
           </div>
           <AnswerIllustration />
         </div>
@@ -267,6 +277,24 @@ export default function LegalPage() {
             <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first.</p></div>
             <div className="lx-card"><Icon d="M4 6h16M4 12h16M4 18h10" /><h3>Saved to your login</h3><p>Research threads are tied to your own sign-in, so your history is there when you come back.</p></div>
             <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>No lock-in</h3><p>Cancel anytime.</p></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Client privacy (Lex privacy Phases 1 and 2, live) */}
+      <section id="privacy" className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Client privacy</div>
+            <h2>Your client&apos;s details never reach the AI in readable form.</h2>
+            <p className="lx-lead">Lex swaps personal details for placeholders before anything is sent to an AI model. You see the real names in your answer, and the model only ever sees the placeholders.</p>
+          </div>
+          <div className="lx-tgrid">
+            <div className="lx-card"><Icon d="M4 7h16M4 12h10M4 17h7M17 15l3 3-3 3" /><h3>Masked before it is sent</h3><p>Names, business and trust names, phone numbers, emails, and ABNs or ACNs become placeholders like {"{{PERSON_1}}"}. They are put back only in the answer you see.</p></div>
+            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>One checkpoint, no off switch</h3><p>Every Lex AI request goes through the same privacy checkpoint, for every firm, including firms using their own AI key. If masking fails, nothing is sent.</p></div>
+            <div className="lx-card"><Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5" /><h3>Searches are masked too</h3><p>Legal searches and source lookups get placeholders, not your client&apos;s details. Results come back masked the same way.</p></div>
+            <div className="lx-card"><Icon d="M5 3h14v18H5zM9 8h6M9 12h6M9 16h3" /><h3>A redaction log, without the details</h3><p>Lex keeps a log for each firm of what kind of details were hidden on each request and how many. It never records the real values.</p></div>
+            <div className="lx-card"><Icon d="m5 12 5 5 9-10" /><h3>Tested for leaks</h3><p>Automated leak tests run against the privacy layer, so any code change that would let a real detail through fails its checks.</p></div>
           </div>
         </div>
       </section>
