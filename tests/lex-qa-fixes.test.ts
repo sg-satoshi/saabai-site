@@ -145,7 +145,7 @@ test("compare dividers are removed and the draft is dated in Brisbane", () => {
 
 test("routes: review uses generateObject at 8000 tokens, confidence waits, prompts have no double hyphen", () => {
   const review = readFileSync("app/api/lex-review/route.ts", "utf8");
-  assert.match(review, /generateObject\(/);
+  assert.match(review, /generateObject(<[^(]*>)?\(/);
   assert.match(review, /maxOutputTokens:\s*8000/);
   assert.ok(!/JSON\.parse\(text\)/.test(review));
   const draft = readFileSync("app/api/lex-draft/route.ts", "utf8");

@@ -12,6 +12,7 @@ import {
 } from "../lib/lex-sources";
 import { withSourceRegistry, buildLexResearchTools } from "../lib/lex-research-tools";
 import { tightenConclusions, buildAnswerMeta } from "../lib/lex-answer-meta";
+import { LexGateway } from "../lib/lex-privacy/gateway";
 import { getLexConfig } from "../lib/lex-config";
 
 const CASE = "https://www.austlii.edu.au/cgi-bin/viewdoc/au/cases/cth/HCA/2004/26.html";
@@ -146,7 +147,7 @@ test("buildAnswerMeta: schema-checked output from the model; bad output degrades
     content: [{ type: "text", text: JSON.stringify({ conclusions: [{ text: "Purpose is objective.", confidence: "high", basis: "High Court", citeIds: ["S1"] }], verify: ["Check the facts"] }) }],
     finishReason: { unified: "stop", raw: "stop" }, usage: { inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 10, text: 10, reasoning: 0 } }, warnings: [],
   }) } as never);
-  const meta = await buildAnswerMeta(good as never, "Purpose is objective [[cite:S1|para 41]].", reg);
+  const meta = await buildAnswerMeta(LexGateway.__forTests(good as never, { route: "lex-answer-check", firm: "test" }), "Purpose is objective [[cite:S1|para 41]].", reg);
   assert.equal(meta.conclusions[0].confidence, "high");
   assert.equal(meta.counts.verified, 1);
   assert.equal(meta.sources[0].id, "S1");
@@ -154,7 +155,7 @@ test("buildAnswerMeta: schema-checked output from the model; bad output degrades
     content: [{ type: "text", text: JSON.stringify({ conclusions: [{ text: "x", confidence: "certain" }] }) }],
     finishReason: { unified: "stop", raw: "stop" }, usage: { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }, warnings: [],
   }) } as never);
-  const m2 = await buildAnswerMeta(bad as never, "A [[cite:S1|para 41]].", reg);
+  const m2 = await buildAnswerMeta(LexGateway.__forTests(bad as never, { route: "lex-answer-check", firm: "test" }), "A [[cite:S1|para 41]].", reg);
   assert.equal(m2.conclusions.length, 0);
   assert.ok(m2.verify.some((v) => /could not run/.test(v)));
 });

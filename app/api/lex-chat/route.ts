@@ -1,13 +1,12 @@
-import { streamText, stepCountIs } from "ai";
-import type { LanguageModel } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { stepCountIs } from "ai";
 import { getRedis } from "../../../lib/redis";
-import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
 import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
 import { createDashFilter } from "../../../lib/no-dashes";
-import { LexMasker, LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse, createRehydrator } from "../../../lib/lex-privacy/mask";
-import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { lastUserText, logStreamFinish } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -60,47 +59,31 @@ Formatting rules (always follow these):
 
   const systemPrompt = (clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES) + PRIVACY_SYSTEM_NOTE;
 
-  // Privacy: always on. Mask client details before the model sees them. Fail closed.
-  const masker = new LexMasker();
+  // Privacy: always on. The gateway picks the model (the firm's own key if saved, else Haiku),
+  // masks every message before the model sees it and rehydrates the reply. Fail closed.
+  const gw = await LexGateway.open({ route: "lex-chat", firm: lexFirmFromRequest(req, clientId), model: { kind: "chat", clientId } });
+  if (!gw) return privacyFailResponse();
+  let result: ReturnType<LexGateway["streamText"]>;
   let masked: typeof normalized;
   try {
-    masked = masker.maskMessages(normalized);
+    masked = gw.maskMessages(normalized);
+    result = gw.streamText({
+      system: systemPrompt,
+      messages: masked,
+      stopWhen: stepCountIs(4),
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "lex",
+          siteId: clientId,
+          model: gw.modelId,
+          userText: lastUserText(masked),
+        });
+      },
+    });
   } catch (err) {
     if (err instanceof LexPrivacyError) return privacyFailResponse();
     throw err;
   }
-
-  // 2. Load client LLM model (API key + model) — keyed by clientId
-  //    Fall back to Haiku (fast, cheap) when no client key is saved
-  let model: LanguageModel = anthropic("claude-haiku-4-5-20251001");
-  if (clientId) {
-    try {
-      const llmConfig = await getClientLLMConfig(clientId);
-      if (llmConfig) {
-        const clientModel = buildModelFromConfig(llmConfig);
-        if (clientModel) model = clientModel;
-      }
-    } catch {
-      // non-fatal — fall back to default model
-    }
-  }
-
-  // 3. Messages were normalised at the top (system messages from the client are dropped).
-
-  const result = streamText({
-    model,
-    system: systemPrompt,
-    messages: masked,
-    stopWhen: stepCountIs(4),
-    onFinish: (event) => {
-      logStreamFinish(event, {
-        bot: "lex",
-        siteId: clientId,
-        model: modelIdFrom(model),
-        userText: lastUserText(masked),
-      });
-    },
-  });
 
   // 4. Stream in the SSE format both LexWidget and client portal expect:
   //    data: {"type":"text-delta","delta":"<chunk>"}
@@ -109,14 +92,13 @@ Formatting rules (always follow these):
     async start(controller) {
       try {
         const dashes = createDashFilter();
-        const names = createRehydrator(masker.map);
         for await (const chunk of result.textStream) {
-          const clean = dashes.push(names.push(chunk));
+          const clean = dashes.push(chunk);
           if (!clean) continue;
           const line = `data: ${JSON.stringify({ type: "text-delta", delta: clean })}\n\n`;
           controller.enqueue(encoder.encode(line));
         }
-        const rest = dashes.push(names.flush()) + dashes.flush();
+        const rest = dashes.flush();
         if (rest) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", delta: rest })}\n\n`));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
