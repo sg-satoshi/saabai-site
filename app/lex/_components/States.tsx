@@ -197,6 +197,7 @@ export function stepLabel(tool: string): string | null {
     searchAustLII: "Searching case law on AustLII",
     searchATO: "Searching ATO rulings and guidance",
     searchLegislation: "Searching federal legislation",
+    checkLegislationStatus: "Checking Act status",
     searchStateLegislation: "Searching state legislation",
     verifySection: "Checking the section in the Act",
     readSource: "Reading a source to check pinpoints",

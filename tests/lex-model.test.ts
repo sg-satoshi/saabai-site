@@ -73,8 +73,10 @@ test("ART replaces AAT in Lex prompts and tools", async () => {
   assert.ok(tools.includes("au/cases/cth/ARTA") && tools.includes("au/cases/cth/AATA"));
   const { buildLexResearchTools } = await import("../lib/lex-research-tools");
   const { getLexConfig } = await import("../lib/lex-config");
+  process.env.LEX_AUSTLII_ENABLED = "true";
   const t = buildLexResearchTools(getLexConfig()) as Record<string, { description?: string }>;
-  assert.ok(t.searchART, "model sees searchART");
+  delete process.env.LEX_AUSTLII_ENABLED;
+  assert.ok(t.searchART, "model sees searchART once AustLII is re-enabled");
   assert.ok(!("searchAAT" in t));
   assert.match(t.searchART.description ?? "", /Administrative Review Tribunal/);
   for (const f of ["lib/lex-config.ts", "lib/lex-tools.ts", "lib/lex-research-tools.ts", "lib/lex-model.ts"]) {
@@ -88,7 +90,12 @@ test("all research tools are still built", async () => {
   const { buildLexResearchTools } = await import("../lib/lex-research-tools");
   const { getLexConfig } = await import("../lib/lex-config");
   const keys = Object.keys(buildLexResearchTools(getLexConfig()));
-  assert.deepEqual(keys.sort(), ["searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
+  // AustLII access is paused by default (LEX_AUSTLII_ENABLED unset).
+  assert.deepEqual(keys.sort(), ["checkLegislationStatus", "searchASIC", "searchATO", "searchFairWork", "searchInternational", "searchLegislation", "verifySection"].sort());
+  process.env.LEX_AUSTLII_ENABLED = "true";
+  const all = Object.keys(buildLexResearchTools(getLexConfig()));
+  delete process.env.LEX_AUSTLII_ENABLED;
+  assert.deepEqual(all.sort(), ["checkLegislationStatus", "searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
   assert.deepEqual(Object.keys(buildLexResearchTools(getLexConfig("lex-external"))), ["captureMatter"]);
 });
 

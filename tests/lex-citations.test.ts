@@ -46,18 +46,18 @@ test("registry gives stable ids, dedupes by URL and returns ids to the model", (
 });
 
 test("readSource allowlist: https legal sites only, no credentials, no other ports", () => {
-  for (const u of [CASE, LEG, TR, "https://classic.austlii.edu.au/x", "https://www.fwc.gov.au/x", "https://www.art.gov.au/x"]) assert.ok(isAllowedSourceUrl(u), u);
-  for (const u of ["http://www.austlii.edu.au/x", "https://evil.com/austlii.edu.au", "https://austlii.edu.au.evil.com/", "https://user:pw@www.ato.gov.au/", "https://www.ato.gov.au:8443/", "https://169.254.169.254/", "file:///etc/passwd", "https://localhost/"]) assert.ok(!isAllowedSourceUrl(u), u);
+  for (const u of [LEG, TR, "https://www.fwc.gov.au/x", "https://www.art.gov.au/x"]) assert.ok(isAllowedSourceUrl(u), u);
+  for (const u of [CASE, "https://classic.austlii.edu.au/x", "https://www5.austlii.edu.au/x", "http://www.austlii.edu.au/x", "https://evil.com/austlii.edu.au", "https://austlii.edu.au.evil.com/", "https://user:pw@www.ato.gov.au/", "https://www.ato.gov.au:8443/", "https://169.254.169.254/", "file:///etc/passwd", "https://localhost/"]) assert.ok(!isAllowedSourceUrl(u), u);
 });
 
 test("fetchSourceText refuses redirects off the allowlist and non-HTML", async () => {
   const redirectOut = async () => new Response(null, { status: 302, headers: { location: "https://evil.com/x" } });
-  const r1 = await fetchSourceText(CASE, redirectOut);
+  const r1 = await fetchSourceText(LEG, redirectOut);
   assert.ok(!r1.ok && /not on Lex's list/.test(r1.error));
   const pdf = async () => new Response("%PDF", { status: 200, headers: { "content-type": "application/pdf" } });
-  assert.ok(!(await fetchSourceText(CASE, pdf)).ok);
+  assert.ok(!(await fetchSourceText(LEG, pdf)).ok);
   const html = async () => new Response(`<html><head><title>t</title></head><body><nav>menu</nav><p>[40] Earlier.</p><p>[41] The dominant purpose is assessed objectively &amp; by reference to the eight matters.</p>${"<p>filler text here</p>".repeat(20)}</body></html>`, { status: 200, headers: { "content-type": "text/html" } });
-  const r3 = await fetchSourceText(CASE, html);
+  const r3 = await fetchSourceText(LEG, html);
   assert.ok(r3.ok);
   if (r3.ok) { assert.ok(r3.text.includes("[41] The dominant purpose is assessed objectively & by")); assert.ok(!r3.text.includes("menu")); }
 });
@@ -113,14 +113,18 @@ test("wrapped tools register results, readSource reads by id with a read limit, 
   const vs = await t.verifySection.execute({ act: "ITAA 1936", section: "109D" }, {});
   assert.deepEqual([(vs.sectionCheck as { found: boolean }).found, (vs.sectionCheck as { id: string }).id], [true, "S1"]);
   await t.searchAustLII.execute({}, {});
+  // AustLII access is paused: an AustLII result is never read.
   const rs = await t.readSource.execute({ id: "S2", pinpoint: "para 41" }, {});
-  assert.equal(rs.pinpointFound, true);
+  assert.equal(rs.ok, false, "AustLII is not on the read list");
+  const r4 = await t.readSource.execute({ id: "S1", pinpoint: "s 109D" }, {});
+  assert.equal(r4.pinpointFound, true);
   assert.equal((await t.readSource.execute({ id: "S3" }, {})).ok, false, "blog is not on the read list");
   assert.equal((await t.readSource.execute({ id: "S77" }, {})).ok, false, "unknown id");
   assert.ok(MAX_READS_PER_ANSWER >= 2 && MAX_READS_PER_ANSWER <= 6);
   // the real research tool set gains readSource and keeps the rest
   const real = withSourceRegistry(buildLexResearchTools(getLexConfig()), new SourceRegistry());
-  assert.ok("readSource" in real && "searchART" in real && "verifySection" in real);
+  assert.ok("readSource" in real && "verifySection" in real && "checkLegislationStatus" in real);
+  assert.ok(!("searchART" in real) && !("searchAustLII" in real), "AustLII tools are paused by default");
 });
 
 test("confidence is tightened by rules: unsupported is low, unverified or persuasive caps at moderate", () => {

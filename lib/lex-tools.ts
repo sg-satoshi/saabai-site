@@ -2,12 +2,12 @@
  * Lex Legal Research Tools
  *
  * Real-time search across Australian (and international) legal databases:
- *   searchAustLII       — Australian case law, tribunal decisions, legislation summaries
- *   searchATO           — ATO rulings, interpretive decisions, tax cases, guides
- *   searchLegislation   — Federal Register of Legislation (Acts + Regulations)
- *   searchInternational — BAILII (UK), NZLII (NZ), WorldLII for comparative law
+ *   searchAustLII      : Australian case law, tribunal decisions, legislation summaries
+ *   searchATO          : ATO rulings, interpretive decisions, tax cases, guides
+ *   searchLegislation  : Federal Register of Legislation (Acts + Regulations)
+ *   searchInternational: BAILII (UK), NZLII (NZ), WorldLII for comparative law
  *
- * Requires SERPER_API_KEY (serper.dev) — add to Vercel environment variables.
+ * Requires SERPER_API_KEY (serper.dev): add to Vercel environment variables.
  * Without it every tool returns a graceful "not configured" message so Lex
  * can still answer from its training knowledge and tell the user to verify.
  */
@@ -26,12 +26,57 @@ export interface LegalSearchResponse {
   error?: string;
 }
 
+// ── AustLII pause ─────────────────────────────────────────────────────────────
+// AustLII's usage policy restricts automated and AI-related access (including
+// retrieval-time inputs to AI). All AustLII-run sources stay off until AustLII
+// gives written permission. Set LEX_AUSTLII_ENABLED=true only after that.
+
+/** Sites run on AustLII infrastructure. Lex neither searches nor reads them while paused. */
+const AUSTLII_HOSTS = /(^|\.)(austlii\.edu\.au|worldlii\.org|nzlii\.org|commonlii\.org|lawcite\.org)$/i;
+
+export function isAustliiEnabled(): boolean {
+  return process.env.LEX_AUSTLII_ENABLED === "true";
+}
+
+export function isAustliiHost(hostOrSite: string): boolean {
+  const host = hostOrSite.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
+  return AUSTLII_HOSTS.test(host);
+}
+
+function isAustliiUrl(url: string): boolean {
+  try { return isAustliiHost(new URL(url).hostname); } catch { return false; }
+}
+
+/** Tool names that only search AustLII. Dropped from every Lex tool set while paused. */
+export const AUSTLII_TOOL_NAMES = [
+  "searchAustLII",
+  "searchStateLegislation",
+  "searchART",
+  "searchAAT",
+  "searchCorporationsLaw",
+  "searchFamilyLaw",
+] as const;
+
+/** Removes AustLII-only tools from a tool set while the pause is on. */
+export function withoutAustliiTools<T extends Record<string, unknown>>(tools: T): T {
+  if (isAustliiEnabled()) return tools;
+  const out = { ...tools } as Record<string, unknown>;
+  for (const k of AUSTLII_TOOL_NAMES) delete out[k];
+  return out as T;
+}
+
+const AUSTLII_PAUSED = "This source is paused. Lex is not searching AustLII-run databases until AustLII gives permission.";
+
 async function siteSearch(
   query: string,
   site: string,
   sourceLabel: string,
   numResults = 6
 ): Promise<LegalSearchResponse> {
+  if (!isAustliiEnabled() && isAustliiHost(site)) {
+    return { results: [], query, source: sourceLabel, error: AUSTLII_PAUSED };
+  }
+
   const apiKey = process.env.SERPER_API_KEY;
 
   if (!apiKey) {
@@ -40,7 +85,7 @@ async function siteSearch(
       query,
       source: sourceLabel,
       error:
-        "Search API not configured — add SERPER_API_KEY to Vercel environment variables to enable live legal database search.",
+        "Search API not configured: add SERPER_API_KEY to Vercel environment variables to enable live legal database search.",
     };
   }
 
@@ -67,8 +112,9 @@ async function siteSearch(
     const organic: Array<{ title?: string; link?: string; snippet?: string }> =
       data.organic ?? [];
 
+    const kept = isAustliiEnabled() ? organic : organic.filter((r) => !isAustliiUrl(r.link ?? ""));
     return {
-      results: organic.map((r) => ({
+      results: kept.map((r) => ({
         title: r.title ?? "",
         url: r.link ?? "",
         snippet: r.snippet ?? "",
@@ -88,7 +134,7 @@ async function siteSearch(
 }
 
 /**
- * Search AustLII — the Australasian Legal Information Institute.
+ * Search AustLII: the Australasian Legal Information Institute.
  * Covers: High Court, Federal Court, all State/Territory Supreme Courts,
  * ART (formerly AAT), VCAT, NCAT, QCAT, and 1000+ other tribunals and databases.
  *
@@ -131,12 +177,14 @@ export async function searchLegislation(
  * Useful for common law comparisons, treaty interpretation, and international cases.
  *
  * @param query   Legal query
- * @param source  "bailii" | "nzlii" | "worldlii" — defaults to worldlii
+ * @param source  "bailii" | "nzlii" | "worldlii": defaults to worldlii
  */
 export async function searchInternational(
   query: string,
   source: "bailii" | "nzlii" | "worldlii" = "worldlii"
 ): Promise<LegalSearchResponse> {
+  // WorldLII and NZLII run on AustLII infrastructure, so BAILII is used while the pause is on.
+  if (!isAustliiEnabled() && source !== "bailii") source = "bailii";
   const sites: Record<string, { site: string; label: string }> = {
     bailii: { site: "bailii.org", label: "BAILII (UK/Ireland)" },
     nzlii: { site: "nzlii.org", label: "NZLII (New Zealand)" },
@@ -243,12 +291,141 @@ export async function searchCorporationsLaw(query: string): Promise<LegalSearchR
 }
 
 /**
- * Search Family Court and Federal Circuit Court decisions.
+ * Search Federal Circuit and Family Court of Australia decisions (FedCFamC1F, FedCFamC2F,
+ * from 1 Sept 2021) plus the former Family Court of Australia (famca, before Sept 2021).
  * Covers: property settlement, parenting orders, spousal maintenance,
  * BFAs, financial agreements, divorce, and de facto relationships.
  *
  * @param query  Family law query
  */
 export async function searchFamilyLaw(query: string): Promise<LegalSearchResponse> {
-  return siteSearch(query, "austlii.edu.au/au/cases/cth/famca", "Family Court of Australia");
+  const [div1, div2, famca] = await Promise.all([
+    siteSearch(query, "austlii.edu.au/au/cases/cth/FedCFamC1F", "Federal Circuit and Family Court of Australia (Division 1)", 3),
+    siteSearch(query, "austlii.edu.au/au/cases/cth/FedCFamC2F", "Federal Circuit and Family Court of Australia (Division 2)", 2),
+    siteSearch(query, "austlii.edu.au/au/cases/cth/famca", "Family Court of Australia (before Sept 2021)", 3),
+  ]);
+  const results = [...div1.results, ...div2.results, ...famca.results];
+  const error = div1.error && div2.error && famca.error ? div1.error : undefined;
+  return { results, query, source: "Federal Circuit and Family Court of Australia and former Family Court", ...(error ? { error } : {}) };
+}
+
+// ── Federal Register of Legislation API (Commonwealth Act status) ────────────
+
+const FRL_API = "https://api.prod.legislation.gov.au/v1/Titles";
+const FRL_TIMEOUT_MS = 10000;
+const FRL_LABEL = "Federal Register of Legislation (status)";
+const FRL_SELECT =
+  "id,name,collection,status,isInForce,isPrincipal,hasCommencedUnincorporatedAmendments,statusPossibleFuture,namePossibleFuture,nameHistory,statusHistory,year,number";
+
+export interface ActStatus {
+  id: string;
+  name: string;
+  /** The name the caller asked for, when the Act has since been renamed. */
+  formerName?: string;
+  status: string;
+  isInForce: boolean;
+  isPrincipal: boolean;
+  /** Amendments that have commenced but are not yet in the compiled text on the Register. */
+  hasCommencedUnincorporatedAmendments: boolean;
+  /** Scheduled future status changes (for example a future repeal). */
+  statusPossibleFuture: Array<{ status?: string; start?: string }>;
+  namePossibleFuture: Array<{ name?: string; start?: string }>;
+  /** Date the current status started, when the Register gives one. */
+  statusSince?: string;
+  url: string;
+}
+
+export interface ActStatusResponse extends LegalSearchResponse {
+  acts: ActStatus[];
+}
+
+/**
+ * Only an Act name may leave Lex for this API. Placeholders ({{PERSON_1}}) or anything
+ * that is not a plausible Act title is refused, so no client detail can be sent.
+ */
+export function cleanActName(raw: string): string | null {
+  const s = String(raw ?? "").replace(/\s+/g, " ").trim();
+  if (!s || s.length > 160) return null;
+  if (/\{\{|\}\}|@|https?:/i.test(s)) return null;
+  if (!/^[A-Za-z0-9 ().,'&\-]+$/.test(s)) return null;
+  if (!/\b(Act|Regulations?|Rules|Ordinance)\b/i.test(s)) return null;
+  return s;
+}
+
+type FrlTitle = {
+  id: string; name: string; status?: string; isInForce?: boolean; isPrincipal?: boolean;
+  hasCommencedUnincorporatedAmendments?: boolean;
+  statusPossibleFuture?: Array<{ status?: string; start?: string }>;
+  namePossibleFuture?: Array<{ name?: string; start?: string }>;
+  nameHistory?: Array<{ name?: string }>;
+  statusHistory?: Array<{ status?: string; start?: string }>;
+};
+
+async function frlQuery(filter: string, top: number, fetchImpl: typeof fetch): Promise<FrlTitle[]> {
+  const u = new URL(FRL_API);
+  u.searchParams.set("$filter", filter);
+  u.searchParams.set("$top", String(top));
+  u.searchParams.set("$select", FRL_SELECT);
+  const res = await fetchImpl(u.toString(), { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(FRL_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`Register returned HTTP ${res.status}`);
+  const data = (await res.json()) as { value?: FrlTitle[] };
+  return Array.isArray(data.value) ? data.value : [];
+}
+
+function toActStatus(t: FrlTitle, asked: string): ActStatus {
+  const hist = t.statusHistory ?? [];
+  const since = hist.length ? hist[hist.length - 1].start : undefined;
+  return {
+    id: t.id,
+    name: t.name,
+    ...(t.name.toLowerCase() !== asked.toLowerCase() && (t.nameHistory ?? []).some((h) => (h.name ?? "").toLowerCase() === asked.toLowerCase())
+      ? { formerName: asked }
+      : {}),
+    status: t.status ?? "Unknown",
+    isInForce: t.isInForce === true,
+    isPrincipal: t.isPrincipal === true,
+    hasCommencedUnincorporatedAmendments: t.hasCommencedUnincorporatedAmendments === true,
+    statusPossibleFuture: t.statusPossibleFuture ?? [],
+    namePossibleFuture: t.namePossibleFuture ?? [],
+    ...(since ? { statusSince: since.slice(0, 10) } : {}),
+    url: `https://www.legislation.gov.au/${t.id}/latest/text`,
+  };
+}
+
+function statusSnippet(a: ActStatus): string {
+  const parts = [`Status: ${a.status}${a.statusSince ? ` since ${a.statusSince}` : ""}.`];
+  if (a.formerName) parts.push(`Renamed: formerly ${a.formerName}.`);
+  if (a.hasCommencedUnincorporatedAmendments) parts.push("Commenced amendments are not yet incorporated in the compiled text. Check the amending Acts.");
+  if (a.statusPossibleFuture.length) parts.push(`Scheduled change: ${a.statusPossibleFuture.map((f) => `${f.status ?? "change"}${f.start ? ` from ${f.start.slice(0, 10)}` : ""}`).join(", ")}.`);
+  if (a.namePossibleFuture.length) parts.push(`Scheduled rename: ${a.namePossibleFuture.map((f) => f.name).filter(Boolean).join(", ")}.`);
+  return parts.join(" ");
+}
+
+/**
+ * Commonwealth Act status from the Federal Register of Legislation API (free, no auth).
+ * Exact title first (also matches former names), then a contains() match.
+ * Never throws: on timeout or error it returns an error string so Lex can say it could not check.
+ * Section text still comes from searchLegislation / verifySection (Serper plus readSource).
+ */
+export async function checkLegislationStatus(act: string, fetchImpl: typeof fetch = fetch): Promise<ActStatusResponse> {
+  const name = cleanActName(act);
+  if (!name) {
+    return { results: [], acts: [], query: "", source: FRL_LABEL, error: "Give an Act title only, for example 'Privacy Act 1988'." };
+  }
+  const q = name.replace(/'/g, "''");
+  try {
+    let titles = await frlQuery(`name eq '${q}'`, 3, fetchImpl);
+    if (!titles.length) titles = await frlQuery(`contains(name,'${q}')`, 5, fetchImpl);
+    const acts = titles.map((t) => toActStatus(t, name));
+    return {
+      acts,
+      results: acts.map((a) => ({ title: a.name, url: a.url, snippet: statusSnippet(a), source: FRL_LABEL })),
+      query: name,
+      source: FRL_LABEL,
+      ...(acts.length ? {} : { error: "No Commonwealth title found with that name. State Acts are not on this Register." }),
+    };
+  } catch (err) {
+    const msg = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError") ? "Register timed out" : String(err instanceof Error ? err.message : err);
+    return { results: [], acts: [], query: name, source: FRL_LABEL, error: `Could not check status: ${msg}. Check legislation.gov.au directly.` };
+  }
 }

@@ -21,7 +21,7 @@ test("no em or en dashes in the /legal page or its styles", () => {
 });
 
 test("unverified or retired claims are gone", () => {
-  for (const bad of [/no hallucinations/i, /australian[- ]hosted/i, /hosted in australia/i, /14[- ]day trial/i, /most popular/i, /court[- ]ready/i, /94%/, /only ai legal tool/i, /firm workspace/i, /Partnership Agreements/, /Loan Agreements/, /Non-Disclosure/, /Contractor/, /Federal Circuit/]) {
+  for (const bad of [/no hallucinations/i, /australian[- ]hosted/i, /hosted in australia/i, /14[- ]day trial/i, /most popular/i, /court[- ]ready/i, /94%/, /only ai legal tool/i, /firm workspace/i, /Partnership Agreements/, /Loan Agreements/, /Non-Disclosure/, /Contractor/, /Federal Circuit Court/]) {
     // the explanatory code comment may name what is deliberately not claimed
     const visible = page.replace(/\/\*[\s\S]*?\*\//g, "");
     assert.ok(!bad.test(visible), `found ${bad}`);
@@ -54,16 +54,21 @@ test("every document type listed exists in the Lex drafting registry", () => {
 
 test("every source listed has a search tool in lib/lex-tools.ts", () => {
   const need: Record<string, RegExp> = {
-    AustLII: /"austlii\.edu\.au"/,
     ATO: /"ato\.gov\.au"/,
     "Federal Register of Legislation": /"legislation\.gov\.au"/,
-    "State legislation": /NT: "nt\/legis"/,
+    "Act status": /export async function checkLegislationStatus/,
     ASIC: /"asic\.gov\.au"/,
-    "Administrative Review Tribunal": /cases\/cth\/ARTA/,
     "Fair Work Commission": /"fwc\.gov\.au"/,
-    "Family Court of Australia": /cases\/cth\/famca"/,
   };
   const listed = [...page.matchAll(/\{ name: "([^"]+)", note:/g)].map((m) => m[1]);
   assert.deepEqual(listed.sort(), Object.keys(need).sort());
   for (const [k, re] of Object.entries(need)) assert.ok(re.test(tools), `no tool for ${k}`);
+});
+
+test("AustLII is paused: /legal and SEO copy do not claim AustLII, case law databases or state legislation search", () => {
+  const visible = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  for (const bad of [/AustLII/, /Administrative Review Tribunal/, /Family Court/, /State legislation/, /all 8 jurisdictions/, /searches[^."]*case law/i]) {
+    assert.ok(!bad.test(visible), `found ${bad}`);
+  }
+  for (const f of ["lib/seo-entity.ts", "lib/seo-pages.ts"]) assert.ok(!/AustLII/.test(readFileSync(f, "utf8")), f);
 });

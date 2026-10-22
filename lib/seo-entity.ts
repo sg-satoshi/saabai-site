@@ -106,7 +106,7 @@ export const lexServiceSchema = withContext(
     name: "Lex",
     serviceType: "AI legal research and drafting",
     description:
-      "Lex is an AI legal research and drafting tool for Australian law firms. It searches AustLII, ATO rulings and Australian legislation, and every answer cites its source.",
+      "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source.",
     url: `${SITE_URL}/legal`,
     offers: {
       "@type": "Offer",

@@ -18,6 +18,7 @@ export type LexTool =
   | "searchLegislation"
   | "searchInternational"
   | "verifySection"
+  | "checkLegislationStatus"
   | "searchStateLegislation"
   | "searchASIC"
   | "searchAAT" // Administrative Review Tribunal (ART) and former AAT; id kept for saved configs
@@ -73,7 +74,7 @@ Never state a legal position without authority. If uncertain, say so explicitly 
 RESEARCH PROCESS:
 When given a legal question, follow this sequence.
 
-1. Call the relevant tools: searchAustLII for case law, searchATO for tax, searchLegislation for Acts, searchInternational for comparative law, verifySection to confirm specific section numbers.
+1. Call the relevant tools that are available: searchAustLII for case law (if available), searchATO for tax, searchLegislation for Acts, searchInternational for comparative law, verifySection to confirm specific section numbers.
 
 2. Synthesise results: extract the legal principles, do not just paste snippets.
 
@@ -185,6 +186,7 @@ const LEX_INTERNAL: LexClientConfig = {
     "searchLegislation",
     "searchInternational",
     "verifySection",
+    "checkLegislationStatus",
     "searchStateLegislation",
     "searchASIC",
     "searchAAT",
