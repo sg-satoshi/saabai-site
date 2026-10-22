@@ -47,9 +47,11 @@ function parseRss(xml: string, sourceName: string, limit = 5): NewsItem[] {
 
 export async function fetchRss(url: string, sourceName: string, limit = 5): Promise<NewsItem[]> {
   try {
+    // Hard cap so one slow feed can never stall the build or a revalidation.
     const res = await fetch(url, {
       next: { revalidate: 1800 },
       headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const xml = await res.text();
@@ -209,9 +211,9 @@ async function fetchXAccount(handle: string, authorName: string, limit = 3): Pro
         headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
         signal: controller.signal,
       });
-      clearTimeout(timeout);
-      if (!res.ok) continue;
+      if (!res.ok) { clearTimeout(timeout); continue; }
       const xml = await res.text();
+      clearTimeout(timeout);
       const items = parseXRss(xml, handle, authorName, limit);
       if (items.length > 0) return items;
     } catch {
