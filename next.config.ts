@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com)" }];
 
 // Lex routes that run the open-source name model.
-const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-settings", "/api/lex-ner-health"];
+const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-extract", "/api/lex-settings", "/api/lex-ner-health"];
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["mammoth", "pdf-parse", "@huggingface/transformers", "onnxruntime-node", "sharp"],

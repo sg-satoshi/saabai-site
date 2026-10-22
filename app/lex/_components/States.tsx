@@ -20,7 +20,7 @@ export const FOLLOW_UPS = [
   "What should I check before advising the client?",
 ];
 
-export type Attachment = { name: string; text: string; words: number };
+export type Attachment = { name: string; text: string; words: number; privacy?: string };
 
 type ComposerProps = {
   value: string; onChange: (v: string) => void; onSend: () => void; disabled?: boolean;
@@ -58,7 +58,7 @@ export const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function 
     <div className="lx-cbox">
       {attachment && (
         <div className="lx-attached">
-          <Icon name="attach" size={14} /><b>{attachment.name}</b><span>{attachment.words.toLocaleString("en-AU")} words, sent with your next question</span>
+          <Icon name="attach" size={14} /><b>{attachment.name}</b><span>{attachment.words.toLocaleString("en-AU")} words, sent with your next question{attachment.privacy ? `. ${attachment.privacy}` : ""}</span>
           <button type="button" aria-label="Remove attachment" onClick={onClearAttachment}><Icon name="close" size={14} /></button>
         </div>
       )}
