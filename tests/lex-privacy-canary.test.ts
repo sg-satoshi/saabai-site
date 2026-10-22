@@ -115,7 +115,7 @@ before(async () => {
     }
     if (/serper\.dev/.test(url)) {
       searchQueries.push(body);
-      return Response.json({ organic: [{ title: `${R.company} v Commissioner`, link: "https://www.austlii.edu.au/cgi-bin/viewdoc/au/cases/qld/QSC/2024/1.html", snippet: RESULT_TEXT }] });
+      return Response.json({ organic: [{ title: `${R.company} v Commissioner`, link: "https://www.legislation.gov.au/C2004A00818/latest/text", snippet: RESULT_TEXT }] });
     }
     if (/austlii|legislation\.gov\.au|ato\.gov\.au/.test(url)) {
       return new Response(`<html><body>${RESULT_TEXT} s 180 Care and diligence</body></html>`, { status: 200, headers: { "content-type": "text/html" } });

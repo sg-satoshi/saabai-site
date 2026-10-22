@@ -19,6 +19,7 @@ import {
   checkLegislationStatus,
   type LegalSearchResponse,
   type ActStatusResponse,
+  withoutAustliiTools,
 } from "./lex-tools";
 import { SourceRegistry, fetchSourceText, isAllowedSourceUrl, findPinpoint, excerptFor, MAX_READS_PER_ANSWER } from "./lex-sources";
 
@@ -36,7 +37,7 @@ type MatterInput         = { name: string; email: string; phone?: string; practi
 
 export function buildLexResearchTools(config: LexClientConfig) {
   const enabledTools = new Set(config.tools);
-  return {
+  return withoutAustliiTools({
 
     ...(enabledTools.has("searchAustLII") && {
       searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
@@ -295,7 +296,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
         },
       }),
     }),
-  };
+  });
 }
 
 // ── Citation backend: source ids, readSource, real section checks ─────────────
@@ -351,7 +352,7 @@ export function withSourceRegistry<T extends Record<string, unknown>>(tools: T, 
   out.readSource = tool<{ id: string; pinpoint?: string }, unknown>({
     description:
       `Read the actual text of a source a search returned, by its id (e.g. S3). Use before giving a paragraph or section pinpoint, ` +
-      `and quote from what it returns. Works for AustLII, legislation.gov.au, ATO, ASIC, FWC and ART pages. Max ${MAX_READS_PER_ANSWER} reads per answer.`,
+      `and quote from what it returns. Works for legislation.gov.au, ATO, ASIC, FWC and ART pages. Max ${MAX_READS_PER_ANSWER} reads per answer.`,
     inputSchema: jsonSchema<{ id: string; pinpoint?: string }>({
       type: "object",
       properties: {

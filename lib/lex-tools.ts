@@ -26,12 +26,57 @@ export interface LegalSearchResponse {
   error?: string;
 }
 
+// ── AustLII pause ─────────────────────────────────────────────────────────────
+// AustLII's usage policy restricts automated and AI-related access (including
+// retrieval-time inputs to AI). All AustLII-run sources stay off until AustLII
+// gives written permission. Set LEX_AUSTLII_ENABLED=true only after that.
+
+/** Sites run on AustLII infrastructure. Lex neither searches nor reads them while paused. */
+const AUSTLII_HOSTS = /(^|\.)(austlii\.edu\.au|worldlii\.org|nzlii\.org|commonlii\.org|lawcite\.org)$/i;
+
+export function isAustliiEnabled(): boolean {
+  return process.env.LEX_AUSTLII_ENABLED === "true";
+}
+
+export function isAustliiHost(hostOrSite: string): boolean {
+  const host = hostOrSite.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
+  return AUSTLII_HOSTS.test(host);
+}
+
+function isAustliiUrl(url: string): boolean {
+  try { return isAustliiHost(new URL(url).hostname); } catch { return false; }
+}
+
+/** Tool names that only search AustLII. Dropped from every Lex tool set while paused. */
+export const AUSTLII_TOOL_NAMES = [
+  "searchAustLII",
+  "searchStateLegislation",
+  "searchART",
+  "searchAAT",
+  "searchCorporationsLaw",
+  "searchFamilyLaw",
+] as const;
+
+/** Removes AustLII-only tools from a tool set while the pause is on. */
+export function withoutAustliiTools<T extends Record<string, unknown>>(tools: T): T {
+  if (isAustliiEnabled()) return tools;
+  const out = { ...tools } as Record<string, unknown>;
+  for (const k of AUSTLII_TOOL_NAMES) delete out[k];
+  return out as T;
+}
+
+const AUSTLII_PAUSED = "This source is paused. Lex is not searching AustLII-run databases until AustLII gives permission.";
+
 async function siteSearch(
   query: string,
   site: string,
   sourceLabel: string,
   numResults = 6
 ): Promise<LegalSearchResponse> {
+  if (!isAustliiEnabled() && isAustliiHost(site)) {
+    return { results: [], query, source: sourceLabel, error: AUSTLII_PAUSED };
+  }
+
   const apiKey = process.env.SERPER_API_KEY;
 
   if (!apiKey) {
@@ -67,8 +112,9 @@ async function siteSearch(
     const organic: Array<{ title?: string; link?: string; snippet?: string }> =
       data.organic ?? [];
 
+    const kept = isAustliiEnabled() ? organic : organic.filter((r) => !isAustliiUrl(r.link ?? ""));
     return {
-      results: organic.map((r) => ({
+      results: kept.map((r) => ({
         title: r.title ?? "",
         url: r.link ?? "",
         snippet: r.snippet ?? "",
@@ -137,6 +183,8 @@ export async function searchInternational(
   query: string,
   source: "bailii" | "nzlii" | "worldlii" = "worldlii"
 ): Promise<LegalSearchResponse> {
+  // WorldLII and NZLII run on AustLII infrastructure, so BAILII is used while the pause is on.
+  if (!isAustliiEnabled() && source !== "bailii") source = "bailii";
   const sites: Record<string, { site: string; label: string }> = {
     bailii: { site: "bailii.org", label: "BAILII (UK/Ireland)" },
     nzlii: { site: "nzlii.org", label: "NZLII (New Zealand)" },

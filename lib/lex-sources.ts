@@ -134,7 +134,6 @@ export class SourceRegistry {
 // ── readSource: fetch real text from allowlisted legal sites ──────────────────
 
 export const READ_ALLOWLIST = [
-  "austlii.edu.au", "www.austlii.edu.au", "classic.austlii.edu.au", "www5.austlii.edu.au",
   "legislation.gov.au", "www.legislation.gov.au",
   "ato.gov.au", "www.ato.gov.au",
   "fwc.gov.au", "www.fwc.gov.au",
@@ -147,7 +146,7 @@ const READ_TIMEOUT_MS = 9000;
 
 /**
  * ATO's edge blocks the old bot UA (HTTP 403). A normal browser UA gets through
- * more often; when it still does not, public rulings are read from AustLII.
+ * more often. There is no AustLII fallback while AustLII access is paused.
  */
 export const SOURCE_BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -236,15 +235,14 @@ async function fetchAllowlisted(url: string, fetcher: Fetcher): Promise<FetchRes
   return { ok: false, error: "Too many redirects" };
 }
 
-/** Fetches one allowlisted page as text. Redirects stay on the allowlist. ATO 403s fall back to AustLII. */
+/**
+ * Fetches one allowlisted page as text. Redirects stay on the allowlist.
+ * AustLII is not on the allowlist and there is no AustLII fallback: AustLII access is paused
+ * until AustLII gives written permission (see isAustliiEnabled in lex-tools).
+ */
 export async function fetchSourceText(url: string, fetcher: Fetcher = fetch): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   const first = await fetchAllowlisted(url, fetcher);
   if (first.ok) return first;
-  const mirror = first.status === 403 ? austliiMirrorUrl(url) : null;
-  if (mirror) {
-    const second = await fetchAllowlisted(mirror, fetcher);
-    if (second.ok) return second;
-  }
   return { ok: false, error: first.error };
 }
 

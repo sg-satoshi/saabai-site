@@ -31,6 +31,7 @@ import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/porta
 import { verifySession } from "../../../lib/portal-session";
 import {
   searchAustLII,
+  withoutAustliiTools,
   searchATO,
   searchLegislation,
   searchFamilyLaw,
@@ -174,7 +175,7 @@ ${warnings}
 SUGGESTED SEARCH TERMS (use these with the available search tools):
 ${searchTerms}
 
-MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation, searchAustLII, and/or searchFamilyLaw/searchCorporationsLaw as appropriate. Confirm the key section numbers. Only then begin the draft.`;
+MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation, and searchAustLII and/or searchFamilyLaw/searchCorporationsLaw where available, as appropriate. Confirm the key section numbers. Only then begin the draft.`;
 }
 
 // ── POST handler ──────────────────────────────────────────────────────────────
@@ -312,7 +313,7 @@ export async function POST(req: Request) {
       stopWhen: stepCountIs(10), // More steps needed for document drafting
       prepareStep: finalStepAnswers(10),
       experimental_transform: [dropNarrationTransform(), noDashesTransform()],
-      tools: {
+      tools: withoutAustliiTools({
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
           description:
@@ -449,7 +450,7 @@ export async function POST(req: Request) {
           execute: async ({ act, section }) => verifySection(act, section),
         }),
 
-      },
+      }),
     });
 
     return result.toUIMessageStreamResponse();
@@ -485,7 +486,7 @@ async function runQAPass(
     const qaResult = await gw.generateText({
       system: QA_SYSTEM_PROMPT,
       messages: [{ role: "user", content: qaUserPrompt }],
-      tools: {
+      tools: withoutAustliiTools({
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
           description:
             "Search AustLII to verify whether a legal proposition or case citation in the draft is accurate.",
@@ -524,7 +525,7 @@ async function runQAPass(
           }),
           execute: async ({ act, section }) => verifySection(act, section),
         }),
-      },
+      }),
       stopWhen: stepCountIs(6),
       prepareStep: finalStepAnswers(6),
     });

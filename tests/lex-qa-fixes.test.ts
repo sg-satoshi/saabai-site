@@ -71,28 +71,18 @@ test("review schema has no length limits, and fenced or prefaced JSON still pars
   assert.throws(() => parseReviewOutput("no object here"));
 });
 
-test("ATO ruling pages that 403 fall back to AustLII, with a browser user agent", async () => {
-  assert.equal(austliiMirrorUrl(TR), MIRROR);
-  assert.equal(austliiMirrorUrl("https://www.ato.gov.au/law/view/document?docid=GSTR/GSTR20191/NAT/ATO/00001"),
-    "https://www.austlii.edu.au/au/other/rulings/ato/ATOGSTR/2019/GSTR20191.html");
-  assert.equal(austliiMirrorUrl("https://www.ato.gov.au/law/view/document?docid=COG/PCG20222/NAT/ATO/00001"), null);
-  assert.equal(austliiMirrorUrl("https://www.austlii.edu.au/au/cases/cth/HCA/1.html"), null);
+test("ATO ruling pages that 403 do not fall back to AustLII (AustLII access paused), browser user agent kept", async () => {
+  assert.equal(austliiMirrorUrl(TR), MIRROR); // helper kept for when AustLII gives permission
   assert.match(SOURCE_BROWSER_UA, /Chrome\/\d/);
   assert.ok(!/SaabaiLex|compatible;/i.test(SOURCE_BROWSER_UA));
-
-  const calls: { url: string; ua: string }[] = [];
-  const body = "<html><body><p>" + "Taxation Ruling TR 2022/4 applies to reimbursement agreements. ".repeat(8) + "</p></body></html>";
-  const fetcher = async (url: string, init: RequestInit) => {
-    const headers = init.headers as Record<string, string>;
-    calls.push({ url, ua: headers["User-Agent"] });
-    if (url.includes("ato.gov.au")) return new Response("blocked", { status: 403, headers: { "content-type": "text/html" } });
-    return new Response(body, { status: 200, headers: { "content-type": "text/html" } });
+  const calls: string[] = [];
+  const fetcher = async (url: string) => {
+    calls.push(url);
+    return new Response("blocked", { status: 403, headers: { "content-type": "text/html" } });
   };
   const got = await fetchSourceText(TR, fetcher);
-  assert.deepEqual(calls.map((c) => c.url), [TR, MIRROR]);
-  assert.ok(calls.every((c) => /Chrome/.test(c.ua)));
-  assert.equal(got.ok, true);
-  if (got.ok) assert.match(got.text, /TR 2022\/4/);
+  assert.deepEqual(calls, [TR], "no AustLII request");
+  assert.equal(got.ok, false);
 });
 
 test("narration before a tool call is dropped; the answer step is kept", async () => {

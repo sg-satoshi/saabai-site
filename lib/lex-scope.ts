@@ -5,11 +5,11 @@
 export type LexScopeKey = "cases" | "legislation" | "ato" | "tribunals" | "other";
 
 export const LEX_SCOPES: { key: LexScopeKey; label: string; hint: string; tools: string[] }[] = [
-  { key: "cases", label: "Cases", hint: "AustLII judgments", tools: ["searchAustLII"] },
-  { key: "legislation", label: "Legislation", hint: "Federal and state Acts", tools: ["searchLegislation", "searchStateLegislation", "verifySection", "checkLegislationStatus"] },
+  { key: "cases", label: "Cases", hint: "Case law search paused", tools: ["searchAustLII"] },
+  { key: "legislation", label: "Legislation", hint: "Commonwealth Acts and status", tools: ["searchLegislation", "searchStateLegislation", "verifySection", "checkLegislationStatus"] },
   { key: "ato", label: "ATO", hint: "Rulings and guidance", tools: ["searchATO"] },
-  { key: "tribunals", label: "Tribunals", hint: "ART, former AAT, Fair Work", tools: ["searchART", "searchFairWork"] },
-  { key: "other", label: "Other", hint: "ASIC, corporations, family, international", tools: ["searchASIC", "searchCorporationsLaw", "searchFamilyLaw", "searchInternational"] },
+  { key: "tribunals", label: "Tribunals", hint: "Fair Work (ART search paused)", tools: ["searchART", "searchFairWork"] },
+  { key: "other", label: "Other", hint: "ASIC, international", tools: ["searchASIC", "searchCorporationsLaw", "searchFamilyLaw", "searchInternational"] },
 ];
 
 export const ALL_SCOPES: LexScopeKey[] = LEX_SCOPES.map((s) => s.key);

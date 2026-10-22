@@ -59,7 +59,7 @@ export const publicPageMeta = {
     path: "/legal",
     title: "Lex AI Legal Research | Saabai, Gold Coast",
     description:
-      "Lex is AI legal research and drafting for Australian law firms, from Saabai on the Gold Coast. It cites AustLII, ATO rulings and legislation, and the Firm plan is $299 a month.",
+      "Lex is AI legal research and drafting for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, and the Firm plan is $299 a month.",
   }),
   receptionist: pageMeta({
     path: "/ai-receptionist-gold-coast",
