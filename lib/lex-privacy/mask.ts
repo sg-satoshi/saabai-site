@@ -12,6 +12,7 @@
 import type { StreamTextTransform, TextStreamPart, ToolSet } from "ai";
 import { createHmac, randomBytes } from "node:crypto";
 import { tokenizePII, type TokenMap, type ScanResult } from "../pii-scanner";
+import { containsParty, partyMatchers, replaceParty, type MatterParty, type PartyMatcher } from "./parties";
 
 /** Bump when detection rules change, so the redaction log shows which masker handled a request. */
 export const MASKER_VERSION = "lex-mask-3.0";
@@ -48,7 +49,12 @@ export function __setTokenizerForTests(fn: Tokenizer | null): void {
 
 const TOKEN_RE = /\{\{([A-Z]+)_(\d+)\}\}/g;
 
-export type MaskStats = { tokensReplaced: number; types: Record<string, number> };
+export type MaskStats = {
+  tokensReplaced: number;
+  types: Record<string, number>;
+  /** Which detector found each new placeholder: pattern, party (matter parties) or ner. Counts only. */
+  sources: Record<string, number>;
+};
 
 // Server-side key for thread placeholders. Derived from an existing server secret, never sent anywhere.
 let tokenSecret: Buffer | null = null;
@@ -78,12 +84,36 @@ export class LexMasker {
   readonly map: TokenMap = {};
   private byValue = new Map<string, string>();
   private counters: Record<string, number> = {};
-  readonly stats: MaskStats = { tokensReplaced: 0, types: {} };
+  readonly stats: MaskStats = { tokensReplaced: 0, types: {}, sources: {} };
+  private parties: PartyMatcher[] = [];
 
   /** With a thread key, placeholders are stable across the whole thread; without one, numbered 1, 2, 3. */
   constructor(private threadKey?: Buffer) {}
 
-  private alloc(type: string, value: string): string {
+  /**
+   * Seeds the session with a matter's known parties. Every variant of a party (surname, initials,
+   * possessives, case variants) is replaced by that party's one placeholder before the detector runs.
+   */
+  addParties(parties: MatterParty[] | undefined | null): void {
+    const add = partyMatchers(parties);
+    if (!add.length) return;
+    this.parties = [...this.parties, ...add].sort((a, b) => b.canonical.length - a.canonical.length);
+  }
+
+  get partyCount(): number {
+    return this.parties.length;
+  }
+
+  private replaceParties(text: string, wrap: (token: string) => string): string {
+    let out = text;
+    for (const m of this.parties) {
+      if (!containsParty(out, m)) continue;
+      out = replaceParty(out, m, () => wrap(this.alloc(m.type, m.canonical, "party")));
+    }
+    return out;
+  }
+
+  private alloc(type: string, value: string, source = "pattern"): string {
     const existing = this.byValue.get(value);
     if (existing) return existing;
     let token: string;
@@ -100,6 +130,7 @@ export class LexMasker {
     this.byValue.set(value, token);
     this.stats.tokensReplaced++;
     this.stats.types[type] = (this.stats.types[type] ?? 0) + 1;
+    this.stats.sources[source] = (this.stats.sources[source] ?? 0) + 1;
     return token;
   }
 
@@ -114,6 +145,8 @@ export class LexMasker {
       const known: string[] = [];
       const keep = (token: string) => `\uE000${known.push(token) - 1}\uE001`;
       let pre = text.replace(TOKEN_RE, (tok) => keep(tok));
+      // Matter parties first: every variant becomes that party's placeholder.
+      pre = this.replaceParties(pre, keep);
       for (const value of [...this.byValue.keys()].sort((a, b) => b.length - a.length)) {
         if (pre.includes(value)) pre = pre.split(value).join(keep(this.byValue.get(value)!));
       }
@@ -136,7 +169,7 @@ export class LexMasker {
 
   /** Replaces only values this session already masked (no detector). Used on Saabai-written prompts. */
   maskKnown(text: string): string {
-    let out = text;
+    let out = this.replaceParties(text, (t) => t);
     for (const value of [...this.byValue.keys()].sort((a, b) => b.length - a.length)) {
       if (value && out.includes(value)) out = out.split(value).join(this.byValue.get(value)!);
     }
@@ -147,6 +180,9 @@ export class LexMasker {
   assertClean(payload: string): void {
     for (const value of this.byValue.keys()) {
       if (value && payload.includes(value)) throw new LexPrivacyError("known value present after masking");
+    }
+    for (const m of this.parties) {
+      if (containsParty(payload, m)) throw new LexPrivacyError("matter party present after masking");
     }
   }
 

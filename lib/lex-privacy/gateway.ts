@@ -26,6 +26,7 @@ import { modelIdFrom } from "../chat-log";
 import { randomBytes } from "node:crypto";
 import { LexMasker, LexPrivacyError, MASKER_VERSION, PRIVACY_SYSTEM_NOTE, lexThreadKey, rehydrateTransform } from "./mask";
 import { recordRedaction, type RedactionOutcome } from "./redaction-log";
+import type { MatterParty } from "./parties";
 
 /** Test seam (same module instance the gateway uses). */
 export { __setTokenizerForTests, LexPrivacyError } from "./mask";
@@ -97,6 +98,8 @@ export interface LexGatewayInit {
    * thread's first user message. Hashed with the firm and a server key, never stored. See threadSeed().
    */
   thread?: string;
+  /** The matter's known parties (see matterPartiesFor). Every variant is always masked. */
+  parties?: MatterParty[];
 }
 
 const THREAD_ID_RE = /^[A-Za-z0-9_-]{6,80}$/;
@@ -118,6 +121,7 @@ export class LexGateway {
     this.route = init.route;
     this.firm = init.firm;
     this.masker = init.masker ?? new LexMasker(init.thread ? lexThreadKey(init.firm, init.thread) : undefined);
+    if (init.parties?.length) this.masker.addParties(init.parties);
     this.requestId = requestId ?? randomBytes(8).toString("hex");
   }
 
@@ -135,6 +139,8 @@ export class LexGateway {
         reason,
         types: { ...this.masker.stats.types },
         total: this.masker.stats.tokensReplaced,
+        sources: { ...this.masker.stats.sources },
+        parties: this.masker.partyCount,
         tools: { ...this.toolStats },
       });
     } catch {

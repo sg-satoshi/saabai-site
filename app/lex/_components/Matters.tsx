@@ -131,7 +131,7 @@ export function MatterDetail(p: {
   const m = p.matter;
   const st = statusPill(m);
   const [editing, setEditing] = useState(false);
-  const [d, setD] = useState({ deadline: m.deadline ?? "", deadlineLabel: m.deadlineLabel, status: m.status as MatterStatus, description: m.description });
+  const [d, setD] = useState({ deadline: m.deadline ?? "", deadlineLabel: m.deadlineLabel, status: m.status as MatterStatus, description: m.description, parties: m.parties ?? "" });
   return (
     <div className="lx-body lxm">
       <div className="lxm-col">
@@ -158,6 +158,7 @@ export function MatterDetail(p: {
             </select></label>
             <label>Next deadline<input type="date" value={d.deadline} onChange={(e) => setD({ ...d, deadline: e.target.value })} /></label>
             <label>What is due<input value={d.deadlineLabel} onChange={(e) => setD({ ...d, deadlineLabel: e.target.value })} placeholder="e.g. Lodge notice of objection" /></label>
+            <label className="wide">Other parties and aliases<textarea rows={3} value={d.parties} onChange={(e) => setD({ ...d, parties: e.target.value })} placeholder="e.g. Jane Citizen (Janie)" /><small>One per line, with any aliases in brackets, e.g. John Smith (Johnny). Lex hides these names and their variants before anything is sent to the AI.</small></label>
             <label className="wide">Notes<textarea rows={3} value={d.description} onChange={(e) => setD({ ...d, description: e.target.value })} /></label>
             <div className="wide row"><button type="button" className="lx-btn primary" disabled={p.busy}
               onClick={() => { p.onUpdate({ ...d, deadline: d.deadline || null }); setEditing(false); }}>Save changes</button></div>
@@ -212,13 +213,14 @@ export function MatterBar({ matter, onOpen, onLeave }: { matter: Matter; onOpen:
 
 export function NewMatterDialog({ onClose, onCreate, busy, error }: {
   onClose: () => void; busy: boolean; error: string | null;
-  onCreate: (f: { name: string; client: string; area: string; urgency: string; description: string; deadline: string | null; deadlineLabel: string }) => void;
+  onCreate: (f: { name: string; client: string; area: string; urgency: string; description: string; deadline: string | null; deadlineLabel: string; parties: string }) => void;
 }) {
   const [client, setClient] = useState("");
   const [name, setName] = useState("");
   const [area, setArea] = useState<string>(LEX_INTAKE_MATTER_TYPE_DEFAULT);
   const [urgency, setUrgency] = useState("medium");
   const [description, setDescription] = useState("");
+  const [parties, setParties] = useState("");
   const [deadline, setDeadline] = useState("");
   const [deadlineLabel, setDeadlineLabel] = useState("");
   const title = name.trim() || (client.trim() ? `${client.trim()}, ${area.toLowerCase()}` : "");
@@ -240,13 +242,16 @@ export function NewMatterDialog({ onClose, onCreate, busy, error }: {
           <div><label htmlFor="lxm-dl">Next deadline (optional)</label><input id="lxm-dl" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div>
           <div><label htmlFor="lxm-dll">What is due</label><input id="lxm-dll" value={deadlineLabel} onChange={(e) => setDeadlineLabel(e.target.value)} placeholder="e.g. Lodge objection" /></div>
         </div>
+        <div className="field"><label htmlFor="lxm-parties">Other parties and aliases (optional)</label>
+          <textarea id="lxm-parties" value={parties} onChange={(e) => setParties(e.target.value)} placeholder="e.g. Jane Citizen (Janie)" rows={2} />
+          <small>One per line, with any aliases in brackets, e.g. John Smith (Johnny). Lex hides these names and their variants before anything is sent to the AI.</small></div>
         <div className="field"><label htmlFor="lxm-desc">Brief description</label>
           <textarea id="lxm-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Briefly describe the matter..." rows={3} /></div>
         {error && <div className="lx-attached bad" role="alert">{error}</div>}
         <div className="row">
           <button type="button" className="lx-btn" onClick={onClose}>Cancel</button>
           <button type="button" className="lx-btn primary" disabled={!title || busy}
-            onClick={() => onCreate({ name: title, client: client.trim(), area, urgency, description, deadline: deadline || null, deadlineLabel })}>
+            onClick={() => onCreate({ name: title, client: client.trim(), area, urgency, description, deadline: deadline || null, deadlineLabel, parties })}>
             {busy ? "Creating..." : "Create matter"}
           </button>
         </div>

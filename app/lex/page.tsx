@@ -545,7 +545,7 @@ export default function LexPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId, scope: useScope, threadId: finalId }),
+        body: JSON.stringify({ messages: updated.map(({ role, content }) => ({ role, content })), clientId, scope: useScope, threadId: finalId, matterId: threads.find(t => t.id === finalId)?.matterId ?? activeMatterId ?? undefined }),
         signal: abortRef.current.signal,
       });
 
@@ -764,6 +764,7 @@ export default function LexPage() {
           specialInstructions: draftInstructions,
           responseLength: draftResponseLength !== "default" ? draftResponseLength : undefined,
           messages: [],
+          matterId: activeMatterId ?? undefined,
         }),
         signal: draftAbortRef.current.signal,
       });
@@ -818,7 +819,7 @@ export default function LexPage() {
           const qaRes = await fetch("/api/lex-draft", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ requestQA: true, completedDraft: fullText, documentType: draftTypeId }),
+            body: JSON.stringify({ requestQA: true, completedDraft: fullText, documentType: draftTypeId, matterId: activeMatterId ?? undefined }),
           });
           if (qaRes.ok) {
             const qa = await qaRes.json() as QAReport;
@@ -922,6 +923,7 @@ export default function LexPage() {
           actingFor: reviewDirection === "incoming" ? reviewActingFor : undefined,
           jurisdiction: reviewJurisdiction,
           fileName: reviewFile?.name,
+          matterId: activeMatterId ?? undefined,
         }),
       });
 
@@ -1173,6 +1175,7 @@ export default function LexPage() {
 
         {mode === "review" && (
           <ReviewView
+            matterId={activeMatterId ?? undefined}
             direction={reviewDirection} setDirection={setReviewDirection}
             docType={reviewDocType} setDocType={setReviewDocType}
             actingFor={reviewActingFor} setActingFor={setReviewActingFor}

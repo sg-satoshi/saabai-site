@@ -18,4 +18,4 @@ jobs:
         run: node scripts/check-lex-gateway.mjs
       - run: npm ci
       - name: Leak canaries and privacy tests
-        run: npx tsx --test tests/lex-privacy-phase1.test.ts tests/lex-privacy-gateway.test.ts tests/lex-privacy-tools.test.ts tests/lex-privacy-log.test.ts tests/lex-privacy-canary.test.ts tests/lex-privacy-thread.test.ts tests/lex-privacy-p3-ids.test.ts
+        run: npx tsx --test tests/lex-privacy-phase1.test.ts tests/lex-privacy-gateway.test.ts tests/lex-privacy-tools.test.ts tests/lex-privacy-log.test.ts tests/lex-privacy-canary.test.ts tests/lex-privacy-thread.test.ts tests/lex-privacy-p3-ids.test.ts tests/lex-privacy-p3-parties.test.ts
