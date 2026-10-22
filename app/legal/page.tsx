@@ -52,7 +52,7 @@ const DOC_TYPES = [
 
 const LEX_FAQS = [
   { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
-  { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the sources it relies on and says when the law is uncertain, so checking is fast, and you should always check primary sources before advising a client." },
+  { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. Case law is not searched right now. Always check primary sources before advising a client." },
   { q: "Which sources does Lex search?", a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Lex does not currently search case law databases, so check case law yourself." },
   { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside Commonwealth legislation, so it suits objections, reviews and ruling work." },
   { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
@@ -186,17 +186,17 @@ export default function LegalPage() {
             <div className="lx-card">
               <div className="lx-n">02</div>
               <h3>Check the citations</h3>
-              <p>Each point cites the case, section or ruling it relies on, with a link to the source Lex found. Open it and read the passage yourself.</p>
+              <p>Each point cites the section or ruling it relies on, with a link to the source Lex found. Open it and read the passage yourself. Lex is not searching case law right now, so check any case it mentions.</p>
             </div>
             <div className="lx-card">
               <div className="lx-n">03</div>
               <h3>Draft and check</h3>
-              <p>Turn the research into a first draft. Lex runs a QA pass and marks each clause verified, flagged or unverified for your sign-off.</p>
+              <p>Turn the research into a first draft. Lex runs a QA pass and marks each clause verified, flagged or unverified for your review. The QA pass does not check case law.</p>
             </div>
           </div>
           <div className="lx-callouts">
-            <div><b>Proper citations</b>Case name and citation, section and Act, or ruling number, not just a vague reference.</div>
-            <div><b>Binding or persuasive</b>Australian authority comes first. Overseas cases are only used for comparison and are marked as persuasive.</div>
+            <div><b>Proper citations</b>Section and Act, or ruling number, not just a vague reference.</div>
+            <div><b>Cases to check</b>Lex is not searching Australian case law right now. Treat any case it mentions as unchecked and look it up yourself.</div>
             <div><b>Clear verify cues</b>Lex says when the law is uncertain or developing, and tells you what to check.</div>
           </div>
         </div>
@@ -242,6 +242,7 @@ export default function LegalPage() {
               <ul>
                 <li><Check />Verified, flagged or unverified status per clause</li>
                 <li><Check />Critical issues: legislation mismatches, missing clauses, citation risks</li>
+                <li><Check />Case law is not checked, so verify any case yourself</li>
                 <li><Check />Recommended checks for a senior lawyer before filing or signing</li>
               </ul>
             </div>
@@ -268,10 +269,10 @@ export default function LegalPage() {
             <p className="lx-lead">Lex speeds up research. It does not replace your judgement, and it is built to make checking easy.</p>
           </div>
           <div className="lx-tgrid">
-            <div className="lx-card"><Icon d="M5 3h10l4 4v14H5zM9 13h6M9 17h4" /><h3>Every answer cites its sources</h3><p>Points link to the source Lex found, so you can read the passage yourself.</p></div>
+            <div className="lx-card"><Icon d="M5 3h10l4 4v14H5zM9 13h6M9 17h4" /><h3>Every answer cites its sources</h3><p>Points link to the legislation or ruling Lex found, so you can read the passage yourself.</p></div>
             <div className="lx-card"><Icon d="m5 12 5 5 9-10" /><h3>Always check primary sources</h3><p>Lex flags uncertain law. Its output is research assistance, not legal advice.</p></div>
-            <div className="lx-card"><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3a14 14 0 0 1 0 18" /><h3>Built for Australian law</h3><p>Australian government sources first. Overseas cases are only used for comparison.</p></div>
-            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first.</p></div>
+            <div className="lx-card"><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3a14 14 0 0 1 0 18" /><h3>Built for Australian law</h3><p>Australian government sources first. Overseas material is only used for comparison.</p></div>
+            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first. Case law is not checked.</p></div>
             <div className="lx-card"><Icon d="M4 6h16M4 12h16M4 18h10" /><h3>Saved to your login</h3><p>Research threads are tied to your own sign-in, so your history is there when you come back.</p></div>
             <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>No lock-in</h3><p>Cancel anytime.</p></div>
           </div>

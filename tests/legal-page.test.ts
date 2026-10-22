@@ -72,3 +72,11 @@ test("AustLII is paused: /legal and SEO copy do not claim AustLII, case law data
   }
   for (const f of ["lib/seo-entity.ts", "lib/seo-pages.ts"]) assert.ok(!/AustLII/.test(readFileSync(f, "utf8")), f);
 });
+
+test("with case law paused, /legal makes no case-checking claims", () => {
+  const visible = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  for (const bad of [/Binding or persuasive/i, /cites the case/i, /Case name and citation/i, /Australian authority comes first/i, /marked as persuasive/i]) {
+    assert.ok(!bad.test(visible), `found ${bad}`);
+  }
+  assert.match(visible, /not searching (Australian )?case law right now/);
+});
