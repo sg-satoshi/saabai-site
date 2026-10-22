@@ -4,8 +4,8 @@
  * (behind Vercel login) so QA can measure cold start; admins only in production.
  */
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
-import { detectNames, getNer, nerLoadMs, selfCheck, NER_MODEL } from "../../../../lib/lex-privacy/ner";
+import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
+import { detectNames, getNer, nerLoadMs, selfCheck, NER_MODEL } from "../../../lib/lex-privacy/ner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
