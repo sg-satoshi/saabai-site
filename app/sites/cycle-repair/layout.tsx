@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Space_Grotesk, IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./cycle-repair.css";
 import { clientSiteMetadata } from "../../../lib/client-site";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--cr-font-display",
-  display: "swap",
-});
+const spaceGrotesk = localFont({ src: "../../fonts/space-grotesk-latin-wght-normal.woff2", weight: "300 700", variable: "--cr-font-display", display: "swap" });
 
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--cr-font-sans",
-  display: "swap",
-});
+const ibmPlexSans = localFont({ src: [{ path: "../../fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" }, { path: "../../fonts/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" }, { path: "../../fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" }], variable: "--cr-font-sans", display: "swap" });
 
 const SITE_URL = "https://stuscyclerepairs.com";
 const HOME_TITLE = "Mobile Bike Repairs Gold Coast | Stu's Cycle Repairs";

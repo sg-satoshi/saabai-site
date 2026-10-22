@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono, Source_Serif_4 } from "next/font/google";
+import localFont from "next/font/local";
 import "./lex.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-lex-sans", display: "swap" });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-lex-mono", display: "swap" });
+const inter = localFont({ src: "../fonts/inter-latin-wght-normal.woff2", weight: "100 900", variable: "--font-lex-sans", display: "swap" });
+const mono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-lex-mono", display: "swap" });
 // Answer text and quoted extracts only (Shane's call, 19 Oct): interface text stays Inter.
-const serif = Source_Serif_4({ subsets: ["latin"], variable: "--font-lex-serif", display: "swap", weight: ["400", "600"] });
+const serif = localFont({ src: "../fonts/source-serif-4-latin-wght-normal.woff2", weight: "200 900", variable: "--font-lex-serif", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Lex: Australian Legal Research",
