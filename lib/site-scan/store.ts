@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { redis } from "@/lib/exp/config";
+import type { ScanEvidence } from "./evidence";
+import type { FalsePositiveFlag } from "./flags";
 import type { ScanReport } from "./types";
 
 const P = "saabai:sitescan";
@@ -97,4 +99,40 @@ export async function history(domain: string): Promise<HistoryPoint[]> {
 }
 export async function allDomains(): Promise<string[]> {
   try { const r = redis(); return r ? ((await r.smembers(`${P}:domains`)) as string[]).sort() : []; } catch { return []; }
+}
+
+export async function saveEvidence(ev: ScanEvidence): Promise<void> {
+  try {
+    const r = redis(); if (!r || !/^[0-9a-f-]{36}$/.test(ev.reportId)) return;
+    await r.set(`${P}:ev:${ev.reportId}`, JSON.stringify(ev), { ex: RESULT_TTL });
+  } catch { /* storing must never break a scan */ }
+}
+
+export async function getEvidence(id: string): Promise<ScanEvidence | null> {
+  try {
+    if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+    const r = redis(); if (!r) return null;
+    const v = await r.get<unknown>(`${P}:ev:${id}`); if (!v) return null;
+    return (typeof v === "string" ? JSON.parse(v) : v) as ScanEvidence;
+  } catch { return null; }
+}
+
+/** Per-site list. Newest first, capped at 200. Same Redis the scanner already uses. */
+export async function saveFalsePositive(fp: FalsePositiveFlag): Promise<boolean> {
+  try {
+    const r = redis(); if (!r) return false;
+    const key = `${P}:fp:${fp.domain}`;
+    await r.lpush(key, JSON.stringify(fp));
+    await r.ltrim(key, 0, 199);
+    return true;
+  } catch { return false; }
+}
+
+export async function listFalsePositives(domain: string): Promise<FalsePositiveFlag[]> {
+  try {
+    const d = domain.trim().toLowerCase().slice(0, 200);
+    if (!d || /[\r\n]/.test(d)) return [];
+    const r = redis(); if (!r) return [];
+    return (await r.lrange<unknown>(`${P}:fp:${d}`, 0, 199)).map((x) => (typeof x === "string" ? JSON.parse(x) : x) as FalsePositiveFlag);
+  } catch { return []; }
 }

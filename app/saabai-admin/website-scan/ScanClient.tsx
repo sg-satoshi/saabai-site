@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import ReportView from "../../components/scan/ReportView";
+import ScanChat from "./ScanChat";
 import type { ScanReport } from "@/lib/site-scan/types";
+import type { FalsePositiveFlag } from "@/lib/site-scan/flags";
 
 type Row = { slug: string; name: string; url: string; kind?: "live" | "preview"; report?: ScanReport; error?: string };
 type Point = { id: string; at: string; overall: number | null; critical: number; quick: number; mode: string };
@@ -16,19 +18,32 @@ export default function ScanClient() {
   const [report, setReport] = useState<ScanReport | null>(null); const [busy, setBusy] = useState(""); const [err, setErr] = useState("");
   const [rows, setRows] = useState<Row[] | null>(null); const [domains, setDomains] = useState<string[]>([]); const [pub, setPub] = useState(false);
   const [hist, setHist] = useState<Point[]>([]); const [histDomain, setHistDomain] = useState("");
+  const [flags, setFlags] = useState<FalsePositiveFlag[]>([]);
+  const [flagFor, setFlagFor] = useState<{ id: string; label: string } | null>(null);
+  const [flagNote, setFlagNote] = useState("");
+  const [flagMsg, setFlagMsg] = useState("");
 
   const loadMeta = async () => { const { j } = await post({ action: "domains" }); setDomains(j.domains ?? []); setPub(j.publicEnabled === true); };
   useEffect(() => { let on = true; post({ action: "domains" }).then(({ j }) => { if (on) { setDomains(j.domains ?? []); setPub(j.publicEnabled === true); } }); return () => { on = false; }; }, []);
+  useEffect(() => { if (flagFor) document.getElementById("fp-form")?.scrollIntoView({ behavior: "smooth", block: "center" }); }, [flagFor]);
   const loadHist = async (d: string) => { setHistDomain(d); const { j } = await post({ action: "history", domain: d }); setHist(j.points ?? []); };
 
   const scan = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(""); setBusy("scan"); setReport(null);
     const { ok, j } = await post({ action: "scan", url, name, industry, suburb, gbp: { rating, reviews, newestDaysAgo: days } });
     setBusy(""); if (!ok) { setErr(j.error ?? "Scan failed"); return; }
-    setReport(j.report); void loadMeta(); void loadHist(j.report.domain);
+    showReport(j.report); void loadMeta(); void loadHist(j.report.domain);
   };
   const factory = async () => { setBusy("factory"); setErr(""); const { ok, j } = await post({ action: "factory" }); setBusy(""); if (!ok) { setErr(j.error ?? "Failed"); return; } setRows(j.rows); void loadMeta(); };
-  const open = async (id: string) => { const { j } = await post({ action: "report", id }); if (j.report) { setReport(j.report); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+  const loadFlags = async (domain: string) => { const { j } = await post({ action: "flags", domain }); setFlags(j.flags ?? []); };
+  const open = async (id: string) => { const { j } = await post({ action: "report", id }); if (j.report) { setReport(j.report); setFlagFor(null); setFlagMsg(""); void loadFlags(j.report.domain); window.scrollTo({ top: 0, behavior: "smooth" }); } };
+  const showReport = (r: ScanReport) => { setReport(r); setFlagFor(null); setFlagMsg(""); void loadFlags(r.domain); };
+  const submitFlag = async () => {
+    if (!report || !flagFor) return;
+    const { ok, j } = await post({ action: "flag-fp", reportId: report.id, checkId: flagFor.id, note: flagNote });
+    if (!ok || j.ok === false) { setFlagMsg(j.error ?? "Could not save the flag"); return; }
+    setFlags((xs) => [j.flag, ...xs]); setFlagFor(null); setFlagNote(""); setFlagMsg(`Flagged ${flagFor.id}.`);
+  };
   const [clean, setClean] = useState("");
   const cleanup = async (apply: boolean) => {
     if (apply && !confirm("Merge duplicate history keys and drop invalid ones? Run the dry run first.")) return;
@@ -71,13 +86,29 @@ export default function ScanClient() {
             <tbody>{rows.map((r) => (
               <tr key={r.url} style={{ borderTop: "1px solid #ffffff18" }}>
                 <td style={{ padding: "8px 6px" }}>{r.name} {r.kind && <span style={{ fontSize: 11, padding: "1px 6px", borderRadius: 6, background: r.kind === "live" ? "#14532d" : "#3f3f46", color: "#fff" }}>{r.kind === "live" ? "Live" : "Preview"}</span>}<div style={{ color: "#8d9cc4", fontSize: 12 }}>{r.url}</div></td>
-                {r.report ? <><td><b>{r.report.overall ?? "n/a"}</b></td><td>{r.report.areas.seo ?? "-"}</td><td>{r.report.areas.ai ?? "-"}</td><td>{r.report.areas.local ?? "-"}</td><td>{r.report.fixes.filter((f) => f.rating === "critical").length}</td><td>{r.report.quickWins.length}</td><td><button style={{ ...btn, height: 32, padding: "0 12px" }} onClick={() => setReport(r.report!)}>View</button></td></> : <td colSpan={7} style={{ color: "#fca5a5" }}>{r.error ?? "failed"}</td>}
+                {r.report ? <><td><b>{r.report.overall ?? "n/a"}</b></td><td>{r.report.areas.seo ?? "-"}</td><td>{r.report.areas.ai ?? "-"}</td><td>{r.report.areas.local ?? "-"}</td><td>{r.report.fixes.filter((f) => f.rating === "critical").length}</td><td>{r.report.quickWins.length}</td><td><button style={{ ...btn, height: 32, padding: "0 12px" }} onClick={() => showReport(r.report!)}>View</button></td></> : <td colSpan={7} style={{ color: "#fca5a5" }}>{r.error ?? "failed"}</td>}
               </tr>))}</tbody>
           </table>
         </div>
       )}
 
-      {report && <div style={{ marginTop: 24, background: "#0b092e", border: "1px solid #62c5d138", borderRadius: 16, padding: 24 }}><ReportView report={report} showLogo /></div>}
+      {report && (
+        <div style={{ marginTop: 24, background: "#0b092e", border: "1px solid #62c5d138", borderRadius: 16, padding: 24 }}>
+          <ReportView report={report} showLogo flaggedIds={flags.map((f) => f.checkId)} onFlag={(id, label) => { setFlagFor({ id, label }); setFlagNote(""); setFlagMsg(""); }} />
+          {flagFor && (
+            <form id="fp-form" onSubmit={(e) => { e.preventDefault(); void submitFlag(); }} style={{ display: "grid", gap: 8, marginTop: 12, padding: 12, border: "1px solid #6a6ec9", borderRadius: 10 }}>
+              <div style={{ fontSize: 14 }}>Flag <b>{flagFor.label}</b> ({flagFor.id}) as a false positive.</div>
+              <input aria-label="False positive note" style={inp} value={flagNote} placeholder="Why is this finding wrong?" onChange={(e) => setFlagNote(e.target.value)} required />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={btn} type="submit">Save flag</button>
+                <button style={{ ...btn, background: "#2a2870", color: "#fff" }} type="button" onClick={() => setFlagFor(null)}>Cancel</button>
+              </div>
+            </form>
+          )}
+          {flagMsg && <p style={{ color: "#a5b4fc", fontSize: 13 }}>{flagMsg}</p>}
+          <ScanChat reportId={report.id} onFlagged={() => loadFlags(report.domain)} />
+        </div>
+      )}
 
       <h2 style={{ fontSize: 20, marginTop: 28 }}>Score history</h2>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "6px 0 10px" }}>
