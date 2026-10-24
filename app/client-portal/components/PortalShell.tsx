@@ -1,5 +1,7 @@
 "use client";
 
+import { PORTAL_REQUESTS_HREF } from "../../../lib/portal-pages";
+
 import React, { useEffect, useState } from "react";
 
 export type NavItem = {
@@ -187,7 +189,7 @@ export function PortalShell({
             <b>{crumb}</b>
           </div>
           <div className="tools">
-            <a className="btn" href="mailto:hello@saabai.ai">
+            <a className="btn" href={PORTAL_REQUESTS_HREF}>
               Contact Saabai
             </a>
             <button type="button" className="btn gh" style={{ padding: "0 8px" }} aria-label="Notifications">

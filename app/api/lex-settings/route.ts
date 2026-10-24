@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getClientLLMConfig,
   saveClientLLMConfig,
-  buildModelFromConfig,
   encryptKey,
 } from "../../../lib/client-config";
 import { getRedis } from "../../../lib/redis";
 import type { ClientLLMConfig } from "../../../lib/client-config";
-import { generateText } from "ai";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
 
 /** GET /api/lex-settings?clientId=xxx — returns config without the real key */
 export async function GET(req: NextRequest) {
@@ -65,13 +64,13 @@ export async function POST(req: NextRequest) {
         testConfig = { ...stored, provider, model };
       }
 
-      const llmModel = buildModelFromConfig(testConfig);
-      if (!llmModel) {
+      // Test calls go through the Lex gateway like every other Lex model call (masked and logged).
+      const gw = await LexGateway.open({ route: "lex-settings-test", firm: clientId, model: { kind: "config", config: testConfig } });
+      if (!gw) {
         return NextResponse.json({ ok: false, error: "Unsupported provider" });
       }
 
-      const { text } = await generateText({
-        model: llmModel,
+      const { text } = await gw.generateText({
         messages: [{ role: "user", content: "Reply with only the word: connected" }],
         maxOutputTokens: 10,
       });

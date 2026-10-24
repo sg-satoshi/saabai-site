@@ -1,5 +1,7 @@
+import { slugify } from "./targets";
 import { randomUUID } from "node:crypto";
 import { CHECKS } from "./checks";
+import { EXTRA_HTML_CAP, HOME_HTML_CAP, ROBOTS_CAP, pageBite, type ScanEvidence } from "./evidence";
 import { safeFetch, type FetchResult } from "./safe-fetch";
 import { parseTarget, ScanUrlError, type Resolver } from "./ssrf";
 import { buildReport, noWebsiteReport } from "./score";
@@ -27,19 +29,23 @@ const looksEmpty = (h: string) => {
 const SHARED_HOSTS = new Set(["saabai.ai"]);
 /** Slug of a sub-site served under a shared host, e.g. /sites/nico-moretti/ on saabai.ai. */
 export function subSitePath(t: URL): string | null {
-  const m = SHARED_HOSTS.has(t.hostname.replace(/^www\./, "")) ? t.pathname.match(/^\/sites\/([a-z0-9-]+)/i) : null;
-  return m ? `/sites/${m[1]}` : null;
+  const m = SHARED_HOSTS.has(t.hostname.toLowerCase().replace(/^www\./, "")) ? t.pathname.match(/^\/sites\/([^/]+)/i) : null;
+  const slug = m ? slugify(m[1]) : "";
+  return slug ? `/sites/${slug}` : null;
 }
 
-export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?: Fetcher; now?: Date } = {}): Promise<ScanReport> {
+export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?: Fetcher; now?: Date; capture?: (e: ScanEvidence) => void } = {}): Promise<ScanReport> {
   const f: Fetcher = deps.fetch ?? safeFetch;
   const target = parseTarget(rawUrl); // throws ScanUrlError on bad or unsafe input
   const id = randomUUID();
   const sub = subSitePath(target);
-  const host = target.hostname.replace(/^www\./, "");
+  const host = target.hostname.toLowerCase().replace(/^www\./, "");
   const domain = sub ? `${host}${sub}` : host;
   const origin = target.origin;
   const budget = 5000;
+  const capture = (e: Omit<ScanEvidence, "reportId" | "domain" | "source" | "fetchedAt">) => {
+    deps.capture?.({ reportId: id, domain, source: "scan", fetchedAt: (deps.now ?? new Date()).toISOString(), ...e });
+  };
   const [home, robotsR, sitemapR, llmsR, httpR] = await Promise.all([
     f(target.toString(), { timeoutMs: 8000 }),
     f(`${origin}/robots.txt`, { timeoutMs: budget }),
@@ -50,9 +56,13 @@ export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?:
   // One retry on a flaky first load so a slow moment is not reported as "blocked".
   if (!home.ok && (home.error === "timeout" || home.error === "other")) { const again = await f(target.toString(), { timeoutMs: 8000 }); if (again.ok) Object.assign(home, again); }
   const gone = (r: FetchResult) => r.error === "dns" || r.error === "refused" || r.status === 404 || r.status === 410;
-  if (gone(home)) return noWebsiteReport({ id, domain, url: target.toString(), input, reason: `We could not find a working website at ${domain}.`, now: deps.now });
+  if (gone(home)) {
+    capture({ home: pageBite(target.toString(), home, HOME_HTML_CAP), robots: null, http: null, extras: [] });
+    return noWebsiteReport({ id, domain, url: target.toString(), input, reason: `We could not find a working website at ${domain}.`, now: deps.now });
+  }
   if (!home.ok && (home.error === "blocked_url")) throw new ScanUrlError("That address cannot be scanned.");
   if (!home.ok) {
+    capture({ home: pageBite(target.toString(), home, HOME_HTML_CAP), robots: robotsR.ok ? robotsR.body.slice(0, ROBOTS_CAP) : null, http: { status: httpR.status, location: (httpR.headers.location ?? "").slice(0, 300) || null }, extras: [] });
     const why = [401, 403, 429].includes(home.status) || home.status >= 500 ? "The site blocked or refused our scan" : home.error === "timeout" ? "The site took too long to answer" : "We could not read the site";
     return { ...noWebsiteReport({ id, domain, url: target.toString(), input, now: deps.now }), mode: "blocked", overall: null, areas: { seo: null, ai: null, local: null }, fixes: [], quickWins: [], offer: "blueprint", offerReason: "We could not scan the site, so we have not scored it.", message: `${why}. We have not scored it. Try again, or tell us about your business and we will review it by hand.` };
   }
@@ -76,6 +86,12 @@ export async function runScan(rawUrl: string, input: Input = {}, deps: { fetch?:
     extra: extraR.filter((r) => r.ok).map((r) => r.body).join("\n"),
     jsHeavy: looksEmpty(home.body),
   };
+  capture({
+    home: pageBite(base, home, HOME_HTML_CAP),
+    robots: robots ? robots.slice(0, ROBOTS_CAP) : null,
+    http: { status: httpR.status, location: (httpR.headers.location ?? "").slice(0, 300) || null },
+    extras: extraR.map((r, i) => ({ url: uniq[i], status: r.status, html: r.ok ? (pageBite(uniq[i], r, EXTRA_HTML_CAP)?.html ?? "") : "" })).filter((x) => x.html),
+  });
   const results = CHECKS.map((def) => ({ def, r: def.run(snap) }));
   return buildReport({ id, domain, url: base, results, input, now: deps.now });
 }

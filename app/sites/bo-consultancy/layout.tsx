@@ -38,11 +38,6 @@ export const metadata: Metadata = {
   authors: [{ name: "BO Consulting" }],
   creator: "BO Consulting",
   publisher: "BO Consulting",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
-  },
   openGraph: {
     type: "website",
     locale: "en_AU",
@@ -123,8 +118,16 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
   function init() {
     if (document.getElementById('bo-widget-root')) return;
     var NAVY='#123B5D',ORANGE='#F58220',AVATAR='/sites/bo-consultancy/christina-avatar.jpg';
+    var SLUG='bo-consultancy';
     var messages=[{role:'assistant',content:"G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?"}];
     var isOpen=false;
+    var chatbotOff=false;
+    var offText='';
+    fetch('/api/chat-platform/config?site='+SLUG).then(function(r){return r.json();}).then(function(c){
+      if(!c||c.active!==false)return;
+      chatbotOff=true;
+      offText=c.offMessage||"Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+    }).catch(function(){});
 
     var style=document.createElement('style');
     style.textContent='@keyframes bo-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}#bo-widget-root *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}';
@@ -198,6 +201,12 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
       var txt=i?i.value.trim():'';
       if(!txt)return;
       i.value='';
+      if(chatbotOff){
+        messages.push({role:'user',content:txt});
+        messages.push({role:'assistant',content:offText||"Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help."});
+        renderMsgs();
+        return;
+      }
       messages.push({role:'user',content:txt});
       renderMsgs();
       var typing=document.createElement('div');
@@ -206,9 +215,10 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
       msgs.appendChild(typing);
       msgs.scrollTop=msgs.scrollHeight;
       try{
-        var r=await fetch('/api/bo-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages})});
+        var r=await fetch('/api/chat-platform/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:SLUG,messages:messages})});
         var d=await r.json();
-        messages.push({role:'assistant',content:d.content||'Sorry, having trouble. Email info@boconsulting.com.au'});
+        if(d&&d.chatbotOff){chatbotOff=true;offText=d.content||offText;}
+        messages.push({role:'assistant',content:(d&&d.content)||'Sorry, having trouble. Email info@boconsulting.com.au'});
       }catch(e){
         messages.push({role:'assistant',content:'Having trouble connecting. Email info@boconsulting.com.au'});
       }

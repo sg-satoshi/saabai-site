@@ -205,7 +205,7 @@ export default function ContactPage() {
                 Service area
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Mobile servicing across all of the Gold Coast, QLD and the Tweed Coast, NSW. Stu comes
+                Stu travels from the Northern Rivers to Coomera and Ormeau. He comes
                 to you, at home or at work.
               </p>
             </div>

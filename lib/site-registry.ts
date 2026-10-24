@@ -1,4 +1,6 @@
 import { Redis } from "@upstash/redis";
+import { BO_SYSTEM_PROMPT } from "./chatbot/platform-bot-seed";
+import { CLIENT_SITE_DIRECTORY } from "./client-site-directory";
 
 const redis = Redis.fromEnv();
 
@@ -59,8 +61,9 @@ export interface SiteConfig {
   updatedAt: number;
 }
 
-// App Router sites (hardcoded in code, not in Redis/Blob)
-const APP_ROUTER_SITES: SiteConfig[] = [
+// App Router sites (hardcoded in code, not in Redis/Blob).
+// url and domains come from lib/client-site-directory.ts so routing rules cannot drift.
+const APP_ROUTER_SITE_DETAILS: Array<Omit<SiteConfig, "url" | "domains">> = [
   {
     id: "cycle-repair",
     slug: "cycle-repair",
@@ -70,8 +73,6 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     status: "live" as const,
     source: "external",
     externalPlatform: "Lovable",
-    url: "https://stuscyclerepairs.com",
-    domains: ["stuscyclerepairs.com", "www.stuscyclerepairs.com"],
     business: {
       name: "Stu's Cycle Repairs",
       tagline: "We Come To You",
@@ -96,7 +97,6 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     description: "Premium tax & trust law specialist site (Next.js App Router)",
     status: "live" as const,
     source: "factory",
-    url: "https://www.saabai.ai/sites/tributum-law-v2",
     business: {
       name: "Tributum Law",
       tagline: "Tax & Trust Law. Resolved.",
@@ -121,8 +121,6 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     description: "Blue-collar recruitment & labour hire specialist site (App Router, custom domain boconsulting.com.au)",
     status: "live" as const,
     source: "factory",
-    url: "https://boconsulting.com.au",
-    domains: ["boconsulting.com.au", "www.boconsulting.com.au"],
     business: {
       name: "BO Consulting",
       tagline: "Connecting Australia's Workforce",
@@ -132,7 +130,7 @@ const APP_ROUTER_SITES: SiteConfig[] = [
       enabled: true,
       name: "Christina",
       greeting: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?",
-      systemPrompt: "You are Christina, the BO Consulting assistant. Help visitors with blue-collar recruitment and labour hire inquiries.",
+      systemPrompt: BO_SYSTEM_PROMPT,
       avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg",
     },
     createdAt: 1745000000000,
@@ -146,8 +144,6 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     description: "Pre-market house & land packages at wholesale pricing for Australian investors (App Router, custom domain wholesalehomes.com.au)",
     status: "live" as const,
     source: "factory",
-    url: "https://wholesalehomes.com.au",
-    domains: ["wholesalehomes.com.au", "www.wholesalehomes.com.au"],
     business: {
       name: "Wholesale Homes Australia",
       tagline: "House & Land Packages. Below Market Price.",
@@ -164,6 +160,18 @@ const APP_ROUTER_SITES: SiteConfig[] = [
     updatedAt: 1749000000000,
   },
 ];
+
+export const APP_ROUTER_SITES: SiteConfig[] = CLIENT_SITE_DIRECTORY.map((entry) => {
+  const details = APP_ROUTER_SITE_DETAILS.find((site) => site.slug === entry.slug);
+  if (!details) throw new Error(`APP_ROUTER_SITES is missing details for "${entry.slug}". Add them in lib/site-registry.ts.`);
+  return { ...details, url: entry.url, ...(entry.domains ? { domains: entry.domains } : {}) };
+});
+
+for (const site of APP_ROUTER_SITE_DETAILS) {
+  if (!CLIENT_SITE_DIRECTORY.some((entry) => entry.slug === site.slug)) {
+    throw new Error(`Register "${site.slug}" in lib/client-site-directory.ts so redirects, noindex and Saabai chrome follow the site registry.`);
+  }
+}
 
 export async function createSite(config: Omit<SiteConfig, "id" | "createdAt" | "updatedAt">): Promise<SiteConfig> {
   const id = `site_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -182,6 +190,12 @@ export async function getSiteBySlug(slug: string): Promise<SiteConfig | null> {
   return sites.find(s => s.slug === slug) ?? null;
 }
 
+/** Raw Redis site records (no hardcoded merge). Used by the dedupe tool. */
+export async function listRedisSites(): Promise<SiteConfig[]> {
+  const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
+  return data ? Object.values(data).map(parseSiteValue).filter((s): s is SiteConfig => s !== null) : [];
+}
+
 export async function listSites(): Promise<SiteConfig[]> {
   try {
     const data = await redis.hgetall<Record<string, SiteConfig>>("saabai:sites");
@@ -189,9 +203,12 @@ export async function listSites(): Promise<SiteConfig[]> {
       ? Object.values(data).map(parseSiteValue).filter((s): s is SiteConfig => s !== null)
       : [];
 
-    // Merge App Router sites, preferring Redis data if same slug exists
+    // Merge App Router sites, preferring Redis data for the same client (same slug, business name or custom domain).
+    const { nameKey, customDomains } = await import("./site-dedupe");
     const seen = new Set(redisSites.map((s) => s.slug));
-    const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug))];
+    const names = new Set(redisSites.map((s) => nameKey(s)).filter(Boolean));
+    const doms = new Set(redisSites.flatMap((s) => customDomains(s)));
+    const merged = [...redisSites, ...APP_ROUTER_SITES.filter((s) => !seen.has(s.slug) && !names.has(nameKey(s)) && !customDomains(s).some((d) => doms.has(d)))];
 
     return merged;
   } catch {

@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { getDeepSeekModel } from "../../../../lib/chat-config";
 import { getTenantBySlug, getActiveAgent, retrieve } from "../../../../lib/agent-retrieval";
 import { serviceClient } from "../../../../lib/agent-supabase";
+import { lastUserText, logChatTurn } from "../../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -114,6 +115,17 @@ export async function POST(req: Request) {
     ];
     const { error } = await db.from("messages").insert(msgRows);
     if (error) console.error("message ledger insert:", error.message);
+
+    // Shared log (bot, site, cost_usd). Separate from the tenant ledger above, which the overview still reads.
+    logChatTurn({
+      bot: "ai-agent",
+      siteId: tenant.id,
+      conversationId,
+      model: isPremium ? "deepseek-v4-pro" : "deepseek-v4-flash",
+      usage,
+      userText: lastUserText(messages),
+      assistantText: text,
+    });
 
     return Response.json({
       content: text,

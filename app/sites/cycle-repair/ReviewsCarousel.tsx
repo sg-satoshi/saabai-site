@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { reviews, googleRating, googleReviewCount, googleMapsUrl } from "./reviews";
+import { reviews, googleRating, googleReviewCount, googleBusinessUrl } from "./reviews";
 
 function Stars({ n, className = "" }: { n: number; className?: string }) {
   return (
@@ -70,7 +70,7 @@ export function ReviewsCarousel() {
           </div>
           <div className="flex items-center gap-3">
             <a
-              href={googleMapsUrl}
+              href={googleBusinessUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-semibold text-[#1a73e8] hover:text-[#174ea6] transition-colors underline underline-offset-4"

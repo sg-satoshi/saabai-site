@@ -13,6 +13,8 @@ export function PageShell({ children }: { children: React.ReactNode }) {
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <Link href="/sites/cycle-repair#services" className="hover:text-brand transition-colors">Services</Link>
             <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="hover:text-brand transition-colors">E-bikes</Link>
+            <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="hover:text-brand transition-colors">Punctures</Link>
             <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
           </div>
@@ -39,6 +41,8 @@ export function PageShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap justify-center gap-6 text-[11px] font-bold tracking-[0.22em] uppercase text-muted-foreground">
             <Link href="/sites/cycle-repair" className="hover:text-brand transition-colors">Home</Link>
             <Link href="/sites/cycle-repair/gold-coast" className="hover:text-brand transition-colors">Gold Coast</Link>
+            <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="hover:text-brand transition-colors">E-bikes</Link>
+            <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="hover:text-brand transition-colors">Punctures</Link>
             <Link href="/sites/cycle-repair/faq" className="hover:text-brand transition-colors">FAQ</Link>
             <Link href="/sites/cycle-repair/contact" className="hover:text-brand transition-colors">Contact</Link>
             <a href="tel:0405225721" className="hover:text-brand transition-colors">Call Stu</a>

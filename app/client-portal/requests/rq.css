@@ -79,7 +79,9 @@ tr.cr td:first-child{box-shadow:inset 3px 0 0 var(--bad)}tr.cr td{background:#ff
 .rq-thumb img{width:100%;height:100%;object-fit:cover}
 .rq-pdf{display:grid;place-items:center;height:100%;font-size:11px;padding:6px;text-align:center;word-break:break-all}
 .rq-x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(11,9,46,.7);color:#fff;cursor:pointer;font-size:12px;line-height:22px;padding:0}
-.rq-add{width:96px;height:72px;border-radius:8px;border:1.5px dashed var(--teal-600,#0e7482);background:var(--teal-50,#edf8f9);display:grid;place-items:center;font-size:13px;color:var(--n-600,#5f6580);cursor:pointer}
+.rq-add-wrap{position:relative;width:96px;height:72px}
+.rq-add{width:100%;height:100%;border-radius:8px;border:1.5px dashed var(--teal-600,#0e7482);background:var(--teal-50,#edf8f9);display:grid;place-items:center;font-size:12px;font-weight:500;color:var(--n-600,#5f6580);cursor:pointer;font-family:inherit;padding:6px;text-align:center;line-height:1.25}
+.rq-file-input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .rq-act{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid var(--n-100,#eef0f5)}
 .btn.crit{background:var(--bad,#c2261d)!important;border-color:var(--bad,#c2261d)!important;color:#fff!important}
 @media(max-width:600px){

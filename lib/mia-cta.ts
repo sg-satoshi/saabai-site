@@ -6,6 +6,7 @@
  */
 import { LINKS, WEBSITE_PLANS } from "./mia-offers";
 import { TIERS } from "./blueprint";
+import { formatAud } from "./money";
 
 export const CTA_STEPS = ["score", "blueprint", "websites", "call"] as const;
 export type CtaStep = (typeof CTA_STEPS)[number];
@@ -14,7 +15,7 @@ export function isCtaStep(v: unknown): v is CtaStep {
   return typeof v === "string" && (CTA_STEPS as readonly string[]).includes(v);
 }
 
-const aud = (n: number) => `$${n.toLocaleString("en-AU")}`;
+const aud = formatAud;
 
 export const CTA_META: Record<CtaStep, { label: string; sub: string; base: string }> = {
   score: { label: "Get my free AI score", sub: "Free · about 3 minutes", base: LINKS.score },

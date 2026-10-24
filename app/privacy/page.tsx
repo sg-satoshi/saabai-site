@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
+import LegalDocument from "../components/LegalDocument";
+import { NAP } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "How Saabai collects, uses and protects your personal information.",
-  alternates: { canonical: "https://www.saabai.ai/privacy" },
-};
+export const metadata: Metadata = publicPageMeta.privacy;
 
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: "Saabai (ABN 71 889 082 572, Merrimac QLD 4226, Australia) (\"we\", \"us\") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.",
+    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",
@@ -33,25 +32,16 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "7. Access, correction and complaints",
-    body: "You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing hello@saabai.ai or writing to Saabai, Merrimac QLD 4226, Australia. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).",
+    body: `You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing ${NAP.email} or writing to ${NAP.name}, ${NAP.addressLine}. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).`,
   },
 ];
 
 export default function PrivacyPage() {
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", color: "#14202b", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 20px 80px" }}>
-        <a href="/" style={{ color: "#5c6670", fontSize: 14, textDecoration: "none" }}>← Back to Saabai</a>
-        <h1 style={{ fontSize: 34, fontWeight: 800, margin: "24px 0 8px" }}>Privacy Policy</h1>
-        <p style={{ color: "#5c6670", fontSize: 14, marginBottom: 40 }}>Last updated: October 2026</p>
-        {SECTIONS.map((s) => (
-          <section key={s.heading} style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{s.heading}</h2>
-            <p style={{ fontSize: 16, lineHeight: 1.7, margin: 0 }}>{s.body}</p>
-          </section>
-        ))}
-        <p style={{ color: "#5c6670", fontSize: 14, marginTop: 48 }}>Saabai, ABN 71 889 082 572, Merrimac QLD 4226, Australia</p>
-      </div>
-    </main>
+    <LegalDocument
+      title="Privacy Policy"
+      lede="Last updated: October 2026"
+      sections={SECTIONS}
+    />
   );
 }

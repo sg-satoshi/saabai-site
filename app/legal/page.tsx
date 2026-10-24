@@ -1,821 +1,367 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import JsonLd from "../components/JsonLd";
+import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
+import { lexServiceSchema } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
+import "./legal.css";
 
-export const metadata: Metadata = {
-  title: "Lex, AI Legal Research for Australian Law Firms",
-  description:
-    "AI-powered legal research, document drafting, and QA verification built for Australian solicitors. Search AustLII, ATO, Federal Legislation instantly. Draft trust deeds, BFAs, and commercial agreements with clause-by-clause verification.",
+export const metadata: Metadata = publicPageMeta.legal;
+
+const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
+
+/*
+ * Every claim on this page is checked against the Lex code (lib/lex-tools.ts,
+ * lib/lex-config.ts, lib/lex-document-types.ts, app/api/lex-*). Do not add a
+ * source, document type or hosting/security claim here unless the code (or the
+ * infrastructure) supports it. Not claimed on purpose: Australian hosting
+ * (functions run in iad1), per-firm data workspaces (threads are per login),
+ * uploaded-document review for firms (admin-only today) and a free trial.
+ *
+ * Client privacy claims are limited to what is live (Lex privacy Phases 1 and 2):
+ * masking in lib/lex-privacy/mask.ts and lib/pii-scanner.ts, the single gateway with no
+ * switch in lib/lex-privacy/gateway.ts (used by every app/api/lex-* model route), tool and
+ * search masking in LexGateway.wrapTools, the counts-only log in lib/lex-privacy/redaction-log.ts,
+ * and the leak tests in tests/lex-privacy-*.test.ts. Not claimed yet: AI-powered name detection,
+ * masking of uploaded documents, data residency, and provider retention or training terms.
+ */
+
+// Sources Lex can search today (one tool each in lib/lex-tools.ts).
+const SOURCES = [
+  { name: "ATO", note: "Tax rulings, PCGs, interpretive decisions" },
+  { name: "Federal Register of Legislation", note: "Acts, Regulations, Determinations" },
+  { name: "Act status", note: "In force, repealed or renamed, and pending amendments" },
+  { name: "ASIC", note: "Corporate law guidance" },
+  { name: "Fair Work Commission", note: "Employment law" },
+];
+
+// The ten structured document types in lib/lex-document-types.ts (plus "Custom").
+const DOC_TYPES = [
+  "Discretionary Trust Deeds",
+  "Unit Trust Deeds",
+  "BFAs (married couples)",
+  "BFAs (de facto couples)",
+  "Financial Settlement Consent Orders",
+  "Separation Agreements",
+  "Service Agreements",
+  "Shareholders Agreements",
+  "Employment Contracts",
+  "Commercial Leases",
+];
+
+const LEX_FAQS = [
+  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
+  { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. Case law is not searched right now. Always check primary sources before advising a client." },
+  { q: "Which sources does Lex search?", a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Lex does not currently search case law databases, so check case law yourself." },
+  { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside Commonwealth legislation, so it suits objections, reviews and ruling work." },
+  { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
+  { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
+  { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
+  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan, with no lock-in and cancel any time." },
+  { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
+];
+
+const lexSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Lex",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: "https://www.saabai.ai/legal",
+  publisher: orgRef,
+  offers: {
+    "@type": "Offer",
+    name: "Firm",
+    price: 299,
+    priceCurrency: "AUD",
+    priceSpecification: { "@type": "UnitPriceSpecification", price: 299, priceCurrency: "AUD", unitText: "MONTH" },
+  },
 };
 
-// ── Brand palette ──────────────────────────────────────────────────────────────
-const C = {
-  bg:            "#0d1b2a",
-  surface:       "#162236",
-  surfaceRaised: "#1e3050",
-  border:        "#243550",
-  gold:          "#C9A84C",
-  goldBright:    "#E0BC6A",
-  goldDim:       "#8a6e30",
-  goldBg:        "rgba(201,168,76,0.08)",
-  goldBorder:    "rgba(201,168,76,0.2)",
-  text:          "#e8edf5",
-  textMuted:     "#8fa3c0",
-  textDim:       "#4a6080",
-  green:         "#22c55e",
-};
+function Check() {
+  return <span className="lx-tick" aria-hidden="true" />;
+}
 
-// ── SVG icons ──────────────────────────────────────────────────────────────────
-function IconSearch() {
+function Icon({ d }: { d: string }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-function IconDocument() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14,2 14,8 20,8" />
-      <line x1="9" y1="13" x2="15" y2="13" />
-      <line x1="9" y1="17" x2="13" y2="17" />
-    </svg>
-  );
-}
-function IconShield() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <polyline points="9,12 11,14 15,10" />
-    </svg>
-  );
-}
-function IconMap() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  );
-}
-function IconChat() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-function IconChart() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-      <line x1="2" y1="20" x2="22" y2="20" />
-    </svg>
-  );
-}
-function IconWarning() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-      <line x1="12" y1="9" x2="12" y2="13" />
-      <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  );
-}
-function IconArrow() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12,5 19,12 12,19" />
-    </svg>
+    <span className="lx-ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d={d} /></svg>
+    </span>
   );
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+/** Illustration of how a Lex answer is laid out. Placeholder lines, no real legal content. */
+function AnswerIllustration() {
+  return (
+    <figure className="lx-illo" aria-label="Illustration of a Lex answer with its sources">
+      <div className="lx-illo-bar">
+        <i /><i /><i />
+        <span className="lx-ex">Illustration only, not legal advice</span>
+      </div>
+      <div className="lx-illo-body">
+        <div className="lx-illo-main">
+          <div className="lx-q">Can the ATO treat a loan from a private company to a shareholder as a dividend?</div>
+          <div className="lx-searched">
+            <span>Searched</span>
+            <b>ATO</b><b>Federal Register of Legislation</b>
+          </div>
+          <div className="lx-lines">
+            <p><i style={{ width: "92%" }} /><sup>1</sup></p>
+            <p><i style={{ width: "78%" }} /></p>
+            <p><i style={{ width: "86%" }} /><sup>2</sup></p>
+            <p><i style={{ width: "64%" }} /></p>
+            <p><i style={{ width: "88%" }} /><sup>3</sup></p>
+            <p><i style={{ width: "52%" }} /></p>
+          </div>
+          <div className="lx-verify">Check the primary sources before you rely on this answer.</div>
+        </div>
+        <div className="lx-illo-src">
+          <div className="lx-src-h">Sources</div>
+          <div className="lx-src"><sup>1</sup><div><b>Legislation</b><span>Section and Act, linked to the Federal Register</span></div></div>
+          <div className="lx-src"><sup>2</sup><div><b>ATO ruling</b><span>Ruling number and title, linked to ato.gov.au</span></div></div>
+          <div className="lx-src"><sup>3</sup><div><b>Act status</b><span>In force or repealed, from the Federal Register</span></div></div>
+        </div>
+      </div>
+    </figure>
+  );
+}
+
 export default function LegalPage() {
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", color: C.text, fontFamily: "system-ui, -apple-system, sans-serif" }}>
-
-      {/* Pulse animation keyframes injected via style tag */}
-      <style>{`
-        @keyframes heroPulse {
-          0%, 100% { opacity: 0.45; transform: scale(1); }
-          50%       { opacity: 0.7;  transform: scale(1.08); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
+    <div className="lx">
+      <JsonLd data={lexServiceSchema} />
+      <JsonLd data={lexSchema} />
+      <JsonLd data={faqSchema(LEX_FAQS)} />
+      <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
       <Nav activePage="/legal" />
 
-      {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
-      <section style={{
-        paddingTop: 140, paddingBottom: 96,
-        position: "relative", overflow: "hidden",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-      }}>
-        {/* Radial gold glow */}
-        <div style={{
-          position: "absolute", top: "50%", left: "50%",
-          transform: "translate(-50%, -60%)",
-          width: 700, height: 500, borderRadius: "50%",
-          background: "radial-gradient(ellipse at center, rgba(201,168,76,0.18) 0%, transparent 70%)",
-          animation: "heroPulse 4s ease-in-out infinite",
-          pointerEvents: "none",
-        }} />
-
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 32px", position: "relative", textAlign: "center" }}>
-
-          {/* Eyebrow */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            marginBottom: 28,
-            animation: "fadeUp 0.6s ease both",
-          }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.gold, display: "inline-block" }} />
-            <span style={{
-              fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase",
-              color: C.gold,
-            }}>Lex by Saabai</span>
-          </div>
-
-          {/* H1 */}
-          <h1 style={{
-            fontSize: "clamp(42px, 6vw, 64px)", fontWeight: 800, lineHeight: 1.08,
-            letterSpacing: "-0.02em", color: C.text,
-            marginBottom: 24, marginTop: 0,
-            animation: "fadeUp 0.7s ease 0.1s both",
-          }}>
-            Australian Legal Research,<br />Reimagined.
-          </h1>
-
-          {/* Sub */}
-          <p style={{
-            fontSize: 18, lineHeight: 1.7, color: C.textMuted,
-            maxWidth: 680, margin: "0 auto 40px",
-            animation: "fadeUp 0.7s ease 0.2s both",
-          }}>
-            Lex gives your firm instant access to AustLII, ATO rulings, Federal and State legislation, and drafts
-            court-ready documents in seconds, with AI-powered QA verification.
+      {/* Hero */}
+      <section className="lx-hero">
+        <div className="lx-wrap lx-hero-inner">
+          <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal research for Australian firms</span></span>
+          <h1>Legal research that <span className="lx-grad">shows its sources.</span></h1>
+          <p className="lx-lead">
+            Lex searches public Australian government sources, including ATO rulings and Commonwealth legislation.
+            It answers with citations and links to the sources it used, so you can check them yourself. Draft documents in the same workspace.
           </p>
-
-          {/* CTAs */}
-          <div style={{
-            display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap",
-            marginBottom: 36,
-            animation: "fadeUp 0.7s ease 0.3s both",
-          }}>
-            <a
-              href="https://calendly.com/shanegoldberg/30min"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: C.gold, color: C.bg,
-                fontWeight: 700, fontSize: 15, letterSpacing: "0.02em",
-                padding: "14px 28px", borderRadius: 10,
-                textDecoration: "none", transition: "background 0.2s",
-                boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-              }}
-            >
-              Book a Demo
-            </a>
-            <a
-              href="/lex"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: "transparent", color: C.gold,
-                fontWeight: 600, fontSize: 15, letterSpacing: "0.02em",
-                padding: "14px 28px", borderRadius: 10,
-                textDecoration: "none",
-                border: `1.5px solid ${C.goldBorder}`,
-                transition: "border-color 0.2s, color 0.2s",
-              }}
-            >
-              See It in Action
-            </a>
+          <div className="lx-ctas">
+            <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
+            <a className="lx-btn lx-ghost" href="#how">See how it works</a>
           </div>
-
-          {/* Trust badges */}
-          <div style={{
-            display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap",
-            animation: "fadeUp 0.7s ease 0.4s both",
-          }}>
-            {["Every answer cites its source", "Australian law only", "Clause-by-clause QA"].map((badge) => (
-              <div key={badge} style={{
-                display: "flex", alignItems: "center", gap: 7,
-                fontSize: 12, color: C.textMuted, letterSpacing: "0.04em",
-              }}>
-                <span style={{
-                  width: 16, height: 16, borderRadius: "50%",
-                  background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9, color: C.gold, fontWeight: 900, flexShrink: 0,
-                }}>✓</span>
-                {badge}
-              </div>
-            ))}
+          <div className="lx-proof">
+            <span>Every answer cites its sources</span>
+            <span>Built for Australian law</span>
+            <span>Built for review by a lawyer</span>
+            <span>Client details masked before the AI sees them</span>
           </div>
+          <AnswerIllustration />
         </div>
       </section>
 
-      {/* ── 3. FEATURE GRID ────────────────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-              Everything Your Firm Needs
-            </h2>
-            <p style={{ fontSize: 16, color: C.textMuted, margin: 0 }}>
-              Purpose-built for Australian solicitors. No generic AI, jurisdiction-specific, legislation-verified.
-            </p>
-          </div>
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 24,
-          }}>
-            {[
-              {
-                icon: <IconSearch />,
-                title: "Instant Legal Research",
-                desc: "Search AustLII, ATO rulings, Federal and State legislation, ASIC, AAT, Fair Work Commission, and Family Law databases simultaneously, in seconds.",
-              },
-              {
-                icon: <IconDocument />,
-                title: "AI Document Drafting",
-                desc: "Trust deeds, BFAs, service agreements, employment contracts, commercial leases, shareholders agreements, ten document types, drafted with legislation references built in.",
-              },
-              {
-                icon: <IconShield />,
-                title: "QA Verification Panel",
-                desc: "Clause-by-clause confidence scoring. Critical issue flagging. Every clause returns a verified, flagged, or unverified status before you sign off.",
-              },
-              {
-                icon: <IconMap />,
-                title: "Multi-Jurisdiction",
-                desc: "NSW, VIC, QLD, WA, SA, TAS, ACT, NT, and cross-border matters. Lex knows which legislation applies where.",
-              },
-              {
-                icon: <IconChat />,
-                title: "Thread Memory",
-                desc: "Full conversation history per research session, persisted across sessions. Return to any matter thread exactly where you left it.",
-              },
-              {
-                icon: <IconChart />,
-                title: "Firm Dashboard",
-                desc: "See all research threads, document history, top questions, and usage by team member, from a single dashboard.",
-              },
-            ].map((f) => (
-              <div key={f.title} style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
-                borderTop: `2px solid ${C.gold}`,
-                borderRadius: 14,
-                padding: "28px 28px 32px",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10,
-                  background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 18,
-                }}>
-                  {f.icon}
-                </div>
-                <h3 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 10px", color: C.text }}>
-                  {f.title}
-                </h3>
-                <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. HOW IT WORKS ────────────────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-        background: C.surface,
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-              How It Works
-            </h2>
-            <p style={{ fontSize: 16, color: C.textMuted, margin: 0 }}>
-              Three steps from question to court-ready document.
-            </p>
-          </div>
-
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 32,
-          }}>
-            {[
-              {
-                num: "01",
-                title: "Ask a research question",
-                desc: "Type any legal question. Lex searches AustLII, ATO rulings, federal legislation, and more in real time, returning cited, current results.",
-              },
-              {
-                num: "02",
-                title: "Draft a document",
-                desc: "Select a document type, add parties and instructions. Lex drafts a jurisdiction-specific, legislation-referenced document in seconds.",
-              },
-              {
-                num: "03",
-                title: "Verify with QA",
-                desc: "Lex auto-runs a QA pass on every draft: clause confidence scores, critical issue flags, and recommended checks, before you sign off.",
-              },
-            ].map((step) => (
-              <div key={step.num}>
-                <div style={{
-                  fontSize: 52, fontWeight: 900, lineHeight: 1,
-                  color: C.goldBorder,
-                  fontFamily: "Georgia, serif",
-                  marginBottom: 16,
-                  letterSpacing: "-0.03em",
-                }}>
-                  {step.num}
-                </div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 12px", color: C.text }}>
-                  {step.title}
-                </h3>
-                <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.7, margin: 0 }}>
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. RESEARCH CAPABILITIES ───────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-      }}>
-        <div style={{
-          maxWidth: 1100, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: 64, alignItems: "start",
-        }}>
-          {/* Left */}
-          <div>
-            <h2 style={{ fontSize: "clamp(26px, 3.5vw, 38px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 20px" }}>
-              Search Every Australian Legal Database
-            </h2>
-            <p style={{ fontSize: 15, color: C.textMuted, lineHeight: 1.7, margin: "0 0 28px" }}>
-              Lex searches the full breadth of Australian legal sources simultaneously, no tab-switching, no manual cross-referencing.
-            </p>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-              {[
-                { db: "AustLII", note: "case law, tribunal decisions, legislation" },
-                { db: "ATO", note: "tax rulings, PCGs, interpretive decisions" },
-                { db: "Federal Register of Legislation", note: "Acts, Regulations, Determinations" },
-                { db: "State legislation", note: "all 8 jurisdictions" },
-                { db: "ASIC", note: "corporate law guidance" },
-                { db: "AAT", note: "administrative tribunal decisions" },
-                { db: "Fair Work Commission", note: "employment law" },
-                { db: "Family Law", note: "Full Court + Federal Circuit" },
-              ].map((item) => (
-                <li key={item.db} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%", background: C.gold,
-                    marginTop: 6, flexShrink: 0,
-                  }} />
-                  <span style={{ fontSize: 14, color: C.text, lineHeight: 1.5 }}>
-                    <strong style={{ color: C.text }}>{item.db}</strong>
-                    <span style={{ color: C.textMuted }}>, {item.note}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Right: Terminal card */}
-          <div style={{
-            background: "#0a1520",
-            border: `1px solid ${C.goldBorder}`,
-            borderRadius: 16,
-            padding: "28px 28px 32px",
-            fontFamily: "'Menlo', 'Monaco', 'Courier New', monospace",
-            fontSize: 13,
-            lineHeight: 1.75,
-            boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-          }}>
-            <div style={{ color: C.gold, fontWeight: 700, marginBottom: 4, fontSize: 12, letterSpacing: "0.08em" }}>
-              Lex Research, AustLII
-            </div>
-            <div style={{ color: C.border, marginBottom: 16 }}>
-              ──────────────────────
-            </div>
-            <div style={{ color: C.textMuted, marginBottom: 16 }}>
-              <span style={{ color: C.gold }}>Query:</span> &quot;director duty of care&quot;
-            </div>
-            <div style={{ color: C.text, marginBottom: 8 }}>
-              <span style={{ color: C.gold }}>Found:</span> Asic v Rich [2003] NSWSC 85
-            </div>
-            <div style={{ color: C.textMuted, paddingLeft: 16, marginBottom: 8 }}>
-              Section 180(1) Corporations Act 2001
-            </div>
-            <div style={{ color: C.textMuted, paddingLeft: 16, marginBottom: 4 }}>
-              → Duty of care and diligence
-            </div>
-            <div style={{ paddingLeft: 16, marginBottom: 16 }}>
-              → Verified: <span style={{ color: C.green }}>✓ Current legislation</span>
-            </div>
-            <div style={{ color: C.textMuted, marginBottom: 4 }}>
-              <span style={{ color: C.gold }}>Cross-referenced:</span> 3 related cases
-            </div>
-            <div style={{ color: C.textMuted }}>
-              <span style={{ color: C.gold }}>Confidence:</span>{" "}
-              <span style={{ color: C.green, fontWeight: 700 }}>94%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. DOCUMENT DRAFTING ───────────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-        background: C.surface,
-      }}>
-        <div style={{
-          maxWidth: 1100, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: 64, alignItems: "start",
-        }}>
-          {/* Left: Document preview */}
-          <div style={{
-            background: C.bg,
-            border: `1px solid ${C.border}`,
-            borderRadius: 14,
-            padding: "32px 32px 36px",
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", textAlign: "center", color: C.text, marginBottom: 12 }}>
-              DISCRETIONARY TRUST DEED
-            </div>
-            <div style={{ height: 1, background: C.border, marginBottom: 20 }} />
-            <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.8 }}>
-              <p style={{ margin: "0 0 14px" }}>This Deed is made on [DATE]</p>
-              <p style={{ margin: "0 0 6px", color: C.text, fontWeight: 600 }}>PARTIES:</p>
-              <p style={{ margin: "0 0 4px" }}>Trustee: [TRUSTEE NAME]</p>
-              <p style={{ margin: "0 0 18px" }}>Settlor: [SETTLOR NAME]</p>
-              <p style={{ margin: "0 0 6px", color: C.text, fontWeight: 600 }}>RECITALS:</p>
-              <p style={{ margin: "0 0 4px" }}>1. The Trustee agrees to hold the</p>
-              <p style={{ margin: "0 0 4px", paddingLeft: 20 }}>Trust Fund on the terms set out</p>
-              <p style={{ margin: "0 0 4px", paddingLeft: 20 }}>herein pursuant to the Trusts Act</p>
-              <p style={{ margin: "0 0 20px", paddingLeft: 20 }}>1973 (Qld) s.8&hellip;</p>
-              <div style={{
-                borderTop: `1px solid ${C.border}`,
-                paddingTop: 14,
-                fontFamily: "system-ui, sans-serif",
-                fontSize: 12,
-              }}>
-                <span style={{ color: C.green, fontWeight: 700 }}>✓ QA Status: Verified</span>
-                <span style={{ color: C.textMuted }}>, 94% confidence</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right */}
-          <div>
-            <h2 style={{ fontSize: "clamp(26px, 3.5vw, 38px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 20px" }}>
-              Ten Document Types, Court-Ready in Seconds
-            </h2>
-            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                "Discretionary Trust Deeds",
-                "Binding Financial Agreements (BFAs)",
-                "Service Agreements",
-                "Employment Contracts",
-                "Commercial Leases",
-                "Shareholders Agreements",
-                "Non-Disclosure Agreements (NDAs)",
-                "Partnership Agreements",
-                "Loan Agreements",
-                "Contractor / Consultant Agreements",
-              ].map((doc) => (
-                <li key={doc} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%", background: C.gold, flexShrink: 0,
-                  }} />
-                  <span style={{ fontSize: 14, color: C.text }}>{doc}</span>
-                </li>
-              ))}
-            </ul>
-            <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.7, margin: 0 }}>
-              Each document includes jurisdiction-specific legislation references and auto-runs QA verification before delivery.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 7. QA VERIFICATION ─────────────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-        textAlign: "center",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{
-            display: "inline-block",
-            background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-            borderRadius: 8, padding: "6px 16px", marginBottom: 24,
-            fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: C.gold,
-          }}>
-            Built-in Quality Assurance
-          </div>
-          <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
-            The Only AI Legal Tool<br />With Built-In QA
-          </h2>
-          <p style={{ fontSize: 17, color: C.textMuted, maxWidth: 600, margin: "0 auto 56px", lineHeight: 1.65 }}>
-            Every document Lex drafts automatically triggers a QA verification pass. Clause by clause.
+      {/* Client line (approved: Tributum Law as the example firm) */}
+      <div className="lx-strip">
+        <div className="lx-wrap">
+          <p>
+            Tributum Law, an Adelaide, South Australia ATO dispute and tax law firm, uses Lex for legal research.{" "}
+            <a href="https://tributumlaw.com" target="_blank" rel="noopener noreferrer">Visit Tributum Law</a>
           </p>
+        </div>
+      </div>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 24,
-            textAlign: "left",
-          }}>
-            {/* Confidence Score */}
-            <div style={{
-              background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 14, padding: "32px 28px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-            }}>
-              <div style={{
-                width: 72, height: 72, borderRadius: "50%",
-                background: "conic-gradient(#C9A84C 0% 94%, #243550 94% 100%)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 20,
-                position: "relative",
-              }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: "50%",
-                  background: C.surface,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 14, fontWeight: 800, color: C.gold,
-                }}>
-                  94%
-                </div>
-              </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 10px", color: C.text }}>
-                Confidence Score
-              </h3>
-              <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                Every clause receives a confidence score based on legislation currency, case law alignment, and jurisdictional accuracy.
-              </p>
+      {/* How it works */}
+      <section id="how" className="lx-sec">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">How it works</div>
+            <h2>From question to cited answer to draft.</h2>
+            <p className="lx-lead">Lex lists its sources with the answer, so checking takes seconds, not a second search.</p>
+          </div>
+          <div className="lx-steps">
+            <div className="lx-card">
+              <div className="lx-n">01</div>
+              <h3>Ask in plain English</h3>
+              <p>Ask about an objection, a Division 7A loan or a penalty. Lex keeps the thread, so follow-up questions have the context.</p>
             </div>
-
-            {/* Critical Issues */}
-            <div style={{
-              background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 14, padding: "32px 28px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 10,
-                background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 20,
-              }}>
-                <IconWarning />
-              </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 10px", color: C.text }}>
-                Critical Issues
-              </h3>
-              <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                Flags legislation mismatches, missing required clauses, and jurisdiction conflicts before you sign off, not after.
-              </p>
+            <div className="lx-card">
+              <div className="lx-n">02</div>
+              <h3>Check the citations</h3>
+              <p>Each point cites the section or ruling it relies on, with a link to the source Lex found. Open it and read the passage yourself. Lex is not searching case law right now, so check any case it mentions.</p>
             </div>
+            <div className="lx-card">
+              <div className="lx-n">03</div>
+              <h3>Draft and check</h3>
+              <p>Turn the research into a first draft. Lex runs a QA pass and marks each clause verified, flagged or unverified for your review. The QA pass does not check case law.</p>
+            </div>
+          </div>
+          <div className="lx-callouts">
+            <div><b>Proper citations</b>Section and Act, or ruling number, not just a vague reference.</div>
+            <div><b>Cases to check</b>Lex is not searching Australian case law right now. Treat any case it mentions as unchecked and look it up yourself.</div>
+            <div><b>Clear verify cues</b>Lex says when the law is uncertain or developing, and tells you what to check.</div>
+          </div>
+        </div>
+      </section>
 
-            {/* Recommended Checks */}
-            <div style={{
-              background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 14, padding: "32px 28px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-            }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 10,
-                background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                marginBottom: 20,
-              }}>
-                <IconArrow />
+      {/* Sources */}
+      <section className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Sources</div>
+            <h2>Searches Australian legal sources together.</h2>
+            <p className="lx-lead">No tab switching, no manual cross-referencing.</p>
+          </div>
+          <div className="lx-srcs">
+            {SOURCES.map((s) => (
+              <div key={s.name}><b>{s.name}</b>{s.note}</div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Features</div>
+            <h2>One workspace for research and drafting.</h2>
+          </div>
+          <div className="lx-feats">
+            <div className="lx-card lx-feat">
+              <div className="lx-eyebrow">Drafting</div>
+              <h3>Drafts with the legislation references built in.</h3>
+              <p>Pick a document type and jurisdiction, then add parties and instructions. Lex searches the governing legislation first, then writes a first draft you can export to Word.</p>
+              <div className="lx-doctypes">
+                {DOC_TYPES.map((d) => <span key={d}>{d}</span>)}
+                <span className="lx-dt-custom">Custom document</span>
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 10px", color: C.text }}>
-                Recommended Checks
-              </h3>
-              <p style={{ fontSize: 14, color: C.textMuted, lineHeight: 1.65, margin: 0 }}>
-                Tells you exactly what a senior lawyer should verify before filing or executing, no guesswork, no surprises.
-              </p>
+            </div>
+            <div className="lx-card lx-feat">
+              <div className="lx-eyebrow">QA on every draft</div>
+              <h3>Every clause gets a status before you sign off.</h3>
+              <p>Lex runs a QA pass on every draft it writes.</p>
+              <ul>
+                <li><Check />Verified, flagged or unverified status per clause</li>
+                <li><Check />Critical issues: legislation mismatches, missing clauses, citation risks</li>
+                <li><Check />Case law is not checked, so verify any case yourself</li>
+                <li><Check />Recommended checks for a senior lawyer before filing or signing</li>
+              </ul>
+            </div>
+            <div className="lx-card lx-feat">
+              <div className="lx-eyebrow">Threads and jurisdictions</div>
+              <h3>Pick up where you left off.</h3>
+              <p>Research threads are saved to your login, so you can come back to them across sessions.</p>
+              <ul>
+                <li><Check />Full research history per thread</li>
+                <li><Check />Drafting for all 8 states and territories</li>
+                <li><Check />Export drafts to Word</li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 8. PRICING ─────────────────────────────────────────────────────── */}
-      <section style={{
-        padding: "88px 32px",
-        borderBottom: `1px solid rgba(255,255,255,0.06)`,
-        background: C.surface,
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-              Simple, Transparent Pricing
-            </h2>
-            <p style={{ fontSize: 16, color: C.textMuted, margin: 0 }}>
-              No surprises. No lock-in. Australian-hosted.
-            </p>
+      {/* Trust */}
+      <section id="trust" className="lx-sec lx-trust">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Trust</div>
+            <h2>Designed for lawyers who check their work.</h2>
+            <p className="lx-lead">Lex speeds up research. It does not replace your judgement, and it is built to make checking easy.</p>
           </div>
+          <div className="lx-tgrid">
+            <div className="lx-card"><Icon d="M5 3h10l4 4v14H5zM9 13h6M9 17h4" /><h3>Every answer cites its sources</h3><p>Points link to the legislation or ruling Lex found, so you can read the passage yourself.</p></div>
+            <div className="lx-card"><Icon d="m5 12 5 5 9-10" /><h3>Always check primary sources</h3><p>Lex flags uncertain law. Its output is research assistance, not legal advice.</p></div>
+            <div className="lx-card"><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3a14 14 0 0 1 0 18" /><h3>Built for Australian law</h3><p>Australian government sources first. Overseas material is only used for comparison.</p></div>
+            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first. Case law is not checked.</p></div>
+            <div className="lx-card"><Icon d="M4 6h16M4 12h16M4 18h10" /><h3>Saved to your login</h3><p>Research threads are tied to your own sign-in, so your history is there when you come back.</p></div>
+            <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>No lock-in</h3><p>Cancel anytime.</p></div>
+          </div>
+        </div>
+      </section>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 24, maxWidth: 800, margin: "0 auto",
-          }}>
-            {/* Firm */}
-            <div style={{
-              background: C.bg,
-              border: `1px solid ${C.border}`,
-              borderRadius: 16, padding: "36px 32px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", color: C.textMuted, textTransform: "uppercase", marginBottom: 12 }}>
-                Firm
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
-                <span style={{ fontSize: 42, fontWeight: 800, color: C.text }}>$299</span>
-                <span style={{ fontSize: 14, color: C.textMuted }}>a month (AUD, GST not applicable)</span>
-              </div>
-              <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 28px" }}>
-                Perfect for small-to-mid sized firms.
-              </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 32px", display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
-                  "Unlimited legal research",
-                  "20 documents per month",
-                  "3 lawyer seats",
-                  "All Australian databases",
-                  "QA verification on every draft",
-                  "Thread memory & history",
-                ].map((item) => (
-                  <li key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: C.textMuted }}>
-                    <span style={{ color: C.green, fontWeight: 700, fontSize: 13 }}>✓</span>
-                    {item}
-                  </li>
+      {/* Client privacy (Lex privacy Phases 1 and 2, live) */}
+      <section id="privacy" className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Client privacy</div>
+            <h2>Your client&apos;s details never reach the AI in readable form.</h2>
+            <p className="lx-lead">Lex swaps personal details for placeholders before anything is sent to an AI model. You see the real names in your answer, and the model only ever sees the placeholders.</p>
+          </div>
+          <div className="lx-tgrid">
+            <div className="lx-card"><Icon d="M4 7h16M4 12h10M4 17h7M17 15l3 3-3 3" /><h3>Masked before it is sent</h3><p>Names, business and trust names, phone numbers, emails, and ABNs or ACNs become placeholders like {"{{PERSON_1}}"}. They are put back only in the answer you see.</p></div>
+            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>One checkpoint, no off switch</h3><p>Every Lex AI request goes through the same privacy checkpoint, for every firm, including firms using their own AI key. If masking fails, nothing is sent.</p></div>
+            <div className="lx-card"><Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5" /><h3>Searches are masked too</h3><p>Legal searches and source lookups get placeholders, not your client&apos;s details. Results come back masked the same way.</p></div>
+            <div className="lx-card"><Icon d="M5 3h14v18H5zM9 8h6M9 12h6M9 16h3" /><h3>A redaction log, without the details</h3><p>Lex keeps a log for each firm of what kind of details were hidden on each request and how many. It never records the real values.</p></div>
+            <div className="lx-card"><Icon d="m5 12 5 5 9-10" /><h3>Tested for leaks</h3><p>Automated leak tests run against the privacy layer, so any code change that would let a real detail through fails its checks.</p></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="lx-sec">
+        <div className="lx-wrap">
+          <div className="lx-head lx-center">
+            <div className="lx-eyebrow">Pricing</div>
+            <h2>Simple, transparent pricing.</h2>
+            <p className="lx-lead">No surprises. No lock-in.</p>
+          </div>
+          <div className="lx-plans">
+            <div className="lx-plan lx-hi">
+              <div className="lx-tier">Firm</div>
+              <div className="lx-price">$299<small> /month</small></div>
+              <p>Perfect for small-to-mid sized firms.</p>
+              <ul>
+                {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "All Australian databases", "QA verification on every draft", "Thread memory and history"].map((i) => (
+                  <li key={i}><Check />{i}</li>
                 ))}
               </ul>
-              <a
-                href="https://calendly.com/shanegoldberg/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "block", textAlign: "center",
-                  background: C.goldBg, color: C.gold,
-                  border: `1.5px solid ${C.goldBorder}`,
-                  fontWeight: 700, fontSize: 14, letterSpacing: "0.04em",
-                  padding: "13px 24px", borderRadius: 10,
-                  textDecoration: "none",
-                }}
-              >
-                Book a demo to start your 14-day trial
-              </a>
+              <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a demo</a>
             </div>
-
-            {/* Enterprise */}
-            <div style={{
-              background: C.bg,
-              border: `2px solid ${C.gold}`,
-              borderRadius: 16, padding: "36px 32px",
-              boxShadow: `0 4px 32px rgba(201,168,76,0.2), 0 4px 24px rgba(0,0,0,0.4)`,
-              position: "relative",
-            }}>
-              <div style={{
-                position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                background: C.gold, color: C.bg,
-                fontSize: 11, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase",
-                padding: "4px 16px", borderRadius: 100,
-                whiteSpace: "nowrap",
-              }}>
-                Most Popular
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, textTransform: "uppercase", marginBottom: 12 }}>
-                Enterprise
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 6 }}>
-                <span style={{ fontSize: 42, fontWeight: 800, color: C.text }}>Custom</span>
-              </div>
-              <p style={{ fontSize: 13, color: C.textMuted, margin: "0 0 28px" }}>
-                For larger firms and legal networks.
-              </p>
-              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 32px", display: "flex", flexDirection: "column", gap: 10 }}>
-                {[
-                  "Unlimited research & documents",
-                  "Unlimited lawyer seats",
-                  "Custom clientId embedding",
-                  "White-label widget option",
-                  "Dedicated onboarding",
-                  "Priority support & SLA",
-                ].map((item) => (
-                  <li key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: C.textMuted }}>
-                    <span style={{ color: C.green, fontWeight: 700, fontSize: 13 }}>✓</span>
-                    {item}
-                  </li>
+            <div className="lx-plan">
+              <div className="lx-tier">Enterprise</div>
+              <div className="lx-price">Custom</div>
+              <p>For larger firms and legal networks.</p>
+              <ul>
+                {["Unlimited research and documents", "Unlimited lawyer seats", "Custom clientId embedding", "White-label widget option", "Dedicated onboarding", "Priority support and SLA"].map((i) => (
+                  <li key={i}><Check />{i}</li>
                 ))}
               </ul>
-              <a
-                href="https://calendly.com/shanegoldberg/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "block", textAlign: "center",
-                  background: C.gold, color: C.bg,
-                  fontWeight: 700, fontSize: 14, letterSpacing: "0.04em",
-                  padding: "13px 24px", borderRadius: 10,
-                  textDecoration: "none",
-                  boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-                }}
-              >
-                Contact Us
-              </a>
+              <a className="lx-btn lx-ghost" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Contact Us</a>
             </div>
           </div>
-
-          <p style={{ textAlign: "center", fontSize: 13, color: C.textDim, marginTop: 28 }}>
-            No lock-in. Cancel anytime. Australian-hosted.
-          </p>
+          <div className="lx-fine">
+            <p>Prices in AUD. GST not applicable.</p>
+            <p>No lock-in. Cancel anytime.</p>
+          </div>
         </div>
       </section>
 
-      {/* ── 9. FINAL CTA ───────────────────────────────────────────────────── */}
-      <section style={{ padding: "88px 32px" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          <div style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: 20, padding: "60px 48px",
-            textAlign: "center",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-          }}>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
-              Ready to see Lex in your firm?
-            </h2>
-            <p style={{ fontSize: 16, color: C.textMuted, lineHeight: 1.7, margin: "0 0 36px" }}>
-              Book a free 30-minute demo. We&apos;ll show you live research and document drafting for your exact practice areas.
-            </p>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <a
-                href="https://calendly.com/shanegoldberg/30min"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex", alignItems: "center",
-                  background: C.gold, color: C.bg,
-                  fontWeight: 700, fontSize: 15, letterSpacing: "0.02em",
-                  padding: "14px 28px", borderRadius: 10,
-                  textDecoration: "none",
-                  boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-                }}
-              >
-                Book a Free Demo
-              </a>
-              <a
-                href="/lex"
-                style={{
-                  display: "inline-flex", alignItems: "center",
-                  background: "transparent", color: C.gold,
-                  fontWeight: 600, fontSize: 15, letterSpacing: "0.02em",
-                  padding: "14px 28px", borderRadius: 10,
-                  textDecoration: "none",
-                  border: `1.5px solid ${C.goldBorder}`,
-                }}
-              >
-                Try Lex Now
-              </a>
-            </div>
+      {/* FAQ */}
+      <section id="faq" className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <div className="lx-head lx-center">
+            <div className="lx-eyebrow">FAQ</div>
+            <h2>Questions lawyers ask us.</h2>
+          </div>
+          <div className="lx-faq">
+            {LEX_FAQS.map((f, i) => (
+              <details key={f.q} open={i < 2}>
+                <summary><h3>{f.q}</h3><span aria-hidden="true">+</span></summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="lx-final">
+        <div className="lx-wrap lx-final-inner">
+          <div className="lx-eyebrow">Book a demo</div>
+          <h2>See Lex on your own practice area.</h2>
+          <p className="lx-lead">Book a free 30-minute demo. We&apos;ll show you live research and document drafting for your exact practice areas.</p>
+          <div className="lx-ctas">
+            <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
           </div>
         </div>
       </section>

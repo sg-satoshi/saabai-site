@@ -1,12 +1,19 @@
 "use client";
 
 /**
- * Public AI Audit fact-find form — client mode.
+ * Public Blueprint fact-find form, client mode.
  * Section-by-section stepper, autosaves on every step, resumable via the
  * same tokenised link.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FACTFIND_CONSENT_LABEL,
+  FACTFIND_INTRO,
+  FACTFIND_SUBMIT_LABEL,
+  FACTFIND_THANKS_BODY,
+  FACTFIND_THANKS_HEADING,
+} from "../../../../lib/audit-factfind";
 
 type QType = "text" | "textarea" | "select" | "multiselect" | "number" | "scale";
 
@@ -36,6 +43,7 @@ interface FormData {
   sections: Section[];
   questions: Question[];
   answers: Record<string, Value>;
+  quoteConsent?: boolean;
 }
 
 const NAVY = "#0e0c2e";
@@ -49,6 +57,8 @@ export default function FactFindClient({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [validationMsg, setValidationMsg] = useState<string | null>(null);
+  // Optional consent: always starts unticked on a fresh form.
+  const [quoteConsent, setQuoteConsent] = useState(false);
 
   useEffect(() => {
     fetch(`/api/audit/factfind/${token}`)
@@ -56,6 +66,7 @@ export default function FactFindClient({ token }: { token: string }) {
       .then((d: FormData) => {
         setData(d);
         setAnswers(d.answers ?? {});
+        setQuoteConsent(d.quoteConsent === true);
         if (d.completed) setDone(true);
       })
       .catch(() => setError("This link is invalid or has expired. Please contact hello@saabai.ai."));
@@ -78,29 +89,36 @@ export default function FactFindClient({ token }: { token: string }) {
   );
 
   const save = useCallback(
-    async (complete: boolean): Promise<boolean> => {
+    async (complete: boolean): Promise<{ ok: boolean; error?: string }> => {
       setSaving(true);
       try {
         const res = await fetch(`/api/audit/factfind/${token}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers, complete }),
+          body: JSON.stringify(complete ? { answers, complete, quoteConsent } : { answers, complete }),
         });
-        return res.ok;
+        if (res.ok) return { ok: true };
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        return { ok: false, error: j?.error };
       } catch {
-        return false;
+        return { ok: false };
       } finally {
         setSaving(false);
       }
     },
-    [token, answers]
+    [token, answers, quoteConsent]
   );
 
   function missingRequired(): string | null {
     for (const q of currentQuestions) {
       if (!q.required) continue;
       const v = answers[q.id];
-      if (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0)) {
+      if (
+        v === undefined ||
+        v === null ||
+        (typeof v === "string" && v.trim() === "") ||
+        (Array.isArray(v) && v.length === 0)
+      ) {
         return q.label;
       }
     }
@@ -119,9 +137,9 @@ export default function FactFindClient({ token }: { token: string }) {
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      const ok = await save(true);
-      if (ok) setDone(true);
-      else setValidationMsg("Something went wrong submitting — please try again.");
+      const res = await save(true);
+      if (res.ok) setDone(true);
+      else setValidationMsg(res.error ?? "Something went wrong sending your answers. Please try again.");
     }
   }
 
@@ -170,11 +188,10 @@ export default function FactFindClient({ token }: { token: string }) {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold mb-4" style={{ color: "#ffffff" }}>
-            Thank you, {data.contactName.split(" ")[0]}.
+            {FACTFIND_THANKS_HEADING}, {data.contactName.split(" ")[0]}.
           </h1>
-          <p className="mb-3" style={{ color: "#9aa0c3" }}>
-            Your questionnaire is in. We&apos;ll review your answers and be in
-            touch shortly to schedule your discovery session.
+          <p className="mb-3" style={{ color: "#9aa0c3" }} data-testid="factfind-thanks">
+            {FACTFIND_THANKS_BODY}
           </p>
           <p style={{ color: "#9aa0c3" }}>
             Questions in the meantime? Email{" "}
@@ -196,6 +213,17 @@ export default function FactFindClient({ token }: { token: string }) {
         <h1 className="text-2xl md:text-3xl font-semibold mb-2" style={{ color: "#ffffff" }}>
           Blueprint Questionnaire
         </h1>
+        {step === 0 && (
+          <div
+            className="mb-6 rounded-xl px-5 py-4"
+            style={{ background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.25)" }}
+            data-testid="factfind-intro"
+          >
+            <p className="text-sm leading-relaxed" style={{ color: "#e2e4f0" }}>
+              {FACTFIND_INTRO}
+            </p>
+          </div>
+        )}
         <p className="mb-8 text-sm" style={{ color: "#9aa0c3" }}>
           Your progress saves automatically each step. The more specific your
           answers, the sharper your Blueprint.
@@ -235,6 +263,26 @@ export default function FactFindClient({ token }: { token: string }) {
           ))}
         </div>
 
+        {step === sections.length - 1 && (
+          <label
+            className="mt-10 flex items-start gap-3 cursor-pointer text-sm"
+            style={{ color: "#c4c8e0" }}
+          >
+            <input
+              type="checkbox"
+              name="quoteConsent"
+              checked={quoteConsent}
+              onChange={(e) => setQuoteConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+              style={{ accentColor: GOLD }}
+            />
+            <span>
+              {FACTFIND_CONSENT_LABEL}{" "}
+              <span style={{ color: "#7c81a6" }}>(Optional)</span>
+            </span>
+          </label>
+        )}
+
         {validationMsg && (
           <p className="mt-6 text-sm" style={{ color: "#ff8a8a" }}>{validationMsg}</p>
         )}
@@ -254,7 +302,7 @@ export default function FactFindClient({ token }: { token: string }) {
             className="px-7 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
             style={{ background: GOLD, color: NAVY }}
           >
-            {saving ? "Saving…" : step === sections.length - 1 ? "Submit questionnaire" : "Save & continue →"}
+            {saving ? "Saving…" : step === sections.length - 1 ? FACTFIND_SUBMIT_LABEL : "Save & continue →"}
           </button>
         </div>
       </div>

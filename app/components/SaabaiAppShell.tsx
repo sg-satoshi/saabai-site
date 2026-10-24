@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 // ── Theme (matching saabai-admin) ─────────────────────────────────────────────
 
 const C = {
-  bg:      "#f5f5f7",
-  sidebar: "#06081a",
+  bg:      "#fbfaf7",
+  sidebar: "#0b092e",
   border:  "rgba(255,255,255,0.07)",
-  gold:    "#C9A84C",
-  goldBg:  "rgba(201,168,76,0.10)",
-  goldBdr: "rgba(201,168,76,0.22)",
+  gold:    "#62c5d1" /* Lex teal */,
+  goldBg:  "rgba(98,197,209,0.12)",
+  goldBdr: "rgba(98,197,209,0.38)",
   text:    "#e2e4f0",
   muted:   "#505570",
   dim:     "#2a2d47",

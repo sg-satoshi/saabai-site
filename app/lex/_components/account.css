@@ -1,0 +1,16 @@
+/* Account and Invoices inside the Lex shell. */
+.lxa-rows{margin:0}
+.lxa-rows div{display:flex;justify-content:space-between;gap:12px;padding:10px 0;font-size:13.5px}
+.lxa-rows div + div{border-top:1px solid var(--line)}
+.lxa-rows dt{color:var(--muted)}
+.lxa-rows dd{margin:0;color:var(--ink);text-align:right;overflow-wrap:anywhere;min-width:0}
+.lxa-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.lxa-btns form{margin:0}
+.lxa-form{display:flex;flex-direction:column;gap:10px}
+.lxa-form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-2)}
+.lxa-form input{min-height:40px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;background:#fff;color:var(--ink)}
+.lxa-form input:focus{outline:2px solid var(--teal);outline-offset:0}
+.lxa-msg{margin:0;font-size:12.5px}
+.lxa-msg.ok{color:var(--ok-fg,#1c6b3a)}
+.lxa-msg.bad{color:var(--bad-fg,#a3261b)}
+.lxa-linkbtn{width:100%;background:none;border:0;text-align:left;cursor:pointer}

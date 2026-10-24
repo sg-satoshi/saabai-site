@@ -1,9 +1,12 @@
-import { streamText, stepCountIs } from "ai";
-import type { LanguageModel } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { stepCountIs } from "ai";
 import { getRedis } from "../../../lib/redis";
-import { getClientLLMConfig, buildModelFromConfig } from "../../../lib/client-config";
 import { verifySession } from "../../../lib/portal-session";
+import { normalizeLexChatMessages } from "../../../lib/lex-chat-input";
+import { createDashFilter } from "../../../lib/no-dashes";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway, threadSeed } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { lastUserText, logStreamFinish } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -19,18 +22,21 @@ function parseCookie(header: string | null, name: string): string | undefined {
   return undefined;
 }
 
-type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 export async function POST(req: Request) {
-  const body = await req.json() as { messages?: Msg[]; clientId?: string };
-  const messages: Msg[] = Array.isArray(body.messages) ? body.messages : [];
-  const clientId: string | undefined = body.clientId;
+  const body = (await req.json().catch(() => null)) as { messages?: unknown; clientId?: unknown } | null;
+  const normalized = normalizeLexChatMessages(body?.messages);
+  // Nothing to answer: a clean 400 instead of the model throwing (was a 500).
+  if (normalized.length === 0 || normalized[normalized.length - 1].role !== "user") {
+    return Response.json({ error: "messages required" }, { status: 400 });
+  }
+  const clientId: string | undefined = typeof body?.clientId === "string" ? body.clientId : undefined;
 
   // Base formatting rules applied to every Lex response regardless of client config
   const BASE_RULES = `
 Formatting rules (always follow these):
 - Never use markdown asterisks for bold or italic. No **word** or *word*.
-- Never use em dashes (—). Use a comma, colon, or rewrite the sentence instead.
+- Never use em dashes or a spaced double hyphen. Use a comma, colon, or rewrite the sentence instead.
 - Never use hyphens as list bullets preceded by bold text. Use plain labels with a colon.
 - Write in plain conversational prose. No markdown formatting of any kind.
 `.trim();
@@ -51,34 +57,35 @@ Formatting rules (always follow these):
     // non-fatal — proceed without client config
   }
 
-  const systemPrompt = clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES;
+  const systemPrompt = (clientConfig ? `${clientConfig}\n\n${BASE_RULES}` : BASE_RULES) + PRIVACY_SYSTEM_NOTE;
 
-  // 2. Load client LLM model (API key + model) — keyed by clientId
-  //    Fall back to Haiku (fast, cheap) when no client key is saved
-  let model: LanguageModel = anthropic("claude-haiku-4-5-20251001");
-  if (clientId) {
-    try {
-      const llmConfig = await getClientLLMConfig(clientId);
-      if (llmConfig) {
-        const clientModel = buildModelFromConfig(llmConfig);
-        if (clientModel) model = clientModel;
-      }
-    } catch {
-      // non-fatal — fall back to default model
-    }
+  // Privacy: always on. The gateway picks the model (the firm's own key if saved, else Haiku),
+  // masks every message before the model sees it and rehydrates the reply. Fail closed.
+  const gw = await LexGateway.open({ route: "lex-chat", firm: lexFirmFromRequest(req, clientId), model: { kind: "chat", clientId }, thread: threadSeed(undefined, normalized) });
+  if (!gw) return privacyFailResponse();
+  // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+  await gw.scanNames([normalized]);
+  let result: ReturnType<LexGateway["streamText"]>;
+  let masked: typeof normalized;
+  try {
+    masked = gw.maskMessages(normalized);
+    result = gw.streamText({
+      system: systemPrompt,
+      messages: masked,
+      stopWhen: stepCountIs(4),
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "lex",
+          siteId: clientId,
+          model: gw.modelId,
+          userText: lastUserText(masked),
+        });
+      },
+    });
+  } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
+    throw err;
   }
-
-  // 3. Normalise messages — strip any system messages from client (we set system above)
-  const normalized = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role, content: m.content }));
-
-  const result = streamText({
-    model,
-    system: systemPrompt,
-    messages: normalized,
-    stopWhen: stepCountIs(4),
-  });
 
   // 4. Stream in the SSE format both LexWidget and client portal expect:
   //    data: {"type":"text-delta","delta":"<chunk>"}
@@ -86,10 +93,15 @@ Formatting rules (always follow these):
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        const dashes = createDashFilter();
         for await (const chunk of result.textStream) {
-          const line = `data: ${JSON.stringify({ type: "text-delta", delta: chunk })}\n\n`;
+          const clean = dashes.push(chunk);
+          if (!clean) continue;
+          const line = `data: ${JSON.stringify({ type: "text-delta", delta: clean })}\n\n`;
           controller.enqueue(encoder.encode(line));
         }
+        const rest = dashes.flush();
+        if (rest) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text-delta", delta: rest })}\n\n`));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[lex-chat] stream error:", msg);
