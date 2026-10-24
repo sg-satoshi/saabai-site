@@ -3,10 +3,42 @@ import { googleRating, googleReviewCount } from "./reviews";
 
 export const SITE_URL = "https://stuscyclerepairs.com";
 
+export const FACEBOOK_URL = "https://www.facebook.com/140958506038130";
+
+/** Region only. Never add a street address. */
+export const AREA_SERVED = [
+  { "@type": "Place" as const, name: "Gold Coast, Queensland, Australia" },
+  { "@type": "Place" as const, name: "Tweed Coast, New South Wales, Australia" },
+  { "@type": "Place" as const, name: "Northern Rivers, NSW" },
+];
+
+export const COVERAGE_LINE = "from the Northern Rivers to Coomera and Ormeau";
+
+export const SUBURB_GROUPS: Array<{ name: string; suburbs: string[] }> = [
+  {
+    name: "Central",
+    suburbs: ["Southport", "Labrador", "Surfers Paradise", "Broadbeach", "Ashmore", "Nerang", "Robina", "Varsity Lakes", "Mudgeeraba"],
+  },
+  {
+    name: "Southern",
+    suburbs: ["Burleigh Heads", "Miami", "Palm Beach", "Elanora", "Currumbin", "Tugun", "Coolangatta", "Tweed Heads"],
+  },
+  {
+    name: "Northern",
+    suburbs: ["Coomera", "Upper Coomera", "Helensvale", "Hope Island", "Oxenford", "Pimpama", "Ormeau"],
+  },
+  {
+    name: "Tweed Coast and Northern Rivers",
+    suburbs: ["Tweed Heads", "Kingscliff", "Cabarita Beach", "Pottsville", "Murwillumbah", "Northern Rivers NSW"],
+  },
+];
+
 /** Every indexable page on stuscyclerepairs.com. Keep in sync with real routes. */
 export const SITEMAP_PATHS: Array<{ path: string; priority: number; changeFrequency: "weekly" | "monthly" }> = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/gold-coast", priority: 0.9, changeFrequency: "monthly" },
+  { path: "/e-bike-repair-gold-coast", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/puncture-repair-gold-coast", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faq", priority: 0.7, changeFrequency: "monthly" },
   { path: "/quote", priority: 0.7, changeFrequency: "monthly" },
   { path: "/contact", priority: 0.6, changeFrequency: "monthly" },
@@ -15,7 +47,7 @@ export const SITEMAP_PATHS: Array<{ path: string; priority: number; changeFreque
 export const faqs: Array<{ q: string; a: string }> = [
   {
     q: "Where does Stu service bikes?",
-    a: "Stu travels to you across all of the Gold Coast, QLD and the Tweed Coast, NSW. He services bikes at your home or at work from his mobile workshop.",
+    a: "Stu travels from the Northern Rivers to Coomera and Ormeau. He services bikes at your home or at work across the Gold Coast, the Tweed Coast and the Northern Rivers, NSW.",
   },
   {
     q: "Do I need to bring my bike to a shop?",
@@ -39,7 +71,7 @@ export const faqs: Array<{ q: string; a: string }> = [
   },
   {
     q: "Can Stu work on e-bikes?",
-    a: "Yes. Stu does diagnostics and servicing for modern high-torque e-bike systems, including motors, drivetrains, brakes and firmware checks. E-bike servicing is $149 to $299, and e-bike wheel builds are $159 per end.",
+    a: "Yes. Stu works on all e-bike brands, with diagnostics and servicing for motors, drivetrains, brakes and firmware checks. E-bike servicing is $149 to $299, and e-bike wheel builds are $159 per end.",
   },
   {
     q: "Do you service kids' bikes?",
@@ -53,6 +85,22 @@ export const faqs: Array<{ q: string; a: string }> = [
     q: "How do I book?",
     a: "Call Stu on 0405 225 721, email stuscyclerepairs@gmail.com, or use the quote form on this website. If you are not sure whether Stu covers your suburb, send an enquiry and he will let you know.",
   },
+  {
+    q: "Which suburbs does Stu cover?",
+    a: "Stu covers central, southern and northern Gold Coast suburbs, plus the Tweed Coast and Northern Rivers, from the Northern Rivers to Coomera and Ormeau. The suburb list is on the Gold Coast page, and if yours is not listed, call 0405 225 721.",
+  },
+  {
+    q: "How much does a puncture repair cost?",
+    a: "Fitting a tyre or tube is $20 per wheel. A rear fat e-bike tube is $70, and there is a $70 call-out fee for repairs under $120.",
+  },
+  {
+    q: "Does Stu work on all e-bike brands?",
+    a: "Yes. Stu works on all e-bike brands. E-bike servicing is $149 to $299, and e-bike wheel builds are $159 per end.",
+  },
+  {
+    q: "Does Stu cover the Northern Rivers?",
+    a: "Yes. Stu travels from the Northern Rivers to Coomera and Ormeau, including the Tweed Coast. Towns include Tweed Heads, Kingscliff, Cabarita Beach, Pottsville and Murwillumbah.",
+  },
 ];
 
 function priceLines(): string[] {
@@ -62,11 +110,11 @@ function priceLines(): string[] {
 export function llmsSummary(): string {
   return `# Stu's Cycle Repairs
 
-> Stu's Cycle Repairs is a mobile bicycle mechanic. Stu has 37 years of experience and travels to customers' homes or workplaces across all of the Gold Coast, QLD, and the Tweed Coast, NSW, with a fully equipped mobile workshop.
+> Stu's Cycle Repairs is a mobile bicycle mechanic. Stu has 37 years of experience and travels to customers' homes or workplaces from the Northern Rivers to Coomera and Ormeau, with a fully equipped mobile workshop.
 
 ## Key facts
 - Business: Stu's Cycle Repairs (mobile bike mechanic, no shopfront visits needed)
-- Service area: all of the Gold Coast, Queensland, Australia, and the Tweed Coast, New South Wales, Australia
+- Service area: from the Northern Rivers to Coomera and Ormeau, including the Gold Coast, Queensland, the Tweed Coast, and the Northern Rivers, NSW
 - Phone: 0405 225 721
 - Email: stuscyclerepairs@gmail.com
 - Website: ${SITE_URL}
@@ -81,6 +129,8 @@ ${priceLines().join("\n")}
 ## Pages
 - [Home, services and prices](${SITE_URL}/)
 - [Mobile bike repairs on the Gold Coast](${SITE_URL}/gold-coast)
+- [E-bike repair on the Gold Coast](${SITE_URL}/e-bike-repair-gold-coast)
+- [Puncture repair on the Gold Coast](${SITE_URL}/puncture-repair-gold-coast)
 - [FAQ](${SITE_URL}/faq)
 - [Get a quote](${SITE_URL}/quote)
 - [Contact Stu](${SITE_URL}/contact)

@@ -2,19 +2,9 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Websites, AI Audits and Automation for Small Businesses",
-  description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  alternates: { canonical: "https://www.saabai.ai/services" },
-  openGraph: {
-    url: "https://www.saabai.ai/services",
-    title: "Websites, AI Audits and Automation for Small Businesses | Saabai",
-    description:
-    "Saabai services for Australian small businesses: website care plans from $100 a month, the Saabai Blueprint AI audit from $497 with SEO and AI search visibility, AI chat agents and automations. Gold Coast based.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.services;
 
 const services: { title: string; description: string; benefits: string[]; href?: string; price?: string }[] = [
   {

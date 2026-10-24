@@ -3,77 +3,15 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
 
-export const metadata: Metadata = {
-  title: "Websites and Care Plans for Small Businesses",
-  description:
-    "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  alternates: { canonical: "https://www.saabai.ai/websites" },
-  openGraph: {
-    url: "https://www.saabai.ai/websites",
-    title: "Website Care Plans for Small Businesses | Saabai",
-    description:
-      "Website care plans for Australian small businesses from Saabai on the Gold Coast. Presence $100, Growth $200, Signature $300 a month, builds from $2,000, AI enquiry chatbot included.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.websites;
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
-
-const tiers = [
-  {
-    name: "Presence",
-    tagline: "Get online with an AI that answers",
-    price: "from $2,000",
-    priceNote: "one-off build",
-    monthly: "then $100/mo care",
-    description:
-      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures every lead.",
-    features: [
-      "Custom site designed for your business",
-      "Fast, mobile, SEO and AI search ready out of the box",
-      "Google reviews carousel showing your real reviews",
-      "AI information gathering and a basic training session before we build",
-      "Trained enquiry chatbot that answers FAQs",
-      "Lead capture straight to your inbox",
-      "Hosting, security and updates included",
-    ],
-    highlight: false,
-  },
-  {
-    name: "Growth",
-    tagline: "For businesses that want the site to sell",
-    price: "from $4,000",
-    priceNote: "one-off build",
-    monthly: "then $200/mo care",
-    description:
-      "Everything in Presence, on a larger or rebuilt site, with a chatbot that qualifies leads, books calls and hands off to your CRM.",
-    features: [
-      "Everything in Presence",
-      "Larger site, or a full rebuild of your current one",
-      "Lead qualifying chatbot with booking",
-      "Handoff to your CRM or inbox",
-      "Light workflow automations",
-    ],
-    highlight: true,
-  },
-  {
-    name: "Signature",
-    tagline: "Your brand, with an AI that sounds like you",
-    price: "from $6,500",
-    priceNote: "one-off build",
-    monthly: "then $300/mo care",
-    description:
-      "Everything in Growth, plus a custom avatar trained to look and sound like the persona you choose, with deeper automations and priority support.",
-    features: [
-      "Everything in Growth",
-      "Custom avatar trained to your chosen persona",
-      "Looks and sounds like your brand voice",
-      "Workflow automations across your enquiries",
-      "Priority support",
-    ],
-    highlight: false,
-  },
-];
+const tiers = WEBSITE_TIERS;
 
 const faqs = [
   {
@@ -94,7 +32,7 @@ const faqs = [
   },
   {
     q: "How much is a Saabai website care plan?",
-    a: "Presence is $100 a month, Growth is $200 a month and Signature is $300 a month (AUD). Builds start from $2,000, $4,000 and $6,500 respectively. Not sure which fits? Take the free AI score at saabai.ai/score or book a free consult.",
+    a: websiteCareFaqAnswer(),
   },
   {
     q: "How do we get started?",
@@ -102,56 +40,11 @@ const faqs = [
   },
 ];
 
-const SITE = "https://www.saabai.ai";
-const CARE: Record<string, number> = { Presence: 100, Growth: 200, Signature: 300 };
-
-const websitesSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${SITE}/websites#service`,
-      name: "Saabai website care plans",
-      serviceType: "Website build, hosting and care plan",
-      description:
-        "Saabai builds, hosts and manages small business websites with a trained AI enquiry chatbot built in. Monthly care covers hosting, security, updates and keeping the AI trained.",
-      url: `${SITE}/websites`,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "Country", name: "Australia" },
-      offers: tiers.map((t) => ({
-        "@type": "Offer",
-        name: `${t.name} care plan`,
-        description: `${t.tagline}. Build ${t.price}, ${t.monthly}.`,
-        price: CARE[t.name],
-        priceCurrency: "AUD",
-        availability: "https://schema.org/InStock",
-        url: `${SITE}/websites`,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: CARE[t.name],
-          priceCurrency: "AUD",
-          unitCode: "MON",
-          referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" },
-        },
-      })),
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: faqs.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "Websites", item: `${SITE}/websites` },
-      ],
-    },
-  ],
-};
+const websitesSchema = schemaGraph([
+  websitesServiceNode,
+  faqNode(faqs),
+  breadcrumbNode([{ name: "Websites", path: "/websites" }]),
+]);
 
 export default function WebsitesPage() {
   return (
@@ -192,9 +85,13 @@ export default function WebsitesPage() {
         </a>
         <InShort>
           Saabai builds and looks after small business websites on a monthly care
-          plan: <strong>Presence $100</strong>, <strong>Growth $200</strong> or{" "}
-          <strong>Signature $300</strong> a month (AUD), with builds from{" "}
-          <strong>$2,000</strong>. Hosting, security, updates and a trained AI
+          plan: {tiers.map((tier, index) => (
+            <span key={tier.name}>
+              {index === 0 ? "" : index === tiers.length - 1 ? " or " : ", "}
+              <strong>{tier.name} {formatAud(tier.monthly)}</strong>
+            </span>
+          ))} a month (AUD), with builds from{" "}
+          <strong>{formatAud(tiers[0].buildFrom)}</strong>. Hosting, security, updates and a trained AI
           enquiry chatbot are included. Founded by Shane Goldberg on the Gold
           Coast, Queensland.
         </InShort>
@@ -311,13 +208,13 @@ export default function WebsitesPage() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-4xl font-semibold tracking-tight text-saabai-teal stat-glow">
-                    {tier.price}
+                    {websiteBuildPrice(tier)}
                   </span>
                   <span className="text-sm text-saabai-text-dim">AUD</span>
                 </div>
                 <p className="text-xs text-saabai-text-dim">{tier.priceNote}</p>
                 <p className="text-xs font-medium text-saabai-teal mt-1">
-                  {tier.monthly}
+                  {websiteMonthlyCare(tier)}
                 </p>
               </div>
 

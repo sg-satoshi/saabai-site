@@ -1,6 +1,9 @@
 import { generateText } from "ai";
 import { getDefaultModel } from "../../../lib/chat-config";
+import { lastUserText, logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
+// Fallback for widgets cached before the move to /api/chat-platform/message.
+// Delete this route after 27 October 2026 (one week).
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
@@ -59,10 +62,20 @@ export async function POST(req: Request) {
         content: m.content,
       }));
 
-    const { text } = await generateText({
-      model: getDefaultModel(),
+    const model = getDefaultModel();
+    const result = await generateText({
+      model,
       system: SYSTEM_PROMPT,
       messages: chatMessages,
+    });
+    const text = result.text;
+    logChatTurn({
+      bot: "bo",
+      siteId: "bo-consultancy",
+      model: modelIdFrom(model),
+      usage: result.totalUsage ?? result.usage,
+      userText: lastUserText(chatMessages),
+      assistantText: text,
     });
 
     return new Response(JSON.stringify({ content: text }), {

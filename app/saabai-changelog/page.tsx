@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import SaabaiChangelogClient from "./SaabaiChangelogClient";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Saabai Changelog, AI Automation Platform",
-  description: "Development history and changelog for Saabai.ai, the hub for Lex, Site Factory, and all client projects.",
-};
+export const metadata: Metadata = publicPageMeta.changelog;
 
 export default function SaabaiChangelog() {
   return <SaabaiChangelogClient />;

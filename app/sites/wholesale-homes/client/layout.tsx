@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Fraunces, Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { wholesaleBasePath } from "../../../../lib/wholesale-paths";
 import { WhBaseProvider } from "../_lib/base-context";
@@ -9,16 +9,8 @@ import { WhBaseProvider } from "../_lib/base-context";
 // handles UI/labels. Exposed as CSS variables so any page under /client
 // (calculators, resources, dashboard, account) can opt in via
 // var(--font-fraunces) / var(--font-manrope).
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-manrope",
-  display: "swap",
-});
+const fraunces = localFont({ src: "../../../fonts/fraunces-latin-wght-normal.woff2", weight: "100 900", variable: "--font-fraunces", display: "swap" });
+const manrope = localFont({ src: "../../../fonts/manrope-latin-wght-normal.woff2", weight: "200 800", variable: "--font-manrope", display: "swap" });
 
 export default async function ClientLayout({ children }: { children: ReactNode }) {
   // Links inside the portal need the /sites/wholesale-homes prefix on saabai.ai

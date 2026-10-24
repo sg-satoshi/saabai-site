@@ -1,3 +1,5 @@
+import { lastUserText, logChatTurn } from "../../../lib/chat-log";
+
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
@@ -118,6 +120,15 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
+    const usage = data.usage ?? {};
+    logChatTurn({
+      bot: "nico",
+      siteId: "nico-moretti",
+      model: "deepseek-v4-flash",
+      usage: { inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens },
+      userText: lastUserText(chatMessages),
+      assistantText: content,
+    });
 
     return new Response(JSON.stringify({ content }), {
       headers: {

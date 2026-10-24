@@ -3,15 +3,17 @@ import Nav from "./components/Nav";
 import HeroHeadline from "./components/exp/HeroHeadline";
 import HeroCta from "./components/exp/HeroCta";
 import SbFooter from "./components/sb/SbFooter";
+import JsonLd from "./components/JsonLd";
+import { miaServiceSchema } from "@/lib/seo-entity";
+import { faqSchema } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
-export const metadata: Metadata = {
-  title: { absolute: "AI Blueprint for Small Businesses | Saabai" },
-  description:
-    "The Saabai Blueprint shows small businesses and professional practices exactly where AI can save hours every week, what each task costs to automate, and what you will save. Start with the free 3 minute AI score.",
-  alternates: { canonical: "/" },
-};
+export const metadata: Metadata = publicPageMeta.home;
+
+const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
 const FAQS = [
   { q: "What is the AI Readiness Score?", a: "A free 3 minute quiz with 12 questions about how your business runs. You get an instant score out of 100, a breakdown by area and three quick wins you can use this week." },
@@ -23,6 +25,8 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
+      <JsonLd data={miaServiceSchema} />
+      <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div className="hero">
@@ -31,7 +35,7 @@ export default function Home() {
           <span className="pill">New: Saabai Blueprint, your AI plan in 48 hours</span>
           <HeroHeadline />
           <p className="lead">
-            Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you'll save. Start with the free 3 minute AI score.
+            Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.
           </p>
           <div className="ctas">
             <HeroCta />
@@ -46,13 +50,11 @@ export default function Home() {
           <div className="card offer">
             <span className="eyebrow">Web Solutions</span>
             <h3>A website that works as hard as you do</h3>
-            <p>We design, build, host and look after it. You get a fast, modern site with lead alerts, reviews and SEO set up from day one.</p>
+            <p>We design, build, host and look after it. Every tier includes hosting, care and a trained AI enquiry chatbot.</p>
             <ul className="tick">
-              <li>Built in about two weeks</li>
-              <li>Hosting, updates and fixes included</li>
-              <li>AI enquiry chatbot and Google reviews on every plan</li>
+              {WEBSITE_TIERS.map((tier) => <li key={tier.name}>{websiteOfferLine(tier)}</li>)}
             </ul>
-            <div className="price">From <b>$2,000</b> + $100/mo care</div>
+            <div className="price">From <b>{formatAud(WEBSITE_TIERS[0].buildFrom)}</b> + {formatAud(WEBSITE_TIERS[0].monthly)}/mo care, AUD</div>
             <a className="btn ghost" href="/websites" style={{ marginTop: 22 }}>See websites →</a>
           </div>
           <div className="card offer feat">
@@ -150,29 +152,51 @@ export default function Home() {
             <h2 style={{ marginTop: 12 }}>Built, hosted and managed for you</h2>
           </div>
           <div className="grid3">
-            <div className="card pkg">
-              <h3>Starter site</h3>
-              <div className="amt">$2,000</div>
-              <p className="dim" style={{ fontSize: 14 }}>from, + $100/mo hosting and care</p>
-              <ul className="tick"><li>Up to 5 pages</li><li>Contact form with lead alerts</li><li>Hosting, SSL and updates</li></ul>
-            </div>
-            <div className="card pkg feat">
-              <span className="pill" style={{ float: "right" }}>Most popular</span>
-              <h3>Growth site</h3>
-              <div className="amt">$4,000</div>
-              <p className="dim" style={{ fontSize: 14 }}>from, + $200/mo</p>
-              <ul className="tick"><li>Everything in Starter</li><li>AI chatbot and Google reviews</li><li>Local SEO setup</li></ul>
-            </div>
-            <div className="card pkg">
-              <h3>Custom</h3>
-              <div className="amt">Quoted</div>
-              <p className="dim" style={{ fontSize: 14 }}>for bigger builds</p>
-              <ul className="tick"><li>Portals, bookings, integrations</li><li>Multi-location sites</li><li>Dedicated build plan</li></ul>
-            </div>
+            {WEBSITE_TIERS.map((tier) => (
+              <div className={`card pkg${tier.highlight ? " feat" : ""}`} key={tier.name}>
+                {tier.highlight ? <span className="pill" style={{ float: "right" }}>Most popular</span> : null}
+                <h3>{tier.name}</h3>
+                <div className="amt">{formatAud(tier.buildFrom)}</div>
+                <p className="dim" style={{ fontSize: 14 }}>{websiteHomeCareNote(tier)}</p>
+                <ul className="tick">
+                  {tier.homePoints.map((point) => <li key={point}>{point}</li>)}
+                </ul>
+              </div>
+            ))}
           </div>
           <p className="dim" style={{ fontSize: 14, textAlign: "center", marginTop: 24, maxWidth: 640, marginLeft: "auto", marginRight: "auto" }}>The price only goes above the &apos;from&apos; figure for custom integrations or other additional work, and we quote that in writing before any work starts.</p>
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <a className="btn ghost" href="/websites">Compare website packages →</a>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <div className="card">
+            <h2>AI chatbots for Australian small businesses and law firms</h2>
+            <div style={{ display: "grid", gap: 14, marginTop: 16, maxWidth: 900, fontSize: 17 }}>
+              <p>Saabai is a <a href="/ai-receptionist-gold-coast" style={copyLink}>Gold Coast</a> business based in Merrimac, Queensland, and we work remotely with clients across Australia.</p>
+              <p>We build custom AI chatbots for business websites, trained on your own services, hours and policies.</p>
+              <p>Your chatbot answers visitors day and night, so enquiries that come in after hours get a reply instead of sitting in an inbox until morning.</p>
+              <p>It captures the person&apos;s details and what they need, then alerts you straight away.</p>
+              <p>Email enquiry alerts come with every plan, and we can also send alerts to Telegram, WhatsApp or SMS.</p>
+              <p>Want to see one working? Chat with Mia, our own AI assistant, right here on saabai.ai.</p>
+              <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI workspace made for legal practices.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <div className="card">
+            <h2>Enquiry alerts</h2>
+            <div style={{ display: "grid", gap: 14, marginTop: 16, maxWidth: 900, fontSize: 17 }}>
+              <p>Every Saabai chatbot sends new enquiry alerts by email on all plans, so nothing gets lost.</p>
+              <p>If you would rather hear about leads on your phone, we can also send alerts to Telegram, WhatsApp or SMS.</p>
+              <p>You choose where each enquiry goes, so the right person sees it quickly and can follow up while the customer is still keen.</p>
+            </div>
           </div>
         </div>
       </section>

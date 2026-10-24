@@ -11,6 +11,18 @@ import { getExperiments } from "./lib/exp/config";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
+import {
+  NOINDEX_ROBOTS,
+  ROBOTS_REQUEST_HEADER,
+  STATIC_DOMAIN_MAP,
+  canonicalDomainsFromHostMap,
+  canonicalHostForSlug,
+  clientSiteRequestDecision,
+  isAdminSitePreview,
+  isSaabaiProductionHost,
+  parseSitesPath,
+  slugForHost,
+} from "./lib/client-site-surface";
 
 // Pages that declare a slot in code. Only these paths pay for an experiment lookup; every other page is untouched.
 const SLOT_PATHS = new Set(SLOTS.map((s) => s.path));
@@ -29,6 +41,7 @@ const PROTECTED_PAGES = [
   "/pulse",
   "/mission-control",
   "/atlas-memory-control",
+  "/lex",                // Lex research tool (signed-in Lex users only; the public sales page is /legal)
 ];
 
 // ── API authorization tiers ──────────────────────────────────────────────
@@ -43,6 +56,7 @@ const PUBLIC_API = [
   "/api/auth/login",
   "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
+  "/api/auth/login-as/exit", // ends Login as; validates its own signed marker and the admin token inside
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
@@ -70,9 +84,7 @@ const PUBLIC_API = [
   "/api/bo-contact",
   "/api/lmm-contact",
   "/api/leadgen/chat",
-  // Public Lex tools on the /lex page (no session check in handlers today)
-  "/api/lex-extract",
-  "/api/lex-compare",
+  // /api/lex-extract and /api/lex-compare are NOT public: they fall through to the session check like the other Lex APIs.
   // Public lead / contact capture
   "/api/rex-leads",
   "/api/lex-leads",
@@ -149,9 +161,9 @@ const ADMIN_API = [
   "/api/growth",
   "/api/mission-control",
   "/api/lex-settings",
-  "/api/lex-review-queue",
-  "/api/lex-review-submit",
-  "/api/lex-review",
+  "/api/lex-review-queue",   // supervisor queue across firms: genuinely admin
+  // /api/lex-review and /api/lex-review-submit are NOT admin-only: signed-in Lex firm users run them,
+  // and each route checks the caller and the firm's daily cap (lib/lex-review-access).
   "/api/rex-woo-backfill",
   "/api/rex-price-test",
   "/api/rex-pipedrive-sync",
@@ -168,11 +180,7 @@ const ADMIN_API = [
 // Public endpoints that client websites on their own domains call today but
 // that stay session-protected on saabai.ai (e.g. the site chat widget, which
 // is also the Site Factory authoring chat). Only allowed on custom domains.
-// Custom domains mapped in code (used when not in the Redis domain map).
-// Keys are bare hosts without "www.".
-const STATIC_DOMAIN_MAP: Record<string, string> = {
-  "lifestylemoneymanagement.com.au": "lmm-site",
-};
+// Custom domains mapped in code live in lib/client-site-surface.ts (STATIC_DOMAIN_MAP).
 
 const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
@@ -285,8 +293,9 @@ export async function proxy(req: NextRequest) {
     !hostname.startsWith("127.")
   ) {
     const lookupHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+    // Coded sites and STATIC_DOMAIN_MAP resolve without Redis. Redis still covers factory sites.
     const slug =
-      STATIC_DOMAIN_MAP[lookupHost] ??
+      slugForHost(hostname) ??
       (await redis.hget<string>("saabai:domain-map", lookupHost));
     if (slug) {
       const url = req.nextUrl.clone();
@@ -370,6 +379,38 @@ export async function proxy(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
+
+  // Client sites on saabai.ai: 301 to the custom domain, or noindex when there is none.
+  // Preview hosts are noindex and are not redirected. Runs after the custom-domain
+  // rewrite above, so a request that is already on the client host cannot loop.
+  const sitesPath = parseSitesPath(pathname);
+  if (sitesPath) {
+    let extraDomains = canonicalDomainsFromHostMap(STATIC_DOMAIN_MAP);
+    if (isSaabaiProductionHost(hostname) && !canonicalHostForSlug(sitesPath.slug, undefined, extraDomains)) {
+      try {
+        const map = await redis.hgetall<Record<string, string>>("saabai:domain-map");
+        extraDomains = { ...extraDomains, ...canonicalDomainsFromHostMap(map) };
+      } catch { /* code registry only */ }
+    }
+    const decision = clientSiteRequestDecision({
+      host: hostname,
+      pathname,
+      search: req.nextUrl.search,
+      extraDomains,
+      adminPreview: isAdminSitePreview({
+        hasSessionCookie: !!req.cookies.get(COOKIE_NAME)?.value,
+        referer: req.headers.get("referer"),
+      }),
+    });
+    if (decision.action === "redirect") return NextResponse.redirect(decision.location, decision.status);
+    if (decision.action === "noindex") {
+      const headers = new Headers(req.headers);
+      headers.set(ROBOTS_REQUEST_HEADER, NOINDEX_ROBOTS);
+      const res = NextResponse.next({ request: { headers } });
+      res.headers.set("X-Robots-Tag", NOINDEX_ROBOTS);
+      return res;
+    }
+  }
 
   // ── Chief (AI overseer) read-only session: hard allowlist, everything else refused ──
   const chiefCookie = req.cookies.get(CHIEF_COOKIE)?.value;
@@ -489,7 +530,8 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);
   const login = new URL(isAdminArea ? "/saabai-admin/login" : "/login", req.url);
-  login.searchParams.set("redirect", pathname);
+  // Keep the query string so e.g. /lex?q=... lands back in the same place after sign-in (login runs it through safeRedirect).
+  login.searchParams.set("redirect", pathname + req.nextUrl.search);
   return NextResponse.redirect(login);
 }
 

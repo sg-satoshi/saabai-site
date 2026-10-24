@@ -7,6 +7,7 @@ import { PortalShell } from "./components/PortalShell";
 import { LexWorkspace } from "./LexWorkspace";
 import { RequestsPanel } from "./requests/RequestsPanel";
 import { UpgradesPanel } from "./upgrades/UpgradesPanel";
+import { portalPageFromSearchParam } from "../../lib/portal-pages";
 
 type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
 type PageId =
@@ -152,7 +153,7 @@ function ClientPortalInner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [page, setPage] = useState<PageId>(() => (searchParams.get("page") === "upgrades" ? "upgrades" : "overview"));
+  const [page, setPage] = useState<PageId>(() => portalPageFromSearchParam(searchParams.get("page")) as PageId);
   const [reqForm, setReqForm] = useState({ name: "", company: "", email: "", about: "My Saabai Blueprint", note: "" });
 
   async function loadWorkspace() {

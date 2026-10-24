@@ -20,7 +20,9 @@ background:var(--bg);color:var(--text);font-family:var(--font-geist-sans),system
 .sb .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px}
 .sb .card.feat{border-color:var(--teal);box-shadow:0 0 60px var(--glow);background:linear-gradient(180deg,#1a1850,var(--surface))}
 .sb .pill{display:inline-block;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(98,197,209,.12);color:var(--teal);border:1px solid var(--border)}
+/* Page bands. Clauses inside a legal card opt out, or each one inherits this padding. */
 .sb section{padding:96px 0}
+.sb .card.legal section{padding:0}
 .sb .glow{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(31,77,197,.45),transparent 70%),radial-gradient(ellipse 40% 40% at 80% 20%,rgba(98,197,209,.18),transparent 70%);pointer-events:none}
 .sb .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 .sb .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}

@@ -176,7 +176,8 @@ export function brisbaneText(iso: string): string {
  */
 export function timerColors(t: ThemeColors) { return { text: t.fg, box: t.fg, digit: t.bg, line: t.bg, label: t.fg }; }
 
-export const DEFAULT_EXCLUDES = ["/checkout", "/checkout/*", "/blueprint/pay*", "/blueprint/checkout*", "/admin", "/admin/*", "/saabai-admin", "/saabai-admin/*", "/unsubscribe", "/unsubscribe/*", "/privacy", "/terms"];
+// "/lex/*" and "/lex-widget/*": no promo bars inside the Lex research tool or its embedded client widget.
+export const DEFAULT_EXCLUDES = ["/checkout", "/checkout/*", "/blueprint/pay*", "/blueprint/checkout*", "/admin", "/admin/*", "/saabai-admin", "/saabai-admin/*", "/unsubscribe", "/unsubscribe/*", "/privacy", "/terms", "/lex/*", "/lex-widget/*"];
 
 export type Announcement = {
   id: string;

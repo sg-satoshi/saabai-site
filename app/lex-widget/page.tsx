@@ -116,8 +116,6 @@ export default function LexWidgetPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkLabel, setThinkLabel] = useState("Researching…");
-  const [privacyMode, setPrivacyMode] = useState(true);
-  const [privacyStats, setPrivacyStats] = useState<{ tokensReplaced: number; types: Record<string, number> } | null>(null);
   const [docContext, setDocContext] = useState<DocContext | null>(null);
   const [analyzingDoc, setAnalyzingDoc] = useState(false);
 
@@ -187,7 +185,7 @@ export default function LexWidgetPage() {
       const res = await fetch("/api/lex-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, clientId, privacyMode }),
+        body: JSON.stringify({ messages: apiMessages, clientId }),
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
 
@@ -240,7 +238,7 @@ export default function LexWidgetPage() {
     } finally {
       setLoading(false);
     }
-  }, [loading, clientId, privacyMode]);
+  }, [loading, clientId]);
 
   const handleFileUpload = useCallback(async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
@@ -284,7 +282,7 @@ export default function LexWidgetPage() {
       if (found.length > 0) {
         clauseText += `Detected **${found.length}** legal clause${found.length === 1 ? "" : "s"}:\n\n`;
         found.forEach((c: ClauseResult) => {
-          clauseText += `• **${c.label}** \u2014 ${c.confidence} confidence`;
+          clauseText += `• **${c.label}**: ${c.confidence} confidence`;
           if (c.snippets.length > 0) {
             const snip = c.snippets[0].replace(/^\s*[^a-zA-Z]*/, "").slice(0, 90);
             clauseText += `\n  _“${snip}${snip.length >= 90 ? "…" : ""}”_`;
@@ -297,7 +295,7 @@ export default function LexWidgetPage() {
       if (notFound.length > 0) {
         clauseText += `\nNot detected: ${notFound.map((c: ClauseResult) => c.label).join(", ")}.\n`;
       }
-      clauseText += "\nAsk me anything about this document — I’ll reference the full text when answering.";
+      clauseText += "\nAsk me anything about this document. I’ll reference the full text when answering.";
 
       const assistantMsg: ChatMessage = { role: "assistant", content: clauseText };
       const updated = [...msgsRef.current, uploadMsg, assistantMsg];
@@ -373,20 +371,18 @@ export default function LexWidgetPage() {
               </div>
             </div>
           </div>
-          {/* Right: privacy toggle + powered by */}
+          {/* Right: privacy status (always on, set by the server) + powered by */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              onClick={() => setPrivacyMode(v => !v)}
-              title={privacyMode ? "Privacy Mode: PII is anonymized before sending to AI" : "Privacy Mode off"}
+            <span
+              title="Privacy is always on"
               style={{
                 display: "flex", alignItems: "center", gap: 4,
                 padding: "3px 8px",
                 borderRadius: 6,
-                border: `1px solid ${privacyMode ? C.goldBorder : C.border}`,
-                background: privacyMode ? C.goldBg : "transparent",
-                cursor: "pointer",
+                border: `1px solid ${C.goldBorder}`,
+                background: C.goldBg,
                 fontSize: 9,
-                color: privacyMode ? C.gold : C.textDim,
+                color: C.gold,
                 fontWeight: 600,
                 letterSpacing: 0.3,
                 textTransform: "uppercase" as const,
@@ -394,11 +390,11 @@ export default function LexWidgetPage() {
             >
               <span style={{
                 width: 6, height: 6, borderRadius: "50%",
-                background: privacyMode ? "#4ade80" : C.textDim,
+                background: "#4ade80",
                 display: "inline-block",
               }} />
-              {privacyMode ? "Privacy On" : "Privacy Off"}
-            </button>
+              Privacy On
+            </span>
             <a
               href="https://saabai.ai"
               target="_blank"
@@ -623,13 +619,7 @@ export default function LexWidgetPage() {
             marginTop: 5, fontSize: 8,
             color: C.textDim, textAlign: "center",
           }}>
-            {privacyMode ? (
-              <span style={{ color: "#4ade80" }}>
-                ✦ Privacy Mode active — client identifiers are anonymized before AI processing
-              </span>
-            ) : (
-              "Not legal advice. Verify all citations."
-            )}
+            Not legal advice. Verify all citations.
           </div>
         </div>
       </div>

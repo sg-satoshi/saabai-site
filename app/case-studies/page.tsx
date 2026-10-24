@@ -2,19 +2,9 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Case Studies, AI Results for Australian Businesses",
-  description:
-    "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  alternates: { canonical: "https://www.saabai.ai/case-studies" },
-  openGraph: {
-    url: "https://www.saabai.ai/case-studies",
-    title: "Case Studies, AI Results for Australian Businesses | Saabai",
-    description:
-      "Real results from Saabai, a Gold Coast AI business: AI agents that answer enquiries in 90 seconds and quote 24/7, live in 3 weeks. Start with a Blueprint from $497.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.caseStudies;
 
 export default function CaseStudies() {
   return (

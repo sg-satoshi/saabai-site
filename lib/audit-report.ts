@@ -1,5 +1,5 @@
 /**
- * AI Audit report generator — builds a branded .docx DRAFT from the
+ * AI Audit report generator: builds a branded .docx DRAFT from the
  * engagement profile + assessment. Shane reviews/polishes in Word before
  * client delivery. Tier shapes length via the assessment's opportunity count.
  */
@@ -19,6 +19,7 @@ import {
   WidthType,
 } from "docx";
 import { AuditEngagement } from "./audit-types";
+import { startAnswers } from "./audit-assessment";
 
 const NAVY = "0E0C2E";
 const GOLD = "C9A84C";
@@ -93,6 +94,64 @@ function metaRow(label: string, value: string): TableRow {
   });
 }
 
+function quote(text: string): Paragraph {
+  return new Paragraph({
+    spacing: { before: 80, after: 200, line: 320 },
+    indent: { left: 400 },
+    border: { left: { style: BorderStyle.SINGLE, size: 18, color: GOLD, space: 12 } },
+    children: [new TextRun({ text: `"${text}"`, size: 23, italics: true, color: NAVY })],
+  });
+}
+
+/**
+ * Fact-find v2: open the Blueprint with the client's own words.
+ * Answer 1 is quoted verbatim, answer 2 shapes what we avoid repeating, and
+ * answer 3 is answered in a short note (Starter) or on the walkthrough call
+ * (Pro, Business). Returns nothing when the v2 answers are absent (older fact-finds).
+ */
+export function whatYouToldUs(eng: AuditEngagement): Paragraph[] {
+  const told = startAnswers(eng);
+  if (!told.frustration && !told.tried && !told.wish) return [];
+  const a = eng.assessment;
+  const out: Paragraph[] = [h1("What you told us")];
+  if (told.frustration) {
+    out.push(body("What's frustrating you most right now, in your words:"), quote(told.frustration));
+    out.push(
+      body(
+        "Everything in this Blueprint is ranked against that. The opportunities that fix it directly come first and are marked as such."
+      )
+    );
+  }
+  if (told.tried) {
+    out.push(h2("What you've already tried"));
+    out.push(
+      body(
+        a?.avoidRepeating ??
+          "We have taken what you have already tried into account, and we will not recommend the same thing again unless we can show why this time is different."
+      )
+    );
+  }
+  if (told.wish) {
+    out.push(h2("What you wish tech sellers understood"));
+    if (eng.tier === "starter") {
+      out.push(
+        body(
+          a?.concernsNote ??
+            "[Short note responding to the client's answer 3. Generate the assessment, or write it here.]",
+          a?.concernsNote ? undefined : { italic: true, color: GREY }
+        )
+      );
+    } else {
+      out.push(
+        body(
+          "You told us what you wish people selling AI or tech understood about your situation. We will talk that through directly on your walkthrough call."
+        )
+      );
+    }
+  }
+  return out;
+}
+
 function noBorders() {
   const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" } as const;
   return { top: none, bottom: none, left: none, right: none };
@@ -139,7 +198,7 @@ export async function buildAuditReportDocx(
       spacing: { before: 200 },
       children: [
         new TextRun({
-          text: "CONFIDENTIAL — prepared exclusively for the addressee.",
+          text: "CONFIDENTIAL. Prepared exclusively for the addressee.",
           italics: true,
           size: 19,
           color: GREY,
@@ -148,6 +207,9 @@ export async function buildAuditReportDocx(
     }),
     new Paragraph({ children: [new PageBreak()] })
   );
+
+  // ── What you told us (fact-find v2) ────────────────────────────────────
+  children.push(...whatYouToldUs(eng));
 
   // ── Engagement snapshot ────────────────────────────────────────────────
   children.push(
@@ -172,7 +234,7 @@ export async function buildAuditReportDocx(
   if (a?.summary) {
     children.push(body(a.summary));
   } else {
-    children.push(body("[Executive summary — generate the AI assessment first, or draft manually.]", { italic: true, color: GREY }));
+    children.push(body("[Executive summary. Generate the AI assessment first, or draft manually.]", { italic: true, color: GREY }));
   }
 
   if (a?.quickWins) {
@@ -187,12 +249,12 @@ export async function buildAuditReportDocx(
 
   const opps = a?.opportunities ?? [];
   if (opps.length === 0) {
-    children.push(body("[No opportunities yet — generate the assessment first.]", { italic: true, color: GREY }));
+    children.push(body("[No opportunities yet. Generate the assessment first.]", { italic: true, color: GREY }));
   }
 
   for (const o of opps) {
     children.push(
-      h2(`${o.rank ? `#${o.rank} — ` : ""}${o.title}`),
+      h2(`${o.rank ? `#${o.rank}: ` : ""}${o.title}`),
       body(o.description)
     );
     children.push(
@@ -200,11 +262,16 @@ export async function buildAuditReportDocx(
         width: { size: 100, type: WidthType.PERCENTAGE },
         borders: noBorders(),
         rows: [
+          ...(o.fixesMainFrustration
+            ? [metaRow("What it fixes", "What's frustrating you most right now")]
+            : []),
           ...(o.hoursSavedPerWeek !== undefined
             ? [metaRow("Estimated time recovered", `~${o.hoursSavedPerWeek} hours per week`)]
             : []),
           metaRow("Build complexity", o.complexity),
-          ...(o.costBandAud ? [metaRow("Indicative build investment", o.costBandAud)] : []),
+          ...(o.costBandAud
+            ? [metaRow("Indicative build investment", `${o.costBandAud} AUD (GST not applicable)`)]
+            : []),
         ],
       })
     );
@@ -222,15 +289,15 @@ export async function buildAuditReportDocx(
     const phases =
       eng.tier === "business"
         ? [
-            { label: "Phase 1 (Months 1–3): Foundations & highest-ROI build", slice: opps.slice(0, 3) },
-            { label: "Phase 2 (Months 4–8): Expansion", slice: opps.slice(3, 7) },
-            { label: "Phase 3 (Months 9–12): Scale & optimise", slice: opps.slice(7) },
+            { label: "Phase 1 (Months 1-3): Foundations & highest-ROI build", slice: opps.slice(0, 3) },
+            { label: "Phase 2 (Months 4-8): Expansion", slice: opps.slice(3, 7) },
+            { label: "Phase 3 (Months 9-12): Scale & optimise", slice: opps.slice(7) },
           ]
         : eng.tier === "pro"
           ? [
-              { label: "Days 1–30: First build", slice: opps.slice(0, 2) },
-              { label: "Days 31–60: Second wave", slice: opps.slice(2, 5) },
-              { label: "Days 61–90: Consolidate & measure", slice: opps.slice(5) },
+              { label: "Days 1-30: First build", slice: opps.slice(0, 2) },
+              { label: "Days 31-60: Second wave", slice: opps.slice(2, 5) },
+              { label: "Days 61-90: Consolidate & measure", slice: opps.slice(5) },
             ]
           : [{ label: "Recommended starting point", slice: opps.slice(0, 3) }];
 
@@ -262,14 +329,14 @@ export async function buildAuditReportDocx(
   children.push(
     h1("Next Steps"),
     body(
-      "We will walk through this report together on your findings call. If you choose to proceed to a build, each opportunity above is quoted separately as a fixed-price engagement — no obligation, and we will tell you plainly if we believe an item is not worth building."
+      "We will walk through this report together on your findings call. If you choose to proceed to a build, each opportunity above is quoted separately as a fixed-price engagement. There is no obligation, and we will tell you plainly if we believe an item is not worth building."
     ),
     body("Shane Goldberg · Saabai.ai · hello@saabai.ai", { color: GREY })
   );
 
   const doc = new Document({
     creator: "Saabai.ai",
-    title: `AI Automation Audit — ${eng.firmName}`,
+    title: `AI Automation Audit: ${eng.firmName}`,
     styles: {
       default: {
         document: { run: { font: "Calibri" } },

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Self-hosted fonts (no Google Fonts fetch at build). Named families for CSS that uses them directly. */
+@font-face { font-family: "Inter"; src: url("./fonts/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("./fonts/geist-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("./fonts/geist-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
 /* ─── Saabai Brand Colour System ───────────────────────────────────────────
    Colours sampled directly from /public/brand/saabai-logo.png.
    All colour decisions flow from here.

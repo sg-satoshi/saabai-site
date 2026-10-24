@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { gaEvent } from "@/lib/ga";
+import { isFocusedFormPath } from "@/lib/focused-paths";
+import { showsSaabaiChrome } from "@/lib/client-site-surface";
 
 const COOKIE_KEY = "saabai_subscribed";
-const SKIP_PATHS = ["/login", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding", "/sites/tributum-law-v2", "/sites/wholesale-homes", "/sites/cycle-repair"];
-const SKIP_HOSTNAMES = ["wholesalehomes.com.au", "www.wholesalehomes.com.au", "stuscyclerepairs.com", "www.stuscyclerepairs.com"];
+const SKIP_PATHS = ["/login", "/lex", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding"];
 
 const INDUSTRIES = ["Law / Legal", "Accounting / Finance", "Real Estate", "Other"];
 
@@ -28,9 +29,8 @@ export default function EmailCapturePopup() {
   const show = useCallback(() => {
     if (hasCookie(COOKIE_KEY)) return;
     const path = window.location.pathname;
-    if (SKIP_PATHS.some(p => path.startsWith(p))) return;
-    const host = window.location.hostname;
-    if (SKIP_HOSTNAMES.includes(host)) return;
+    if (!showsSaabaiChrome(window.location.hostname, path)) return;
+    if (SKIP_PATHS.some(p => path.startsWith(p)) || isFocusedFormPath(path)) return;
     setVisible(true);
   }, []);
 
