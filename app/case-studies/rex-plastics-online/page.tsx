@@ -5,8 +5,7 @@ import { pageMeta } from "@/lib/seo-meta";
 
 const rexMeta = pageMeta({
   path: "/case-studies/rex-plastics-online",
-  title: "PlasticOnline Case Study: Rex, AI Quoting Agent",
-  ogTitle: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
+  title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
   description:
     "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
 });
