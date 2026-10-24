@@ -205,7 +205,7 @@ export const BRISBANE: LocationConfig = {
       a: "A Saabai Blueprint delivers a prioritised roadmap in days, not months. First automations (typically quoting or enquiry handling) are often live within a few weeks after that. We sequence the highest-impact, lowest-risk wins first so you see returns early.",
     },
     {
-      q: "What does an engagement with Saabai.ai cost?",
+      q: "What does an engagement with Saabai cost?",
       a: "It depends on scope, which is why we start with a fixed-price Saabai Blueprint. That gives you a clear picture of opportunities and expected return before any build commitment, so you can make the decision on real numbers rather than a guess. Pricing: Starter $497, Pro $1,497 or Business $3,500, credited against a build booked within 30 days. The free AI Readiness Score is a good first step.",
     },
   ],
@@ -213,12 +213,12 @@ export const BRISBANE: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint and a ranked plan for where automation saves your Brisbane business the most time, or start with the free AI Readiness Score.",
   seo: {
-    title: "Websites & AI Automation Brisbane",
+    title: "Websites and AI Automation in Brisbane | Saabai",
     description:
-      "Brisbane websites from $2,000 plus $100/mo and AI automation plans from $497. Built for small businesses and trades. Free AI score. Free AI Readiness Score.",
-    ogTitle: "Websites & AI Automation Brisbane | Saabai",
+      "Brisbane websites from $2,000 plus $100 a month, and AI automation plans from $497, built for small businesses and trades. Start with the free AI Readiness Score.",
+    ogTitle: "Websites and AI Automation in Brisbane | Saabai",
     ogDescription:
-      "Brisbane small businesses: managed websites and a Saabai Blueprint for AI automation. Take the free AI Readiness Score.",
+      "Brisbane websites from $2,000 plus $100 a month, and AI automation plans from $497, built for small businesses and trades. Start with the free AI Readiness Score.",
     canonical: `${BASE_URL}/brisbane`,
   },
 };
@@ -373,12 +373,12 @@ export const GOLD_COAST: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "Websites & AI Automation Gold Coast | Local Team",
+    title: "Websites and AI Automation on the Gold Coast | Saabai",
     description:
-      "Gold Coast based. Websites built, hosted and managed from $2,000 plus $100/mo, and Saabai Blueprint AI plans from $497 for small businesses. Free AI score.",
-    ogTitle: "Websites & AI Automation Gold Coast | Local Team | Saabai",
+      "Gold Coast websites built, hosted and managed from $2,000 plus $100 a month, plus Saabai Blueprint AI plans from $497. Start with the free AI Readiness Score.",
+    ogTitle: "Websites and AI Automation on the Gold Coast | Saabai",
     ogDescription:
-      "Saabai is a Gold Coast team building websites and AI systems for local small businesses. Take the free AI Readiness Score.",
+      "Gold Coast websites built, hosted and managed from $2,000 plus $100 a month, plus Saabai Blueprint AI plans from $497. Start with the free AI Readiness Score.",
     canonical: `${BASE_URL}/gold-coast`,
   },
 };

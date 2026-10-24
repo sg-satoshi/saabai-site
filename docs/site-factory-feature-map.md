@@ -18,12 +18,12 @@ Registry of coded sites: `lib/site-registry.ts` (`APP_ROUTER_SITES`: slug, domai
 
 ## 2. Host mapping (how a custom domain reaches a site)
 
-- `proxy.ts` (Next 16 middleware). Any host that is not saabai.ai, `*.saabai.ai`, `*.vercel.app` or localhost is a custom domain. `www.` is stripped, then the slug comes from `STATIC_DOMAIN_MAP` (in code; only `lifestylemoneymanagement.com.au` -> `lmm-site`) or the Redis hash `saabai:domain-map` (written by `app/api/site-factory/domain/route.ts`).
+- `proxy.ts` (Next 16 middleware). Any host that is not saabai.ai, `*.saabai.ai`, `*.vercel.app` or localhost is a custom domain. `www.` is stripped, then the slug comes from `STATIC_DOMAIN_MAP` in `lib/client-site-surface.ts` (only `lifestylemoneymanagement.com.au` -> `lmm-site`) or the Redis hash `saabai:domain-map` (written by `app/api/site-factory/domain/route.ts`).
 - Matched requests are rewritten: `/` -> `/sites/<slug>`, `/x` -> `/sites/<slug>/x`. Exceptions: `/_next/*`, `/clients/<slug>/*` and static files under `/sites/<slug>` are rewritten to www.saabai.ai; `/favicon.ico` -> `/sites/<slug>/favicon.ico`.
 - LMM specials in `proxy.ts`: brand assets via `lib/lmm-brand.ts` (`lmmBrandAsset`) and `robots.txt, sitemap.xml, llms.txt, llms-full.txt` rewritten to `/clients/lmm-site/...`.
 - `/api/*` on custom domains gets the same deny-by-default auth as saabai.ai. A form endpoint is only callable if it is listed in `PUBLIC_API` in `proxy.ts` (e.g. `/api/lmm-contact`, `/api/cycle-repair/lead`, `/api/site-factory/lead`). `CUSTOM_DOMAIN_PUBLIC_API` holds extras allowed only on custom domains (`/api/site-factory-chat`). A new form route that is not added to `PUBLIC_API` will 401 in production.
 - `next.config.ts`: `CLIENT_HOST` regex (stuscyclerepairs.com, boconsulting.com.au, wholesalehomes.com.au, lifestylemoneymanagement.com.au, tributumlaw.com) stops saabai.ai city redirects (`/sydney` etc.) applying to client hosts. Add every new client domain there. Rewrites: `/sites/tributumlaw` -> `/sites/tributum-law`, `/clients/lmm-site` -> `/clients/lmm-site/index.html`.
-- `app/components/ConditionalWidgets.tsx`: suppresses Saabai's Mia chat/ticker on listed paths and `SUPPRESS_HOSTNAMES`. Add new client hosts there too.
+- Saabai chrome, `/sites/<slug>` redirects, and noindex are not per site. Register the site in `lib/client-site-directory.ts`. `lib/client-site-surface.ts` and `proxy.ts` apply the rule. See `AGENTS.md`.
 
 ## 3. Human term -> file / selector
 
@@ -128,7 +128,7 @@ Checks: home 200; every same-host sitemap URL and `--pages` return 200; robots.t
 - Proxy-rewritten paths: on a custom host the browser path is `/`, but Next sees `/sites/<slug>`. Public assets referenced as `/brand/...` get rewritten to `/sites/<slug>/brand/...` and 404; use absolute `/sites/<slug>/...` or `/clients/<slug>/...` URLs for assets.
 - Mia on client hosts: `ConditionalWidgets` renders nothing until mounted, then checks path and hostname (fixed 17 Oct: previously the server saw the rewritten `/sites/slug` path while the browser saw `/`, causing hydration error #418 and a stray `/brand/agent-avatar.png` request on stuscyclerepairs.com). `proxy.ts` now also passes `/brand/*` through to the master domain on custom hosts. No open findings.
 - New API route for a public form: add it to `PUBLIC_API` in `proxy.ts`.
-- New client domain checklist: `CLIENT_HOST` in `next.config.ts`, `SUPPRESS_HOSTNAMES` in `ConditionalWidgets.tsx`, domain-map entry (`STATIC_DOMAIN_MAP` or Redis), a geo profile, then run the self-check.
+- New client domain checklist: add the site to `lib/client-site-directory.ts` (slug, canonical url, domains). Redirects, noindex, and Saabai chrome follow automatically. Also add the domain to `CLIENT_HOST` in `next.config.ts` so city redirects stay off that host, add a geo profile, then run `npx tsx --test tests/client-site-surface.test.ts` and the self-check. Static hosts that are not App Router sites still go in `STATIC_DOMAIN_MAP`.
 
 ## 9. Split testing (Phase 1, live on saabai.ai only)
 

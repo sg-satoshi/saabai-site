@@ -41,8 +41,8 @@ async function getKey(usage: "sign" | "verify"): Promise<CryptoKey> {
   );
 }
 
-export async function createSessionToken(clientId: string): Promise<string> {
-  const expiry = Math.floor(Date.now() / 1000) + SESSION_DAYS * 24 * 3600;
+export async function createSessionToken(clientId: string, ttlSeconds: number = SESSION_DAYS * 24 * 3600): Promise<string> {
+  const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
   // Base64url-encode clientId to prevent delimiter collisions (dots in emails)
   const encodedId = b64url(new TextEncoder().encode(clientId).buffer);
   const payload = `${encodedId}.${expiry}`;
@@ -112,7 +112,12 @@ export { COOKIE_NAME };
 export async function resolveStaff(clientId: string): Promise<{ id: string; email?: string; name?: string; grant: AccessGrant } | null> {
   if (!clientId) return null;
   const ADMIN_ID = process.env.SAABAI_ADMIN_ID ?? "saabai";
-  if (clientId === ADMIN_ID) return { id: clientId, grant: { role: "admin", kind: "internal" } };
+  if (clientId === ADMIN_ID) {
+    // Owner identity comes from the env client with the same id (SAABAI_CLIENT_N_NAME / _EMAIL), never a placeholder.
+    const { loadClients } = await import("./clients");
+    const c = loadClients().find((x) => x.id === clientId);
+    return { id: clientId, ...(c?.email ? { email: c.email } : {}), ...(c?.name && c.name !== c.id ? { name: c.name } : {}), grant: { role: "admin", kind: "internal" } };
+  }
   if (clientId.includes(":") || clientId === "rex-dashboard") return null;
   try {
     const { listDirectoryUsers } = await import("../lib/user-directory");

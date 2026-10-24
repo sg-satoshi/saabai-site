@@ -1,6 +1,8 @@
 import { getDefaultModel } from "../../../../lib/chat-config";
 import { generateText } from "ai";
 import { cleanMessages } from "../../../../lib/chat-origin";
+import { NO_DASH_RULE, noDashes } from "../../../../lib/no-dashes";
+import { lastUserText, logChatTurn, modelIdFrom } from "../../../../lib/chat-log";
 
 export const runtime = "nodejs";
 
@@ -17,14 +19,24 @@ export async function POST(req: Request) {
     const name = typeof businessName === "string" ? businessName.replace(/[^\p{L}\p{N} &'.,-]/gu, "").slice(0, 80) : "";
     const messages = cleanMessages([{ role: "user", content: message }], 1, 2000);
 
-    const { text } = await generateText({
-      model: getDefaultModel(),
-      system: `You are a helpful assistant for ${name || "this business"}. Only answer questions about this business and its services. Keep responses under 120 words.`,
+    const model = getDefaultModel();
+    const result = await generateText({
+      model,
+      system: `You are a helpful assistant for ${name || "this business"}. Only answer questions about this business and its services. Keep responses under 120 words. ${NO_DASH_RULE}`,
       messages,
       maxOutputTokens: 600,
     });
+    const text = result.text;
+    logChatTurn({
+      bot: "site-factory",
+      siteId: name || "site-factory",
+      model: modelIdFrom(model),
+      usage: result.totalUsage ?? result.usage,
+      userText: lastUserText(messages),
+      assistantText: text,
+    });
 
-    return Response.json({ content: text });
+    return Response.json({ content: noDashes(text) });
   } catch (error) {
     console.error("Site factory chat error:", error);
     return Response.json({ error: "Failed to generate response" }, { status: 500 });

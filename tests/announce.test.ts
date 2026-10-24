@@ -79,6 +79,16 @@ test("page rules and default excludes", () => {
   assert.equal(pageAllowed(mk({ include: ["/pricing"] }), "/"), false);
   assert.ok(pathMatches("/blog/*", "/blog"));
 });
+test("no promo bars inside Lex, even on an all-pages bar", () => {
+  for (const mode of [undefined, "all", "exclude"] as const) {
+    const a = mk(mode === "exclude" ? { pageMode: mode, exclude: ["/pricing"] } : mode ? { pageMode: mode } : {});
+    for (const p of ["/lex", "/lex/", "/lex?q=div%207a", "/lex/anything", "/lex-widget", "/lex-widget?client=tributum"]) assert.equal(pageAllowed(a, p), false, `${mode} ${p}`);
+    // the public sales page and other lookalikes still get the bar
+    for (const p of ["/legal", "/", "/blueprint"]) assert.ok(pageAllowed(a, p), `${mode} ${p}`);
+  }
+  // an include-mode bar that names /lex still cannot show there
+  assert.equal(pageAllowed(mk({ pageMode: "include", include: ["/lex"] }), "/lex"), false);
+});
 test("schedule", () => {
   const now = new Date("2026-10-20T00:00:00Z");
   assert.equal(isLiveNow({ status: "draft" }, now), false);

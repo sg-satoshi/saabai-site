@@ -1,17 +1,7 @@
 import type { Metadata } from "next";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Free Automation Cost Calculator",
-  description:
-    "Calculate how much repetitive manual work is costing your firm. Free instant estimate, hours lost and dollar cost per year. No sign-up required.",
-  alternates: { canonical: "https://www.saabai.ai/calculator" },
-  openGraph: {
-    url: "https://www.saabai.ai/calculator",
-    title: "Free Automation Cost Calculator | Saabai",
-    description:
-      "Calculate how much repetitive manual work is costing your firm. Free instant estimate, hours lost and dollar cost per year. No sign-up required.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.calculator;
 
 export default function CalculatorLayout({
   children,

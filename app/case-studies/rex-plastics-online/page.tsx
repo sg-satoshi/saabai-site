@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
+import { pageMeta } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
+const rexMeta = pageMeta({
+  path: "/case-studies/rex-plastics-online",
   title: "PlasticOnline Case Study: Rex, AI Quoting Agent",
+  ogTitle: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
   description:
     "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
-  alternates: {
-    canonical: "https://www.saabai.ai/case-studies/rex-plastics-online",
-  },
+});
+
+export const metadata: Metadata = {
+  ...rexMeta,
   openGraph: {
-    url: "https://www.saabai.ai/case-studies/rex-plastics-online",
-    title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
+    ...rexMeta.openGraph,
     description:
       "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
   },

@@ -43,6 +43,8 @@ export default async function DashboardPage() {
 
   // Resolve products from user record (Redis products[] field > dashboardUrl fallback)
   const productIds = userRecord ? userProducts(userRecord) : [];
+  // Lex-only firm users live in the Lex shell; the client hub is for multi-product clients.
+  if (productIds.length === 1 && productIds[0] === "lex") redirect("/lex?view=dashboard");
   const productInfos = productIds.map((id) => ALL_PRODUCTS[id]);
 
   return (

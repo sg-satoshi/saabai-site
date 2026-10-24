@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     const existing = await getDirectoryUser(email);
     if (existing) {
-      return Response.json({ error: "User already exists" }, { status: 409 });
+      return Response.json({ error: "A user with this email already exists. Find them in the list and use Edit." }, { status: 409 });
     }
 
     const user = {
@@ -195,7 +195,12 @@ export async function DELETE(req: NextRequest) {
   try {
     const { email } = await req.json();
     if (!email) return Response.json({ error: "Email required" }, { status: 400 });
+    const lower = String(email).trim().toLowerCase();
+    if (loadClients().some((c) => c.email.toLowerCase() === lower)) {
+      return Response.json({ error: "This user is set in the site settings and can't be deleted here" }, { status: 400 });
+    }
     const target = await getDirectoryUser(email);
+    if (!target) return Response.json({ error: "User not found" }, { status: 404 });
     const me = await adminId(req);
     if (me && target && target.id === me) return Response.json({ error: "You can't delete your own account" }, { status: 400 });
 

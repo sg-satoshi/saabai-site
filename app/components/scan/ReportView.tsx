@@ -5,7 +5,9 @@ import type { Fix, ScanReport } from "@/lib/site-scan/types";
 
 const GROUPS: Fix["rating"][] = ["critical", "important", "nice"];
 
-export default function ReportView({ report: r, showLogo = false }: { report: ScanReport; showLogo?: boolean }) {
+export default function ReportView({ report: r, showLogo = false, onFlag, flaggedIds }: { report: ScanReport; showLogo?: boolean; onFlag?: (checkId: string, label: string) => void; flaggedIds?: string[] }) {
+  const flagged = new Set(flaggedIds ?? []);
+  const flagBtn = (id: string, label: string) => onFlag ? (flagged.has(id) ? <span className="sx-flagged">Flagged as false positive</span> : <button type="button" className="sx-flag" onClick={() => onFlag(id, label)}>Flag as false positive</button>) : null;
   const offer = OFFERS[r.offer];
   const noSite = r.mode === "no_website";
   const blocked = r.mode === "blocked";
@@ -63,6 +65,7 @@ export default function ReportView({ report: r, showLogo = false }: { report: Sc
               <p><em>What we found</em>{f.found}</p>
               <p><em>What it means</em>{f.meaning}</p>
               <p><em>The fix · {f.time}</em>{f.fix}</p>
+              {flagBtn(f.id, f.label)}
             </div>
           ))}
         </div>
@@ -72,7 +75,7 @@ export default function ReportView({ report: r, showLogo = false }: { report: Sc
         <div role="region" className="sx-box" aria-labelledby="sx-un-h">
           <h3 id="sx-un-h">Unable to verify</h3>
           <p className="sub">We only use public information, so these were left out of your score rather than guessed.</p>
-          <ul className="sx-un" style={{ margin: 0, paddingLeft: 18 }}>{r.unverified.map((u) => <li key={u.id}><b>{u.label}</b>: {u.why}</li>)}</ul>
+          <ul className="sx-un" style={{ margin: 0, paddingLeft: 18 }}>{r.unverified.map((u) => <li key={u.id}><b>{u.label}</b>: {u.why} {flagBtn(u.id, u.label)}</li>)}</ul>
         </div>
       )}
 

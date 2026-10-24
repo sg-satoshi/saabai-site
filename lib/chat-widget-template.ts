@@ -6,13 +6,13 @@ export interface ChatWidgetConfig {
   accentColor: string;
   bgColor: string;
   textColor: string;
-  avatarUrl?: string;   // photo URL — DALL-E generated or uploaded
+  avatarUrl?: string;   // photo URL: DALL-E generated or uploaded
   placeholder?: string;
   apiBase?: string;
 }
 
 // Generates a complete self-contained chat widget <script> block.
-// Zero external dependencies — safe to inline in any HTML file.
+// Zero external dependencies. It is safe to inline in any HTML file.
 export function buildChatWidget(cfg: ChatWidgetConfig): string {
   // New one-line widget, behind the CHAT_WIDGET_V2 flag (off by default). Same call sites, same position in the page.
   if (process.env.CHAT_WIDGET_V2 === "1" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cfg.slug)) {
@@ -220,7 +220,7 @@ async function send(){
     var res=await fetch(CFG.api,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({slug:CFG.slug,messages:msgs.filter(function(m){return m.text!==CFG.greeting;}).slice(-10).map(function(m){return{role:m.role==='bot'?'assistant':'user',content:m.text};})})});
     hideTyping();
-    if(res.ok||res.status===429||res.status===413){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that — could you rephrase?");}
+    if(res.ok||res.status===429||res.status===413){var d=await res.json();addMsg('bot',d.content||"I'm not sure about that. Could you rephrase?");}
     else{addMsg('bot',"Something went wrong. Please try again shortly.");}
   }catch(e){hideTyping();addMsg('bot',"Connection error. Please try again.");}
   sendBtn.disabled=inp.value.trim()==='';

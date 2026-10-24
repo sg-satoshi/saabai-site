@@ -7,6 +7,7 @@ import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
+import { MiaReplyText } from "../../lib/mia-reply-format";
 
 const STORAGE_KEY = "saabai-conversation";
 const PROFILE_KEY = "saabai-visitor-profile";
@@ -89,25 +90,6 @@ function getMessageText(message: UIMessage): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("\n\n");
-}
-
-function renderMessageText(text: string): React.ReactNode[] {
-  const parts = text.split(/(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g);
-  return parts.map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline break-all opacity-80 hover:opacity-100 transition-opacity"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    )
-  );
 }
 
 function MiaAvatar({ size = 36, dotSize = 10, showDot = true }: { size?: number; dotSize?: number; showDot?: boolean }) {
@@ -704,8 +686,7 @@ export default function ChatWidget() {
               <MiaAvatar size={36} dotSize={10} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">Usually replies within a minute</p>
+                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none">Saabai&apos;s AI assistant</p>
               </div>
             </div>
             <button onClick={() => setShowBubble(false)} className="w-5 h-5 flex items-center justify-center text-saabai-text-dim hover:text-saabai-text transition-colors text-lg leading-none" aria-label="Dismiss">×</button>
@@ -767,7 +748,7 @@ export default function ChatWidget() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-saabai-text leading-none mb-1">Talk {!speechSupported && <span className="text-[10px] font-normal text-saabai-text-dim ml-1">(not supported in this browser)</span>}</p>
-                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Voice conversation — speak naturally with Mia</p>
+                <p className="text-[11px] text-saabai-text-dim leading-relaxed">Voice conversation. Speak naturally with Mia</p>
               </div>
             </button>
           </div>
@@ -802,7 +783,7 @@ export default function ChatWidget() {
             </div>
             {/* Status */}
             <p className="text-sm text-saabai-text-muted tracking-wide text-center">
-              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong — tap mic to retry" : "Mia is ready…"}
+              {isListening ? "Listening…" : isLoading ? "Mia is thinking…" : thinkingDelay ? "Mia is speaking…" : voiceError ? "Something went wrong. Tap mic to retry" : "Mia is ready…"}
             </p>
             {voiceError && <p className="text-[10px] text-red-400 text-center">{voiceError}</p>}
           </div>
@@ -852,10 +833,10 @@ export default function ChatWidget() {
               <MiaAvatar size={40} dotSize={11} showDot={!isEnded} />
               <div>
                 <p className="text-sm font-semibold text-saabai-text tracking-tight leading-none mb-0.5">Mia</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide leading-none mb-1">Saabai&apos;s AI assistant</p>
-                <p className="text-[10px] text-saabai-text-dim tracking-wide">
-                  {isEnded ? "Conversation ended" : "Usually replies within a minute"}
-                </p>
+                <p className={`text-[10px] text-saabai-text-dim tracking-wide leading-none${isEnded ? " mb-1" : ""}`}>Saabai&apos;s AI assistant</p>
+                {isEnded && (
+                  <p className="text-[10px] text-saabai-text-dim tracking-wide">Conversation ended</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -922,7 +903,7 @@ export default function ChatWidget() {
                   }`}
                   style={item.role !== "user" ? { background: "#272466" } : {}}
                 >
-                  {renderMessageText(item.text)}
+                  <MiaReplyText text={item.text} />
                 </div>
               </div>
             ))}
@@ -1091,7 +1072,7 @@ export default function ChatWidget() {
                         </svg>
                       </div>
                       <p className="text-sm text-saabai-text-muted leading-relaxed">
-                        {endEmail.trim() ? "Transcript sent — check your inbox." : "Thanks for chatting with Mia."}
+                        {endEmail.trim() ? "Transcript sent. Check your inbox." : "Thanks for chatting with Mia."}
                       </p>
                     </div>
                     <div className="h-px bg-saabai-border" />
@@ -1230,7 +1211,7 @@ export default function ChatWidget() {
                   if (!newState) stopAudio();
                 }}
                 aria-label={voiceEnabled ? "Mute Mia" : "Hear Mia's voice"}
-                title={voiceError ? "Voice error — click to retry" : voiceEnabled ? "Voice on — click to mute" : "Click to hear Mia"}
+                title={voiceError ? "Voice error. Click to retry" : voiceEnabled ? "Voice on. Click to mute" : "Click to hear Mia"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
                 style={{
                   background: voiceError ? "rgba(239,68,68,0.12)" : voiceEnabled ? "rgba(98,197,209,0.15)" : "transparent",

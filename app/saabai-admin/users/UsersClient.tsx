@@ -491,7 +491,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
       : defaultAccess(),
   );
   const [adminExpiry] = useState(initial?.role === "admin" ? initial.access?.expiresAt : undefined);
-  const [sites, setSites] = useState<{ id: string; name: string }[]>([]);
+  const [sites, setSites] = useState<{ id: string; name: string; slug?: string; domain?: string; status?: string; createdAt?: number }[]>([]);
 
   useEffect(() => {
     fetch("/api/admin/client-sites")
@@ -515,7 +515,8 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    // The page shows its own specific error; no generic global toast over it.
+    <form onSubmit={handleSubmit} data-no-feedback>
       <Field label="Full name" required>
         <TextInput value={name} onChange={setName} placeholder="Jane Smith" autoFocus={!isEdit} />
       </Field>
@@ -563,7 +564,7 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
         >
           <option value="">No website linked</option>
           {siteId && !sites.some(x => x.id === siteId) && <option value={siteId}>{siteId}</option>}
-          {sites.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+          {sites.map(x => <option key={x.id} value={x.id}>{siteLabel(x)}</option>)}
         </select>
       </Field>
 
@@ -829,7 +830,8 @@ function UsersToolbar({ q, setQ, filter, setFilter, counts, sort, setSort, onAdd
 }
 
 // ── Table ────────────────────────────────────────────────────────────────
-function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete, onToggleDisabled }: {
+function UsersTable({ users, density, showLastActive, showCreated, selected, setSelected, onEdit, onDelete, onToggleDisabled, canLoginAs }: {
+  canLoginAs?: boolean;
   users: User[]; density: "compact" | "comfortable";
   showLastActive: boolean; showCreated: boolean;
   selected: Record<string, boolean>;
@@ -839,14 +841,16 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
   onToggleDisabled: (u: User) => void;
 }) {
   const rowH = density === "compact" ? 44 : 56;
-  const allSelected = users.length > 0 && users.every(u => selected[keyOf(u)]);
-  const someSelected = users.some(u => selected[keyOf(u)]) && !allSelected;
+  // Env users (set in the site settings) can't be deleted here, so they are never selectable.
+  const selectable = users.filter(u => u.source !== "env");
+  const allSelected = selectable.length > 0 && selectable.every(u => selected[keyOf(u)]);
+  const someSelected = selectable.some(u => selected[keyOf(u)]) && !allSelected;
 
   function toggleAll() {
     if (allSelected) setSelected({});
     else {
       const next: Record<string, boolean> = {};
-      users.forEach(u => { next[keyOf(u)] = true; });
+      selectable.forEach(u => { next[keyOf(u)] = true; });
       setSelected(next);
     }
   }
@@ -909,7 +913,7 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
           showLastActive={showLastActive} showCreated={showCreated}
           selected={!!selected[keyOf(u)]}
           toggle={() => toggleRow(keyOf(u))}
-          onEdit={onEdit} onDelete={onDelete} onToggleDisabled={onToggleDisabled}
+          onEdit={onEdit} onDelete={onDelete} onToggleDisabled={onToggleDisabled} canLoginAs={canLoginAs}
           isLast={i === users.length - 1}
         />
       ))}
@@ -919,7 +923,8 @@ function UsersTable({ users, density, showLastActive, showCreated, selected, set
 
 function keyOf(u: User): string { return u.id || u.email; }
 
-function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, onToggleDisabled, isLast }: {
+function Row({ user, density, rowH, cols, showLastActive, showCreated, selected, toggle, onEdit, onDelete, onToggleDisabled, isLast, canLoginAs }: {
+  canLoginAs?: boolean;
   user: User; density: "compact" | "comfortable"; rowH: number; cols: string;
   showLastActive: boolean; showCreated: boolean;
   selected: boolean; toggle: () => void;
@@ -947,7 +952,9 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Checkbox checked={selected} onChange={toggle} />
+        {isEnv
+          ? <span title="This user is set in the site settings and can't be deleted here" style={{ width: 16, height: 16, display: "inline-block", opacity: 0.25, border: `1px solid ${C.text}`, borderRadius: 4 }} />
+          : <Checkbox checked={selected} onChange={toggle} />}
       </div>
 
       <div style={{ padding: "0 16px", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -1047,6 +1054,26 @@ function Row({ user, density, rowH, cols, showLastActive, showCreated, selected,
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M1 7s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.4" />
               <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </IconBtn>
+        )}
+        {canLoginAs && !isEnv && user.role === "user" && (
+          <IconBtn
+            title={`Login as ${user.name || user.email} (1 hour)`}
+            onClick={() => {
+              if (!window.confirm(`Login as ${user.name || user.email}? You will see exactly what they see for up to 1 hour. Password and billing changes are blocked. Use Exit in the banner to come back.`)) return;
+              fetch("/api/admin/login-as", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: user.id }) })
+                .then(async (res) => {
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) { notify.error(data.error || "Could not start Login as."); return; }
+                  window.location.href = data.redirect || "/dashboard";
+                })
+                .catch(() => notify.error("Network error starting Login as."));
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="4.6" r="2.4" stroke="currentColor" strokeWidth="1.4" />
+              <path d="M2.2 12.4c.6-2.5 2.5-3.8 4.8-3.8s4.2 1.3 4.8 3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
           </IconBtn>
         )}
@@ -1269,7 +1296,7 @@ function downloadCsv(rows: User[], filename: string) {
 }
 
 // ── Main client ──────────────────────────────────────────────────────────
-export default function UsersClient() {
+export default function UsersClient({ canLoginAs = false }: { canLoginAs?: boolean } = {}) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -1402,8 +1429,8 @@ export default function UsersClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: u.email }),
       });
-      const out = await res.json();
-      if (out.success) {
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.success) {
         setUsers(prev => prev.filter(x => x.email !== u.email));
         setSelected(prev => { const n = { ...prev }; delete n[keyOf(u)]; return n; });
         showToast(`Deleted ${u.name}`);
@@ -1416,7 +1443,7 @@ export default function UsersClient() {
   }
 
   async function deleteBulk(items: User[]) {
-    let ok = 0, fail = 0;
+    let ok = 0, fail = 0, firstErr = "";
     for (const u of items) {
       try {
         const res = await fetch("/api/user-directory", {
@@ -1425,12 +1452,12 @@ export default function UsersClient() {
           body: JSON.stringify({ email: u.email }),
         });
         const out = await res.json();
-        if (out.success) ok++; else fail++;
-      } catch { fail++; }
+        if (res.ok && out.success) ok++; else { fail++; firstErr = firstErr || out.error || `HTTP ${res.status}`; }
+      } catch { fail++; firstErr = firstErr || "Network error"; }
     }
     setSelected({});
     fetchUsers();
-    showToast(`Deleted ${ok} user${ok === 1 ? "" : "s"}${fail ? ` · ${fail} failed` : ""}`, fail === 0);
+    showToast(`Deleted ${ok} user${ok === 1 ? "" : "s"}${fail ? `, ${fail} failed: ${firstErr}` : ""}`, fail === 0);
   }
 
   async function bulkUpdateRole(items: User[], newRole: string) {
@@ -1496,7 +1523,7 @@ export default function UsersClient() {
   const safePage = Math.min(page, pageCount);
   const visible = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const selectedUsers = users.filter(u => selected[keyOf(u)]);
+  const selectedUsers = users.filter(u => u.source !== "env" && selected[keyOf(u)]);
   const selectedCount = selectedUsers.length;
 
   return (
@@ -1570,6 +1597,7 @@ export default function UsersClient() {
         ) : (
           <UsersTable
             users={visible}
+            canLoginAs={canLoginAs}
             density="comfortable"
             showLastActive={true}
             showCreated={true}
@@ -1782,4 +1810,13 @@ export default function UsersClient() {
       </Modal>
     </div>
   );
+}
+
+/** "Name (domain or slug), draft, added 3 Oct 2026" so same-named sites can be told apart. */
+function siteLabel(x: { name: string; slug?: string; domain?: string; status?: string; createdAt?: number }): string {
+  const where = x.domain && !x.domain.endsWith("saabai.ai") ? x.domain : x.slug || x.domain || "";
+  const bits = [where ? `${x.name} (${where})` : x.name];
+  if (x.status && x.status !== "live") bits.push(x.status);
+  if (x.createdAt) bits.push(`added ${new Date(x.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "Australia/Brisbane" })}`);
+  return bits.join(", ");
 }

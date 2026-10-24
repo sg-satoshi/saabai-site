@@ -91,6 +91,26 @@ case "HMGET": return args.slice(1).map((f) => hashes.get(k)?.get(f) ?? null);
       case "LPUSH": case "RPUSH": { if (!lists.has(k)) lists.set(k, []); const l = lists.get(k); const v = args.slice(1); if (name === "LPUSH") l.unshift(...v.reverse()); else l.push(...v); return l.length; }
       case "LRANGE": { const l = lists.get(k) ?? []; const s = Number(args[1]); let e = Number(args[2]); if (e < 0) e = l.length + e; return l.slice(s, e + 1); }
       case "LLEN": return lists.get(k)?.length ?? 0;
+      case "LTRIM": { const l = lists.get(k); if (!l) return "OK"; const s = Number(args[1]); let e = Number(args[2]); if (e < 0) e = l.length + e; lists.set(k, l.slice(s, e + 1)); return "OK"; }
+      case "LREM": {
+        const l = lists.get(k);
+        if (!l) return 0;
+        const count = Number(args[1]);
+        const value = args[2];
+        let removed = 0;
+        if (count === 0) {
+          for (let i = l.length - 1; i >= 0; i--) if (l[i] === value) { l.splice(i, 1); removed++; }
+        } else if (count > 0) {
+          for (let i = 0; i < l.length && removed < count;) {
+            if (l[i] === value) { l.splice(i, 1); removed++; } else i++;
+          }
+        } else {
+          for (let i = l.length - 1; i >= 0 && removed < -count; i--) {
+            if (l[i] === value) { l.splice(i, 1); removed++; }
+          }
+        }
+        return removed;
+      }
       case "KEYS": return allKeys().filter((x) => globRe(k).test(x));
       case "SCAN": {
         let match = "*";

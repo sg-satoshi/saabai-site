@@ -4,7 +4,9 @@ import { getDefaultModel } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
 import { offMessage, promptAdditions } from "./core";
+import { NO_DASH_RULE, noDashes } from "../no-dashes";
 import { fallbackSessionId, getConfig, isEnabled, recordTokens, recordUsage } from "./store";
+import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
 
 export function cors(origin: string | null): Record<string, string> {
   return {
@@ -89,11 +91,23 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
 
     const extra = promptAdditions(config);
     if (extra) system = `${system}\n\n${extra}`;
+    // House rule for every Saabai chatbot: no em or en dashes.
+    system = `${system}\n\n${NO_DASH_RULE}`;
 
-    const result = await generateText({ model: getDefaultModel(), system, messages: chatMessages, maxOutputTokens: 600 });
+    const model = getDefaultModel();
+    const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
-    return Response.json({ content: result.text }, { headers: h });
+    logChatTurn({
+      bot: slug,
+      siteId: slug,
+      conversationId: sid,
+      model: modelIdFrom(model),
+      usage: result.totalUsage ?? result.usage,
+      userText: lastUserText(chatMessages),
+      assistantText: result.text,
+    });
+    return Response.json({ content: noDashes(result.text) }, { headers: h });
   } catch (e) {
     console.error("chat handler error:", e);
     return say("Failed to respond", 500, h);

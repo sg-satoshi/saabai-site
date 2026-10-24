@@ -23,6 +23,9 @@ export async function POST(req: Request) {
   if (host === "saabai.ai" || host.endsWith(".saabai.ai")) {
     headers.append("Set-Cookie", `${clear}; Domain=saabai.ai`);
   }
+  // A sign-out during Login as also drops the Login as cookies (the admin session inside is discarded).
+  headers.append("Set-Cookie", "saabai_login_as=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
+  headers.append("Set-Cookie", "saabai_viewing_as=; Path=/; SameSite=Lax; Max-Age=0");
   headers.append("Cache-Control", "no-store");
   headers.append("Location", admin ? "/saabai-admin/login" : "/login");
   return new Response(null, { status: 303, headers });

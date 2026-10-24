@@ -4,9 +4,12 @@ import { loadClients } from "../../../../lib/clients";
 import { saveDirectoryUser, listDirectoryUsers } from "../../../../lib/user-directory";
 import { hashPassword, verifyPassword, validateNewPassword } from "../../../../lib/password";
 
+import { rejectIfLoginAs } from "../../../../lib/login-as";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const loginAs = rejectIfLoginAs(req);
+  if (loginAs) return loginAs;
   try {
     const token = req.cookies.get(COOKIE_NAME)?.value;
     if (!token) {

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { redis } from "@/lib/exp/config";
+import type { ScanEvidence } from "./evidence";
+import type { FalsePositiveFlag } from "./flags";
 import type { ScanReport } from "./types";
 
 const P = "saabai:sitescan";
@@ -50,6 +52,33 @@ export async function saveReport(rep: ScanReport, opts: { history?: boolean; cac
     }
   } catch { /* storing must never break a scan */ }
 }
+/** One-off hygiene for saved history: merge non-canonical keys into the canonical one, drop invalid keys. Dry run by default. */
+export async function cleanupHistory(apply = false, knownSubSites?: Set<string>): Promise<{ apply: boolean; total: number; keep: number; merge: { from: string; to: string; points: number }[]; drop: { domain: string; points: number }[] }> {
+  const { planDomainCleanup } = await import("./targets");
+  const r = redis();
+  if (!r) return { apply, total: 0, keep: 0, merge: [], drop: [] };
+  const domains = ((await r.smembers(`${P}:domains`)) as string[]) ?? [];
+  const plan = planDomainCleanup(domains, knownSubSites);
+  const len = async (d: string) => Number(await r.llen(`${P}:hist:${d}`)) || 0;
+  const merge = await Promise.all(plan.merge.map(async (m) => ({ ...m, points: await len(m.from) })));
+  const drop = await Promise.all(plan.drop.map(async (d) => ({ domain: d, points: await len(d) })));
+  if (apply) {
+    for (const m of merge) {
+      const pts = (await r.lrange<unknown>(`${P}:hist:${m.from}`, 0, 49)).map((x) => (typeof x === "string" ? x : JSON.stringify(x)));
+      const into = (await r.lrange<unknown>(`${P}:hist:${m.to}`, 0, 49)).map((x) => (typeof x === "string" ? x : JSON.stringify(x)));
+      const all = [...into, ...pts].map((x) => JSON.parse(x) as { id?: string; at?: string })
+        .filter((p, i, a) => a.findIndex((q) => q.id === p.id) === i)
+        .sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 50);
+      await r.del(`${P}:hist:${m.to}`);
+      if (all.length) await r.rpush(`${P}:hist:${m.to}`, ...all.map((p) => JSON.stringify(p)));
+      await r.sadd(`${P}:domains`, m.to);
+      await r.del(`${P}:hist:${m.from}`); await r.srem(`${P}:domains`, m.from);
+    }
+    for (const d of drop) { await r.del(`${P}:hist:${d.domain}`); await r.srem(`${P}:domains`, d.domain); }
+  }
+  return { apply, total: domains.length, keep: plan.keep.length, merge, drop };
+}
+
 export async function getReport(id: string): Promise<ScanReport | null> {
   try {
     if (!/^[0-9a-f-]{36}$/.test(id)) return null;
@@ -70,4 +99,40 @@ export async function history(domain: string): Promise<HistoryPoint[]> {
 }
 export async function allDomains(): Promise<string[]> {
   try { const r = redis(); return r ? ((await r.smembers(`${P}:domains`)) as string[]).sort() : []; } catch { return []; }
+}
+
+export async function saveEvidence(ev: ScanEvidence): Promise<void> {
+  try {
+    const r = redis(); if (!r || !/^[0-9a-f-]{36}$/.test(ev.reportId)) return;
+    await r.set(`${P}:ev:${ev.reportId}`, JSON.stringify(ev), { ex: RESULT_TTL });
+  } catch { /* storing must never break a scan */ }
+}
+
+export async function getEvidence(id: string): Promise<ScanEvidence | null> {
+  try {
+    if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+    const r = redis(); if (!r) return null;
+    const v = await r.get<unknown>(`${P}:ev:${id}`); if (!v) return null;
+    return (typeof v === "string" ? JSON.parse(v) : v) as ScanEvidence;
+  } catch { return null; }
+}
+
+/** Per-site list. Newest first, capped at 200. Same Redis the scanner already uses. */
+export async function saveFalsePositive(fp: FalsePositiveFlag): Promise<boolean> {
+  try {
+    const r = redis(); if (!r) return false;
+    const key = `${P}:fp:${fp.domain}`;
+    await r.lpush(key, JSON.stringify(fp));
+    await r.ltrim(key, 0, 199);
+    return true;
+  } catch { return false; }
+}
+
+export async function listFalsePositives(domain: string): Promise<FalsePositiveFlag[]> {
+  try {
+    const d = domain.trim().toLowerCase().slice(0, 200);
+    if (!d || /[\r\n]/.test(d)) return [];
+    const r = redis(); if (!r) return [];
+    return (await r.lrange<unknown>(`${P}:fp:${d}`, 0, 199)).map((x) => (typeof x === "string" ? JSON.parse(x) : x) as FalsePositiveFlag);
+  } catch { return []; }
 }

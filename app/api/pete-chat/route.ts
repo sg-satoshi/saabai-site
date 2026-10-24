@@ -5,6 +5,7 @@ import { trackConversationStart, trackEngaged } from "../../../lib/rex-stats";
 import { searchProducts, calculateCutToSizePrice } from "../../../lib/woo-client";
 import { lookupOrder } from "../../../lib/pipedrive-client";
 import { getPricing, type PricingInput, type PriceResult } from "../../../lib/rex-pricing-engine";
+import { lastUserText, logStreamFinish, modelIdFrom } from "../../../lib/chat-log";
 
 export const maxDuration = 60;
 
@@ -122,11 +123,20 @@ export async function POST(req: Request) {
 
     const enabledTools = new Set(config.tools);
 
+    const model = getRexModel(tier, "chat");
     const result = streamText({
-      model: getRexModel(tier, "chat"),
+      model,
       system: cachedSystem,
       messages: coreMessages,
       stopWhen: stepCountIs(8),
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "rex",
+          siteId: typeof clientId === "string" ? clientId : config.id,
+          model: modelIdFrom(model),
+          userText: lastUserText(coreMessages),
+        });
+      },
       tools: {
         captureLead: captureLeadTool,
 

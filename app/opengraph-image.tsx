@@ -76,10 +76,13 @@ export default async function Image() {
             color: "#ffffff",
             maxWidth: "900px",
             marginBottom: "24px",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
           }}
         >
-          Get found. Win the enquiry.{" "}
-          <span style={{ color: "#62c5d1" }}>Get your week back.</span>
+          <span>Get found. Win the enquiry.</span>
+          <span style={{ color: "#62c5d1", marginLeft: "16px" }}>Get your week back.</span>
         </div>
 
         {/* Sub */}

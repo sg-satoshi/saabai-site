@@ -56,7 +56,8 @@ export function clientSiteMetadata(opts: {
       description,
       images: opts.ogImage ? [opts.ogImage.url] : undefined,
     },
-    robots: { index: true, follow: true },
+    // Robots are host-aware (app/sites/layout.tsx + lib/client-site-surface.ts).
+    // A static index,follow here would override noindex on saabai.ai and previews.
   };
 }
 

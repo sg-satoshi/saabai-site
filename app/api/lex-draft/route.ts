@@ -1,27 +1,37 @@
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
+import { lexErrorResponse } from "../../../lib/lex-errors";
 /**
- * Lex Document Drafting API — /api/lex-draft
+ * Lex Document Drafting API: /api/lex-draft
  *
  * Two-pass architecture:
  *
- *   Pass 1 — Drafter (streaming)
+ *   Pass 1: Drafter (streaming)
  *     An elite Australian legal drafter that searches for governing legislation
  *     BEFORE drafting, cites every substantive proposition, and marks anything
  *     unverifiable with [VERIFY: ...]. Returns the full draft as a stream.
  *
- *   Pass 2 — QA Verifier (non-streaming, optional)
+ *   Pass 2: QA Verifier (non-streaming, optional)
  *     An independent legal reviewer that checks every clause in the draft,
  *     returns a structured JSON confidence report with flagged issues.
  *     Triggered when requestQA is true and a completed draft is provided.
  *
- * Always uses the premium model — legal accuracy is non-negotiable.
+ * Uses LEX_RESEARCH_MODEL (or the firm's own model). Legal accuracy is non-negotiable.
  */
 
-import { streamText, generateText, tool, jsonSchema, stepCountIs } from "ai";
-import { getPremiumModel } from "../../../lib/chat-config";
+import { tool, jsonSchema, stepCountIs } from "ai";
+import { getLexConfig } from "../../../lib/lex-config";
+import { finalStepAnswers } from "../../../lib/lex-research-tools";
+import { brisbaneLongDate, dropNarrationTransform } from "../../../lib/lex-output";
+import { noDashesTransform } from "../../../lib/no-dashes";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway, threadSeed } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromRequest } from "../../../lib/lex-privacy/firm";
+import { lastUserText, logChatTurn, logStreamFinish } from "../../../lib/chat-log";
 import { getPortalSettings, buildSystemPromptAddition } from "../../../lib/portal-config";
 import { verifySession } from "../../../lib/portal-session";
 import {
   searchAustLII,
+  withoutAustliiTools,
   searchATO,
   searchLegislation,
   searchFamilyLaw,
@@ -36,7 +46,7 @@ import {
 } from "../../../lib/lex-document-types";
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // Legal documents need extended time — searches + full draft
+export const maxDuration = 300; // Legal documents need extended time: searches + full draft
 
 // ── Type definitions ─────────────────────────────────────────────────────────
 
@@ -65,12 +75,16 @@ export interface QAVerificationReport {
 
 const DRAFTING_SYSTEM_PROMPT = `You are an elite Australian legal drafter with the equivalent expertise of a senior partner at a top-tier firm. You draft precise, enforceable legal documents grounded in current Australian law.
 
+TODAY'S DATE: {{TODAY}} (Australia/Brisbane).
+Date the document with this date. Do not use 2025, or any other date, unless the instructing lawyer gives a different one.
+
 ABSOLUTE RULES:
 1. SEARCH BEFORE YOU DRAFT. For every document, first search for the governing legislation and key cases. Do not rely on memory alone.
 2. CITE EVERYTHING. Every substantive legal proposition must cite the specific Act, the exact section number, and where relevant the case. Format: [Act Name Year (Cth/State) s XX].
 3. FLAG UNCERTAINTY. If you cannot find or verify a legal proposition via search, mark it: [VERIFY: what needs checking and why]. Do not invent citations.
 4. JURISDICTION PRECISION. Australian law varies significantly by state. Always specify which jurisdiction's law applies and note where state law diverges.
 5. NEVER HALLUCINATE. If a section number is uncertain, search for it. If you cannot find it, say so explicitly.
+6. WRITE ONLY THE DOCUMENT. Do not narrate your process. Never write "Let me run all searches", "Good. I have enough", or any other plan before or between tool calls. Call the tools, then write the document and nothing else.
 
 DOCUMENT QUALITY STANDARDS:
 - Use proper legal drafting conventions: defined terms in capitals, operative provisions in present tense, schedules for detailed matters.
@@ -79,14 +93,13 @@ DOCUMENT QUALITY STANDARDS:
 - Flag stamp duty and registration requirements.
 
 ALWAYS INCLUDE AT TOP OF EVERY DOCUMENT:
----
-DRAFT -- [Document Type] -- [Date]
+DRAFT: [Document Type]: {{TODAY}}
 Prepared using Lex by Saabai. For review by a qualified Australian lawyer before execution.
 This document is a draft only and does not constitute legal advice.
----
 
 FORMATTING:
-- Plain text only. No markdown symbols, no asterisks, no em dashes.
+- Plain text only. No markdown symbols, no asterisks, no em dashes, no spaced double hyphen.
+- No divider lines of equals signs, hyphens, or box-drawing characters.
 - Number every clause (1., 1.1, 1.1.1).
 - New paragraph after every clause.
 - Section headings in CAPITALS.
@@ -110,7 +123,7 @@ Return your assessment as a JSON object with this exact structure:
       "id": "<clause number or section heading>",
       "clause": "<brief description of what the clause does>",
       "status": "<verified|flagged|unverified>",
-      "note": "<your assessment — what is correct, what needs checking>"
+      "note": "<your assessment: what is correct, what needs checking>"
     }
   ],
   "criticalIssues": ["<issue 1>", "<issue 2>"],
@@ -162,7 +175,7 @@ ${warnings}
 SUGGESTED SEARCH TERMS (use these with the available search tools):
 ${searchTerms}
 
-MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation, searchAustLII, and/or searchFamilyLaw/searchCorporationsLaw as appropriate. Confirm the key section numbers. Only then begin the draft.`;
+MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation, and searchAustLII and/or searchFamilyLaw/searchCorporationsLaw where available, as appropriate. Confirm the key section numbers. Only then begin the draft.`;
 }
 
 // ── POST handler ──────────────────────────────────────────────────────────────
@@ -178,12 +191,26 @@ export async function POST(req: Request) {
       messages,
       requestQA,
       completedDraft,
+      clientId,
+      threadId,
+      matterId,
     } = await req.json();
+
+    // Same model rule as research: the firm's own model if saved, else LEX_RESEARCH_MODEL
+    // (which falls back to PREMIUM_CHAT_MODEL).
+    // The gateway picks it and masks every client-supplied text before the model sees it. Fail closed.
+    const lexConfigId = getLexConfig(clientId).id;
+    const firm = lexFirmFromRequest(req, lexConfigId);
+    const gw = await LexGateway.open({ route: requestQA && completedDraft ? "lex-draft-qa" : "lex-draft", firm, model: { kind: "firm", configId: lexConfigId }, thread: threadSeed(threadId, Array.isArray(messages) ? messages : undefined), parties: await matterPartiesFor(req, matterId) });
+    if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([parties, specialInstructions, messages, completedDraft]);
+    const masker = gw.masker;
 
     // ── QA Pass (Pass 2) ────────────────────────────────────────────────────
     // If a completed draft is provided and QA is requested, run QA and return.
     if (requestQA && completedDraft) {
-      const qaResult = await runQAPass(completedDraft, documentType);
+      const qaResult = masker.rehydrateDeep(await runQAPass(gw, masker.mask(String(completedDraft)), documentType, typeof clientId === "string" ? clientId : undefined));
       return new Response(JSON.stringify(qaResult), {
         headers: { "Content-Type": "application/json" },
       });
@@ -191,12 +218,12 @@ export async function POST(req: Request) {
 
     // ── Drafting Pass (Pass 1) ──────────────────────────────────────────────
 
-    // Look up document type from registry (optional — enhances the system prompt)
+    // Look up document type from registry (optional: enhances the system prompt)
     // "custom" means free-form: skip the preset document context
     const docTypeEntry = (documentType && documentType !== "custom") ? getDocumentType(documentType) : undefined;
 
     // Build the full system prompt
-    let systemPrompt = DRAFTING_SYSTEM_PROMPT;
+    let systemPrompt = DRAFTING_SYSTEM_PROMPT.replaceAll("{{TODAY}}", brisbaneLongDate());
 
     if (docTypeEntry && jurisdiction) {
       systemPrompt += buildDocumentContextAddition(docTypeEntry, jurisdiction);
@@ -225,16 +252,17 @@ export async function POST(req: Request) {
 
     // Append parties and special instructions to the system prompt
     if (parties) {
-      systemPrompt += `\n\nPARTIES:\n${typeof parties === "string" ? parties : JSON.stringify(parties, null, 2)}`;
+      systemPrompt += `\n\nPARTIES:\n${masker.mask(typeof parties === "string" ? parties : JSON.stringify(parties, null, 2))}`;
     }
     if (specialInstructions) {
-      systemPrompt += `\n\nSPECIAL INSTRUCTIONS FROM INSTRUCTING LAWYER:\n${specialInstructions}`;
+      systemPrompt += `\n\nSPECIAL INSTRUCTIONS FROM INSTRUCTING LAWYER:\n${masker.mask(String(specialInstructions))}`;
     }
+    systemPrompt += PRIVACY_SYSTEM_NOTE;
     if (responseLength) {
       const lengthMap: Record<string, string> = {
-        concise:  "RESPONSE LENGTH: Concise — produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
-        balanced: "RESPONSE LENGTH: Balanced — standard professional length. Include all required elements without padding.",
-        detailed: "RESPONSE LENGTH: Detailed — produce a thorough, comprehensive document. Include full explanations, recitals, and all optional protective clauses.",
+        concise:  "RESPONSE LENGTH: Concise. Produce a shorter, focused document. Cut any optional boilerplate. Every clause must earn its place.",
+        balanced: "RESPONSE LENGTH: Balanced. Standard professional length. Include all required elements without padding.",
+        detailed: "RESPONSE LENGTH: Detailed. Produce a thorough, comprehensive document. Include full explanations, recitals, and all optional protective clauses.",
       };
       if (lengthMap[responseLength]) {
         systemPrompt += `\n\n${lengthMap[responseLength]}`;
@@ -253,7 +281,7 @@ export async function POST(req: Request) {
       )
       .map((m) => ({
         role: m.role as "user" | "assistant",
-        content: m.content,
+        content: masker.mask(m.content),
       }));
 
     // If no messages provided, create a drafting instruction
@@ -271,12 +299,21 @@ export async function POST(req: Request) {
             },
           ];
 
-    const result = streamText({
-      model: getPremiumModel(),
+    const result = gw.streamText({
       system: systemPrompt,
       messages: finalMessages,
+      onFinish: (event) => {
+        logStreamFinish(event, {
+          bot: "lex-draft",
+          siteId: typeof clientId === "string" ? clientId : undefined,
+          model: gw.modelId,
+          userText: lastUserText(finalMessages),
+        });
+      },
       stopWhen: stepCountIs(10), // More steps needed for document drafting
-      tools: {
+      prepareStep: finalStepAnswers(10),
+      experimental_transform: [dropNarrationTransform(), noDashesTransform()],
+      tools: withoutAustliiTools({
 
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
           description:
@@ -287,11 +324,11 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Legal query — e.g. 'discretionary trust deed valid certainty of objects' or 'binding financial agreement s90G requirements'",
+                description: "Legal query: e.g. 'discretionary trust deed valid certainty of objects' or 'binding financial agreement s90G requirements'",
               },
               jurisdiction: {
                 type: "string",
-                description: "Optional court filter — HCA, FCA, NSWSC, VSC, QSC, WASC",
+                description: "Optional court filter: HCA, FCA, NSWSC, VSC, QSC, WASC",
               },
             },
             required: ["query"],
@@ -309,7 +346,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Tax query — e.g. 'discretionary trust streaming rules Subdivision 207-B' or 'Division 7A trustee loan'",
+                description: "Tax query: e.g. 'discretionary trust streaming rules Subdivision 207-B' or 'Division 7A trustee loan'",
               },
             },
             required: ["query"],
@@ -326,7 +363,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Act name and section — e.g. 'Family Law Act 1975 section 90G binding financial agreement requirements'",
+                description: "Act name and section: e.g. 'Family Law Act 1975 section 90G binding financial agreement requirements'",
               },
             },
             required: ["query"],
@@ -343,7 +380,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Family law query — e.g. 'section 90G certificate independent legal advice binding' or 'property settlement just equitable s79'",
+                description: "Family law query: e.g. 'section 90G certificate independent legal advice binding' or 'property settlement just equitable s79'",
               },
             },
             required: ["query"],
@@ -360,7 +397,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "Corporations law query — e.g. 'shareholders agreement drag along oppression remedy s232' or 'unit trust MIS registration threshold'",
+                description: "Corporations law query: e.g. 'shareholders agreement drag along oppression remedy s232' or 'unit trust MIS registration threshold'",
               },
             },
             required: ["query"],
@@ -377,7 +414,7 @@ export async function POST(req: Request) {
             properties: {
               query: {
                 type: "string",
-                description: "State legislation query — e.g. 'Retail Leases Act disclosure statement requirements' or 'Duties Act trust deed stamp duty exemption'",
+                description: "State legislation query: e.g. 'Retail Leases Act disclosure statement requirements' or 'Duties Act trust deed stamp duty exemption'",
               },
               state: {
                 type: "string",
@@ -394,18 +431,18 @@ export async function POST(req: Request) {
         verifySection: tool<VerifySectionInput, LegalSearchResponse>({
           description:
             "Verify the exact text of a specific section on legislation.gov.au. " +
-            "ALWAYS call this before including a specific section number in a draft — " +
+            "ALWAYS call this before including a specific section number in a draft: " +
             "this is the primary anti-hallucination tool for statutory citations.",
           inputSchema: jsonSchema<VerifySectionInput>({
             type: "object",
             properties: {
               act: {
                 type: "string",
-                description: "Full Act name — e.g. 'Family Law Act 1975' or 'Corporations Act 2001'",
+                description: "Full Act name: e.g. 'Family Law Act 1975' or 'Corporations Act 2001'",
               },
               section: {
                 type: "string",
-                description: "Section number — e.g. '90G' or '180' or '102AG'",
+                description: "Section number: e.g. '90G' or '180' or '102AG'",
               },
             },
             required: ["act", "section"],
@@ -413,21 +450,24 @@ export async function POST(req: Request) {
           execute: async ({ act, section }) => verifySection(act, section),
         }),
 
-      },
+      }),
     });
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
+    if (err instanceof LexPrivacyError) return privacyFailResponse();
     console.error("[lex-draft]", err);
-    return new Response(String(err), { status: 500 });
+    return lexErrorResponse(500, "draft_failed");
   }
 }
 
 // ── QA Pass (Pass 2) ──────────────────────────────────────────────────────────
 
 async function runQAPass(
+  gw: LexGateway,
   draftText: string,
-  documentTypeId?: string
+  documentTypeId?: string,
+  siteId?: string
 ): Promise<QAVerificationReport> {
   const docTypeEntry = documentTypeId ? getDocumentType(documentTypeId) : undefined;
 
@@ -443,11 +483,10 @@ async function runQAPass(
     `Return ONLY the JSON verification report as specified in your instructions.`;
 
   try {
-    const qaResult = await generateText({
-      model: getPremiumModel(),
+    const qaResult = await gw.generateText({
       system: QA_SYSTEM_PROMPT,
       messages: [{ role: "user", content: qaUserPrompt }],
-      tools: {
+      tools: withoutAustliiTools({
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
           description:
             "Search AustLII to verify whether a legal proposition or case citation in the draft is accurate.",
@@ -486,12 +525,23 @@ async function runQAPass(
           }),
           execute: async ({ act, section }) => verifySection(act, section),
         }),
-      },
+      }),
       stopWhen: stepCountIs(6),
+      prepareStep: finalStepAnswers(6),
     });
 
     // Parse the JSON response
-    const responseText = qaResult.text.trim();
+    logChatTurn({
+      bot: "lex-draft",
+      siteId,
+      model: gw.modelId,
+      usage: qaResult.totalUsage ?? qaResult.usage,
+      userText: qaUserPrompt,
+      assistantText: qaResult.maskedText,
+    });
+
+    // Parse the masked text; the caller rehydrates the parsed report.
+    const responseText = qaResult.maskedText.trim();
     // Strip markdown code fences if the model added them despite instructions
     const jsonText = responseText
       .replace(/^```json\s*/i, "")
@@ -499,15 +549,19 @@ async function runQAPass(
       .replace(/\s*```$/i, "")
       .trim();
 
-    const parsed = JSON.parse(jsonText) as QAVerificationReport;
+    // The model sometimes writes a sentence before the JSON ("Now I have..."). Parse the outermost object.
+    const start = jsonText.indexOf("{");
+    const end = jsonText.lastIndexOf("}");
+    const parsed = JSON.parse(start !== -1 && end > start ? jsonText.slice(start, end + 1) : jsonText) as QAVerificationReport;
     return parsed;
   } catch (err) {
+    console.error("[lex-draft qa]", err);
     // Return a safe fallback if QA parsing fails
     return {
       overallConfidence: 0,
       sections: [],
       criticalIssues: [
-        `QA pass failed: ${String(err)}. Manual review of all clauses is required.`,
+        "The automatic QA check could not run. Manual review of all clauses is required.",
       ],
       recommendedChecks: [
         "Verify all legislative section references against legislation.gov.au",
