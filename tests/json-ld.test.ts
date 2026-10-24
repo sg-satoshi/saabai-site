@@ -22,6 +22,7 @@ import {
 import { faqSchema } from "../lib/seo-meta";
 import { publicPageMeta } from "../lib/seo-pages";
 import { BRISBANE, GOLD_COAST } from "../lib/location-data";
+import { websiteCareFaqAnswer } from "../lib/website-tiers";
 
 const PUBLISHED_PRICES = new Set(["0", "100", "200", "299", "300", "497", "1497", "2000", "3500"]);
 
@@ -122,11 +123,15 @@ test("schema prices are copied from the pages that publish them", () => {
   const websites = readFileSync("app/websites/page.tsx", "utf8");
   const blueprint = readFileSync("lib/blueprint.ts", "utf8");
   const blueprintPage = readFileSync("app/blueprint/page.tsx", "utf8");
+  const careAnswer = websiteCareFaqAnswer();
   assert.match(legal, /\$299/);
-  assert.match(websites, /Presence is \$100 a month/);
-  assert.match(websites, /Growth is \$200 a month/);
-  assert.match(websites, /Signature is \$300 a month/);
-  assert.match(websites, /\$2,000/);
+  assert.match(websites, /websiteCareFaqAnswer/);
+  assert.match(websites, /WEBSITE_TIERS/);
+  assert.match(readFileSync("lib/seo-entity.ts", "utf8"), /WEBSITE_TIERS/);
+  assert.match(careAnswer, /Presence is \$100 a month/);
+  assert.match(careAnswer, /Growth is \$200 a month/);
+  assert.match(careAnswer, /Signature is \$300 a month/);
+  assert.match(careAnswer, /\$2,000/);
   assert.match(blueprintPage, /priceLabel/);
   assert.match(blueprint, /price: 497/);
   assert.match(blueprint, /priceLabel: "\$1,497"/);

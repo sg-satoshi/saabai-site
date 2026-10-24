@@ -7,6 +7,7 @@ import JsonLd from "./components/JsonLd";
 import { miaServiceSchema } from "@/lib/seo-entity";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
@@ -49,13 +50,11 @@ export default function Home() {
           <div className="card offer">
             <span className="eyebrow">Web Solutions</span>
             <h3>A website that works as hard as you do</h3>
-            <p>We design, build, host and look after it. You get a fast, modern site with lead alerts, reviews and SEO set up from day one.</p>
+            <p>We design, build, host and look after it. Every tier includes hosting, care and a trained AI enquiry chatbot.</p>
             <ul className="tick">
-              <li>Built in about two weeks</li>
-              <li>Hosting, updates and fixes included</li>
-              <li>Optional chatbot and Google reviews</li>
+              {WEBSITE_TIERS.map((tier) => <li key={tier.name}>{websiteOfferLine(tier)}</li>)}
             </ul>
-            <div className="price">From <b>$2,000</b> + $100/mo care</div>
+            <div className="price">From <b>{formatAud(WEBSITE_TIERS[0].buildFrom)}</b> + {formatAud(WEBSITE_TIERS[0].monthly)}/mo care, AUD</div>
             <a className="btn ghost" href="/websites" style={{ marginTop: 22 }}>See websites →</a>
           </div>
           <div className="card offer feat">
@@ -153,25 +152,17 @@ export default function Home() {
             <h2 style={{ marginTop: 12 }}>Built, hosted and managed for you</h2>
           </div>
           <div className="grid3">
-            <div className="card pkg">
-              <h3>Starter site</h3>
-              <div className="amt">$2,000</div>
-              <p className="dim" style={{ fontSize: 14 }}>from, + $100/mo hosting and care</p>
-              <ul className="tick"><li>Up to 5 pages</li><li>Contact form with lead alerts</li><li>Hosting, SSL and updates</li></ul>
-            </div>
-            <div className="card pkg feat">
-              <span className="pill" style={{ float: "right" }}>Most popular</span>
-              <h3>Growth site</h3>
-              <div className="amt">$4,000</div>
-              <p className="dim" style={{ fontSize: 14 }}>from, + $200/mo</p>
-              <ul className="tick"><li>Everything in Starter</li><li>AI chatbot and Google reviews</li><li>Local SEO setup</li></ul>
-            </div>
-            <div className="card pkg">
-              <h3>Custom</h3>
-              <div className="amt">Quoted</div>
-              <p className="dim" style={{ fontSize: 14 }}>for bigger builds</p>
-              <ul className="tick"><li>Portals, bookings, integrations</li><li>Multi-location sites</li><li>Dedicated build plan</li></ul>
-            </div>
+            {WEBSITE_TIERS.map((tier) => (
+              <div className={`card pkg${tier.highlight ? " feat" : ""}`} key={tier.name}>
+                {tier.highlight ? <span className="pill" style={{ float: "right" }}>Most popular</span> : null}
+                <h3>{tier.name}</h3>
+                <div className="amt">{formatAud(tier.buildFrom)}</div>
+                <p className="dim" style={{ fontSize: 14 }}>{websiteHomeCareNote(tier)}</p>
+                <ul className="tick">
+                  {tier.homePoints.map((point) => <li key={point}>{point}</li>)}
+                </ul>
+              </div>
+            ))}
           </div>
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <a className="btn ghost" href="/websites">Compare website packages →</a>

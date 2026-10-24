@@ -5,12 +5,15 @@ import JsonLd from "../components/JsonLd";
 import { receptionistServiceNode, schemaGraph } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS } from "@/lib/website-tiers";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
 
 const PATH = "/ai-receptionist-gold-coast";
 
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+
+const entryTier = WEBSITE_TIERS[0];
 
 const FAQS: { q: string; a: string[] }[] = [
   {
@@ -35,7 +38,7 @@ const FAQS: { q: string; a: string[] }[] = [
     q: "Do I need a new website?",
     a: [
       "No.",
-      "We can add a chatbot to your current site, or build a new site from $2,000 plus $100/mo care.",
+      `We can add a chatbot to your current site, or build a new site from ${formatAud(entryTier.buildFrom)} plus ${formatAud(entryTier.monthly)}/mo care.`,
     ],
   },
 ];
@@ -93,7 +96,7 @@ export default function AiReceptionistGoldCoastPage() {
             <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>Website and chatbot together</h2>
             <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
               <p>Need a new site as well?</p>
-              <p>Our <a href="/websites" style={copyLink}>Growth site package</a> includes an AI chatbot and Google reviews, with hosting and care looked after by us.</p>
+              <p>Every <a href="/websites" style={copyLink}>website tier</a> includes a trained AI enquiry chatbot, hosting and care. {entryTier.name} starts from {formatAud(entryTier.buildFrom)} plus {formatAud(entryTier.monthly)}/mo.</p>
             </div>
           </div>
         </div>

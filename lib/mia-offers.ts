@@ -5,13 +5,14 @@
  *
  * Blueprint tiers come straight from lib/blueprint.ts (the same data the
  * checkout uses), so Mia can never drift from what people are charged.
- * Website plans mirror app/websites/page.tsx; tests/mia-offers.test.ts fails
- * if that page and this file disagree.
+ * Website plans come from lib/website-tiers.ts, the same list /websites
+ * and the homepage render. Tests fail if those pages stop using it.
  *
  * Saabai is not GST registered: always "GST not applicable".
  */
 import { TIERS, TIER_ORDER } from "./blueprint";
 import { formatAud } from "./money";
+import { WEBSITE_TIERS } from "./website-tiers";
 
 export const SITE = "https://www.saabai.ai";
 export const LINKS = {
@@ -25,29 +26,12 @@ export const LINKS = {
 
 export const GST_LINE = "All prices are in Australian dollars (AUD). GST not applicable.";
 
-export const WEBSITE_PLANS = [
-  {
-    name: "Presence",
-    build: 2000,
-    monthly: 100,
-    summary:
-      "A polished, fast website with a trained enquiry chatbot that answers FAQs, lead capture straight to your inbox, hosting, security and updates included.",
-  },
-  {
-    name: "Growth",
-    build: 4000,
-    monthly: 200,
-    summary:
-      "Everything in Presence, on a larger or rebuilt site, with a lead-qualifying chatbot that books calls and hands off to your CRM or inbox, plus light workflow automations.",
-  },
-  {
-    name: "Signature",
-    build: 6500,
-    monthly: 300,
-    summary:
-      "Everything in Growth, plus a custom AI avatar trained to look and sound like the persona you choose.",
-  },
-] as const;
+export const WEBSITE_PLANS = WEBSITE_TIERS.map((tier) => ({
+  name: tier.name,
+  build: tier.buildFrom,
+  monthly: tier.monthly,
+  summary: tier.description,
+}));
 
 const aud = formatAud;
 
