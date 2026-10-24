@@ -3,33 +3,66 @@ import { Resend } from "resend";
 import { getSiteBySlug } from "../../../../lib/site-registry";
 import { listSiteLeads } from "../../../../lib/site-leads";
 import { verifySessionToken, isAdminSession, COOKIE_NAME } from "../../../../lib/auth";
+import { isValidEmail } from "../../../../lib/leads-guard";
 
 const redis = Redis.fromEnv();
 // Created lazily: constructing Resend at module load throws when
 // RESEND_API_KEY is absent (e.g. Preview builds), failing the whole build.
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
-// Hardcoded lead email overrides — for sites not in the Redis registry
+// Hardcoded lead email overrides, for sites not in the Redis registry
 const LEAD_EMAIL_OVERRIDES: Record<string, string> = {
   "bo-consultancy": "info@boconsulting.com.au",
   "wholesale-homes": "hello@wholesalehomes.com.au",
 };
 
-// Telegram config per site — add new sites here
-const TELEGRAM_SITES: Record<string, { token: string; chatId: string }> = {
-  "nico-moretti": {
-    token: process.env.TG_NICO_BOT || "",
-    chatId: process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "",
-  },
-  "heaven-thai-massage": {
-    token: process.env.TG_HTM_BOT || "",
-    chatId: process.env.TELEGRAM_CHAT_ID_HEAVEN_THAI_MASSAGE || "",
-  },
-  "wholesale-homes": {
-    token: process.env.TG_WHOLESALE_HOMES_BOT || "",
-    chatId: process.env.TELEGRAM_CHAT_ID_WHOLESALE_HOMES || "",
-  },
-};
+// Telegram config per site. Add new sites here.
+// Read at send time so a cold start cannot freeze empty env values.
+function telegramTarget(siteSlug: string): { token: string; chatId: string } | undefined {
+  const sites: Record<string, { token: string; chatId: string }> = {
+    "nico-moretti": {
+      token: process.env.TG_NICO_BOT || "",
+      chatId: process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "",
+    },
+    "heaven-thai-massage": {
+      token: process.env.TG_HTM_BOT || "",
+      chatId: process.env.TELEGRAM_CHAT_ID_HEAVEN_THAI_MASSAGE || "",
+    },
+    "wholesale-homes": {
+      token: process.env.TG_WHOLESALE_HOMES_BOT || "",
+      chatId: process.env.TELEGRAM_CHAT_ID_WHOLESALE_HOMES || "",
+    },
+  };
+  return sites[siteSlug];
+}
+
+// Em dash and en dash (plus the neighbouring unicode dashes) never go out in copy.
+function clean(value: string): string {
+  return value.replace(/[\u2012-\u2015]/g, "-");
+}
+
+function siteDisplayName(site: { name?: string } | null, siteSlug: string): string {
+  const name = site?.name?.trim() || "";
+  return name || siteSlug;
+}
+
+function leadSubject(submitterName: string, displayName: string): string {
+  const who = clean(submitterName.trim() || "Anonymous");
+  const where = clean(displayName.trim() || "site");
+  return `New booking enquiry: ${who} (${where})`;
+}
+
+function submitterReplyTo(email: string): string[] | undefined {
+  const trimmed = email.trim();
+  return isValidEmail(trimmed) ? [trimmed] : undefined;
+}
+
+function resendErrorMessage(message: string): string {
+  const raw = message.trim() || "Resend returned an error";
+  const key = process.env.RESEND_API_KEY;
+  if (key && raw.includes(key)) return raw.split(key).join("[redacted]");
+  return raw;
+}
 
 function corsOrigin(origin: string | null): string {
   const allowed = [
@@ -92,20 +125,20 @@ function buildLeadEmail(lead: {
         <tr>
           <td style="background:#f2ca50;padding:20px 28px;">
             <span style="font-size:18px;font-weight:700;color:#101415;letter-spacing:-0.3px;">New Inquiry</span>
-            <span style="font-size:13px;color:#6b5a10;margin-left:10px;">via ${lead.siteSlug}</span>
+            <span style="font-size:13px;color:#6b5a10;margin-left:10px;">via ${clean(lead.siteSlug)}</span>
           </td>
         </tr>
 
         <!-- Fields -->
         <tr><td style="padding:8px 14px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-            ${row("Name", lead.name)}
-            ${row("Email", lead.email)}
-            ${row("Phone", lead.phone)}
-            ${row("Duration", lead.metadata?.duration ?? "")}
-            ${row("Event type", lead.metadata?.eventType ?? "")}
-            ${row("Message", lead.message ? lead.message.replace(/\n/g, "<br>") : "")}
-            ${row("Received", ts)}
+            ${row("Name", clean(lead.name))}
+            ${row("Email", clean(lead.email))}
+            ${row("Phone", clean(lead.phone))}
+            ${row("Duration", clean(lead.metadata?.duration ?? ""))}
+            ${row("Event type", clean(lead.metadata?.eventType ?? ""))}
+            ${row("Message", lead.message ? clean(lead.message).replace(/\n/g, "<br>") : "")}
+            ${row("Received", clean(ts))}
           </table>
         </td></tr>
 
@@ -123,26 +156,49 @@ function buildLeadEmail(lead: {
 </html>`;
 }
 
+function buildLeadEmailText(lead: {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  siteSlug: string;
+  metadata?: { duration?: string; eventType?: string };
+  createdAt: number;
+}): string {
+  const ts = new Date(lead.createdAt).toLocaleString("en-AU", {
+    timeZone: "Australia/Sydney",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  const lines = [`New Inquiry via ${clean(lead.siteSlug)}`, ""];
+  const add = (label: string, value: string) => {
+    const v = clean(value);
+    if (v) lines.push(`${label}: ${v}`);
+  };
+  add("Name", lead.name);
+  add("Email", lead.email);
+  add("Phone", lead.phone);
+  add("Duration", lead.metadata?.duration ?? "");
+  add("Event type", lead.metadata?.eventType ?? "");
+  add("Message", lead.message);
+  add("Received", ts);
+  lines.push("", "Saabai Site Factory · noreply@saabai.ai");
+  return clean(lines.join("\n"));
+}
+
 export async function OPTIONS(req: Request) {
   return new Response(null, { status: 204, headers: { ...CORS_HEADERS, "Access-Control-Allow-Origin": corsOrigin(req.headers.get("origin")) } });
 }
 
 export async function POST(req: Request) {
+  const origin = req.headers.get("origin");
   try {
     const { name, email, phone, message, siteSlug, duration, eventType, state, budget, buyer_type, timeline } =
       await req.json();
 
     if (!siteSlug) {
-      return corsJson({ error: "siteSlug is required" }, 400, req.headers.get("origin"));
+      return corsJson({ error: "siteSlug is required" }, 400, origin);
     }
-
-    // EARLY TEST: env var send (right after req.json, before anything else)
-    const tgConfigEarly = TELEGRAM_SITES[siteSlug];
-    if (tgConfigEarly && tgConfigEarly.token && tgConfigEarly.chatId) {
-      await fetch(`https://api.telegram.org/bot${tgConfigEarly.token}/sendMessage?chat_id=${tgConfigEarly.chatId}&text=${encodeURIComponent("📥 EARLY: " + name)}`);
-    }
-
-    const origin = req.headers.get("origin");
 
     const lead = {
       name: name || "",
@@ -167,7 +223,7 @@ export async function POST(req: Request) {
 
     await redis.lpush(`saabai:leads:${siteSlug}`, JSON.stringify(lead));
 
-    // Send notifications — awaited inline (Edge kills IIFE on exit)
+    // Send notifications, awaited inline (Edge kills an un-awaited task on exit)
     try {
       const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
       const site = await getSiteBySlug(siteSlug);
@@ -178,27 +234,39 @@ export async function POST(req: Request) {
         process.env.LEAD_NOTIFY_EMAIL ??
         "shanegoldberg@pm.me";
 
-      await getResend().emails.send({
-        from: "noreply@saabai.ai",
-        to: toEmail,
-        subject: `New inquiry — ${name || "Anonymous"} via ${siteSlug}`,
-        html: buildLeadEmail(lead),
-      });
+      const replyTo = submitterReplyTo(typeof email === "string" ? email : "");
+      try {
+        const { error } = await getResend().emails.send({
+          from: "noreply@saabai.ai",
+          to: toEmail,
+          subject: leadSubject(typeof name === "string" ? name : "", siteDisplayName(site, siteSlug)),
+          html: clean(buildLeadEmail(lead)),
+          text: buildLeadEmailText(lead),
+          ...(replyTo ? { replyTo } : {}),
+        });
+        if (error) {
+          console.error(`Lead notification email failed for ${siteSlug}: ${resendErrorMessage(error.message)}`);
+        }
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Resend returned an error";
+        console.error(`Lead notification email failed for ${siteSlug}: ${resendErrorMessage(message)}`);
+      }
 
       // Per-site Telegram alerts
-      const tgConfig = TELEGRAM_SITES[siteSlug];
+      const tgConfig = telegramTarget(siteSlug);
       if (tgConfig && tgConfig.token && tgConfig.chatId) {
         const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
-        let msg = `🔔 *New inquiry — ${siteSlug}*\n\n`;
-        msg += `*Name:* ${name || "—"}\n*Email:* ${email || "—"}\n*Phone:* ${phone || "—"}\n`;
-        if (buyer_type) msg += `*Type:* ${buyer_type}\n`;
-        if (timeline) msg += `*Timeline:* ${timeline}\n`;
-        if (state) msg += `*State:* ${state}\n`;
-        if (budget) msg += `*Budget:* ${budget}\n`;
-        if (duration) msg += `*Duration:* ${duration}\n`;
-        if (eventType) msg += `*Event:* ${eventType}\n`;
-        if (message) msg += `*Notes:* ${message}\n`;
+        let msg = `🔔 *New inquiry - ${clean(siteSlug)}*\n\n`;
+        msg += `*Name:* ${clean(name || "-")}\n*Email:* ${clean(email || "-")}\n*Phone:* ${clean(phone || "-")}\n`;
+        if (buyer_type) msg += `*Type:* ${clean(buyer_type)}\n`;
+        if (timeline) msg += `*Timeline:* ${clean(timeline)}\n`;
+        if (state) msg += `*State:* ${clean(state)}\n`;
+        if (budget) msg += `*Budget:* ${clean(budget)}\n`;
+        if (duration) msg += `*Duration:* ${clean(duration)}\n`;
+        if (eventType) msg += `*Event:* ${clean(eventType)}\n`;
+        if (message) msg += `*Notes:* ${clean(message)}\n`;
         msg += `\n_Received ${ts}_`;
+        msg = clean(msg);
         const tgRes = await fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
         if (!tgRes.ok) console.error("Telegram error:", await tgRes.text());
       }
