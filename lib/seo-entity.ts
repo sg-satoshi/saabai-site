@@ -1,3 +1,5 @@
+import { formatAud, WEBSITE_TIERS } from "./website-tiers";
+
 export const SITE_URL = "https://www.saabai.ai";
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
@@ -128,11 +130,11 @@ export const lexServiceSchema = withContext(
  * Monthly care prices published on /websites.
  * Build prices stay in the description so the Offer price is the monthly figure.
  */
-const WEBSITE_CARE = [
-  { name: "Presence", monthly: "100", build: "$2,000" },
-  { name: "Growth", monthly: "200", build: "$4,000" },
-  { name: "Signature", monthly: "300", build: "$6,500" },
-] as const;
+const WEBSITE_CARE = WEBSITE_TIERS.map((tier) => ({
+  name: tier.name,
+  monthly: String(tier.monthly),
+  build: formatAud(tier.buildFrom),
+}));
 
 export const websitesServiceNode = serviceSchema({
   id: `${SITE_URL}/websites#service`,

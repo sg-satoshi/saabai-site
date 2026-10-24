@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { renderOffersForPrompt, WEBSITE_PLANS, GST_LINE } from "../lib/mia-offers";
 import { TIERS } from "../lib/blueprint";
 import { SYSTEM_PROMPT } from "../lib/chat-prompt";
+import { WEBSITE_TIERS } from "../lib/website-tiers";
 
 const aud = (n: number) => `$${n.toLocaleString("en-AU")}`;
 
@@ -13,12 +14,30 @@ test("offers block lists every Blueprint tier at checkout prices", () => {
   assert.deepEqual(Object.values(TIERS).map((t) => t.price).sort((a, b) => a - b), [497, 1497, 3500]);
 });
 
-test("website plans match the live /websites page source", () => {
+test("website plans match the shared tiers the site renders", () => {
+  assert.equal(WEBSITE_PLANS.length, WEBSITE_TIERS.length);
+  for (let i = 0; i < WEBSITE_TIERS.length; i++) {
+    const plan = WEBSITE_PLANS[i];
+    const tier = WEBSITE_TIERS[i];
+    assert.equal(plan.name, tier.name);
+    assert.equal(plan.build, tier.buildFrom);
+    assert.equal(plan.monthly, tier.monthly);
+    assert.equal(plan.summary, tier.description);
+    assert.ok(tier.homePoints.every((point) => tier.features.includes(point)), tier.name);
+  }
   const page = readFileSync("app/websites/page.tsx", "utf8");
-  for (const p of WEBSITE_PLANS) {
-    assert.ok(page.includes(`name: "${p.name}"`), p.name);
-    assert.ok(page.includes(`from ${aud(p.build)}`), `${p.name} build`);
-    assert.ok(page.includes(`${p.name} is ${aud(p.monthly)} a month`) || page.includes(`${p.name} ${aud(p.monthly)}`), `${p.name} monthly`);
+  const home = readFileSync("app/page.tsx", "utf8");
+  const receptionist = readFileSync("app/ai-receptionist-gold-coast/page.tsx", "utf8");
+  assert.match(page, /WEBSITE_TIERS/);
+  assert.match(page, /websiteCareFaqAnswer/);
+  assert.match(home, /WEBSITE_TIERS/);
+  assert.match(receptionist, /WEBSITE_TIERS/);
+  for (const file of [home, receptionist]) {
+    assert.doesNotMatch(file, /Starter site|Growth site|Optional chatbot|Custom, quoted/);
+  }
+  const block = renderOffersForPrompt();
+  for (const tier of WEBSITE_TIERS) {
+    assert.ok(block.includes(`${tier.name}: from ${aud(tier.buildFrom)} one-off build, then ${aud(tier.monthly)}/month care.`), tier.name);
   }
 });
 
