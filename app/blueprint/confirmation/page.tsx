@@ -85,7 +85,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
                 <span className="d">{!t || t.includesCall ? 4 : 3}</span>
                 <div>
                   <b>Receive your Blueprint</b>
-                  <p>{t ? `Within ${t.delivery} of your fact-find` : "Soon after your fact-find"}, as a PDF and in your client portal.</p>
+                  <p>{t ? `Within ${t.delivery} of your fact-find, as a PDF and in your client portal.` : "Starter within 48 hours, Pro within 3 business days, Business in 2 to 3 weeks. You'll get it as a PDF and in your client portal."}</p>
                 </div>
               </div>
             </div>

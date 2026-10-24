@@ -53,6 +53,7 @@ export default function Home() {
             <p>We design, build, host and look after it. Every tier includes hosting, care and a trained AI enquiry chatbot.</p>
             <ul className="tick">
               {WEBSITE_TIERS.map((tier) => <li key={tier.name}>{websiteOfferLine(tier)}</li>)}
+              <li>AI enquiry chatbot and Google reviews on every plan</li>
             </ul>
             <div className="price">From <b>{formatAud(WEBSITE_TIERS[0].buildFrom)}</b> + {formatAud(WEBSITE_TIERS[0].monthly)}/mo care, AUD</div>
             <a className="btn ghost" href="/websites" style={{ marginTop: 22 }}>See websites →</a>
@@ -64,7 +65,7 @@ export default function Home() {
             <ul className="tick">
               <li>Ranked opportunities with hours and $ saved</li>
               <li>Delivered as a PDF and in your client portal</li>
-              <li>Fee credited if you build with us in 30 days</li>
+              <li>Full fee credited if you book a build within 30 days of delivery</li>
             </ul>
             <div className="price">From <b>$497</b> · start with a free score</div>
             <a className="btn" href="/score" style={{ marginTop: 22 }}>Get your free AI score →</a>
@@ -164,6 +165,7 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <p className="dim" style={{ fontSize: 14, textAlign: "center", marginTop: 24, maxWidth: 640, marginLeft: "auto", marginRight: "auto" }}>The price only goes above the &apos;from&apos; figure for custom integrations or other additional work, and we quote that in writing before any work starts.</p>
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <a className="btn ghost" href="/websites">Compare website packages →</a>
           </div>

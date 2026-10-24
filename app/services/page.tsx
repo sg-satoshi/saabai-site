@@ -88,7 +88,7 @@ const results = [
   {
     stat: "90s",
     label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for a Brisbane law firm. Previously 2 to 14 hours.",
+    detail: "Every enquiry answered within 90 seconds, day or night, for Tributum Law, an Adelaide tax law firm. Previously 2 to 14 hours.",
   },
   {
     stat: "12 hrs",
@@ -98,7 +98,7 @@ const results = [
   {
     stat: "40%",
     label: "Enquiries resolved by AI",
-    detail: "Share of a national supplier's inbound enquiries fully handled without staff, with instant quotes.",
+    detail: "Share of PlasticOnline (Holland Plastics) inbound enquiries fully handled without staff, with instant quotes.",
   },
   {
     stat: "3 wks",
@@ -212,7 +212,7 @@ export default function Services() {
 
         <div className="mt-6 flex flex-col md:flex-row md:items-center gap-6 md:gap-8 rounded-2xl border border-saabai-border-accent bg-saabai-surface p-7 md:px-10 md:py-9 shadow-[0_0_40px_var(--saabai-glow-mid)]" style={{ background: "radial-gradient(ellipse 60% 120% at 100% 0%, rgba(98,197,209,.16), transparent 60%), var(--saabai-surface)" }}>
           <div className="flex-1">
-            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 5 MIN</span>
+            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 3 MIN</span>
             <h3 className="text-[22px] font-semibold tracking-tight mt-2 mb-2">Not sure where to start? Take the free AI score.</h3>
             <p className="text-base text-saabai-text-muted leading-relaxed">
               A few quick questions and you&apos;ll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.
@@ -238,9 +238,9 @@ export default function Services() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "a few days" },
-            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "3 business days", highlight: true },
-            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "2 to 3 weeks" },
+            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "within 48 hours" },
+            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "in 3 business days", highlight: true },
+            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "in 2 to 3 weeks" },
           ].map((t) => (
             <div
               key={t.name}
@@ -259,7 +259,7 @@ export default function Services() {
                 {t.price}
               </div>
               <p className="text-xs text-saabai-text-dim tracking-wide">
-                AUD · Delivered in {t.duration}
+                AUD · Delivered {t.duration}
               </p>
             </div>
           ))}

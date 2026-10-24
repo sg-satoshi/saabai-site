@@ -40,7 +40,7 @@ const faqs = [
     items: [
       {
         q: "How much does it typically cost?",
-        a: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes. See the Blueprint page for what is included at each tier.",
+        a: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days of delivery. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. The price only goes above a 'from' figure for custom integrations or other additional work, and we quote that in writing before any work starts. Not sure where to start? The free AI Readiness Score takes a few minutes. See the Blueprint page for what is included at each tier.",
       },
       {
         q: "How do we measure the ROI?",
@@ -56,7 +56,7 @@ const faqs = [
       },
       {
         q: "What if I buy a Saabai Blueprint and decide it's not for me?",
-        a: "You have 7 days from purchase to cancel for a full refund, no questions asked, provided the discovery session hasn't started yet. Once the discovery session begins, the engagement is non-refundable. We don't pressure anyone into proceeding to a build after the Blueprint. If the Blueprint shows there's nothing high-impact worth automating, we'll tell you.",
+        a: "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply. We don't pressure anyone into proceeding to a build after the Blueprint. If the Blueprint shows there's nothing high-impact worth automating, we'll tell you.",
       },
           ],
   },
@@ -108,7 +108,8 @@ const faqs = [
       },
       {
         q: "Do you work with e-commerce or product businesses?",
-        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups and lead capture 24/7. A national plastics supplier is currently running one of these in production.",
+        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups and lead capture 24/7. PlasticOnline (Holland Plastics) is currently running one of these in production.",
+        link: { href: "/case-studies/rex-plastics-online", label: "Read the case study." },
       },
     ],
   },
@@ -122,7 +123,7 @@ const faqs = [
       },
       {
         q: "Is the strategy call really free? What's the catch?",
-        a: "Yes, genuinely free. No invoice, no follow-up pressure, no \"free call\" that turns into a two-hour pitch. The only catch: we only take it if we think there's a real opportunity to help. If your operation isn't a good fit for what we do, we'll tell you on the call.",
+        a: "Yes, genuinely free. No invoice, no follow-up pressure, no \"free call\" that turns into a two-hour pitch. If we don't think we can help, we'll say so on the call and point you somewhere useful.",
       },
       {
         q: "What does ongoing support look like after the build?",
@@ -209,7 +210,7 @@ export default function FAQ() {
             className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden"
             style={{ boxShadow: "0 0 60px rgba(98,197,209,0.25), 0 0 24px rgba(98,197,209,0.15)" }}
           >
-            {items.map(({ q, a }) => (
+            {items.map(({ q, a, ...rest }) => (
               <details key={q} className="group bg-saabai-surface">
                 <summary className="flex items-center justify-between gap-6 px-8 py-6 cursor-pointer list-none select-none hover:bg-saabai-surface-raised transition-colors">
                   <span className="text-base font-medium text-saabai-text leading-snug">{q}</span>
@@ -218,7 +219,15 @@ export default function FAQ() {
                   </span>
                 </summary>
                 <div className="px-8 pb-7 pt-1">
-                  <p className="text-base text-saabai-text-muted leading-relaxed">{a}</p>
+                  <p className="text-base text-saabai-text-muted leading-relaxed">
+                    {a}
+                    {"link" in rest && rest.link ? (
+                      <>
+                        {" "}
+                        <a href={rest.link.href} className="text-saabai-teal hover:text-saabai-teal-bright underline underline-offset-2">{rest.link.label}</a>
+                      </>
+                    ) : null}
+                  </p>
                 </div>
               </details>
             ))}

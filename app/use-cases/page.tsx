@@ -79,13 +79,13 @@ const useCases = [
       "Audit trail documentation",
       "Regulatory deadline tracking and escalation",
     ],
-    outcome: "Compliance runs to schedule. Documentation is consistent. Audit risk is reduced.",
+    outcome: "Compliance runs to schedule. Documentation is consistent. Fewer missed deadlines and gaps in your records.",
   },
 ];
 
 const inlineCta = {
   headline: "See this in your business?",
-  body: "Book a free 30-minute call. We'll identify the highest-value automation opportunities in your specific operation.",
+  body: "Take the free 3 minute AI score, or book a free 30 minute call. We'll help you find the highest-value opportunities in your business.",
   cta: "Book Your Free Strategy Call",
 };
 
@@ -124,9 +124,8 @@ export default function UseCases() {
           actually requires expertise.
         </p>
         <p className="relative text-base text-saabai-text-dim max-w-xl mx-auto mb-14 leading-relaxed">
-          If your business runs on expertise, there&apos;s almost always a layer of
-          operational work that can be automated, without changing how you
-          deliver value to clients.
+          In most small businesses there&apos;s a layer of repeat admin that can
+          be automated, without changing how you look after your customers.
         </p>
 
         <a
@@ -206,14 +205,22 @@ export default function UseCases() {
                   <p className="text-lg font-semibold tracking-tight mb-1">{inlineCta.headline}</p>
                   <p className="text-sm text-saabai-text-muted max-w-md leading-relaxed">{inlineCta.body}</p>
                 </div>
-                <a
-                  href="https://calendly.com/shanegoldberg/30min"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 bg-saabai-teal text-saabai-bg px-7 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
-                >
-                  {inlineCta.cta}
-                </a>
+                <div className="shrink-0 flex flex-col items-start sm:items-end gap-3">
+                  <a
+                    href="https://calendly.com/shanegoldberg/30min"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-saabai-teal text-saabai-bg px-7 py-3 rounded-xl font-semibold text-sm hover:bg-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+                  >
+                    {inlineCta.cta}
+                  </a>
+                  <a
+                    href="/score"
+                    className="text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide whitespace-nowrap"
+                  >
+                    Take the free AI score →
+                  </a>
+                </div>
               </div>
             </div>
           )}

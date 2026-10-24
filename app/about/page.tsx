@@ -90,7 +90,7 @@ export default function About() {
               slow websites, missed enquiries and admin that ate their week.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
-              The problem wasn&apos;t effort. It was architecture. The wrong work
+              The problem wasn&apos;t effort. The wrong work
               was landing on the wrong desks, and the tools that were supposed
               to fix it either required a technical team to maintain, or weren&apos;t
               built for a business with five staff, not five hundred.
@@ -139,7 +139,7 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-5">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for a Brisbane tax law firm.
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for PlasticOnline (Holland Plastics), and an after-hours intake agent for Tributum Law, an Adelaide tax law firm.
             </p>
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
               Websites on our care plans are live too. Saabai is based in {NAP.addressLine} (ABN {NAP.abn}).

@@ -300,15 +300,15 @@ export default function Calculator() {
               operational leverage.
             </p>
             <p className="text-sm text-saabai-text-dim leading-relaxed">
-              Even automating 25%–50% of this workload could unlock{" "}
+              If 25% to 50% of this work could be automated, that would free up{" "}
               <span className="text-saabai-teal font-medium">
-                {formatHours(annualHours * 0.25)}–{formatHours(annualHours * 0.5)} hours
+                {formatHours(annualHours * 0.25)} to {formatHours(annualHours * 0.5)} hours
               </span>{" "}
               and{" "}
               <span className="text-saabai-teal font-medium">
-                {formatCurrency(annualCost * 0.25)}–{formatCurrency(annualCost * 0.5)}
+                {formatCurrency(annualCost * 0.25)} to {formatCurrency(annualCost * 0.5)}
               </span>{" "}
-              in annual savings.
+              a year. A Blueprint shows which parts are realistic for your business.
             </p>
           </div>
         </div>

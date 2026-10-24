@@ -105,9 +105,9 @@ export const publicPageMeta = {
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
-    title: "Rex Case Study | AI Sales Agent | Saabai",
+    title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
     description:
-      "How a national plastics supplier used Rex, an AI sales agent built by Saabai on the Gold Coast. The team recovered 60% of the sales day, with 344 leads in 30 days.",
+      "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture. Saabai built Rex on the Gold Coast.",
   }),
   process: pageMeta({
     path: "/process",

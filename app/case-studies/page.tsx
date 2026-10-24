@@ -42,9 +42,10 @@ export default function CaseStudies() {
         </p>
         <InShort>
           Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
-          live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12
-          hours a week recovered) and a national plastics supplier (instant quotes,
-          40% of enquiries resolved without staff). Most projects start with a{" "}
+          live for an Adelaide tax law firm (enquiries answered in 90 seconds, 12
+          hours a week recovered) and PlasticOnline (Holland Plastics), a
+          cut-to-size plastics supplier (instant quotes, 40% of enquiries resolved
+          without staff). Most projects start with a{" "}
           <a href="/blueprint">Saabai Blueprint from $497</a>.
         </InShort>
 
@@ -75,7 +76,7 @@ export default function CaseStudies() {
           Tributum Law
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Specialist ATO dispute and tax law firm, Brisbane
+          Specialist ATO dispute and tax law firm, Adelaide
         </p>
 
         {/* Problem / Solution */}
@@ -161,13 +162,13 @@ export default function CaseStudies() {
             difference it&apos;s made to our conversion rate has been significant.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Principal, Tributum Law
+            Principal, Tributum Law
           </p>
         </blockquote>
 
       </section>
 
-      {/* ── Case Study 2, National Plastics Supplier ───────────────────── */}
+      {/* ── Case Study 2, PlasticOnline (Holland Plastics) ───────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
@@ -185,11 +186,10 @@ export default function CaseStudies() {
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          National Plastics Supplier
+          PlasticOnline (Holland Plastics)
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Large national plastics supplier (name withheld on request), trade and retail
-          customers across Australia
+          Cut-to-size plastics supplier, trade and retail customers across Australia
         </p>
 
         {/* Problem / Solution */}
@@ -256,7 +256,7 @@ export default function CaseStudies() {
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
             <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">24/7</p>
             <p className="text-saabai-text-muted text-xs leading-relaxed">
-              After-hours enquiries now captured and quoted automatically, zero lost
+              After-hours enquiries now captured and quoted automatically
             </p>
           </div>
           <div className="bg-saabai-surface p-8 flex flex-col gap-3">
@@ -275,7 +275,7 @@ export default function CaseStudies() {
             after-hours enquiries, we were just losing those before.&rdquo;
           </p>
           <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Operations Manager, National Plastics Supplier
+            Operations Manager, PlasticOnline (Holland Plastics)
           </p>
         </blockquote>
 
