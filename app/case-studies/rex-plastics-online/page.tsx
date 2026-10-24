@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
-import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = publicPageMeta.rexCase;
-
+export const metadata: Metadata = {
+  title: "PlasticOnline Case Study: Rex, AI Quoting Agent",
+  description:
+    "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
+  alternates: {
+    canonical: "https://www.saabai.ai/case-studies/rex-plastics-online",
+  },
+  openGraph: {
+    url: "https://www.saabai.ai/case-studies/rex-plastics-online",
+    title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
+    description:
+      "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
+  },
+};
 
 const stats = [
   { value: "344", label: "Leads in 30 days" },

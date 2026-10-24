@@ -7,7 +7,6 @@ import { publicPageMeta } from "@/lib/seo-pages";
 
 export const metadata: Metadata = publicPageMeta.faq;
 
-
 const faqs = [
   {
     id: "the-basics",
