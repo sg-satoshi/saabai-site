@@ -6,11 +6,13 @@ import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
 import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import LexDemoPanel from "./LexDemoPanel";
+import VoiceDemo, { LachieLockup } from "../components/sb/VoiceDemo";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
 
 const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
+const voiceDemoReady = Boolean(process.env.XAI_API_KEY);
 
 /*
  * Every claim on this page is checked against the Lex code (lib/lex-tools.ts,
@@ -186,6 +188,27 @@ export default function LegalPage() {
           <div className="lx-demo-cta">
             <p>Want this on your firm&apos;s website? We will shape it around your practice areas and how you book.</p>
             <a className="lx-btn lx-pri" href="/contact">Talk to Saabai</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Phone demo. Same fictional firm as Lex. Lachie answers the phone. */}
+      <section id="lachie" className="lx-sec lx-pt0 lx-lachie">
+        <div className="lx-wrap">
+          <div className="lx-demo-grid">
+            <div className="lx-head">
+              <div className="lx-eyebrow">Phone demo</div>
+              <LachieLockup as="h2" second="Legal" descriptor="Your AI phone answering service. He picks up when you can't." />
+              <p className="lx-demo-line">Lex is the website chat. Lachie Legal answers the phone.</p>
+              <p className="lx-demo-fine">Harbour Street Legal is an example firm. Nothing you say is sent to a real firm.</p>
+            </div>
+            <div className="lx-lachie-demo">
+              <VoiceDemo ready={voiceDemoReady} variant="legal" />
+              <div className="lx-demo-cta">
+                <p>Want Lachie answering your firm&apos;s phones? Book a call and we will show you how it fits.</p>
+                <a className="lx-btn lx-pri" href="/contact">Talk to Saabai</a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
