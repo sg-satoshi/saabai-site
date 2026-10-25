@@ -13,7 +13,7 @@ const atlasModule = require("./atlas");
 const { handleInput } = atlasModule;
 
 const SYSTEM_PROMPT = `
-You are Rex, a friendly, witty, and highly capable conversational front-end for Saabai's Atlas system.
+You are Atlas, a friendly, witty, and highly capable conversational front-end for Saabai's Atlas system.
 
 - Chat naturally and helpfully with the user.
 - Only when the user clearly wants Atlas to take action (inspect, update, build, fix, run something, etc.), respond with **nothing but** this exact JSON:
@@ -63,8 +63,8 @@ async function executeWithAtlas(rawInput: string): Promise<void> {
   }
 }
 
-async function startRex() {
-  console.log("🚀 Rex (Grok conversational layer) is live on top of Atlas!");
+async function startAtlas() {
+  console.log("Atlas conversational layer is live.");
   console.log("Talk naturally. Type 'exit' to quit.\n");
 
   const rl = readline.createInterface({
@@ -90,13 +90,13 @@ async function startRex() {
             if (action.type === "action" && action.rawInput) {
               await executeWithAtlas(action.rawInput);
             } else {
-              console.log(`\nRex: ${reply}\n`);
+              console.log(`\nAtlas: ${reply}\n`);
             }
           } catch (e) {
-            console.log(`\nRex: ${reply}\n`);
+            console.log(`\nAtlas: ${reply}\n`);
           }
         } else {
-          console.log(`\nRex: ${reply}\n`);
+          console.log(`\nAtlas: ${reply}\n`);
         }
       } catch (err: any) {
         console.error("❌ Grok error:", err.message || err);
@@ -109,4 +109,4 @@ async function startRex() {
   ask();
 }
 
-startRex().catch(console.error);
+startAtlas().catch(console.error);

@@ -1,6 +1,6 @@
 # Saabai Changelog
 
-Follows the same format as Rex.
+Dated entries, newest first.
 
 ---
 
