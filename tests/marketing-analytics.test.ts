@@ -19,9 +19,11 @@ import {
   fbcValue,
   ga4MeasurementId,
   isCalendlyScheduledMessage,
+  lachieDemoStartPath,
   marketingHostMode,
   marketingPathAllowed,
   metaPixelId,
+  telClickUrl,
   viewContentFor,
 } from "../lib/marketing/public";
 
@@ -131,6 +133,16 @@ test("contact details are found in Lex and Lachie text, and Calendly completion 
   assert.equal(calendlyClickAction({ ...click, widgetReady: false, widgetFailed: false }), "wait");
   assert.equal(calendlyClickAction({ ...click, widgetReady: false, widgetFailed: true }), "native");
   assert.equal(calendlyClickAction({ ...click, metaKey: true, widgetReady: true, widgetFailed: false }), "native");
+
+  assert.equal(telClickUrl("tel:0405225721"), "tel:0405225721");
+  assert.equal(telClickUrl("tel:+61755646744"), "tel:+61755646744");
+  assert.equal(telClickUrl("tel:abc"), null);
+  assert.equal(telClickUrl("https://saabai.ai"), null);
+  assert.equal(lachieDemoStartPath("/"), true);
+  assert.equal(lachieDemoStartPath("/legal"), true);
+  assert.equal(lachieDemoStartPath("/ai-chatbot-law-firms"), true);
+  assert.equal(lachieDemoStartPath("/websites"), false);
+  assert.equal(lachieDemoStartPath("/client-portal"), false);
 });
 
 test("Purchase is Blueprint and website payments, in AUD, with a stable event id", () => {
@@ -314,6 +326,16 @@ test("the browser relay refuses Purchase and other origins, and does not call Me
     }));
     assert.equal(lead.status, 200);
     assert.deepEqual(await lead.json(), { ok: true, sent: false });
+
+    for (const eventName of ["Contact", "LachieDemoStart"]) {
+      const extra = await POST(new Request("https://www.saabai.ai/api/marketing/event", {
+        method: "POST",
+        headers: { origin: "https://www.saabai.ai", "content-type": "application/json", "x-forwarded-for": "203.0.113.11" },
+        body: JSON.stringify({ eventName, eventId: "33333333-3333-3333-3333-333333333333" }),
+      }));
+      assert.equal(extra.status, 200, eventName);
+      assert.deepEqual(await extra.json(), { ok: true, sent: false });
+    }
     assert.deepEqual(calls, []);
   } finally {
     globalThis.fetch = original;
@@ -346,6 +368,15 @@ test("scripts, privacy copy and wiring stay on saabai.ai and off lead endpoints"
   assert.match(browser, /send_to: measurementId/);
   assert.doesNotMatch(browser, /saabaiMarketingLayer|googletagmanager/);
   assert.match(read("app/components/ChatWidget.tsx"), /skipGa: true/);
+  assert.match(widget, /trackMarketingPhoneClick/);
+  assert.match(widget, /telClickUrl/);
+  assert.match(browser, /click_to_call/);
+  assert.match(browser, /lachie_demo_start/);
+  assert.match(browser, /trackCustom/);
+  const voice = read("app/components/sb/VoiceDemo.tsx");
+  assert.match(voice, /callRef\.current = call;\n    trackMarketingLachieStart\(variant\);/);
+  assert.doesNotMatch(voice, LEAD_ENDPOINT);
+  assert.match(read("app/privacy/page.tsx"), /clicking a phone number, starting the Lachie voice demo/);
   assert.match(read("app/pay/done/page.tsx"), /purchase \?/);
   assert.match(read("app/blueprint/confirmation/page.tsx"), /amountAud != null \?/);
 

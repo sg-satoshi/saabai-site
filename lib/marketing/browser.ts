@@ -12,6 +12,7 @@ import {
   fbcValue,
   ga4MeasurementId,
   marketingHostMode,
+  lachieDemoStartPath,
   marketingPathAllowed,
   metaPixelId,
   readCookie,
@@ -70,20 +71,21 @@ function sendGa4(name: string, params: Record<string, unknown>, attempt = 0): vo
   w.gtag("event", name, { ...params, send_to: measurementId });
 }
 
-function sendPixel(event: string, params: Record<string, unknown>, eventId: string, attempt = 0): void {
+function sendPixel(event: string, params: Record<string, unknown>, eventId: string, opts?: { custom?: boolean; attempt?: number }): void {
   const pixelId = metaPixelId();
   if (!pixelId || !marketingAllowedHere()) return;
   const w = win();
   if (!w) return;
+  const attempt = opts?.attempt ?? 0;
   if (typeof w.fbq !== "function") {
-    if (attempt < 25) window.setTimeout(() => sendPixel(event, params, eventId, attempt + 1), 200);
+    if (attempt < 25) window.setTimeout(() => sendPixel(event, params, eventId, { ...opts, attempt: attempt + 1 }), 200);
     return;
   }
   if (!w.__saabaiPixel) {
     w.fbq("init", pixelId);
     w.__saabaiPixel = true;
   }
-  w.fbq("track", event, params, { eventID: eventId });
+  w.fbq(opts?.custom ? "trackCustom" : "track", event, params, { eventID: eventId });
 }
 
 function postCapi(body: Record<string, unknown>): void {
@@ -189,6 +191,28 @@ export function trackMarketingLead(input: { source: LeadSource; email?: string; 
     contentName: input.contentName,
     contentCategory: input.source,
   });
+}
+
+/** A click on a tel: link. Meta Contact, GA4 click_to_call. The number is the business line, not hashed user data. */
+export function trackMarketingPhoneClick(linkUrl: string): void {
+  if (!marketingAllowedHere()) return;
+  const eventId = newEventId();
+  const path = win()?.location.pathname;
+  sendGa4("click_to_call", { link_url: linkUrl, ...(path ? { page_path: path } : {}) });
+  sendPixel("Contact", { content_name: "Phone" }, eventId);
+  postCapi({ eventName: "Contact", eventId, contentName: "Phone" });
+}
+
+/** Fired once the Lachie voice session is live. Does not place the call. */
+export function trackMarketingLachieStart(variant: "home" | "legal"): void {
+  if (!marketingAllowedHere()) return;
+  const path = win()?.location.pathname || "/";
+  if (!lachieDemoStartPath(path)) return;
+  const eventId = newEventId();
+  const contentName = variant === "legal" ? "Lachie Legal" : "Lachie";
+  sendGa4("lachie_demo_start", { page_path: path, variant });
+  sendPixel("LachieDemoStart", { content_name: contentName }, eventId, { custom: true });
+  postCapi({ eventName: "LachieDemoStart", eventId, contentName, contentCategory: "demo" });
 }
 
 export function trackMarketingSchedule(): void {

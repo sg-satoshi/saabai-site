@@ -14,10 +14,12 @@ import {
   marketingHostMode,
   marketingPathAllowed,
   metaPixelId,
+  telClickUrl,
   viewContentFor,
 } from "../../lib/marketing/public";
 import {
   trackMarketingPageView,
+  trackMarketingPhoneClick,
   trackMarketingSchedule,
   trackMarketingViewContent,
 } from "../../lib/marketing/browser";
@@ -96,6 +98,21 @@ export default function MarketingAnalytics() {
         }
         window.open(url, "_blank", "noopener,noreferrer");
       });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) return;
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const url = telClickUrl(anchor.href);
+      if (!url) return;
+      trackMarketingPhoneClick(url);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);

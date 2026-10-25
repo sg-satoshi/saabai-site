@@ -14,7 +14,7 @@ import {
 } from "@/lib/voice-demo/config";
 import { type TranscriptLine } from "@/lib/voice-demo/events";
 import { startVoiceCall, type VoicePhase } from "./voice-call";
-import { trackMarketingLead } from "../../../lib/marketing/browser";
+import { trackMarketingLachieStart, trackMarketingLead } from "../../../lib/marketing/browser";
 import { contactInText } from "../../../lib/marketing/public";
 import "./voice-demo.css";
 
@@ -292,6 +292,7 @@ export default function VoiceDemo({
       },
     });
     callRef.current = call;
+    trackMarketingLachieStart(variant);
 
     pulseRef.current = window.setInterval(() => {
       const session = sessionRef.current;

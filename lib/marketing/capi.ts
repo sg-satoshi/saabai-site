@@ -3,7 +3,7 @@ import { cleanMetaCookie, metaPixelId } from "./public";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
-export type CapiEventName = "PageView" | "ViewContent" | "Lead" | "Schedule" | "Purchase";
+export type CapiEventName = "PageView" | "ViewContent" | "Lead" | "Schedule" | "Purchase" | "Contact" | "LachieDemoStart";
 
 export type CapiInput = {
   eventName: CapiEventName;

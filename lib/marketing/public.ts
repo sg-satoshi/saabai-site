@@ -103,6 +103,25 @@ export function contactInText(text: string): { email?: string; phone?: string } 
   return { ...(email ? { email } : {}), ...(phone ? { phone } : {}) };
 }
 
+/** A real telephone link, not a tel: placeholder. Returns the href when it should count as a click. */
+export function telClickUrl(href: string): string | null {
+  try {
+    const url = new URL(href);
+    if (url.protocol !== "tel:") return null;
+    const digits = url.pathname.replace(/\D/g, "");
+    if (digits.length < 6 || digits.length > 15) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Lachie demo start is only the homepage and the two law-firm demo pages. */
+export function lachieDemoStartPath(pathname: string): boolean {
+  const path = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname || "/";
+  return path === "/" || path === "/legal" || path === "/ai-chatbot-law-firms";
+}
+
 export function isCalendlyScheduledMessage(origin: string, data: unknown): boolean {
   if (origin !== "https://calendly.com") return false;
   if (!data || typeof data !== "object") return false;

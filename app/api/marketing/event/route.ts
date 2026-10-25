@@ -3,7 +3,7 @@ import { marketingHostMode } from "@/lib/marketing/public";
 
 export const runtime = "nodejs";
 
-const BROWSER_EVENTS = new Set<CapiEventName>(["PageView", "ViewContent", "Lead", "Schedule"]);
+const BROWSER_EVENTS = new Set<CapiEventName>(["PageView", "ViewContent", "Lead", "Schedule", "Contact", "LachieDemoStart"]);
 
 const hits = new Map<string, { n: number; exp: number }>();
 
