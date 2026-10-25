@@ -8,12 +8,14 @@ import { miaServiceSchema } from "@/lib/seo-entity";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
+import VoiceDemo from "./components/sb/VoiceDemo";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = publicPageMeta.home;
 
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+const voiceDemoReady = Boolean(process.env.XAI_API_KEY);
 
 const FAQS = [
   { q: "What is the AI Readiness Score?", a: "A free 3 minute quiz with 12 questions about how your business runs. You get an instant score out of 100, a breakdown by area and three quick wins you can use this week." },
@@ -40,6 +42,7 @@ export default function Home() {
           <div className="ctas">
             <HeroCta />
             <a className="btn ghost" href="/blueprint">See the Blueprint</a>
+            <VoiceDemo ready={voiceDemoReady} />
           </div>
           <div className="trust">Free 3 minute quiz · Instant score out of 100 · No credit card</div>
         </div>

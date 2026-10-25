@@ -1,6 +1,6 @@
 .sb .hero{position:relative;padding:120px 0 96px;text-align:center}
 .sb .hero p.lead{font-size:20px;max-width:640px;margin:24px auto 36px}
-.sb .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.sb .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
 .sb .trust{margin-top:28px;font-size:14px;color:var(--dim)}
 .sb .offer{display:flex;flex-direction:column}.sb .offer h3{font-size:26px;margin:14px 0 8px}
 .sb .offer .price{font-size:15px;color:#fff;margin-top:auto}.sb .offer .price b{color:var(--teal);font-size:22px}

@@ -1,0 +1,23 @@
+.sb .voice-launch{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:240px}
+.sb .voice-launch .voice-support{font-size:14px;line-height:1.4;text-align:center}
+.voice-back{position:fixed;inset:0;z-index:80;background:rgba(11,9,46,.72);display:grid;place-items:end center;padding:20px 16px 28px}
+.voice-panel{width:min(440px,100%);background:#14123a;color:#fff;border:1px solid rgba(98,197,209,.22);border-radius:20px;padding:28px;box-shadow:0 0 60px rgba(98,197,209,.19);font-family:var(--font-geist-sans),system-ui,sans-serif}
+.voice-panel h3{margin:10px 0 0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.voice-panel p{margin:0;color:#a5b4fc;line-height:1.5}
+.voice-panel a{color:#62c5d1;text-decoration:underline;text-underline-offset:3px}
+.voice-kicker{font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#62c5d1}
+.voice-timer{margin-top:18px;font-size:42px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#fff}
+.voice-timer span{display:block;margin-top:2px;font-size:13px;font-weight:500;letter-spacing:0;color:#8d9cc4}
+.voice-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.voice-actions .btn{min-height:48px}
+.voice-note{margin-top:14px;font-size:14px}
+.voice-line{margin-top:16px;font-size:15px;color:#fff}
+@media (max-width:760px){
+  .sb .hero .voice-launch{width:100%;max-width:none}
+  .voice-back{padding:12px 12px 20px;align-items:end}
+  .voice-panel{padding:22px}
+  .voice-actions .btn{width:100%}
+}
+@media (min-width:761px){
+  .voice-back{place-items:center;padding:24px}
+}
