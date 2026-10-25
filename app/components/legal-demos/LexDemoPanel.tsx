@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { trackMarketingLead } from "../../../lib/marketing/browser";
+import { contactInText } from "../../../lib/marketing/public";
 
 type Role = "user" | "assistant";
 type Msg = { role: Role; content: string };
@@ -36,6 +38,10 @@ export default function LexDemoPanel() {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
     const history = [...messages, { role: "user" as const, content: trimmed }];
+    const contact = contactInText(trimmed);
+    if (contact.email || contact.phone) {
+      trackMarketingLead({ source: "lex", email: contact.email, phone: contact.phone, contentName: "Lex chat" });
+    }
     setMessages(history);
     setInput("");
     setLoading(true);

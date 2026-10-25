@@ -5,6 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+import { trackMarketingLead } from "../../lib/marketing/browser";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 import { MiaReplyText } from "../../lib/mia-reply-format";
@@ -540,6 +541,7 @@ export default function ChatWidget() {
       });
       if (!skipEmail && endEmail.trim()) {
         track("transcript_requested");
+        trackMarketingLead({ source: "enquiry", email: endEmail.trim(), contentName: "Enquiry form" });
       }
       setEndSubmitted(true);
     } finally {
@@ -662,6 +664,7 @@ export default function ChatWidget() {
         }),
       });
       track("lead_captured", { hasName: !!leadForm.name.trim(), sendTranscript: leadForm.sendTranscript });
+      trackMarketingLead({ source: "enquiry", email: leadForm.email.trim(), contentName: "Enquiry form" });
       setLeadSubmitted(true);
     } finally {
       setLeadSubmitting(false);

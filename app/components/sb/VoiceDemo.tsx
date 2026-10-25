@@ -14,6 +14,8 @@ import {
 } from "@/lib/voice-demo/config";
 import { type TranscriptLine } from "@/lib/voice-demo/events";
 import { startVoiceCall, type VoicePhase } from "./voice-call";
+import { trackMarketingLead } from "../../../lib/marketing/browser";
+import { contactInText } from "../../../lib/marketing/public";
 import "./voice-demo.css";
 
 type Phase = "idle" | "consent" | "connecting" | "live" | "ended" | "error";
@@ -166,6 +168,16 @@ export default function VoiceDemo({
     }
     stopStream();
     if (!session) return;
+    const spoken = lines.filter((line) => line.role === "visitor").map((line) => line.text).join("\n");
+    const contact = contactInText(spoken);
+    if (contact.email || contact.phone) {
+      trackMarketingLead({
+        source: "lachie",
+        email: contact.email,
+        phone: contact.phone,
+        contentName: variant === "legal" ? "Lachie Legal demo" : "Lachie demo",
+      });
+    }
     await postJson("/api/voice/transcript", { ...session, lines }).catch(() => {});
     await postJson("/api/voice/end", session).catch(() => {});
   }

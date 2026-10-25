@@ -118,6 +118,7 @@ const PUBLIC_API = [
   "/api/webhooks",
   // Write-only telemetry beacon fired from public pages
   "/api/analytics",
+  "/api/marketing/event", // Meta Conversions API relay (no-ops until env is set)
   "/api/exp/event",          // split-testing beacon (always 204, ignores bots)
   "/api/announcement/active", // public read of the one live announcement (null unless flag on and live)
   // Widget media / embeds
