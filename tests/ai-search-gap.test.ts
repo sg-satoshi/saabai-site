@@ -118,8 +118,12 @@ test("the law firms page copies the Tributum case study quote and its attributio
   assert.ok(study.includes("someone&apos;s there."));
   assert.ok(study.includes("difference it&apos;s made to our conversion rate has been significant."));
   assert.match(study, /, Principal, Tributum Law/);
+  assert.match(study, /An Adelaide law firm serving clients across Australia and internationally/);
+  assert.doesNotMatch(study, /Brisbane/);
   assert.ok(firms.includes(quote));
   assert.match(firms, /, Principal, Tributum Law/);
+  assert.match(firms, /Tributum Law is an Adelaide law firm serving clients across Australia and internationally/);
+  assert.doesNotMatch(firms, /Brisbane practice|Brisbane firm|firm, Brisbane/);
   assert.match(firms, /different product from the website chatbot demo/);
   assert.match(firms, /ai-chatbot-developer-queensland/);
 });
