@@ -89,6 +89,29 @@ test("a reply that sounds like a real consult is replaced", async () => {
   assert.match(route, /guardDemoReply/);
 });
 
+test("Lex and Lachie share the integrations answer and do not price or name practice software", async () => {
+  const { LEX_DEMO_SYSTEM, guardDemoReply } = await import("../lib/legal-demo");
+  const { SAABAI_ASSISTANT_FACTS } = await import("../lib/harbour-demo-facts");
+  const { voiceScript } = await import("../lib/voice-demo/variants");
+  const lachie = voiceScript("legal").instructions;
+  assert.ok(LEX_DEMO_SYSTEM.includes(SAABAI_ASSISTANT_FACTS));
+  assert.ok(lachie.includes(SAABAI_ASSISTANT_FACTS));
+  assert.match(SAABAI_ASSISTANT_FACTS, /About this assistant \(Saabai\)/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /Yes, it integrates/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /Calendly, Google Calendar and Outlook/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /email and SMS notifications/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /CRM or practice-management system/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /nothing technical for the firm to do/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /updated any time/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /around two weeks for a full build/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /tailor it on a quick call/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /book a call with Saabai/);
+  assert.doesNotMatch(SAABAI_ASSISTANT_FACTS, /\$\d|LEAP|Smokeball|Clio|Actionstep/);
+  assert.ok(!/[\u2012-\u2015]/.test(SAABAI_ASSISTANT_FACTS));
+  const spoken = "Yes, it integrates. Saabai connects it to Calendly, Google Calendar, Outlook, email, SMS and your CRM, and there is nothing technical for the firm to do. Book a call with Saabai and the team will tailor it on a quick call.";
+  assert.equal(guardDemoReply(spoken), spoken);
+});
+
 test("prompt is a demo, refuses legal advice, and stays off the research gateway path", async () => {
   const { LEX_DEMO_SYSTEM, DEMO_MAX_OUTPUT_TOKENS, DEMO_DAY_CAP } = await import("../lib/legal-demo");
   assert.match(LEX_DEMO_SYSTEM, /AI demo/);
