@@ -41,11 +41,10 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
 
   return (
     <div className="sb">
-      {o.paid && t && o.ref ? (
-        <GaEvent name="purchase" onceKey={`purchase:${o.ref}`} params={{ transaction_id: o.ref, currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${o.tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] }} />
-      ) : null}
       {o.paid && t && o.sessionId && o.amountAud != null ? (
         <MarketingPurchase eventId={`purchase_${o.sessionId}`} transactionId={o.sessionId} value={o.amountAud} contentName={`Saabai Blueprint ${t.name}`} contentId={`blueprint_${o.tier}`} contentCategory="blueprint" />
+      ) : o.paid && t && o.ref ? (
+        <GaEvent name="purchase" onceKey={`purchase:${o.ref}`} params={{ transaction_id: o.ref, currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${o.tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] }} />
       ) : null}
       <SbNav minimal right={o.ref ? <span className="dim" style={{ fontSize: 14 }}>Order {o.ref}</span> : undefined} />
       <div style={{ position: "relative" }}>

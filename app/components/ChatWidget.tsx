@@ -664,7 +664,7 @@ export default function ChatWidget() {
         }),
       });
       track("lead_captured", { hasName: !!leadForm.name.trim(), sendTranscript: leadForm.sendTranscript });
-      trackMarketingLead({ source: "enquiry", email: leadForm.email.trim(), contentName: "Enquiry form" });
+      trackMarketingLead({ source: "enquiry", email: leadForm.email.trim(), contentName: "Enquiry form", skipGa: true });
       setLeadSubmitted(true);
     } finally {
       setLeadSubmitting(false);

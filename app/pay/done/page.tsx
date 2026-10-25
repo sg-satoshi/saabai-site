@@ -24,10 +24,11 @@ export default async function PayDone({ searchParams }: { searchParams: Promise<
   const purchase = await websitePurchase(sessionId);
   return (
     <>
-    <GaEvent name="purchase" onceKey={`careplan:${site || "unknown"}`} params={{ currency: "AUD", items: [{ item_id: "care_plan", item_name: "Website care plan", item_category: "care_plan", quantity: 1 }], payment_type: "care_plan_setup" }} />
     {purchase ? (
       <MarketingPurchase eventId={purchase.eventId} transactionId={purchase.transactionId} value={purchase.value} contentName={purchase.contentName} contentId={purchase.contentIds[0] || "care_plan"} contentCategory="website" />
-    ) : null}
+    ) : (
+      <GaEvent name="purchase" onceKey={`careplan:${site || "unknown"}`} params={{ currency: "AUD", items: [{ item_id: "care_plan", item_name: "Website care plan", item_category: "care_plan", quantity: 1 }], payment_type: "care_plan_setup" }} />
+    )}
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#f4f5f9", padding: 20, fontFamily: "Inter, system-ui, sans-serif" }}>
       <div style={{ background: "#fff", border: "1px solid #dfe2ea", borderRadius: 14, maxWidth: 440, padding: 28, color: "#13152a" }}>
         <h1 style={{ fontSize: 20, margin: "0 0 10px" }}>You&apos;re all set</h1>

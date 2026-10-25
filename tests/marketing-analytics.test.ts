@@ -12,6 +12,8 @@ import { hashEmail, hashPhone, normalizeEmail, normalizePhone, sha256 } from "..
 import { purchaseEventFromSession } from "../lib/marketing/purchase";
 import { buildCapiBody, sendCapiEvent } from "../lib/marketing/capi";
 import { reportCheckoutPurchase } from "../lib/marketing/report-purchase";
+import { calendlyClickAction, calendlyPopupUrl } from "../lib/marketing/calendly";
+import { GA_ID } from "../lib/ga";
 import {
   contactInText,
   fbcValue,
@@ -55,21 +57,23 @@ test("email and phone are normalised and hashed with SHA-256", () => {
   assert.equal(normalizePhone("12"), null);
 });
 
-test("ids no-op unless they match the expected shape", () => {
+test("GA4 events use the existing property; the pixel no-ops until its id is valid", () => {
   const prevGa = process.env.NEXT_PUBLIC_GA4_ID;
   const prevPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   delete process.env.NEXT_PUBLIC_GA4_ID;
   delete process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  assert.equal(ga4MeasurementId(), "");
+  assert.equal(ga4MeasurementId(), GA_ID);
   assert.equal(metaPixelId(), "");
   process.env.NEXT_PUBLIC_GA4_ID = "not-a-ga-id";
   process.env.NEXT_PUBLIC_META_PIXEL_ID = "pixel";
-  assert.equal(ga4MeasurementId(), "");
+  assert.equal(ga4MeasurementId(), GA_ID);
   assert.equal(metaPixelId(), "");
   process.env.NEXT_PUBLIC_GA4_ID = "G-TEST1234";
   process.env.NEXT_PUBLIC_META_PIXEL_ID = "123456789012345";
-  assert.equal(ga4MeasurementId(), "G-TEST1234");
+  assert.equal(ga4MeasurementId(), GA_ID);
   assert.equal(metaPixelId(), "123456789012345");
+  process.env.NEXT_PUBLIC_GA4_ID = GA_ID;
+  assert.equal(ga4MeasurementId(), GA_ID);
   if (prevGa === undefined) delete process.env.NEXT_PUBLIC_GA4_ID;
   else process.env.NEXT_PUBLIC_GA4_ID = prevGa;
   if (prevPixel === undefined) delete process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -114,6 +118,19 @@ test("contact details are found in Lex and Lachie text, and Calendly completion 
   assert.equal(isCalendlyScheduledMessage("https://calendly.com", { event: "calendly.event_type_viewed" }), false);
   assert.equal(fbcValue(undefined, "?fbclid=abc123", 1700000000000), "fb.1.1700000000000.abc123");
   assert.equal(fbcValue("fb.1.1.existing", "?fbclid=abc"), "fb.1.1.existing");
+
+  assert.equal(calendlyPopupUrl("https://calendly.com/shanegoldberg/30min"), "https://calendly.com/shanegoldberg/30min");
+  assert.equal(
+    calendlyPopupUrl("https://calendly.com/shanegoldberg/30min?utm_source=mia"),
+    "https://calendly.com/shanegoldberg/30min?utm_source=mia",
+  );
+  assert.equal(calendlyPopupUrl("https://evil.example/shanegoldberg/30min"), null);
+  assert.equal(calendlyPopupUrl("http://calendly.com/shanegoldberg/30min"), null);
+  const click = { href: "https://calendly.com/shanegoldberg/30min", button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, defaultPrevented: false };
+  assert.equal(calendlyClickAction({ ...click, widgetReady: true, widgetFailed: false }), "popup");
+  assert.equal(calendlyClickAction({ ...click, widgetReady: false, widgetFailed: false }), "wait");
+  assert.equal(calendlyClickAction({ ...click, widgetReady: false, widgetFailed: true }), "native");
+  assert.equal(calendlyClickAction({ ...click, metaKey: true, widgetReady: true, widgetFailed: false }), "native");
 });
 
 test("Purchase is Blueprint and website payments, in AUD, with a stable event id", () => {
@@ -314,11 +331,23 @@ test("scripts, privacy copy and wiring stay on saabai.ai and off lead endpoints"
 
   const widget = read("app/components/MarketingAnalytics.tsx");
   assert.match(widget, /strategy="afterInteractive"/);
+  assert.match(widget, /strategy="lazyOnload"/);
+  assert.match(widget, /CALENDLY_WIDGET_SRC/);
+  assert.match(read("lib/marketing/calendly.ts"), /https:\/\/assets\.calendly\.com\/assets\/external\/widget\.js/);
+  assert.match(widget, /initPopupWidget/);
+  assert.match(widget, /window\.open\(url, "_blank"/);
   assert.doesNotMatch(widget, /beforeInteractive/);
+  assert.doesNotMatch(widget, /googletagmanager|saabaiMarketingLayer|gtag\/js/);
   assert.match(widget, /marketingHostMode/);
   assert.match(widget, /marketingPathAllowed/);
-  assert.match(widget, /send_page_view:false/);
   assert.doesNotMatch(widget, /META_CAPI_ACCESS_TOKEN/);
+
+  const browser = read("lib/marketing/browser.ts");
+  assert.match(browser, /send_to: measurementId/);
+  assert.doesNotMatch(browser, /saabaiMarketingLayer|googletagmanager/);
+  assert.match(read("app/components/ChatWidget.tsx"), /skipGa: true/);
+  assert.match(read("app/pay/done/page.tsx"), /purchase \?/);
+  assert.match(read("app/blueprint/confirmation/page.tsx"), /amountAud != null \?/);
 
   for (const file of ["lib/marketing/browser.ts", "lib/marketing/public.ts", "app/components/MarketingPurchase.tsx"]) {
     assert.doesNotMatch(read(file), /META_CAPI_ACCESS_TOKEN/, file);
@@ -355,6 +384,6 @@ test("scripts, privacy copy and wiring stay on saabai.ai and off lead endpoints"
   assert.doesNotMatch(privacy, /xAI|Grok/);
 
   const sites = walk(path.join(ROOT, "app/sites")).filter((file) => /\.(tsx?|jsx?)$/.test(file));
-  const hits = sites.filter((file) => /connect\.facebook\.net|META_PIXEL|NEXT_PUBLIC_GA4_ID|saabaiMarketingLayer/.test(readFileSync(file, "utf8")));
+  const hits = sites.filter((file) => /connect\.facebook\.net|META_PIXEL|NEXT_PUBLIC_GA4_ID|saabaiMarketingLayer|widget\.js/.test(readFileSync(file, "utf8")));
   assert.deepEqual(hits, []);
 });

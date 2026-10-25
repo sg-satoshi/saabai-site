@@ -2,18 +2,17 @@
 
 /**
  * Browser marketing events for saabai.ai.
- * GA4 goes to NEXT_PUBLIC_GA4_ID. Meta pixel goes to NEXT_PUBLIC_META_PIXEL_ID.
- * The same event id is sent to the pixel and to /api/marketing/event so Meta can dedupe.
- * Email and phone are not sent to GA4. Nothing runs when the env vars are unset.
+ * GA4 events go through the gtag already loaded for saabai.ai (see lib/ga.ts).
+ * NEXT_PUBLIC_GA4_ID is optional and does not load a second tag.
+ * Meta pixel goes to NEXT_PUBLIC_META_PIXEL_ID. The same event id is sent to the
+ * pixel and to /api/marketing/event so Meta can dedupe.
+ * Email and phone are not sent to GA4. The pixel no-ops when its env var is unset.
  */
-import { GA_ID } from "../ga";
 import {
   fbcValue,
   ga4MeasurementId,
-  marketingBrowserOn,
   marketingHostMode,
   marketingPathAllowed,
-  marketingSeparateGa4,
   metaPixelId,
   readCookie,
 } from "./public";
@@ -21,8 +20,6 @@ import {
 type LeadSource = "enquiry" | "lex" | "lachie";
 
 type MarketingWindow = Window & {
-  saabaiMarketingLayer?: unknown[];
-  saabaiGtag?: (...args: unknown[]) => void;
   gtag?: (...args: unknown[]) => void;
   fbq?: (...args: unknown[]) => void;
   __saabaiPixel?: boolean;
@@ -35,7 +32,7 @@ function win(): MarketingWindow | null {
 
 export function marketingAllowedHere(): boolean {
   const w = win();
-  if (!w || !marketingBrowserOn()) return false;
+  if (!w) return false;
   return !!marketingHostMode(w.location.hostname) && marketingPathAllowed(w.location.pathname);
 }
 
@@ -61,34 +58,16 @@ function shortKey(value: string): string {
   return (hash >>> 0).toString(36);
 }
 
-function marketingGtag(w: MarketingWindow): (...args: unknown[]) => void {
-  if (typeof w.saabaiGtag === "function") return w.saabaiGtag;
-  const layer = w.saabaiMarketingLayer || (w.saabaiMarketingLayer = []);
-  function queued() {
-    layer.push(arguments);
-  }
-  w.saabaiGtag = queued;
-  return queued;
-}
-
-function sendGa4(name: string, params: Record<string, unknown>, opts?: { skipIfShared?: boolean; attempt?: number }): void {
+function sendGa4(name: string, params: Record<string, unknown>, attempt = 0): void {
   const measurementId = ga4MeasurementId();
   if (!measurementId || !marketingAllowedHere()) return;
-  if (opts?.skipIfShared && !marketingSeparateGa4()) return;
   const w = win();
   if (!w) return;
-  const payload = { ...params, send_to: measurementId };
-  if (marketingSeparateGa4()) {
-    marketingGtag(w)("event", name, payload);
-    return;
-  }
-  if (measurementId !== GA_ID) return;
   if (typeof w.gtag !== "function") {
-    const attempt = opts?.attempt ?? 0;
-    if (attempt < 20) window.setTimeout(() => sendGa4(name, params, { ...opts, attempt: attempt + 1 }), 250);
+    if (attempt < 20) window.setTimeout(() => sendGa4(name, params, attempt + 1), 250);
     return;
   }
-  w.gtag("event", name, payload);
+  w.gtag("event", name, { ...params, send_to: measurementId });
 }
 
 function sendPixel(event: string, params: Record<string, unknown>, eventId: string, attempt = 0): void {
@@ -191,7 +170,7 @@ export function trackMarketingViewContent(content: {
 }
 
 /** Lead when an enquiry form, Lex chat or Lachie demo has contact details. */
-export function trackMarketingLead(input: { source: LeadSource; email?: string; phone?: string; contentName: string }): void {
+export function trackMarketingLead(input: { source: LeadSource; email?: string; phone?: string; contentName: string; skipGa?: boolean }): void {
   const email = input.email?.trim();
   const phone = input.phone?.trim();
   if (!email && !phone) return;
@@ -199,7 +178,8 @@ export function trackMarketingLead(input: { source: LeadSource; email?: string; 
   const key = `lead:${input.source}:${shortKey(`${email || ""}|${phone || ""}`)}`;
   if (!once(key)) return;
   const eventId = newEventId();
-  sendGa4("generate_lead", { method: input.source, content_name: input.contentName });
+  // Mia's lead form already sends generate_lead via track("lead_captured").
+  if (!input.skipGa) sendGa4("generate_lead", { method: input.source, content_name: input.contentName });
   sendPixel("Lead", { content_name: input.contentName, content_category: input.source }, eventId);
   postCapi({
     eventName: "Lead",
@@ -221,9 +201,9 @@ export function trackMarketingSchedule(): void {
 }
 
 /**
- * Browser Purchase. The server webhook sends the matching Conversions API event
- * with the same event id (purchase_<checkout session id>), so this does not POST.
- * Skipped on the shared GA property because the confirmation page already fires purchase there.
+ * Browser Purchase on the existing GA4 tag, plus the Meta pixel.
+ * The server webhook sends the matching Conversions API event with the same
+ * event id (purchase_<checkout session id>), so this does not POST.
  */
 export function trackMarketingPurchase(input: {
   eventId: string;
@@ -246,7 +226,7 @@ export function trackMarketingPurchase(input: {
       price: input.value,
       quantity: 1,
     }],
-  }, { skipIfShared: true });
+  });
   sendPixel("Purchase", {
     value: input.value,
     currency: "AUD",

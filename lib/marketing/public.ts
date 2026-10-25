@@ -1,7 +1,8 @@
 /**
  * Public marketing analytics config for saabai.ai.
  * Safe to import from client components: only NEXT_PUBLIC ids, no access token.
- * No-ops when the ids are missing or not in the expected shape.
+ * The pixel no-ops when its id is missing or the wrong shape.
+ * GA4 events use the measurement id already loaded on the page.
  */
 import { GA_ID, gaHostMode, gaPathAllowed } from "../ga";
 import { isTier, TIERS } from "../blueprint";
@@ -13,24 +14,20 @@ function clean(value: string | undefined): string {
   return (value || "").trim();
 }
 
+/**
+ * GA4 measurement id for marketing events.
+ * NEXT_PUBLIC_GA4_ID is optional. When it is unset, invalid, or a different
+ * property, events use the tag already on the page (GA_ID) so gtag is not loaded twice.
+ */
 export function ga4MeasurementId(): string {
   const value = clean(process.env.NEXT_PUBLIC_GA4_ID);
-  return GA_RE.test(value) ? value : "";
+  if (GA_RE.test(value) && value === GA_ID) return value;
+  return GA_ID;
 }
 
 export function metaPixelId(): string {
   const value = clean(process.env.NEXT_PUBLIC_META_PIXEL_ID);
   return PIXEL_RE.test(value) ? value : "";
-}
-
-/** A second GA4 property, separate from the tag already loaded by lib/ga.ts. */
-export function marketingSeparateGa4(): boolean {
-  const id = ga4MeasurementId();
-  return !!id && id !== GA_ID;
-}
-
-export function marketingBrowserOn(): boolean {
-  return !!(ga4MeasurementId() || metaPixelId());
 }
 
 export function marketingHostMode(hostname: string): "prod" | "preview" | null {
