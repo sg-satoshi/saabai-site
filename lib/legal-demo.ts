@@ -23,6 +23,13 @@ export const DEMO_LIMIT =
 export const DEMO_FALLBACK =
   "I can help with a general enquiry, sample fees or a demo booking. I can't give legal advice.";
 
+/** Used when a reply implies a real appointment or a person at the firm. */
+export const DEMO_SAFE_CONSULT =
+  "I'm an AI demo and this is not legal advice. I can show a sample consult, and nothing from this chat is sent to a real firm.";
+
+const OVERCLAIM =
+  /\blawyer will\b|\bconfirmed\b|speak with someone|discuss your|with someone at|\b(i'll|i will) (book|arrange|have)\b/i;
+
 const KEY_BY_PROVIDER: Record<string, string[]> = {
   anthropic: ["ANTHROPIC_API_KEY"],
   openai: ["OPENAI_API_KEY"],
@@ -119,6 +126,13 @@ export function createBannedWordFilter(word = BANNED_WORD) {
 export function scrubDemoText(input: string): string {
   if (!input.trim() || new RegExp(BANNED_WORD, "i").test(input)) return DEMO_FALLBACK;
   return noDashes(input).replace(/\s{2,}/g, " ").trim();
+}
+
+/** Replace a reply that sounds like a real booking or a conversation with a lawyer. */
+export function guardDemoReply(input: string): string {
+  const clean = scrubDemoText(input);
+  if (clean === DEMO_FALLBACK || OVERCLAIM.test(clean)) return clean === DEMO_FALLBACK ? clean : DEMO_SAFE_CONSULT;
+  return clean;
 }
 
 export const LEX_DEMO_SYSTEM = `You are Lex, the website assistant for Harbour Street Legal, a fictional example firm in this Saabai demo. You are an AI demo. You are not a lawyer and you do not give legal advice.

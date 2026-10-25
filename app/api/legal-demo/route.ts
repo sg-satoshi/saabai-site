@@ -12,6 +12,7 @@ import {
   createBannedWordFilter,
   missingModelKey,
   reserveDemoMessage,
+  guardDemoReply,
   scrubDemoText,
   visitorIdFrom,
 } from "../../../lib/legal-demo";
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
           model: modelIdFrom(model),
           usage: event.totalUsage ?? event.usage,
           userText: lastUserText(messages),
-          assistantText: scrubDemoText(event.text ?? ""),
+          assistantText: guardDemoReply(event.text ?? ""),
         });
       },
     });
@@ -125,11 +126,9 @@ export async function POST(req: Request) {
           sent += tail.text;
           send({ type: "text-delta", delta: tail.text });
         }
-        const finalText = scrubDemoText(sent);
-        if (finalText === DEMO_FALLBACK && sent.trim()) {
-          send({ type: "replace", text: DEMO_FALLBACK });
-        } else if (!sent.trim()) {
-          send({ type: "replace", text: DEMO_FALLBACK });
+        const finalText = guardDemoReply(sent);
+        if (!sent.trim() || finalText !== scrubDemoText(sent)) {
+          send({ type: "replace", text: finalText || DEMO_FALLBACK });
         }
       } catch (err) {
         console.error("[legal-demo] stream error:", safeErr(err));

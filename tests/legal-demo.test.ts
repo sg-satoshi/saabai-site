@@ -76,6 +76,15 @@ test("the route reuses the default model, caps tokens, and is on the public chat
   assert.match(readFileSync("lib/chat-guard.ts", "utf8"), /CHAT_API/);
 });
 
+test("a reply that sounds like a real consult is replaced", async () => {
+  const { guardDemoReply, DEMO_SAFE_CONSULT } = await import("../lib/legal-demo");
+  const over = "I'd be happy to arrange a demo consult where you could discuss your situation with someone at Harbour Street Legal.";
+  assert.equal(guardDemoReply(over), DEMO_SAFE_CONSULT);
+  const fee = "A simple will starts from $450. These are sample fees only, not a quote.";
+  assert.equal(guardDemoReply(fee), fee);
+  assert.match(route, /guardDemoReply/);
+});
+
 test("prompt is a demo, refuses legal advice, and stays off the research gateway path", async () => {
   const { LEX_DEMO_SYSTEM, DEMO_MAX_OUTPUT_TOKENS, DEMO_DAY_CAP } = await import("../lib/legal-demo");
   assert.match(LEX_DEMO_SYSTEM, /AI demo/);
