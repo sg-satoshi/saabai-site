@@ -122,10 +122,10 @@ test("coloured text must be readable on the chosen background", () => {
 test("public payload re-sanitises and carries the end message rich text", () => {
   const c = validateAnnouncement({ ...base, message: "<b>Hi</b>", timer: { style: "text", endAt: "2026-10-25T00:00:00Z", endMode: "message", endMessage: "<i>Over</i>" } } as never, null, NOW);
   assert.ok(c.ok); if (!c.ok) return;
-  assert.equal(toPublic(c.value).message, "<b>Hi</b>");
+  assert.equal(toPublic(c.value, undefined, NOW.getTime()).message, "<b>Hi</b>");
   assert.equal(toPublic(c.value, undefined, Date.parse("2026-10-26T00:00:00Z")).message, "<i>Over</i>");
   const tampered = { ...c.value, message: "<img src=x onerror=1><b>Hi</b>" };
-  assert.equal(toPublic(tampered).message, "<b>Hi</b>");
+  assert.equal(toPublic(tampered, undefined, NOW.getTime()).message, "<b>Hi</b>");
 });
 test("rich messages work in split test variants", () => {
   const c = validateAnnouncement({ ...base, message: '<b>Big</b> sale' } as never, null, NOW);
