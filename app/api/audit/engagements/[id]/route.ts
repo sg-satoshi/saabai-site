@@ -107,8 +107,12 @@ export async function PATCH(req: Request, { params }: Params) {
   if (Object.keys(patch).length === 0)
     return Response.json({ error: "Nothing to update" }, { status: 400 });
 
-  // Log manual status changes to the timeline
+  // Log manual status changes to the timeline.
+  // Marking delivered stamps deliveredAt once, which starts the credit window.
   const before = await getEngagement(id);
+  if (before && patch.status === "delivered" && !before.deliveredAt) {
+    patch.deliveredAt = new Date().toISOString();
+  }
   let engagement = await updateEngagement(id, patch);
   if (!engagement)
     return Response.json({ error: "Not found" }, { status: 404 });

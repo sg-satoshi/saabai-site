@@ -19,6 +19,7 @@ import type {
   FirmType,
   FactFindValue,
 } from "../../../../lib/audit-types";
+import { CreditUsePanel } from "./CreditUsePanel";
 
 const C = {
   card: "#ffffff",
@@ -363,6 +364,18 @@ export default function EngagementClient({ id }: { id: string }) {
                   Copy client link
                 </button>
               </div>
+            </div>
+
+            <div style={card}>
+              <CreditUsePanel
+                eng={eng}
+                onSaved={(next) => {
+                  setEng(next);
+                  showFlash("Credit recorded.");
+                }}
+                inputStyle={inputStyle}
+                btn={btn}
+              />
             </div>
 
             <div style={card}>
