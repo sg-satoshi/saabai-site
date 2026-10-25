@@ -34,6 +34,10 @@ const SECTIONS: { heading: string; body: string }[] = [
     heading: "7. Access, correction and complaints",
     body: `You can ask to see or correct the information we hold about you, or raise a privacy concern, by emailing ${NAP.email} or writing to ${NAP.name}, ${NAP.addressLine}. If you are not satisfied with our response you can contact the Office of the Australian Information Commissioner (oaic.gov.au).`,
   },
+  {
+    heading: "8. Overseas disclosure",
+    body: "If you use Talk to our AI on saabai.ai, xAI processes your voice in the United States so the assistant can reply. We store a text transcript with the time and length of the call for 30 days, not the audio and not your IP address (Australian Privacy Principle 8).",
+  },
 ];
 
 export default function PrivacyPage() {
