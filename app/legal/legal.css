@@ -14,10 +14,10 @@
 .lx-lead{font-size:19px;line-height:1.6;color:var(--body)}
 .lx-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 26px;border-radius:12px;font-weight:600;font-size:16px;white-space:nowrap;transition:filter .15s,background .15s}
 .lx-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.lx .lx-pri{background:var(--teal);color:var(--navy);box-shadow:0 8px 28px rgba(98,197,209,.28)}
-.lx .lx-pri:hover{filter:brightness(1.08)}
-.lx .lx-ghost{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.03)}
-.lx .lx-ghost:hover{background:rgba(255,255,255,.08)}
+.lx .lx-pri,.lx-demo-scope .lx-pri{background:var(--teal);color:var(--navy);box-shadow:0 8px 28px rgba(98,197,209,.28)}
+.lx .lx-pri:hover,.lx-demo-scope .lx-pri:hover{filter:brightness(1.08)}
+.lx .lx-ghost,.lx-demo-scope .lx-ghost{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.03)}
+.lx .lx-ghost:hover,.lx-demo-scope .lx-ghost:hover{background:rgba(255,255,255,.08)}
 .lx-ex{font:500 11px/1 var(--mono);color:#7a5200;background:#fff6e0;border-radius:5px;padding:5px 8px;white-space:nowrap}
 
 /* hero */
@@ -164,6 +164,24 @@
 @media(max-width:900px){
  .lx-demo-grid{grid-template-columns:1fr}
  .lx-chat{max-height:none;min-height:520px}
+}
+/* Same demos on a .sb page. /legal does not use this class, so its layout stays as it is. */
+.lx-demo-scope{
+  --navy:#0b092e;--teal:#62c5d1;--body:#c9c8dc;--dim:#a3a2b8;--line:rgba(98,197,209,.22);--line-2:rgba(255,255,255,.08);--mono:var(--font-geist-mono),ui-monospace,monospace;
+}
+.lx-demo-scope .lx-head h2{margin:12px 0 14px;color:#fff;font-weight:700;letter-spacing:-.025em;line-height:1.1;text-wrap:balance}
+.lx-demo-scope .lx-lead,.lx-demo-scope .lx-demo-cta p{color:var(--body)}
+.lx-demo-scope .lx-demo-line{color:#fff}
+.lx-demo-scope .lx-demo-fine{color:var(--dim)}
+.lx-demo-scope .lx-chat p{color:#1d1b3a}
+.lx-demo-scope .lx-chat .lx-bubble-me{color:#fff}
+.lx-demo-scope .lx-chat .lx-chat-note{color:#6b4a00}
+.lx-demo-scope .lx-chat-form input{width:auto;min-height:44px;height:44px;background:#fff;color:#1d1b3a}
+.lx-demo-scope .lx-demo-grid,.lx-demo-scope .lx-chat{min-width:0}
+.sb section#demo.lx-demo-scope{padding-bottom:24px}
+@media(max-width:760px){
+  .lx-demo-scope .lx-demo-cta .lx-btn{width:100%}
+  .sb section#demo.lx-demo-scope{padding-bottom:8px}
 }
 @media(max-width:640px){
  .lx-hm{display:none}

@@ -32,21 +32,23 @@ after(() => {
 
 const page = readFileSync("app/legal/page.tsx", "utf8");
 const css = readFileSync("app/legal/legal.css", "utf8");
-const panel = readFileSync("app/legal/LexDemoPanel.tsx", "utf8");
+const panel = readFileSync("app/components/legal-demos/LexDemoPanel.tsx", "utf8");
+const demos = readFileSync("app/components/legal-demos/HarbourDemos.tsx", "utf8");
 const route = readFileSync("app/api/legal-demo/route.ts", "utf8");
 const lib = readFileSync("lib/legal-demo.ts", "utf8");
 
 test("demo copy has no em or en dashes", () => {
-  for (const [name, src] of [["page", page], ["css", css], ["panel", panel], ["route", route], ["lib", lib]]) {
+  for (const [name, src] of [["page", page], ["css", css], ["panel", panel], ["demos", demos], ["route", route], ["lib", lib]]) {
     assert.ok(!/[\u2012-\u2015]/.test(src), name);
   }
 });
 
 test("the panel is inline on /legal with starters, the firm line and a contact CTA", () => {
   assert.match(page, /id="demo"/);
-  assert.match(page, /LexDemoPanel/);
-  assert.match(page, /This is what a chatbot on your firm&apos;s own website would look like/);
-  assert.match(page, /href="\/contact"/);
+  assert.match(page, /LexWebsiteDemo/);
+  assert.match(demos, /LexDemoPanel/);
+  assert.match(demos, /This is what a chatbot on your firm&apos;s own website would look like/);
+  assert.match(demos, /href="\/contact"/);
   assert.match(page, /href="#demo"/);
   for (const label of ["New client enquiry", "What does a will cost?", "Book a consult", "After-hours enquiry"]) {
     assert.ok(panel.includes(label), label);
@@ -57,7 +59,7 @@ test("the panel is inline on /legal with starters, the firm line and a contact C
 });
 
 test("demo code never posts a lead", () => {
-  for (const src of [page, panel, route, lib]) {
+  for (const src of [page, panel, demos, route, lib]) {
     assert.doesNotMatch(src, /\/api\/leads|\/api\/site-factory\/lead|\/api\/lex-leads/);
   }
   assert.doesNotMatch(route, /saveLead|captureLead|capture_lead/);
@@ -85,6 +87,29 @@ test("a reply that sounds like a real consult is replaced", async () => {
   const afterHours = "The office is closed outside Monday to Friday, 9am to 5pm AEST. This demo does not save contact details, so please reach out during business hours if you would like to speak with someone.";
   assert.equal(guardDemoReply(afterHours), afterHours);
   assert.match(route, /guardDemoReply/);
+});
+
+test("Lex and Lachie share the integrations answer and do not price or name practice software", async () => {
+  const { LEX_DEMO_SYSTEM, guardDemoReply } = await import("../lib/legal-demo");
+  const { SAABAI_ASSISTANT_FACTS } = await import("../lib/harbour-demo-facts");
+  const { voiceScript } = await import("../lib/voice-demo/variants");
+  const lachie = voiceScript("legal").instructions;
+  assert.ok(LEX_DEMO_SYSTEM.includes(SAABAI_ASSISTANT_FACTS));
+  assert.ok(lachie.includes(SAABAI_ASSISTANT_FACTS));
+  assert.match(SAABAI_ASSISTANT_FACTS, /About this assistant \(Saabai\)/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /Yes, it integrates/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /Calendly, Google Calendar and Outlook/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /email and SMS notifications/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /CRM or practice-management system/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /nothing technical for the firm to do/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /updated any time/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /around two weeks for a full build/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /tailor it on a quick call/);
+  assert.match(SAABAI_ASSISTANT_FACTS, /book a call with Saabai/);
+  assert.doesNotMatch(SAABAI_ASSISTANT_FACTS, /\$\d|LEAP|Smokeball|Clio|Actionstep/);
+  assert.ok(!/[\u2012-\u2015]/.test(SAABAI_ASSISTANT_FACTS));
+  const spoken = "Yes, it integrates. Saabai connects it to Calendly, Google Calendar, Outlook, email, SMS and your CRM, and there is nothing technical for the firm to do. Book a call with Saabai and the team will tailor it on a quick call.";
+  assert.equal(guardDemoReply(spoken), spoken);
 });
 
 test("prompt is a demo, refuses legal advice, and stays off the research gateway path", async () => {
@@ -147,6 +172,19 @@ test("missing provider key is named and a capped visitor never reaches the model
       else process.env[k] = saved[k];
     }
   }
+});
+
+test("the law firms page reuses the same demos and does not send a prompt or a lead", () => {
+  const firms = readFileSync("app/ai-chatbot-law-firms/page.tsx", "utf8");
+  assert.match(firms, /LexWebsiteDemo/);
+  assert.match(firms, /LachieLegalDemo/);
+  assert.match(firms, /id="demo"/);
+  assert.match(firms, /id="lachie"/);
+  assert.match(demos, /variant="legal"/);
+  assert.doesNotMatch(demos, /instructions|24\/7|Answers your business phone/);
+  assert.doesNotMatch(firms, /\/api\/leads|\/api\/site-factory\/lead|24\/7/);
+  assert.equal(firms.includes("New client enquiry"), false);
+  assert.match(panel, /\/api\/legal-demo/);
 });
 
 test("visitor cap uses Redis and blocks the next message", async () => {

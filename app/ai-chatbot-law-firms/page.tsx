@@ -5,8 +5,12 @@ import JsonLd from "../components/JsonLd";
 import { lawFirmChatbotServiceNode, schemaGraph } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { LachieLegalDemo, LexWebsiteDemo } from "../components/legal-demos/HarbourDemos";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
+import "../legal/legal.css";
+
+const voiceDemoReady = Boolean(process.env.XAI_API_KEY);
 
 const PATH = "/ai-chatbot-law-firms";
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -97,6 +101,24 @@ function BookDemo() {
   );
 }
 
+function FirmCard({ section }: { section: (typeof SECTIONS)[number] }) {
+  return (
+    <div className={section.features ? "card feat" : "card"}>
+      <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>{section.title}</h2>
+      <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
+        {section.body.map((para) => <p key={para}>{para}</p>)}
+      </div>
+      {section.features && (
+        <ul className="tick">
+          {section.features.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function AiChatbotLawFirmsPage() {
   return (
     <div className="sb">
@@ -117,21 +139,27 @@ export default function AiChatbotLawFirmsPage() {
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap grid2">
-          {SECTIONS.map((section) => (
-            <div className={section.features ? "card feat" : "card"} key={section.title}>
-              <h2 style={{ fontSize: 26, lineHeight: 1.25 }}>{section.title}</h2>
-              <div style={{ display: "grid", gap: 12, marginTop: 12, fontSize: 17 }}>
-                {section.body.map((para) => <p key={para}>{para}</p>)}
-              </div>
-              {section.features && (
-                <ul className="tick">
-                  {section.features.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
+          {SECTIONS.slice(0, 2).map((section) => <FirmCard key={section.title} section={section} />)}
+        </div>
+      </section>
+
+      {/* Lex is the website chat. Same Harbour Street demo as /legal. */}
+      <section id="demo" className="lx-demo-scope" style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <LexWebsiteDemo />
+        </div>
+      </section>
+
+      {/* Lachie answers the phones. Same legal voice demo as /legal. */}
+      <section id="lachie" className="lx-demo-scope lx-lachie" style={{ paddingTop: 24 }}>
+        <div className="wrap">
+          <LachieLegalDemo ready={voiceDemoReady} />
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap grid2">
+          {SECTIONS.slice(2).map((section) => <FirmCard key={section.title} section={section} />)}
         </div>
       </section>
 
