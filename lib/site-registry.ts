@@ -48,6 +48,8 @@ export interface SiteConfig {
     avatarUrl?: string;
   };
   domains?: string[];
+  /** Hostnames counted for this site in AI visitors. When set, they replace inferred domains. */
+  analyticsHosts?: string[];
   reviews?: {
     url: string;
     fetchedReviews: Array<{ name: string; rating: number; text: string; date?: string }>;

@@ -4,6 +4,7 @@ import { notify } from "../ui/Feedback";
 import { useEffect, useState } from "react";
 import AdminShell from "../AdminSidebar";
 import { Num } from "../ui/Num";
+import AiVisitorsReport from "./AiVisitorsReport";
 
 type OrderLite = { kind: string; amountTotal: number | null; monthlyAmount: number | null; createdAt: number; statusLabel: string };
 type BpStats = { todayCount: number; todayRevenue: number; weekCount: number; weekRevenue: number; allCount: number; allRevenue: number };
@@ -95,6 +96,7 @@ export default function AnalyticsClient() {
           </div>
         </div>
       </div>
+      <AiVisitorsReport />
     </AdminShell>
   );
 }
