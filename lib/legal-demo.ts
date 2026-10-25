@@ -28,7 +28,7 @@ export const DEMO_SAFE_CONSULT =
   "I'm an AI demo and this is not legal advice. I can show a sample consult, and nothing from this chat is sent to a real firm.";
 
 const OVERCLAIM =
-  /\blawyer will\b|\bconfirmed\b|speak with someone|discuss your|with someone at|\b(i'll|i will) (book|arrange|have)\b/i;
+  /\blawyer will\b|\bconfirmed\b|discuss your|with someone at|\b(i'll|i will) (book|arrange|have)\b/i;
 
 const KEY_BY_PROVIDER: Record<string, string[]> = {
   anthropic: ["ANTHROPIC_API_KEY"],

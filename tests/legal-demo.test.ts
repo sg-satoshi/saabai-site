@@ -82,6 +82,8 @@ test("a reply that sounds like a real consult is replaced", async () => {
   assert.equal(guardDemoReply(over), DEMO_SAFE_CONSULT);
   const fee = "A simple will starts from $450. These are sample fees only, not a quote.";
   assert.equal(guardDemoReply(fee), fee);
+  const afterHours = "The office is closed outside Monday to Friday, 9am to 5pm AEST. This demo does not save contact details, so please reach out during business hours if you would like to speak with someone.";
+  assert.equal(guardDemoReply(afterHours), afterHours);
   assert.match(route, /guardDemoReply/);
 });
 
