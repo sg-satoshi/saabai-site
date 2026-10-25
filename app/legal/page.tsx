@@ -5,6 +5,7 @@ import JsonLd from "../components/JsonLd";
 import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
 import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import LexDemoPanel from "./LexDemoPanel";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
@@ -147,7 +148,7 @@ export default function LegalPage() {
           </p>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
-            <a className="lx-btn lx-ghost" href="#how">See how it works</a>
+            <a className="lx-btn lx-ghost" href="#demo">Try Lex live</a>
           </div>
           <div className="lx-proof">
             <span>Every answer cites its sources</span>
@@ -169,8 +170,28 @@ export default function LegalPage() {
         </div>
       </div>
 
+      {/* Live client-chat demo. Harbour Street Legal is fictional. */}
+      <section id="demo" className="lx-sec">
+        <div className="lx-wrap">
+          <div className="lx-demo-grid">
+            <div className="lx-head">
+              <div className="lx-eyebrow">Live demo</div>
+              <h2>Talk to Lex the way your clients would.</h2>
+              <p className="lx-lead">Lex takes a new enquiry, answers a fee question and books a consult inside this demo.</p>
+              <p className="lx-demo-line">This is what a chatbot on your firm&apos;s own website would look like.</p>
+              <p className="lx-demo-fine">It is an AI demo, not legal advice. Harbour Street Legal is an example firm, and nothing you type is sent to a lawyer.</p>
+            </div>
+            <LexDemoPanel />
+          </div>
+          <div className="lx-demo-cta">
+            <p>Want this on your firm&apos;s website? We will shape it around your practice areas and how you book.</p>
+            <a className="lx-btn lx-pri" href="/contact">Talk to Saabai</a>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
-      <section id="how" className="lx-sec">
+      <section id="how" className="lx-sec lx-pt0">
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">How it works</div>
