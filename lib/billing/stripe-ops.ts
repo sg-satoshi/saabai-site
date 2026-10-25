@@ -82,7 +82,7 @@ export async function createSetupCheckout(rec: SiteBillingRecord, customerId: st
     metadata: meta,
     ...(promo ? { discounts: [{ promotion_code: promo.id }] } : { allow_promotion_codes: true }),
     payment_method_collection: "always",
-    success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}`,
+    success_url: `${siteUrl()}/pay/done?site=${encodeURIComponent(rec.siteName)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl()}/pay/${rec.payToken}`,
   });
   return session.url!;
