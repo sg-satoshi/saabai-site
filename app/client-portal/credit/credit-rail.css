@@ -18,10 +18,6 @@
 .credit-rail .C-h.t-warm{background:radial-gradient(300px 160px at 100% 0%,rgba(245,194,122,.2),transparent 70%),linear-gradient(140deg,#0b092e,#1c1a4d)}
 .credit-rail .C-h.t-warm .pill2{background:rgba(245,194,122,.16);color:#f5c27a}
 .credit-rail .C-h.t-warm .trk i{background:linear-gradient(90deg,#e9a23b,#f5c27a)}
-.credit-rail .C-h.closed{background:var(--n-25);color:var(--n-900);border-bottom:1px solid var(--n-100)}
-.credit-rail .C-h.closed .eb{color:var(--teal-700)}
-.credit-rail .C-h.closed .pill2{background:var(--n-100);color:var(--n-600)}
-.credit-rail .C-h.closed .ends{color:var(--n-500)}
 .credit-rail .C-b{padding:16px 20px 18px}
 .credit-rail .body{font-size:13.5px;color:var(--n-600);margin:0 0 14px;line-height:1.45}
 .credit-rail .used{font-size:13px;color:var(--n-700);margin:-6px 0 14px}

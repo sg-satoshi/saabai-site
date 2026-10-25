@@ -96,7 +96,7 @@ export function CreditUsePanel({
           ))}
         </ul>
       ) : null}
-      {view && view.phase !== "expired" ? (
+      {view ? (
         <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 420 }}>
           <label style={{ fontSize: 13 }}>
             Amount (AUD)

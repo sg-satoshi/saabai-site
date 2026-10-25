@@ -12,14 +12,14 @@
  * Credit is used only when a signed quote or a deposit is recorded.
  * A booked call does not reduce it. Partial use across builds is allowed.
  * The card shows the remaining amount. It hides when nothing is left, when
- * the Blueprint was never delivered, or 30 days after the window closes.
+ * the Blueprint was never delivered, or as soon as the window closes
+ * (11:59 pm Australia/Brisbane on day 30). There is no post-expiry card.
  */
 
 import { normalizeAuditTier, type AuditTier, type BlueprintCreditApplication } from "./audit-types";
 import { formatAud } from "./money";
 
 export const CREDIT_WINDOW_DAYS = 30;
-export const CREDIT_VISIBLE_AFTER_EXPIRY_DAYS = 30;
 export const BRISBANE_TZ = "Australia/Brisbane";
 
 /** AUD cents. Matches lib/blueprint.ts tier prices. */
@@ -48,14 +48,10 @@ export const TIER_PLAN_LIMIT: Record<AuditTier, number> = {
 
 /** Same Calendly link the Blueprint checkout and the public site already use. */
 export const IMPLEMENTATION_CALL_URL = "https://calendly.com/shanegoldberg/30min";
-/** Same address as the portal's existing "Book a call with Shane" control. */
-export const TALK_TO_US_URL = "mailto:hello@saabai.ai";
 export const BLUEPRINT_PAGE_HREF = "/client-portal?page=blueprint";
 
 export const BOOK_IMPLEMENTATION_CTA = "Book an implementation call";
-export const TALK_TO_US_CTA = "Talk to us";
 export const SEE_CREDIT_CTA = "See what your credit covers";
-export const VIEW_BLUEPRINT_CTA = "View your Blueprint";
 
 /**
  * Verbatim from the live Blueprint FAQ (app/blueprint/page.tsx).
@@ -87,7 +83,7 @@ export const SERVICE_LABEL: Record<CreditServiceId, string> = {
   automation: "Automation",
 };
 
-export type CreditPhase = "fresh" | "mid" | "urgent" | "last_day" | "expired";
+export type CreditPhase = "fresh" | "mid" | "urgent" | "last_day";
 
 export type CreditOpportunity = {
   title?: string;
@@ -132,7 +128,7 @@ export type BlueprintCreditModel = {
 
 export type CreditView = {
   phase: CreditPhase;
-  tone: "calm" | "warm" | "closed";
+  tone: "calm" | "warm";
   statusLabel: string;
   headline: string;
   body: string;
@@ -194,12 +190,6 @@ function brisbaneWallTime(y: number, m: number, d: number, hh: number, mm: numbe
 export function creditEndsAt(deliveredAt: Date): Date {
   const p = brisbaneYmd(deliveredAt);
   const end = addCalendarDays(p.y, p.m, p.d, CREDIT_WINDOW_DAYS);
-  return brisbaneWallTime(end.y, end.m, end.d, 23, 59, 59);
-}
-
-export function creditHideAt(endsAt: Date): Date {
-  const p = brisbaneYmd(endsAt);
-  const end = addCalendarDays(p.y, p.m, p.d, CREDIT_VISIBLE_AFTER_EXPIRY_DAYS);
   return brisbaneWallTime(end.y, end.m, end.d, 23, 59, 59);
 }
 
@@ -299,7 +289,7 @@ export function creditModelForEngagement(
   };
 }
 
-/** The one card to show: a live window beats an expired one, then the soonest end. */
+/** The one card to show. Closed windows are already filtered out. Soonest end wins. */
 export function creditModelForEngagements(
   engagements: CreditEngagementInput[],
   now: Date,
@@ -308,12 +298,7 @@ export function creditModelForEngagements(
     .map((engagement) => creditModelForEngagement(engagement, now))
     .filter((model): model is BlueprintCreditModel => !!model && describeCredit(model, now) !== null);
   if (!visible.length) return null;
-  visible.sort((a, b) => {
-    const aExpired = phaseAt(now, new Date(a.endsAt)) === "expired" ? 1 : 0;
-    const bExpired = phaseAt(now, new Date(b.endsAt)) === "expired" ? 1 : 0;
-    if (aExpired !== bExpired) return aExpired - bExpired;
-    return new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime();
-  });
+  visible.sort((a, b) => new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime());
   return visible[0];
 }
 
@@ -327,12 +312,11 @@ export function countdownParts(now: Date, endsAt: Date): { days: number; hours: 
 
 /**
  * Fresh is more than 14 whole days left. Mid is 8 to 14. Urgent is 1 to 7.
- * Last day is under 24 hours. Under one minute is already expired, so the
- * card never shows a 0h 0m frame. The browser ticks once a minute.
+ * Last day is under 24 hours and at least one minute. Under one minute the
+ * rail is already hidden, so this never describes a 0h 0m frame.
  */
 export function phaseAt(now: Date, endsAt: Date): CreditPhase {
-  const { days, ms } = countdownParts(now, endsAt);
-  if (ms < MINUTE_MS) return "expired";
+  const { days } = countdownParts(now, endsAt);
   if (days <= 0) return "last_day";
   if (days <= 7) return "urgent";
   if (days <= 14) return "mid";
@@ -344,12 +328,6 @@ function shortStamp(instant: Date): string {
   const day = part(instant, "day", { day: "numeric" });
   const month = part(instant, "month", { month: "short" });
   return `${weekday} ${day} ${month}`;
-}
-
-function dayMonth(instant: Date): string {
-  const day = part(instant, "day", { day: "numeric" });
-  const month = part(instant, "month", { month: "short" });
-  return `${day} ${month}`;
 }
 
 function longDate(instant: Date): string {
@@ -374,7 +352,9 @@ export function describeCredit(model: BlueprintCreditModel, now: Date): CreditVi
   const ends = new Date(model.endsAt);
   const delivered = new Date(model.deliveredAt);
   if (!Number.isFinite(ends.getTime()) || !Number.isFinite(delivered.getTime())) return null;
-  if (now.getTime() >= creditHideAt(ends).getTime()) return null;
+  // Hide at 11:59 pm on day 30. The last minute is included so the rail
+  // never sits on a 0h 0m frame after the window has effectively closed.
+  if (ends.getTime() - now.getTime() < MINUTE_MS) return null;
 
   const fullCents = model.fullCents;
   const usedCents = Math.max(0, model.usedCents);
@@ -396,16 +376,12 @@ export function describeCredit(model: BlueprintCreditModel, now: Date): CreditVi
     : FALLBACK_ITEMS;
 
   const total = ends.getTime() - delivered.getTime();
-  const fraction = phase === "expired" || total <= 0 ? 0 : Math.min(1, Math.max(0, (ends.getTime() - now.getTime()) / total));
+  const fraction = total <= 0 ? 0 : Math.min(1, Math.max(0, (ends.getTime() - now.getTime()) / total));
 
   let body: string;
   let endsLine: string;
   let ariaSummary: string;
-  if (phase === "expired") {
-    body = `Your credit window closed on ${dayMonth(ends)}. Your Blueprint is still yours, and we're happy to help you put it to work whenever you're ready.`;
-    endsLine = `Closed 11:59 pm ${shortStamp(ends)}`;
-    ariaSummary = `Your credit window closed on ${longDate(ends)}. Your Blueprint is still yours.`;
-  } else if (phase === "last_day") {
+  if (phase === "last_day") {
     body = "Your credit is available until 11:59 pm tonight. If you'd like to use it, book a call today and we'll help you with the details.";
     endsLine = "Ends 11:59 pm tonight, Brisbane time";
     ariaSummary = `${unit(parts.hours, "hour")} and ${unit(parts.minutes, "minute")} left on your ${amount} credit. Ends 11:59 pm tonight, Brisbane time.`;
@@ -425,24 +401,23 @@ export function describeCredit(model: BlueprintCreditModel, now: Date): CreditVi
     ariaSummary = `${unit(parts.days, "day")}, ${unit(parts.hours, "hour")} and ${unit(parts.minutes, "minute")} left on your ${amount} credit. Ends 11:59 pm ${longDate(ends)}, Brisbane time.`;
   }
 
-  const statusLabel =
-    phase === "expired" ? "Closed" : phase === "last_day" ? "Last day" : `${parts.days} ${parts.days === 1 ? "day" : "days"} left`;
+  const statusLabel = phase === "last_day" ? "Last day" : `${parts.days} ${parts.days === 1 ? "day" : "days"} left`;
 
   return {
     phase,
-    tone: phase === "expired" ? "closed" : phase === "urgent" || phase === "last_day" ? "warm" : "calm",
+    tone: phase === "urgent" || phase === "last_day" ? "warm" : "calm",
     statusLabel,
-    headline: phase === "expired" ? "Let's put your Blueprint to work" : `Your ${amount} ${tierName} Blueprint credit`,
+    headline: `Your ${amount} ${tierName} Blueprint credit`,
     body,
     usedNote: usedCents > 0 ? `${formatAud(usedCents / 100)} of this credit is already on a build.` : null,
     endsLine,
-    planTitle: phase === "expired" ? "Your Blueprint plan" : "Your credit plan",
+    planTitle: "Your credit plan",
     planSource: fromBlueprint ? "From your Blueprint" : "Saabai services",
     items,
     fromBlueprint,
     alsoCovers: ALSO_COVERS,
     finePrint: BLUEPRINT_CREDIT_FINE_PRINT,
-    showCountdown: phase !== "expired",
+    showCountdown: true,
     days: parts.days,
     hours: parts.hours,
     minutes: parts.minutes,
@@ -450,8 +425,8 @@ export function describeCredit(model: BlueprintCreditModel, now: Date): CreditVi
     ariaSummary,
     remainingCents,
     fullCents,
-    primaryLabel: phase === "expired" ? TALK_TO_US_CTA : BOOK_IMPLEMENTATION_CTA,
-    secondaryLabel: phase === "expired" ? VIEW_BLUEPRINT_CTA : SEE_CREDIT_CTA,
+    primaryLabel: BOOK_IMPLEMENTATION_CTA,
+    secondaryLabel: SEE_CREDIT_CTA,
   };
 }
 
@@ -515,7 +490,7 @@ export function planCreditApplication(
   return { ok: true, applications, creditUsedCents: used, detail };
 }
 
-export const CREDIT_PREVIEW_STATES = ["fresh", "mid", "urgent", "last", "expired", "hidden"] as const;
+export const CREDIT_PREVIEW_STATES = ["fresh", "mid", "urgent", "last", "hidden"] as const;
 export type CreditPreviewState = (typeof CREDIT_PREVIEW_STATES)[number];
 
 export function isCreditPreviewState(value: string | undefined | null): value is CreditPreviewState {
@@ -541,8 +516,7 @@ export function previewNow(state: Exclude<CreditPreviewState, "hidden">): Date {
   if (state === "fresh") return new Date(PREVIEW_DELIVERED_AT.getTime());
   if (state === "mid") return new Date(ends.getTime() - (14 * DAY_MS + 9 * HOUR_MS + 32 * MINUTE_MS));
   if (state === "urgent") return new Date(ends.getTime() - (6 * DAY_MS + 3 * HOUR_MS + 20 * MINUTE_MS));
-  if (state === "last") return new Date(ends.getTime() - (7 * HOUR_MS + 12 * MINUTE_MS));
-  return new Date(ends.getTime() + 36 * HOUR_MS);
+  return new Date(ends.getTime() - (7 * HOUR_MS + 12 * MINUTE_MS));
 }
 
 /** Static Coastline Physio sample. No Redis read or write. */
