@@ -88,7 +88,7 @@ const results = [
   {
     stat: "90s",
     label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for a Brisbane law firm. Previously 2 to 14 hours.",
+    detail: "Every enquiry answered within 90 seconds, day or night, for an Adelaide law firm serving clients across Australia and internationally. Previously 2 to 14 hours.",
   },
   {
     stat: "12 hrs",

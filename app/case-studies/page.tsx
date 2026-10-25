@@ -42,9 +42,9 @@ export default function CaseStudies() {
         </p>
         <InShort>
           Saabai, a Gold Coast AI business founded by Shane Goldberg, has AI agents
-          live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12
-          hours a week recovered) and a national plastics supplier (instant quotes,
-          40% of enquiries resolved without staff). Most projects start with a{" "}
+          live for Tributum Law, an Adelaide law firm serving clients across Australia and internationally
+          (enquiries answered in 90 seconds, 12 hours a week recovered) and a national plastics supplier
+          (instant quotes, 40% of enquiries resolved without staff). Most projects start with a{" "}
           <a href="/blueprint">Saabai Blueprint from $497</a>.
         </InShort>
 
@@ -75,7 +75,7 @@ export default function CaseStudies() {
           Tributum Law
         </h2>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Specialist ATO dispute and tax law firm, Brisbane
+          An Adelaide law firm serving clients across Australia and internationally. Specialist ATO dispute and tax law.
         </p>
 
         {/* Problem / Solution */}
