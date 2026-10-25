@@ -1,5 +1,5 @@
 /**
- * Saabai Voice, phase 1a. Homepage demo only.
+ * Saabai Voice, phase 1a. Homepage demo, plus the legal variant on /legal.
  * VOICE_AGENT_NAME is the display name. The spoken intro uses that first name.
  * VOICE_AGENT_FULL_NAME is the supporting line only.
  * Prices and offers are not stored here. They come from lib/mia-offers.ts.
