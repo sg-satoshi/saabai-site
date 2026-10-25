@@ -16,6 +16,7 @@ export const CHAT_API = [
   "/api/site-factory-chat",
   "/api/site-factory/chat",
   "/api/chat-platform/message",
+  "/api/legal-demo",
 ];
 
 const num = (v: string | undefined, d: number) => (v && Number(v) > 0 ? Number(v) : d);
