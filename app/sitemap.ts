@@ -18,9 +18,11 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/calculator", updated: "2026-05-15", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faq", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
   { path: "/insights", updated: "2026-10-14", priority: 0.8, changeFrequency: "weekly" },
-  { path: "/legal", updated: "2026-05-15", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/ai-chatbot-law-firms", updated: "2026-10-20", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/ai-receptionist-gold-coast", updated: "2026-10-20", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/legal", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/legal/lex-vs-ai-legal-tools", updated: "2026-10-25", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/ai-chatbot-law-firms", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/ai-chatbot-developer-queensland", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/ai-receptionist-gold-coast", updated: "2026-10-25", priority: 0.8, changeFrequency: "monthly" },
   { path: "/about", updated: "2026-10-14", priority: 0.7, changeFrequency: "monthly" },
   { path: "/contact", updated: "2026-10-17", priority: 0.5, changeFrequency: "yearly" },
   { path: "/terms", updated: "2026-10-17", priority: 0.3, changeFrequency: "yearly" },
@@ -30,7 +32,7 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
 
 export default function sitemap(): MetadataRoute.Sitemap {
 // Update `updated` when a page's content meaningfully changes.
-  const CITY_UPDATED = new Date("2026-10-13");
+  const CITY_UPDATED = new Date("2026-10-25");
   const pages = PAGES.map((p) => ({
     url: `${BASE_URL}${p.path}`,
     lastModified: new Date(p.updated),

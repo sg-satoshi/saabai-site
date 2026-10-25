@@ -57,15 +57,27 @@ export const publicPageMeta = {
   }),
   legal: pageMeta({
     path: "/legal",
-    title: "Lex AI Legal Research | Saabai, Gold Coast",
+    title: "Lex AI Legal Assistant | Saabai, Gold Coast",
     description:
-      "Lex is AI legal research and drafting for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, and the Firm plan is $299 a month.",
+      "Lex is an AI legal assistant for Australian law firms, from Saabai on the Gold Coast. It cites ATO rulings and Commonwealth legislation, and the Firm plan is $299 a month.",
+  }),
+  legalCompare: pageMeta({
+    path: "/legal/lex-vs-ai-legal-tools",
+    title: "Lex vs other AI legal tools 2026 | Saabai",
+    description:
+      "Published facts on price, sources and data location for Lex, Harvey, CoCounsel and Lexis+ AI. Lex is an AI legal assistant from Saabai on the Gold Coast, and the Firm plan is $299 a month.",
+  }),
+  queenslandChatbot: pageMeta({
+    path: "/ai-chatbot-developer-queensland",
+    title: "Custom AI Chatbot Developer in Queensland | Saabai",
+    description:
+      "Saabai builds custom AI chatbots for Queensland businesses in Brisbane, the Gold Coast and the Sunshine Coast. Alerts go out by email, SMS, WhatsApp or Telegram.",
   }),
   receptionist: pageMeta({
     path: "/ai-receptionist-gold-coast",
     title: "AI Receptionist for Gold Coast Businesses | Saabai",
     description:
-      "A Gold Coast built AI receptionist for your website. It answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.",
+      "A Gold Coast built AI receptionist for your website, from Saabai in Merrimac. It answers enquiries day and night and alerts you by email, SMS, WhatsApp or Telegram.",
   }),
   lawFirms: pageMeta({
     path: "/ai-chatbot-law-firms",
@@ -81,15 +93,15 @@ export const publicPageMeta = {
   }),
   goldCoast: pageMeta({
     path: "/gold-coast",
-    title: "Websites and AI Automation on the Gold Coast | Saabai",
+    title: "Web Design Gold Coast, Hosting Included, From $2,000 | Saabai",
     description:
-      "Gold Coast websites built, hosted and managed from $2,000 plus $100 a month, plus Saabai Blueprint AI plans from $497. Start with the free AI Readiness Score.",
+      "Web design on the Gold Coast from $2,000 plus $100 a month care, with hosting included. Saabai is based in Merrimac, and Blueprint AI plans start from $497.",
   }),
   brisbane: pageMeta({
     path: "/brisbane",
     title: "Websites and AI Automation in Brisbane | Saabai",
     description:
-      "Brisbane websites from $2,000 plus $100 a month, and AI automation plans from $497, built for small businesses and trades. Start with the free AI Readiness Score.",
+      "Brisbane websites from $2,000 plus $100 a month, plus custom AI chatbots for local businesses. Book a free 30 minute call for a chatbot quote.",
   }),
   score: pageMeta({
     path: "/score",

@@ -53,7 +53,8 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
-  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
+  { q: "What is Lex?", a: "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
+  { q: "Is the website chatbot the same as Lex?", a: "No. Lex is the AI legal assistant for research and drafting. The chat demo on this page is a separate website chatbot for a fictional firm. It answers visitor questions. It does not search legislation or draft documents." },
   { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. Case law is not searched right now. Always check primary sources before advising a client." },
   { q: "Which sources does Lex search?", a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Lex does not currently search case law databases, so check case law yourself." },
   { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside Commonwealth legislation, so it suits objections, reviews and ruling work." },
@@ -136,16 +137,20 @@ export default function LegalPage() {
       <JsonLd data={lexSchema} />
       <JsonLd data={faqSchema(LEX_FAQS)} />
       <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", url: "https://www.saabai.ai/legal", name: "Lex AI Legal Assistant | Saabai, Gold Coast", dateModified: "2026-10-25" }} />
       <Nav activePage="/legal" />
 
       {/* Hero */}
       <section className="lx-hero">
         <div className="lx-wrap lx-hero-inner">
-          <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal research for Australian firms</span></span>
-          <h1>Legal research that <span className="lx-grad">shows its sources.</span></h1>
+          <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal assistant for Australian firms</span></span>
+          <h1>Lex, an AI legal assistant that <span className="lx-grad">shows its sources.</span></h1>
           <p className="lx-lead">
             Lex searches public Australian government sources, including ATO rulings and Commonwealth legislation.
             It answers with citations and links to the sources it used, so you can check them yourself. Draft documents in the same workspace.
+          </p>
+          <p className="lx-lead" style={{ marginTop: 16 }}>
+            <a href="/legal/lex-vs-ai-legal-tools" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex vs other AI legal tools 2026</a>
           </p>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
@@ -171,8 +176,19 @@ export default function LegalPage() {
         </div>
       </div>
 
+      <section className="lx-sec" id="workspace">
+        <div className="lx-wrap">
+          <div className="lx-head">
+            <div className="lx-eyebrow">Two products</div>
+            <h2>Lex the workspace is not the chatbot demo.</h2>
+            <p className="lx-lead">Lex is the AI legal assistant on this page. Lawyers use it to research and draft.</p>
+            <p className="lx-lead" style={{ marginTop: 12 }}>The chat further down is a demo of a website chatbot for a fictional firm. It answers visitors. It does not search legislation or draft documents.</p>
+          </div>
+        </div>
+      </section>
+
       {/* Live client-chat demo. Harbour Street Legal is fictional. */}
-      <section id="demo" className="lx-sec">
+      <section id="demo" className="lx-sec lx-pt0">
         <div className="lx-wrap">
           <LexWebsiteDemo />
         </div>

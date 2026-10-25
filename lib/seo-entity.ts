@@ -108,7 +108,7 @@ export const lexServiceSchema = withContext(
     name: "Lex",
     serviceType: "AI legal research and drafting",
     description:
-      "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source.",
+      "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source.",
     url: `${SITE_URL}/legal`,
     offers: {
       "@type": "Offer",
@@ -167,7 +167,7 @@ export const receptionistServiceNode = serviceSchema({
   name: "AI receptionist for Gold Coast businesses",
   serviceType: "Website AI chatbot",
   description:
-    "A Gold Coast built AI receptionist for your website. It answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.",
+    "A website chatbot for Gold Coast businesses. It answers visitors on the site and alerts you by email, SMS, WhatsApp or Telegram.",
   url: `${SITE_URL}/ai-receptionist-gold-coast`,
   areaServed: AREA_SERVED,
 });
@@ -202,10 +202,10 @@ export const LOCATION_OFFER_CATALOG = {
   ],
 };
 
-export function locationServiceSchema(city: string, url: string, description: string) {
+export function locationServiceSchema(city: string, url: string, description: string, serviceName?: string) {
   return withContext(serviceSchema({
     id: `${url}#service`,
-    name: `Websites and AI automation in ${city}`,
+    name: serviceName ?? `Websites and AI automation in ${city}`,
     serviceType: "Website build, hosting and AI automation",
     description,
     url,
