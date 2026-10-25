@@ -14,7 +14,6 @@ const LABELS: Record<CreditPreviewState, string> = {
   mid: "Mid",
   urgent: "7 days or less",
   last: "Last day",
-  expired: "Expired",
   hidden: "Hidden",
 };
 

@@ -7,7 +7,6 @@ import {
   BLUEPRINT_CREDIT_FINE_PRINT,
   BOOK_IMPLEMENTATION_CTA,
   creditEndsAt,
-  creditHideAt,
   creditModelForEngagement,
   creditModelForEngagements,
   creditPreviewEnabled,
@@ -20,7 +19,6 @@ import {
   previewNow,
   resolveDeliveredAt,
   SERVICE_LABEL,
-  TALK_TO_US_CTA,
   TIER_CREDIT_CENTS,
   type CreditPreviewState,
 } from "../lib/blueprint-credit";
@@ -102,19 +100,7 @@ test("concept C states for the Pro sample clock", () => {
   assert.equal(last.endsLine, "Ends 11:59 pm tonight, Brisbane time");
   assert.match(last.body, /11:59 pm tonight/);
 
-  const expired = describeCredit(previewCreditModel("expired")!, previewNow("expired"))!;
-  assert.equal(expired.phase, "expired");
-  assert.equal(expired.tone, "closed");
-  assert.equal(expired.headline, "Let's put your Blueprint to work");
-  assert.equal(expired.statusLabel, "Closed");
-  assert.equal(expired.showCountdown, false);
-  assert.equal(expired.primaryLabel, TALK_TO_US_CTA);
-  assert.equal(expired.secondaryLabel, "View your Blueprint");
-  assert.equal(expired.planTitle, "Your Blueprint plan");
-  assert.equal(expired.endsLine, "Closed 11:59 pm Wed 25 Nov");
-  assert.match(expired.body, /closed on 25 Nov/);
-
-  for (const state of ["fresh", "mid", "urgent", "last", "expired"] as CreditPreviewState[]) {
+  for (const state of ["fresh", "mid", "urgent", "last"] as CreditPreviewState[]) {
     const view = describeCredit(previewCreditModel(state)!, previewNow(state as Exclude<CreditPreviewState, "hidden">))!;
     assert.equal(view.finePrint, BLUEPRINT_CREDIT_FINE_PRINT);
     assert.ok(!/[\u2012-\u2015]/.test(JSON.stringify(view)), state);
@@ -134,19 +120,23 @@ test("one day left stays urgent until the last 24 hours", () => {
   assert.match(view.body, /1 more day/);
 });
 
-test("under a minute is expired, with no zero frame", () => {
+test("the rail hides as soon as the window closes", () => {
   const ends = creditEndsAt(DELIVERED);
   const model = previewCreditModel("last")!;
-  const view = describeCredit(model, new Date(ends.getTime() - 30_000));
-  assert.equal(view!.phase, "expired");
-  assert.equal(view!.showCountdown, false);
-});
-
-test("expired card stays for 30 days, then hides", () => {
-  const ends = creditEndsAt(DELIVERED);
-  const model = previewCreditModel("expired")!;
-  assert.equal(describeCredit(model, new Date(creditHideAt(ends).getTime() - 60_000))!.phase, "expired");
-  assert.equal(describeCredit(model, creditHideAt(ends)), null);
+  const lastMinute = describeCredit(model, new Date(ends.getTime() - 60_000));
+  assert.equal(lastMinute!.phase, "last_day");
+  assert.equal(lastMinute!.hours, 0);
+  assert.equal(lastMinute!.minutes, 1);
+  assert.equal(describeCredit(model, new Date(ends.getTime() - 30_000)), null);
+  assert.equal(describeCredit(model, ends), null);
+  assert.equal(describeCredit(model, new Date(ends.getTime() + 36 * 60 * 60 * 1000)), null);
+  assert.equal(
+    creditModelForEngagements(
+      [{ id: "closed", tier: "pro", deliveredAt: DELIVERED.toISOString() }],
+      ends,
+    ),
+    null,
+  );
 });
 
 test("non-Blueprint, undelivered, and fully used credit stay hidden", () => {
@@ -318,4 +308,9 @@ test("preview route is off in production and does not post to lead endpoints", (
   const page = readFileSync("app/client-portal/credit-preview/page.tsx", "utf8");
   assert.match(page, /creditPreviewEnabled/);
   assert.match(page, /notFound/);
+  assert.match(page, /state === "expired"/);
+  assert.match(page, /state=hidden/);
+  const rail = readFileSync("app/client-portal/credit/CreditPlanRail.tsx", "utf8");
+  assert.equal(rail.includes("Let's put your Blueprint to work"), false);
+  assert.equal(rail.includes("Talk to us"), false);
 });

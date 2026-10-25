@@ -7,7 +7,6 @@ import {
   describeCredit,
   IMPLEMENTATION_CALL_URL,
   padCreditUnit,
-  TALK_TO_US_URL,
   type BlueprintCreditModel,
   type CreditServiceId,
 } from "../../../lib/blueprint-credit";
@@ -52,14 +51,6 @@ function CalendarIcon() {
   );
 }
 
-function TalkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 5h16v11H9l-5 4z" />
-    </svg>
-  );
-}
-
 export function CreditPlanRail({
   model,
   blueprintHref = BLUEPRINT_PAGE_HREF,
@@ -84,9 +75,7 @@ export function CreditPlanRail({
   const view = describeCredit(model, new Date(nowMs));
   if (!view) return null;
 
-  const primaryHref = view.phase === "expired" ? TALK_TO_US_URL : IMPLEMENTATION_CALL_URL;
-  const external = primaryHref.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {};
-  const headerClass = view.tone === "closed" ? "C-h closed" : view.tone === "warm" ? "C-h t-warm" : "C-h t-calm";
+  const headerClass = view.tone === "warm" ? "C-h t-warm" : "C-h t-calm";
 
   return (
     <article className="card credit-rail" aria-label={view.headline} data-phase={view.phase}>
@@ -136,8 +125,8 @@ export function CreditPlanRail({
           </div>
         ))}
         <p className="also">{view.alsoCovers}</p>
-        <a className="btn pri full" href={primaryHref} {...external}>
-          {view.phase === "expired" ? <TalkIcon /> : <CalendarIcon />}
+        <a className="btn pri full" href={IMPLEMENTATION_CALL_URL} target="_blank" rel="noopener noreferrer">
+          <CalendarIcon />
           {view.primaryLabel}
         </a>
         <a className="btn full" href={blueprintHref}>

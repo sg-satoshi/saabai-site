@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { creditPreviewEnabled, isCreditPreviewState, type CreditPreviewState } from "../../../lib/blueprint-credit";
 import { CreditPreview } from "./CreditPreview";
 
@@ -21,6 +21,9 @@ export default async function CreditPreviewPage({
 }) {
   if (!creditPreviewEnabled()) notFound();
   const query = await searchParams;
+  if (query.state === "expired") {
+    redirect(`/client-portal/credit-preview?state=hidden${query.chrome === "0" ? "&chrome=0" : ""}`);
+  }
   const state: CreditPreviewState = isCreditPreviewState(query.state) ? query.state : "fresh";
   return <CreditPreview state={state} chrome={query.chrome !== "0"} />;
 }
