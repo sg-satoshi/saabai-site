@@ -1,5 +1,12 @@
 .sb .voice-launch{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:240px}
 .sb .voice-launch .voice-support{font-size:14px;line-height:1.4;text-align:center}
+.voice-role{font-size:13px;font-weight:600;letter-spacing:.02em;color:#7dd9e3;font-family:var(--font-geist-sans),system-ui,sans-serif}
+.lx .voice-launch{align-items:flex-start;max-width:280px}
+.lx .voice-launch .btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:12px;font-weight:600;font-size:16px;border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.03);cursor:pointer;font-family:var(--font-geist-sans),system-ui,sans-serif}
+.lx .voice-launch .btn:hover{background:rgba(255,255,255,.08)}
+.lx .voice-launch .btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.voice-panel .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;background:#62c5d1;color:#0b092e;padding:12px 22px;border-radius:12px;font-weight:600;font-size:16px;border:0;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center}
+.voice-panel .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.18)}
 .voice-back{position:fixed;inset:0;z-index:80;background:rgba(11,9,46,.72);display:grid;place-items:end center;padding:20px 16px 28px}
 .voice-panel{width:min(440px,100%);background:#14123a;color:#fff;border:1px solid rgba(98,197,209,.22);border-radius:20px;padding:28px;box-shadow:0 0 60px rgba(98,197,209,.19);font-family:var(--font-geist-sans),system-ui,sans-serif}
 .voice-panel h3{margin:10px 0 0;font-size:22px;font-weight:600;letter-spacing:-.01em}
@@ -14,6 +21,7 @@
 .voice-line{margin-top:16px;font-size:15px;color:#fff}
 @media (max-width:760px){
   .sb .hero .voice-launch{width:100%;max-width:none}
+  .lx .voice-launch,.lx .voice-launch .btn{width:100%;max-width:none}
   .voice-back{padding:12px 12px 20px;align-items:end}
   .voice-panel{padding:22px}
   .voice-actions .btn{width:100%}

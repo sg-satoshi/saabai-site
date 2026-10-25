@@ -1,6 +1,6 @@
 /* /legal (Lex sales page). Scoped under .lx. Saabai navy and teal, matches the new Lex UI direction. */
 .lx{--navy:#0b092e;--surface:#14123a;--surface-2:#0d0b35;--teal:#62c5d1;--royal:#2454c8;--body:#c9c8dc;--dim:#a3a2b8;--line:rgba(98,197,209,.22);--line-2:rgba(255,255,255,.08);--mono:var(--font-geist-mono),ui-monospace,monospace;
-  background:var(--navy);color:var(--body);min-height:100vh;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
+  background:var(--navy);color:var(--body);min-height:100vh;font-family:var(--font-geist-sans),system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
 .lx *{box-sizing:border-box}
 .lx a{color:inherit;text-decoration:none}
 .lx h1,.lx h2,.lx h3{color:#fff;letter-spacing:-.025em;line-height:1.1;margin:0}
@@ -128,6 +128,9 @@
 .lx-demo-grid .lx-head{margin-bottom:0}
 .lx-demo-line{margin-top:16px;font-size:17px;color:#fff;font-weight:600}
 .lx-demo-fine{margin-top:10px;font-size:15px;color:var(--dim);max-width:460px}
+.lx-gold{color:#c9a227}
+.lx-lachie{font-family:var(--font-geist-sans),system-ui,sans-serif}
+.lx-lachie-demo{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .lx-demo-cta{margin-top:28px;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 .lx-demo-cta p{font-size:16px;max-width:560px}
 .lx-chat{display:flex;flex-direction:column;min-height:560px;max-height:640px;background:#f7f5ef;color:#1d1b3a;border-radius:18px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.28);overflow:hidden;text-align:left}

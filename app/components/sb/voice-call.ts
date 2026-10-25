@@ -1,5 +1,5 @@
 /**
- * Browser side of one homepage voice call.
+ * Browser side of one voice call. The server chooses the prompt.
  * Audio stays in the browser. Only text lines are returned for the transcript.
  */
 import { VOICE_LIMITS, VOICE_SAMPLE_RATE } from "@/lib/voice-demo/config";
@@ -84,6 +84,7 @@ export function startVoiceCall(opts: {
   instructions: string;
   intro: string;
   wrapInstructions: string;
+  keyterms?: readonly string[];
   hardEndAt: number;
   startedAt: number;
   serverNow: number;
@@ -155,7 +156,7 @@ export function startVoiceCall(opts: {
   };
 
   ws.addEventListener("open", () => {
-    send(voiceSessionUpdate(opts.instructions));
+    send(voiceSessionUpdate(opts.instructions, opts.keyterms));
   });
 
   ws.addEventListener("message", (event) => {

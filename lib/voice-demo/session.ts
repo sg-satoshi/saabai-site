@@ -6,6 +6,8 @@
  */
 import { VOICE_ID, VOICE_MODEL, VOICE_SAMPLE_RATE } from "./config";
 
+const HOME_KEYTERMS = ["Lachie", "Saabai", "Shane", "Mia", "Presence", "Growth", "Signature", "Blueprint", "Gold Coast"];
+
 export function voiceSocketUrl(model: string = VOICE_MODEL): string {
   return `wss://api.x.ai/v1/realtime?model=${encodeURIComponent(model)}`;
 }
@@ -15,7 +17,7 @@ export function voiceSocketProtocols(token: string): string[] {
   return [`xai-client-secret.${token}`];
 }
 
-export function voiceSessionUpdate(instructions: string) {
+export function voiceSessionUpdate(instructions: string, keyterms: readonly string[] = HOME_KEYTERMS) {
   return {
     type: "session.update" as const,
     session: {
@@ -29,7 +31,7 @@ export function voiceSessionUpdate(instructions: string) {
           transcription: {
             model: "grok-transcribe",
             language_hint: "en",
-            keyterms: ["Lachie", "Saabai", "Shane", "Mia", "Presence", "Growth", "Signature", "Blueprint", "Gold Coast"],
+            keyterms: [...keyterms],
           },
         },
         output: { format: { type: "audio/pcm" as const, rate: VOICE_SAMPLE_RATE } },

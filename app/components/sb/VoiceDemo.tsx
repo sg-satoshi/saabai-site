@@ -17,6 +17,7 @@ import { startVoiceCall, type VoicePhase } from "./voice-call";
 import "./voice-demo.css";
 
 type Phase = "idle" | "consent" | "connecting" | "live" | "ended" | "error";
+type VoiceVariant = "home" | "legal";
 
 type SessionPayload = {
   ok: true;
@@ -24,10 +25,12 @@ type SessionPayload = {
   secret: string;
   token: string;
   model: string;
+  variant?: VoiceVariant;
   agentName: string;
   instructions: string;
   intro: string;
   wrapInstructions: string;
+  keyterms?: string[];
   startedAt: number;
   hardEndAt: number;
   serverNow: number;
@@ -47,7 +50,15 @@ async function postJson(url: string, body: unknown): Promise<Response> {
   });
 }
 
-export default function VoiceDemo({ ready }: { ready: boolean }) {
+export default function VoiceDemo({
+  ready,
+  variant = "home",
+  showSupport = variant === "home",
+}: {
+  ready: boolean;
+  variant?: VoiceVariant;
+  showSupport?: boolean;
+}) {
   const titleId = useId();
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
@@ -63,9 +74,10 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
   const attemptRef = useRef(0);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setRoot(document.querySelector(".sb")), 0);
+    const selector = variant === "legal" ? ".lx" : ".sb";
+    const id = window.setTimeout(() => setRoot(document.querySelector(selector)), 0);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     return () => {
@@ -148,7 +160,7 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
 
     let payload: SessionPayload | FailPayload | null = null;
     try {
-      const res = await postJson("/api/voice/session", {});
+      const res = await postJson("/api/voice/session", { variant });
       payload = await res.json() as SessionPayload | FailPayload;
     } catch {
       payload = null;
@@ -180,6 +192,7 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
       instructions: payload.instructions,
       intro: payload.intro,
       wrapInstructions: payload.wrapInstructions,
+      keyterms: payload.keyterms,
       hardEndAt: payload.hardEndAt,
       startedAt: payload.startedAt,
       serverNow: payload.serverNow,
@@ -285,7 +298,8 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
           <button type="button" className="btn ghost" onClick={() => setPhase("consent")} disabled={phase !== "idle"}>
             {VOICE_COPY.button}
           </button>
-          <p className="voice-support">{VOICE_COPY.support}</p>
+          <span className="voice-role">AI receptionist</span>
+          {showSupport ? <p className="voice-support">{VOICE_COPY.support}</p> : null}
         </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>
