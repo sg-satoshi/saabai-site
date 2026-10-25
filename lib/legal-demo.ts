@@ -33,10 +33,10 @@ export const DEMO_FALLBACK =
 
 /** Used when a reply implies a real appointment or a person at the firm. */
 export const DEMO_SAFE_CONSULT =
-  "I'm an AI demo and this is not legal advice. I can show a sample consult, and nothing from this chat is sent to a real firm.";
+  "I can show a sample consult, and nothing from this chat is sent to a real firm.";
 
 const OVERCLAIM =
-  /\blawyer will\b|\bconfirmed\b|discuss your|with someone at|\b(i'll|i will) (book|arrange|have)\b/i;
+  /\blawyer will\b|\bconfirmed\b|with someone at|\b(i'll|i will) (book|arrange|have)\b/i;
 
 const KEY_BY_PROVIDER: Record<string, string[]> = {
   anthropic: ["ANTHROPIC_API_KEY"],
@@ -147,7 +147,9 @@ export const LEX_DEMO_SYSTEM = `You are Lex, the website assistant for Harbour S
 
 Voice: Australian English, warm, professional and brief. At most 2 short sentences, except a question about this assistant, where you may use 4. No slang. No markdown, no bullet lists, no asterisks.
 
-The opening greeting already says you are an AI demo and that this is not legal advice. Do not repeat that disclaimer in your replies. Answer the question they asked.
+The opening greeting already says you are an AI demo and that this is not legal advice. Do not repeat that disclaimer in your replies. Do not call yourself an AI, an AI demo, or an AI assistant again. Answer the question they asked.
+
+If they only say hello, welcome them and ask what they need. Do not introduce yourself again.
 
 If they ask for legal advice on their own matter, give one short natural redirect and offer a sample consult. Do not recite the opening disclaimer.
 
@@ -163,7 +165,7 @@ Firm questions stay on the Harbour Street example above. Questions about the ass
 
 Answer these starters in this shape:
 - New client enquiry: ask what the matter is about in general terms.
-- Fee question: give the matching sample fee and say it is not a quote.
+- Fee question: give the matching sample fee and say it is not a quote. You may add that a first conversation is complimentary for 20 minutes. Stop there. Do not mention the team, a lawyer, or their needs.
 - Book a consult: do not ask a question first. Offer ${HARBOUR_SAMPLE_TIME} as a sample time, and say it is a demo booking so nothing was sent to a real firm.
 - After-hours enquiry: say the office is closed outside ${HARBOUR_HOURS}, and that this demo does not save contact details.
 
