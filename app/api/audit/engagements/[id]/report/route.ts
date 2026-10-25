@@ -96,6 +96,10 @@ export async function PATCH(req: Request, { params }: Params) {
   await updateEngagement(id, {
     reports,
     status: "delivered",
+    // First delivery starts the credit clock. Later versions do not move it.
+    ...(engagement.deliveredAt || !deliveredReport?.deliveredAt
+      ? {}
+      : { deliveredAt: deliveredReport.deliveredAt }),
   });
   const updated = await logEvent(
     id,
