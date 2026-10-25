@@ -24,7 +24,6 @@ export default function LocationPage({ config }: Props) {
     challenges,
     howWeHelpIntro,
     services,
-    caseStudy,
     industryLinks,
     faqs,
     ctaHeadline,
@@ -250,7 +249,7 @@ export default function LocationPage({ config }: Props) {
         </div>
       </section>
 
-      {/* ── Case Study ──────────────────────────────────────────────────── */}
+      {/* ── Case studies ────────────────────────────────────────────────── */}
       <section
         className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border"
         style={{ background: "var(--saabai-surface)" }}
@@ -259,40 +258,14 @@ export default function LocationPage({ config }: Props) {
           <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
             Real Experience
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-10">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
             Work We Have Done
           </h2>
-          <div
-            className="rounded-2xl border border-saabai-border p-8 md:p-10"
-            style={{ background: "var(--saabai-surface-raised)" }}
-          >
-            <h3 className="text-2xl font-bold">{caseStudy.client}</h3>
-            <p className="text-saabai-teal text-sm font-semibold mt-1 mb-6">
-              {caseStudy.industry}
-            </p>
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">
-                Context
-              </p>
-              <p className="text-saabai-text-muted leading-relaxed">
-                {caseStudy.context}
-              </p>
-            </div>
-            <div className="my-7 border-t border-saabai-border" />
-            <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-saabai-text-dim mb-2">
-                Outcome
-              </p>
-              <p className="text-saabai-text-muted leading-relaxed">
-                {caseStudy.outcome}
-              </p>
-            </div>
-          </div>
           <a
             href="/case-studies"
-            className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
+            className="inline-flex items-center min-h-[44px] text-saabai-teal font-medium hover:text-saabai-teal-bright transition-colors"
           >
-            See more case studies &rarr;
+            See case studies &rarr;
           </a>
         </div>
       </section>

@@ -36,13 +36,11 @@ git push         # triggers Vercel auto-deploy
 | `ANTHROPIC_API_KEY` | Claude API |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Redis persistence |
 | `PORTAL_SESSION_SECRET` | HMAC key for signed session cookies |
-| `REX_DASHBOARD_PASSWORD` | Rex dashboard login |
 | `RESEND_API_KEY` | Email delivery |
 | `COUPON_HASH_SECRET` | Keys the HMAC of customer emails for one-use-per-customer coupons. 32+ chars. Falls back to `SAABAI_SESSION_SECRET` if unset or too short. Don't rotate once codes are in use: it resets everyone's usage. |
 
 ## Architecture Notes
 
-- Rex widget is an iframe-embeddable page at `/rex-widget`. Host sites resize the iframe via `postMessage`.
 - Portal sessions are self-contained HMAC-SHA256 signed tokens — no Redis lookup required for auth.
 - Lex threads are scoped per logged-in user email and persisted to Redis with a 90-day TTL.
-- Multi-client configs: `lib/rex-config.ts` (Rex) and `lib/lex-config.ts` (Lex) — add new clients there.
+- Lex client config lives in `lib/lex-config.ts`.

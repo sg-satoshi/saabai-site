@@ -7,9 +7,21 @@ import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/au
 import { sanitizeGrant, type AccessGrant } from "../../../lib/access";
 import { hashPassword, generateRandomPassword, validateNewPassword, withoutPassword } from "../../../lib/password";
 import { sendWelcomeEmail } from "../../../lib/account-emails";
+import { PRODUCT_IDS, type ProductId } from "../../../lib/user-products";
 
 // Node runtime: password hashing uses Node's crypto.scrypt.
 export const runtime = "nodejs";
+
+function knownProducts(products: unknown): ProductId[] | undefined {
+  if (!Array.isArray(products)) return undefined;
+  return products.filter((p): p is ProductId => typeof p === "string" && (PRODUCT_IDS as readonly string[]).includes(p as ProductId));
+}
+
+/** A removed product route must not be stored as a new user's home. */
+function safeDashboard(url: unknown, fallback: string): string {
+  const value = typeof url === "string" && url.trim() ? url.trim() : fallback;
+  return value === "/rex-dashboard" ? "/dashboard" : value;
+}
 
 
 // Defense-in-depth: middleware already gates /api/user-directory to admins,
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId, sendInvite, access } = body;
+    const { name, email, password, role = "user", dashboardUrl, products, siteId, sendInvite, access } = body;
     if (!ROLES.includes(role)) return Response.json({ error: "Invalid role" }, { status: 400 });
     const ra = resolveRoleAccess(role, access);
     if ("error" in ra) return Response.json({ error: ra.error }, { status: 400 });
@@ -100,8 +112,8 @@ export async function POST(req: NextRequest) {
       password: await hashPassword(password || generateRandomPassword()),
       role: ra.role,
       ...(ra.access ? { access: ra.access } : {}),
-      dashboardUrl,
-      ...(Array.isArray(products) ? { products } : {}),
+      dashboardUrl: safeDashboard(dashboardUrl, "/dashboard"),
+      ...(Array.isArray(products) ? { products: knownProducts(products) } : {}),
       ...(typeof siteId === "string" && siteId ? { siteId: siteId.slice(0, 100) } : {}),
       approvedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
@@ -164,8 +176,8 @@ export async function PATCH(req: NextRequest) {
       name: name ?? existing.name,
       email: newEmail,
       role: nextRole,
-      dashboardUrl: dashboardUrl ?? existing.dashboardUrl,
-      ...(Array.isArray(products) ? { products } : {}),
+      dashboardUrl: dashboardUrl === undefined ? existing.dashboardUrl : safeDashboard(dashboardUrl, existing.dashboardUrl || "/dashboard"),
+      ...(Array.isArray(products) ? { products: knownProducts(products) } : {}),
       ...(password ? { password: await hashPassword(password) } : {}),
     } as typeof existing;
     if (nextAccess) updated.access = nextAccess;

@@ -35,7 +35,7 @@ export function similarity(a: string, b: string): number {
 /** Pages overlays may touch: public pages only. Never legal pages, admin, API or customer sites. */
 export function overlayPathOk(path: string): boolean {
   if (!path.startsWith("/") || path.startsWith("//") || /[\s<>"'`?#]/.test(path)) return false;
-  if (/\.\w+$/.test(path) || /^\/(?:api|_next|sites|saabai-admin|admin|login|portal|mission-control|rex-|edge|pulse|atlas)/.test(path)) return false;
+  if (/\.\w+$/.test(path) || /^\/(?:api|_next|sites|saabai-admin|admin|login|portal|mission-control|edge|pulse|atlas)/.test(path)) return false;
   return !isLegalPath(path);
 }
 

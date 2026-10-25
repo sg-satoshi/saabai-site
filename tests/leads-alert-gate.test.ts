@@ -26,7 +26,7 @@ test("chat_widget and calculator leads need a valid email", () => {
 });
 
 test("transcripts need an email or at least one visitor message", () => {
-  for (const source of ["chat_closed", "chat_ended", "chat_ended_short", "pete_ended"]) {
+  for (const source of ["chat_closed", "chat_ended", "chat_ended_short"]) {
     assert.equal(leadAlertCheck(clean({ source })).ok, false, source);
     assert.equal(leadAlertCheck(clean({ source, conversation: [{ role: "assistant", content: "Hi" }] })).ok, false, source);
     assert.equal(leadAlertCheck(clean({ source, conversation: [{ role: "user", content: "hello" }] })).ok, true, source);

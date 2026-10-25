@@ -6,13 +6,6 @@ export const FILE_MAP: Record<string, string[]> = {
     "app/lex-widget/page.tsx",
   ],
 
-  rex: [
-    "app/rex-dashboard/page.tsx",
-    "app/rex-changelog/ChangelogClient.tsx",
-    "app/api/rex-feedback/route.ts",
-    "app/rex-analytics/page.tsx",
-  ],
-
   atlas: [
     "atlas/atlas.ts",
     "atlas/core/execution.ts",
@@ -27,11 +20,6 @@ export const FILE_MAP: Record<string, string[]> = {
 
   mission: [
     "app/mission-control/page.tsx",
-  ],
-
-  plon: [
-    "app/plon/page.tsx",
-    "app/api/pete-chat/route.ts",
   ],
 
   home: [
@@ -82,7 +70,6 @@ export const FILE_MAP: Record<string, string[]> = {
 
   dashboard: [
     "app/mission-control/page.tsx",
-    "app/rex-dashboard/page.tsx",
     "app/client-portal/page.tsx",
     "atlas/atlas.ts",
   ],

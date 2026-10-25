@@ -32,9 +32,6 @@ const redis = Redis.fromEnv();
 
 // Page routes that require a logged-in session.
 const PROTECTED_PAGES = [
-  "/rex-dashboard",
-  "/rex-analytics",
-  "/rex-changelog",
   "/saabai-admin",
   "/admin",
   "/edge",
@@ -68,10 +65,8 @@ const PUBLIC_API = [
   "/api/portal/request-access", // access request + auto-approve (opaque ok)
   "/api/portal/requests", // client change requests (portal_session inside)
   "/api/portal/billing", // plans, add-ons, billing (portal_session inside)
-  "/api/rex-dashboard-auth", // dashboard password login — issues the cookie
   // Public chat widgets (embedded on client + marketing sites)
   "/api/chat",
-  "/api/pete-chat",
   "/api/lex-chat",
   "/api/lmm-chat",
   "/api/nextinvestment-chat",
@@ -87,7 +82,6 @@ const PUBLIC_API = [
   "/api/leadgen/chat",
   // /api/lex-extract and /api/lex-compare are NOT public: they fall through to the session check like the other Lex APIs.
   // Public lead / contact capture
-  "/api/rex-leads",
   "/api/lex-leads",
   "/api/advisory-leads",
   "/api/leads",
@@ -109,9 +103,6 @@ const PUBLIC_API = [
   "/api/blueprint/checkout", // Saabai Blueprint one-off Stripe Checkout (public buyers)
   "/api/blueprint/score",    // AI Readiness Score results email (public quiz)
   "/api/site-scan",          // website scan step of /score: self-gates (404 unless flag on or admin), rate limited.
-  "/api/rex-checkout",
-  "/api/rex-cart",
-  "/api/rex-pay",
   "/api/leadgen/checkout",
   "/api/leadgen/webhook",    // Stripe webhook (verifies its own signature)
   "/api/stripe",
@@ -123,14 +114,11 @@ const PUBLIC_API = [
   "/api/announcement/active", // public read of the one live announcement (null unless flag on and live)
   // Widget media / embeds
   "/api/tts",
-  "/api/heygen-token",
   // Homepage voice demo. Anonymous on purpose: origin check, caps and session secret are enforced inside.
   "/api/voice/session",
   "/api/voice/pulse",
   "/api/voice/transcript",
   "/api/voice/end",
-  "/api/rex-feedback",
-  "/api/rex-transcript", // self-checks admin session for reads
   "/api/leadgen/widget",
   "/api/leadgen/config",
   // Saabai AI Agent public widget + chat (self-authenticated by slug; config
@@ -144,7 +132,6 @@ const PUBLIC_API = [
   "/api/cron",
   "/api/unsubscribe",       // one-click marketing unsubscribe (signed token)
   "/api/testimonial",       // client testimonial form (unguessable token)
-  "/api/rex-weekly-digest",
   "/api/instagram/cron",
   // MCP gateway — self-authenticated. The route enforces Authorization: Bearer
   // MCP_API_KEY via authorizeRequest(); exempt at the proxy so it can be reached
@@ -171,10 +158,6 @@ const ADMIN_API = [
   "/api/lex-review-queue",   // supervisor queue across firms: genuinely admin
   // /api/lex-review and /api/lex-review-submit are NOT admin-only: signed-in Lex firm users run them,
   // and each route checks the caller and the firm's daily cap (lib/lex-review-access).
-  "/api/rex-woo-backfill",
-  "/api/rex-price-test",
-  "/api/rex-pipedrive-sync",
-  "/api/rex-analytics",
   "/api/deploy",
   "/api/imagine",
   "/api/subscribers",
@@ -214,12 +197,6 @@ async function getSession(req: NextRequest): Promise<{ clientId: string } | null
   if (portal) {
     const s = verifySession(portal);
     if (s?.email) return { clientId: `portal:${s.email}` };
-  }
-  // Legacy rex-dashboard cookie maps to a non-admin session.
-  const legacy = req.cookies.get("rex_dash_auth")?.value;
-  if (legacy) {
-    const session = verifySession(legacy);
-    if (session?.email === "rex-dashboard") return { clientId: "rex-dashboard" };
   }
   return null;
 }

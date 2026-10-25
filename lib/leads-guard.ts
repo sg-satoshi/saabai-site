@@ -17,7 +17,6 @@ export const PUBLIC_SOURCES = [
   "chat_ended_short",
   "calculator_page",
   "calculator_homepage",
-  "pete_ended",
 ] as const;
 /** Only the server (chat route) may use this one. */
 export const INTERNAL_SOURCE = "mia_qualified";
@@ -210,7 +209,7 @@ export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_ho
  *
  * - chat_widget and calculator_*: a valid email is required (phone is not an
  *   accepted contact on any form today).
- * - chat_closed, chat_ended, chat_ended_short, pete_ended: a valid email or at
+ * - chat_closed, chat_ended, chat_ended_short: a valid email or at
  *   least one real visitor message.
  * - mia_qualified (server only): at least one visitor message or a qualification summary.
  */

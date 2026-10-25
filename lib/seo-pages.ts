@@ -103,12 +103,6 @@ export const publicPageMeta = {
     description:
       "Real results from Saabai, a Gold Coast AI business, including AI agents that answer enquiries and quote around the clock. Start with a Blueprint from $497.",
   }),
-  rexCase: pageMeta({
-    path: "/case-studies/rex-plastics-online",
-    title: "Rex Case Study | AI Sales Agent | Saabai",
-    description:
-      "How a national plastics supplier used Rex, an AI sales agent built by Saabai on the Gold Coast. The team recovered 60% of the sales day, with 344 leads in 30 days.",
-  }),
   process: pageMeta({
     path: "/process",
     title: "Saabai AI Process | Gold Coast",

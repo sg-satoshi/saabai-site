@@ -33,7 +33,7 @@ before(async () => {
   process.env.RESEND_API_KEY = "re_test";
   process.env.PORTAL_SESSION_SECRET = "portal-test-secret-portal-test-secret";
   process.env.NEXT_PUBLIC_BASE_URL = "https://saabai.ai";
-  process.env.PLON_TEAM_EMAIL = "team@plon.test";
+  delete process.env.PLON_TEAM_EMAIL;
   delete process.env.SAABAI_NOTIFY_EMAIL; // Lex demo account defaults to hello@saabai.ai
 });
 
@@ -105,12 +105,23 @@ test("Lex demo still works end to end: link is emailed, signs in, and lands on t
   assert.match(again.headers.get("location") ?? "", /error=invalid_token/);
 });
 
-test("Lex allow-list covers approved portal users, Lex directory users, existing firms and the PLON team", async () => {
-  for (const email of ["partner@approvedfirm.test", "lexclient@firm.test", "existing@firm.test", "team@plon.test"]) {
+test("Lex allow-list covers approved portal users, Lex directory users and existing firms", async () => {
+  for (const email of ["partner@approvedfirm.test", "lexclient@firm.test", "existing@firm.test"]) {
     await requestLink(email);
   }
-  await settle(4);
-  assert.deepEqual(sentEmails.map((m) => m.to).sort(), ["existing@firm.test", "lexclient@firm.test", "partner@approvedfirm.test", "team@plon.test"]);
+  await settle(3);
+  assert.deepEqual(sentEmails.map((m) => m.to).sort(), ["existing@firm.test", "lexclient@firm.test", "partner@approvedfirm.test"]);
+});
+
+test("PLON_TEAM_EMAIL does not grant a Lex portal link", async () => {
+  process.env.PLON_TEAM_EMAIL = "team@plon.test";
+  try {
+    await requestLink("team@plon.test");
+    await settle(0);
+    assert.deepEqual(sentEmails, []);
+  } finally {
+    delete process.env.PLON_TEAM_EMAIL;
+  }
 });
 
 test("Lex allow-list honours optional LEX_PORTAL_ALLOWED_EMAILS", async () => {
@@ -153,11 +164,10 @@ test("admin login redirect: only same-origin relative paths survive", async () =
   }
 });
 
-test("admin and PLON login pages never use the raw ?redirect= value", () => {
+test("admin login pages never use the raw ?redirect= value", () => {
   for (const [file, fallback] of [
     ["app/saabai-admin/login/page.tsx", "/saabai-admin"],
     ["app/admin/login/page.tsx", "/saabai-admin"],
-    ["app/plon/login/page.tsx", "/rex-dashboard"],
   ]) {
     const src = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
     assert.ok(src.includes(`safeRedirect(params.redirect, "${fallback}")`), `${file} must validate with safeRedirect`);

@@ -276,22 +276,26 @@ export function buildLexResearchTools(config: LexClientConfig) {
           required: ["name", "email", "practiceArea", "matterBrief"],
         }),
         execute: async ({ name, email, phone, practiceArea, matterBrief }) => {
-          fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://saabai-site.vercel.app"}/api/rex-leads`,
-            {
+          // Notify this Lex client's own inbox. Do not post to a shared lead route:
+          // those routes belong to other products and would brand or route the enquiry wrongly.
+          const key = (process.env[config.email.resendKeyEnvVar] ?? "").trim();
+          const to = config.email.teamEmail.trim();
+          if (key && to) {
+            const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const row = (label: string, value: string) =>
+              `<tr><td style="padding:6px 12px 6px 0;font-weight:600;">${esc(label)}</td><td>${esc(value)}</td></tr>`;
+            fetch("https://api.resend.com/emails", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                clientId: config.id,
-                source: "lex_matter_enquiry",
-                name,
-                email,
-                mobile: phone,
-                note: `[${practiceArea}] ${matterBrief}`,
-                timestamp: new Date().toISOString(),
+                from: config.email.from,
+                to: [to],
+                replyTo: [email],
+                subject: `New matter enquiry: ${name.replace(/[\r\n]/g, " ").slice(0, 120)}`,
+                html: `<table>${row("Name", name)}${row("Email", email)}${phone ? row("Phone", phone) : ""}${row("Practice area", practiceArea)}${row("Matter", matterBrief)}</table>`,
               }),
-            }
-          ).catch(() => {});
+            }).catch(() => {});
+          }
           return { ok: true };
         },
       }),

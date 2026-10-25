@@ -108,7 +108,7 @@ const faqs = [
       },
       {
         q: "Do you work with e-commerce or product businesses?",
-        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups and lead capture 24/7. A national plastics supplier is currently running one of these in production.",
+        a: "Yes. Product businesses with high enquiry volume lose leads every hour they can't respond. We build AI agents that handle product questions, custom quoting, order lookups and lead capture around the clock.",
       },
     ],
   },
