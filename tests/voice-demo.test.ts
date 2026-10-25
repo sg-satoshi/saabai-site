@@ -290,6 +290,23 @@ test("pcm round trip keeps samples", () => {
   assert.ok(back[2] < 0);
 });
 
+test("the four homepage voice routes are public and a neighbouring admin route stays denied", () => {
+  const proxy = read("proxy.ts");
+  const pub = proxy.slice(proxy.indexOf("const PUBLIC_API"), proxy.indexOf("const ADMIN_API"));
+  const adm = proxy.slice(proxy.indexOf("const ADMIN_API"), proxy.indexOf("const CUSTOM_DOMAIN_PUBLIC_API"));
+  const entries = [...pub.matchAll(/"(\/api\/[^"]+)"/g)].map((match) => match[1]);
+  const voice = ["/api/voice/session", "/api/voice/pulse", "/api/voice/transcript", "/api/voice/end"];
+  for (const path of voice) assert.equal(entries.includes(path), true, path);
+  assert.equal(entries.includes("/api/voice"), false, "no broad /api/voice prefix");
+  const allowed = (pathname: string) => entries.some((entry) => pathname === entry || pathname.startsWith(`${entry}/`));
+  for (const path of voice) assert.equal(allowed(path), true, path);
+  assert.equal(allowed("/api/admin"), false);
+  assert.equal(allowed("/api/admin/experiments"), false);
+  assert.equal(allowed("/api/voice"), false);
+  assert.ok(adm.includes('"/api/admin"'));
+  assert.match(pub, /origin check, caps and session secret are enforced inside/);
+});
+
 test("the demo is mounted on the homepage only and the privacy policy has the APP 8 line", () => {
   const hits = walk("app")
     .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))

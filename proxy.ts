@@ -123,6 +123,11 @@ const PUBLIC_API = [
   // Widget media / embeds
   "/api/tts",
   "/api/heygen-token",
+  // Homepage voice demo. Anonymous on purpose: origin check, caps and session secret are enforced inside.
+  "/api/voice/session",
+  "/api/voice/pulse",
+  "/api/voice/transcript",
+  "/api/voice/end",
   "/api/rex-feedback",
   "/api/rex-transcript", // self-checks admin session for reads
   "/api/leadgen/widget",
