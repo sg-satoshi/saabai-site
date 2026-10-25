@@ -38,8 +38,63 @@ type SessionPayload = {
 
 type FailPayload = { ok: false; error?: string; message?: string };
 
+const AVATAR_1X = "/brand/lachie/avatar/lachie-headset-avatar-button-48.png";
+const AVATAR_2X = "/brand/lachie/avatar/lachie-headset-avatar-button-96.png";
+const WAVE_STATES = ["idle", "listening", "talking"] as const;
+type WaveState = (typeof WAVE_STATES)[number];
+
 function openMia() {
   document.querySelector<HTMLButtonElement>('button[aria-label="Chat with Mia"]')?.click();
+}
+
+function LachieAvatar({ size }: { size: number }) {
+  return (
+    <img
+      src={AVATAR_1X}
+      srcSet={`${AVATAR_2X} 2x`}
+      width={size}
+      height={size}
+      alt=""
+    />
+  );
+}
+
+export function LachieLockup({
+  second,
+  descriptor,
+  as: Tag = "div",
+}: {
+  second: "Legend" | "Legal";
+  descriptor: string;
+  as?: "div" | "h2";
+}) {
+  return (
+    <Tag className="lachie-lockup" data-theme="dark">
+      <span className="lachie-lockup__line">
+        <span className="lachie-lockup__meet">Meet</span>{" "}
+        <span className="lachie-lockup__name">Lachie</span>{" "}
+        <span className="lachie-lockup__second">{second}</span>
+      </span>
+      <span className="lachie-lockup__desc">{descriptor}</span>
+    </Tag>
+  );
+}
+
+function Waveform({ state }: { state: WaveState }) {
+  const alt = state === "talking" ? "Lachie is talking" : state === "listening" ? "Lachie is listening" : "Lachie, idle";
+  return (
+    <div className="voice-stage">
+      {WAVE_STATES.map((name) => {
+        const on = name === state;
+        return (
+          <picture key={name} className={on ? "is-on" : undefined} aria-hidden={on ? undefined : true}>
+            <source srcSet={`/brand/lachie/widget/lachie-waveform-${name}-still.svg`} media="(prefers-reduced-motion: reduce)" />
+            <img src={`/brand/lachie/widget/lachie-waveform-${name}.svg`} alt={on ? alt : ""} width={168} height={168} />
+          </picture>
+        );
+      })}
+    </div>
+  );
 }
 
 async function postJson(url: string, body: unknown): Promise<Response> {
@@ -232,47 +287,75 @@ export default function VoiceDemo({
   }
 
   const showWrapLinks = phase === "ended" || (phase === "live" && elapsed >= VOICE_LIMITS.wrapSeconds);
+  const wave: WaveState = phase === "live" && (callPhase === "speaking" || callPhase === "wrapping")
+    ? "talking"
+    : phase === "live" && callPhase === "listening"
+      ? "listening"
+      : "idle";
   const status = phase === "connecting"
     ? VOICE_COPY.connecting
-    : callPhase === "speaking"
-      ? VOICE_COPY.speaking
-      : callPhase === "wrapping"
-        ? VOICE_COPY.wrapping
-        : VOICE_COPY.listening;
+    : wave === "talking"
+      ? "Lachie is talking"
+      : wave === "listening"
+        ? "Listening"
+        : callPhase === "wrapping"
+          ? VOICE_COPY.wrapping
+          : VOICE_COPY.listening;
+  const ttlState = phase === "connecting" ? "connecting" : phase === "live" ? "live" : phase === "ended" ? "ended" : "idle";
+  const clock = formatVoiceClock(elapsed);
+  const buttonLabel = ttlState === "connecting"
+    ? "Connecting…"
+    : ttlState === "live"
+      ? "Live with Lachie"
+      : ttlState === "ended"
+        ? "Call ended"
+        : VOICE_COPY.button;
+  const buttonSub = ttlState === "connecting"
+    ? "Calling Lachie, your AI receptionist"
+    : ttlState === "live"
+      ? `AI receptionist · ${clock}`
+      : ttlState === "ended"
+        ? "Thanks for calling. Tap to call again"
+        : "AI receptionist";
 
   const dialog = phase === "idle" ? null : (
     <div className="voice-back" role="presentation">
       <div className="voice-panel" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="voice-kicker">Saabai</div>
-        <h3 id={titleId}>
-          {phase === "consent" ? VOICE_COPY.consentTitle : agentName || VOICE_AGENT_NAME}
-        </h3>
+        <div className="voice-hd">
+          <LachieAvatar size={44} />
+          <div>
+            <b id={titleId}>{agentName || VOICE_AGENT_NAME}</b>
+            <small>AI receptionist</small>
+          </div>
+          {phase === "connecting" || phase === "live" ? (
+            <span className="voice-tm" aria-label="Call time">{clock}</span>
+          ) : null}
+        </div>
 
         {phase === "consent" ? (
           <>
-            <p style={{ marginTop: 12 }}>{VOICE_COPY.consent}</p>
+            <Waveform state="idle" />
+            <p className="voice-state">{VOICE_COPY.consentTitle}</p>
+            <p className="voice-hint">{VOICE_COPY.consent}</p>
             <p className="voice-note">
-              <a href={VOICE_PRIVACY_PATH} style={{ color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 }}>{VOICE_COPY.privacy}</a>
+              <a href={VOICE_PRIVACY_PATH}>{VOICE_COPY.privacy}</a>
             </p>
             <div className="voice-actions">
-              <button type="button" className="btn" onClick={() => void begin()}>{VOICE_COPY.start}</button>
-              <button type="button" className="btn ghost" onClick={closeConsent}>{VOICE_COPY.cancel}</button>
+              <button type="button" className="voice-go" onClick={() => void begin()}>{VOICE_COPY.start}</button>
+              <button type="button" className="voice-quiet" onClick={closeConsent}>{VOICE_COPY.cancel}</button>
             </div>
           </>
         ) : null}
 
         {phase === "connecting" || phase === "live" ? (
           <>
-            <p style={{ marginTop: 8 }}>{VOICE_COPY.aiLine}</p>
-            <div className="voice-timer" aria-live="polite">
-              {formatVoiceClock(elapsed)}
-              <span>{status} · {VOICE_COPY.timerOf}</span>
-            </div>
-            {line ? <p className="voice-line">{line}</p> : null}
+            <Waveform state={wave} />
+            <p className="voice-state" aria-live="polite">{status}</p>
+            <p className="voice-hint">{line || VOICE_COPY.aiLine}</p>
             {showWrapLinks ? <NextLinks /> : null}
             <div className="voice-actions">
-              <button type="button" className="btn ghost" onClick={phase === "connecting" ? cancelAttempt : hangUp}>
-                {phase === "connecting" ? VOICE_COPY.cancel : VOICE_COPY.end}
+              <button type="button" className={phase === "connecting" ? "voice-quiet" : "voice-end"} onClick={phase === "connecting" ? cancelAttempt : hangUp}>
+                {phase === "connecting" ? VOICE_COPY.cancel : "End call"}
               </button>
             </div>
           </>
@@ -280,10 +363,12 @@ export default function VoiceDemo({
 
         {phase === "error" || phase === "ended" ? (
           <>
-            <p style={{ marginTop: 12 }}>{message}</p>
+            <Waveform state="idle" />
+            <p className="voice-state">{phase === "ended" ? "Call ended" : "Something went wrong"}</p>
+            <p className="voice-hint">{message}</p>
             <NextLinks onMia={() => { openMia(); setPhase("idle"); }} />
             <div className="voice-actions">
-              <button type="button" className="btn ghost" onClick={() => setPhase("idle")}>Close</button>
+              <button type="button" className="voice-quiet" onClick={() => setPhase("idle")}>Close</button>
             </div>
           </>
         ) : null}
@@ -295,11 +380,23 @@ export default function VoiceDemo({
     <>
       {ready ? (
         <span className="voice-launch">
-          <button type="button" className="btn ghost" onClick={() => setPhase("consent")} disabled={phase !== "idle"}>
-            {VOICE_COPY.button}
+          <button
+            type="button"
+            className="ttl"
+            data-theme="dark"
+            data-state={ttlState}
+            aria-label={`${buttonLabel}, ${buttonSub.replace(/ · /g, ", ")}`}
+            onClick={() => setPhase("consent")}
+            disabled={phase !== "idle"}
+          >
+            <span className="ttl__avatar"><LachieAvatar size={48} /></span>
+            <span className="ttl__text">
+              <span className="ttl__label">{buttonLabel}</span>
+              <span className="ttl__sub">{buttonSub}</span>
+            </span>
+            <span className="ttl__wave" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
           </button>
-          <span className="voice-role">AI receptionist</span>
-          {showSupport ? <p className="voice-support">{VOICE_COPY.support}</p> : null}
+          {showSupport ? <LachieLockup second="Legend" descriptor="Saabai's AI receptionist." /> : null}
         </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>

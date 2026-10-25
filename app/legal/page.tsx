@@ -6,7 +6,7 @@ import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
 import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import LexDemoPanel from "./LexDemoPanel";
-import VoiceDemo from "../components/sb/VoiceDemo";
+import VoiceDemo, { LachieLockup } from "../components/sb/VoiceDemo";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
@@ -198,8 +198,7 @@ export default function LegalPage() {
           <div className="lx-demo-grid">
             <div className="lx-head">
               <div className="lx-eyebrow">Phone demo</div>
-              <h2>Meet Lachie <span className="lx-gold">Legal</span></h2>
-              <p className="lx-lead">Your AI phone answering service. He picks up when you can&apos;t.</p>
+              <LachieLockup as="h2" second="Legal" descriptor="Your AI phone answering service. He picks up when you can't." />
               <p className="lx-demo-line">Lex is the website chat. Lachie Legal answers the phone.</p>
               <p className="lx-demo-fine">Harbour Street Legal is an example firm. Nothing you say is sent to a real firm.</p>
             </div>
