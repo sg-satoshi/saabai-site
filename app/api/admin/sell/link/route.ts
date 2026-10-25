@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     type SessionParams = NonNullable<Parameters<typeof stripe.checkout.sessions.create>[0]>;
     type SessionLineItem = NonNullable<SessionParams["line_items"]>[number];
 
-    const { coupon, error } = await resolveCoupon(stripe, body?.code, product);
+    const { coupon, error } = await resolveCoupon(stripe, body?.code, product, customerEmail);
     if (error) return NextResponse.json({ error }, { status: 400 });
 
     const baked = bakedAmounts(product);

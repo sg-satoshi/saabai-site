@@ -39,6 +39,7 @@ export interface ConversationRecord {
 export interface LeadRecord {
   id: string;
   name?: string;
+  email?: string;
   business?: string;
   industry?: string;
   team_size?: string;
@@ -264,6 +265,7 @@ export async function saveLead(
     id,
     createdAt: new Date().toISOString(),
     name: lead.name ?? "",
+    email: lead.email ?? "",
     business: lead.business ?? "",
     industry: lead.industry ?? "",
     team_size: lead.team_size ?? "",
@@ -299,6 +301,7 @@ export async function getLeads(limit = 50): Promise<LeadRecord[]> {
       id: raw.id,
       createdAt: raw.createdAt,
       name: raw.name || undefined,
+      email: raw.email || undefined,
       business: raw.business || undefined,
       industry: raw.industry || undefined,
       team_size: raw.team_size || undefined,

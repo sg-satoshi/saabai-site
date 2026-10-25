@@ -27,6 +27,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ig: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></>,
   scale: <><path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z"/></>,
   list: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></>,
+  lock: <><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></>,
   cpu: <><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></>,
   gear: <><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></>,
   menu: <><path d="M3 6h18M3 12h18M3 18h18"/></>,
@@ -51,6 +52,7 @@ const NAV: NavGroup[] = [
       { label: "Dashboard", href: "/saabai-admin", icon: "grid" },
       { label: "Analytics", href: "/saabai-admin/analytics", icon: "chart" },
       { label: "Split testing", href: "/saabai-admin/experiments", icon: "flow" },
+      { label: "Roadmap", href: "/saabai-admin/roadmap", icon: "list" },
     ],
   },
   {
@@ -115,6 +117,7 @@ const NAV: NavGroup[] = [
       { label: "Lex Clients", href: "/saabai-admin/lex-clients", icon: "scale" },
       { label: "Lex Orders", href: "/saabai-admin/orders?kind=lex", icon: "list" },
       { label: "LLM Config", href: "/saabai-admin/lex-settings", icon: "cpu" },
+      { label: "Privacy Log", href: "/saabai-admin/lex-privacy", icon: "lock" },
     ],
   },
   {
@@ -241,6 +244,18 @@ export default function AdminShell({
     setDrawer(false);
   }, [pathname]);
 
+  const [me, setMe] = useState<{ name: string; email?: string; roleLabel: string; twoFactor: boolean } | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/admin/2fa", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (live && d?.me) setMe(d.me); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const meName = (me?.name || me?.email || "").trim() || "Signed in";
+  const meInitial = me && (me.name || me.email) ? (me.name || me.email || "").trim().charAt(0).toUpperCase() : "?";
+
   const crumb =
     title ||
     NAV.flatMap((g) => g.items).find((i) => isActive(pathname, i.href))?.label ||
@@ -269,14 +284,18 @@ export default function AdminShell({
         toggleGroup={toggleGroup}
       />
       <div className="me">
-        <div className="av">SG</div>
+        <div className="av">{meInitial}</div>
         <div style={{ lineHeight: 1.3, flex: 1, minWidth: 0 }}>
-          <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>Shane Goldberg</div>
-          <div style={{ fontSize: 12, color: "#8f95c0" }}>Owner · 2FA on</div>
+          <div style={{ color: "#fff", fontWeight: 500, fontSize: 13 }}>{meName}</div>
+          <div style={{ fontSize: 12, color: "#8f95c0" }}>{me ? `${me.roleLabel} · 2FA ${me.twoFactor ? "on" : "off"}` : "\u00a0"}</div>
+          {me?.email ? <div style={{ fontSize: 11, color: "#8f95c0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{me.email}</div> : null}
         </div>
-        <a href="/api/auth/logout" style={{ color: "#8f95c0", fontSize: 12, textDecoration: "none" }}>
-          Sign out
-        </a>
+        <form method="POST" action="/api/auth/logout" style={{ margin: 0 }}>
+          <input type="hidden" name="next" value="admin" />
+          <button type="submit" style={{ color: "#8f95c0", fontSize: 12, background: "none", border: 0, padding: 0, cursor: "pointer" }}>
+            Sign out
+          </button>
+        </form>
       </div>
     </>
   );

@@ -2,6 +2,7 @@ import { streamText, stepCountIs, tool } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { verifySession } from "../../../../lib/portal-session";
+import { lastUserText, logStreamFinish, modelIdFrom } from "../../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -95,6 +96,14 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     messages: requestMessages,
     stopWhen: stepCountIs(5),
+    onFinish: (event) => {
+      logStreamFinish(event, {
+        bot: "portal-setup",
+        siteId: session.email,
+        model: modelIdFrom(model),
+        userText: lastUserText(requestMessages),
+      });
+    },
     tools: {
       saveConfig: tool({
         description: "Save extracted configuration fields. Call this whenever you learn useful information — don't wait until the end.",

@@ -177,7 +177,7 @@ export async function logEvent(
 export async function saveResponses(
   id: string,
   responses: FactFindResponse[],
-  options?: { markComplete?: boolean }
+  options?: { markComplete?: boolean; extra?: Partial<AuditEngagement> }
 ): Promise<AuditEngagement | null> {
   const existing = await getEngagement(id);
   if (!existing) return null;
@@ -185,7 +185,7 @@ export async function saveResponses(
   const merged = { ...existing.responses };
   for (const r of responses) merged[r.questionId] = r;
 
-  const patch: Partial<AuditEngagement> = { responses: merged };
+  const patch: Partial<AuditEngagement> = { ...(options?.extra ?? {}), responses: merged };
 
   // Timeline auto-events
   const events: AuditEvent[] = [];

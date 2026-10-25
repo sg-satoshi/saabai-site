@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { saveReview } from "../../../lib/lex-review-store";
+import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
 import type { ReviewReport } from "../lex-review/route";
 
 function esc(s: unknown): string {
@@ -66,12 +67,12 @@ function supervisorEmail(req: SubmitRequest): string {
       <tr>
         <td style="padding:14px;background:#1e3050;border-radius:8px;width:50%;vertical-align:top;">
           <p style="margin:0;font-size:10px;color:#8fa3c0;text-transform:uppercase;letter-spacing:0.5px;">Submitted By</p>
-          <p style="margin:4px 0 0;font-size:14px;color:#e8edf5;font-weight:600;">${esc(submittedBy) || "—"}</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#e8edf5;font-weight:600;">${esc(submittedBy) || "Not given"}</p>
         </td>
         <td style="width:12px;"></td>
         <td style="padding:14px;background:#1e3050;border-radius:8px;width:50%;vertical-align:top;">
           <p style="margin:0;font-size:10px;color:#8fa3c0;text-transform:uppercase;letter-spacing:0.5px;">Matter</p>
-          <p style="margin:4px 0 0;font-size:14px;color:#e8edf5;font-weight:600;">${esc(matterNo) || "—"} ${clientName ? `· ${esc(clientName)}` : ""}</p>
+          <p style="margin:4px 0 0;font-size:14px;color:#e8edf5;font-weight:600;">${esc(matterNo) || "Not given"} ${clientName ? `· ${esc(clientName)}` : ""}</p>
         </td>
       </tr>
     </table>
@@ -96,7 +97,19 @@ function supervisorEmail(req: SubmitRequest): string {
   return emailShell(`New Doc Review: ${documentName || report.documentType} (${risk.toUpperCase()})`, body);
 }
 
+/**
+ * Lex firm users and admins only (lib/lex-review-access), with a per-firm daily cap.
+ * A request that fails is refunded so it doesn't use up the firm's allowance.
+ */
 export async function POST(request: Request): Promise<Response> {
+  const gate = await gateReview(request, "submit");
+  if (!gate.ok) return gate.response;
+  const res = await runSubmit(request, gate.actor);
+  if (!res.ok) await gate.refund();
+  return res;
+}
+
+async function runSubmit(request: Request, actor: LexReviewActor): Promise<Response> {
   try {
     const body: SubmitRequest = await request.json();
     const { firmId, submittedBy, matterNo, clientName, documentName, report, supervisorEmail: supEmail } = body;
@@ -110,7 +123,8 @@ export async function POST(request: Request): Promise<Response> {
     await saveReview({
       id,
       firmId,
-      submittedBy: submittedBy || "",
+      // Signed-in email for firm users, so the supervisor always knows who really sent it.
+      submittedBy: actor.kind === "firm" ? (submittedBy ? `${submittedBy} (${actor.email})` : actor.email) : (submittedBy || ""),
       matterNo: matterNo || "",
       clientName: clientName || "",
       documentName: documentName || "",
@@ -127,7 +141,8 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     // Send email notification to supervisor
-    const notifyEmail = supEmail || process.env.SAABAI_NOTIFY_EMAIL || "hello@saabai.ai";
+    // Only admins may redirect the notification; firm users can't make Lex email arbitrary addresses.
+    const notifyEmail = (actor.kind === "admin" && supEmail) || process.env.SAABAI_NOTIFY_EMAIL || "hello@saabai.ai";
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey && notifyEmail) {
       try {
@@ -135,7 +150,7 @@ export async function POST(request: Request): Promise<Response> {
         await resend.emails.send({
           from: "Lex at Saabai <hello@saabai.ai>",
           to: notifyEmail,
-          subject: `New Doc Review: ${documentName || report.documentType} — ${report.riskLevel.toUpperCase()} risk`,
+          subject: `New Doc Review: ${documentName || report.documentType}, ${report.riskLevel.toUpperCase()} risk`,
           html: supervisorEmail(body),
         });
       } catch { /* non-fatal */ }
@@ -143,7 +158,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({ success: true, id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-review-submit]", err);
+    return Response.json({ error: "submit_failed" }, { status: 500 });
   }
 }

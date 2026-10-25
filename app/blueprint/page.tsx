@@ -4,12 +4,11 @@ import SbFooter from "../components/sb/SbFooter";
 import "../components/sb/blueprint.css";
 import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 import JsonLd from "../components/JsonLd";
+import { schemaGraph, serviceSchema } from "@/lib/seo-entity";
+import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Saabai Blueprint: your AI plan, ranked by dollars saved",
-  description: "A clear, ranked AI plan for small businesses and professional practices. Starter $497, Pro $1,497, Business $3,500. Fee credited if you build within 30 days.",
-  alternates: { canonical: "/blueprint" },
-};
+export const metadata: Metadata = publicPageMeta.blueprint;
 
 const ROWS: [string, string, string, string][] = [
   ["Ranked opportunities with $ saved", "✓", "✓", "✓"],
@@ -23,54 +22,33 @@ const ROWS: [string, string, string, string][] = [
 
 const FAQS = [
   ["What do I need to provide?", "After checkout we email a short fact-find about your team, tools and busiest tasks. It takes about 15 minutes."],
-  ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build."],
+  ["How does the 30 day credit work?", "If you book any Saabai build within 30 days of receiving your Blueprint, the full fee is taken off that build. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days."],
   ["Is this the same as your old AI review service?", "Yes, rebuilt. The Blueprint replaces it with clearer pricing and faster delivery."],
   ["Do I have to build with Saabai?", "No. The plan is yours to keep and use with any provider or your own team."],
   ["Are prices in AUD?", "Yes. All prices are in Australian dollars. GST not applicable. You get an invoice by email straight after payment."],
   ["Can I get a refund?", "If we have not started your analysis, we will refund you in full. Just reply to your confirmation email."],
 ];
 
-const SITE = "https://www.saabai.ai";
-
-const blueprintSchema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "@id": `${SITE}/blueprint#service`,
-      name: "Saabai Blueprint AI audit",
-      serviceType: "AI audit",
-      description: metadata.description,
-      url: `${SITE}/blueprint`,
-      provider: { "@id": `${SITE}/#organization` },
-      areaServed: { "@type": "Country", name: "Australia" },
-      offers: TIER_ORDER.map((id) => ({
-        "@type": "Offer",
-        name: `Blueprint ${TIERS[id].name}`,
-        description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
-        price: TIERS[id].price,
-        priceCurrency: "AUD",
-        availability: "https://schema.org/InStock",
-        url: `${SITE}/blueprint`,
-      })),
-    },
-    {
-      "@type": "FAQPage",
-      mainEntity: FAQS.map(([q, a]) => ({
-        "@type": "Question",
-        name: q,
-        acceptedAnswer: { "@type": "Answer", text: a },
-      })),
-    },
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE },
-        { "@type": "ListItem", position: 2, name: "Blueprint", item: `${SITE}/blueprint` },
-      ],
-    },
-  ],
-};
+const blueprintSchema = schemaGraph([
+  serviceSchema({
+    id: "https://www.saabai.ai/blueprint#service",
+    name: "Saabai Blueprint AI audit",
+    serviceType: "AI audit",
+    description: String(publicPageMeta.blueprint.description),
+    url: "https://www.saabai.ai/blueprint",
+    offers: TIER_ORDER.map((id) => ({
+      "@type": "Offer",
+      name: `Blueprint ${TIERS[id].name}`,
+      description: `${TIERS[id].who} Delivery: ${TIERS[id].delivery}.`,
+      price: TIERS[id].price,
+      priceCurrency: "AUD",
+      availability: "https://schema.org/InStock",
+      url: "https://www.saabai.ai/blueprint",
+    })),
+  }),
+  faqNode(FAQS.map(([q, a]) => ({ q, a }))),
+  breadcrumbNode([{ name: "Blueprint", path: "/blueprint" }]),
+]);
 
 export default function BlueprintPage() {
   return (
@@ -114,6 +92,7 @@ export default function BlueprintPage() {
             <div className="big">100% credited</div>
             <div>
               <h3>Build within 30 days and your Blueprint is free</h3>
+              <p style={{ fontSize: 14, marginTop: 4 }}>Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.</p>
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>
           </div>

@@ -121,10 +121,18 @@ test("seeding keeps a saved skin and gives new sites their starting colours", as
   assert.equal((await getConfig("new-site")).skin.primary, "#aa0000", "never overwrites an admin's skin");
 });
 
-test("wiring: Stu installed (and OFF), bespoke bots untouched, admin-only content save, routes registered", () => {
+test("wiring: Stu installed (and OFF), remaining bespoke bots untouched, BO and LMM on the platform, admin-only content save, routes registered", () => {
   assert.match(read("app/sites/cycle-repair/layout.tsx"), /embed\/chat\.v1\.js"[^>]*data-site="cycle-repair"/);
-  for (const f of ["lmm-chat", "bo-chat", "tributum-chat", "nico-chat", "nextinvestment-chat"]) assert.doesNotMatch(read(`app/api/${f}/route.ts`), /chatbot\//, `${f} untouched`);
-  for (const f of ["public/clients/lmm-site/assets/chat-widget.js", "public/clients/nico-moretti/chat-widget.js", "public/clients/nextinvestment/assets/chat-widget.js", "app/components/BOChatWidget.tsx"]) assert.doesNotMatch(read(f), /embed\/chat\.v1/, `${f} untouched`);
+  for (const f of ["tributum-chat", "nico-chat", "nextinvestment-chat"]) assert.doesNotMatch(read(`app/api/${f}/route.ts`), /chatbot\//, `${f} untouched`);
+  for (const f of ["public/clients/nico-moretti/chat-widget.js", "public/clients/nextinvestment/assets/chat-widget.js"]) assert.doesNotMatch(read(f), /embed\/chat\.v1|chat-platform/, `${f} untouched`);
+  for (const f of ["public/clients/lmm-site/assets/chat-widget.js", "app/components/BOChatWidget.tsx", "app/sites/bo-consultancy/layout.tsx"]) {
+    const src = read(f);
+    assert.match(src, /\/api\/chat-platform\/message/, `${f} posts to the platform`);
+    assert.match(src, /\/api\/chat-platform\/config/, `${f} reads platform config`);
+  }
+  assert.match(read("public/clients/lmm-site/assets/chat-widget.js"), /lmm-site/);
+  assert.match(read("app/components/BOChatWidget.tsx"), /bo-consultancy/);
+  assert.match(read("app/sites/bo-consultancy/layout.tsx"), /bo-consultancy/);
   const api = read("app/api/admin/chatbots/route.ts");
   assert.match(api, /export async function POST[\s\S]*adminActor\(\)[\s\S]*case "save_content"[\s\S]*case "save_all"/);
   assert.match(read("app/saabai-admin/chatbots/ChatbotEditor.tsx"), /action: "save_all"/, "the editor saves skin and content in one go");

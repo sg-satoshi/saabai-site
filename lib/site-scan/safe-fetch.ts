@@ -11,7 +11,7 @@ export type FetchResult = {
   redirectedTo?: string;
 };
 
-type Opts = { timeoutMs?: number; maxRedirects?: number; resolver?: Resolver; follow?: boolean; textOnly?: boolean };
+type Opts = { timeoutMs?: number; maxRedirects?: number; resolver?: Resolver; follow?: boolean; textOnly?: boolean; maxBytes?: number };
 
 /** The only way the scanner touches the internet. Public IPs only, pinned per request, re-checked on every redirect. */
 export async function safeFetch(rawUrl: string, o: Opts = {}): Promise<FetchResult> {
@@ -57,9 +57,10 @@ function once(url: URL, pin: { ip: string; family: 4 | 6 }, o: Opts, start: numb
         const ct = headers["content-type"] ?? "";
         const status = res.statusCode ?? 0;
         if (o.textOnly !== false && status < 300 && ct && !/text|xml|json/i.test(ct)) { res.destroy(); return finish({ ok: false, status, url: url.toString(), headers, body: "", bytes: 0, ms: Date.now() - start, error: "other" }); }
+        const cap = o.maxBytes ?? MAX_BYTES;
         const chunks: Buffer[] = []; let bytes = 0;
-        res.on("data", (c: Buffer) => { bytes += c.length; if (bytes <= MAX_BYTES) chunks.push(c); else { res.destroy(); } });
-        const end = () => finish({ ok: status >= 200 && status < 300, status, url: url.toString(), headers, body: Buffer.concat(chunks).toString("utf8"), bytes: Math.min(bytes, MAX_BYTES), ms: Date.now() - start });
+        res.on("data", (c: Buffer) => { bytes += c.length; if (bytes <= cap) chunks.push(c); else { res.destroy(); } });
+        const end = () => finish({ ok: status >= 200 && status < 300, status, url: url.toString(), headers, body: Buffer.concat(chunks).toString("utf8"), bytes: Math.min(bytes, cap), ms: Date.now() - start });
         res.on("end", end); res.on("close", end); res.on("error", end);
       },
     );

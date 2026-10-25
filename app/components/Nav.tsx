@@ -14,6 +14,8 @@ const navSections: NavSection[] = [
       { label: "Free AI Score", href: "/score", isNew: true },
       { label: "Services", href: "/services" },
       { label: "Websites", href: "/websites", isNew: true },
+      { label: "Law firms", href: "/ai-chatbot-law-firms" },
+      { label: "AI receptionist", href: "/ai-receptionist-gold-coast" },
       { label: "Process", href: "/process" },
     ],
   },

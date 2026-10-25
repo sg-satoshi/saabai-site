@@ -15,6 +15,7 @@ import {
   type LeadGenClient,
 } from "../../../../lib/leadgen-config";
 import { sendLeadNotification } from "../../../../lib/leadgen-notify";
+import { lastUserText, logChatTurn, modelIdFrom } from "../../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -54,10 +55,19 @@ export async function POST(req: NextRequest) {
         content: m.content,
       }));
 
-    const { text } = await generateText({
+    const result = await generateText({
       model: leadgenModel,
       system,
       messages: chatMessages,
+    });
+    const text = result.text;
+    logChatTurn({
+      bot: "leadgen",
+      siteId: typeof slug === "string" ? slug : undefined,
+      model: modelIdFrom(leadgenModel),
+      usage: result.totalUsage ?? result.usage,
+      userText: lastUserText(chatMessages),
+      assistantText: text,
     });
 
     // ── Check for lead capture in the response ─────────────────────────

@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./admin.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-admin-sans",
-  display: "swap",
-});
+const inter = localFont({ src: "../fonts/inter-latin-wght-normal.woff2", weight: "100 900", variable: "--font-admin-sans", display: "swap" });
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-admin-mono",
-  display: "swap",
-});
+const geistMono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-admin-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "Mission Control", template: "%s | Saabai Admin" },

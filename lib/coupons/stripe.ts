@@ -10,7 +10,9 @@ import type Stripe from "stripe";
 import { getStripe } from "../stripe";
 import { getRedis } from "../redis";
 import { TIERS, type BlueprintTier } from "../blueprint";
-import { CARE_PLAN_IDS, TARGETS, type CarePlanId, type Redemption, type TargetId } from "./core";
+import { markUsed, type MarkResult } from "./once";
+import { promoIsOnce } from "./core";
+import { CARE_PLAN_IDS, TARGETS, couponCoversProducts, type CarePlanId, type Redemption, type TargetId } from "./core";
 
 export const CARE_PRODUCTS_KEY = "saabai:coupons:care-products";
 const CARE_NAMES: Record<CarePlanId, string> = { presence: "Presence", growth: "Growth", signature: "Signature" };
@@ -91,7 +93,7 @@ export async function targetStatuses(): Promise<TargetStatus[]> {
 export async function findActivePromo(code: string): Promise<Stripe.PromotionCode | null> {
   if (!code) return null;
   try {
-    const res = await getStripe().promotionCodes.list({ code, active: true, limit: 1 });
+    const res = await getStripe().promotionCodes.list({ code, active: true, limit: 1, expand: ["data.promotion.coupon"] });
     const p = res.data[0];
     if (!p || (p.expires_at && p.expires_at * 1000 < Date.now())) return null;
     if (p.max_redemptions && p.times_redeemed >= p.max_redemptions) return null;
@@ -99,8 +101,45 @@ export async function findActivePromo(code: string): Promise<Stripe.PromotionCod
   } catch { return null; }
 }
 
+/**
+ * Does this promotion code discount at least one of the Stripe products being bought?
+ * Stripe silently skips a product-restricted coupon when nothing matches (or errors at
+ * session creation), so checkout calls this first and refuses the code clearly.
+ * Codes with no product restriction always pass.
+ */
+export function promoCoversProducts(promo: Stripe.PromotionCode, productIds: (string | null | undefined)[]): boolean {
+  const c = promo.promotion?.coupon;
+  const restricted = c && typeof c === "object" ? c.applies_to?.products : undefined;
+  return couponCoversProducts(restricted, productIds);
+}
+
+/** Stripe product behind a price id (null when it can't be read). */
+export async function productOfPrice(priceId: string): Promise<string | null> {
+  try {
+    const price = await getStripe().prices.retrieve(priceId);
+    return typeof price.product === "string" ? price.product : price.product.id;
+  } catch { return null; }
+}
+
 /** Fill in the human code when the webhook only carried the promotion code id. */
 export async function resolveRedemptionCode(r: Redemption | null): Promise<Redemption | null> {
   if (!r || r.code || !r.promotionCodeId) return r;
   try { const p = await getStripe().promotionCodes.retrieve(r.promotionCodeId); return { ...r, code: p.code }; } catch { return r; }
+}
+
+/**
+ * Called from the completed-checkout webhooks. If the code used carries the one-per-customer
+ * rule, record this customer's use (hashed). Returns "repeat" when this email had already used it,
+ * so the caller can flag it for review. Never throws.
+ */
+export async function recordRedemptionUse(r: Redemption | null, email: string | null | undefined, sessionId: string): Promise<MarkResult> {
+  if (!r?.promotionCodeId || !email) return "skipped";
+  try {
+    const p = await getStripe().promotionCodes.retrieve(r.promotionCodeId, { expand: ["promotion.coupon"] });
+    if (!promoIsOnce(p as never)) return "skipped";
+    return await markUsed(p.id, email, sessionId);
+  } catch (e) {
+    console.error("[coupon once] webhook record failed", e instanceof Error ? e.message : e);
+    return "skipped";
+  }
 }

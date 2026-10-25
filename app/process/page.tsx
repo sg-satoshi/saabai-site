@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Our AI Automation Process, Blueprint to Deployment",
-  description:
-    "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  alternates: { canonical: "https://www.saabai.ai/process" },
-  openGraph: {
-    url: "https://www.saabai.ai/process",
-    title: "Our AI Automation Process, Blueprint to Deployment | Saabai",
-    description:
-      "Saabai's 4-step process: Saabai Blueprint, System Design, Build & Deploy, Ongoing Optimisation. Most small businesses and practices have first automations live within 2–4 weeks.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.process;
 
 const steps = [
   {

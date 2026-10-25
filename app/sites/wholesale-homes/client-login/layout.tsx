@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
+import localFont from "next/font/local";
 
 // Same editorial type system as the client portal, so the login gateway
 // feels continuous with the members-only experience it leads into.
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
+const fraunces = localFont({ src: "../../../fonts/fraunces-latin-wght-normal.woff2", weight: "100 900", variable: "--font-fraunces", display: "swap" });
+const manrope = localFont({ src: "../../../fonts/manrope-latin-wght-normal.woff2", weight: "200 800", variable: "--font-manrope", display: "swap" });
 
 const PAGE_URL = "https://www.wholesalehomes.com.au";
 

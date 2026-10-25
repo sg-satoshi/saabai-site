@@ -2,6 +2,7 @@
  * GET/PATCH /api/admin/requests/:id
  * PATCH: status, assignee, autoHandle/discussWithShane, internal note, reply to client
  */
+import { actorLabel } from "../../../../../lib/auth-acl";
 import { requireAdminSession } from "../../../../../lib/admin-guard";
 import {
   addTimelineEntry,
@@ -92,7 +93,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const next = await addTimelineEntry(id, {
         kind: "internal_note",
         authorKind: "admin",
-        authorName: typeof body.authorName === "string" ? body.authorName : "Admin",
+        authorName: await actorLabel(),
         body: body.internalNote.trim(),
         internal: true,
       });
@@ -109,7 +110,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         summary: `Request “${request.title}” → ${request.status}`,
         source: "request",
         requestId: request.id,
-        authorName: "Admin",
+        authorName: await actorLabel(),
       });
     }
     return Response.json({ request, statusChanged, emailed });

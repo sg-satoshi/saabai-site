@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
+import { NAP } from "@/lib/seo-entity";
+import { publicPageMeta } from "@/lib/seo-pages";
 import "../components/sb/sb.css";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Contact Saabai by email or book a call. Merrimac, working across the Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
-  alternates: { canonical: "https://www.saabai.ai/contact" },
-};
+export const metadata: Metadata = publicPageMeta.contact;
 
 const ROWS: [string, string][] = [
-  ["Email", "hello@saabai.ai"],
-  ["Address", "Merrimac"],
-  ["ABN", "71 889 082 572"],
+  ["Email", NAP.email],
+  ["Address", NAP.addressLine],
+  ["ABN", NAP.abn],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
 ];
@@ -40,7 +37,7 @@ export default function ContactPage() {
                 <p className="dim" style={{ fontSize: 13, marginBottom: 4 }}>{label}</p>
                 {label === "Email" ? (
                   <a
-                    href="mailto:hello@saabai.ai"
+                    href={`mailto:${NAP.email}`}
                     style={{ color: "var(--teal)", fontSize: 20, fontWeight: 600, textDecoration: "none", overflowWrap: "anywhere" }}
                   >
                     {value}

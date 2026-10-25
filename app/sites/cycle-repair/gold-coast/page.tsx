@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageShell } from "../PageShell";
 import { tiers } from "../services";
 import { googleRating, googleReviewCount } from "../reviews";
+import { AREA_SERVED, SUBURB_GROUPS } from "../seo";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -9,15 +10,15 @@ const jsonLd = {
   name: "Mobile bicycle repair and servicing, Gold Coast",
   serviceType: "Bicycle repair and servicing",
   provider: { "@type": "LocalBusiness", "@id": "https://stuscyclerepairs.com/#business", name: "Stu's Cycle Repairs" },
-  areaServed: { "@type": "Place", name: "Gold Coast, Queensland, Australia" },
+  areaServed: AREA_SERVED,
   url: "https://stuscyclerepairs.com/gold-coast",
 };
 
 const points = [
   { title: "He comes to you", body: "Stu arrives with a fully equipped pro-grade mobile workshop and services your bike at your home or office, while you work, train or rest. No wrestling bikes into car boots." },
-  { title: "All of the Gold Coast", body: "Stu services riders, professional and recreational, from all over the Gold Coast, with local knowledge of the terrain so your set-up suits Gold Coast conditions." },
+  { title: "From the Northern Rivers to Coomera and Ormeau", body: "Stu services riders, professional and recreational, from the Northern Rivers to Coomera and Ormeau. Local knowledge of the terrain means the set-up suits those roads." },
   { title: "Pick-up and drop-off for bigger jobs", body: "For complex rebuilds, wheel builds or boxed bike assembly, Stu collects your bike and returns it precision-tuned and test-ridden." },
-  { title: "E-bikes welcome", body: "Diagnostics and servicing for modern high-torque e-bike systems, including motors, drivetrains, brakes and firmware checks." },
+  { title: "E-bikes welcome", body: "Stu works on all e-bike brands. Diagnostics and servicing cover motors, drivetrains, brakes and firmware checks." },
 ];
 
 export default function GoldCoastPage() {
@@ -35,8 +36,8 @@ export default function GoldCoastPage() {
               Mobile bike mechanic on the Gold Coast
             </h1>
             <p className="mt-6 text-muted-foreground text-lg max-w-[56ch] text-pretty">
-              Stu brings 37 years of experience straight to your driveway. Servicing, repairs, wheel builds
-              and e-bike work across all of the Gold Coast, with no shop queues.
+              Stu brings 37 years of experience to your home or work, from the Northern Rivers to Coomera and Ormeau.
+              He covers servicing, repairs, wheel builds and e-bike work, with no shop queues.
             </p>
             <p className="mt-4 text-sm text-muted-foreground">
               Rated {googleRating} from {googleReviewCount} Google reviews.
@@ -72,6 +73,31 @@ export default function GoldCoastPage() {
           </div>
         </section>
 
+        <section className="py-20 border-b border-muted-line">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl md:text-4xl font-display font-semibold tracking-tighter mb-3">Suburbs Stu covers</h2>
+            <p className="text-muted-foreground text-sm mb-8 max-w-[62ch]">
+              Stu travels from the Northern Rivers to Coomera and Ormeau.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {SUBURB_GROUPS.map((group) => (
+                <div key={group.name} className="p-7 rounded-2xl bg-bg ring-1 ring-white/5">
+                  <h3 className="font-display font-semibold text-lg mb-3">{group.name}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{group.suburbs.join(", ")}.</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-8 text-sm text-muted-foreground">
+              Not on the list? Call <a href="tel:0405225721" className="text-brand hover:underline">0405 225 721</a>
+            </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              <Link href="/sites/cycle-repair/e-bike-repair-gold-coast" className="text-brand hover:underline">E-bike repair</Link>
+              {" · "}
+              <Link href="/sites/cycle-repair/puncture-repair-gold-coast" className="text-brand hover:underline">Puncture repair</Link>
+            </p>
+          </div>
+        </section>
+
         <section className="py-20 border-y border-muted-line bg-surface/20">
           <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-3">Service prices</h2>
@@ -98,8 +124,7 @@ export default function GoldCoastPage() {
             <div>
               <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-3">Service area</h2>
               <p className="text-muted-foreground leading-relaxed text-pretty">
-                Stu covers all of the Gold Coast, QLD, and also the Tweed Coast, NSW. Not sure if he
-                covers your suburb? Send an enquiry or give him a call and he will let you know.
+                Stu travels from the Northern Rivers to Coomera and Ormeau. If your suburb is not listed above, call 0405 225 721.
               </p>
               <p className="mt-4 text-sm text-muted-foreground">
                 More questions? Read the <Link href="/sites/cycle-repair/faq" className="text-brand hover:underline">FAQ</Link>.

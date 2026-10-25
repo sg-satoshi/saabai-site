@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import AnnouncementView from "./AnnouncementView";
+import { hidesAnnouncement } from "@/lib/focused-paths";
+import { showsSaabaiChrome } from "@/lib/client-site-surface";
 import { countShown, EMPTY_STATE, pickAnnouncement, type PublicAnnouncement, type VisitorState } from "@/lib/announce/core";
 
-const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$/i;
+const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$|^127(?:\.\d+){3}$/i;
 const storeKey = (a: { id: string; version: number }) => `sb_ann_${a.id}_v${a.version}`;
 /** Click, session count and last-counted session. Keyed by bar id and version, so editing a bar starts everyone fresh. */
 const stateKey = (a: { id: string; version: number }) => `sb_ann_st_${a.id}_v${a.version}`;
@@ -52,6 +54,7 @@ function beacon(type: string, exp: string) {
  */
 export default function AnnouncementBar() {
   const path = usePathname() || "/";
+  const [host, setHost] = useState("");
   const [list, setList] = useState<PublicAnnouncement[]>([]);
   const [, setTick] = useState(0);
   const [show, setShow] = useState(false);
@@ -62,8 +65,12 @@ export default function AnnouncementBar() {
   const ref = useRef<HTMLDivElement>(null);
   const seen = useRef<string>("");
 
+  useEffect(() => { setHost(window.location.hostname); }, []);
+
+  const chromeOn = !!host && OWNED_HOST.test(host) && showsSaabaiChrome(host, path);
+
   useEffect(() => {
-    if (!OWNED_HOST.test(window.location.hostname)) return;
+    if (!chromeOn) return;
     let dead = false;
     const t0 = Date.now();
     fetch("/api/announcement/active", { credentials: "same-origin", cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => {
@@ -74,7 +81,7 @@ export default function AnnouncementBar() {
       setList(all);
     }).catch(() => {});
     return () => { dead = true; };
-  }, []);
+  }, [chromeOn]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -84,7 +91,8 @@ export default function AnnouncementBar() {
   }, []);
 
   // One bar per page view: the highest priority one that this page, device and visitor history allow.
-  const ann = list.length ? pickAnnouncement(list, { path, mobile, session: sessionId(), state: (x) => readState(x, list.find((l) => l.id === x.id)) }) : null;
+  // Blueprint fact-find: no promo bar for paid customers (and no impression is counted).
+  const ann = chromeOn && list.length && !hidesAnnouncement(path) ? pickAnnouncement(list, { path, mobile, session: sessionId(), state: (x) => readState(x, list.find((l) => l.id === x.id)) }) : null;
   const annKey = ann ? `${ann.id}:${ann.version}` : "";
 
   useEffect(() => {

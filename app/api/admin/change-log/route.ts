@@ -1,4 +1,5 @@
 import { requireAdminSession } from "../../../../lib/admin-guard";
+import { actorLabel } from "../../../../lib/auth-acl";
 import { addChangeLogEntry, listChangeLog } from "../../../../lib/change-log";
 
 export const runtime = "nodejs";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
     siteName: siteName || siteId,
     summary,
     source: "manual",
-    authorName: typeof body.authorName === "string" ? body.authorName : "Admin",
+    authorName: await actorLabel(), // signed-in actor, never client-supplied
   });
   return Response.json({ entry }, { status: 201 });
 }

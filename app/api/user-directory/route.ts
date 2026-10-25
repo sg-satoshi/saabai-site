@@ -4,6 +4,7 @@ import { listDirectoryUsers, saveDirectoryUser, deleteDirectoryUser, getDirector
 import { loadClients } from "../../../lib/clients";
 import { getRedis } from "../../../lib/redis";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../lib/auth";
+import { sanitizeGrant, type AccessGrant } from "../../../lib/access";
 import { hashPassword, generateRandomPassword, validateNewPassword, withoutPassword } from "../../../lib/password";
 import { sendWelcomeEmail } from "../../../lib/account-emails";
 
@@ -18,6 +19,30 @@ async function requireAdmin(req: NextRequest): Promise<boolean> {
   if (!token) return false;
   const session = await verifySessionToken(token);
   return session ? isAdminSession(session.clientId) : false;
+}
+
+/** Signed-in full-admin id (for lock-out protection), or null. */
+async function adminId(req: NextRequest): Promise<string | null> {
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  const session = token ? await verifySessionToken(token) : null;
+  return session && (await isAdminSession(session.clientId)) ? session.clientId : null;
+}
+
+const ROLES = ["admin", "staff", "user"] as const;
+type Role = (typeof ROLES)[number];
+
+/**
+ * Turn the form's role + access block into stored fields. "admin" stays a legacy-shaped full admin (access only
+ * kept when an expiry or disable flag is set). "staff" = restricted: needs a viewer/custom grant.
+ */
+function resolveRoleAccess(role: Role, rawAccess: unknown): { role: Role; access?: AccessGrant } | { error: string } {
+  if (role === "user") return { role };
+  const g = sanitizeGrant(role === "staff" ? rawAccess : { ...(rawAccess as object), role: "admin" });
+  if (role === "staff") {
+    if (!g || g.role === "admin") return { error: "Staff accounts need a viewer or custom access level" };
+    return { role, access: g };
+  }
+  return { role, ...(g && (g.expiresAt || g.disabled) ? { access: { role: "admin" as const, kind: "internal" as const, ...(g.expiresAt ? { expiresAt: g.expiresAt } : {}), ...(g.disabled ? { disabled: true } : {}) } } : {}) };
 }
 
 const FORBIDDEN = () => Response.json({ error: "Forbidden" }, { status: 403 });
@@ -48,7 +73,10 @@ export async function POST(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId, sendInvite } = body;
+    const { name, email, password, role = "user", dashboardUrl = "/rex-dashboard", products, siteId, sendInvite, access } = body;
+    if (!ROLES.includes(role)) return Response.json({ error: "Invalid role" }, { status: 400 });
+    const ra = resolveRoleAccess(role, access);
+    if ("error" in ra) return Response.json({ error: ra.error }, { status: 400 });
 
     if (!name || !email || typeof email !== "string") {
       return Response.json({ error: "Name and email required" }, { status: 400 });
@@ -62,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     const existing = await getDirectoryUser(email);
     if (existing) {
-      return Response.json({ error: "User already exists" }, { status: 409 });
+      return Response.json({ error: "A user with this email already exists. Find them in the list and use Edit." }, { status: 409 });
     }
 
     const user = {
@@ -70,7 +98,8 @@ export async function POST(req: NextRequest) {
       name,
       email: email.toLowerCase(),
       password: await hashPassword(password || generateRandomPassword()),
-      role,
+      role: ra.role,
+      ...(ra.access ? { access: ra.access } : {}),
       dashboardUrl,
       ...(Array.isArray(products) ? { products } : {}),
       ...(typeof siteId === "string" && siteId ? { siteId: siteId.slice(0, 100) } : {}),
@@ -83,7 +112,7 @@ export async function POST(req: NextRequest) {
     // Welcome email never contains a password, only a set-password link.
     const inviteQueued = sendInvite === true || !password;
     if (inviteQueued) {
-      runAfterResponse(() => sendWelcomeEmail({ name: user.name, email: user.email, mentionMagicLink: user.role !== "admin" }));
+      runAfterResponse(() => sendWelcomeEmail({ name: user.name, email: user.email, mentionMagicLink: user.role === "user" }));
     }
     return Response.json({ success: true, inviteQueued, user: withoutPassword(user) });
   } catch (error) {
@@ -96,7 +125,7 @@ export async function PATCH(req: NextRequest) {
   if (!(await requireAdmin(req))) return FORBIDDEN();
   try {
     const body = await req.json();
-    const { originalEmail, name, email, password, role, dashboardUrl, products, siteId } = body;
+    const { originalEmail, name, email, password, role, dashboardUrl, products, siteId, access, disabled } = body;
     if (!originalEmail) return Response.json({ error: "originalEmail required" }, { status: 400 });
 
     const existing = await getDirectoryUser(originalEmail);
@@ -108,15 +137,39 @@ export async function PATCH(req: NextRequest) {
     }
 
     const newEmail = (email || originalEmail).toLowerCase();
+    // Role / access: recompute only when the caller sent them. "disabled" alone is the one-click enable/disable.
+    let nextRole: Role = existing.role;
+    let nextAccess: AccessGrant | undefined = existing.access;
+    if (role !== undefined || access !== undefined) {
+      const r: Role = role ?? existing.role;
+      if (!ROLES.includes(r)) return Response.json({ error: "Invalid role" }, { status: 400 });
+      const ra = resolveRoleAccess(r, access ?? existing.access);
+      if ("error" in ra) return Response.json({ error: ra.error }, { status: 400 });
+      nextRole = ra.role;
+      nextAccess = ra.access;
+    }
+    if (typeof disabled === "boolean" && nextRole !== "user") {
+      const base: AccessGrant = nextAccess ?? { role: "admin", kind: "internal" };
+      const { disabled: _d, ...rest } = base; void _d;
+      nextAccess = disabled ? { ...rest, disabled: true } : (rest.role === "admin" && !rest.expiresAt ? undefined : rest);
+    }
+    // Lock-out protection: you cannot demote, disable or expire your own account.
+    const me = await adminId(req);
+    if (me && me === existing.id) {
+      const stillFull = nextRole === "admin" && !(nextAccess?.disabled) && !nextAccess?.expiresAt;
+      if (!stillFull) return Response.json({ error: "You can't demote, disable or expire your own account" }, { status: 400 });
+    }
     const updated = {
       ...existing,
       name: name ?? existing.name,
       email: newEmail,
-      role: role ?? existing.role,
+      role: nextRole,
       dashboardUrl: dashboardUrl ?? existing.dashboardUrl,
       ...(Array.isArray(products) ? { products } : {}),
       ...(password ? { password: await hashPassword(password) } : {}),
-    };
+    } as typeof existing;
+    if (nextAccess) updated.access = nextAccess;
+    else delete updated.access;
     // siteId: string links the client to a website; "" unlinks; undefined leaves it.
     if (typeof siteId === "string") {
       if (siteId) updated.siteId = siteId.slice(0, 100);
@@ -142,6 +195,14 @@ export async function DELETE(req: NextRequest) {
   try {
     const { email } = await req.json();
     if (!email) return Response.json({ error: "Email required" }, { status: 400 });
+    const lower = String(email).trim().toLowerCase();
+    if (loadClients().some((c) => c.email.toLowerCase() === lower)) {
+      return Response.json({ error: "This user is set in the site settings and can't be deleted here" }, { status: 400 });
+    }
+    const target = await getDirectoryUser(email);
+    if (!target) return Response.json({ error: "User not found" }, { status: 404 });
+    const me = await adminId(req);
+    if (me && target && target.id === me) return Response.json({ error: "You can't delete your own account" }, { status: 400 });
 
     await deleteDirectoryUser(email);
     return Response.json({ success: true });

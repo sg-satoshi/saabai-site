@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ATTR_COOKIE, ATTR_MAX_AGE, mergeTouch, parseAttr, serialiseAttr, touchFrom } from "./lib/growth/attribution";
 import { Redis } from "@upstash/redis";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./lib/auth";
+import { verifySessionToken, COOKIE_NAME, resolveStaff } from "./lib/auth";
+import { ACL_HEADER, ADMIN_AUDIT_KEY, ADMIN_AUDIT_MAX, aclHeaderValue, gate } from "./lib/access";
 import { verifySession } from "./lib/portal-session";
 import { CHAT_API, chatGuard } from "./lib/chat-guard";
 import { lmmBrandAsset } from "./lib/lmm-brand";
@@ -10,6 +11,18 @@ import { getExperiments } from "./lib/exp/config";
 import { SLOTS } from "./lib/exp/seed";
 import { CHIEF_COOKIE, chiefAllowed, chiefAudit, chiefHostOk, verifyChiefToken } from "./lib/chief";
 import { OV_COOKIE, encodeOverlay, liveOverlays, overlayPathOk } from "./lib/exp/overlay";
+import {
+  NOINDEX_ROBOTS,
+  ROBOTS_REQUEST_HEADER,
+  STATIC_DOMAIN_MAP,
+  canonicalDomainsFromHostMap,
+  canonicalHostForSlug,
+  clientSiteRequestDecision,
+  isAdminSitePreview,
+  isSaabaiProductionHost,
+  parseSitesPath,
+  slugForHost,
+} from "./lib/client-site-surface";
 
 // Pages that declare a slot in code. Only these paths pay for an experiment lookup; every other page is untouched.
 const SLOT_PATHS = new Set(SLOTS.map((s) => s.path));
@@ -28,6 +41,7 @@ const PROTECTED_PAGES = [
   "/pulse",
   "/mission-control",
   "/atlas-memory-control",
+  "/lex",                // Lex research tool (signed-in Lex users only; the public sales page is /legal)
 ];
 
 // ── API authorization tiers ──────────────────────────────────────────────
@@ -42,6 +56,7 @@ const PUBLIC_API = [
   "/api/auth/login",
   "/api/chief-auth",         // Chief read-only QA login (own env password, rate limited, master host only)
   "/api/auth/logout",
+  "/api/auth/login-as/exit", // ends Login as; validates its own signed marker and the admin token inside
   "/api/auth/register",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
@@ -69,9 +84,7 @@ const PUBLIC_API = [
   "/api/bo-contact",
   "/api/lmm-contact",
   "/api/leadgen/chat",
-  // Public Lex tools on the /lex page (no session check in handlers today)
-  "/api/lex-extract",
-  "/api/lex-compare",
+  // /api/lex-extract and /api/lex-compare are NOT public: they fall through to the session check like the other Lex APIs.
   // Public lead / contact capture
   "/api/rex-leads",
   "/api/lex-leads",
@@ -148,9 +161,9 @@ const ADMIN_API = [
   "/api/growth",
   "/api/mission-control",
   "/api/lex-settings",
-  "/api/lex-review-queue",
-  "/api/lex-review-submit",
-  "/api/lex-review",
+  "/api/lex-review-queue",   // supervisor queue across firms: genuinely admin
+  // /api/lex-review and /api/lex-review-submit are NOT admin-only: signed-in Lex firm users run them,
+  // and each route checks the caller and the firm's daily cap (lib/lex-review-access).
   "/api/rex-woo-backfill",
   "/api/rex-price-test",
   "/api/rex-pipedrive-sync",
@@ -167,11 +180,7 @@ const ADMIN_API = [
 // Public endpoints that client websites on their own domains call today but
 // that stay session-protected on saabai.ai (e.g. the site chat widget, which
 // is also the Site Factory authoring chat). Only allowed on custom domains.
-// Custom domains mapped in code (used when not in the Redis domain map).
-// Keys are bare hosts without "www.".
-const STATIC_DOMAIN_MAP: Record<string, string> = {
-  "lifestylemoneymanagement.com.au": "lmm-site",
-};
+// Custom domains mapped in code live in lib/client-site-surface.ts (STATIC_DOMAIN_MAP).
 
 const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
@@ -217,6 +226,45 @@ async function apiAuth(req: NextRequest, pathname: string): Promise<NextResponse
   return res;
 }
 
+/** Append-only admin audit (Redis list, newest first, capped). Actor comes from the signed session, never the body. No bodies, no query strings, no secrets. */
+async function adminAudit(entry: Record<string, string | number | boolean | undefined>): Promise<void> {
+  try {
+    await redis.lpush(ADMIN_AUDIT_KEY, JSON.stringify({ t: new Date().toISOString(), ...entry }));
+    await redis.ltrim(ADMIN_AUDIT_KEY, 0, ADMIN_AUDIT_MAX - 1);
+  } catch { /* auditing never blocks */ }
+}
+
+type Staff = NonNullable<Awaited<ReturnType<typeof resolveStaff>>>;
+
+/**
+ * Central enforcement for signed-in staff on admin pages and ADMIN_API. Full admins pass unchanged (writes are audited).
+ * Restricted staff (viewer / per-area) are decided by lib/access.ts: deny by default, 2FA enrolment required first.
+ * Returns a response to short-circuit, or null to continue.
+ */
+async function staffGate(req: NextRequest, pathname: string, staff: Staff | null, kind: "api" | "page"): Promise<NextResponse | null> {
+  if (!staff) return null;
+  const method = req.method.toUpperCase();
+  const write = method !== "GET" && method !== "HEAD";
+  const full = staff.grant.role === "admin";
+  const enrolled = full ? true : !!(await redis.get(`admin2fa:${staff.id}`).catch(() => null));
+  const g = gate(staff.grant, method, pathname, enrolled);
+  const base = { actor: staff.id, email: staff.email, role: staff.grant.role, m: method, p: pathname.slice(0, 160), area: g.decision.area };
+  if (g.action === "allow") {
+    if (write) await adminAudit({ ...base, result: "allow" });
+    if (full) return null;
+    const headers = new Headers(req.headers);
+    headers.set(ACL_HEADER, await aclHeaderValue(staff.id));
+    return NextResponse.next({ request: { headers } });
+  }
+  if (kind === "api" || write) await adminAudit({ ...base, result: g.action === "enrol" ? "enrol-required" : `deny:${g.decision.reason}` });
+  if (g.action === "enrol") {
+    if (kind === "page") return NextResponse.redirect(new URL("/saabai-admin/security?enrol=required", req.url));
+    return NextResponse.json({ error: "Two-factor enrolment required" }, { status: 403 });
+  }
+  if (kind === "page") return NextResponse.redirect(new URL("/saabai-admin?denied=1", req.url));
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
 async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextResponse> {
   if (matches(pathname, PUBLIC_API)) return NextResponse.next();
 
@@ -224,8 +272,10 @@ async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextRes
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (matches(pathname, ADMIN_API) && !(await isAdminSession(session.clientId))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (matches(pathname, ADMIN_API)) {
+    const staff = await resolveStaff(session.clientId);
+    if (!staff) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return (await staffGate(req, pathname, staff, "api")) ?? NextResponse.next();
   }
   return NextResponse.next();
 }
@@ -243,8 +293,9 @@ export async function proxy(req: NextRequest) {
     !hostname.startsWith("127.")
   ) {
     const lookupHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+    // Coded sites and STATIC_DOMAIN_MAP resolve without Redis. Redis still covers factory sites.
     const slug =
-      STATIC_DOMAIN_MAP[lookupHost] ??
+      slugForHost(hostname) ??
       (await redis.hget<string>("saabai:domain-map", lookupHost));
     if (slug) {
       const url = req.nextUrl.clone();
@@ -328,6 +379,38 @@ export async function proxy(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
+
+  // Client sites on saabai.ai: 301 to the custom domain, or noindex when there is none.
+  // Preview hosts are noindex and are not redirected. Runs after the custom-domain
+  // rewrite above, so a request that is already on the client host cannot loop.
+  const sitesPath = parseSitesPath(pathname);
+  if (sitesPath) {
+    let extraDomains = canonicalDomainsFromHostMap(STATIC_DOMAIN_MAP);
+    if (isSaabaiProductionHost(hostname) && !canonicalHostForSlug(sitesPath.slug, undefined, extraDomains)) {
+      try {
+        const map = await redis.hgetall<Record<string, string>>("saabai:domain-map");
+        extraDomains = { ...extraDomains, ...canonicalDomainsFromHostMap(map) };
+      } catch { /* code registry only */ }
+    }
+    const decision = clientSiteRequestDecision({
+      host: hostname,
+      pathname,
+      search: req.nextUrl.search,
+      extraDomains,
+      adminPreview: isAdminSitePreview({
+        hasSessionCookie: !!req.cookies.get(COOKIE_NAME)?.value,
+        referer: req.headers.get("referer"),
+      }),
+    });
+    if (decision.action === "redirect") return NextResponse.redirect(decision.location, decision.status);
+    if (decision.action === "noindex") {
+      const headers = new Headers(req.headers);
+      headers.set(ROBOTS_REQUEST_HEADER, NOINDEX_ROBOTS);
+      const res = NextResponse.next({ request: { headers } });
+      res.headers.set("X-Robots-Tag", NOINDEX_ROBOTS);
+      return res;
+    }
+  }
 
   // ── Chief (AI overseer) read-only session: hard allowlist, everything else refused ──
   const chiefCookie = req.cookies.get(CHIEF_COOKIE)?.value;
@@ -434,12 +517,21 @@ async function pageRoute(req: NextRequest, pathname: string): Promise<NextRespon
   if (!matches(pathname, PROTECTED_PAGES)) return NextResponse.next();
 
   const session = await getSession(req);
-  if (session) return NextResponse.next();
+  if (session) {
+    // Staff on admin pages go through the central access gate (full admins pass; restricted roles are deny-by-default).
+    if (matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"])) {
+      const staff = await resolveStaff(session.clientId);
+      const r = await staffGate(req, pathname, staff, "page");
+      if (r) return r;
+    }
+    return NextResponse.next();
+  }
 
   // Admin areas use the separate admin sign-in; everything else uses /login.
   const isAdminArea = matches(pathname, ["/saabai-admin", "/admin", "/mission-control", "/atlas-memory-control", "/edge", "/pulse"]);
   const login = new URL(isAdminArea ? "/saabai-admin/login" : "/login", req.url);
-  login.searchParams.set("redirect", pathname);
+  // Keep the query string so e.g. /lex?q=... lands back in the same place after sign-in (login runs it through safeRedirect).
+  login.searchParams.set("redirect", pathname + req.nextUrl.search);
   return NextResponse.redirect(login);
 }
 

@@ -105,37 +105,7 @@ function QuoteBuilder() {
     "w-full bg-bg ring-1 ring-white/10 focus:ring-brand rounded-lg px-3.5 py-2.5 text-sm outline-none transition-shadow placeholder:text-muted-foreground/60";
 
   return (
-    <div className="min-h-screen bg-bg text-fg font-sans">
-      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-muted-line">
-        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/sites/cycle-repair" className="flex items-center">
-            <Logo width={160} height={68} className="h-[58px] sm:h-[68px] w-auto" />
-          </Link>
-          <a
-            href="tel:0405225721"
-            className="bg-brand text-brand-foreground px-4 py-2 rounded-md font-semibold text-xs tracking-wide hover:bg-brand/90 transition-colors"
-          >
-            0405 225 721
-          </a>
-        </nav>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-14 pb-32">
-        <Link
-          href="/sites/cycle-repair"
-          className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-brand transition-colors"
-        >
-          Back to services
-        </Link>
-        <h1 className="mt-5 text-4xl md:text-5xl font-display font-semibold tracking-tighter max-w-[20ch]">
-          Build your service, then send it to Stu
-        </h1>
-        <p className="mt-4 text-muted-foreground max-w-[60ch] text-pretty">
-          Tick everything you want done. The running total is an approximate labour
-          estimate, parts are not included and anything marked &quot;from&quot; is confirmed once
-          Stu sees the bike.
-        </p>
-
+    <>
         {sent ? (
           <div className="mt-12 max-w-xl rounded-2xl bg-surface ring-1 ring-white/10 p-8">
             <h2 className="text-xs font-bold tracking-[0.22em] text-brand uppercase mb-4">
@@ -351,6 +321,48 @@ function QuoteBuilder() {
             </aside>
           </form>
         )}
+    </>
+  );
+}
+
+export default function QuotePage() {
+  return (
+    <div className="min-h-screen bg-bg text-fg font-sans">
+      <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-muted-line">
+        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/sites/cycle-repair" className="flex items-center">
+            <Logo width={160} height={68} className="h-[58px] sm:h-[68px] w-auto" />
+          </Link>
+          <a
+            href="tel:0405225721"
+            className="bg-brand text-brand-foreground px-4 py-2 rounded-md font-semibold text-xs tracking-wide hover:bg-brand/90 transition-colors"
+          >
+            0405 225 721
+          </a>
+        </nav>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-14 pb-32">
+        <Link
+          href="/sites/cycle-repair"
+          className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-brand transition-colors"
+        >
+          Back to services
+        </Link>
+        <h1 className="mt-5 text-4xl md:text-5xl font-display font-semibold tracking-tighter max-w-[20ch]">
+          Get a bike repair quote
+        </h1>
+        <p className="mt-4 text-muted-foreground max-w-[60ch] text-pretty">
+          Build your service, then send it to Stu.
+        </p>
+        <p className="mt-4 text-muted-foreground max-w-[60ch] text-pretty">
+          Tick everything you want done. The running total is an approximate labour
+          estimate, parts are not included and anything marked &quot;from&quot; is confirmed once
+          Stu sees the bike.
+        </p>
+        <Suspense fallback={null}>
+          <QuoteBuilder />
+        </Suspense>
       </main>
     </div>
   );
@@ -402,13 +414,5 @@ function ChecklistSection({
         })}
       </div>
     </section>
-  );
-}
-
-export default function QuotePage() {
-  return (
-    <Suspense fallback={null}>
-      <QuoteBuilder />
-    </Suspense>
   );
 }

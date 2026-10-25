@@ -1,21 +1,9 @@
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Case Study: Rex Plastics — AI Sales Agent Recovers 60% of Sales Day",
-  description:
-    "How a national plastics supplier deployed an AI sales agent (Rex) and recovered 60% of their sales team's day: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
-  alternates: {
-    canonical: "https://www.saabai.ai/case-studies/rex-plastics-online",
-  },
-  openGraph: {
-    url: "https://www.saabai.ai/case-studies/rex-plastics-online",
-    title: "Case Study: Rex Plastics — AI Sales Agent Recovers 60% of Sales Day | Saabai",
-    description:
-      "How a national plastics supplier deployed an AI sales agent and recovered 60% of their sales day: 344 leads in 30 days, $218K quoted pipeline.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.rexCase;
 
 const stats = [
   { value: "344", label: "Leads in 30 days" },

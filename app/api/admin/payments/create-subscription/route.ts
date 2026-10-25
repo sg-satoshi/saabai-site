@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "../../../../../lib/stripe";
 import { isAdminRequest } from "../../../../../lib/product-stripe";
+import { markUsed } from "../../../../../lib/coupons/once";
 import { resolveCouponForManual } from "../../../../../lib/sell";
 import { classifySubscription } from "../../../../../lib/subscription-classify";
 
@@ -137,9 +138,11 @@ export async function POST(req: NextRequest) {
     // Validate an optional coupon and apply it natively to the subscription.
     let appliedCode: string | null = null;
     const subDiscounts: { promotion_code: string }[] = [];
+    let onceUse: string | null = null; // promo id when the one-per-customer rule applies
     if (promotionCode) {
-      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode);
+      const { coupon, error: couponErr } = await resolveCouponForManual(stripe, promotionCode, customerEmail);
       if (couponErr) return NextResponse.json({ error: couponErr }, { status: 400 });
+      if (coupon?.oncePerCustomer) onceUse = coupon.promotionCodeId;
       if (coupon) {
         subDiscounts.push({ promotion_code: coupon.promotionCodeId });
         appliedCode = coupon.code;
@@ -203,6 +206,7 @@ export async function POST(req: NextRequest) {
       setupIntentClientSecret = (pendingSetup as unknown as Record<string, string | null>).client_secret;
     }
 
+    if (onceUse) await markUsed(onceUse, customerEmail, "admin:create-subscription:" + Date.now());
     return NextResponse.json({
       subscriptionId: subscription.id,
       clientSecret,

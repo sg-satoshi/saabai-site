@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "Insights, AI for Australian Small Businesses",
-  description:
-    "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
-  alternates: { canonical: "https://www.saabai.ai/insights" },
-  openGraph: {
-    url: "https://www.saabai.ai/insights",
-    title: "Insights, AI for Australian Small Businesses | Saabai",
-    description:
-      "Real patterns from building websites, AI agents and automation for Australian small businesses, from Saabai on the Gold Coast.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.insights;
 
 const articles = [
   {

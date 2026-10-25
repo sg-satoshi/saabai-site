@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { isFocusedFormPath } from "@/lib/focused-paths";
 
 /**
  * Site-wide async feedback for buttons. When a click on a button/link starts a
@@ -43,7 +44,8 @@ export default function ButtonFeedback() {
       const method = (init?.method || (typeof input === "object" && "method" in input ? input.method : "GET")).toUpperCase();
       const own = typeof url === "string" && (url.startsWith("/") || url.startsWith(location.origin));
       const el = own && last && Date.now() - last.at < 400 && !/chat|stream|track|analytics|events?\b/i.test(url) ? last.el : null;
-      if (!el || !el.isConnected) return orig(input, init);
+      // The fact-find form shows its own saving state; no global toasts over its buttons.
+      if (!el || !el.isConnected || isFocusedFormPath(location.pathname)) return orig(input, init);
       last = null;
       const was = el.getAttribute("aria-busy");
       el.setAttribute("aria-busy", "true");

@@ -2,8 +2,14 @@ export type Review = { name: string; stars: number; date: string; text: string }
 
 export const googleRating = 4.8;
 export const googleReviewCount = 28;
-export const googleMapsUrl =
-  "https://www.google.com/maps/place/Stus+Cycle+Repairs/@-28.1560182,153.4765945,17z/data=!3m1!4b1!4m6!3m5!1s0x6b910205109b3c31:0xeb8e6ae34fc4af37!8m2!3d-28.1560182!4d153.4765945!16s%2Fg%2F1v_sndg3?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D";
+
+/**
+ * Google Business Profile reviews link.
+ * The kgmid (/g/1v_sndg3) and listing id come from the Maps place URL already
+ * used by the reviews carousel. The old latitude/longitude pin is left out.
+ */
+export const googleBusinessUrl =
+  "https://www.google.com/search?kgmid=/g/1v_sndg3&q=Stu%27s+Cycle+Repairs#lrd=0x6b910205109b3c31:0xeb8e6ae34fc4af37,1,,,,";
 
 // Verbatim from Stu's Google Business listing. Do not edit text.
 export const reviews: Review[] = [

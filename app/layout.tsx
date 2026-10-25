@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import ConditionalWidgets from "./components/ConditionalWidgets";
 import ButtonFeedback from "./components/ui/ButtonFeedback";
+import LoginAsBanner from "./components/LoginAsBanner";
 import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
 import GoogleAnalytics from "./components/GoogleAnalytics";
@@ -10,15 +11,9 @@ import ExpOverlay from "./components/exp/ExpOverlay";
 import AnnouncementBar from "./components/AnnouncementBar";
 import { ANTI_FLICKER_SCRIPT } from "@/lib/exp/overlay";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = localFont({ src: "./fonts/geist-latin-wght-normal.woff2", weight: "100 900", variable: "--font-geist-sans" });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistMono = localFont({ src: "./fonts/geist-mono-latin-wght-normal.woff2", weight: "100 900", variable: "--font-geist-mono" });
 
 export const viewport: Viewport = {
   themeColor: "#0e0c2e",
@@ -35,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | Saabai",
   },
   description:
-    "Saabai builds, hosts and manages small business websites on care plans from $100/month, and the Saabai Blueprint AI audit (from $497) shows exactly where AI saves you hours and dollars.",
+    "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
   keywords: [
     "Saabai",
     "Saabai Blueprint",
@@ -67,7 +62,7 @@ export const metadata: Metadata = {
     siteName: "Saabai",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
+      "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
     images: [
       {
         url: "/og-image.png",
@@ -81,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Websites and AI Systems for Small Businesses | Saabai",
     description:
-      "Website care plans from $100/month and the Saabai Blueprint AI audit from $497. Gold Coast, Brisbane and Queensland, with clients Australia-wide online.",
+      "Saabai, based in Merrimac on the Gold Coast, builds and hosts small business websites on care plans from $100 a month. The Blueprint AI audit from $497 shows where AI saves hours and dollars.",
     images: ["/og-image.png"],
   },
   alternates: {
@@ -112,6 +107,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SaabaiJsonLd />
+        <LoginAsBanner />
         <ButtonFeedback />
         {children}
         <ConditionalWidgets />

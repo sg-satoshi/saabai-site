@@ -3,12 +3,13 @@
  * restricts /api/admin/* to the SAABAI_ADMIN_ID session).
  */
 import { cookies } from "next/headers";
-import { verifySessionToken, COOKIE_NAME, isAdminSession } from "./auth";
+import { verifySessionToken, COOKIE_NAME, } from "./auth";
+import { isAdminOrGranted } from "./auth-acl";
 
 export async function requireAdminSession(): Promise<boolean> {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return false;
   const session = await verifySessionToken(token);
   if (!session) return false;
-  return isAdminSession(session.clientId);
+  return isAdminOrGranted(session.clientId);
 }

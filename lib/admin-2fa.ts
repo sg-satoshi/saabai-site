@@ -94,6 +94,11 @@ export async function isTwoFactorEnabled(adminId: string): Promise<boolean> {
   return !!(await getRecord(adminId));
 }
 
+/** True when a TOTP record exists. Ignores the SAABAI_ADMIN_2FA_DISABLE break-glass (restricted accounts never skip 2FA). */
+export async function isTotpEnrolled(adminId: string): Promise<boolean> {
+  return !!(await getRecord(adminId));
+}
+
 export async function twoFactorStatus(adminId: string): Promise<{ enabled: boolean; enabledAt?: string; backupLeft?: number; envDisabled: boolean }> {
   const rec = await getRecord(adminId);
   return { enabled: !!rec, enabledAt: rec?.enabledAt, backupLeft: rec?.backup.length, envDisabled: twoFactorDisabledByEnv() };

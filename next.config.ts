@@ -3,13 +3,35 @@ import type { NextConfig } from "next";
 // City-page redirects are for saabai.ai only; client sites on their own domains must not inherit them.
 const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com)" }];
 
+// Lex routes that run the open-source name model.
+const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-extract", "/api/lex-threads", "/api/lex-settings", "/api/lex-ner-health"];
+
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["mammoth", "pdf-parse"],
+  serverExternalPackages: ["mammoth", "pdf-parse", "@huggingface/transformers", "onnxruntime-node", "sharp"],
   // Members-only Wholesale files live outside public/ and are read from disk
   // by this route, so make sure they're bundled with it.
   outputFileTracingIncludes: {
     "/api/wholesale-files/[file]": ["./private/wholesale-homes/**/*"],
+    // Lex privacy name model (open source, runs inside these functions; fetched at build time).
+    // The ONNX runtime loads libonnxruntime.so.1 natively, which file tracing cannot see.
+    ...Object.fromEntries(LEX_NER_ROUTES.map((r) => [r, [
+      "./models/**/*",
+      "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime.so.1",
+      "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime_providers_shared.so",
+    ]])),
   },
+  // The name model runs on CPU: keep GPU builds and the browser runtime out of the functions.
+  outputFileTracingExcludes: Object.fromEntries(LEX_NER_ROUTES.map((r) => [r, [
+    "./node_modules/onnxruntime-node/bin/**/libonnxruntime_providers_cuda.so",
+    "./node_modules/onnxruntime-node/bin/**/libonnxruntime_providers_tensorrt.so",
+    "./node_modules/onnxruntime-node/bin/napi-v3/linux/x64/libonnxruntime.so.1.21.0",
+    "./node_modules/onnxruntime-node/bin/napi-v3/darwin/**",
+    "./node_modules/onnxruntime-node/bin/napi-v3/win32/**",
+    "./node_modules/onnxruntime-node/bin/napi-v3/linux/arm64/**",
+    "./node_modules/onnxruntime-web/**",
+    "./node_modules/@img/sharp-libvips-linuxmusl-x64/**",
+    "./node_modules/@img/sharp-linuxmusl-x64/**",
+  ]])),
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     const embed = [{ source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" }] }];

@@ -1,5 +1,11 @@
-import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { matterPartiesFor } from "../../../lib/lex-privacy/matter-parties";
+import { parsePartiesText } from "../../../lib/lex-privacy/parties";
+import { gateReview, type LexReviewActor } from "../../../lib/lex-review-access";
+import { ReviewReportSchema, normaliseReview, parseReviewOutput } from "../../../lib/lex-review-parse";
+import { LexPrivacyError, PRIVACY_SYSTEM_NOTE, privacyFailResponse } from "../../../lib/lex-privacy/mask";
+import { LexGateway } from "../../../lib/lex-privacy/gateway";
+import { lexFirmFromActor } from "../../../lib/lex-privacy/firm";
+import { logChatTurn } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -60,6 +66,8 @@ type ReviewRequest = {
   actingFor?: string;
   jurisdiction: string;
   fileName?: string;
+  /** Matter the review belongs to: its known parties are always masked. */
+  matterId?: string;
 };
 
 function buildUserPrompt(body: ReviewRequest): string {
@@ -79,11 +87,11 @@ function buildUserPrompt(body: ReviewRequest): string {
 Review this document as ${actingFor ?? "your client"}'s solicitor in ${jurisdiction}.
 
 Analyse across these axes:
-1. RISK FLAGS — clauses that create unfavorable exposure for your client (unlimited liability, one-sided indemnities, unilateral variation rights, unusual termination triggers, IP assignment, auto-renewal traps)
-2. MISSING CLAUSES — clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.) — tailor this to the identified document type
-3. LEGISLATION CONFLICTS — clauses that may conflict with Australian legislation relevant to this document type (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, Family Law Act, etc.)
-4. MARKET POSITION — terms that are unusually aggressive or non-standard for this document type
-5. NEGOTIATION — for each critical/moderate finding, suggest a redline (replacement clause language)
+1. RISK FLAGS: clauses that create unfavorable exposure for your client (unlimited liability, one-sided indemnities, unilateral variation rights, unusual termination triggers, IP assignment, auto-renewal traps)
+2. MISSING CLAUSES: clauses that should be present but are absent (limitation of liability, dispute resolution, IP ownership, restraint of trade, force majeure, confidentiality, etc.): tailor this to the identified document type
+3. LEGISLATION CONFLICTS: clauses that may conflict with Australian legislation relevant to this document type (ACL, Fair Work Act, Corporations Act, Residential Tenancies Acts, Copyright Act 1968, Family Law Act, etc.)
+4. MARKET POSITION: terms that are unusually aggressive or non-standard for this document type
+5. NEGOTIATION: for each critical/moderate finding, suggest a redline (replacement clause language)
 
 Return a JSON ReviewReport object.`;
   } else {
@@ -92,11 +100,11 @@ Return a JSON ReviewReport object.`;
 Review this document prepared for a client in ${jurisdiction} as outgoing work product from a law firm.
 
 Analyse across these axes:
-1. ACCURACY — are legal citations correct? Are case references valid? Are legislation section numbers accurate for the identified document type?
-2. COMPLETENESS — has the lawyer addressed all material issues relevant to this document type? What has been missed?
-3. COMPLIANCE — does this comply with Legal Profession Uniform Law obligations (costs disclosure, conflict disclosure)?
-4. TONE — is the language professionally appropriate? Too aggressive? Too tentative?
-5. RISK TO FIRM — anything that could expose the firm to professional indemnity liability?
+1. ACCURACY: are legal citations correct? Are case references valid? Are legislation section numbers accurate for the identified document type?
+2. COMPLETENESS: has the lawyer addressed all material issues relevant to this document type? What has been missed?
+3. COMPLIANCE: does this comply with Legal Profession Uniform Law obligations (costs disclosure, conflict disclosure)?
+4. TONE: is the language professionally appropriate? Too aggressive? Too tentative?
+5. RISK TO FIRM: anything that could expose the firm to professional indemnity liability?
 
 Return a JSON ReviewReport object.`;
   }
@@ -113,7 +121,19 @@ The overallScore should be 0-100 where 0 = perfectly clean, 100 = critical issue
 Generate at least 4 findings and check carefully for missing clauses.`;
 }
 
+/**
+ * Lex firm users and admins only (lib/lex-review-access), with a per-firm daily cap.
+ * A request that fails is refunded so it doesn't use up the firm's allowance.
+ */
 export async function POST(request: Request): Promise<Response> {
+  const gate = await gateReview(request, "review");
+  if (!gate.ok) return gate.response;
+  const res = await runReview(request, gate.actor);
+  if (!res.ok) await gate.refund();
+  return res;
+}
+
+async function runReview(request: Request, actor: LexReviewActor): Promise<Response> {
   try {
     const body: ReviewRequest = await request.json();
 
@@ -129,26 +149,64 @@ export async function POST(request: Request): Promise<Response> {
     const systemPrompt =
       "You are Lex, an expert AI legal document reviewer specialising in Australian law.\n" +
       "You review documents with the precision of a senior partner conducting a pre-execution review.\n" +
-      "You MUST respond with valid JSON only — no prose, no markdown, no code fences. Raw JSON object only.";
+      "No em dashes and no spaced double hyphen. Use a comma, a colon, or a full stop." + PRIVACY_SYSTEM_NOTE;
 
-    const userPrompt = buildUserPrompt(body);
-
-    const { text } = await generateText({
-      model: anthropic("claude-sonnet-4-6"),
-      system: systemPrompt,
-      prompt: userPrompt,
-      maxOutputTokens: 4000,
-    });
+    // Privacy: always on. Uploaded document text and party names are masked before the model sees them. Fail closed.
+    // The matter's known parties, plus the party the firm acts for, are masked in every variant.
+    const parties = [...(await matterPartiesFor(request, body.matterId)), ...(typeof actingFor === "string" ? parsePartiesText(actingFor) : [])];
+    const gw = await LexGateway.open({ route: "lex-review", firm: lexFirmFromActor(actor), model: { kind: "saabai", modelId: "claude-sonnet-4-6" }, parties });
+    if (!gw) return privacyFailResponse();
+    // Open-source name model, inside this function (no external API). Best effort: patterns and matter parties always run.
+    await gw.scanNames([documentText, actingFor]);
+    const masker = gw.masker;
+    let userPrompt: string;
+    try {
+      userPrompt = buildUserPrompt({
+        ...body,
+        documentText: masker.mask(String(documentText)),
+        actingFor: actingFor ? masker.mask(String(actingFor)) : actingFor,
+      });
+    } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
+      throw err;
+    }
 
     let report: ReviewReport;
     try {
-      report = JSON.parse(text);
-    } catch {
-      return Response.json(
-        { error: "Analysis failed — could not parse review output" },
-        { status: 500 }
-      );
+      const { object, usage } = await gw.generateObject<Parameters<typeof normaliseReview>[0]>({
+        schema: ReviewReportSchema,
+        schemaName: "ReviewReport",
+        system: systemPrompt,
+        prompt: userPrompt,
+        // A full review (findings, missing clauses, redlines) was truncated at 4000 and then failed JSON.parse.
+        maxOutputTokens: 8000,
+        maxRetries: 1,
+        // jsonTool, not native outputFormat: outputFormat rejects schemas like this one.
+        providerOptions: { anthropic: { structuredOutputMode: "jsonTool" } },
+      });
+      report = normaliseReview(object);
+      logChatTurn({
+        bot: "lex-review",
+        model: gw.modelId,
+        usage: usage as Parameters<typeof logChatTurn>[0]["usage"],
+        userText: userPrompt,
+        assistantText: masker.mask(String(report.summary ?? "")),
+      });
+    } catch (err) {
+      if (err instanceof LexPrivacyError) return privacyFailResponse();
+      const text = (err as { text?: string })?.text;
+      if (typeof text === "string" && text.includes("{")) {
+        try { report = normaliseReview(parseReviewOutput(text)); }
+        catch {
+          return Response.json({ error: "Analysis failed, could not parse review output" }, { status: 500 });
+        }
+      } else {
+        console.error("[lex-review] parse", err);
+        return Response.json({ error: "Analysis failed, could not parse review output" }, { status: 500 });
+      }
     }
+
+    report = masker.rehydrateDeep(report);
 
     // Ensure top-level metadata is populated from the request in case the model omits them
     report.documentType = report.documentType ?? documentType;
@@ -158,7 +216,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json(report);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return Response.json({ error: message }, { status: 500 });
+    console.error("[lex-review]", err);
+    return Response.json({ error: "review_failed" }, { status: 500 });
   }
 }

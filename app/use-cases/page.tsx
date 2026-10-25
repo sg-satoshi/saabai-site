@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
+import { publicPageMeta } from "@/lib/seo-pages";
 
-export const metadata: Metadata = {
-  title: "AI Automation Use Cases for Small Businesses",
-  description:
-    "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
-  alternates: { canonical: "https://www.saabai.ai/use-cases" },
-  openGraph: {
-    url: "https://www.saabai.ai/use-cases",
-    title: "AI Automation Use Cases for Small Businesses | Saabai",
-    description:
-      "Practical examples of AI and automation for Australian small businesses: AI enquiry agents, instant quoting, follow-up and admin. Start with a Blueprint AI audit from $497.",
-  },
-};
+export const metadata: Metadata = publicPageMeta.useCases;
 
 const useCases = [
   {

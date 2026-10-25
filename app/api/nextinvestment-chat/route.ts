@@ -2,6 +2,7 @@ import { getDefaultModel } from "../../../lib/chat-config";
 import { generateText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { logAuditEvent } from "../../../lib/lex-audit";
+import { lastUserText, logChatTurn, modelIdFrom } from "../../../lib/chat-log";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -73,6 +74,14 @@ export async function POST(req: Request) {
       model,
       system: SYSTEM_PROMPT,
       messages: chatMessages,
+    });
+    logChatTurn({
+      bot: "nextinvestment",
+      siteId: "nextinvestment",
+      model: modelIdFrom(model),
+      usage: result.totalUsage ?? result.usage,
+      userText: lastUserText(chatMessages),
+      assistantText: result.text,
     });
 
     return new Response(JSON.stringify({ content: result.text }), {

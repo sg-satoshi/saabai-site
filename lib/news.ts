@@ -10,16 +10,34 @@ export interface NewsItem {
   authorName?: string;
 }
 
-function decodeHtml(str: string): string {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .trim();
+const NAMED: Record<string, string> = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+  rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201D", ldquo: "\u201C", hellip: "\u2026",
+  ndash: "-", mdash: "-", middot: "\u00B7", copy: "\u00A9", reg: "\u00AE", trade: "\u2122",
+};
+
+function decodeOnce(str: string): string {
+  return str.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, ent: string) => {
+    if (ent[0] === "#") {
+      const code = ent[1] === "x" || ent[1] === "X" ? parseInt(ent.slice(2), 16) : parseInt(ent.slice(1), 10);
+      if (!Number.isFinite(code) || code <= 0 || code > 0x10ffff) return m;
+      // Dashes become plain hyphens: no en or em dashes on Saabai pages.
+      if (code === 0x2013 || code === 0x2014) return "-";
+      return String.fromCodePoint(code);
+    }
+    return NAMED[ent.toLowerCase()] ?? m;
+  });
+}
+
+/** Decodes feed text: CDATA, named, decimal and hex entities, including double encoded ones (&amp;#8217;). */
+export function decodeHtml(str: string): string {
+  let out = str.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1");
+  for (let i = 0; i < 3; i++) {
+    const next = decodeOnce(out);
+    if (next === out) break;
+    out = next;
+  }
+  return out.replace(/[\u2013\u2014]/g, "-").replace(/<[^>]+>/g, "").trim();
 }
 
 function parseRss(xml: string, sourceName: string, limit = 5): NewsItem[] {
@@ -47,9 +65,11 @@ function parseRss(xml: string, sourceName: string, limit = 5): NewsItem[] {
 
 export async function fetchRss(url: string, sourceName: string, limit = 5): Promise<NewsItem[]> {
   try {
+    // Hard cap so one slow feed can never stall the build or a revalidation.
     const res = await fetch(url, {
       next: { revalidate: 1800 },
       headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
     const xml = await res.text();
@@ -209,9 +229,9 @@ async function fetchXAccount(handle: string, authorName: string, limit = 3): Pro
         headers: { "User-Agent": "saabai-news/1.0 (https://saabai.ai)" },
         signal: controller.signal,
       });
-      clearTimeout(timeout);
-      if (!res.ok) continue;
+      if (!res.ok) { clearTimeout(timeout); continue; }
       const xml = await res.text();
+      clearTimeout(timeout);
       const items = parseXRss(xml, handle, authorName, limit);
       if (items.length > 0) return items;
     } catch {

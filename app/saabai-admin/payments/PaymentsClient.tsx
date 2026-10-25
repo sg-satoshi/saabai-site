@@ -5,6 +5,7 @@ import AdminShell from "../AdminSidebar";
 import { CardElement, useStripe, useElements, Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import InvoiceTracker from "./InvoiceTracker";
+import CouponPicker from "./CouponPicker";
 import type { PaymentRecord } from "../../api/admin/payments/history/route";
 
 // ── Theme ───────────────────────────────────────────────────────────────────
@@ -511,6 +512,7 @@ function ChargeCardForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       <Field label="Coupon code (optional)">
+        <CouponPicker value={coupon} onPick={code => { setCoupon(code); setCouponInfo(null); setCouponMsg(null); }} border={C.border} bg={C.card} text={C.text} />
         <div style={{ display: "flex", gap: 8 }}>
           <input
             value={coupon}
@@ -768,6 +770,7 @@ function SendInvoiceForm({ onSuccess }: { onSuccess: () => void }) {
       </Field>
 
       <Field label="Coupon code (optional)">
+        <CouponPicker value={coupon} onPick={code => { setCoupon(code); setCouponInfo(null); setCouponMsg(null); }} border={C.border} bg={C.card} text={C.text} />
         <div style={{ display: "flex", gap: 8 }}>
           <input
             value={coupon}

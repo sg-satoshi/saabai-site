@@ -25,17 +25,31 @@ import type { LanguageModel } from "ai";
 
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 
-function resolveModel(envKey: string, fallback: string): LanguageModel {
-  const value = process.env[envKey] ?? fallback;
+/**
+ * Parse a "provider:model-id" env value. Trims spaces, tabs and newlines
+ * (a value pasted with a trailing newline once broke Mia in production:
+ * xAI got "grok-3-mini\n" and answered 404). Blank values use the fallback.
+ * No provider prefix means Anthropic.
+ */
+export function parseModelSpec(raw: string | undefined, fallback: string): { provider: string; modelId: string; value: string } {
+  const trimmed = (raw ?? "").trim();
+  const value = trimmed || fallback.trim();
   const sep = value.indexOf(":");
+  if (sep === -1) return { provider: "anthropic", modelId: value, value };
+  return { provider: value.slice(0, sep).trim().toLowerCase(), modelId: value.slice(sep + 1).trim(), value };
+}
 
-  if (sep === -1) {
-    // No provider prefix — assume Anthropic
-    return anthropic(value);
-  }
+function resolveModel(envKey: string, fallback: string): LanguageModel {
+  return modelFromSpec(process.env[envKey] ?? "", envKey, fallback);
+}
 
-  const provider = value.slice(0, sep);
-  const modelId = value.slice(sep + 1);
+/**
+ * Build a model from a "provider:model-id" value (same rules as the env vars above).
+ * `label` only appears in error messages, so a bad value names where it came from.
+ */
+export function modelFromSpec(raw: string, label: string, fallback = raw): LanguageModel {
+  const envKey = label;
+  const { provider, modelId, value } = parseModelSpec(raw, fallback);
 
   switch (provider) {
     case "anthropic":
