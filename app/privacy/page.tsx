@@ -36,7 +36,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "8. Overseas disclosure",
-    body: "If you use Talk to our AI on saabai.ai, xAI processes your voice in the United States so the assistant can reply. We store a text transcript with the time and length of the call for 30 days, not the audio and not your IP address (Australian Privacy Principle 8).",
+    body: "If you use Talk to Lachie on saabai.ai, xAI processes your voice in the United States so the assistant can reply. We store a text transcript with the time and length of the call for 30 days, not the audio and not your IP address (Australian Privacy Principle 8).",
   },
 ];
 

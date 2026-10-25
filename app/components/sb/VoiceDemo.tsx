@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   formatVoiceClock,
+  VOICE_AGENT_NAME,
   VOICE_BOOKING_URL,
   VOICE_CONTACT_PATH,
   VOICE_COPY,
@@ -233,7 +234,7 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
       <div className="voice-panel" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="voice-kicker">Saabai</div>
         <h3 id={titleId}>
-          {phase === "consent" ? VOICE_COPY.consentTitle : agentName || VOICE_COPY.button}
+          {phase === "consent" ? VOICE_COPY.consentTitle : agentName || VOICE_AGENT_NAME}
         </h3>
 
         {phase === "consent" ? (
@@ -283,9 +284,12 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
   return (
     <>
       {ready ? (
-        <button type="button" className="btn ghost" onClick={() => setPhase("consent")} disabled={phase !== "idle"}>
-          {VOICE_COPY.button}
-        </button>
+        <span className="voice-launch">
+          <button type="button" className="btn ghost" onClick={() => setPhase("consent")} disabled={phase !== "idle"}>
+            {VOICE_COPY.button}
+          </button>
+          <p className="voice-support">{VOICE_COPY.support}</p>
+        </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>
       )}

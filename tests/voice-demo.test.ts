@@ -10,8 +10,10 @@ import { formatAud, WEBSITE_TIERS } from "../lib/website-tiers";
 import {
   formatVoiceClock,
   maxSessionUsd,
+  VOICE_AGENT_FULL_NAME,
   VOICE_AGENT_NAME,
   VOICE_COPY,
+  VOICE_NAME_SAY,
   VOICE_ID,
   VOICE_LIMITS,
   voiceConsentSentences,
@@ -53,10 +55,15 @@ function storeAt(now = NOW) {
   return { store: createMemoryVoiceStore(() => clock), set: (n: number) => { clock = n; } };
 }
 
-test("name, intro and consent are one config value and say this is an AI", () => {
-  assert.equal(VOICE_AGENT_NAME, "Saabai's AI assistant");
-  assert.match(voiceIntro(), new RegExp(VOICE_AGENT_NAME.replace("'", "\\'")));
-  assert.match(voiceIntro(), /I'm an AI/);
+test("name, intro and consent are config values and say this is an AI", () => {
+  assert.equal(VOICE_AGENT_NAME, "Lachie");
+  assert.equal(VOICE_AGENT_FULL_NAME, "Lachie Legend");
+  assert.equal(VOICE_NAME_SAY, "LACK-ee");
+  assert.equal(voiceIntro(), "Hi, I'm Lachie from Saabai, an AI assistant. This chat is transcribed, not recorded.");
+  assert.match(voiceIntro(), /an AI assistant/);
+  assert.match(voiceIntro(), /transcribed, not recorded/);
+  assert.equal(VOICE_COPY.button, "Talk to Lachie");
+  assert.equal(VOICE_COPY.support, "Meet Lachie Legend, Saabai's AI receptionist.");
   const consent = voiceConsentSentences();
   assert.equal(consent.length, 2);
   assert.match(consent[0], /AI, not a person/);
@@ -82,7 +89,10 @@ test("public voice copy has no em dashes and points at Mia or contact when cappe
 test("instructions reuse Mia's published prices and do not invent a voice price", () => {
   const prompt = buildVoiceInstructions();
   assert.match(prompt, new RegExp(VOICE_AGENT_NAME.replace("'", "\\'")));
+  assert.match(prompt, new RegExp(VOICE_AGENT_FULL_NAME));
+  assert.match(prompt, new RegExp(VOICE_NAME_SAY));
   assert.match(prompt, /You are an AI/);
+  assert.match(prompt, /not recorded/);
   assert.match(prompt, /GST not applicable/);
   assert.match(prompt, /Never mention Localsearch/);
   assert.match(prompt, new RegExp(formatAud(WEBSITE_TIERS[0].buildFrom).replace("$", "\\$")));

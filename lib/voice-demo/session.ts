@@ -29,7 +29,7 @@ export function voiceSessionUpdate(instructions: string) {
           transcription: {
             model: "grok-transcribe",
             language_hint: "en",
-            keyterms: ["Saabai", "Shane", "Mia", "Presence", "Growth", "Signature", "Blueprint", "Gold Coast"],
+            keyterms: ["Lachie", "Saabai", "Shane", "Mia", "Presence", "Growth", "Signature", "Blueprint", "Gold Coast"],
           },
         },
         output: { format: { type: "audio/pcm" as const, rate: VOICE_SAMPLE_RATE } },

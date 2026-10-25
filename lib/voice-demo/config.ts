@@ -1,6 +1,7 @@
 /**
  * Saabai Voice, phase 1a. Homepage demo only.
- * Display name and the spoken introduction both use VOICE_AGENT_NAME.
+ * VOICE_AGENT_NAME is the display name. The spoken intro uses that first name.
+ * VOICE_AGENT_FULL_NAME is the supporting line only.
  * Prices and offers are not stored here. They come from lib/mia-offers.ts.
  *
  * xAI speech-to-speech pricing (checked 25 Oct 2026):
@@ -10,8 +11,12 @@
  */
 import { LINKS } from "../mia-offers";
 
-/** Placeholder until the final name is chosen. */
-export const VOICE_AGENT_NAME = "Saabai's AI assistant";
+/** Name shown on the call screen and in the homepage button. */
+export const VOICE_AGENT_NAME = "Lachie";
+/** Full name for the homepage supporting line. */
+export const VOICE_AGENT_FULL_NAME = "Lachie Legend";
+/** Say the first name this way. LACK-ee, not Latch-ee. */
+export const VOICE_NAME_SAY = "LACK-ee";
 
 export const VOICE_ID = "rigel";
 export const VOICE_MODEL = "grok-voice-latest";
@@ -44,14 +49,15 @@ export function maxSessionUsd(): number {
 }
 
 export function voiceIntro(name: string = VOICE_AGENT_NAME): string {
-  return `Hi, I'm ${name}. I'm an AI, not a person. What would you like to know about Saabai?`;
+  return `Hi, I'm ${name} from Saabai, an AI assistant. This chat is transcribed, not recorded.`;
 }
 
 export const VOICE_WRAP_INSTRUCTIONS =
   "The demo time is almost up. In one or two short sentences, wrap up and offer to book a call with Shane or visit the contact page. Do not ask a new question. Do not read out a web address.";
 
 export const VOICE_COPY = {
-  button: "Talk to our AI",
+  button: `Talk to ${VOICE_AGENT_NAME}`,
+  support: `Meet ${VOICE_AGENT_FULL_NAME}, Saabai's AI receptionist.`,
   comingSoon: "Voice demo coming soon",
   consentTitle: "Before we start",
   start: "Start talking",

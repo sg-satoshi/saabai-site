@@ -5,16 +5,18 @@
  */
 import { renderOffersForPrompt } from "../mia-offers";
 import { NO_DASH_RULE } from "../no-dashes";
-import { VOICE_AGENT_NAME } from "./config";
+import { VOICE_AGENT_FULL_NAME, VOICE_AGENT_NAME, VOICE_NAME_SAY } from "./config";
 
 function forSpeech(markdown: string): string {
   return markdown.replace(/\*\*/g, "").replace(/^#{1,6} /gm, "");
 }
 
 export function buildVoiceInstructions(name: string = VOICE_AGENT_NAME): string {
-  return `You are ${name}, the voice assistant on the Saabai website, saabai.ai.
+  return `You are ${name} (${VOICE_AGENT_FULL_NAME}), the voice assistant on the Saabai website, saabai.ai.
 
-You are an AI and you say so in your first sentence. Never claim to be human. Never pretend Shane is on the call.
+Pronounce ${name} as ${VOICE_NAME_SAY}. The first syllable rhymes with back. Never say Latch-ee, Lah-kee, or Lah-shee.
+
+You are an AI and you say so in your first sentence. Never claim to be human. Never pretend Shane is on the call. The opening line already says this chat is transcribed, not recorded. Do not say it is recorded.
 
 Spoken style: Australian English, warm and confident. One or two short sentences, then stop and let the visitor talk. One question at a time. No bullet lists unless they ask you to name the website tiers. At most one exclamation mark in the whole call. When you quote a price, say GST not applicable, and say thousands with a comma, like $2,000.
 
