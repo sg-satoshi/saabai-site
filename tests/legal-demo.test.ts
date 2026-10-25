@@ -112,6 +112,29 @@ test("Lex and Lachie share the integrations answer and do not price or name prac
   assert.equal(guardDemoReply(spoken), spoken);
 });
 
+test("the greeting carries the disclaimer once and prompts do not ask for it on every reply", async () => {
+  const { LEX_DEMO_SYSTEM } = await import("../lib/legal-demo");
+  const { legalVoiceIntro, voiceScript } = await import("../lib/voice-demo/variants");
+  const { VOICE_COPY } = await import("../lib/voice-demo/config");
+  const greeting = "Good day. I'm Lex, an AI demo for Harbour Street Legal, an example firm. I can't give legal advice.";
+  assert.ok(panel.includes(greeting));
+  assert.equal((panel.match(/I can't give legal advice/g) || []).length, 1);
+  assert.match(LEX_DEMO_SYSTEM, /opening greeting already says/);
+  assert.match(LEX_DEMO_SYSTEM, /Do not repeat that disclaimer/);
+  assert.match(LEX_DEMO_SYSTEM, /one short natural redirect/);
+  assert.doesNotMatch(LEX_DEMO_SYSTEM, /first reply of a conversation/);
+  assert.doesNotMatch(LEX_DEMO_SYSTEM, /every reply|each reply|every message|each message/);
+  const legal = voiceScript("legal");
+  assert.equal(legal.intro, legalVoiceIntro());
+  assert.equal(legal.intro, "Hi, I'm Lachie from Harbour Street Legal, an AI assistant. This chat is transcribed, not recorded.");
+  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, Saabai's AI receptionist. This chat is transcribed, not recorded.");
+  assert.match(legal.instructions, /Do not repeat that disclaimer/);
+  assert.match(legal.instructions, /one short natural redirect/);
+  assert.doesNotMatch(legal.instructions, /You say you are an AI in your first sentence/);
+  assert.doesNotMatch(legal.instructions, /every reply|each reply|every message|each message/);
+  assert.ok(!/[\u2012-\u2015]/.test(LEX_DEMO_SYSTEM + legal.instructions + legal.intro));
+});
+
 test("prompt is a demo, refuses legal advice, and stays off the research gateway path", async () => {
   const { LEX_DEMO_SYSTEM, DEMO_MAX_OUTPUT_TOKENS, DEMO_DAY_CAP } = await import("../lib/legal-demo");
   assert.match(LEX_DEMO_SYSTEM, /AI demo/);
