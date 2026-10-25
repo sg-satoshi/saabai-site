@@ -59,6 +59,7 @@ export const VOICE_COPY = {
   button: `Talk to ${VOICE_AGENT_NAME}`,
   support: `Meet ${VOICE_AGENT_FULL_NAME}, Saabai's AI receptionist.`,
   comingSoon: "Voice demo coming soon",
+  consent: "You're talking to Lachie, Saabai's AI receptionist. This chat is transcribed, not recorded.",
   consentTitle: "Before we start",
   start: "Start talking",
   cancel: "Not now",
@@ -82,13 +83,6 @@ export const VOICE_COPY = {
   mia: "Chat with Mia",
   timerOf: "of 2:00",
 } as const;
-
-export function voiceConsentSentences(name: string = VOICE_AGENT_NAME): [string, string] {
-  return [
-    `You're about to talk with ${name}. This is an AI, not a person.`,
-    "We keep a text transcript of the conversation, not a recording, and xAI processes the voice in the United States.",
-  ];
-}
 
 export function voiceCapMessage(reason: "visitor" | "site" | "busy" | "locked"): string {
   if (reason === "visitor") return VOICE_COPY.visitorCap;

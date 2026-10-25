@@ -10,7 +10,6 @@ import {
   VOICE_COPY,
   VOICE_LIMITS,
   VOICE_PRIVACY_PATH,
-  voiceConsentSentences,
   voiceCapMessage,
 } from "@/lib/voice-demo/config";
 import { type TranscriptLine } from "@/lib/voice-demo/events";
@@ -219,7 +218,6 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
     callRef.current?.stop();
   }
 
-  const consent = voiceConsentSentences();
   const showWrapLinks = phase === "ended" || (phase === "live" && elapsed >= VOICE_LIMITS.wrapSeconds);
   const status = phase === "connecting"
     ? VOICE_COPY.connecting
@@ -239,8 +237,7 @@ export default function VoiceDemo({ ready }: { ready: boolean }) {
 
         {phase === "consent" ? (
           <>
-            <p style={{ marginTop: 12 }}>{consent[0]}</p>
-            <p style={{ marginTop: 8 }}>{consent[1]}</p>
+            <p style={{ marginTop: 12 }}>{VOICE_COPY.consent}</p>
             <p className="voice-note">
               <a href={VOICE_PRIVACY_PATH} style={{ color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 }}>{VOICE_COPY.privacy}</a>
             </p>

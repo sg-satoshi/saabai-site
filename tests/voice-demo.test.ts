@@ -16,7 +16,6 @@ import {
   VOICE_NAME_SAY,
   VOICE_ID,
   VOICE_LIMITS,
-  voiceConsentSentences,
   voiceIntro,
 } from "../lib/voice-demo/config";
 import { applyVoiceEvent, emptyTranscript, transcriptLines } from "../lib/voice-demo/events";
@@ -64,13 +63,13 @@ test("name, intro and consent are config values and say this is an AI", () => {
   assert.match(voiceIntro(), /transcribed, not recorded/);
   assert.equal(VOICE_COPY.button, "Talk to Lachie");
   assert.equal(VOICE_COPY.support, "Meet Lachie Legend, Saabai's AI receptionist.");
-  const consent = voiceConsentSentences();
-  assert.equal(consent.length, 2);
-  assert.match(consent[0], /AI, not a person/);
-  assert.match(consent[1], /text transcript/);
-  assert.match(consent[1], /United States/);
-  assert.ok(!DASH.test(consent.join(" ")));
+  assert.equal(VOICE_COPY.consent, "You're talking to Lachie, Saabai's AI receptionist. This chat is transcribed, not recorded.");
+  assert.doesNotMatch(VOICE_COPY.consent, /calls may be recorded/);
+  assert.ok(!DASH.test(VOICE_COPY.consent));
   assert.ok(!DASH.test(voiceIntro()));
+  for (const value of Object.values(VOICE_COPY)) {
+    assert.doesNotMatch(value, /xAI|Grok|United States/);
+  }
 });
 
 test("public voice copy has no em dashes and points at Mia or contact when capped", () => {
@@ -314,10 +313,14 @@ test("the demo is mounted on the homepage only and the privacy policy has the AP
   assert.deepEqual(hits.sort(), ["app/components/sb/VoiceDemo.tsx", "app/page.tsx"].sort());
   const privacy = read("app/privacy/page.tsx");
   assert.match(privacy, /Australian Privacy Principle 8/);
+  assert.match(privacy, /overseas AI service provider/);
   assert.match(privacy, /United States/);
-  assert.match(privacy, /xAI/);
-  assert.match(privacy, /not the audio/);
+  assert.match(privacy, /text transcripts only, not audio recordings/);
+  assert.doesNotMatch(privacy, /xAI|Grok/);
+  assert.doesNotMatch(privacy, /calls may be recorded/);
   assert.ok(!DASH.test(privacy));
+  const widget = ["app/components/sb/VoiceDemo.tsx", "app/components/sb/voice-call.ts", "app/page.tsx"].map(read).join("\n");
+  assert.doesNotMatch(widget, /xAI|Grok|United States/);
   const route = read("app/api/voice/session/route.ts");
   assert.match(route, /mintVoiceToken/);
   assert.match(route, /refundVoiceSession/);
