@@ -82,6 +82,8 @@ test("prompt is a demo, refuses legal advice, and stays off the research gateway
   assert.match(LEX_DEMO_SYSTEM, /not legal advice/i);
   assert.match(LEX_DEMO_SYSTEM, /Australian English/);
   assert.match(LEX_DEMO_SYSTEM, /does not keep them/);
+  assert.match(LEX_DEMO_SYSTEM, /Tuesday at 10am/);
+  assert.match(LEX_DEMO_SYSTEM, /demo booking/);
   assert.ok(DEMO_MAX_OUTPUT_TOKENS <= 200);
   assert.ok(DEMO_DAY_CAP >= 8 && DEMO_DAY_CAP <= 40);
   assert.doesNotMatch(route, /LexGateway/);
