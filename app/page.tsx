@@ -184,7 +184,8 @@ export default function Home() {
               <p>It captures the person&apos;s details and what they need, then alerts you straight away.</p>
               <p>Email enquiry alerts come with every plan, and we can also send alerts to Telegram, WhatsApp or SMS.</p>
               <p>Want to see one working? Chat with Mia, our own AI assistant, right here on saabai.ai.</p>
-              <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI workspace made for legal practices.</p>
+              <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI legal assistant for legal practices.</p>
+              <p>For businesses in Brisbane, the Gold Coast and the Sunshine Coast, see our <a href="/ai-chatbot-developer-queensland" style={copyLink}>custom AI chatbot developer in Queensland</a> page.</p>
             </div>
           </div>
         </div>

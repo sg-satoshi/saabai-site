@@ -29,6 +29,10 @@ export default function LocationPage({ config }: Props) {
     faqs,
     ctaHeadline,
     ctaSubtext,
+    spotlight,
+    breadcrumbName,
+    serviceName,
+    dateModified,
     seo,
   } = config;
 
@@ -36,9 +40,18 @@ export default function LocationPage({ config }: Props) {
 
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
-      <JsonLd data={locationServiceSchema(city, seo.canonical, seo.description)} />
+      <JsonLd data={locationServiceSchema(city, seo.canonical, seo.description, serviceName)} />
       <JsonLd data={faqSchema(faqs)} />
-      <JsonLd data={breadcrumbSchema([{ name: `Websites and AI ${city}`, path: `/${slug}` }])} />
+      <JsonLd data={breadcrumbSchema([{ name: breadcrumbName ?? `Websites and AI ${city}`, path: `/${slug}` }])} />
+      {dateModified ? (
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          url: seo.canonical,
+          name: seo.title,
+          dateModified,
+        }} />
+      ) : null}
 
       <Nav />
 
@@ -165,6 +178,30 @@ export default function LocationPage({ config }: Props) {
           </p>
         </div>
       </section>
+
+      {spotlight ? (
+        <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-xs font-semibold tracking-widest uppercase text-saabai-teal mb-4">
+              {spotlight.eyebrow}
+            </p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-6">
+              {spotlight.title}
+            </h2>
+            <div className="text-saabai-text-muted text-lg leading-relaxed space-y-4 max-w-3xl">
+              {spotlight.paragraphs.map((para) => (
+                <p key={para}>{para}</p>
+              ))}
+            </div>
+            <a
+              href={spotlight.linkHref}
+              className="inline-flex items-center min-h-[44px] mt-6 text-saabai-teal font-medium hover:text-saabai-teal-bright"
+            >
+              {spotlight.linkLabel} &rarr;
+            </a>
+          </div>
+        </section>
+      ) : null}
 
       {/* ── Local Market Context ────────────────────────────────────────── */}
       <section className="py-16 md:py-24 px-5 sm:px-6 border-t border-saabai-border">

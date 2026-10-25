@@ -17,6 +17,9 @@ import { startVoiceCall, type VoicePhase } from "./voice-call";
 import { trackMarketingLachieStart, trackMarketingLead } from "../../../lib/marketing/browser";
 import { contactInText } from "../../../lib/marketing/public";
 import "./voice-demo.css";
+import { LachieLockup } from "./LachieLockup";
+
+export { LachieLockup } from "./LachieLockup";
 
 type Phase = "idle" | "consent" | "connecting" | "live" | "ended" | "error";
 type VoiceVariant = "home" | "legal";
@@ -70,27 +73,6 @@ function LachieAvatar({ size }: { size: number }) {
       height={size}
       alt=""
     />
-  );
-}
-
-export function LachieLockup({
-  second,
-  descriptor,
-  as: Tag = "div",
-}: {
-  second: "Legend" | "Legal";
-  descriptor: string;
-  as?: "div" | "h2";
-}) {
-  return (
-    <Tag className="lachie-lockup" data-theme="dark">
-      <span className="lachie-lockup__line">
-        <span className="lachie-lockup__meet">Meet</span>{" "}
-        <span className="lachie-lockup__name">Lachie</span>{" "}
-        <span className="lachie-lockup__second">{second}</span>
-      </span>
-      <span className="lachie-lockup__desc">{descriptor}</span>
-    </Tag>
   );
 }
 

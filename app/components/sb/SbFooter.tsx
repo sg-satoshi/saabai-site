@@ -79,6 +79,7 @@ export default function SbFooter() {
           <nav aria-label="Service areas">
             <a className="pill" href="/gold-coast">Gold Coast</a>
             <a className="pill" href="/brisbane">Brisbane</a>
+            <a className="pill" href="/ai-chatbot-developer-queensland">Queensland chatbots</a>
           </nav>
         </div>
         <div className="legal">

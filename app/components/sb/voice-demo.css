@@ -70,6 +70,8 @@
 .lachie-lockup__desc{display:block;margin-top:10px;font-weight:500;font-size:.42em;line-height:1.45;letter-spacing:0;color:#62c5d1}
 .voice-launch .lachie-lockup{font-size:22px;text-align:center}
 .voice-launch .lachie-lockup__desc{font-size:14px;margin-top:6px}
+.sb .voice-launch h2.lachie-lockup{font-size:22px;line-height:1.05;letter-spacing:-.025em;font-weight:500}
+.voice-launch .lachie-portrait{width:96px;height:96px;border-radius:50%;display:block}
 .lx-head .lachie-lockup{font-size:40px}
 
 .voice-back{position:fixed;inset:0;z-index:80;background:rgba(11,9,46,.72);display:grid;place-items:end center;padding:20px 16px 28px}

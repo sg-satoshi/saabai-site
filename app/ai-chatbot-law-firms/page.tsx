@@ -22,7 +22,7 @@ const LEX_FEATURES = [
   "matter management",
 ];
 
-const SECTIONS: { title: string; body: string[]; features?: string[] }[] = [
+const SECTIONS: { title: string; body: string[]; features?: string[]; href?: string; hrefLabel?: string }[] = [
   {
     title: "Never miss a new client enquiry",
     body: [
@@ -38,13 +38,24 @@ const SECTIONS: { title: string; body: string[]; features?: string[] }[] = [
     ],
   },
   {
-    title: "Lex, an AI workspace for law firms",
+    title: "Lex, an AI legal assistant for law firms",
     body: [
-      "Lex is Saabai's AI workspace made for legal practices.",
-      "It gives your team one place to use AI in daily firm work.",
-      "Talk to us about how Lex could fit how your firm runs.",
+      "Lex is Saabai's AI legal assistant for research and drafting.",
+      "It is a different product from the website chatbot demo on this page.",
+      "The demo answers a visitor. Lex searches public Australian government sources and drafts documents for lawyers.",
     ],
     features: LEX_FEATURES,
+    href: "/legal",
+    hrefLabel: "See Lex, the AI legal assistant",
+  },
+  {
+    title: "Custom AI chatbots in Queensland",
+    body: [
+      "Saabai is based in Merrimac on the Gold Coast and builds chatbots for firms in Brisbane, the Gold Coast and the Sunshine Coast.",
+      "The Queensland page covers who builds them, how alerts work, and how to book a quote.",
+    ],
+    href: "/ai-chatbot-developer-queensland",
+    hrefLabel: "Custom AI chatbot developer in Queensland",
   },
   {
     title: "Alerts where your team already works",
@@ -66,7 +77,8 @@ const FAQS: { q: string; a: string[] }[] = [
     q: "Is there an AI legal assistant built for Australian law firms?",
     a: [
       "Yes.",
-      "Saabai builds Lex, an AI workspace for law firms, and is based on the Gold Coast in Queensland.",
+      "Saabai builds Lex, an AI legal assistant for research and drafting, and is based on the Gold Coast in Queensland.",
+      "Lex is not the website chatbot demo on this page.",
     ],
   },
   {
@@ -91,6 +103,12 @@ const schema = schemaGraph([
   lawFirmChatbotServiceNode,
   faqNode(FAQS.map((f) => ({ q: f.q, a: f.a.join(" ") }))),
   breadcrumbNode([{ name: "AI chatbot for law firms", path: PATH }]),
+  {
+    "@type": "WebPage",
+    url: "https://www.saabai.ai/ai-chatbot-law-firms",
+    name: "AI Chatbot for Law Firms | Saabai, Gold Coast",
+    dateModified: "2026-10-25",
+  },
 ]);
 
 function BookDemo() {
@@ -115,6 +133,11 @@ function FirmCard({ section }: { section: (typeof SECTIONS)[number] }) {
           ))}
         </ul>
       )}
+      {section.href && section.hrefLabel ? (
+        <p style={{ marginTop: 16 }}>
+          <a href={section.href} style={{ color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 }}>{section.hrefLabel}</a>
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -160,6 +183,23 @@ export default function AiChatbotLawFirmsPage() {
       <section style={{ paddingTop: 24 }}>
         <div className="wrap grid2">
           {SECTIONS.slice(2).map((section) => <FirmCard key={section.title} section={section} />)}
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 24 }}>
+        <div className="wrap" style={{ maxWidth: 860 }}>
+          <div className="head"><h2>Tributum Law</h2></div>
+          <p style={{ fontSize: 17, marginBottom: 16 }}>
+            From the <a href="/case-studies" style={{ color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 }}>Tributum Law case study</a>.
+          </p>
+          <blockquote className="card" style={{ margin: 0 }}>
+            <p style={{ fontSize: 18, lineHeight: 1.5 }}>
+              &ldquo;The clients calling about ATO disputes are stressed. They want to know someone&apos;s there. Lex answers that in 90 seconds, any time of day. The difference it&apos;s made to our conversion rate has been significant.&rdquo;
+            </p>
+            <p style={{ marginTop: 16, fontSize: 14, letterSpacing: "0.04em" }}>
+              , Principal, Tributum Law
+            </p>
+          </blockquote>
         </div>
       </section>
 
