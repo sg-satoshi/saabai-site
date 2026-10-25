@@ -21,6 +21,16 @@ export type WebsiteTier = {
   highlight: boolean;
 };
 
+/**
+ * Split testing for client sites. Per Shane's 17 Oct 2026 rule it is a paid add-on, switched on per site after
+ * his approval, never free. Draft offer: Growth and Signature only (Presence sites rarely have the traffic).
+ */
+export const SPLIT_TESTING = {
+  name: "Split Testing Optimisation Machine",
+  tierFeature: "Split Testing Optimisation Machine add-on",
+  tiers: ["Growth", "Signature"] as readonly WebsiteTier["name"][],
+} as const;
+
 export const WEBSITE_TIERS: readonly WebsiteTier[] = [
   {
     name: "Presence",
@@ -60,11 +70,13 @@ export const WEBSITE_TIERS: readonly WebsiteTier[] = [
       "Lead qualifying chatbot with booking",
       "Handoff to your CRM or inbox",
       "Light workflow automations",
+      "Split Testing Optimisation Machine add-on",
     ],
     homePoints: [
       "Everything in Presence",
       "Lead qualifying chatbot with booking",
       "Handoff to your CRM or inbox",
+      "Split Testing Optimisation Machine add-on",
     ],
     highlight: true,
   },
@@ -82,11 +94,13 @@ export const WEBSITE_TIERS: readonly WebsiteTier[] = [
       "Looks and sounds like your brand voice",
       "Workflow automations across your enquiries",
       "Priority support",
+      "Split Testing Optimisation Machine add-on",
     ],
     homePoints: [
       "Everything in Growth",
       "Custom avatar trained to your chosen persona",
       "Priority support",
+      "Split Testing Optimisation Machine add-on",
     ],
     highlight: false,
   },
@@ -139,6 +153,9 @@ function tierMentionsChatbot(tier: WebsiteTier, seen = new Set<string>()): boole
 }
 
 for (const tier of WEBSITE_TIERS) {
+  if (tier.features.includes(SPLIT_TESTING.tierFeature) !== SPLIT_TESTING.tiers.includes(tier.name)) {
+    throw new Error(`${tier.name} split testing feature does not match SPLIT_TESTING.tiers`);
+  }
   for (const point of tier.homePoints) {
     if (!tier.features.includes(point)) {
       throw new Error(`${tier.name} homepage point is not a /websites feature: ${point}`);
