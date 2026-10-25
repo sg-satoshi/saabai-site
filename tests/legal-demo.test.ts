@@ -32,21 +32,23 @@ after(() => {
 
 const page = readFileSync("app/legal/page.tsx", "utf8");
 const css = readFileSync("app/legal/legal.css", "utf8");
-const panel = readFileSync("app/legal/LexDemoPanel.tsx", "utf8");
+const panel = readFileSync("app/components/legal-demos/LexDemoPanel.tsx", "utf8");
+const demos = readFileSync("app/components/legal-demos/HarbourDemos.tsx", "utf8");
 const route = readFileSync("app/api/legal-demo/route.ts", "utf8");
 const lib = readFileSync("lib/legal-demo.ts", "utf8");
 
 test("demo copy has no em or en dashes", () => {
-  for (const [name, src] of [["page", page], ["css", css], ["panel", panel], ["route", route], ["lib", lib]]) {
+  for (const [name, src] of [["page", page], ["css", css], ["panel", panel], ["demos", demos], ["route", route], ["lib", lib]]) {
     assert.ok(!/[\u2012-\u2015]/.test(src), name);
   }
 });
 
 test("the panel is inline on /legal with starters, the firm line and a contact CTA", () => {
   assert.match(page, /id="demo"/);
-  assert.match(page, /LexDemoPanel/);
-  assert.match(page, /This is what a chatbot on your firm&apos;s own website would look like/);
-  assert.match(page, /href="\/contact"/);
+  assert.match(page, /LexWebsiteDemo/);
+  assert.match(demos, /LexDemoPanel/);
+  assert.match(demos, /This is what a chatbot on your firm&apos;s own website would look like/);
+  assert.match(demos, /href="\/contact"/);
   assert.match(page, /href="#demo"/);
   for (const label of ["New client enquiry", "What does a will cost?", "Book a consult", "After-hours enquiry"]) {
     assert.ok(panel.includes(label), label);
@@ -57,7 +59,7 @@ test("the panel is inline on /legal with starters, the firm line and a contact C
 });
 
 test("demo code never posts a lead", () => {
-  for (const src of [page, panel, route, lib]) {
+  for (const src of [page, panel, demos, route, lib]) {
     assert.doesNotMatch(src, /\/api\/leads|\/api\/site-factory\/lead|\/api\/lex-leads/);
   }
   assert.doesNotMatch(route, /saveLead|captureLead|capture_lead/);
@@ -147,6 +149,19 @@ test("missing provider key is named and a capped visitor never reaches the model
       else process.env[k] = saved[k];
     }
   }
+});
+
+test("the law firms page reuses the same demos and does not send a prompt or a lead", () => {
+  const firms = readFileSync("app/ai-chatbot-law-firms/page.tsx", "utf8");
+  assert.match(firms, /LexWebsiteDemo/);
+  assert.match(firms, /LachieLegalDemo/);
+  assert.match(firms, /id="demo"/);
+  assert.match(firms, /id="lachie"/);
+  assert.match(demos, /variant="legal"/);
+  assert.doesNotMatch(demos, /instructions|24\/7|Answers your business phone/);
+  assert.doesNotMatch(firms, /\/api\/leads|\/api\/site-factory\/lead|24\/7/);
+  assert.equal(firms.includes("New client enquiry"), false);
+  assert.match(panel, /\/api\/legal-demo/);
 });
 
 test("visitor cap uses Redis and blocks the next message", async () => {

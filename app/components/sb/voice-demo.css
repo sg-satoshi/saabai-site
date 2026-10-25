@@ -57,7 +57,7 @@
 }
 
 .sb .voice-launch{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:none}
-.lx .voice-launch{align-items:flex-start}
+.lx .voice-launch,.lx-demo-scope .voice-launch{align-items:flex-start}
 
 .lachie-lockup{margin:0;font-family:var(--font-geist-sans),system-ui,sans-serif;line-height:1.05;letter-spacing:-.025em}
 .lachie-lockup__line{display:block}
@@ -97,7 +97,7 @@
 .voice-actions .btn.ghost{background:transparent;color:#fff;border:1.5px solid rgba(165,180,252,.35)}
 @media (max-width:760px){
   .sb .hero .voice-launch{width:100%}
-  .sb .hero .ttl,.lx .voice-launch,.lx .ttl{width:100%;min-width:0;max-width:none}
+  .sb .hero .ttl,.lx .voice-launch,.lx .ttl,.lx-demo-scope .voice-launch,.lx-demo-scope .ttl{width:100%;min-width:0;max-width:none}
   .lx-head .lachie-lockup{font-size:30px}
   .voice-back{padding:12px 12px 20px;align-items:end}
   .voice-panel{padding:18px}

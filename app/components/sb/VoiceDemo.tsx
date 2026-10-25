@@ -47,6 +47,18 @@ function openMia() {
   document.querySelector<HTMLButtonElement>('button[aria-label="Chat with Mia"]')?.click();
 }
 
+/**
+ * Where the call dialog mounts.
+ * /legal's page root is .lx, so the legal variant stays there.
+ * A Saabai page shells in .sb. Use that when .lx is missing or only wraps the demo.
+ */
+function findVoiceRoot(variant: VoiceVariant): Element | null {
+  const legal = document.querySelector(".lx");
+  const shell = document.querySelector(".sb");
+  if (variant === "legal" && legal && !legal.closest(".sb")) return legal;
+  return shell ?? legal;
+}
+
 function LachieAvatar({ size }: { size: number }) {
   return (
     <img
@@ -129,8 +141,7 @@ export default function VoiceDemo({
   const attemptRef = useRef(0);
 
   useEffect(() => {
-    const selector = variant === "legal" ? ".lx" : ".sb";
-    const id = window.setTimeout(() => setRoot(document.querySelector(selector)), 0);
+    const id = window.setTimeout(() => setRoot(findVoiceRoot(variant)), 0);
     return () => window.clearTimeout(id);
   }, [variant]);
 

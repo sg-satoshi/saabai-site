@@ -163,11 +163,16 @@ test("legal variant is chosen on the server and a client prompt is rejected", ()
   assert.doesNotMatch(widget, /24\/7|Answers your business phone/);
 
   const page = read("app/legal/page.tsx");
-  assert.match(page, /LachieLockup as="h2" second="Legal"/);
-  assert.match(page, /Your AI phone answering service\. He picks up when you can't\./);
-  assert.match(page, /variant="legal"/);
-  assert.match(page, /href="\/contact"/);
+  const demos = read("app/components/legal-demos/HarbourDemos.tsx");
+  assert.match(page, /LachieLegalDemo/);
+  assert.match(demos, /LachieLockup as="h2" second="Legal"/);
+  assert.match(demos, /Your AI phone answering service\. He picks up when you can't\./);
+  assert.match(demos, /variant="legal"/);
+  assert.match(demos, /href="\/contact"/);
   assert.doesNotMatch(page, /24\/7|Answers your business phone/);
+  assert.doesNotMatch(demos, /24\/7|Answers your business phone/);
+  assert.match(widget, /findVoiceRoot/);
+  assert.match(widget, /closest\("\.sb"\)/);
   const voiceCss = read("app/components/sb/voice-demo.css");
   assert.match(voiceCss, /#c9a227/);
   assert.match(voiceCss, /#8f7210/);
@@ -389,7 +394,14 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy has
   const hits = walk("app")
     .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
     .filter((file) => read(file).includes("VoiceDemo"));
-  assert.deepEqual(hits.sort(), ["app/components/sb/VoiceDemo.tsx", "app/page.tsx", "app/legal/page.tsx"].sort());
+  assert.deepEqual(hits.sort(), [
+    "app/components/legal-demos/HarbourDemos.tsx",
+    "app/components/sb/VoiceDemo.tsx",
+    "app/page.tsx",
+  ].sort());
+  assert.match(read("app/legal/page.tsx"), /LachieLegalDemo/);
+  assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LachieLegalDemo/);
+  assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LexWebsiteDemo/);
   const privacy = read("app/privacy/page.tsx");
   assert.match(privacy, /Australian Privacy Principle 8/);
   assert.match(privacy, /overseas AI service provider/);
