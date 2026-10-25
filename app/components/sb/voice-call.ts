@@ -1,5 +1,5 @@
 /**
- * Browser side of one Grok Voice call.
+ * Browser side of one homepage voice call.
  * Audio stays in the browser. Only text lines are returned for the transcript.
  */
 import { VOICE_LIMITS, VOICE_SAMPLE_RATE } from "@/lib/voice-demo/config";

@@ -81,7 +81,7 @@ const PUBLIC_API = [
   "/api/site-factory-chat",  // generic Site Factory widget (Wholesale Homes etc.)
   "/api/chat-platform/message", // central chatbot platform (origin, limits and on/off inside)
   "/api/chat-platform/config",  // public widget config (read-only, no secrets)
-  "/api/legal-demo",            // public Lex demo on /legal (no leads, own visitor cap)
+  "/api/legal-demo",            // public /legal demo, fictional firm, no lead capture; origin and limits inside
   "/api/bo-contact",
   "/api/lmm-contact",
   "/api/leadgen/chat",
@@ -123,6 +123,11 @@ const PUBLIC_API = [
   // Widget media / embeds
   "/api/tts",
   "/api/heygen-token",
+  // Homepage voice demo. Anonymous on purpose: origin check, caps and session secret are enforced inside.
+  "/api/voice/session",
+  "/api/voice/pulse",
+  "/api/voice/transcript",
+  "/api/voice/end",
   "/api/rex-feedback",
   "/api/rex-transcript", // self-checks admin session for reads
   "/api/leadgen/widget",
