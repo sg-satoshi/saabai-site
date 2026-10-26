@@ -22,6 +22,8 @@ import {
   withoutAustliiTools,
 } from "./lex-tools";
 import { SourceRegistry, fetchSourceText, isAllowedSourceUrl, findPinpoint, excerptFor, MAX_READS_PER_ANSWER } from "./lex-sources";
+import { checkCitation, type CitationCheck } from "./oalc-citations";
+import { CHECK_CITATION_DESCRIPTION, SEARCH_AUSTLII_DESCRIPTION, SEARCH_CORPORATIONS_DESCRIPTION, SEARCH_FAMILY_LAW_DESCRIPTION } from "./oalc-disclosure";
 
 /** Max model steps (tool rounds plus the answer) for one research question. */
 export const LEX_RESEARCH_MAX_STEPS = 6;
@@ -39,12 +41,26 @@ export function buildLexResearchTools(config: LexClientConfig) {
   const enabledTools = new Set(config.tools);
   return withoutAustliiTools({
 
+    ...(config.mode === "internal" && {
+      checkCitation: tool<{ citation: string }, CitationCheck>({
+        description: CHECK_CITATION_DESCRIPTION,
+        inputSchema: jsonSchema<{ citation: string }>({
+          type: "object",
+          properties: {
+            citation: {
+              type: "string",
+              description: "One case citation, a legislation title, or an official judgment URL. Example: [2024] FCA 100",
+            },
+          },
+          required: ["citation"],
+        }),
+        execute: async ({ citation }) => checkCitation(citation),
+      }),
+    }),
+
     ...(enabledTools.has("searchAustLII") && {
       searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
-        description:
-          "Search AustLII for Australian case law, tribunal decisions, and legislation summaries. " +
-          "Covers High Court, Federal Court, all State Supreme Courts, the ART (formerly the AAT), VCAT, NCAT, QCAT and 1000+ databases. " +
-          "Use this for case law research and finding precedents.",
+        description: SEARCH_AUSTLII_DESCRIPTION,
         inputSchema: jsonSchema<AustLIIInput>({
           type: "object",
           properties: {
@@ -54,7 +70,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
             },
             jurisdiction: {
               type: "string",
-              description: "Optional court filter: e.g. 'HCA' (High Court), 'FCA' (Federal Court), 'NSWSC', 'VSC', 'QSC', 'WASC'",
+              description: "Optional extra words added to the query. Not a filter over every Australian court, and not the licensed snapshot.",
             },
           },
           required: ["query"],
@@ -231,9 +247,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
 
     ...(enabledTools.has("searchCorporationsLaw") && {
       searchCorporationsLaw: tool<SimpleQueryInput, LegalSearchResponse>({
-        description:
-          "Search Corporations Act case law and ASIC decisions on AustLII. Use for directors' duties, " +
-          "corporate governance, insolvency, managed investment schemes, takeovers, and market misconduct.",
+        description: SEARCH_CORPORATIONS_DESCRIPTION,
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {
@@ -247,9 +261,7 @@ export function buildLexResearchTools(config: LexClientConfig) {
 
     ...(enabledTools.has("searchFamilyLaw") && {
       searchFamilyLaw: tool<SimpleQueryInput, LegalSearchResponse>({
-        description:
-          "Search Federal Circuit and Family Court of Australia decisions, plus the former Family Court of Australia (before Sept 2021). Use for property settlement, " +
-          "parenting orders, spousal maintenance, binding financial agreements, divorce, and de facto matters.",
+        description: SEARCH_FAMILY_LAW_DESCRIPTION,
         inputSchema: jsonSchema<SimpleQueryInput>({
           type: "object",
           properties: {

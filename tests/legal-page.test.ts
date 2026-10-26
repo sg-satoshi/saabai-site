@@ -65,18 +65,23 @@ test("every source listed has a search tool in lib/lex-tools.ts", () => {
   for (const [k, re] of Object.entries(need)) assert.ok(re.test(tools), `no tool for ${k}`);
 });
 
-test("AustLII is paused: /legal and SEO copy do not claim AustLII, case law databases or state legislation search", () => {
+test("AustLII stays paused on /legal, and case law is described as the licensed snapshot", () => {
   const visible = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  for (const bad of [/AustLII/, /Administrative Review Tribunal/, /Family Court/, /State legislation/, /all 8 jurisdictions/, /searches[^."]*case law/i]) {
+  const disclosed = visible + "\n" + readFileSync("lib/oalc-disclosure.ts", "utf8");
+  for (const bad of [/AustLII/, /Administrative Review Tribunal/, /State legislation/, /all 8 jurisdictions/, /all State Supreme Courts/i, /1000\+ databases/i, /All Australian databases/]) {
     assert.ok(!bad.test(visible), `found ${bad}`);
   }
+  assert.match(disclosed, /Family Court[\s\S]{0,220}not in this snapshot/);
+  assert.match(visible, /OALC_SOURCE_PANEL/);
+  assert.match(visible, /cutoff 10 March 2025/);
+  assert.match(disclosed, /citation and link only/);
   for (const f of ["lib/seo-entity.ts", "lib/seo-pages.ts"]) assert.ok(!/AustLII/.test(readFileSync(f, "utf8")), f);
 });
 
-test("with case law paused, /legal makes no case-checking claims", () => {
+test("the licensed snapshot does not revive retired case-checking claims", () => {
   const visible = page.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  for (const bad of [/Binding or persuasive/i, /cites the case/i, /Case name and citation/i, /Australian authority comes first/i, /marked as persuasive/i]) {
+  for (const bad of [/Binding or persuasive/i, /cites the case/i, /Case name and citation/i, /Australian authority comes first/i, /marked as persuasive/i, /not searching (Australian )?case law right now/]) {
     assert.ok(!bad.test(visible), `found ${bad}`);
   }
-  assert.match(visible, /not searching (Australian )?case law right now/);
+  assert.match(visible, /licensed snapshot/);
 });

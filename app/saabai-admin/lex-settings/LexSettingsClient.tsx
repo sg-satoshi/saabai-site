@@ -140,7 +140,7 @@ const LEGAL_FIT: Record<string, LegalFit> = {
     summary:
       "The strongest choice for a legal AI. Claude is built for careful, verifiable reasoning and follows complex instruction sets with higher consistency than any other provider tested in this context.",
     strengths: [
-      "Most reliable multi-step tool chains — rarely skips AustLII or verifySection calls",
+      "Most reliable multi-step tool chains — rarely skips checkCitation or verifySection calls",
       "Follows the 'never fabricate citations' rule more tightly than any other provider",
       "200K context window handles even the longest contracts or transcripts without truncation",
       "Prompt caching reduces cost on long system prompts — a Lex-specific optimisation built in",
@@ -462,8 +462,9 @@ export default function LexSettingsClient() {
                 Why model choice matters for Lex
               </p>
               <p style={{ fontSize: 12, color: C.sub, lineHeight: 1.65, margin: 0 }}>
-                Lex performs multi-step legal research: it queries AustLII, the ATO, and legislation databases in
-                sequence, then verifies every section reference before including it in a response. That verification
+                Lex performs multi-step legal research: it checks case citations against a licensed snapshot
+                (NSW Caselaw, Federal Court and High Court, cutoff 10 March 2025), searches the ATO and the
+                Federal Register of Legislation, then verifies every section reference before including it in a response. AustLII is not searched. That verification
                 step is what stops a fabricated section number from appearing in a drafted document or client advice
                 memo. The step only runs reliably if the model handles multi-step tool chains consistently under
                 legal constraints. Not all models do this equally well — and the difference is not about being

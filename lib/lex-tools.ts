@@ -1,11 +1,12 @@
 /**
  * Lex Legal Research Tools
  *
- * Real-time search across Australian (and international) legal databases:
- *   searchAustLII      : Australian case law, tribunal decisions, legislation summaries
+ * Real-time search across the sources Lex is allowed to use:
+ *   checkCitation      : licensed OALC snapshot (NSW Caselaw, Federal Court, High Court; cutoff 10 March 2025)
+ *   searchAustLII      : paused AustLII site search, not the licensed snapshot
  *   searchATO          : ATO rulings, interpretive decisions, tax cases, guides
  *   searchLegislation  : Federal Register of Legislation (Acts + Regulations)
- *   searchInternational: BAILII (UK), NZLII (NZ), WorldLII for comparative law
+ *   searchInternational: BAILII (UK). NZLII and WorldLII stay off while AustLII is paused
  *
  * Requires SERPER_API_KEY (serper.dev): add to Vercel environment variables.
  * Without it every tool returns a graceful "not configured" message so Lex
@@ -134,12 +135,12 @@ async function siteSearch(
 }
 
 /**
- * Search AustLII: the Australasian Legal Information Institute.
- * Covers: High Court, Federal Court, all State/Territory Supreme Courts,
- * ART (formerly AAT), VCAT, NCAT, QCAT, and 1000+ other tribunals and databases.
+ * AustLII site search. This is not the licensed case-law snapshot and it is
+ * not a complete set of Australian courts. Prefer checkCitation for a citation
+ * in the OALC snapshot (NSW Caselaw, Federal Court, High Court; cutoff 10 March 2025).
  *
  * @param query     Free-text legal query
- * @param jurisdiction  Optional: "HCA" | "FCA" | "NSWSC" | "VSC" | "QSC" | "WASC" etc.
+ * @param jurisdiction  Optional court code, used only as extra query text
  */
 export async function searchAustLII(
   query: string,
@@ -280,9 +281,9 @@ export async function searchFairWork(query: string): Promise<LegalSearchResponse
 }
 
 /**
- * Search ASIC Connect and Corporations Act case law on AustLII.
- * Covers: directors' duties, corporate governance, insolvency,
- * managed investment schemes, market misconduct, takeovers.
+ * AustLII site search for corporations topics. Not a complete case-law database.
+ * Corporations Act text is on the Federal Register. Citations in the licensed
+ * snapshot are checked with checkCitation.
  *
  * @param query  Corporations law query
  */
@@ -291,10 +292,9 @@ export async function searchCorporationsLaw(query: string): Promise<LegalSearchR
 }
 
 /**
- * Search Federal Circuit and Family Court of Australia decisions (FedCFamC1F, FedCFamC2F,
- * from 1 Sept 2021) plus the former Family Court of Australia (famca, before Sept 2021).
- * Covers: property settlement, parenting orders, spousal maintenance,
- * BFAs, financial agreements, divorce, and de facto relationships.
+ * AustLII site search of family-law databases. Those courts are not in the
+ * licensed case-law snapshot (cutoff 10 March 2025). A result from this
+ * function does not mean the Family Court was confirmed.
  *
  * @param query  Family law query
  */

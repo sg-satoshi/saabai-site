@@ -13,6 +13,7 @@
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type LexTool =
+  | "checkCitation"
   | "searchAustLII"
   | "searchATO"
   | "searchLegislation"
@@ -74,7 +75,7 @@ Never state a legal position without authority. If uncertain, say so explicitly 
 RESEARCH PROCESS:
 When given a legal question, follow this sequence.
 
-1. Call the relevant tools that are available: searchAustLII for case law (if available), searchATO for tax, searchLegislation for Acts, searchInternational for comparative law, verifySection to confirm specific section numbers.
+1. Call the relevant tools that are available: checkCitation for a case citation (licensed snapshot only), searchATO for tax, searchLegislation for Acts, searchInternational for comparative law, verifySection to confirm specific section numbers.
 
 2. Synthesise results: extract the legal principles, do not just paste snippets.
 
@@ -90,6 +91,21 @@ Common law applies generally; note when State law diverges.
 Key courts: High Court of Australia (binding all), Federal Court, State Supreme Courts, specialist tribunals (ART, VCAT, NCAT, QCAT etc.).
 
 The Administrative Review Tribunal (ART) replaced the Administrative Appeals Tribunal (AAT) on 14 October 2024. Reviews of ATO objection decisions now go to the ART (Taxation and Commercial jurisdiction). Cite decisions made before that date as AAT decisions (AATA) and later ones as ART decisions (ARTA). Never describe the AAT as the current tribunal.
+
+CASE LAW SNAPSHOT:
+checkCitation checks one citation against the licensed Open Australian Legal Corpus snapshot v7.1.0, cutoff 10 March 2025. It covers NSW Caselaw, Federal Court and High Court decisions in that snapshot only.
+
+It does not cover the Family Court, the Federal Circuit and Family Court, other State or Territory supreme courts, or tribunals. Do not claim that Lex searches every state supreme court.
+
+A result is the citation, the court, the date and a link to the official original. Do not quote judgment text. NSW Caselaw and High Court results are citation and link only. A Federal Court result may be quoted only with the acknowledgement the tool returns, and this version does not return the text. If the tool did not return words from a judgment, do not invent them.
+
+A year-only date is the year from the citation, not a precise decision date. Say so.
+
+If checkCitation does not find a citation, use its wording unchanged. A citation year of 2025 or later may postdate the snapshot. An older miss is not in the snapshot. Neither means the citation was fabricated. Tell the user to confirm it exists.
+
+Legislation is never checked against this snapshot. Use searchLegislation, verifySection and checkLegislationStatus on the Federal Register of Legislation.
+
+If checkCitation says the case-law index is unavailable, say that and do not invent a case-law result.
 
 INTERNATIONAL LAW:
 For comparative law, treaty obligations, or international arbitration: use searchInternational.
@@ -181,6 +197,7 @@ const LEX_INTERNAL: LexClientConfig = {
   mode: "internal",
   systemPrompt: LEX_INTERNAL_SYSTEM,
   tools: [
+    "checkCitation",
     "searchAustLII",
     "searchATO",
     "searchLegislation",
@@ -198,7 +215,7 @@ const LEX_INTERNAL: LexClientConfig = {
     "What are the elements of negligence under Australian law?",
     "Summarise the duty of care test from Donoghue v Stevenson",
     "What does the Corporations Act say about director duties?",
-    "Search AustLII for recent cases on unfair dismissal",
+    "Check whether [2024] FCA 100 is in the licensed case-law snapshot",
     "What are the CGT implications of a trust distribution?",
     "Draft a letter of advice on a contract dispute",
     "What is the test for unconscionable conduct under the ACL?",
