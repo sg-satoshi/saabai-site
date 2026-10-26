@@ -1,25 +1,24 @@
 /**
  * Lifestyle Money Management legal particulars.
- * Square-bracket values are unpublished. Replace them here only.
- * Do not invent an entity name, ABN, ACL, credit representative number,
- * licensee or aggregator, or AFCA member number.
+ * Leave a field null until Nick supplies it. Null and blank values are omitted
+ * from the public pages. Do not invent an entity name, ABN, ACL, credit
+ * representative number, licensee or aggregator, or AFCA member number.
  */
+export type LmmLegalIdentity = {
+  entityName: string | null;
+  abn: string | null;
+  aclOrCreditRep: string | null;
+  licenseeOrAggregator: string | null;
+  afcaMemberNo: string | null;
+};
 
-export const LMM_LEGAL_IDENTITY = {
-  entityName: "[ENTITY NAME]",
-  abn: "[ABN]",
-  aclOrCreditRep: "[ACL / Credit Rep No.]",
-  licenseeOrAggregator: "[LICENSEE / AGGREGATOR]",
-  afcaMemberNo: "[AFCA Member No.]",
-} as const;
-
-export const LMM_PLACEHOLDERS = [
-  LMM_LEGAL_IDENTITY.entityName,
-  LMM_LEGAL_IDENTITY.abn,
-  LMM_LEGAL_IDENTITY.aclOrCreditRep,
-  LMM_LEGAL_IDENTITY.licenseeOrAggregator,
-  LMM_LEGAL_IDENTITY.afcaMemberNo,
-] as const;
+export const LMM_LEGAL_IDENTITY: LmmLegalIdentity = {
+  entityName: null, // TODO: legal entity name
+  abn: null, // TODO: ABN
+  aclOrCreditRep: null, // TODO: Australian Credit Licence or credit representative number
+  licenseeOrAggregator: null, // TODO: licensee or aggregator name
+  afcaMemberNo: null, // TODO: AFCA member number
+};
 
 export const LMM_SITE = {
   name: "Lifestyle Money Management",
@@ -62,9 +61,41 @@ export const LMM_LEGAL_UPDATED = "26 October 2026";
 
 const HOME_MARKER = "<!-- LMM-LEGAL-FOOTER -->";
 
-export function lmmLicensingLine(): string {
-  const id = LMM_LEGAL_IDENTITY;
-  return `${LMM_SITE.name} is the trading name of ${id.entityName} (ABN ${id.abn}). Credit assistance is provided under ${id.aclOrCreditRep}, authorised through ${id.licenseeOrAggregator}. AFCA member number: ${id.afcaMemberNo}.`;
+function text(value: string | null | undefined): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+/** Public name. An unset entity stays the trading name, Lifestyle Money Management. */
+export function lmmPublicName(id: LmmLegalIdentity = LMM_LEGAL_IDENTITY): string {
+  return text(id.entityName) ?? LMM_SITE.name;
+}
+
+/** Only the particulars that have been filled in. Empty when every field is unset. */
+export function lmmLicensingLine(id: LmmLegalIdentity = LMM_LEGAL_IDENTITY): string {
+  const parts: string[] = [];
+  const entity = text(id.entityName);
+  const abn = text(id.abn);
+  const brand = LMM_SITE.name;
+  if (entity && entity !== brand) {
+    parts.push(abn ? `${brand} is the trading name of ${entity} (ABN ${abn}).` : `${brand} is the trading name of ${entity}.`);
+  } else if (abn) {
+    parts.push(`${brand} (ABN ${abn}).`);
+  }
+  const acl = text(id.aclOrCreditRep);
+  const licensee = text(id.licenseeOrAggregator);
+  if (acl && licensee) parts.push(`Credit assistance is provided under ${acl}, authorised through ${licensee}.`);
+  else if (acl) parts.push(`Credit assistance is provided under ${acl}.`);
+  else if (licensee) parts.push(`Credit assistance is authorised through ${licensee}.`);
+  const member = text(id.afcaMemberNo);
+  if (member) parts.push(`AFCA member number: ${member}.`);
+  return parts.join(" ");
+}
+
+function licensingHtml(): string {
+  const line = lmmLicensingLine();
+  return line ? `<p>${esc(line)}</p>` : "";
 }
 
 function esc(value: string): string {
@@ -97,8 +128,9 @@ function tel(phoneTel: string, label: string): string {
 }
 
 export function lmmHomeLegalBlock(): string {
-  return `<div class="container footer-legal" data-lmm-legal="1">
-      <p>${esc(lmmLicensingLine())} Items in square brackets are particulars still to be published.</p>
+  const line = lmmLicensingLine();
+  const licence = line ? `\n      <p>${esc(line)}</p>` : "";
+  return `<div class="container footer-legal" data-lmm-legal="1">${licence}
       <nav aria-label="Legal">
         ${link(LMM_SITE.privacyPath, "Privacy Policy", "/privacy")}
         ${link(LMM_SITE.complaintsPath, "Complaints", "/complaints")}
@@ -163,6 +195,8 @@ function oaicBlock(): string {
 }
 
 function afcaBlock(): string {
+  const member = text(LMM_LEGAL_IDENTITY.afcaMemberNo);
+  const memberLine = member ? `<p>Our AFCA member number is ${esc(member)}.</p>` : "";
   return `<p>${esc(LMM_AFCA.name)} (AFCA)</p>
 <ul>
 <li>Website: ${external(LMM_AFCA.website, LMM_AFCA.websiteDisplay)}</li>
@@ -170,20 +204,24 @@ function afcaBlock(): string {
 <li>Phone: ${tel(LMM_AFCA.phoneTel, LMM_AFCA.phoneDisplay)} (free call from an Australian landline)</li>
 <li>Post: Australian Financial Complaints Authority, ${esc(LMM_AFCA.post)}</li>
 </ul>
-<p>AFCA's service is free for consumers. Time limits apply. Our AFCA member number is ${esc(LMM_LEGAL_IDENTITY.afcaMemberNo)}.</p>`;
+<p>AFCA's service is free for consumers. Time limits apply.</p>${memberLine}`;
+}
+
+function licenseeShareItem(): string {
+  const name = text(LMM_LEGAL_IDENTITY.licenseeOrAggregator);
+  if (name) return `<li>our licensee or aggregator, ${esc(name)}</li>`;
+  return `<li>our licensee or aggregator, where they are involved in arranging the credit</li>`;
 }
 
 function privacyBody(): string {
-  const id = LMM_LEGAL_IDENTITY;
-  const home = link(LMM_SITE.homePath, LMM_SITE.name, "/");
+  const home = link(LMM_SITE.homePath, lmmPublicName(), "/");
   const complaints = link(LMM_SITE.complaintsPath, "Complaints", "/complaints");
   return `
 <p class="lede">Last updated: ${esc(LMM_LEGAL_UPDATED)}</p>
 <p>This policy explains how ${home} handles personal information and credit-related information. It is written in plain English. It is not legal advice.</p>
 <h2>Who this policy covers</h2>
-<p>Lifestyle Money Management provides finance and credit assistance, including mortgage broking. Nick Foale is the Managing Director. He is a licensed finance broker based in Adelaide, with close to 30 years in finance.</p>
-<p>${esc(lmmLicensingLine())}</p>
-<p>Items in square brackets are particulars still to be published. They are not a legal name or a licence number.</p>
+<p>${esc(lmmPublicName())} provides finance and credit assistance, including mortgage broking. Nick Foale is the Managing Director. He is a licensed finance broker based in Adelaide, with close to 30 years in finance.</p>
+${licensingHtml()}
 <p>This policy covers information collected through ${external(LMM_SITE.url, LMM_SITE.host)}, by phone, by email, and when you ask us to help with a finance or credit application.</p>
 <h2>The laws that apply</h2>
 <p>We handle personal information under the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).</p>
@@ -230,7 +268,7 @@ function privacyBody(): string {
 <p>We share personal information, and credit information where the law allows, only as needed for the purposes above. Recipients can include:</p>
 <ul>
 <li>lenders and other credit providers you ask us to approach</li>
-<li>the licensee or aggregator we are authorised through (${esc(id.licenseeOrAggregator)})</li>
+${licenseeShareItem()}
 <li>credit reporting bodies, when a credit check is part of an application you have asked us to help with</li>
 <li>people you authorise, such as an accountant, solicitor, conveyancer or referrer</li>
 <li>service providers who help us operate, including email delivery, website hosting, the chatbot platform, information technology support, and professional advisers</li>
@@ -285,7 +323,8 @@ ${afcaBlock()}
 <p>If you are not satisfied with our response, you can complain to the OAIC.</p>
 ${oaicBlock()}
 <h2>Who provides the credit assistance</h2>
-<p>${esc(lmmLicensingLine())} Items in square brackets are particulars still to be published.</p>`;
+<p>${esc(lmmPublicName())} provides the credit assistance.</p>
+${licensingHtml()}`;
 }
 
 function documentHtml(opts: { title: string; description: string; path: string; body: string }): string {
@@ -345,7 +384,7 @@ function documentHtml(opts: { title: string; description: string; path: string; 
   </main>
   <footer>
     <div class="wrap">
-      <p>${esc(lmmLicensingLine())} Items in square brackets are particulars still to be published.</p>
+      ${licensingHtml()}
       <nav aria-label="Legal">
         ${link(LMM_SITE.homePath, "Home", "/")}
         ${link(LMM_SITE.privacyPath, "Privacy Policy", "/privacy")}

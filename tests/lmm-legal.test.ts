@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  LMM_AFCA, LMM_LEGAL_IDENTITY, LMM_OAIC, LMM_PLACEHOLDERS, LMM_SITE,
-  lmmLegalDocument, lmmLicensingLine, prepareLmmHomeHtml,
+  LMM_AFCA, LMM_LEGAL_IDENTITY, LMM_OAIC, LMM_SITE,
+  lmmLegalDocument, lmmLicensingLine, lmmPublicName, prepareLmmHomeHtml,
 } from "../lib/lmm-legal";
 
 const home = readFileSync("public/clients/lmm-site/index.html", "utf8");
@@ -11,21 +11,32 @@ const served = prepareLmmHomeHtml(home);
 const privacy = lmmLegalDocument("privacy");
 const complaints = lmmLegalDocument("complaints");
 
-test("unpublished licence particulars live in one config", () => {
-  assert.deepEqual([...LMM_PLACEHOLDERS], [
-    "[ENTITY NAME]",
-    "[ABN]",
-    "[ACL / Credit Rep No.]",
-    "[LICENSEE / AGGREGATOR]",
-    "[AFCA Member No.]",
-  ]);
-  assert.deepEqual(Object.values(LMM_LEGAL_IDENTITY), [...LMM_PLACEHOLDERS]);
-  for (const token of LMM_PLACEHOLDERS) {
-    assert.equal((lmmLicensingLine().match(new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length, 1, token);
-    assert.ok(served.includes(token), `home footer missing ${token}`);
-    assert.ok(privacy.includes(token), `privacy missing ${token}`);
-    assert.ok(complaints.includes(token), `complaints missing ${token}`);
+test("unset licence particulars are null and do not render", () => {
+  assert.deepEqual(LMM_LEGAL_IDENTITY, {
+    entityName: null,
+    abn: null,
+    aclOrCreditRep: null,
+    licenseeOrAggregator: null,
+    afcaMemberNo: null,
+  });
+  assert.equal(lmmPublicName(), "Lifestyle Money Management");
+  assert.equal(lmmLicensingLine(), "");
+  assert.equal(lmmLicensingLine({
+    entityName: "Example Pty Ltd",
+    abn: "12 345 678 901",
+    aclOrCreditRep: "123456",
+    licenseeOrAggregator: "Example Aggregator",
+    afcaMemberNo: "99999",
+  }), "Lifestyle Money Management is the trading name of Example Pty Ltd (ABN 12 345 678 901). Credit assistance is provided under 123456, authorised through Example Aggregator. AFCA member number: 99999.");
+  assert.equal(lmmLicensingLine({ ...LMM_LEGAL_IDENTITY, abn: "   " }), "");
+  const hidden = ["[ENTITY NAME]", "[ABN]", "[ACL", "[LICENSEE", "[AFCA", "square brackets", "particulars still", "AFCA member number", "trading name of"];
+  for (const page of [served, privacy, complaints]) {
+    for (const token of hidden) assert.equal(page.includes(token), false, token);
   }
+  const footer = served.slice(served.indexOf('data-lmm-legal="1"'));
+  assert.match(footer, /Privacy Policy/);
+  assert.match(footer, /Complaints/);
+  assert.doesNotMatch(footer.slice(0, 400), /<p>/);
 });
 
 test("the LMM home page links to privacy and complaints and has no draft quotes", () => {
