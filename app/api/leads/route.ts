@@ -948,6 +948,68 @@ function buildHotLeadEmail(lead: {
   return { subject, html };
 }
 
+// ── Operator notification: Instagram instant site check ──────────────────────
+// Same Resend client and inbox as every other Saabai lead.
+// No visitor email and no nurture. The score is the one the check returned.
+
+function buildInstagramOperatorEmail(lead: {
+  email?: string;
+  name?: string;
+  business?: string;
+  website?: string;
+  phone?: string;
+  problem?: string;
+  offer?: string;
+  page?: string;
+  siteScore?: number;
+  checkSummary?: string;
+  timestamp: string;
+  utm?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string };
+}) {
+  const utm = lead.utm ?? {};
+  const utmLine = [utm.source, utm.medium, utm.campaign, utm.content, utm.term].filter(Boolean).join(" · ");
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 140px; vertical-align: top;">${label}</td><td style="padding: 6px 0; font-size: 14px;">${value}</td></tr>`;
+  const site = lead.website
+    ? `<a href="${lead.website}" style="color: #62c5d1;">${lead.website}</a>`
+    : "Not provided";
+  const scored = typeof lead.siteScore === "number";
+  const scoreLabel = scored ? `${lead.siteScore} out of 100` : "Not scored";
+
+  return {
+    subject: `Site check: ${lead.business || lead.name || lead.email || "Instagram"} (${scored ? `${lead.siteScore}/100` : "not scored"})`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 640px; margin: 0 auto; color: #1a1a1a;">
+        <div style="background: #0b092e; padding: 32px; border-radius: 12px 12px 0 0;">
+          <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 8px;">Saabai · Instagram</p>
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 600;">Instant site check</h1>
+        </div>
+        <div style="background: #f8f8f8; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Contact</h2>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+            ${row("Name", lead.name || "Not provided")}
+            ${row("Business", lead.business || "Not provided")}
+            ${row("Website", site)}
+            ${row("Email", lead.email ? `<a href="mailto:${lead.email}" style="color: #62c5d1;">${lead.email}</a>` : "Not provided")}
+            ${row("Phone", lead.phone || "Not provided")}
+            ${row("Offer", lead.offer || "free-site-check")}
+            ${row("Page", lead.page || "/ig")}
+            ${row("Score", scoreLabel)}
+            ${row("UTM", utmLine || "None")}
+            ${row("Time", new Date(lead.timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }))}
+          </table>
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Site check</h2>
+          <p style="font-size: 14px; color: #333; line-height: 1.6; margin: 0 0 28px;">${lead.checkSummary || "No check summary."}</p>
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Biggest problem</h2>
+          <p style="font-size: 14px; color: #333; line-height: 1.6; margin: 0 0 28px;">${lead.problem || "Not provided"}</p>
+          ${lead.email ? `<a href="mailto:${lead.email}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none;">Reply to lead</a>` : ""}
+          <p style="font-size: 12px; color: #999; margin: 24px 0 0; padding-top: 16px; border-top: 1px solid #e5e5e5;">Submitted via saabai.ai/ig · source=instagram · offer=free-site-check</p>
+        </div>
+      </div>
+    `,
+  };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -980,7 +1042,7 @@ export async function POST(req: Request) {
 
   console.log(safeLogLine(lead));
 
-  if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator")) {
+  if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator") || lead.source === "instagram") {
     const { recordConversion } = await import("@/lib/exp/track");
     await recordConversion(req, "form_submit");
   }
@@ -989,6 +1051,7 @@ export async function POST(req: Request) {
   const isMiaQualified = lead.source === "mia_qualified";
   const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";
   const isPeteClosed = lead.source === "pete_ended";
+  const isInstagram = lead.source === "instagram";
 
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
@@ -1070,6 +1133,20 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error("[resend customer transcript error]", err);
         }
+      }
+    } else if (isInstagram) {
+      // Operator alert only. Same sender and inbox as other leads. No visitor email and no nurture.
+      const { subject, html } = buildInstagramOperatorEmail(lead);
+      try {
+        await resend.emails.send({
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
+          replyTo: lead.email || undefined,
+        });
+      } catch (err) {
+        console.error("[resend operator error]", err);
       }
     } else {
       // Standard lead notification (Mia or calculator)
