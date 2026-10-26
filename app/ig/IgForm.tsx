@@ -57,7 +57,6 @@ export default function IgForm() {
           </div>
         ) : null}
         {check.checked.length > 0 ? <p className="ig-checked">Checked: {check.checked.join(", ")}.</p> : null}
-        {check.foldNote ? <p className="ig-fine">{check.foldNote}</p> : null}
         <a className="btn full" href="/blueprint">See the Blueprint audit</a>
         {error ? <p className="ig-error" role="alert">{error}</p> : null}
         <p className="ig-fine">

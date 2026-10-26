@@ -14,13 +14,15 @@ import { robotsDisallowsUs } from "./site-scan/scan";
 import { runBlueprintSearchAudit, type Fetcher } from "./blueprint/search-audit";
 import {
   AREA_LABEL,
-  FOLD_NOTE,
   SEARCH_LIMITS,
   pathBlockedByRobots,
   type SearchArea,
   type SearchAudit,
   type SearchClientInput,
 } from "./blueprint/search-rules";
+
+/** One line under the score. The number itself is the score; this does not add another. */
+export const IG_SCORE_LINE = "Based on how Google, AI search and buyers see your site.";
 import type { IgSiteCheck } from "./ig-lead";
 
 const LIMIT = 4;
@@ -70,7 +72,7 @@ export function instagramRobotsBlock(robots: string, path: string): boolean {
 }
 
 function unread(summary: string): IgSiteCheck {
-  return { read: false, score: null, fixes: [], checked: [], pages: 0, summary, foldNote: null };
+  return { read: false, score: null, fixes: [], checked: [], pages: 0, summary, foldNote: null, token: null };
 }
 
 function clientFromBusiness(business?: string): SearchClientInput {
@@ -91,19 +93,17 @@ function shape(audit: SearchAudit): IgSiteCheck {
     .slice(0, 3)
     .map((c) => ({ what: c.what, why: c.why }));
   const n = audit.pagesCrawled.length;
-  const pages = `We opened ${n} page${n === 1 ? "" : "s"} with read-only requests${audit.capped ? " and stopped at the page cap" : ""}.`;
-  const areas = checked.length ? `Checked ${checked.join(", ")}.` : "No section had enough evidence to score.";
-  const scoreBit = audit.overall === null
-    ? "There was not enough evidence for a score out of 100. Nothing was guessed."
-    : `Overall ${audit.overall} out of 100. ${audit.weightingNote}`;
   return {
     read: true,
     score: audit.overall,
     fixes,
     checked,
     pages: n,
-    summary: `${scoreBit} ${pages} ${areas}`,
-    foldNote: FOLD_NOTE,
+    summary: audit.overall === null
+      ? "There was not enough on the pages we opened to give a score."
+      : IG_SCORE_LINE,
+    foldNote: null,
+    token: null,
   };
 }
 

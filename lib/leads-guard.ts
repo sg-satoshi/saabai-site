@@ -9,6 +9,7 @@
  */
 import { createHash, timingSafeEqual } from "node:crypto";
 import { getRedis } from "./redis";
+import { readIgScore } from "./ig-score-token";
 
 export const PUBLIC_SOURCES = [
   "chat_widget",
@@ -91,11 +92,6 @@ function cleanUtm(v: unknown): Record<string, string> | undefined {
 const num = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
-/** Site-check score. Only a finite number is kept, clamped to 0–100. */
-function cleanScore(v: unknown): number | undefined {
-  if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
-  return Math.min(100, Math.max(0, Math.round(v)));
-}
 
 export type CleanLead = Record<string, unknown> & {
   source: string;
@@ -177,8 +173,11 @@ export function sanitizeLead(raw: unknown, internal: boolean): { ok: true; lead:
     lead.problem = clip(r.problem, MAX_STR);
     const utm = cleanUtm(r.utm);
     if (utm) lead.utm = utm;
-    const siteScore = cleanScore(r.siteScore);
-    if (siteScore !== undefined) lead.siteScore = siteScore;
+    const token = typeof r.scoreToken === "string" ? r.scoreToken.trim().slice(0, 800) : "";
+    if (token && typeof lead.website === "string") {
+      const verdict = readIgScore(token, lead.website);
+      if (verdict.ok && typeof verdict.score === "number") lead.siteScore = verdict.score;
+    }
     const checkSummary = clip(r.checkSummary, 800);
     if (checkSummary) lead.checkSummary = checkSummary;
   }

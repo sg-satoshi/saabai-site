@@ -9,7 +9,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { INSTAGRAM_OFFER, leadAlertCheck, leadFingerprint, sanitizeLead, type CleanLead } from "../lib/leads-guard";
 import { buildInstagramLeadPayload, instagramLeadError, parseIgSiteCheck, submitInstagramLead, submitInstagramSiteCheck, utmFromSearch } from "../lib/ig-lead";
-import { igCheckLimited, instagramRobotsBlock, runInstagramSiteCheck } from "../lib/ig-check";
+import { IG_SCORE_LINE, igCheckLimited, instagramRobotsBlock, runInstagramSiteCheck } from "../lib/ig-check";
+import { signIgScore } from "../lib/ig-score-token";
 import { runBlueprintSearchAudit, type Fetcher } from "../lib/blueprint/search-audit";
 import { AREA_LABEL, SEARCH_LIMITS, type SearchArea } from "../lib/blueprint/search-rules";
 import { ScanUrlError } from "../lib/site-scan/ssrf";
@@ -150,6 +151,8 @@ test("page is noindex, uses Shane's photo, and does not invent a second sender",
   assert.ok(form.indexOf('id="ig-website"') < form.indexOf('id="ig-name"'));
   assert.match(form, /Check my site/);
   assert.match(form, /See the Blueprint audit/);
+  assert.ok(!form.includes("foldNote"));
+  assert.doesNotMatch(form, /headless|medium confidence/i);
   assert.ok(!page.includes("testimonial"));
   assert.ok(!page.includes("/api/leads"));
   assert.ok(!form.includes("/api/site-factory/lead"));
@@ -169,6 +172,7 @@ test("page is noindex, uses Shane's photo, and does not invent a second sender",
   assert.match(read("proxy.ts"), /\/api\/ig\/check/);
   assert.match(checkRoute, /igCheckLimited/);
   assert.match(checkRoute, /runInstagramSiteCheck/);
+  assert.match(checkRoute, /signIgScore/);
   assert.doesNotMatch(checkRoute, /Resend|\/api\/leads/);
   assert.doesNotMatch(checkLib, /method:\s*["']POST["']/);
   assert.match(read("lib/site-scan/safe-fetch.ts"), /method:\s*"GET"/);
@@ -235,27 +239,43 @@ test("dry-run: handler accepts one instagram lead and does not call a lead URL",
   }
 });
 
-test("sanitizeLead keeps a clamped site score only on instagram leads", () => {
-  const lead = clean({
-    source: "instagram",
-    name: "Sam",
-    business: "Acme",
-    website: "acme.com.au",
-    email: "a@b.co",
-    siteScore: 72.4,
-    checkSummary: "<b>Checked indexing</b>",
-  });
-  assert.equal(lead.siteScore, 72);
-  assert.equal(lead.checkSummary, "&lt;b&gt;Checked indexing&lt;/b&gt;");
-  const high = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: 140 });
-  assert.equal(high.siteScore, 100);
-  const zero = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: 0 });
-  assert.equal(zero.siteScore, 0);
-  const text = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: "72" });
-  assert.equal(text.siteScore, undefined);
-  const other = clean({ source: "calculator_page", email: "a@b.co", siteScore: 80, checkSummary: "nope" });
-  assert.equal(other.siteScore, undefined);
-  assert.equal(other.checkSummary, undefined);
+test("operator email keeps a site score only when the HMAC matches", () => {
+  const prev = process.env.PORTAL_SESSION_SECRET;
+  process.env.PORTAL_SESSION_SECRET = "ig-score-test-secret";
+  const base = { source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co" };
+  try {
+    const token = signIgScore("https://acme.com.au/", 72);
+    assert.ok(token);
+    const lead = clean({ ...base, siteScore: 100, scoreToken: token, checkSummary: "<b>Checked indexing</b>" });
+    assert.equal(lead.siteScore, 72);
+    assert.equal(lead.scoreToken, undefined);
+    assert.equal(lead.checkSummary, "&lt;b&gt;Checked indexing&lt;/b&gt;");
+    assert.equal(leadAlertCheck(lead).ok, true);
+
+    const forged = clean({ ...base, siteScore: 100, checkSummary: "plain" });
+    assert.equal(forged.siteScore, undefined);
+    assert.equal(leadAlertCheck(forged).ok, true);
+
+    const other = signIgScore("https://other.com.au/", 90);
+    const mismatch = clean({ ...base, siteScore: 90, scoreToken: other });
+    assert.equal(mismatch.siteScore, undefined);
+
+    const stale = signIgScore("https://acme.com.au/", 50, Date.now() - 31 * 60 * 1000);
+    assert.equal(clean({ ...base, siteScore: 50, scoreToken: stale }).siteScore, undefined);
+
+    const zero = signIgScore("https://acme.com.au/", 0);
+    assert.equal(clean({ ...base, siteScore: 40, scoreToken: zero }).siteScore, 0);
+
+    const unread = signIgScore("https://acme.com.au/", null);
+    assert.equal(clean({ ...base, siteScore: 99, scoreToken: unread }).siteScore, undefined);
+
+    const calc = clean({ source: "calculator_page", email: "a@b.co", siteScore: 80, scoreToken: token, checkSummary: "nope" });
+    assert.equal(calc.siteScore, undefined);
+    assert.equal(calc.checkSummary, undefined);
+  } finally {
+    if (prev === undefined) delete process.env.PORTAL_SESSION_SECRET;
+    else process.env.PORTAL_SESSION_SECRET = prev;
+  }
 });
 
 test("an unread score is dropped and a bad address does not post a lead", async () => {
@@ -292,8 +312,9 @@ test("a scored check posts one mocked lead and an unread check still does", asyn
         fixes: [{ what: "Add a canonical link.", why: "Google may keep two copies." }],
         checked: ["Indexing", "Conversion"],
         pages: 1,
-        summary: "Overall 64 out of 100.",
-        foldNote: "HTML only.",
+        summary: "Based on how Google, AI search and buyers see your site.",
+        foldNote: null,
+        token: "abcdefgh.ijklmnop",
       }), { status: 200 });
     }
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
@@ -305,9 +326,10 @@ test("a scored check posts one mocked lead and an unread check still does", asyn
   assert.equal(scored.check.score, 64);
   assert.equal(calls[1].url, "/api/leads");
   assert.equal(calls[1].body.siteScore, 64);
+  assert.equal(calls[1].body.scoreToken, "abcdefgh.ijklmnop");
   assert.equal(calls[1].body.source, "instagram");
   assert.equal(calls[1].body.offer, "free-site-check");
-  assert.match(String(calls[1].body.checkSummary), /Overall 64 out of 100/);
+  assert.match(String(calls[1].body.checkSummary), /Based on how Google, AI search and buyers see your site/);
   assert.match(String(calls[1].body.checkSummary), /Add a canonical link/);
 
   calls.length = 0;
@@ -385,8 +407,9 @@ test("fixture crawl score matches the Blueprint audit and stays within the page 
   assert.equal(typeof audit.overall, "number");
   assert.equal(check.score, audit.overall);
   assert.equal(check.read, true);
-  assert.match(check.summary, new RegExp(`Overall ${check.score} out of 100`));
-  assert.doesNotMatch(check.summary, /\$\d/);
+  assert.equal(check.summary, IG_SCORE_LINE);
+  assert.equal(check.foldNote, null);
+  assert.doesNotMatch(check.summary, /headless|medium confidence|\$\d/i);
   assert.ok(check.fixes.length <= 3);
   assert.ok(check.pages >= 1 && check.pages <= SEARCH_LIMITS.maxHtmlPages);
   for (const label of check.checked) {
@@ -460,8 +483,9 @@ test("real public site is read with GET only", { timeout: 60_000 }, async () => 
     assert.equal(typeof check.score, "number");
     assert.ok((check.score ?? -1) >= 0 && (check.score ?? 101) <= 100);
     assert.ok(check.pages >= 1);
-    assert.match(check.summary, new RegExp(`Overall ${check.score} out of 100`));
-    assert.ok(check.foldNote);
+    assert.equal(check.summary, IG_SCORE_LINE);
+    assert.equal(check.foldNote, null);
+    assert.doesNotMatch(check.summary, /headless|medium confidence/i);
   } else {
     assert.equal(check.score, null);
     assert.match(check.summary, /couldn't read your site/i);

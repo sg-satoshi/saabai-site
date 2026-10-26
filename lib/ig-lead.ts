@@ -23,6 +23,8 @@ export type IgSiteCheck = {
   pages: number;
   summary: string;
   foldNote: string | null;
+  /** HMAC from the check route. Forwarded to the lead. Never shown. */
+  token: string | null;
 };
 
 export type IgLeadInput = {
@@ -34,8 +36,9 @@ export type IgLeadInput = {
   problem?: string;
   /** `location.search`, including the leading ? */
   search?: string;
-  /** Whole number from the site check. Omitted when the site was not scored. */
+  /** Whole number from the site check. The server keeps it only when scoreToken matches. */
   siteScore?: number | null;
+  scoreToken?: string;
   checkSummary?: string;
 };
 
@@ -90,6 +93,7 @@ export function buildInstagramLeadPayload(input: IgLeadInput): Record<string, un
   const problem = input.problem?.trim();
   const score = input.siteScore;
   const summary = input.checkSummary?.trim().slice(0, 800);
+  const scoreToken = input.scoreToken?.trim();
   return {
     source: IG_SOURCE,
     offer: IG_OFFER,
@@ -101,6 +105,7 @@ export function buildInstagramLeadPayload(input: IgLeadInput): Record<string, un
     ...(phone ? { phone } : {}),
     ...(problem ? { problem } : {}),
     ...(typeof score === "number" && Number.isFinite(score) ? { siteScore: Math.min(100, Math.max(0, Math.round(score))) } : {}),
+    ...(scoreToken ? { scoreToken: scoreToken.slice(0, 800) } : {}),
     ...(summary ? { checkSummary: summary } : {}),
     ...(Object.keys(utm).length ? { utm } : {}),
   };
@@ -151,6 +156,7 @@ const UNREAD_CHECK: IgSiteCheck = {
   pages: 0,
   summary: "We couldn't read your site. Nothing was guessed, and there is no score.",
   foldNote: null,
+  token: null,
 };
 
 /** Accept only a score the check marked as read. A number on an unread result is dropped. */
@@ -187,7 +193,10 @@ export function parseIgSiteCheck(data: unknown): IgSiteCheck | null {
   const foldNote = read && typeof o.foldNote === "string" && o.foldNote.trim()
     ? o.foldNote.trim().slice(0, 600)
     : null;
-  return { read, score, fixes, checked, pages, summary, foldNote };
+  const token = typeof o.token === "string" && /^[A-Za-z0-9_-]{8,400}\.[A-Za-z0-9_-]{8,200}$/.test(o.token)
+    ? o.token
+    : null;
+  return { read, score, fixes, checked, pages, summary, foldNote, token };
 }
 
 export type IgCheckOutcome =
@@ -236,6 +245,7 @@ export async function submitInstagramSiteCheck(
     ...input,
     website,
     siteScore: result.score,
+    scoreToken: result.token ?? undefined,
     checkSummary,
   }, post);
   if (!saved.ok) return { ok: true, saved: false, check: result, error: saved.error };
