@@ -18,6 +18,7 @@ import {
   canonicalDomainsFromHostMap,
   canonicalHostForSlug,
   clientSiteRequestDecision,
+  apexWwwRedirect,
   isAdminSitePreview,
   isSaabaiProductionHost,
   parseSitesPath,
@@ -290,6 +291,11 @@ async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextRes
 export async function proxy(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const hostname = host.split(":")[0];
+
+  // Apex saabai.ai → https://www.saabai.ai (same path and query). Exact host only:
+  // www, client domains, and *.vercel.app do not match, so this cannot loop.
+  const apex = apexWwwRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
+  if (apex) return NextResponse.redirect(apex.location, apex.status);
 
   // Custom domain routing — rewrite to /sites/${slug}
   if (

@@ -29,7 +29,8 @@ test("unverified or retired claims are gone", () => {
 });
 
 test("prices, GST line, demo CTA and Tributum line are as approved", () => {
-  assert.ok(page.includes("$299<small> /month</small>"));
+  assert.ok(page.includes("$299<small> per month</small>"));
+  assert.ok(!page.includes("> /month<") && !page.includes(">/month<") && !page.includes("> /year<"));
   assert.ok(page.includes(">Custom<"));
   assert.ok(page.includes("Prices in AUD. GST not applicable."));
   assert.ok(page.includes("Tributum Law, an Adelaide, South Australia ATO dispute and tax law firm, uses Lex for legal research."));

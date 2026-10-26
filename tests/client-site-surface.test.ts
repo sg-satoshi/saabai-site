@@ -14,6 +14,7 @@ import { APP_ROUTER_SITES } from "../lib/site-registry";
 import { CLIENT_SITE_DIRECTORY } from "../lib/client-site-directory";
 import { clientSiteMetadata } from "../lib/client-site";
 import {
+  apexWwwRedirect,
   canonicalHost,
   clientSiteRequestDecision,
   clientSiteRobots,
@@ -24,6 +25,9 @@ import {
 } from "../lib/client-site-surface";
 import sitemap from "../app/sitemap";
 import robots from "../app/robots";
+import nextConfig from "../next.config";
+import { matchHas, prepareDestination } from "next/dist/shared/lib/router/utils/prepare-destination";
+import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 
 const ROOT = path.join(__dirname, "..");
 
@@ -153,6 +157,100 @@ test("saabai.ai sitemap and robots.txt do not list or disallow /sites", () => {
   assert.ok(!body.includes("/sites"));
   assert.ok(!read("app/robots.ts").includes("/sites"));
   assert.ok(!read("app/sitemap.ts").includes("/sites"));
+});
+
+test("apex saabai.ai redirects to www with the same path and query", () => {
+  assert.deepEqual(apexWwwRedirect("saabai.ai", "/", ""), {
+    location: "https://www.saabai.ai/",
+    status: 308,
+  });
+  assert.deepEqual(apexWwwRedirect("SAABAI.AI:443", "/score", "?utm=a&ref=b"), {
+    location: "https://www.saabai.ai/score?utm=a&ref=b",
+    status: 308,
+  });
+  assert.deepEqual(apexWwwRedirect("saabai.ai", "/sites/cycle-repair/faq", "?x=1"), {
+    location: "https://www.saabai.ai/sites/cycle-repair/faq?x=1",
+    status: 308,
+  });
+
+  const untouched = [
+    "www.saabai.ai",
+    "blog.saabai.ai",
+    "stuscyclerepairs.com",
+    "www.stuscyclerepairs.com",
+    "lifestylemoneymanagement.com.au",
+    "www.lifestylemoneymanagement.com.au",
+    "boconsulting.com.au",
+    "wholesalehomes.com.au",
+    "tributumlaw.com",
+    "saabai-site-git-x.vercel.app",
+    "localhost",
+    "127.0.0.1",
+    "saabai.ai.evil.com",
+    "notsaabai.ai",
+  ];
+  for (const host of untouched) {
+    assert.equal(apexWwwRedirect(host, "/websites", "?q=1"), null, host);
+  }
+
+  const proxySrc = read("proxy.ts");
+  const redirectAt = proxySrc.indexOf("apexWwwRedirect(");
+  const customDomainAt = proxySrc.indexOf("Custom domain routing");
+  assert.ok(redirectAt > 0 && customDomainAt > redirectAt, "apex redirect runs before custom-domain routing");
+  assert.match(proxySrc, /NextResponse\.redirect\(apex\.location, apex\.status\)/);
+});
+
+test("proxy sends only the apex host to www", async () => {
+  process.env.UPSTASH_REDIS_REST_URL ||= "http://127.0.0.1:9";
+  process.env.UPSTASH_REDIS_REST_TOKEN ||= "test";
+  process.env.SAABAI_SESSION_SECRET ||= "test-secret-test-secret-test-secret-1234";
+  process.env.PORTAL_SESSION_SECRET ||= "portal-test-secret-portal-test-secret";
+  const { NextRequest } = await import("next/server");
+  const { proxy } = await import("../proxy");
+  const hit = async (host: string, path: string) => {
+    const res = await proxy(new NextRequest(`https://${host}${path}`, { headers: { host } }));
+    return { status: res.status, location: res.headers.get("location") };
+  };
+  assert.deepEqual(await hit("saabai.ai", "/"), { status: 308, location: "https://www.saabai.ai/" });
+  assert.deepEqual(await hit("saabai.ai", "/score?utm=a&ref=b"), { status: 308, location: "https://www.saabai.ai/score?utm=a&ref=b" });
+  assert.deepEqual(await hit("SAABAI.AI", "/sites/cycle-repair/faq?x=1"), { status: 308, location: "https://www.saabai.ai/sites/cycle-repair/faq?x=1" });
+});
+
+test("next.config host redirect matches only saabai.ai and keeps path and query", async () => {
+  assert.ok(nextConfig.redirects);
+  const rules = await nextConfig.redirects();
+  const apex = rules.filter((rule) => rule.has?.some((item) => item.type === "host" && item.value === "saabai.ai"));
+  assert.equal(apex.length, 1);
+  const rule = apex[0];
+  assert.equal(rule.source, "/:path*");
+  assert.equal(rule.destination, "https://www.saabai.ai/:path*");
+  assert.equal(rule.permanent, true);
+  assert.equal(rules.indexOf(rule), 0, "apex host redirect is checked before path redirects");
+
+  const has = rule.has ?? [];
+  const hostReq = (host: string) => ({ headers: { host } }) as Parameters<typeof matchHas>[0];
+  const hosts = ["www.saabai.ai", "blog.saabai.ai", "stuscyclerepairs.com", "www.stuscyclerepairs.com", "lifestylemoneymanagement.com.au", "boconsulting.com.au", "wholesalehomes.com.au", "tributumlaw.com", "saabai-site.vercel.app", "localhost", "saabai.ai.evil.com", "notsaabai.ai"];
+  for (const host of hosts) assert.equal(matchHas(hostReq(host), {}, has, []), false, host);
+  assert.notEqual(matchHas(hostReq("saabai.ai"), {}, has, []), false);
+  assert.notEqual(matchHas(hostReq("SAABAI.AI:443"), {}, has, []), false);
+
+  const match = getPathMatch(rule.source);
+  const built = (pathname: string, query: Record<string, string>) => {
+    const params = match(pathname);
+    assert.ok(params, pathname);
+    const { parsedDestination } = prepareDestination({
+      appendParamsToQuery: false,
+      destination: rule.destination,
+      params,
+      query,
+    });
+    const search = new URLSearchParams(parsedDestination.query as Record<string, string>).toString();
+    const path = parsedDestination.pathname || "/";
+    return `https://www.saabai.ai${path}${search ? `?${search}` : ""}`;
+  };
+  assert.equal(built("/", {}), "https://www.saabai.ai/");
+  assert.equal(built("/score", { utm: "a" }), "https://www.saabai.ai/score?utm=a");
+  assert.equal(built("/sites/cycle-repair/faq", { x: "1" }), "https://www.saabai.ai/sites/cycle-repair/faq?x=1");
 });
 
 test("chrome, middleware and site metadata use the shared helper", () => {

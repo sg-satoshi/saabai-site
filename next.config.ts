@@ -41,6 +41,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Bare apex only. The host check is anchored, so www and client domains do not match.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "saabai.ai" }],
+        destination: "https://www.saabai.ai/:path*",
+        permanent: true,
+      },
       { source: "/counsel", destination: "/blueprint", statusCode: 301 },
       // Retired Oct 2026: advisory + law/accounting pages -> Blueprint; non-QLD city pages -> /websites
       { source: "/advisory", destination: "/blueprint", statusCode: 301 },

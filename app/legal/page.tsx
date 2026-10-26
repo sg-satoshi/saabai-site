@@ -350,7 +350,7 @@ export default function LegalPage() {
           <div className="lx-plans">
             <div className="lx-plan lx-hi">
               <div className="lx-tier">Firm</div>
-              <div className="lx-price">$299<small> /month</small></div>
+              <div className="lx-price">$299<small> per month</small></div>
               <p>Perfect for small-to-mid sized firms.</p>
               <ul>
                 {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
