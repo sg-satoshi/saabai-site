@@ -19,7 +19,7 @@ const FAQS = [
   },
   {
     q: "Which sources does Lex search?",
-    a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Lex does not currently search case law.",
+    a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Case citations are checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). Other courts are not in that snapshot.",
   },
   {
     q: "Where does Lex host data?",
@@ -32,7 +32,7 @@ const FAQS = [
 ];
 
 const SOURCES: { name: string; href: string; note: string }[] = [
-  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Price, sources, privacy wording and the statement that case law is not searched." },
+  { name: "Lex on saabai.ai", href: "https://www.saabai.ai/legal", note: "Price, sources, privacy wording and the licensed case-law snapshot limits." },
   { name: "Harvey homepage", href: "https://www.harvey.ai/", note: "Product description. No price is listed on this page." },
   { name: "Harvey pricing URL", href: "https://www.harvey.ai/pricing", note: "Returned 404 on the check date. Not used as a price." },
   { name: "Harvey security", href: "https://www.harvey.ai/security", note: "Hosting and data localisation wording." },
@@ -106,7 +106,7 @@ export default function LexComparePage() {
             <div className="lx-card">
               <h3>Sources</h3>
               <p>Lex searches public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation, whether an Act is in force, ASIC and the Fair Work Commission.</p>
-              <p style={{ marginTop: 12 }}>Lex does not currently search case law. Check case law yourself before you advise a client.</p>
+              <p style={{ marginTop: 12 }}>Case citations are checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). It does not cover every court, and NSW and High Court results are citation and link only. Confirm anything the snapshot does not contain.</p>
             </div>
             <div className="lx-card">
               <h3>Data location</h3>
