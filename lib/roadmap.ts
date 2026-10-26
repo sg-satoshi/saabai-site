@@ -4,7 +4,7 @@
  */
 import { randomUUID } from "crypto";
 import { getRedis } from "./redis";
-import { ROADMAP_KEY, MAX_ITEMS, SEED_ITEMS, type GithubState, type ItemInput, type RoadmapItem } from "./roadmap-core";
+import { GITHUB_UNAVAILABLE, ROADMAP_KEY, MAX_ITEMS, SEED_ITEMS, classifySearchItems, type GhSearchItem, type GithubState, type ItemInput, type LinkedWork, type MergedPr, type OpenWork, type RoadmapItem } from "./roadmap-core";
 
 export * from "./roadmap-core";
 
@@ -38,7 +38,7 @@ export async function createItem(input: ItemInput, actor: string): Promise<Roadm
   const now = new Date().toISOString();
   const it: RoadmapItem = {
     id: randomUUID(), title: input.title!, description: input.description ?? "", status: input.status!, area: input.area || "Other",
-    target: input.target, priority: input.priority, prNumber: input.prNumber, createdAt: now, updatedAt: now, updatedBy: actor,
+    target: input.target, priority: input.priority, prNumber: input.prNumber, issueNumber: input.issueNumber, createdAt: now, updatedAt: now, updatedBy: actor,
   };
   // New items go to the top of their status group (front of the list).
   await saveItems([it, ...items]);
@@ -50,7 +50,7 @@ export async function updateItem(id: string, input: ItemInput, actor: string): P
   const i = items.findIndex((x) => x.id === id);
   if (i < 0) return null;
   const next: RoadmapItem = { ...items[i], ...input, updatedAt: new Date().toISOString(), updatedBy: actor };
-  for (const k of ["target", "priority", "prNumber"] as const) if (next[k] === undefined) delete next[k];
+  for (const k of ["target", "priority", "prNumber", "issueNumber"] as const) if (next[k] === undefined) delete next[k];
   items[i] = next;
   await saveItems(items);
   return next;
@@ -80,37 +80,186 @@ export async function deleteItem(id: string): Promise<RoadmapItem | null> {
 
 // ── GitHub (fail soft) ───────────────────────────────────────────────
 const REPO = process.env.ROADMAP_GITHUB_REPO || "sg-satoshi/saabai-site";
-let cache: { at: number; state: GithubState } | null = null;
+/** Merged PRs since this date stay on the page. Older linked numbers are fetched one by one. */
+const MERGED_SINCE = "2026-10-01";
+const SEARCH_PAGE_SIZE = 100;
+const MAX_SEARCH_PAGES = 5;
 const TTL = 5 * 60_000;
 
-async function gh<T>(path: string): Promise<T> {
-  const headers: Record<string, string> = { Accept: "application/vnd.github+json", "User-Agent": "saabai-admin-roadmap" };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  const res = await fetch(`https://api.github.com/repos/${REPO}${path}`, { headers, signal: AbortSignal.timeout(6000), cache: "no-store" });
-  if (!res.ok) throw new Error(`GitHub ${res.status}`);
-  return (await res.json()) as T;
+export interface GithubLinks { prs?: number[]; issues?: number[] }
+
+interface BulkCache {
+  at: number;
+  prs: MergedPr[];
+  openIssues: OpenWork[];
+  openPrs: OpenWork[];
+  deployedAt: string | null;
+  fetchedAt: string;
+}
+interface GhPull {
+  number: number;
+  title?: string;
+  state?: string;
+  merged_at?: string | null;
+  html_url?: string;
+  body?: string | null;
+  labels?: { name?: string }[];
+  updated_at?: string;
+  pull_request?: { merged_at?: string | null; html_url?: string } | null;
 }
 
-export async function fetchGithubState(force = false): Promise<GithubState> {
-  if (!force && cache && Date.now() - cache.at < TTL) return cache.state;
-  try {
-    const pulls = await gh<Array<{ number: number; title: string; merged_at: string | null; html_url: string; base: { ref: string } }>>(
-      "/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=40");
-    const prs = pulls.filter((p) => p.merged_at).map((p) => ({ number: p.number, title: p.title, mergedAt: p.merged_at!, url: p.html_url }));
-    let deployedAt: string | null = null;
-    try {
-      const deps = await gh<Array<{ id: number; created_at: string }>>("/deployments?environment=Production&per_page=8");
-      for (const d of deps) {
-        const sts = await gh<Array<{ state: string }>>(`/deployments/${d.id}/statuses?per_page=1`);
-        if (sts[0]?.state === "success") { deployedAt = d.created_at; break; }
-      }
-    } catch { /* deployed state unknown: merged PRs stay "Shipped" */ }
-    const state = { prs, deployedAt, ok: true };
-    cache = { at: Date.now(), state };
-    return state;
-  } catch (e) {
-    return { prs: [], deployedAt: null, ok: false, error: e instanceof Error ? e.message : "GitHub unavailable" };
+let bulkCache: BulkCache | null = null;
+let linkCache = new Map<string, { at: number; work: LinkedWork | null }>();
+
+function unavailable(): GithubState {
+  return { prs: [], openIssues: [], openPrs: [], linked: [], deployedAt: null, fetchedAt: null, ok: false, error: GITHUB_UNAVAILABLE };
+}
+
+function ghHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "saabai-admin-roadmap",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  return headers;
+}
+
+async function ghGet(url: string): Promise<{ ok: true; json: unknown } | { ok: false; status: number }> {
+  const res = await fetch(url, { headers: ghHeaders(), signal: AbortSignal.timeout(8000), cache: "no-store" });
+  if (!res.ok) return { ok: false, status: res.status };
+  return { ok: true, json: await res.json() };
+}
+
+async function searchAll(q: string): Promise<GhSearchItem[]> {
+  const all: GhSearchItem[] = [];
+  let total = Infinity;
+  for (let page = 1; page <= MAX_SEARCH_PAGES && all.length < total; page++) {
+    const url = `https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=${SEARCH_PAGE_SIZE}&page=${page}&sort=updated&order=desc`;
+    const res = await ghGet(url);
+    if (!res.ok) throw new Error(`GitHub ${res.status}`);
+    const data = res.json as { total_count?: number; items?: GhSearchItem[] };
+    total = typeof data.total_count === "number" ? data.total_count : 0;
+    const items = Array.isArray(data.items) ? data.items : [];
+    all.push(...items);
+    if (items.length < SEARCH_PAGE_SIZE) break;
+  }
+  return all;
+}
+
+async function loadDeployedAt(): Promise<string | null> {
+  const deps = await ghGet(`https://api.github.com/repos/${REPO}/deployments?environment=Production&per_page=8`);
+  if (!deps.ok || !Array.isArray(deps.json)) return null;
+  for (const d of deps.json as { id?: number; created_at?: string }[]) {
+    if (!d?.id) continue;
+    const sts = await ghGet(`https://api.github.com/repos/${REPO}/deployments/${d.id}/statuses?per_page=1`);
+    if (sts.ok && Array.isArray(sts.json) && (sts.json as { state?: string }[])[0]?.state === "success") return d.created_at || null;
+  }
+  return null;
+}
+
+function names(labels?: { name?: string }[]): string[] {
+  return (labels ?? []).map((l) => (typeof l?.name === "string" ? l.name : "")).filter(Boolean);
+}
+
+function asLinked(kind: "pr" | "issue", p: GhPull, mergedAt: string | null): LinkedWork | null {
+  if (!Number.isInteger(p.number)) return null;
+  return {
+    kind, number: p.number, title: (p.title || `GitHub #${p.number}`).slice(0, 140), url: p.html_url || "",
+    state: p.state === "open" ? "open" : "closed", mergedAt, labels: names(p.labels), updatedAt: p.updated_at || new Date(0).toISOString(),
+  };
+}
+
+async function fetchPull(n: number): Promise<LinkedWork | null> {
+  const res = await ghGet(`https://api.github.com/repos/${REPO}/pulls/${n}`);
+  if (!res.ok) return null;
+  const p = res.json as GhPull;
+  return asLinked("pr", p, p.merged_at || null);
+}
+
+async function fetchIssue(n: number): Promise<LinkedWork | null> {
+  const res = await ghGet(`https://api.github.com/repos/${REPO}/issues/${n}`);
+  if (!res.ok) return null;
+  const issue = res.json as GhPull;
+  if (issue.pull_request) {
+    const pr = await fetchPull(n);
+    if (pr) return { ...pr, kind: "issue" };
+  }
+  return asLinked("issue", issue, null);
+}
+
+function remember(list: "prs" | "openIssues" | "openPrs", bulk: BulkCache, work: LinkedWork) {
+  if (work.mergedAt && !bulk.prs.some((p) => p.number === work.number)) {
+    bulk.prs.push({ number: work.number, title: work.title, mergedAt: work.mergedAt, url: work.url });
+  }
+  if (work.state !== "open") return;
+  if (list === "openPrs" || (work.kind === "pr" && work.state === "open")) {
+    if (!bulk.openPrs.some((p) => p.number === work.number)) {
+      bulk.openPrs.push({ number: work.number, title: work.title, url: work.url, labels: work.labels, updatedAt: work.updatedAt });
+    }
+  } else if (!bulk.openIssues.some((i) => i.number === work.number)) {
+    bulk.openIssues.push({ number: work.number, title: work.title, url: work.url, labels: work.labels, updatedAt: work.updatedAt });
   }
 }
 
-export function resetGithubCache() { cache = null; }
+async function cachedLink(key: string, force: boolean, load: () => Promise<LinkedWork | null>): Promise<LinkedWork | null> {
+  const hit = linkCache.get(key);
+  if (!force && hit && Date.now() - hit.at < TTL) return hit.work;
+  const work = await load();
+  linkCache.set(key, { at: Date.now(), work });
+  return work;
+}
+
+export async function fetchGithubState(force = false, links?: GithubLinks): Promise<GithubState> {
+  try {
+    let bulk = !force && bulkCache && Date.now() - bulkCache.at < TTL ? bulkCache : null;
+    if (!bulk) {
+      const [mergedItems, openItems, deployedAt] = await Promise.all([
+        searchAll(`repo:${REPO} is:pr is:merged merged:>=${MERGED_SINCE}`),
+        searchAll(`repo:${REPO} is:open`),
+        loadDeployedAt().catch(() => null),
+      ]);
+      const merged = classifySearchItems(mergedItems);
+      const open = classifySearchItems(openItems);
+      bulk = {
+        at: Date.now(),
+        prs: merged.prs,
+        openIssues: open.openIssues,
+        openPrs: open.openPrs,
+        deployedAt,
+        fetchedAt: new Date().toISOString(),
+      };
+      bulkCache = bulk;
+    }
+
+    const prs = [...bulk.prs];
+    const openIssues = [...bulk.openIssues];
+    const openPrs = [...bulk.openPrs];
+    const folded: BulkCache = { ...bulk, prs, openIssues, openPrs };
+    const linked: LinkedWork[] = [];
+    const wantPr = [...new Set((links?.prs ?? []).filter((n) => Number.isInteger(n) && n > 0))];
+    const wantIssue = [...new Set((links?.issues ?? []).filter((n) => Number.isInteger(n) && n > 0))];
+
+    await Promise.all([
+      ...wantPr.filter((n) => !prs.some((p) => p.number === n) && !openPrs.some((p) => p.number === n)).map(async (n) => {
+        const work = await cachedLink(`pr:${n}`, force, () => fetchPull(n));
+        if (!work) return;
+        linked.push(work);
+        remember("openPrs", folded, work);
+      }),
+      ...wantIssue.filter((n) => !openIssues.some((i) => i.number === n) && !prs.some((p) => p.number === n)).map(async (n) => {
+        const work = await cachedLink(`issue:${n}`, force, () => fetchIssue(n));
+        if (!work) return;
+        linked.push(work);
+        if (work.state === "open" && work.kind === "issue") remember("openIssues", folded, work);
+        else remember("prs", folded, work);
+      }),
+    ]);
+
+    return { prs: folded.prs, openIssues: folded.openIssues, openPrs: folded.openPrs, linked, deployedAt: bulk.deployedAt, fetchedAt: bulk.fetchedAt, ok: true };
+  } catch {
+    return unavailable();
+  }
+}
+
+export function resetGithubCache() { bulkCache = null; linkCache = new Map(); }
