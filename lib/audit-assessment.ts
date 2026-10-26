@@ -43,8 +43,12 @@ export function startAnswers(eng: AuditEngagement): {
   };
 }
 
-/** Returns the prompt, or null when there are no fact-find answers to work from. */
-export function buildAssessmentPrompt(engagement: AuditEngagement): string | null {
+/**
+ * Returns the prompt, or null when there are no fact-find answers to work from.
+ * searchContext is the read-only crawl summary. Omit it and the prompt is unchanged
+ * apart from the standing rule not to invent ratings, prices, or results.
+ */
+export function buildAssessmentPrompt(engagement: AuditEngagement, searchContext?: string): string | null {
   const questions = questionsForTier(engagement.tier, engagement.firmType);
   const qa = questions
     .filter((q) => !START_IDS.has(q.id))
@@ -104,9 +108,9 @@ ${goals ? `\nSTATED GOALS\n${goals}` : ""}
 
 CAPABILITY MATRIX (automation patterns proven for firms like this, reference by [id])
 ${matrixAsPromptContext(engagement.firmType)}
-
+${searchContext?.trim() ? `\nSEARCH AND CONVERSION (read-only crawl of the client's site. Do not add ratings, prices, traffic, or results that are not written here.)\n${searchContext.trim()}\n` : ""}
 TASK
-Identify the ${TIER_OPPORTUNITY_COUNT[engagement.tier] ?? "top"} automation opportunities, ranked by ROI (impact x ease). For each, ground estimates in the client's OWN numbers from the fact-find (hours, volumes, team size). Never invent figures; where data is missing, state the assumption. Map each to a capability-matrix pattern id where one fits; use patternId "custom" only if nothing fits. Be honest: if something is low-value or premature, exclude it. Tie opportunities to the client's stated goals where possible.
+Identify the ${TIER_OPPORTUNITY_COUNT[engagement.tier] ?? "top"} automation opportunities, ranked by ROI (impact x ease). For each, ground estimates in the client's OWN numbers from the fact-find (hours, volumes, team size). Never invent figures; where data is missing, state the assumption. Do not invent Google ratings, prices, traffic, rankings, or lost revenue. If a number is not in the fact-find or the search block, say it is missing. Map each to a capability-matrix pattern id where one fits; use patternId "custom" only if nothing fits. Be honest: if something is low-value or premature, exclude it. Tie opportunities to the client's stated goals where possible.
 ${toldRules}
 STYLE
 Plain Australian English. ${NO_DASH_RULE}
