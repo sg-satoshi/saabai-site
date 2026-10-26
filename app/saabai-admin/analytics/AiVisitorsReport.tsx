@@ -6,7 +6,9 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { Button } from "../ui/Button";
+import { aiVisitorPanelMode } from "@/lib/ai-visitors/report-state";
 import { DATA_NOTE, type SiteReport, type VisitorsView } from "@/lib/ai-visitors/types";
+import { AiVisitorsStatus } from "./AiVisitorsStatus";
 import "./ai-visitors.css";
 
 const COMPANY_COLOR: Record<string, string> = {
@@ -178,6 +180,7 @@ export default function AiVisitorsReport() {
         setLoading(false);
         if (!started.current && body.partialDays === 0 && !body.lastRunAt) {
           started.current = true;
+          setBusy("backfill");
           void run("backfill");
         }
       })
@@ -203,6 +206,14 @@ export default function AiVisitorsReport() {
       return (a[sort] - b[sort]) * dir;
     });
   }, [payload, sort]);
+
+  const mode = aiVisitorPanelMode({
+    error,
+    lastError: payload?.lastError ?? "",
+    partialDays: payload?.partialDays ?? 0,
+    hasReport: !!report,
+    collecting: loading || busy !== null,
+  });
 
   function choose(key: string) {
     setSiteKey(key);
@@ -243,22 +254,24 @@ export default function AiVisitorsReport() {
         </div>
       </div>
 
-      {error ? <div className="aiv-error" role="alert">Couldn&apos;t load AI visitor data. {error}</div> : null}
-      {!error && payload?.lastError ? <div className="aiv-error" role="alert">Last snapshot failed. {payload.lastError}</div> : null}
+      {mode === "report" && error ? <div className="aiv-error" role="alert">Couldn&apos;t refresh AI visitor data. {error}</div> : null}
+      {mode === "report" && !error && payload?.lastError ? <div className="aiv-error" role="alert">Last snapshot failed. {payload.lastError}</div> : null}
       {progress ? <div className="aiv-banner">{progress}. History is saved a couple of days at a time.</div> : null}
-      {payload?.partial && payload.partialDays > 0 ? (
+      {mode === "report" && payload?.partial && payload.partialDays > 0 ? (
         <div className="aiv-banner">Showing {payload.partialDays} days, the data available so far.</div>
       ) : null}
 
-      {loading && !payload ? <Skeleton /> : null}
+      {mode === "unknown" ? <AiVisitorsStatus mode="unknown" message={error || payload?.lastError || ""} /> : null}
+      {mode === "pending" && payload ? <AiVisitorsStatus mode="pending" /> : null}
+      {mode === "pending" && !payload ? <Skeleton /> : null}
 
-      {report ? (
+      {mode === "report" && report ? (
         <div className={busy ? "aiv-busy" : ""}>
           <ReportView report={report} clientView={clientView} compareNote={payload?.compareNote ?? ""} />
         </div>
       ) : null}
 
-      {!clientView && payload ? (
+      {mode === "report" && !clientView && payload ? (
         <Portfolio rows={rows} sort={sort} setSort={setSort} open={open} setOpen={setOpen} onOpen={choose} active={report?.key ?? ""} onBackfill={() => void run("backfill")} busy={busy === "backfill"} />
       ) : null}
 
