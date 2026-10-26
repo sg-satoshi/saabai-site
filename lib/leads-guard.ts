@@ -18,7 +18,11 @@ export const PUBLIC_SOURCES = [
   "calculator_page",
   "calculator_homepage",
   "pete_ended",
+  "instagram",
 ] as const;
+
+/** Instagram bio landing (/ig). Offer is set on the server, not trusted from the client. */
+export const INSTAGRAM_OFFER = "free-site-check";
 /** Only the server (chat route) may use this one. */
 export const INTERNAL_SOURCE = "mia_qualified";
 
@@ -54,6 +58,36 @@ export function isValidEmail(e: unknown): e is string {
 
 const clip = (v: unknown, n = MAX_STR): string | undefined =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, n) : undefined;
+
+/** http(s) website only. A bare domain gets https. Returns undefined when it is not a real host. */
+function cleanWebsite(v: unknown): string | undefined {
+  const s = clip(v, 300);
+  if (!s) return undefined;
+  const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  try {
+    const u = new URL(withProto);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return undefined;
+    if (u.username || u.password) return undefined;
+    if (!u.hostname.includes(".")) return undefined;
+    return u.toString().slice(0, 300);
+  } catch {
+    return undefined;
+  }
+}
+
+const UTM_KEYS = ["source", "medium", "campaign", "content", "term"] as const;
+
+/** Whitelisted UTM fields from the landing URL. Drop anything that looks like an email. */
+function cleanUtm(v: unknown): Record<string, string> | undefined {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+  const o = v as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const k of UTM_KEYS) {
+    const s = clip(o[k], 80);
+    if (s && !s.includes("@")) out[k] = s;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
 const num = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
@@ -130,6 +164,14 @@ export function sanitizeLead(raw: unknown, internal: boolean): { ok: true; lead:
       : undefined,
     conversation,
   };
+  if (source === "instagram") {
+    lead.offer = INSTAGRAM_OFFER;
+    lead.website = cleanWebsite(r.website);
+    lead.phone = clip(r.phone, 40);
+    lead.problem = clip(r.problem, MAX_STR);
+    const utm = cleanUtm(r.utm);
+    if (utm) lead.utm = utm;
+  }
   const { email: e, ...rest } = lead;
   const escaped = deepEscape(rest) as Record<string, unknown>;
   return { ok: true, lead: { ...(escaped as CleanLead), email: e } };
@@ -200,16 +242,20 @@ export async function claimVisitorEmail(email: string): Promise<boolean> {
 
 // ── Alert gating and dedupe ──────────────────────────────────────────────────
 
-/** Sources that are a contact capture: they only make sense with a valid email. */
-export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_homepage"] as const;
+/**
+ * Sources that are a contact capture: they only make sense with a valid email.
+ * Phone is optional extra detail on the Instagram form. It never replaces email.
+ */
+export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_homepage", "instagram"] as const;
 
 /**
  * Decide whether a sanitised lead is worth acting on at all. Empty or contactless
  * payloads (for example a QA probe POSTing `{}`) are rejected with a 400 so they
  * never reach the operator inbox as "New Lead via Mia: undefined".
  *
- * - chat_widget and calculator_*: a valid email is required (phone is not an
- *   accepted contact on any form today).
+ * - chat_widget and calculator_*: a valid email is required.
+ * - instagram (/ig free site check): email, name, business and a website.
+ *   Phone is optional and is not a contact on its own.
  * - chat_closed, chat_ended, chat_ended_short, pete_ended: a valid email or at
  *   least one real visitor message.
  * - mia_qualified (server only): at least one visitor message or a qualification summary.
@@ -217,6 +263,13 @@ export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_ho
 export function leadAlertCheck(lead: CleanLead): { ok: true } | { ok: false; error: string } {
   const hasEmail = isValidEmail(lead.email);
   const visitorMsgs = lead.conversation.filter((m) => m.role === "user" && m.content.trim()).length;
+  if (lead.source === "instagram") {
+    if (!hasEmail) return { ok: false, error: "Email required" };
+    if (typeof lead.name !== "string" || !lead.name) return { ok: false, error: "Name required" };
+    if (typeof lead.business !== "string" || !lead.business) return { ok: false, error: "Business required" };
+    if (typeof lead.website !== "string" || !lead.website) return { ok: false, error: "Website required" };
+    return { ok: true };
+  }
   if ((CONTACT_SOURCES as readonly string[]).includes(lead.source)) {
     return hasEmail ? { ok: true } : { ok: false, error: "Email required" };
   }
