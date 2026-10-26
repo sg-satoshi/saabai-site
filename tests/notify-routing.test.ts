@@ -273,6 +273,7 @@ test("portal alert code does not name a customer or shared Telegram variable", (
   const factory = readFileSync("app/api/site-factory/lead/route.ts", "utf8");
   assert.match(factory, /siteTelegramDestination\(siteSlug\)/);
   assert.match(factory, /siteLeadEmail\(siteSlug/);
+  assert.equal(factory.includes("EARLY"), false, "no debug Telegram to a client chat");
   assert.equal(factory.includes("TELEGRAM_CYCLE"), false);
   assert.equal(factory.includes("TELEGRAM_SITES"), false);
   assert.equal(factory.includes("sites[0]"), false);

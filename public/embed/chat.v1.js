@@ -79,6 +79,7 @@
     ".send{width:40px;height:40px;border-radius:50%;border:0;background:var(--accent);color:var(--primary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}",
     ".send:disabled{opacity:.45;cursor:default}",
     ".pw{text-align:center;font-size:11px;color:rgba(0,0,0,.45);padding:2px 0 8px;flex:none}.pw a{color:inherit}",
+    ".go{text-align:center;padding:0 12px 8px;flex:none}.go a{font-size:13px;color:var(--primary)}",
     ".sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}",
     "@media (max-width:480px){.w{bottom:12px}.w.right{right:12px}.w.left{left:12px}.panel{position:fixed;left:8px;right:8px;bottom:84px;width:auto;max-width:none;height:min(560px,calc(100vh - 100px))}}"
   ].join("");
@@ -106,7 +107,8 @@
     bar.appendChild(inp); bar.appendChild(send);
     var pw = el("div", "pw"); els.pw = pw;
     var a = el("a", "", "Saabai AI"); a.href = "https://www.saabai.ai"; a.target = "_blank"; a.rel = "noopener"; pw.appendChild(document.createTextNode("Powered by ")); pw.appendChild(a);
-    panel.appendChild(head); panel.appendChild(msgs); panel.appendChild(bar); panel.appendChild(pw);
+    var go = el("div", "go"); els.go = go;
+    panel.appendChild(head); panel.appendChild(msgs); panel.appendChild(go); panel.appendChild(bar); panel.appendChild(pw);
     w.appendChild(panel); w.appendChild(btn); root.appendChild(w);
     document.body.appendChild(host);
     els.host = host;
@@ -115,6 +117,15 @@
     panel.addEventListener("keydown", function (e) { if (e.key === "Escape") { toggle(false); btn.focus(); } });
     inp.addEventListener("input", function () { send.disabled = busy || ended || !inp.value.trim(); });
     bar.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
+  }
+
+  function track(ev) {
+    if (preview || !site) return;
+    fetch(base + "/api/chat-platform/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: site, sessionId: state.sid, event: ev })
+    }).catch(function () {});
   }
 
   function apply(c) {
@@ -135,7 +146,18 @@
     }
     fill(els.btn, true); fill(els.av, false);
     els.pw.style.display = c.poweredBy === false ? "none" : "";
-    if (!state.msgs.length) state.msgs = [{ r: "bot", c: c.greeting, g: 1 }];
+    if (els.go) {
+      els.go.textContent = "";
+      if (c.handoff && c.handoff.href && c.handoff.label) {
+        var link = el("a", "", c.handoff.label);
+        link.href = c.handoff.href;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.addEventListener("click", function () { track("handoff"); });
+        els.go.appendChild(link);
+      }
+    }
+    if (!state.msgs.length && c.greeting) state.msgs = [{ r: "bot", c: c.greeting, g: 1 }];
     else if (state.msgs[0] && state.msgs[0].g) state.msgs[0].c = c.greeting;
     render();
   }

@@ -115,12 +115,6 @@ export async function POST(req: Request) {
       return corsJson({ error: "siteSlug is required" }, 400, req.headers.get("origin"));
     }
 
-    // EARLY TEST: this site's own Telegram only. No other site, and no shared default.
-    const tgEarly = siteTelegramDestination(siteSlug);
-    if (tgEarly) {
-      await fetch(`https://api.telegram.org/bot${tgEarly.token}/sendMessage?chat_id=${tgEarly.chatId}&text=${encodeURIComponent("📥 EARLY: " + name)}`);
-    }
-
     const origin = req.headers.get("origin");
 
     const lead = {

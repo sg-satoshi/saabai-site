@@ -11,10 +11,11 @@
     slug: 'lmm-site',
     apiEndpoint: 'https://www.saabai.ai/api/chat-platform/message',
     configEndpoint: 'https://www.saabai.ai/api/chat-platform/config?site=lmm-site',
-    systemPrompt: `You are Zara, a knowledgeable and friendly Australian finance and mortgage broking specialist based in Adelaide. You work for Lifestyle Money Management (LMM), helping clients build long-term wealth through ethical, property-led strategy, financial analysis, and portfolio management. You serve clients across Australia with a deep focus on Adelaide and Queensland markets. You are warm, professional, and conversational. You help with: mortgage broking, investment strategy, financial analysis, portfolio management, property wealth planning, lending strategy, and retirement planning. You prioritise affordability, asset quality, downside protection, and whether purchases genuinely move clients closer to financial independence. Keep responses concise and actionable.`,
-    greeting: "Hello! I'm Zara from Lifestyle Money Management. Ready to talk property wealth strategy? I'm here to help!",
+    eventEndpoint: 'https://www.saabai.ai/api/chat-platform/event',
     placeholder: "Ask about finance, strategy, or property wealth..."
   };
+
+  let greeting = '';
 
   const STORAGE_KEY = 'lmm-chat-history';
   let messages = [];
@@ -26,9 +27,13 @@
   fetch(CONFIG.configEndpoint)
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (c) {
-      if (!c || c.active !== false) return;
-      chatbotOff = true;
-      offMessage = c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+      if (!c) return;
+      if (typeof c.greeting === 'string') greeting = c.greeting;
+      if (c.handoff && c.handoff.href && c.handoff.label) showHandoff(c.handoff);
+      if (c.active === false) {
+        chatbotOff = true;
+        offMessage = c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+      }
     })
     .catch(function () {});
 
@@ -155,12 +160,33 @@
   const messagesContainer = widget.querySelector('.lmm-chat-messages');
   const input = widget.querySelector('.lmm-chat-input');
   const sendBtn = widget.querySelector('.lmm-chat-send');
+  const handoffRow = document.createElement('div');
+  handoffRow.style.cssText = 'text-align:center;padding:0 16px 8px;';
+  widget.querySelector('.lmm-chat-input-area').before(handoffRow);
+
+  function showHandoff(link) {
+    handoffRow.textContent = '';
+    const a = document.createElement('a');
+    a.href = link.href;
+    a.textContent = link.label;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.style.cssText = 'font-size:13px;color:#0b5d55;';
+    a.addEventListener('click', function () {
+      fetch(CONFIG.eventEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: CONFIG.slug, event: 'handoff' })
+      }).catch(function () {});
+    });
+    handoffRow.appendChild(a);
+  }
 
   function togglePanel() {
     isOpen = !isOpen;
     panel.classList.toggle('open', isOpen);
-    if (isOpen && messages.length === 0) {
-      addMessage('bot', CONFIG.greeting);
+    if (isOpen && messages.length === 0 && greeting) {
+      addMessage('bot', greeting);
     }
     if (isOpen) setTimeout(() => input.focus(), 100);
   }
@@ -254,7 +280,7 @@
         body: JSON.stringify({
           slug: CONFIG.slug,
           messages: messages
-            .filter(m => m.text !== CONFIG.greeting && m.role !== 'system')
+            .filter(m => m.text !== greeting && m.role !== 'system')
             .slice(-10)
             .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text }))
         })
