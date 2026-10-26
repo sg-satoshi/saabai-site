@@ -294,6 +294,7 @@ export async function proxy(req: NextRequest) {
 
   // Apex saabai.ai → https://www.saabai.ai (same path and query). Exact host only:
   // www, client domains, and *.vercel.app do not match, so this cannot loop.
+  // /api and /api/* are not redirected (MCP and webhooks on the apex).
   const apex = apexWwwRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
   if (apex) return NextResponse.redirect(apex.location, apex.status);
 

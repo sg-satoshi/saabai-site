@@ -44,10 +44,17 @@ export function isSaabaiProductionHost(hostname: string | null | undefined): boo
   return host === "saabai.ai" || host === "www.saabai.ai";
 }
 
+/** /api and /api/* stay on the apex. /apiary and other page paths do not. */
+function isApexApiPath(pathname: string): boolean {
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return path === "/api" || path.startsWith("/api/");
+}
+
 /**
  * Permanent redirect for the bare apex only.
  * www.saabai.ai, client hosts, preview hosts, and other subdomains are left alone
  * so this cannot loop with the custom-domain rewrite below.
+ * API routes are not redirected, so webhooks and MCP clients on saabai.ai keep working.
  */
 export function apexWwwRedirect(
   host: string | null | undefined,
@@ -56,6 +63,7 @@ export function apexWwwRedirect(
 ): { location: string; status: 308 } | null {
   if (normaliseHost(host) !== "saabai.ai") return null;
   const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  if (isApexApiPath(path)) return null;
   const query = !search ? "" : search.startsWith("?") ? search : `?${search}`;
   return { location: `https://www.saabai.ai${path}${query}`, status: 308 };
 }

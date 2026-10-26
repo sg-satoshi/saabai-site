@@ -42,8 +42,9 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // Bare apex only. The host check is anchored, so www and client domains do not match.
+      // /api and /api/* stay on the apex (MCP clients and webhooks). Other paths 308 to www.
       {
-        source: "/:path*",
+        source: "/:path((?!api(?:/|$)).*)",
         has: [{ type: "host", value: "saabai.ai" }],
         destination: "https://www.saabai.ai/:path*",
         permanent: true,
