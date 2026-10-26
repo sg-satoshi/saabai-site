@@ -13,13 +13,26 @@ import { put } from "@vercel/blob";
 import { requireAdmin } from "../../../../../../lib/audit-admin";
 import { getEngagement, logEvent, updateEngagement } from "../../../../../../lib/audit-store";
 import { buildAuditReportDocx } from "../../../../../../lib/audit-report";
-import { AuditReport, newId } from "../../../../../../lib/audit-types";
+import { clientFromEngagement, runBlueprintSearchAudit } from "../../../../../../lib/blueprint/search-audit";
+import { AuditEngagement, AuditReport, newId } from "../../../../../../lib/audit-types";
+import type { SearchAudit } from "../../../../../../lib/blueprint/search-rules";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 type Params = { params: Promise<{ id: string }> };
+
+/** GET-only crawl of the client's site. A failed crawl still produces a report, with nothing guessed. */
+async function searchForEngagement(engagement: AuditEngagement): Promise<SearchAudit | null> {
+  const website = engagement.website?.trim();
+  if (!website) return null;
+  try {
+    return await runBlueprintSearchAudit({ url: website, client: clientFromEngagement(engagement) });
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(_req: Request, { params }: Params) {
   const auth = await requireAdmin();
@@ -30,7 +43,8 @@ export async function POST(_req: Request, { params }: Params) {
   if (!engagement)
     return Response.json({ error: "Not found" }, { status: 404 });
 
-  const buffer = await buildAuditReportDocx(engagement);
+  const search = await searchForEngagement(engagement);
+  const buffer = await buildAuditReportDocx(engagement, search);
 
   const version = (engagement.reports?.length ?? 0) + 1;
   const safeFirm = engagement.firmName.replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 40);

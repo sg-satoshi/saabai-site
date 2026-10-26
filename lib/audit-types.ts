@@ -264,6 +264,23 @@ export interface AuditEngagement {
    */
   creditUsedCents?: number;
   creditApplications?: BlueprintCreditApplication[];
+
+  /**
+   * Optional facts the client supplied for the search section. Never filled
+   * from a crawl. Leak dollars are calculated only from figures here.
+   */
+  searchBrief?: {
+    promise?: string;
+    services?: string[];
+    industry?: string;
+    statedGoogleRating?: number;
+    statedGoogleReviews?: number;
+    figures?: {
+      missedEnquiriesPerMonth?: number;
+      closeRate?: number;
+      averageJobAud?: number;
+    };
+  };
 }
 
 export function newId(prefix: string): string {
