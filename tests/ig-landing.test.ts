@@ -8,7 +8,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { INSTAGRAM_OFFER, leadAlertCheck, leadFingerprint, sanitizeLead, type CleanLead } from "../lib/leads-guard";
-import { buildInstagramLeadPayload, instagramLeadError, submitInstagramLead, utmFromSearch } from "../lib/ig-lead";
+import { buildInstagramLeadPayload, instagramLeadError, parseIgSiteCheck, submitInstagramLead, submitInstagramSiteCheck, utmFromSearch } from "../lib/ig-lead";
+import { igCheckLimited, instagramRobotsBlock, runInstagramSiteCheck } from "../lib/ig-check";
+import { runBlueprintSearchAudit, type Fetcher } from "../lib/blueprint/search-audit";
+import { AREA_LABEL, SEARCH_LIMITS, type SearchArea } from "../lib/blueprint/search-rules";
+import { ScanUrlError } from "../lib/site-scan/ssrf";
+import type { FetchResult } from "../lib/site-scan/safe-fetch";
 import { hidesAnnouncement, isFocusedFormPath } from "../lib/focused-paths";
 
 const read = (path: string) => readFileSync(path, "utf8");
@@ -136,20 +141,37 @@ test("page is noindex, uses Shane's photo, and does not invent a second sender",
   assert.ok(!robots.includes("/ig"));
   assert.match(page, /\/shane-goldberg\.png/);
   assert.match(page, /Ink FX Printing/);
-  assert.match(page, /Stop missing leads/);
+  assert.match(page, /Free instant site check: see what&apos;s costing you leads/);
   assert.match(page, /href="\/ai-receptionist-gold-coast"/);
   assert.match(page, /href="\/websites"/);
   assert.match(page, /href="\/blueprint"/);
-  assert.match(page, /PLACEHOLDER for Shane to confirm: within 2 business days/);
-  assert.match(page, /Within 2 business days/);
+  assert.doesNotMatch(page, /video|5-minute|2 business days|PLACEHOLDER/i);
+  assert.doesNotMatch(form, /video|5-minute|2 business days/i);
+  assert.ok(form.indexOf('id="ig-website"') < form.indexOf('id="ig-name"'));
+  assert.match(form, /Check my site/);
+  assert.match(form, /See the Blueprint audit/);
   assert.ok(!page.includes("testimonial"));
   assert.ok(!page.includes("/api/leads"));
   assert.ok(!form.includes("/api/site-factory/lead"));
   assert.ok(!form.includes("/api/cycle-repair/lead"));
-  assert.match(form, /submitInstagramLead/);
+  assert.ok(!form.includes("/api/leads"));
+  assert.match(form, /submitInstagramSiteCheck/);
   assert.ok(!form.includes("fetch("));
   assert.match(guard, /"instagram"/);
   assert.equal(route.split("new Resend(").length - 1, 1);
+  const emailFn = route.slice(route.indexOf("function buildInstagramOperatorEmail"), route.indexOf("export async function POST"));
+  assert.match(emailFn, /Instant site check/);
+  assert.match(emailFn, /siteScore/);
+  assert.match(emailFn, /checkSummary/);
+  assert.doesNotMatch(emailFn, /5-minute|video|2 business/i);
+  const checkRoute = read("app/api/ig/check/route.ts");
+  const checkLib = read("lib/ig-check.ts");
+  assert.match(read("proxy.ts"), /\/api\/ig\/check/);
+  assert.match(checkRoute, /igCheckLimited/);
+  assert.match(checkRoute, /runInstagramSiteCheck/);
+  assert.doesNotMatch(checkRoute, /Resend|\/api\/leads/);
+  assert.doesNotMatch(checkLib, /method:\s*["']POST["']/);
+  assert.match(read("lib/site-scan/safe-fetch.ts"), /method:\s*"GET"/);
   const ig = route.indexOf("} else if (isInstagram)");
   const nurture = route.indexOf("saveNurtureRecord({");
   assert.ok(ig > 0 && ig < nurture);
@@ -210,5 +232,238 @@ test("dry-run: handler accepts one instagram lead and does not call a lead URL",
     assert.deepEqual(calls, []);
   } finally {
     globalThis.fetch = orig;
+  }
+});
+
+test("sanitizeLead keeps a clamped site score only on instagram leads", () => {
+  const lead = clean({
+    source: "instagram",
+    name: "Sam",
+    business: "Acme",
+    website: "acme.com.au",
+    email: "a@b.co",
+    siteScore: 72.4,
+    checkSummary: "<b>Checked indexing</b>",
+  });
+  assert.equal(lead.siteScore, 72);
+  assert.equal(lead.checkSummary, "&lt;b&gt;Checked indexing&lt;/b&gt;");
+  const high = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: 140 });
+  assert.equal(high.siteScore, 100);
+  const zero = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: 0 });
+  assert.equal(zero.siteScore, 0);
+  const text = clean({ source: "instagram", name: "Sam", business: "Acme", website: "acme.com.au", email: "a@b.co", siteScore: "72" });
+  assert.equal(text.siteScore, undefined);
+  const other = clean({ source: "calculator_page", email: "a@b.co", siteScore: 80, checkSummary: "nope" });
+  assert.equal(other.siteScore, undefined);
+  assert.equal(other.checkSummary, undefined);
+});
+
+test("an unread score is dropped and a bad address does not post a lead", async () => {
+  assert.equal(parseIgSiteCheck({ read: false, score: 90, summary: "blocked" })?.score, null);
+  const calls: string[] = [];
+  const blocked = await submitInstagramSiteCheck(sample, async (url, init) => {
+    calls.push(`${init?.method} ${url}`);
+    if (url !== "/api/ig/check") throw new Error(`unexpected ${url}`);
+    return new Response(JSON.stringify({ error: "Only http and https addresses can be scanned." }), { status: 400 });
+  });
+  assert.equal(blocked.ok, false);
+  assert.deepEqual(calls, ["POST /api/ig/check"]);
+
+  calls.length = 0;
+  const limited = await submitInstagramSiteCheck(sample, async (url) => {
+    calls.push(url);
+    return new Response(JSON.stringify({ error: "Too many checks" }), { status: 429 });
+  });
+  assert.equal(limited.ok, false);
+  assert.deepEqual(calls, ["/api/ig/check"]);
+});
+
+test("a scored check posts one mocked lead and an unread check still does", async () => {
+  const calls: { url: string; body: Record<string, unknown> }[] = [];
+  const post = async (url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    calls.push({ url, body });
+    assert.ok(!/\/api\/(leads$|site-factory\/lead|cycle-repair\/lead)/.test(`https://x${url}`) || url === "/api/leads");
+    assert.ok(url === "/api/ig/check" || url === "/api/leads");
+    if (url === "/api/ig/check") {
+      return new Response(JSON.stringify({
+        read: true,
+        score: 64,
+        fixes: [{ what: "Add a canonical link.", why: "Google may keep two copies." }],
+        checked: ["Indexing", "Conversion"],
+        pages: 1,
+        summary: "Overall 64 out of 100.",
+        foldNote: "HTML only.",
+      }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  };
+  const scored = await submitInstagramSiteCheck(sample, post);
+  assert.equal(scored.ok, true);
+  if (!scored.ok) return;
+  assert.equal(scored.saved, true);
+  assert.equal(scored.check.score, 64);
+  assert.equal(calls[1].url, "/api/leads");
+  assert.equal(calls[1].body.siteScore, 64);
+  assert.equal(calls[1].body.source, "instagram");
+  assert.equal(calls[1].body.offer, "free-site-check");
+  assert.match(String(calls[1].body.checkSummary), /Overall 64 out of 100/);
+  assert.match(String(calls[1].body.checkSummary), /Add a canonical link/);
+
+  calls.length = 0;
+  const unread = await submitInstagramSiteCheck(sample, async (url) => {
+    calls.push({ url, body: {} });
+    if (url === "/api/ig/check") {
+      return new Response(JSON.stringify({
+        read: false,
+        score: null,
+        fixes: [],
+        checked: [],
+        pages: 0,
+        summary: "We couldn't read your site. Its robots.txt asks scanners to stay out, so no pages were opened and there is no score.",
+        foldNote: null,
+      }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  });
+  assert.equal(unread.ok, true);
+  if (!unread.ok) return;
+  assert.equal(unread.check.score, null);
+  assert.equal(calls[1].url, "/api/leads");
+
+  let lied = "";
+  await submitInstagramSiteCheck(sample, async (url, init) => {
+    if (url === "/api/leads") lied = String(init?.body);
+    if (url === "/api/ig/check") {
+      return new Response(JSON.stringify({ read: false, score: 99, summary: "We couldn't read your site." }), { status: 200 });
+    }
+    return new Response("{}", { status: 200 });
+  });
+  const leadBody = JSON.parse(lied) as { siteScore?: number; checkSummary: string };
+  assert.equal(leadBody.siteScore, undefined);
+  assert.match(leadBody.checkSummary, /couldn't read your site/i);
+});
+
+const FIXTURE = `<!doctype html><html><head><title>Acme Plumbing Burleigh</title>
+<link rel="canonical" href="https://acme.example/">
+</head><body>
+<header><a href="tel:0755551234">Call</a><a href="/hot-water">Hot water</a></header>
+<h1>Acme Plumbing Burleigh</h1>
+<p>We cover the Gold Coast, based in Burleigh. Call 07 5555 1234. Fully licensed and insured. Emergency same-day call-outs are available today. Prices start at a fixed call-out.</p>
+</body></html>`;
+
+function fixtureRes(body: string, status = 200, headers: Record<string, string> = {}): FetchResult {
+  return { ok: status >= 200 && status < 300, status, url: "", headers, body, bytes: body.length, ms: 5 };
+}
+
+function fixtureFetch(pages: Record<string, FetchResult>): Fetcher {
+  return async (url, o) => {
+    const path = new URL(url).pathname;
+    if (pages[path]) return pages[path];
+    if (o?.follow === false) return fixtureRes("", 301, { location: "https://acme.example/" });
+    return fixtureRes(FIXTURE);
+  };
+}
+
+test("fixture crawl score matches the Blueprint audit and stays within the page cap", async () => {
+  const calls: string[] = [];
+  const fetchImpl: Fetcher = async (url, o) => {
+    calls.push(url);
+    return fixtureFetch({
+      "/robots.txt": fixtureRes("User-agent: *\nAllow: /\n"),
+      "/sitemap.xml": fixtureRes("<urlset><loc>https://acme.example/</loc></urlset>"),
+      "/llms.txt": fixtureRes("", 404),
+    })(url, o);
+  };
+  const check = await runInstagramSiteCheck({ url: "https://acme.example/", business: "Acme Plumbing", fetch: fetchImpl });
+  const audit = await runBlueprintSearchAudit({
+    url: "https://acme.example/",
+    client: { name: "Acme Plumbing", overview: "Acme Plumbing" },
+    fetch: fetchImpl,
+  });
+  assert.equal(audit.mode, "scored");
+  assert.equal(typeof audit.overall, "number");
+  assert.equal(check.score, audit.overall);
+  assert.equal(check.read, true);
+  assert.match(check.summary, new RegExp(`Overall ${check.score} out of 100`));
+  assert.doesNotMatch(check.summary, /\$\d/);
+  assert.ok(check.fixes.length <= 3);
+  assert.ok(check.pages >= 1 && check.pages <= SEARCH_LIMITS.maxHtmlPages);
+  for (const label of check.checked) {
+    assert.ok(Object.values(AREA_LABEL).includes(label as (typeof AREA_LABEL)[SearchArea]));
+  }
+  assert.ok(calls.length > 1);
+});
+
+test("a robots disallow opens no HTML page", async () => {
+  const calls: string[] = [];
+  const fetchImpl: Fetcher = async (url) => {
+    calls.push(url);
+    if (!url.endsWith("/robots.txt")) throw new Error(`HTML fetch ${url}`);
+    return fixtureRes("User-agent: *\nDisallow: /\n");
+  };
+  const check = await runInstagramSiteCheck({ url: "https://blocked.example/secret", fetch: fetchImpl });
+  assert.equal(check.read, false);
+  assert.equal(check.score, null);
+  assert.equal(check.pages, 0);
+  assert.match(check.summary, /couldn't read your site/i);
+  assert.deepEqual(calls, ["https://blocked.example/robots.txt"]);
+  assert.equal(instagramRobotsBlock("User-agent: SaabaiScanner\nDisallow: /secret\n", "/secret"), true);
+  assert.equal(instagramRobotsBlock("User-agent: SaabaiScanner\nDisallow: /secret\n", "/"), false);
+});
+
+test("private and non-http addresses never call fetch", async () => {
+  const bad = [
+    "http://127.0.0.1/",
+    "http://10.1.2.3/",
+    "http://192.168.0.4/",
+    "http://169.254.169.254/",
+    "http://localhost/admin",
+    "https://printer.internal/",
+    "https://user:pass@acme.example/",
+    "file:///etc/passwd",
+    "http://0.0.0.0/",
+  ];
+  for (const url of bad) {
+    let called = false;
+    const fetchImpl: Fetcher = async () => {
+      called = true;
+      throw new Error("fetch");
+    };
+    await assert.rejects(() => runInstagramSiteCheck({ url, fetch: fetchImpl }), ScanUrlError);
+    assert.equal(called, false, url);
+  }
+});
+
+test("check route rejects a private address and rate limits before any crawl", async () => {
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  const { POST } = await import("../app/api/ig/check/route");
+  const ip = "203.0.113.77";
+  const send = () => POST(new Request("http://x/api/ig/check", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": ip },
+    body: JSON.stringify({ url: "http://127.0.0.1/" }),
+  }));
+  for (let i = 0; i < 4; i++) assert.equal((await send()).status, 400);
+  assert.equal((await send()).status, 429);
+  assert.equal(await igCheckLimited(ip), true);
+  assert.equal(await igCheckLimited("203.0.113.78"), false);
+});
+
+test("real public site is read with GET only", { timeout: 60_000 }, async () => {
+  const check = await runInstagramSiteCheck({ url: "https://example.com", business: "Example" });
+  assert.ok(check.summary.length > 20);
+  assert.ok(check.fixes.length <= 3);
+  assert.ok(check.pages <= SEARCH_LIMITS.maxHtmlPages);
+  if (check.read) {
+    assert.equal(typeof check.score, "number");
+    assert.ok((check.score ?? -1) >= 0 && (check.score ?? 101) <= 100);
+    assert.ok(check.pages >= 1);
+    assert.match(check.summary, new RegExp(`Overall ${check.score} out of 100`));
+    assert.ok(check.foldNote);
+  } else {
+    assert.equal(check.score, null);
+    assert.match(check.summary, /couldn't read your site/i);
   }
 });

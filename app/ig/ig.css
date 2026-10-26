@@ -18,9 +18,21 @@
 .sb.ig .ig-error{color:#f3c1c1;font-size:14px;margin:0}
 .sb.ig .ig-fine{font-size:13px;color:var(--dim);margin:0}
 .sb.ig .ig-fine a{color:var(--teal)}
-.sb.ig .ig-ok h2{font-size:28px}
-.sb.ig .ig-ok p{margin-top:10px}
-.sb.ig .ig-ok a{color:var(--teal)}
+.sb.ig .ig-result h2{font-size:26px;line-height:1.15}
+.sb.ig .ig-result > p{margin-top:10px}
+.sb.ig .ig-score{display:flex;align-items:baseline;gap:8px;margin:8px 0 0}
+.sb.ig .ig-score b{font-size:56px;line-height:.9;letter-spacing:-.04em;color:#fff}
+.sb.ig .ig-score span{color:var(--dim);font-size:16px}
+.sb.ig .ig-fixes{margin-top:14px}
+.sb.ig .ig-fixes h3{font-size:16px;margin:0 0 8px}
+.sb.ig .ig-fixes ol{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.sb.ig .ig-fixes li{display:grid;gap:2px}
+.sb.ig .ig-fixes strong{font-size:15px;line-height:1.35}
+.sb.ig .ig-fixes span{color:var(--dim);font-size:14px;line-height:1.4}
+.sb.ig .ig-checked{color:var(--dim);font-size:14px}
+.sb.ig .ig-result .btn{margin-top:16px}
+.sb.ig .ig-result .ig-fine{margin-top:12px}
+.sb.ig .ig-result .ig-fine a,.sb.ig .ig-result .ig-error{margin-top:8px}
 .sb.ig .ig-next h2{font-size:28px}
 .sb.ig .ig-next .card h3{margin:8px 0}
 .sb.ig .ig-next .card p{font-size:15px}

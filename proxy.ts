@@ -93,6 +93,7 @@ const PUBLIC_API = [
   "/api/lex-leads",
   "/api/advisory-leads",
   "/api/leads",
+  "/api/ig/check",        // Instagram instant site check (GET crawl only, rate limited, no lead email)
   "/api/site-factory/lead",
   "/api/leadgen/lead",
   "/api/subscribe",

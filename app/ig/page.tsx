@@ -11,8 +11,8 @@ import "./ig.css";
 const PATH = "/ig";
 
 export const metadata: Metadata = {
-  title: "Free 5-minute site check",
-  description: "Shane Goldberg records a free 5-minute video review of your website. For visitors from his Instagram bio.",
+  title: "Free instant site check",
+  description: "Free instant site check. See a score out of 100 and the first three fixes on your website.",
   // Campaign page. Same noindex treatment as /login and the other non-search pages in next.config headers.
   robots: {
     index: false,
@@ -22,10 +22,10 @@ export const metadata: Metadata = {
   alternates: { canonical: PATH },
   openGraph: {
     url: PATH,
-    title: "Free 5-minute site check",
-    description: "A free video review of your website from Shane Goldberg at Saabai.",
+    title: "Free instant site check",
+    description: "See a score out of 100 and the first three fixes on your website.",
   },
-  twitter: { card: "summary", title: "Free 5-minute site check" },
+  twitter: { card: "summary", title: "Free instant site check" },
 };
 
 const presence = WEBSITE_TIERS[0];
@@ -44,8 +44,8 @@ export default function InstagramLandingPage() {
         <div className="glow" aria-hidden="true" />
         <div className="wrap ig-narrow" style={{ position: "relative" }}>
           <p className="eyebrow">Instagram</p>
-          <h1>Stop missing leads from your website.</h1>
-          <p className="lead">Shane records a free 5-minute video review of your site and emails it to you.</p>
+          <h1>Free instant site check: see what&apos;s costing you leads</h1>
+          <p className="lead">Enter your website. We read the pages we are allowed to open and show a score out of 100, the first three fixes, and what was checked.</p>
           <div className="ig-shane">
             <Image
               src="/shane-goldberg.png"
@@ -72,7 +72,7 @@ export default function InstagramLandingPage() {
         <div className="wrap">
           <div className="head">
             <p className="eyebrow">If you want to look around</p>
-            <h2>Three ways Saabai helps after the video</h2>
+            <h2>Three ways Saabai helps after the check</h2>
           </div>
           <div className="grid3">
             <article className="card">
@@ -92,9 +92,9 @@ export default function InstagramLandingPage() {
             </article>
             <article className="card">
               <p className="eyebrow">Blueprint</p>
-              <h3>The paid audit the video can lead to</h3>
+              <h3>The paid audit after this check</h3>
               <p>
-                The video looks at your website. A Blueprint maps the whole business, ranked by hours and dollars.
+                This check reads your website. A Blueprint maps the whole business, ranked by hours and dollars.
                 Starter {TIERS.starter.priceLabel}, Pro {TIERS.pro.priceLabel}, Business {TIERS.business.priceLabel}.
               </p>
               <a className="ig-more" href="/blueprint">See the Blueprint</a>
@@ -108,16 +108,15 @@ export default function InstagramLandingPage() {
           <h2>Questions</h2>
           <details className="faq">
             <summary>What do I get? <span>+</span></summary>
-            <p>A short video from Shane, about 5 minutes, reviewing your website. He records what he sees and emails it to you. The video covers the site. A Blueprint is the separate paid audit of the whole business.</p>
+            <p>A score out of 100 from the search and conversion checks we could actually run, the first three fixes in plain English, and a note of what was checked. If we cannot read the site, there is no score.</p>
           </details>
           <details className="faq">
             <summary>Is it really free? <span>+</span></summary>
-            <p>Yes. The video is free. A Blueprint is a separate paid audit if you want one after you have seen the video.</p>
+            <p>Yes. The check is free. A Blueprint is a separate paid audit if you want one after you have seen the result.</p>
           </details>
           <details className="faq">
-            <summary>How fast will I hear back? <span>+</span></summary>
-            {/* PLACEHOLDER for Shane to confirm: within 2 business days */}
-            <p>Within 2 business days.</p>
+            <summary>What if you can&apos;t read my site? <span>+</span></summary>
+            <p>We say so on the page. We do not invent a score. Your name, business, website and email are still saved.</p>
           </details>
         </div>
       </section>
