@@ -305,3 +305,20 @@ export const organizationSchema = {
     },
   ],
 };
+
+/** Prices rendered on /blueprint: Starter $497, Pro $1,497, Business $3,500. */
+const BLUEPRINT_PAGE_OFFER_PRICES = new Set(["497", "1497", "3500"]);
+
+/**
+ * Sitewide Organization JSON-LD. On /blueprint, drop Offer nodes whose prices
+ * are not on that page (the care plans at 100, 200 and 300). Other pages keep them.
+ */
+export function organizationSchemaForSegment(segment: string | null): typeof organizationSchema {
+  if (segment !== "blueprint") return organizationSchema;
+  const data = structuredClone(organizationSchema);
+  data["@graph"] = data["@graph"].filter((node) => {
+    if (!("offers" in node) || !Array.isArray(node.offers)) return true;
+    return node.offers.every((offer) => BLUEPRINT_PAGE_OFFER_PRICES.has(String(offer.price)));
+  }) as typeof organizationSchema["@graph"];
+  return data;
+}
