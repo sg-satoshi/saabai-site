@@ -9,7 +9,7 @@ import { NAP } from "./seo-entity";
 export const publicPageMeta = {
   home: pageMeta({
     path: "/",
-    canonical: "https://www.saabai.ai/",
+    rawCanonical: true,
     title: "Know exactly where AI will save your business hours, in 48 hours | Saabai",
     description:
       "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, with alerts by email, SMS, WhatsApp or Telegram.",
