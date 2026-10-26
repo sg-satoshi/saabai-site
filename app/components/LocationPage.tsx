@@ -17,6 +17,7 @@ export default function LocationPage({ config }: Props) {
     slug,
     stateCode,
     heroHeadline,
+    heroPrice,
     heroSubheading,
     industries,
     marketContext,
@@ -93,6 +94,9 @@ export default function LocationPage({ config }: Props) {
         <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-8 text-balance">
           {heroHeadline}
         </h1>
+        {heroPrice ? (
+          <p className="relative text-lg font-semibold text-saabai-teal mb-8">{heroPrice}</p>
+        ) : null}
 
         {/* Subheading */}
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-3xl mx-auto mb-12 leading-relaxed">

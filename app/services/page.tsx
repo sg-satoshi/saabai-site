@@ -3,6 +3,10 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import { publicPageMeta } from "@/lib/seo-pages";
+import JsonLd from "../components/JsonLd";
+import BreadcrumbLd from "../components/BreadcrumbLd";
+import { schemaGraph, serviceSchema, websitesServiceNode, SITE_URL } from "@/lib/seo-entity";
+import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 
 export const metadata: Metadata = publicPageMeta.services;
 
@@ -36,7 +40,7 @@ const services: { title: string; description: string; benefits: string[]; href?:
   {
     title: "SEO & AI Search Visibility",
     price: "In every Blueprint",
-    href: "/blueprint",
+    href: "/seo-ai-search",
     description:
       "Where you rank in Google, and whether ChatGPT, Claude, Perplexity and Gemini actually recommend you, or your competitor down the road.",
     benefits: [
@@ -49,7 +53,7 @@ const services: { title: string; description: string; benefits: string[]; href?:
   {
     title: "AI Chat Agents & Automations",
     price: "Scoped from your Blueprint",
-    href: "/blueprint",
+    href: "/custom-ai-agents",
     description:
       "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
     benefits: [
@@ -107,9 +111,29 @@ const results = [
   },
 ];
 
+const servicesSchema = schemaGraph([
+  websitesServiceNode,
+  serviceSchema({
+    id: `${SITE_URL}/blueprint#service`,
+    name: "Saabai Blueprint AI audit",
+    serviceType: "AI audit",
+    description: "A ranked AI plan. Starter, Pro and Business prices are the ones published on the Blueprint page.",
+    url: `${SITE_URL}/blueprint`,
+    offers: TIER_ORDER.map((id) => ({
+      "@type": "Offer",
+      name: `Blueprint ${TIERS[id].name}`,
+      price: String(TIERS[id].price),
+      priceCurrency: "AUD",
+      url: `${SITE_URL}/blueprint`,
+    })),
+  }),
+]);
+
 export default function Services() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={servicesSchema} />
+      <BreadcrumbLd name="Services" path="/services" />
 
       <Nav activePage="/services" />
 
@@ -147,7 +171,8 @@ export default function Services() {
           (<strong>Starter $497</strong>, <strong>Pro $1,497</strong>,{" "}
           <strong>Business $3,500</strong>) with SEO and AI search visibility, and
           custom AI agents and automations. Start free with the{" "}
-          <a href="/score">AI score</a>.
+          <a href="/score">AI score</a>, or{" "}
+          <a href="/compare">compare Saabai with an agency or a DIY builder</a>.
         </InShort>
 
 

@@ -1,6 +1,8 @@
 import { formatAud, WEBSITE_TIERS } from "./website-tiers";
 
 export const SITE_URL = "https://www.saabai.ai";
+/** Firm plan price published on /legal. AUD per month. */
+export const LEX_FIRM_MONTHLY = 299;
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const FOUNDER_ID = `${SITE_URL}/#shane-goldberg`;
 
@@ -113,12 +115,12 @@ export const lexServiceSchema = withContext(
     offers: {
       "@type": "Offer",
       name: "Firm",
-      price: "299",
+      price: String(LEX_FIRM_MONTHLY),
       priceCurrency: "AUD",
       description: "3 lawyer seats, unlimited research and 20 documents a month. AUD. GST not applicable.",
       priceSpecification: {
         "@type": "UnitPriceSpecification",
-        price: "299",
+        price: String(LEX_FIRM_MONTHLY),
         priceCurrency: "AUD",
         unitText: "MONTH",
       },
@@ -162,6 +164,8 @@ export const websitesServiceNode = serviceSchema({
   })),
 });
 
+const entryTier = WEBSITE_TIERS[0];
+
 export const receptionistServiceNode = serviceSchema({
   id: `${SITE_URL}/ai-receptionist-gold-coast#service`,
   name: "AI receptionist for Gold Coast businesses",
@@ -170,6 +174,14 @@ export const receptionistServiceNode = serviceSchema({
     "A website chatbot for Gold Coast businesses. It answers visitors on the site and alerts you by email, SMS, WhatsApp or Telegram.",
   url: `${SITE_URL}/ai-receptionist-gold-coast`,
   areaServed: AREA_SERVED,
+  offers: {
+    "@type": "Offer",
+    name: `${entryTier.name} website with chatbot`,
+    price: String(entryTier.buildFrom),
+    priceCurrency: "AUD",
+    url: `${SITE_URL}/websites`,
+    description: `${entryTier.name} starts from ${formatAud(entryTier.buildFrom)} plus ${formatAud(entryTier.monthly)} a month care. The chatbot is included in the website tiers.`,
+  },
 });
 
 export const lawFirmChatbotServiceNode = serviceSchema({
@@ -180,6 +192,14 @@ export const lawFirmChatbotServiceNode = serviceSchema({
     "Custom AI chatbots and Lex, an AI workspace for Australian law firms. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.",
   url: `${SITE_URL}/ai-chatbot-law-firms`,
   areaServed: AREA_SERVED,
+  offers: {
+    "@type": "Offer",
+    name: "Lex Firm",
+    price: String(LEX_FIRM_MONTHLY),
+    priceCurrency: "AUD",
+    url: `${SITE_URL}/legal`,
+    description: `The Lex Firm plan is $${LEX_FIRM_MONTHLY} a month. A custom website chatbot is quoted on a call.`,
+  },
 });
 
 /** Prices already published on /websites, /blueprint and /score. */

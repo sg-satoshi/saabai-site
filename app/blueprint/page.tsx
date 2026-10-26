@@ -63,6 +63,7 @@ export default function BlueprintPage() {
           <p className="lead">A clear, ranked AI plan for small businesses, with professional practices just as welcome. Every opportunity comes with the hours and dollars it saves and what it costs to build.</p>
           <div style={{ marginTop: 32, display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn" href="/score">Not sure which? Take the free score →</a>
+            <a className="btn ghost" href="https://calendly.com/shanegoldberg/30min" target="_blank" rel="noopener noreferrer">Book a call</a>
           </div>
         </div>
       </div>

@@ -1,14 +1,20 @@
 # Saabai
 
-> Saabai (ABN 71 889 082 572) is a Gold Coast, Queensland business (head office Merrimac QLD 4226, Australia) founded by Shane Goldberg. Saabai has two products: website care plans for small businesses, and the Saabai Blueprint AI audit. All prices are in AUD. Saabai is not GST registered (GST not applicable).
+> Saabai (ABN 71 889 082 572) is a Gold Coast, Queensland business (Merrimac QLD 4226, Australia) founded by Shane Goldberg. All prices are in AUD. Saabai is not GST registered (GST not applicable).
 
 ## Products
 
-- [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month.
+- [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month. Builds start from $2,000.
 - [Saabai Blueprint AI audit](https://www.saabai.ai/blueprint): a ranked AI plan showing where AI saves hours and dollars. Starter $497 (48 hours), Pro $1,497 (3 business days, reviewed by Shane, 30 min walkthrough), Business $3,500 (2 to 3 weeks, team discovery, 12 month roadmap). Fee credited if you build with Saabai within 30 days.
 - [Free AI Readiness Score](https://www.saabai.ai/score): a free 3 minute, 12 question quiz with an instant score out of 100 and three quick wins.
-- [AI chatbot for law firms](https://www.saabai.ai/ai-chatbot-law-firms): Custom AI chatbots and Lex, an AI workspace for Australian law firms. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.
-- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): A Gold Coast built AI receptionist for your website. Answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.
+- [Lex](https://www.saabai.ai/legal): an AI legal assistant for Australian law firms. It cites ATO rulings and Commonwealth legislation. The Firm plan is $299 a month.
+- [Custom AI chatbots](https://www.saabai.ai/ai-chatbot-developer-queensland): custom AI chatbots for Queensland business websites. A website chatbot is included in the care plans above. A custom build is quoted on a call.
+- [Custom AI agents](https://www.saabai.ai/custom-ai-agents): agents that answer, quote and follow up. Scoped from a Blueprint. Book a call for a quote.
+- [AI chatbot for law firms](https://www.saabai.ai/ai-chatbot-law-firms): custom AI chatbots for Australian law firms, plus Lex. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.
+- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): a website chatbot for Gold Coast businesses. Included in the website tiers, from $2,000 plus $100 a month care. Answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.
+- [SEO and AI search visibility](https://www.saabai.ai/seo-ai-search): included in every Blueprint, from $497. Checks Google, ChatGPT, Claude, Perplexity and Gemini.
+- [LeadGen](https://www.saabai.ai/leadgen): AI lead capture for service businesses. Starter $197/month, Pro $397/month, Enterprise $997/month.
+- [Pricing](https://www.saabai.ai/pricing): the published prices collected on one page.
 
 ## About
 

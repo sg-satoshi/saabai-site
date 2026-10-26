@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 import "../components/sb/sb.css";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -20,6 +21,7 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <BreadcrumbLd name="Contact" path="/contact" />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>

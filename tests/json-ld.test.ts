@@ -113,7 +113,7 @@ test("service and FAQ JSON-LD parses, with no ratings, reviews or unpublished pr
 
   const receptionist = parseLd(receptionistServiceNode);
   assert.equal(receptionist.name, "AI receptionist for Gold Coast businesses");
-  assert.equal(receptionist.offers, undefined);
+  assert.equal((receptionist.offers as { price: string }).price, "2000");
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Gold Coast"));
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Brisbane"));
 });

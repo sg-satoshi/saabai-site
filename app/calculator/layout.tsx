@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.calculator;
 
@@ -8,5 +9,10 @@ export default function CalculatorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <BreadcrumbLd name="Calculator" path="/calculator" />
+      {children}
+    </>
+  );
 }

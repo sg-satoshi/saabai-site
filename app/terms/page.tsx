@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import LegalDocument from "../components/LegalDocument";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { CARE_PLAN_CANCELLATION } from "@/lib/care-faqs";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.terms;
 
@@ -9,7 +11,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   { heading: "1. Who we are", body: `These terms apply to services supplied by ${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}), a sole trader business operated by Shane Goldberg. Contact: ${NAP.email}.` },
   { heading: "2. Our services", body: "We provide website building, hosting and care plans, and the Saabai Blueprint AI audit. What is included in each is described on the relevant page of saabai.ai at the time you buy, or in a written quote we send you." },
   { heading: "3. Prices and payment", body: "Prices are in Australian dollars. Saabai is not registered for GST, so GST is not applicable and invoices are not tax invoices. If this changes we will update our prices and invoices. Payments are processed securely by Stripe. Care plans are billed monthly in advance until cancelled." },
-  { heading: "4. Cancellation", body: "You can cancel a care plan at any time by emailing hello@saabai.ai. Cancellation takes effect at the end of the period you have already paid for, and we do not give part-month refunds unless the law requires it." },
+  { heading: "4. Cancellation", body: CARE_PLAN_CANCELLATION },
   { heading: "5. Refunds and Australian Consumer Law", body: "Our services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights. If something is not right, email us and we will work with you to fix it." },
   { heading: "6. Your content", body: "You own the content, logos and photos you give us. You confirm you have the right to use them and give us permission to use them to deliver the service." },
   { heading: "7. Liability", body: "To the extent the law allows, our liability is limited to resupplying the service or refunding the amount paid for it. We do not guarantee particular search rankings, traffic or sales results." },
@@ -19,6 +21,8 @@ const SECTIONS: { heading: string; body: string }[] = [
 
 export default function TermsPage() {
   return (
+    <>
+    <BreadcrumbLd name="Terms" path="/terms" />
     <LegalDocument
       title="Terms"
       lede="General terms. Last updated: October 2026"
@@ -28,5 +32,6 @@ export default function TermsPage() {
         { href: "/privacy", label: "Privacy" },
       ]}
     />
+    </>
   );
 }

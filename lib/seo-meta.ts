@@ -22,8 +22,10 @@ export function pageMeta(o: {
   description?: string;
   ogTitle?: string;
   robots?: Metadata["robots"];
+  /** Overrides the default canonical. The homepage uses a trailing slash. */
+  canonical?: string;
 }): Metadata {
-  const url = pageUrl(o.path);
+  const url = o.canonical ?? pageUrl(o.path);
   const ogTitle = o.ogTitle ?? o.title;
   return {
     title: { absolute: o.title },
