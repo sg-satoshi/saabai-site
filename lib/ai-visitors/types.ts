@@ -5,7 +5,11 @@ export const BRISBANE_OFFSET_MS = 10 * 60 * 60 * 1000;
 export const HISTORY_DAYS = 35;
 export const SNAPSHOT_PREFIX = "aiv:daily:";
 export const META_KEY = "aiv:meta";
-export const QUERY_ROW_LIMIT = 1000;
+/** Vercel rejects observability `limit` above 500. One request never asks for more. */
+export const OBSERVABILITY_LIMIT_MAX = 500;
+/** Pages per window. 8 × 500 rows, then the window is marked truncated. */
+export const OBSERVABILITY_MAX_PAGES = 8;
+export const QUERY_ROW_LIMIT = OBSERVABILITY_LIMIT_MAX;
 
 export const DATA_NOTE =
   "Counts are AI requests, not people. One page can be several requests, and the bot names are the platform's own classification. Vercel keeps about 36 days of request logs, so this history builds from the daily snapshot. Apps often strip the referrer, ads.openai.com is not counted as an AI referral, and ad clicks are not included.";
