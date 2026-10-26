@@ -8,6 +8,7 @@ import { miaServiceSchema } from "@/lib/seo-entity";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
+import { TIERS } from "@/lib/blueprint";
 import VoiceDemo from "./components/sb/VoiceDemo";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
@@ -27,6 +28,8 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
+      {/* Next.js metadata drops the trailing slash on this URL. */}
+      <link rel="canonical" href="https://www.saabai.ai/" />
       <JsonLd data={miaServiceSchema} />
       <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
@@ -44,7 +47,8 @@ export default function Home() {
             <a className="btn ghost" href="/blueprint">See the Blueprint</a>
             <VoiceDemo ready={voiceDemoReady} />
           </div>
-          <div className="trust">Free 3 minute quiz · Instant score out of 100 · No credit card</div>
+          {/* TODO: Google rating goes here once Shane has consent to publish it. Do not add a rating, review count or stars until then. */}
+          <div className="trust">Free 3 minute quiz · Blueprint from {TIERS.starter.priceLabel} · Websites from {formatAud(WEBSITE_TIERS[0].buildFrom)}</div>
         </div>
       </div>
 

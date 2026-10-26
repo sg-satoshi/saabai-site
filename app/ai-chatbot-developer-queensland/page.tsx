@@ -5,10 +5,12 @@ import JsonLd from "../components/JsonLd";
 import { serviceSchema, schemaGraph, SITE_URL } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { formatAud, WEBSITE_TIERS } from "@/lib/website-tiers";
 import "../components/sb/sb.css";
 import "../components/sb/home.css";
 
 const PATH = "/ai-chatbot-developer-queensland";
+const entryTier = WEBSITE_TIERS[0];
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
 
@@ -45,6 +47,14 @@ const schema = schemaGraph([
     description:
       "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast. Alerts by email on all plans, plus Telegram, WhatsApp or SMS.",
     url: `${SITE_URL}${PATH}`,
+    offers: {
+      "@type": "Offer",
+      name: `${entryTier.name} website with chatbot`,
+      price: String(entryTier.buildFrom),
+      priceCurrency: "AUD",
+      url: `${SITE_URL}/websites`,
+      description: `${entryTier.name} starts from ${formatAud(entryTier.buildFrom)} plus ${formatAud(entryTier.monthly)} a month care. A custom build is quoted on a call.`,
+    },
     areaServed: [
       { "@type": "City", name: "Brisbane" },
       { "@type": "City", name: "Gold Coast" },
@@ -76,6 +86,9 @@ export default function QueenslandChatbotPage() {
           </h1>
           <p style={{ maxWidth: 720, margin: "18px auto 0", fontSize: 18 }}>
             Saabai builds custom AI chatbots for business websites across Queensland. We are based in Merrimac on the Gold Coast and work with clients in Brisbane, the Sunshine Coast and beyond.
+          </p>
+          <p style={{ maxWidth: 720, margin: "14px auto 0", fontSize: 17, color: "var(--teal)", fontWeight: 600 }}>
+            From {formatAud(entryTier.buildFrom)} plus {formatAud(entryTier.monthly)} a month on a website care plan. For a custom build, book a free 30 minute call for a quote.
           </p>
           <div className="ctas" style={{ marginTop: 32 }}>
             <a className="btn" href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a free 30-min call</a>

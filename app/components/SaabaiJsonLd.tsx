@@ -1,7 +1,7 @@
 "use client";
 
 import { useSelectedLayoutSegment } from "next/navigation";
-import { organizationSchema } from "../../lib/seo-entity";
+import { organizationSchemaForSegment } from "../../lib/seo-entity";
 
 /**
  * Saabai's Organization JSON-LD for saabai.ai pages only.
@@ -13,10 +13,11 @@ import { organizationSchema } from "../../lib/seo-entity";
 export default function SaabaiJsonLd() {
   const segment = useSelectedLayoutSegment();
   if (segment === "sites") return null;
+  const data = organizationSchemaForSegment(segment);
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, "\\u003c") }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
     />
   );
 }

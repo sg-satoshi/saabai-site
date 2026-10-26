@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import JsonLd from "../components/JsonLd";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.faq;
 
@@ -134,11 +136,17 @@ const faqs = [
       },
     ],
   },
+  {
+    id: "care-plans",
+    category: "Care plans, ownership and data",
+    items: CARE_PLAN_FAQS,
+  },
 ];
 
 export default function FAQ() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="FAQ" path="/faq" />
       <JsonLd data={faqSchema(faqs.flatMap((cat) => cat.items))} />
 
       <Nav activePage="/faq" />

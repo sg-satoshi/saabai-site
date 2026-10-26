@@ -87,6 +87,9 @@ export default function AiReceptionistGoldCoastPage() {
           <p style={{ maxWidth: 760, margin: "18px auto 0", fontSize: 18 }}>
             Saabai builds AI chatbots that act as a receptionist on your website. Visitors get an answer when you are on a job, with a guest, or closed for the night.
           </p>
+          <p style={{ maxWidth: 760, margin: "14px auto 0", fontSize: 17, color: "var(--teal)", fontWeight: 600 }}>
+            From {formatAud(entryTier.buildFrom)} plus {formatAud(entryTier.monthly)} a month care. The chatbot is included in the website tiers.
+          </p>
           <div className="ctas" style={{ marginTop: 32 }}>
             <a className="btn" href="/websites">See website tiers</a>
             <a className="btn ghost" href={CALENDLY} target="_blank" rel="noopener noreferrer">Book a free 30-min call</a>

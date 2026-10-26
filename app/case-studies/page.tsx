@@ -3,12 +3,14 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.caseStudies;
 
 export default function CaseStudies() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="Case studies" path="/case-studies" />
 
       <Nav />
 
@@ -185,8 +187,11 @@ export default function CaseStudies() {
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          National Plastics Supplier
+          <a href="/case-studies/rex-plastics-online">National Plastics Supplier</a>
         </h2>
+        <p className="mb-6">
+          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex case study</a>
+        </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
           Large national plastics supplier (name withheld on request), trade and retail
           customers across Australia

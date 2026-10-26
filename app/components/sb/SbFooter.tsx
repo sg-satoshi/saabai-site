@@ -8,10 +8,17 @@ const OFFERS = [
   { label: "Web Solutions", href: "/websites" },
   { label: "Saabai Blueprint", href: "/blueprint" },
   { label: "Free AI score", href: "/score" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 const COMPANY = [
   { label: "Work", href: "/case-studies" },
+  { label: "Use cases", href: "/use-cases" },
+  { label: "Process", href: "/process" },
+  { label: "Calculator", href: "/calculator" },
+  { label: "Insights", href: "/insights" },
+  { label: "AI News", href: "/ai-news" },
+  { label: "Compare", href: "/compare" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "FAQ", href: "/faq" },
@@ -23,7 +30,9 @@ const PRODUCTS = [
   { label: "Lex", href: "/legal" },
   { label: "Law firms", href: "/ai-chatbot-law-firms" },
   { label: "AI receptionist", href: "/ai-receptionist-gold-coast" },
-  { label: "Rex", href: "/case-studies" },
+  { label: "Custom AI agents", href: "/custom-ai-agents" },
+  { label: "SEO and AI search", href: "/seo-ai-search" },
+  { label: "Rex", href: "/case-studies/rex-plastics-online" },
 ];
 
 function Column({

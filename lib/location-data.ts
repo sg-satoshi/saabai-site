@@ -38,6 +38,8 @@ export interface LocationConfig {
   stateCode: string;
   heroHeadline: string;
   heroSubheading: string;
+  /** Optional price line under the headline. Published prices only. */
+  heroPrice?: string;
   industries: string[];
   /** 3-4 paragraphs, ~80-120 words each */
   marketContext: string[];
@@ -86,6 +88,7 @@ export const BRISBANE: LocationConfig = {
   state: "Queensland",
   stateCode: "QLD",
   heroHeadline: "Websites and AI systems for Brisbane small businesses",
+  heroPrice: "Websites from $2,000 plus $100 a month.",
   heroSubheading:
     "From growth-corridor trades in Logan and Moreton Bay to CBD practices, we build, host and manage websites that win work, and map exactly where AI can take the admin off your plate with a Saabai Blueprint.",
   industries: [

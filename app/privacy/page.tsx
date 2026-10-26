@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import LegalDocument from "../components/LegalDocument";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.privacy;
 
@@ -42,10 +43,13 @@ const SECTIONS: { heading: string; body: string }[] = [
 
 export default function PrivacyPage() {
   return (
-    <LegalDocument
-      title="Privacy Policy"
-      lede="Last updated: October 2026"
-      sections={SECTIONS}
-    />
+    <>
+      <BreadcrumbLd name="Privacy" path="/privacy" />
+      <LegalDocument
+        title="Privacy Policy"
+        lede="Last updated: October 2026"
+        sections={SECTIONS}
+      />
+    </>
   );
 }

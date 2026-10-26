@@ -16,6 +16,7 @@ import {
   locationServiceSchema,
   miaServiceSchema,
   organizationSchema,
+  organizationSchemaForSegment,
   receptionistServiceNode,
   websitesServiceNode,
 } from "../lib/seo-entity";
@@ -113,9 +114,25 @@ test("service and FAQ JSON-LD parses, with no ratings, reviews or unpublished pr
 
   const receptionist = parseLd(receptionistServiceNode);
   assert.equal(receptionist.name, "AI receptionist for Gold Coast businesses");
-  assert.equal(receptionist.offers, undefined);
+  assert.equal((receptionist.offers as { price: string }).price, "2000");
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Gold Coast"));
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Brisbane"));
+});
+
+test("blueprint JSON-LD offers are only the prices shown on the page", () => {
+  const prices: string[] = [];
+  walk(organizationSchemaForSegment("blueprint"), (node) => {
+    if (node["@type"] === "Offer" && node.price !== undefined) prices.push(String(node.price));
+  });
+  assert.deepEqual(prices.sort(), ["1497", "3500", "497"]);
+  const elsewhere: string[] = [];
+  walk(organizationSchemaForSegment("websites"), (node) => {
+    if (node["@type"] === "Offer" && node.price !== undefined) elsewhere.push(String(node.price));
+  });
+  assert.ok(elsewhere.includes("200") && elsewhere.includes("300"));
+  const blueprintPage = readFileSync("app/blueprint/page.tsx", "utf8");
+  assert.match(blueprintPage, /priceLabel/);
+  assert.doesNotMatch(blueprintPage, /"200"|"300"|price: 200|price: 300/);
 });
 
 test("schema prices are copied from the pages that publish them", () => {
@@ -155,7 +172,7 @@ test("product pages render the shared Service and FAQ schema", () => {
   assert.match(receptionist, /receptionistServiceNode/);
   assert.match(receptionist, /faqNode\(/);
   assert.match(faq, /faqSchema\(faqs\.flatMap/);
-  assert.match(layout, /organizationSchema/);
+  assert.match(layout, /organizationSchemaForSegment/);
   assert.match(location, /locationServiceSchema/);
   assert.doesNotMatch(location, /#business/);
   assert.doesNotMatch(location, /addressLocality: "Gold Coast"/);

@@ -22,13 +22,20 @@ export function pageMeta(o: {
   description?: string;
   ogTitle?: string;
   robots?: Metadata["robots"];
+  /** Overrides the default canonical. */
+  canonical?: string;
+  /**
+   * Homepage only. Next.js metadata turns https://www.saabai.ai/ into the
+   * origin with no slash, so the page renders that link itself.
+   */
+  rawCanonical?: boolean;
 }): Metadata {
-  const url = pageUrl(o.path);
+  const url = o.canonical ?? pageUrl(o.path);
   const ogTitle = o.ogTitle ?? o.title;
   return {
     title: { absolute: o.title },
     ...(o.description ? { description: o.description } : {}),
-    alternates: { canonical: url },
+    alternates: o.rawCanonical ? { canonical: null } : { canonical: url },
     openGraph: {
       type: "website",
       locale: "en_AU",

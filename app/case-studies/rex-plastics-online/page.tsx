@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import { publicPageMeta } from "@/lib/seo-pages";
+import JsonLd from "../../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
+import { ORG_ID, SITE_URL } from "@/lib/seo-entity";
 
 export const metadata: Metadata = publicPageMeta.rexCase;
 
@@ -12,9 +15,22 @@ const stats = [
   { value: "$1,316", label: "Average quote value" },
 ];
 
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How a National Plastics Supplier Recovered 60% of Their Sales Day",
+  description: publicPageMeta.rexCase.description,
+  url: `${SITE_URL}/case-studies/rex-plastics-online`,
+  mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
+  author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
+  publisher: { "@id": ORG_ID },
+};
+
 export default function RexPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={articleSchema} />
+      <JsonLd data={breadcrumbSchema([{ name: "Rex case study", path: "/case-studies/rex-plastics-online" }])} />
       <Nav />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}

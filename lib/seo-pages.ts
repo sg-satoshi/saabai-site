@@ -9,7 +9,8 @@ import { NAP } from "./seo-entity";
 export const publicPageMeta = {
   home: pageMeta({
     path: "/",
-    title: "AI Chatbots for Australian Businesses | Saabai, Gold Coast",
+    rawCanonical: true,
+    title: "Know exactly where AI will save your business hours, in 48 hours | Saabai",
     description:
       "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, with alerts by email, SMS, WhatsApp or Telegram.",
   }),
@@ -132,6 +133,7 @@ export const publicPageMeta = {
     title: "Saabai Insights | AI for Small Business, Gold Coast",
     description:
       "Patterns from building websites, AI agents and automation for Australian small businesses. Written by Saabai on the Gold Coast.",
+    robots: { index: false, follow: true },
   }),
   useCases: pageMeta({
     path: "/use-cases",
@@ -156,6 +158,31 @@ export const publicPageMeta = {
     title: "AI News | Saabai, Gold Coast",
     description:
       "Live AI news and research, curated by Saabai on the Gold Coast. Updated from leading AI publications and discussions.",
+    robots: { index: false, follow: true },
+  }),
+  pricing: pageMeta({
+    path: "/pricing",
+    title: "Saabai Pricing | Websites and AI, Gold Coast",
+    description:
+      "Published Saabai prices in Australian dollars. Website care plans start from $100 a month on the Gold Coast, and the Blueprint starts from $497.",
+  }),
+  compare: pageMeta({
+    path: "/compare",
+    title: "Saabai, an agency, or a DIY site builder | Gold Coast",
+    description:
+      "How a Saabai care plan compares with a traditional web agency and with DIY builders such as Wix and Squarespace. Saabai is based on the Gold Coast, and care plans start from $100 a month.",
+  }),
+  seoAiSearch: pageMeta({
+    path: "/seo-ai-search",
+    title: "SEO and AI Search Visibility | Saabai, Gold Coast",
+    description:
+      "SEO and AI search checks are included in every Saabai Blueprint, from $497. Saabai is based in Merrimac on the Gold Coast and looks at Google, ChatGPT, Claude, Perplexity and Gemini.",
+  }),
+  customAgents: pageMeta({
+    path: "/custom-ai-agents",
+    title: "Custom AI Agents for Australian Businesses | Saabai",
+    description:
+      "Custom AI agents for Australian businesses, scoped in a Saabai Blueprint and quoted before any build. Saabai is based on the Gold Coast, and you can book a call for a quote.",
   }),
   changelog: pageMeta({
     path: "/saabai-changelog",

@@ -5,12 +5,14 @@ import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.about;
 
 export default function About() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="About" path="/about" />
 
       <Nav activePage="/about" />
 
