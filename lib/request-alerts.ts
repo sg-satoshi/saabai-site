@@ -1,26 +1,12 @@
 /**
- * Critical request alerts: branded email + Telegram (24/7).
- * Email buttons open Mission Control and require admin sign-in.
+ * Critical request alerts: branded email, and Telegram only when an admin chat
+ * is configured. Email buttons open Mission Control and require admin sign-in.
+ * A missing admin chat does not fall through to a customer bot.
  */
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, sendBrandedEmail } from "./email/branded-layout";
 import type { ClientRequest } from "./client-requests";
-import { PRIORITY_LABELS, TYPE_LABELS } from "./client-requests";
-
-function telegramCreds(): { token: string; chatId: string } | null {
-  const token =
-    process.env.SAABAI_TELEGRAM_BOT_TOKEN ||
-    process.env.TELEGRAM_BOT_TOKEN ||
-    process.env.TELEGRAM_CYCLE_BOT_TOKEN ||
-    "";
-  const chatId =
-    process.env.SAABAI_TELEGRAM_CHAT_ID ||
-    process.env.TELEGRAM_SHANE_CHAT_ID ||
-    process.env.TELEGRAM_CHAT_ID ||
-    process.env.TELEGRAM_CYCLE_CHAT_ID ||
-    "";
-  if (!token || !chatId) return null;
-  return { token, chatId };
-}
+import { TYPE_LABELS } from "./client-requests";
+import { planPortalRequestAlert } from "./notify-routing";
 
 export function criticalAlertEmail(req: ClientRequest, to: string) {
   const adminUrl = `https://www.saabai.ai/saabai-admin/requests?id=${encodeURIComponent(req.id)}`;
@@ -57,7 +43,8 @@ export async function sendCriticalAlerts(
   req: ClientRequest,
   opts?: { emailTo?: string },
 ): Promise<{ email: boolean; telegram: boolean }> {
-  const to = opts?.emailTo || process.env.REQUESTS_CRITICAL_EMAIL || "shanegoldberg@pm.me";
+  const plan = planPortalRequestAlert(req);
+  const to = opts?.emailTo || plan.emailTo;
   const { email, adminUrl } = criticalAlertEmail(req, to);
   const emailOk = await sendBrandedEmail({
     to,
@@ -67,7 +54,7 @@ export async function sendCriticalAlerts(
   });
 
   let telegramOk = false;
-  const tg = telegramCreds();
+  const tg = plan.telegram;
   if (tg) {
     const text = [
       "CRITICAL request · Chief AI auto-handling",
@@ -90,7 +77,7 @@ export async function sendCriticalAlerts(
       console.error("[request-alerts] telegram error", err);
     }
   } else {
-    console.warn("[request-alerts] Telegram credentials missing; email only");
+    console.warn(`[request-alerts] ${plan.telegramSkip}`);
   }
 
   return { email: emailOk, telegram: telegramOk };
