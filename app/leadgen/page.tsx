@@ -236,8 +236,8 @@ export default function LeadGenPage() {
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Email notifications (unlimited)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.starter}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.starter}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.starter} per month)`}</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.starter} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup and configuration</li>
             </ul>
@@ -261,8 +261,8 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.pro}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.pro}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.pro} per month)`}</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.pro} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
@@ -284,8 +284,8 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> SMS alerts ({TIER_SMS.enterprise}/month)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> WhatsApp alerts ({TIER_WA.enterprise}/month)</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.enterprise} per month)`}</li>
+              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.enterprise} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>

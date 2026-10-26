@@ -44,6 +44,22 @@ export function isSaabaiProductionHost(hostname: string | null | undefined): boo
   return host === "saabai.ai" || host === "www.saabai.ai";
 }
 
+/**
+ * Permanent redirect for the bare apex only.
+ * www.saabai.ai, client hosts, preview hosts, and other subdomains are left alone
+ * so this cannot loop with the custom-domain rewrite below.
+ */
+export function apexWwwRedirect(
+  host: string | null | undefined,
+  pathname: string,
+  search = "",
+): { location: string; status: 308 } | null {
+  if (normaliseHost(host) !== "saabai.ai") return null;
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  const query = !search ? "" : search.startsWith("?") ? search : `?${search}`;
+  return { location: `https://www.saabai.ai${path}${query}`, status: 308 };
+}
+
 export function isPreviewHost(hostname: string | null | undefined): boolean {
   const host = normaliseHost(hostname);
   return host.endsWith(".vercel.app") || host === "localhost" || host.startsWith("127.");

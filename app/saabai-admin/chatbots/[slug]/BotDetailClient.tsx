@@ -153,7 +153,7 @@ export default function BotDetailClient({ slug }: { slug: string }) {
               <div className="bd-plan">
                 <label>Plan{" "}
                   <select data-testid={`plan-${row.slug}`} aria-label={`Plan for ${row.name}`} value={row.plan} disabled={busy} onChange={(e) => void post({ action: "set_plan", plan: e.target.value })}>
-                    {plans.map((p) => <option key={p.key} value={p.key}>{p.label} ({p.cap}/month)</option>)}
+                    {plans.map((p) => <option key={p.key} value={p.key}>{`${p.label} (${p.cap} per month)`}</option>)}
                   </select>
                 </label>
                 <OnOff testId={`toggle-${row.slug}`} on={!!row.enabled} label={`${row.name} chatbot`} busy={busy} disabled={kill} disabledReason="Emergency switch is on" note={note}

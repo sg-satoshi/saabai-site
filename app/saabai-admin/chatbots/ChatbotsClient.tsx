@@ -119,7 +119,7 @@ export default function ChatbotsClient() {
               <div className="cb-meta">
                 <label>Plan{" "}
                   <select data-testid={`plan-${r.slug}`} aria-label={`Plan for ${r.name}`} value={r.plan} disabled={busy === r.slug} onChange={(e) => void post(r.slug, { action: "set_plan", plan: e.target.value })}>
-                    {plans.map((p) => <option key={p.key} value={p.key}>{p.label} ({p.cap}/month)</option>)}
+                    {plans.map((p) => <option key={p.key} value={p.key}>{`${p.label} (${p.cap} per month)`}</option>)}
                   </select>
                 </label>
                 <span data-testid={`usage-${r.slug}`}>This month: <b>{r.usage.conversations}</b> of {r.cap.cap} conversations ({r.cap.pct}%), {r.usage.messages} messages</span>
