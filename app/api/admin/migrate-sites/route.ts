@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, COOKIE_NAME, isAdminSession } from "../../../../lib/auth";
+import { ZARA_PERSONA, personaGreeting } from "../../../../lib/chatbot/personas";
+import { ZARA_SYSTEM_PROMPT } from "../../../../lib/chatbot/platform-bot-seed";
 import { createSite, getSiteBySlug, listSites } from "../../../../lib/site-registry";
 import { normaliseSlug, nameKey, customDomains } from "../../../../lib/site-dedupe";
 
@@ -38,8 +40,8 @@ const SITES = [
     business: { name: "Lifestyle Money Management" },
     chatbot: {
       enabled: true, name: "Zara",
-      greeting: "Hi! I'm Zara from Lifestyle Money Management. How can I help you build wealth through property today?",
-      systemPrompt: "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Adelaide.",
+      greeting: personaGreeting(ZARA_PERSONA),
+      systemPrompt: ZARA_SYSTEM_PROMPT,
     },
   },
   {

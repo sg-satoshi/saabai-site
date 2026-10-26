@@ -3,6 +3,8 @@
  * Run from terminal: node -r esbuild-register scripts/migrate-all-sites.ts
  * Or use tsx: npx tsx scripts/migrate-all-sites.ts
  */
+import { ZARA_PERSONA, personaGreeting } from "../lib/chatbot/personas";
+import { ZARA_SYSTEM_PROMPT } from "../lib/chatbot/platform-bot-seed";
 import { createSite, getSiteBySlug } from "../lib/site-registry";
 
 const SITES = [
@@ -40,10 +42,8 @@ const SITES = [
     chatbot: {
       enabled: true,
       name: "Zara",
-      greeting:
-        "Hi! I'm Zara from Lifestyle Money Management. How can I help you build wealth through property today?",
-      systemPrompt:
-        "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Adelaide.",
+      greeting: personaGreeting(ZARA_PERSONA),
+      systemPrompt: ZARA_SYSTEM_PROMPT,
     },
   },
   {

@@ -119,14 +119,35 @@ export default function BOConsultancyLayout({ children }: { children: React.Reac
     if (document.getElementById('bo-widget-root')) return;
     var NAVY='#123B5D',ORANGE='#F58220',AVATAR='/sites/bo-consultancy/christina-avatar.jpg';
     var SLUG='bo-consultancy';
-    var messages=[{role:'assistant',content:"G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?"}];
+    var messages=[];
+    var greeting='';
     var isOpen=false;
     var chatbotOff=false;
     var offText='';
     fetch('/api/chat-platform/config?site='+SLUG).then(function(r){return r.json();}).then(function(c){
-      if(!c||c.active!==false)return;
-      chatbotOff=true;
-      offText=c.offMessage||"Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+      if(!c)return;
+      if(c.active===false){
+        chatbotOff=true;
+        offText=c.offMessage||"Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.";
+        return;
+      }
+      if(typeof c.greeting==='string'&&messages.length===0){
+        greeting=c.greeting;
+        messages.push({role:'assistant',content:greeting});
+        if(isOpen&&typeof renderMsgs==='function')renderMsgs();
+      }
+      if(c.handoff&&c.handoff.href&&c.handoff.label){
+        var link=document.createElement('a');
+        link.href=c.handoff.href;
+        link.textContent=c.handoff.label;
+        link.target='_blank';
+        link.rel='noopener';
+        link.style.cssText='display:block;text-align:center;font-size:13px;color:'+NAVY+';padding:8px 12px;text-decoration:none';
+        link.addEventListener('click',function(){
+          fetch('/api/chat-platform/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:SLUG,event:'handoff'})}).catch(function(){});
+        });
+        panel.insertBefore(link,inp);
+      }
     }).catch(function(){});
 
     var style=document.createElement('style');
