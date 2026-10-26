@@ -38,13 +38,13 @@ async function seed() {
       tagline: "Property Wealth Strategy",
       phone: "",
       email: "",
-      address: "Brisbane, Queensland",
+      address: "Adelaide, South Australia",
     },
     chatbot: {
       enabled: true,
       name: "Zara",
       greeting: "Hi! I'm Zara from Lifestyle Money Management. How can I help you build wealth through property today?",
-      systemPrompt: "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Brisbane. You help Australians build long-term wealth through ethical, property-led strategy and financial analysis.",
+      systemPrompt: "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Adelaide. You help Australians build long-term wealth through ethical, property-led strategy and financial analysis.",
     },
   });
   console.log("Registered: lmm-site");

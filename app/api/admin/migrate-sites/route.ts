@@ -32,14 +32,14 @@ const SITES = [
     slug: "lmm-site",
     name: "Lifestyle Money Management",
     niche: "finance",
-    description: "Property Wealth Strategy in Brisbane.",
+    description: "Property Wealth Strategy in Adelaide.",
     source: "factory" as const,
     url: "https://www.saabai.ai/sites/lmm-site/",
     business: { name: "Lifestyle Money Management" },
     chatbot: {
       enabled: true, name: "Zara",
       greeting: "Hi! I'm Zara from Lifestyle Money Management. How can I help you build wealth through property today?",
-      systemPrompt: "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Brisbane.",
+      systemPrompt: "You are Zara, a knowledgeable property wealth strategist at Lifestyle Money Management in Adelaide.",
     },
   },
   {
