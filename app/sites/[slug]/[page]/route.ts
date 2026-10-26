@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { ensurePoweredBy } from "@/lib/client-site";
+import { lmmLegalDocument, type LmmLegalPage } from "@/lib/lmm-legal";
 import { resolveGeoProfile } from "@/lib/geo/profiles";
 import { llmsFullTxt, llmsTxt, robotsTxt, sitemapXml } from "@/lib/geo";
 import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
@@ -54,6 +55,17 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; page: string }> }
 ) {
   const { slug, page } = await params;
+
+  if (slug === "lmm-site" && (page === "privacy" || page === "complaints")) {
+    const html = ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage));
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, s-maxage=3600",
+      },
+    });
+  }
 
   // Favicon files — served as binary from blob
   const faviconMime = FAVICON_EXTS[page];
