@@ -114,6 +114,7 @@ export function clientFromEngagement(eng: Pick<AuditEngagement, "firmName" | "fi
   return {
     name: eng.firmName,
     firmType: eng.firmType,
+    businessKind: brief?.businessKind,
     industry: brief?.industry,
     overview: typeof overview === "string" ? overview : undefined,
     location: eng.location,
@@ -176,6 +177,12 @@ export function searchReportBlocks(audit: SearchAudit): ReportBlock[] {
     out.push({ kind: "p", text: "Left out of the score rather than guessed." });
     for (const u of audit.unverified) out.push({ kind: "p", text: `${u.what} ${u.why}`.trim() });
   }
+  const assumed = audit.checks.filter((c) => c.assumption && c.status !== "fail" && c.status !== "partial");
+  if (assumed.length) {
+    out.push({ kind: "h2", text: "Still relying on an assumption" });
+    out.push({ kind: "p", text: "These checks did not have a confirmed fact from you. Do not read them as something we observed." });
+    for (const c of assumed) out.push({ kind: "p", text: `Assumption: ${sentence(c.assumption ?? "")}${sentence(c.what)}` });
+  }
   const passed = audit.checks.filter((c) => c.status === "pass");
   if (passed.length) {
     out.push({ kind: "h2", text: "Already in place" });
@@ -203,6 +210,7 @@ export function searchAuditForPrompt(audit: SearchAudit): string {
     "Decisions only the owner can make:",
     ...(audit.ownerDecisions.length ? audit.ownerDecisions.map(oneLine) : ["None."]),
     `Buyer questions: ${audit.questionScore ?? "not scored"} out of 100.`,
+    assumedLine(audit),
     ...audit.questions.filter((q) => q.result !== "clear").map((q) => `${q.result}: ${q.question}${q.page ? ` (${q.page})` : ""}`),
     "Do not invent ratings, prices, traffic, rankings, or lost revenue beyond the leak line above.",
   ];
@@ -210,12 +218,19 @@ export function searchAuditForPrompt(audit: SearchAudit): string {
   return text.length > 4000 ? `${text.slice(0, 3990)}\n[truncated]` : text;
 }
 
+function assumedLine(audit: SearchAudit): string {
+  const ids = audit.checks.filter((c) => c.assumption).map((c) => c.id);
+  if (!ids.length) return "No check is relying on an assumption.";
+  return `These checks still rely on an assumption: ${ids.join(", ")}. Do not treat them as confirmed fact.`;
+}
+
 function oneLine(f: SearchCheck): string {
   return `- ${f.what} Page: ${f.page ?? "n/a"}. Effort: ${f.effort}. Confidence: ${cap(f.confidence)}.`;
 }
 
 function findingLine(f: SearchCheck): string {
-  return `What: ${sentence(f.what)} Why it affects results: ${sentence(f.why)} Page: ${f.page ?? "the pages we opened"}. Effort: ${sentence(f.effort)} Confidence: ${cap(f.confidence)}.`;
+  const assumption = f.assumption ? ` Assumption: ${sentence(f.assumption)}` : "";
+  return `What: ${sentence(f.what)} Why it affects results: ${sentence(f.why)} Page: ${f.page ?? "the pages we opened"}. Effort: ${sentence(f.effort)} Confidence: ${cap(f.confidence)}.${assumption}`;
 }
 
 function sentence(s: string): string {
@@ -228,7 +243,8 @@ function questionLine(q: QuestionResult): string {
   const result = q.result === "clear" ? "Clear" : q.result === "partial" ? "Partial" : "Missing";
   const page = q.page ? `Page: ${q.page}.` : "Page: not found on the pages we opened.";
   const effort = q.effort ? ` Effort: ${sentence(q.effort)}` : "";
-  return `${result}. ${q.question} ${page} ${sentence(q.why)}${effort}Confidence: ${cap(q.confidence)}.`;
+  const assumption = q.assumption ? ` Assumption: ${sentence(q.assumption)}` : "";
+  return `${result}. ${q.question} ${page} ${sentence(q.why)}${effort}Confidence: ${cap(q.confidence)}.${assumption}`;
 }
 
 function areaSentence(audit: SearchAudit): string {
