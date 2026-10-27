@@ -161,7 +161,7 @@
       '.nm-disclaimer {' +
         'text-align: center; font-size: 13px; line-height: 1.45; padding: 8px 12px 0; color: ' + CONFIG.textColor + ';' +
       '}' +
-      '.nm-disclaimer a { color: inherit; text-decoration: underline; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 8px; }' +
+      '.nm-disclaimer a { color: inherit; text-decoration: underline; display: inline-block; line-height: 24px; padding: 10px 8px; min-height: 44px; vertical-align: middle; }' +
       '@media (max-width: 480px) {' +
         '.nm-window {' +
           'bottom: 0; right: 0; left: 0; top: 0;' +

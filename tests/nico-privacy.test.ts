@@ -15,7 +15,7 @@ test("the privacy policy states the chat facts the code can support", () => {
     "APP 5",
     "APP 8",
     "Saabai (saabai.ai)",
-    "limited to operating the service",
+    "can access leads and chats to run and support the site",
     "Sofia is an AI assistant",
     "DeepSeek",
     "deepseek-v4-flash",
@@ -27,7 +27,7 @@ test("the privacy policy states the chat facts the code can support", () => {
     "last 40 messages",
     "Sydney",
     "Supabase",
-    "Tokyo, Japan",
+    "Tokyo, Japan, for 90 days",
     "20,000 characters",
     "cost figure",
     "90 days",
@@ -44,7 +44,11 @@ test("the privacy policy states the chat facts the code can support", () => {
     "Vercel",
     "Google Fonts",
     "cdn.tailwindcss.com",
-    "kept only for as long as needed",
+    "one or more of those countries",
+    "Telegram Messenger Inc.",
+    "Gold Coast and Hobart do not ask for an event type",
+    "seven city pages",
+    "kept until Nico deletes them",
     "oaic.gov.au",
     "https://nicomoretti.au/#contact",
     'id="mobile-menu"',
@@ -55,6 +59,12 @@ test("the privacy policy states the chat facts the code can support", () => {
   assert.ok(!policy.includes("the code does not"));
   assert.ok(!policy.includes("If a Telegram"));
   assert.ok(!policy.includes("last 50 messages"));
+  assert.ok(!policy.includes("limited to operating the service"));
+  assert.ok(!policy.includes("as long as needed"));
+  assert.ok(!policy.includes("Ashburn"));
+  assert.ok(!policy.includes("project settings"));
+  assert.ok(!policy.includes("Netherlands"));
+  assert.ok(!policy.includes("When the chat log database is connected"));
   assert.ok(!/[\u2012-\u2015]/.test(policy), "policy must not use em or en dashes");
 });
 
@@ -63,7 +73,7 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   for (const file of pages) {
     const html = readFileSync(`${dir}/${file}`, "utf8");
     assert.match(html, /nicomoretti\.au\/privacy-policy|href="\/privacy-policy"|privacy-policy\.html/, file);
-    assert.match(html, /chat-widget\.js\?4/, file);
+    assert.match(html, /chat-widget\.js\?5/, file);
     if (html.includes('type="submit"')) formPages.push(file);
   }
   assert.deepEqual(formPages.sort(), [
@@ -83,6 +93,8 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
     assert.match(html, /Nico receives your inquiry by email and Telegram/, file);
     assert.match(html, /font-size:13px/, file);
     assert.match(html, /min-height:44px/, file);
+    assert.match(html, /display:inline-block/, file);
+    assert.doesNotMatch(html, /inline-flex/, file);
   }
   assert.match(widget, /Hi, I'm Sofia, Nico's AI booking assistant/);
   assert.match(widget, /Sofia is an AI assistant/);
@@ -91,6 +103,8 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   assert.match(widget, /DeepSeek in China/);
   assert.match(widget, /font-size: 13px/);
   assert.match(widget, /min-height: 44px/);
+  assert.match(widget, /display: inline-block/);
+  assert.doesNotMatch(widget, /inline-flex/);
   assert.match(widget, /privacyHref/);
   assert.match(widget, /nico-chat-history/);
   assert.match(widget, /MAX_HISTORY = 40/);
@@ -100,13 +114,29 @@ test("every Nico page links the privacy policy, and the chat discloses the AI", 
   assert.ok(!/[\u2012-\u2015]/.test(widget));
 });
 
-test("discretion copy is unchanged and the chat route stays on DeepSeek", () => {
+test("discretion copy does not make absolute claims, and the chat route stays on DeepSeek", () => {
   const faq = readFileSync(`${dir}/faq.html`, "utf8");
   const husband = readFileSync(`${dir}/husband-experience.html`, "utf8");
-  assert.match(faq, /never disclosed to any third party/);
-  assert.match(husband, /Your privacy is permanent\. Nothing is ever disclosed\./);
-  assert.doesNotMatch(faq, /AI service in China/);
-  assert.doesNotMatch(husband, /AI service in China/);
+  const interim = "Your enquiry is kept confidential. It is shared only with the services that run this website, which are listed in our privacy policy, and never sold or used for marketing.";
+  assert.ok(faq.includes(interim));
+  assert.ok(husband.includes(interim));
+  for (const phrase of [
+    "never disclosed to any third party",
+    "absolute professional silence",
+    "Nothing is ever disclosed",
+    "invoices are issued through a discreet professional entity",
+    "invoices are issued discreetly",
+    "Your privacy is permanent",
+  ]) {
+    assert.ok(!faq.includes(phrase), phrase);
+    assert.ok(!husband.includes(phrase), phrase);
+  }
+  assert.match(route, /an AI booking assistant/);
+  assert.match(route, /say that you are an AI assistant/);
+  assert.match(route, /enquiry form/);
+  assert.doesNotMatch(route, /personal booking consultant/);
+  assert.doesNotMatch(route, /Phone: as listed/);
+  assert.doesNotMatch(route, /or phone/);
   assert.match(route, /model: "deepseek-v4-flash"/);
   assert.match(route, /https:\/\/api\.deepseek\.com\/v1\/chat\/completions/);
   assert.match(route, /logChatTurn/);
