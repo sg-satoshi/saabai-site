@@ -1,5 +1,6 @@
 import { resolveSlot } from "@/lib/exp/resolve";
 import { CLICK_KINDS } from "@/lib/exp/core";
+import { qualifyHoursClaim } from "@/lib/exp/seed";
 import ExpBeacon from "./ExpBeacon";
 import type { ReactNode } from "react";
 
@@ -14,10 +15,12 @@ export default async function ExpText({ slot, children }: {
   children: (v: { text: string; emphasis?: string; attrs: Record<string, string> }) => ReactNode;
 }) {
   const { exp, variant, tracked } = await resolveSlot(slot);
-  const attrs = { "data-exp-slot": slot, "data-exp-id": exp.id, "data-exp-variant": variant.id, "data-exp-kind": exp.kind ?? "headline" };
+  const kind = exp.kind ?? "headline";
+  const shown = kind === "headline" ? qualifyHoursClaim(variant.text, variant.emphasis) : variant;
+  const attrs = { "data-exp-slot": slot, "data-exp-id": exp.id, "data-exp-variant": variant.id, "data-exp-kind": kind };
   return (
     <>
-      {children({ text: variant.text, emphasis: variant.emphasis, attrs })}
+      {children({ text: shown.text, emphasis: shown.emphasis, attrs })}
       {tracked && <ExpBeacon exp={exp.id} slot={slot} scope={CLICK_KINDS.includes(exp.kind ?? "headline") ? "slot" : "page"} />}
     </>
   );

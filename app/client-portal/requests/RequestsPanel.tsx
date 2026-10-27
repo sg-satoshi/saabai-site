@@ -56,7 +56,7 @@ const TYPE_OPTS: { id: RequestType; label: string }[] = [
 const PRI_OPTS: { id: Priority; label: string; hint: string }[] = [
   { id: "low", label: "Low", hint: "When you can" },
   { id: "normal", label: "Normal", hint: "2 business days" },
-  { id: "high", label: "High", hint: "2 business days" },
+  { id: "high", label: "High", hint: "Same day" },
   { id: "critical", label: "Critical", hint: "Site broken" },
 ];
 

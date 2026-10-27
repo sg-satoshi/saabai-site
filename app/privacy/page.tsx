@@ -9,11 +9,11 @@ export const metadata: Metadata = publicPageMeta.privacy;
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: "1. About this policy",
-    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") respects your privacy and handles personal information in line with the Australian Privacy Principles. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it. Australian Privacy Principle 1: this policy is our plain-language account of the personal information we handle and why. Australian Privacy Principle 5: when a form, chatbot or voice demo asks you for information, we tell you what we are collecting and why, on that screen or in this policy.`,
+    body: `${NAP.name} (ABN ${NAP.abn}, ${NAP.addressLine}) ("we", "us") is a sole trader business operated by Shane Goldberg. This policy explains what we collect when you use saabai.ai or buy our services, and what we do with it.`,
   },
   {
     heading: "2. What we collect",
-    body: "Information you give us, such as your name, email, phone number, business details and the answers you submit in our score quiz, Blueprint fact-find or contact forms. Payment details are handled by Stripe and we never see or store your full card number. If you use a chatbot we run, we also keep a transcript of what you type and the reply. We use that transcript to provide the chat, to handle an enquiry you start, and to check that the bot is working. A scheduled task deletes those chat logs after 90 days. We store them with Supabase. Our code does not name the region of that database, so we do not claim the transcripts are held in Australia or in any particular country. Some conversation records are also stored with Upstash Redis. The code does not name that region either. The Tokyo location named below is only for split-test data, not for chatbot transcripts.",
+    body: "Information you give us, such as your name, email, phone number, business details and the answers you submit in our score quiz, Blueprint fact-find or contact forms. Payment details are handled by Stripe and we never see or store your full card number. If you use a chatbot we run, we also keep a transcript of what you type and the reply. We use that transcript to provide the chat, to handle an enquiry you start, and to check that the bot is working. A scheduled task deletes those chat logs after 90 days. Chat transcripts are stored with our database provider Supabase in Tokyo, Japan. Chat IP addresses are kept briefly in Upstash Redis for abuse protection. A short-window record expires after 11 minutes, and a daily record expires after 26 hours.",
   },
   {
     heading: "3. Cookies and source tracking",
@@ -29,7 +29,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "6. Who we share it with",
-    body: "Only the service providers that help us run Saabai, such as hosting, payments, analytics and advertising (Google Analytics, and Meta for Facebook and Instagram), email and SMS delivery, and only as needed to provide their service. We do not sell personal information. Chat replies are written by an external AI provider. The code can send a chat to Anthropic, OpenAI, Google, xAI or DeepSeek. Which of those a bot uses is set in our hosting configuration, except the /api/ai-agent/chat path, which sends the conversation to DeepSeek at api.deepseek.com. DeepSeek processes those messages overseas, in China. Anthropic, OpenAI, Google and xAI may process messages outside Australia, including in the United States. The custom sales agent Rex uses Anthropic.",
+    body: "Only the service providers that help us run Saabai, such as hosting, payments, analytics and advertising (Google Analytics, and Meta for Facebook and Instagram), email and SMS delivery, and only as needed to provide their service. We do not sell personal information. Our chatbots use AI providers to write replies: Anthropic, OpenAI, Google, xAI and DeepSeek. Some chats on saabai.ai are sent to DeepSeek, which processes them in China. Anthropic, OpenAI, Google and xAI may process messages outside Australia, including in the United States. The custom sales agent Rex uses Anthropic.",
   },
   {
     heading: "7. Access, correction and complaints",
@@ -37,7 +37,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: "8. Overseas disclosure",
-    body: "Voice demo audio is processed in real time by an overseas AI service provider, xAI, which may be located in the United States. We keep text transcripts only, not audio recordings, with the time and length of the chat for 30 days, and not your IP address. Chat messages may be disclosed to the AI providers named above. DeepSeek is in China. The others may be in the United States or elsewhere overseas. Australian Privacy Principle 8: before we disclose personal information overseas, we take reasonable steps so that the overseas handling lines up with the Australian Privacy Principles. You can choose not to use the chat or the voice demo. We do not claim that chat data stays in Australia. Google and Meta may process the analytics and advertising information described above outside Australia, including in the United States.",
+    body: "Voice demo audio is processed in real time by xAI, which may be located in the United States. We keep text transcripts only, not audio recordings, with the time and length of the chat for 30 days, and not your IP address. Chat transcripts are stored with Supabase in Tokyo, Japan. Chat messages may be sent to the AI providers named above. DeepSeek processes some chats in China. The others may process messages in the United States or elsewhere overseas. You can choose not to use the chat or the voice demo. We do not claim that chat data stays in Australia. Our host Vercel keeps standard server logs. Google and Meta may process the analytics and advertising information described above outside Australia, including in the United States.",
   },
 ];
 

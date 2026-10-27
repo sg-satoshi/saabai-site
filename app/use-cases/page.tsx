@@ -26,7 +26,7 @@ const useCases = [
       "Lead qualification is where many agencies lose track of enquiries. An AI system can answer new enquiries at any hour, ask qualifying questions, and pass serious buyers and sellers to your agents.",
     examples: [
       "Fast AI response to inbound enquiries",
-      "Automated inspection reminders and appraisal follow-up sequences",
+      "Illustrative example: inspection reminders and appraisal follow-up, quoted separately",
       "Listing update communications to matched buyers",
       "Vendor report automation",
     ],

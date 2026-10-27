@@ -91,7 +91,7 @@ export default function Home() {
               <div className="shot" role="img" aria-label="Gold Coast cycle workshop website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
               <div className="meta">
                 <h3>Gold Coast cycle workshop</h3>
-                <p style={{ fontSize: 15 }}>Bookings site with online enquiries and Google reviews. Enquiry alerts are not part of the published website plans.</p>
+                <p style={{ fontSize: 15 }}>Bookings site with online enquiries and Google reviews.</p>
               </div>
             </a>
             <a className="site" href="https://wholesalehomes.com.au" target="_blank" rel="noopener noreferrer">

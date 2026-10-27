@@ -39,15 +39,14 @@ export default function CaseStudies() {
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
           One published example: a custom AI sales agent on a national plastics
-          supplier&apos;s website. The client&apos;s name is withheld. We do not
-          publish result figures we cannot verify.
+          supplier&apos;s website. The client&apos;s name is withheld.
         </p>
         <InShort>
           Saabai, a Gold Coast AI business founded by Shane Goldberg, has a custom AI
           sales agent live for a national plastics supplier (name withheld). It answers
           product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.
           A Blueprint is optional, from{" "}
-          <a href="/blueprint">$497</a>. Website care plans are sold on their own.
+          <a href="/blueprint">the Starter Blueprint at $497</a>. Website care plans are sold on their own.
         </InShort>
 
 
@@ -106,20 +105,14 @@ export default function CaseStudies() {
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase">
-              What we do not claim
+              Note
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
-              No unpublished result figures
+              Quoted to the job
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                We do not publish lead counts, pipeline dollars, capture rates or
-                time saved for this build. Those figures have not been verified
-                for the public site.
-              </p>
-              <p>
-                Custom agents are quoted to the job. There is no published price
-                for Rex.
+                This page describes what the agent does. Custom agents are quoted to the job.
               </p>
             </div>
           </div>

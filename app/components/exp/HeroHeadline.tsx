@@ -1,5 +1,4 @@
 import ExpText from "./ExpText";
-import { qualifyHoursClaim } from "@/lib/exp/seed";
 
 /**
  * Homepage hero headline (slot home.hero.headline). The control is the live headline.
@@ -11,15 +10,12 @@ import { qualifyHoursClaim } from "@/lib/exp/seed";
 export default function HeroHeadline() {
   return (
     <ExpText slot="home.hero.headline">
-      {(v) => {
-        const shown = qualifyHoursClaim(v.text, v.emphasis);
-        return (
+      {(v) => (
         <h1 style={{ marginTop: 28 }} {...v.attrs}>
-          {shown.text} <br />
-          <span className="grad">{shown.emphasis}</span>
+          {v.text} <br />
+          <span className="grad">{v.emphasis}</span>
         </h1>
-        );
-      }}
+      )}
     </ExpText>
   );
 }

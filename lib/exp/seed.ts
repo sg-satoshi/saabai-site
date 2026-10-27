@@ -72,12 +72,17 @@ export function slotToExperiment(d: SlotDecl): Experiment {
  * Starter delivery stays on the Blueprint page as "within 48 hours".
  */
 export function qualifyHoursClaim(text: string, emphasis?: string): { text: string; emphasis?: string } {
-  const fix = (s: string) => s
-    .replace(/,?\s*in 48[\u00a0 ]hours\.?/gi, "")
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([.!?])/g, "$1")
-    .replace(/[,\s]+$/g, "")
-    .trim();
+  const fix = (s: string) => {
+    const hadStop = /,?\s*in 48[\u00a0 ]hours\./i.test(s);
+    let next = s
+      .replace(/,?\s*in 48[\u00a0 ]hours\.?/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+([.!?])/g, "$1")
+      .replace(/[,\s]+$/g, "")
+      .trim();
+    if (hadStop && next && !/[.!?]$/.test(next)) next += ".";
+    return next;
+  };
   const nextText = fix(text);
   if (emphasis === undefined) return { text: nextText };
   const nextEmphasis = fix(emphasis);

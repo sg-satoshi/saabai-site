@@ -15,7 +15,7 @@ const FEATURES = [
   },
   {
     title: "Lead details for your team",
-    desc: "The plan includes email notifications, plus SMS and WhatsApp alerts up to the monthly limit on your tier. Ask us to confirm live SMS and WhatsApp delivery before you rely on them.",
+    desc: "Your team gets an email with the lead details.",
     icon: "📲",
   },
   {
@@ -44,11 +44,8 @@ const HOW_IT_WORKS = [
   { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
   { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes visitors, asks what they need, and can capture their details." },
   { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, and urgency, collected in a natural conversation." },
-  { step: "04", title: "Your team gets the details", desc: "The plan includes an email with the lead details, plus SMS and WhatsApp up to your tier limit. Ask us to confirm live SMS and WhatsApp delivery before you rely on them." },
+  { step: "04", title: "Your team gets the details", desc: "Your team gets an email with the lead details." },
 ];
-
-const TIER_SMS = { starter: 10, pro: 50, enterprise: 500 } as const;
-const TIER_WA = { starter: 10, pro: 50, enterprise: 500 } as const;
 
 export default function LeadGenPage() {
   return (
@@ -80,7 +77,7 @@ export default function LeadGenPage() {
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
           Saabai LeadGen is an AI lead capture widget for service businesses.
           It can collect a name, phone and the job at any hour, including while you are on a job.
-          The plan includes email notifications, plus SMS and WhatsApp alerts up to your tier limit. Ask us to confirm live SMS and WhatsApp delivery before you rely on them.
+          Your team gets an email with the lead details.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -159,7 +156,6 @@ export default function LeadGenPage() {
               <div className="space-y-4">
                 {[
                   "The plan includes an email with the conversation and lead details",
-                  "SMS and WhatsApp are listed on your tier. Ask us to confirm live delivery before you rely on them",
                   "Urgent jobs can be marked in the captured details so your team can see them",
                   "The lead appears in your Saabai dashboard with all channels logged",
                 ].map((step, i) => (
@@ -220,7 +216,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            One flat monthly fee. Published prices are Starter $197, Pro $397 and Enterprise $997. Cancellation terms for LeadGen are not in our terms yet.
+            One flat monthly fee. Published prices are Starter $197, Pro $397 and Enterprise $997.
           </p>
         </div>
 
@@ -236,8 +232,6 @@ export default function LeadGenPage() {
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> AI lead capture widget</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Email notifications (unlimited)</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.starter} per month)`}</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.starter} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Monthly lead report</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Setup and configuration</li>
             </ul>
@@ -261,8 +255,6 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.pro} per month)`}</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.pro} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
             <form action="/api/leadgen/checkout" method="POST" target="_blank">
@@ -282,8 +274,6 @@ export default function LeadGenPage() {
             </div>
             <ul className="space-y-3 text-sm text-saabai-text-dim mb-8 flex-1">
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Pro</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.enterprise} per month)`}</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.enterprise} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Multi-location support</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Dedicated account management</li>
             </ul>

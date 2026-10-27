@@ -392,7 +392,7 @@ test("voice and legal demo routes are public and a neighbouring admin route stay
   assert.match(pub, /public \/legal demo, fictional firm, no lead capture; origin and limits inside/);
 });
 
-test("the demo is mounted on the homepage and /legal, and the privacy policy has the APP 8 line", () => {
+test("the demo is mounted on the homepage and /legal, and the privacy policy names the chat providers", () => {
   const hits = walk("app")
     .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
     .filter((file) => read(file).includes("VoiceDemo"));
@@ -405,15 +405,20 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy has
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LachieLegalDemo/);
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LexWebsiteDemo/);
   const privacy = read("app/privacy/page.tsx");
-  assert.match(privacy, /Australian Privacy Principle 1/);
-  assert.match(privacy, /Australian Privacy Principle 5/);
-  assert.match(privacy, /Australian Privacy Principle 8/);
-  assert.match(privacy, /overseas AI service provider/);
+  assert.match(privacy, /sole trader business operated by Shane Goldberg/);
+  assert.match(privacy, /Supabase in Tokyo, Japan/);
+  assert.match(privacy, /xAI/);
   assert.match(privacy, /United States/);
   assert.match(privacy, /China/);
   assert.match(privacy, /DeepSeek/);
   assert.match(privacy, /90 days/);
   assert.match(privacy, /text transcripts only, not audio recordings/);
+  assert.match(privacy, /Vercel keeps standard server logs/);
+  assert.match(privacy, /11 minutes/);
+  assert.match(privacy, /26 hours/);
+  assert.doesNotMatch(privacy, /Australian Privacy Principle/);
+  assert.doesNotMatch(privacy, /reasonable steps/);
+  assert.doesNotMatch(privacy, /\/api\//);
   assert.doesNotMatch(privacy, /Grok/);
   assert.doesNotMatch(privacy, /calls may be recorded/);
   assert.ok(!DASH.test(privacy));

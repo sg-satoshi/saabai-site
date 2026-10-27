@@ -29,6 +29,6 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Where is chatbot data stored, and which AI providers process it?",
-    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The privacy policy names those providers, including one in China for one chat path. A transcript is stored, and a scheduled task deletes those chat logs after 90 days. The code does not name the region of that database. It is not the split-test store the privacy policy describes as being in Tokyo. Some conversation records are also stored with a separate cache provider. The code does not name that region. The site is hosted on Vercel, and the serverless functions run in Sydney. That does not mean chat data stays in Australia.",
+    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The privacy policy names those providers. Some chats are processed in China. Chat transcripts are stored with our database provider Supabase in Tokyo, Japan, and a scheduled task deletes those chat logs after 90 days. Chat IP addresses are kept briefly in Upstash Redis for abuse protection. A short-window record expires after 11 minutes, and a daily record expires after 26 hours. Our host Vercel keeps standard server logs. Serverless functions run in Sydney. That does not mean every chat stays in Australia.",
   },
 ];

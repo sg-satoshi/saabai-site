@@ -31,7 +31,7 @@ export const PRIORITY_LABELS: Record<RequestPriority, string> = {
 export const RESPONSE_TARGETS: Record<RequestPriority, string> = {
   low: "3 business days",
   normal: "2 business days",
-  high: "2 business days",
+  high: "same day",
   critical: "within 1 hour",
 };
 

@@ -67,9 +67,7 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
     if (!r || typeof r !== "object") continue;
     const o = r as Record<string, unknown>;
     const tidy = (x: unknown) => (typeof x === "string" ? x.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
-    // Keep "48 hours" together like the live headline does.
-    const nb = (x: string) => x.replace(/\b48 hours/gi, "48\u00a0hours");
-    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: kind !== "headline" ? "" : nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
+    const s: Suggestion = { text: tidy(o.text), emphasis: kind !== "headline" ? "" : tidy(o.emphasis), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
     const why = checkSuggestion(s, seen, kind);
     if (why) { dropped.push({ text: s.text, why }); continue; }
     if (ok.length >= max) continue;

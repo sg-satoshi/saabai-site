@@ -18,7 +18,7 @@ export const publicPageMeta = {
     path: "/contact",
     title: "Contact Saabai | Gold Coast and Brisbane",
     description:
-      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 2 business days, and we serve the Gold Coast, Brisbane and clients across Australia.`,
+      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 2 business days and serve the Gold Coast, Brisbane, Queensland and clients across Australia.`,
   }),
   terms: pageMeta({
     path: "/terms",
@@ -114,7 +114,7 @@ export const publicPageMeta = {
     path: "/case-studies",
     title: "Saabai Case Studies | Gold Coast AI Results",
     description:
-      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions. We do not publish result figures we cannot verify.",
+      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions and prices cut-to-size jobs.",
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
@@ -126,7 +126,7 @@ export const publicPageMeta = {
     path: "/process",
     title: "Saabai AI Process | Gold Coast",
     description:
-      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Most small businesses have a first automation live within 2 to 4 weeks.",
+      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Simple automations can go live in one to two weeks, and more complex workflows typically take four to six weeks.",
   }),
   insights: pageMeta({
     path: "/insights",
