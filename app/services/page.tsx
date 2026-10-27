@@ -90,16 +90,6 @@ const steps = [
 
 const results = [
   {
-    stat: "90s",
-    label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for an Adelaide law firm serving clients across Australia and internationally. Previously 2 to 14 hours.",
-  },
-  {
-    stat: "12 hrs",
-    label: "Recovered per week",
-    detail: "Intake admin taken off the same team's plate each week by one AI agent.",
-  },
-  {
     stat: "40%",
     label: "Enquiries resolved by AI",
     detail: "Share of a national supplier's inbound enquiries fully handled without staff, with instant quotes.",
@@ -339,7 +329,7 @@ export default function Services() {
           Time recovered. Costs reduced. Capacity unlocked.
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
+        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
           {results.map(({ stat, label, detail }) => (
             <div key={label} className="bg-saabai-surface p-10 relative h-full">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
