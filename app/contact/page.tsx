@@ -52,7 +52,7 @@ export default function ContactPage() {
           </div>
 
           <p className="dim" style={{ marginTop: 28, fontSize: 15 }}>
-            Saabai is a home-based, online business. We do not operate a public shopfront, and visits are by appointment only.
+            Saabai is an online business. We do not operate a public shopfront, and visits are by appointment only.
           </p>
 
           <div style={{ marginTop: 28 }}>
