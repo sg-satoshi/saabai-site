@@ -315,12 +315,12 @@ export default function Services() {
           Published work
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-8 max-w-2xl mx-auto leading-snug">
-          Case studies
+          Case study
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto leading-relaxed">
           A custom AI sales agent for a national plastics supplier. The name is withheld.
           It answers product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.{" "}
-          <a href="/case-studies" className="text-saabai-teal font-semibold">See the case studies.</a>
+          <a href="/case-studies" className="text-saabai-teal font-semibold">See the case study.</a>
         </p>
       </section>
 
