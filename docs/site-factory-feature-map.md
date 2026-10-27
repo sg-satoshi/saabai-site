@@ -12,9 +12,10 @@ Plain-English guide for agents: which human term (header, hero, footer...) is wh
 | BO Consulting | boconsulting.com.au | Coded | `app/sites/bo-consultancy/` |
 | Wholesale Homes | wholesalehomes.com.au | Coded | `app/sites/wholesale-homes/` |
 | Tributum Law | tributumlaw.com (friendly `/sites/tributumlaw`) | Stored HTML (slug `tributum-law`) + demo `app/sites/tributum-law-v2/` | `app/sites/[slug]/` |
-| Next Investment, Nico Moretti | domains pending | Static | `public/clients/nextinvestment`, `public/clients/nico-moretti` |
+| Next Investment | domain pending | Static | `public/clients/nextinvestment` |
+| Nico Moretti | nicomoretti.au | Static HTML served from the repo, not Blob | `public/clients/nico-moretti` |
 
-Registry of coded sites: `lib/site-registry.ts` (`APP_ROUTER_SITES`: slug, domains, description). Stored-HTML sites live in Vercel Blob / Redis and are served by `app/sites/[slug]/route.ts` and `app/sites/[slug]/[page]/route.ts`.
+Registry of coded sites: `lib/site-registry.ts` (`APP_ROUTER_SITES`: slug, domains, description). Stored-HTML sites live in Vercel Blob / Redis and are served by `app/sites/[slug]/route.ts` and `app/sites/[slug]/[page]/route.ts`. Nico Moretti is the exception: `lib/repo-client-html.ts` serves that slug from the repo files, so a Blob edit does not change the live pages.
 
 ## 2. Host mapping (how a custom domain reaches a site)
 
