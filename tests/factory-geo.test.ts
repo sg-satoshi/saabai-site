@@ -64,7 +64,7 @@ test("every static client site has robots, sitemap and llms files", () => {
 
 test("city-page redirects never apply to client hosts", () => {
   const cfg = readFileSync(path.join(ROOT, "next.config.ts"), "utf8");
-  for (const host of ["stuscyclerepairs", "boconsulting", "wholesalehomes", "lifestylemoneymanagement"]) {
+  for (const host of ["stuscyclerepairs", "boconsulting", "wholesalehomes", "lifestylemoneymanagement", "nicomoretti"]) {
     assert.ok(cfg.includes(host), `${host} missing from CLIENT_HOST`);
   }
 });
