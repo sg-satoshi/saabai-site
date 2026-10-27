@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { trackMarketingLead } from "../../../lib/marketing/browser";
 import { contactInText } from "../../../lib/marketing/public";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "../useChatOpen";
 
 type Role = "user" | "assistant";
 type Msg = { role: Role; content: string };
@@ -24,6 +26,8 @@ export default function LexDemoPanel() {
   const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [composing, setComposing] = useState(false);
+  useChatOpen("lex-demo", composing || loading);
   const logRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -37,6 +41,7 @@ export default function LexDemoPanel() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    noteVisitorMessage("lex-demo");
     const history = [...messages, { role: "user" as const, content: trimmed }];
     const contact = contactInText(trimmed);
     if (contact.email || contact.phone) {
@@ -160,6 +165,8 @@ export default function LexDemoPanel() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={() => setComposing(true)}
+          onBlur={() => setComposing(false)}
           placeholder="Ask about a consult, fees or a new enquiry"
           aria-label="Message Lex"
           disabled={loading}
