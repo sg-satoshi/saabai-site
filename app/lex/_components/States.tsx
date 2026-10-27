@@ -194,7 +194,8 @@ export function ErrorCard({ error, onRetry, retryLabel = "Try again" }: { error:
 /** Label for a research tool call shown in the step list (null for tools the user doesn't need to see). */
 export function stepLabel(tool: string): string | null {
   const labels: Record<string, string> = {
-    searchAustLII: "Searching case law on AustLII",
+    checkCitation: "Checking the licensed case-law snapshot",
+    searchAustLII: "AustLII search (not the licensed snapshot)",
     searchATO: "Searching ATO rulings and guidance",
     searchLegislation: "Searching federal legislation",
     checkLegislationStatus: "Checking Act status",
@@ -206,7 +207,7 @@ export function stepLabel(tool: string): string | null {
     searchART: "Searching ART and former AAT decisions",
     searchFairWork: "Searching the Fair Work Commission",
     searchCorporationsLaw: "Searching corporations law",
-    searchFamilyLaw: "Searching family law",
+    searchFamilyLaw: "Family Court is outside the licensed snapshot",
   };
   if (tool === "captureMatter") return null;
   return labels[tool] ?? "Searching";

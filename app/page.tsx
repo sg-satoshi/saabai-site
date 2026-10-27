@@ -8,12 +8,15 @@ import { miaServiceSchema } from "@/lib/seo-entity";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
+import { TIERS } from "@/lib/blueprint";
+import VoiceDemo from "./components/sb/VoiceDemo";
 import "./components/sb/sb.css";
 import "./components/sb/home.css";
 
 export const metadata: Metadata = publicPageMeta.home;
 
 const copyLink = { color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 } as const;
+const voiceDemoReady = Boolean(process.env.XAI_API_KEY);
 
 const FAQS = [
   { q: "What is the AI Readiness Score?", a: "A free 3 minute quiz with 12 questions about how your business runs. You get an instant score out of 100, a breakdown by area and three quick wins you can use this week." },
@@ -25,6 +28,8 @@ const FAQS = [
 export default function Home() {
   return (
     <div className="sb">
+      {/* Next.js metadata drops the trailing slash on this URL. */}
+      <link rel="canonical" href="https://www.saabai.ai/" />
       <JsonLd data={miaServiceSchema} />
       <JsonLd data={faqSchema(FAQS)} />
       <Nav activePage="/" />
@@ -32,7 +37,7 @@ export default function Home() {
       <div className="hero">
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
-          <span className="pill">New: Saabai Blueprint, your AI plan in 48 hours</span>
+          <span className="pill">New: Saabai Blueprint from $497.</span>
           <HeroHeadline />
           <p className="lead">
             Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.
@@ -40,8 +45,10 @@ export default function Home() {
           <div className="ctas">
             <HeroCta />
             <a className="btn ghost" href="/blueprint">See the Blueprint</a>
+            <VoiceDemo ready={voiceDemoReady} />
           </div>
-          <div className="trust">Free 3 minute quiz · Instant score out of 100 · No credit card</div>
+          {/* TODO: Google rating goes here once Shane has consent to publish it. Do not add a rating, review count or stars until then. */}
+          <div className="trust">Free 3 minute quiz · Blueprint from {TIERS.starter.priceLabel} · Websites from {formatAud(WEBSITE_TIERS[0].buildFrom)}</div>
         </div>
       </div>
 
@@ -81,10 +88,10 @@ export default function Home() {
           <div className="grid2">
             <a className="site" href="https://stuscyclerepairs.com" target="_blank" rel="noopener noreferrer">
               <div className="bar"><i /><i /><i /></div>
-              <div className="shot" role="img" aria-label="Stu's Cycle Repairs website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
+              <div className="shot" role="img" aria-label="Gold Coast cycle workshop website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
               <div className="meta">
-                <h3>Stu&apos;s Cycle Repairs</h3>
-                <p style={{ fontSize: 15 }}>Bookings site with online enquiries, Google reviews and instant lead alerts to Stu&apos;s phone.</p>
+                <h3>Gold Coast cycle workshop</h3>
+                <p style={{ fontSize: 15 }}>Bookings site with online enquiries and Google reviews.</p>
               </div>
             </a>
             <a className="site" href="https://wholesalehomes.com.au" target="_blank" rel="noopener noreferrer">
@@ -178,10 +185,11 @@ export default function Home() {
               <p>Saabai is a <a href="/ai-receptionist-gold-coast" style={copyLink}>Gold Coast</a> business based in Merrimac, Queensland, and we work remotely with clients across Australia.</p>
               <p>We build custom AI chatbots for business websites, trained on your own services, hours and policies.</p>
               <p>Your chatbot answers visitors day and night, so enquiries that come in after hours get a reply instead of sitting in an inbox until morning.</p>
-              <p>It captures the person&apos;s details and what they need, then alerts you straight away.</p>
-              <p>Email enquiry alerts come with every plan, and we can also send alerts to Telegram, WhatsApp or SMS.</p>
+              <p>It answers their questions and keeps a log of the chat.</p>
+              <p>Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.</p>
               <p>Want to see one working? Chat with Mia, our own AI assistant, right here on saabai.ai.</p>
-              <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI workspace made for legal practices.</p>
+              <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI legal assistant for legal practices.</p>
+              <p>For businesses in Brisbane, the Gold Coast and the Sunshine Coast, see our <a href="/ai-chatbot-developer-queensland" style={copyLink}>custom AI chatbot developer in Queensland</a> page.</p>
             </div>
           </div>
         </div>
@@ -192,9 +200,8 @@ export default function Home() {
           <div className="card">
             <h2>Enquiry alerts</h2>
             <div style={{ display: "grid", gap: 14, marginTop: 16, maxWidth: 900, fontSize: 17 }}>
-              <p>Every Saabai chatbot sends new enquiry alerts by email on all plans, so nothing gets lost.</p>
-              <p>If you would rather hear about leads on your phone, we can also send alerts to Telegram, WhatsApp or SMS.</p>
-              <p>You choose where each enquiry goes, so the right person sees it quickly and can follow up while the customer is still keen.</p>
+              <p>The chatbot answers visitors and keeps a log of each chat.</p>
+              <p>Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.</p>
             </div>
           </div>
         </div>

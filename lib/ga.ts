@@ -10,9 +10,9 @@ const PREVIEW_HOST = /^saabai-site-[a-z0-9-]+\.vercel\.app$/;
 
 const EXCLUDED_PATHS = [
   "/sites", "/clients", "/saabai-admin", "/admin", "/pulse", "/client-portal", "/dashboard",
-  "/mission-control", "/atlas-memory-control", "/rex-dashboard", "/rex-analytics", "/rex-changelog",
+  "/mission-control", "/atlas-memory-control",
   "/leadgen-dashboard", "/login", "/forgot-password", "/reset-password", "/onboarding", "/edge",
-  "/ai-agent", "/lex", "/lex-widget", "/rex-widget", "/leadgen-widget",
+  "/ai-agent", "/lex", "/lex-widget", "/leadgen-widget",
 ];
 
 export function gaHostMode(hostname: string): "prod" | "preview" | null {

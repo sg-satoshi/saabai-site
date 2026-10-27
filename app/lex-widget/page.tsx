@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "../components/useChatOpen";
 
 // ── Brand ──────────────────────────────────────────────────────────────────────
 const C = {
@@ -118,6 +120,7 @@ export default function LexWidgetPage() {
   const [thinkLabel, setThinkLabel] = useState("Researching…");
   const [docContext, setDocContext] = useState<DocContext | null>(null);
   const [analyzingDoc, setAnalyzingDoc] = useState(false);
+  useChatOpen("lex-widget", true);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -154,6 +157,7 @@ export default function LexWidgetPage() {
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    noteVisitorMessage("lex-widget");
 
     const userMsg: ChatMessage = { role: "user", content: trimmed };
     const updated: ChatMessage[] = [...msgsRef.current, userMsg];

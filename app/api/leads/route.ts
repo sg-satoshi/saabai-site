@@ -681,115 +681,6 @@ function buildCustomerTranscriptEmail(lead: {
   };
 }
 
-// ── Pete chat transcript emails ───────────────────────────────────────────────
-
-function buildPeteOperatorEmail(lead: {
-  timestamp: string;
-  email?: string;
-  conversation?: { role: string; content: string }[];
-}) {
-  const { timestamp, email, conversation = [] } = lead;
-  const userCount = conversation.filter((m) => m.role === "user").length;
-
-  const bubblesHtml = conversation
-    .filter((m) => m.content.trim())
-    .map(({ role, content }) => {
-      const isPete = role === "assistant";
-      if (isPete) {
-        return `<tr><td style="padding: 4px 0 8px;">
-          <table style="border-collapse: collapse;"><tr>
-            <td style="vertical-align: bottom; padding-right: 8px; width: 28px;">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">P</div>
-            </td>
-            <td>
-              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">Rex</div>
-              <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
-            </td>
-          </tr></table>
-        </td></tr>`;
-      } else {
-        return `<tr><td style="padding: 4px 0 8px; text-align: right;">
-          <div style="font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; text-align: right;">${email ?? "Visitor"}</div>
-          <div style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 11px 15px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; text-align: left;">${content}</div>
-        </td></tr>`;
-      }
-    })
-    .join("");
-
-  const contactRow = email
-    ? `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
-        <span style="font-size:12px;color:#999;">Visitor email: </span>
-        <a href="mailto:${email}" style="font-size:14px;font-weight:600;color:#62c5d1;text-decoration:none;">${email}</a>
-       </div>`
-    : `<div style="background:#ffffff;border:1px solid #e8e8ec;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
-        <span style="font-size:12px;color:#bbb;">No email provided</span>
-       </div>`;
-
-  return {
-    subject: `Rex transcript: ${email ?? "anonymous"} · ${userCount} messages · /onboarding/plon`,
-    html: buildTranscriptShell({
-      eyebrow: "Saabai · Rex Transcript",
-      heading: "A visitor chatted with Rex.",
-      subheading: `${userCount} visitor messages · /onboarding/plon · ${new Date(timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}`,
-      bubblesHtml: contactRow + bubblesHtml,
-      footerNote: "Sent automatically after a Rex conversation ends.",
-    }),
-  };
-}
-
-function buildPeteCustomerTranscriptEmail(lead: {
-  email: string;
-  conversation?: { role: string; content: string }[];
-}) {
-  const { email, conversation = [] } = lead;
-
-  const bubblesHtml = conversation
-    .filter((m) => m.content.trim())
-    .map(({ role, content }) => {
-      const isPete = role === "assistant";
-      const label = isPete ? "Rex" : "You";
-      if (isPete) {
-        return `<tr><td style="padding: 4px 0 8px;">
-          <table style="border-collapse: collapse;"><tr>
-            <td style="vertical-align: bottom; padding-right: 8px; width: 28px;">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: #1c1a52; border: 1px solid rgba(98,197,209,0.3); text-align: center; line-height: 28px; font-size: 11px; font-weight: 700; color: #62c5d1;">P</div>
-            </td>
-            <td>
-              <div style="font-size: 10px; font-weight: 600; color: #62c5d1; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;">${label}</div>
-              <div style="background: #1c1a52; color: #d8d8f0; padding: 11px 15px; border-radius: 4px 16px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; display: inline-block;">${content}</div>
-            </td>
-          </tr></table>
-        </td></tr>`;
-      } else {
-        return `<tr><td style="padding: 4px 0 8px; text-align: right;">
-          <div style="font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; text-align: right;">${label}</div>
-          <div style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 11px 15px; border-radius: 16px 4px 16px 16px; font-size: 14px; line-height: 1.55; max-width: 340px; text-align: left;">${content}</div>
-        </td></tr>`;
-      }
-    })
-    .join("");
-
-  const ctaHtml = `
-    <div style="text-align: center; margin-bottom: 28px;">
-      <p style="font-size: 15px; color: #444; margin: 0 0 20px; line-height: 1.6;">Thanks for chatting with Rex. Ready to see what we can automate for your business?</p>
-      <a href="${CALENDLY}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 16px 36px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;">Book Your Free Strategy Call →</a>
-      <p style="font-size: 12px; color: #aaa; margin: 12px 0 0;">Free · 30 minutes · No obligation</p>
-    </div>
-  `;
-
-  return {
-    subject: "Your conversation with Rex: PlasticOnline",
-    html: buildTranscriptShell({
-      eyebrow: "PlasticOnline · From Rex",
-      heading: "Here's your chat with Rex.",
-      subheading: "Everything you discussed, saved for your reference.",
-      bubblesHtml,
-      ctaHtml,
-      footerNote: "You requested this transcript during your chat. Questions? Reply to this email.",
-    }),
-  };
-}
-
 // ── Operator notification: Mia hot lead (show_booking_cta fired) ─────────────
 
 function buildHotLeadEmail(lead: {
@@ -948,6 +839,68 @@ function buildHotLeadEmail(lead: {
   return { subject, html };
 }
 
+// ── Operator notification: Instagram instant site check ──────────────────────
+// Same Resend client and inbox as every other Saabai lead.
+// No visitor email and no nurture. The score is the one the check returned.
+
+function buildInstagramOperatorEmail(lead: {
+  email?: string;
+  name?: string;
+  business?: string;
+  website?: string;
+  phone?: string;
+  problem?: string;
+  offer?: string;
+  page?: string;
+  siteScore?: number;
+  checkSummary?: string;
+  timestamp: string;
+  utm?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string };
+}) {
+  const utm = lead.utm ?? {};
+  const utmLine = [utm.source, utm.medium, utm.campaign, utm.content, utm.term].filter(Boolean).join(" · ");
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 140px; vertical-align: top;">${label}</td><td style="padding: 6px 0; font-size: 14px;">${value}</td></tr>`;
+  const site = lead.website
+    ? `<a href="${lead.website}" style="color: #62c5d1;">${lead.website}</a>`
+    : "Not provided";
+  const scored = typeof lead.siteScore === "number";
+  const scoreLabel = scored ? `${lead.siteScore} out of 100` : "Not scored";
+
+  return {
+    subject: `Site check: ${lead.business || lead.name || lead.email || "Instagram"} (${scored ? `${lead.siteScore}/100` : "not scored"})`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 640px; margin: 0 auto; color: #1a1a1a;">
+        <div style="background: #0b092e; padding: 32px; border-radius: 12px 12px 0 0;">
+          <p style="color: #62c5d1; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 8px;">Saabai · Instagram</p>
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 600;">Instant site check</h1>
+        </div>
+        <div style="background: #f8f8f8; padding: 32px; border-radius: 0 0 12px 12px; border: 1px solid #e5e5e5; border-top: none;">
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Contact</h2>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px;">
+            ${row("Name", lead.name || "Not provided")}
+            ${row("Business", lead.business || "Not provided")}
+            ${row("Website", site)}
+            ${row("Email", lead.email ? `<a href="mailto:${lead.email}" style="color: #62c5d1;">${lead.email}</a>` : "Not provided")}
+            ${row("Phone", lead.phone || "Not provided")}
+            ${row("Offer", lead.offer || "free-site-check")}
+            ${row("Page", lead.page || "/ig")}
+            ${row("Score", scoreLabel)}
+            ${row("UTM", utmLine || "None")}
+            ${row("Time", new Date(lead.timestamp).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }))}
+          </table>
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Site check</h2>
+          <p style="font-size: 14px; color: #333; line-height: 1.6; margin: 0 0 28px;">${lead.checkSummary || "No check summary."}</p>
+          <h2 style="font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; color: #666; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e5e5;">Biggest problem</h2>
+          <p style="font-size: 14px; color: #333; line-height: 1.6; margin: 0 0 28px;">${lead.problem || "Not provided"}</p>
+          ${lead.email ? `<a href="mailto:${lead.email}" style="display: inline-block; background: #62c5d1; color: #0b092e; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none;">Reply to lead</a>` : ""}
+          <p style="font-size: 12px; color: #999; margin: 24px 0 0; padding-top: 16px; border-top: 1px solid #e5e5e5;">Submitted via saabai.ai/ig · source=instagram · offer=free-site-check</p>
+        </div>
+      </div>
+    `,
+  };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
@@ -980,7 +933,7 @@ export async function POST(req: Request) {
 
   console.log(safeLogLine(lead));
 
-  if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator")) {
+  if (lead.source === "mia_qualified" || lead.source?.startsWith("calculator") || lead.source === "instagram") {
     const { recordConversion } = await import("@/lib/exp/track");
     await recordConversion(req, "form_submit");
   }
@@ -988,42 +941,12 @@ export async function POST(req: Request) {
   const isCalculator = lead.source?.startsWith("calculator");
   const isMiaQualified = lead.source === "mia_qualified";
   const isChatClosed = lead.source === "chat_closed" || lead.source === "chat_ended" || lead.source === "chat_ended_short";
-  const isPeteClosed = lead.source === "pete_ended";
+  const isInstagram = lead.source === "instagram";
 
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    if (isPeteClosed) {
-      // Operator transcript, always send for Pete (client onboarding context)
-      const { subject, html } = buildPeteOperatorEmail(lead);
-      try {
-        await resend.emails.send({
-          from: "Saabai Leads <leads@saabai.ai>",
-          to: ["hello@saabai.ai"],
-          subject,
-          html,
-        });
-      } catch (err) {
-        console.error("[resend pete operator error]", err);
-      }
-
-      // Customer transcript, only if they opted in
-      if (lead.sendTranscript && lead.email && visitorMailOk) {
-        const { subject: txSubject, html: txHtml } = buildPeteCustomerTranscriptEmail(lead);
-        try {
-          await resend.emails.send({
-            from: "Shane at Saabai.ai <hello@saabai.ai>",
-            to: [lead.email],
-            subject: txSubject,
-            html: txHtml,
-            replyTo: "hello@saabai.ai",
-          });
-        } catch (err) {
-          console.error("[resend pete customer transcript error]", err);
-        }
-      }
-
-    } else if (isMiaQualified) {
+    if (isMiaQualified) {
       // Hottest possible signal, Mia's show_booking_cta tool fired
       const analysis = await analyseConversation(lead.conversation ?? []);
       const { subject, html } = buildHotLeadEmail({ ...lead, analysis });
@@ -1070,6 +993,20 @@ export async function POST(req: Request) {
         } catch (err) {
           console.error("[resend customer transcript error]", err);
         }
+      }
+    } else if (isInstagram) {
+      // Operator alert only. Same sender and inbox as other leads. No visitor email and no nurture.
+      const { subject, html } = buildInstagramOperatorEmail(lead);
+      try {
+        await resend.emails.send({
+          from: "Saabai Leads <leads@saabai.ai>",
+          to: ["hello@saabai.ai"],
+          subject,
+          html,
+          replyTo: lead.email || undefined,
+        });
+      } catch (err) {
+        console.error("[resend operator error]", err);
       }
     } else {
       // Standard lead notification (Mia or calculator)

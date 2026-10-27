@@ -3,6 +3,8 @@ import { list } from "@vercel/blob";
 import { readFileSync } from "fs";
 import path from "path";
 import { ensurePoweredBy } from "@/lib/client-site";
+import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
 
@@ -21,6 +23,10 @@ function applyCssPatch(slug: string, html: string): string {
   return html.replace("</head>", `<style data-saabai-patch>${css}</style></head>`);
 }
 
+function prepareStoredHtml(slug: string, html: string): string {
+  return slug === "lmm-site" ? prepareLmmHomeHtml(html) : html;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -28,13 +34,36 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    // 1. Check Vercel Blob first (AI-generated sites)
-    const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
-    const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+    // Nico's HTML in this repo is the copy visitors should see. Blob is only
+    // the fallback, so the privacy policy ships with the deploy.
+    const repoHtml = readRepoClientHtml(slug, "index.html");
+    if (repoHtml !== null) {
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
+      return new Response(html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
-    if (blob) {
-      const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, await res.text()))));
+    // 1. Check Vercel Blob first (AI-generated sites). A missing token or a
+    // blob outage must not hide the legacy file in public/clients/.
+    let blobHtml: string | null = null;
+    try {
+      const { blobs } = await list({ prefix: `sites/${slug}/index.html` });
+      const blob = blobs.find((b) => b.pathname === `sites/${slug}/index.html`);
+      if (blob) {
+        const res = await fetch(`${blob.url}?t=${Date.now()}`, { cache: "no-store" });
+        blobHtml = await res.text();
+      }
+    } catch (e) {
+      console.error("Site blob lookup failed:", e);
+    }
+
+    if (blobHtml !== null) {
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, applyCssPatch(slug, prepareStoredHtml(slug, blobHtml)))));
       return new Response(html, {
         status: 200,
         headers: {
@@ -47,7 +76,7 @@ export async function GET(
     // 2. Fall back to legacy static sites in public/clients/
     try {
       const filePath = path.join(process.cwd(), "public", "clients", slug, "index.html");
-      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, readFileSync(filePath, "utf-8"))));
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, readFileSync(filePath, "utf-8")))));
       return new Response(html, {
         status: 200,
         headers: {

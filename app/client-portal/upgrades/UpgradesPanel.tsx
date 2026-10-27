@@ -22,7 +22,10 @@ type Confirm =
   | { kind: "remove"; addon: Addon }
   | null;
 
-const ICON: Record<string, string> = { "extra-page": "▤", booking: "◷", "ai-chatbot": "◎", "seo-pack": "⌕", "reviews-carousel": "☆", "custom-integration": "⌁" };
+const ICON: Record<string, string> = { "extra-page": "▤", "seo-pack": "⌕", "custom-integration": "⌁" };
+/** Matches lib/billing/catalog.ts. The portal also drops these on the server. */
+const HIDDEN_ADDON_IDS = new Set(["ai-chatbot", "reviews-carousel", "booking"]);
+const HIDDEN_ADDON_NAMES = new Set(["ai chatbot", "google reviews carousel", "booking system"]);
 
 export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
   const [data, setData] = useState<Data | null>(null);
@@ -140,7 +143,7 @@ export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
         <>
           <p className="bl-note" style={{ marginTop: 0, marginBottom: 12 }}>Fixed price: checkout with Stripe. Custom work: we quote first. Monthly extras added mid-cycle are prorated.</p>
           <div className="bl-addons">
-            {data.addons.map((a) => {
+            {data.addons.filter((a) => !HIDDEN_ADDON_IDS.has(a.id) && !HIDDEN_ADDON_NAMES.has(a.name.trim().toLowerCase())).map((a) => {
               const own = owned(a.id);
               return (
                 <div key={a.id} className="bl-addon">
@@ -204,7 +207,7 @@ export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
                 </>
               )}
               {confirm.kind === "quote-sent" && (
-                <div className="bl-done"><div className="ic">✓</div><div style={{ fontWeight: 600 }}>We&apos;re on it</div><div className="bl-help">You&apos;ll find it under Requests. We usually reply within one business day.</div></div>
+                <div className="bl-done"><div className="ic">✓</div><div style={{ fontWeight: 600 }}>We&apos;re on it</div><div className="bl-help">You&apos;ll find it under Requests. We usually reply within 1 business day.</div></div>
               )}
               {confirm.kind === "remove" && <p style={{ margin: 0, fontSize: 14 }}>{confirm.addon.name} stays on until the end of this billing cycle{b?.currentPeriodEnd ? ` (${shortDate(b.currentPeriodEnd)})` : ""}, then it&apos;s removed. No more charges after that.</p>}
               {err && <div className="bl-err">{err}</div>}

@@ -49,3 +49,10 @@ next-env.d.ts
 .atlas-approvals.json
 .atlas-system-memory.json
 /models/
+
+# OALC citation index. Built locally from corpus.jsonl. Never commit the corpus or the index.
+oalc_citations.csv
+oalc_citation_aliases.csv
+oalc_dedupe_log.csv
+oalc_build_meta.json
+corpus.jsonl

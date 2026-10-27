@@ -7,7 +7,6 @@
  *   - an approved portal user (Redis portal:users, approved in Saabai admin)
  *   - a Saabai directory user with the Lex product
  *   - an email that already has saved Lex portal settings (existing firms)
- *   - the PlasticOnline team email (PLON_TEAM_EMAIL), used by /plon/login
  *   - anything listed in the optional LEX_PORTAL_ALLOWED_EMAILS env var
  *     (comma-separated). Not required; nothing needs to be set for this to work.
  *
@@ -36,7 +35,6 @@ export async function isKnownLexPortalClient(rawEmail: string): Promise<boolean>
 
   if (getLexClients().some((c) => c.email.teamEmail.trim().toLowerCase() === email)) return true;
   if (envList("LEX_PORTAL_ALLOWED_EMAILS").includes(email)) return true;
-  if (envList("PLON_TEAM_EMAIL").includes(email)) return true;
 
   try {
     if (await getPortalUser(email)) return true;

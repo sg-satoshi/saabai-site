@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -122,6 +124,7 @@ function Bubble({ msg, isLast }: { msg: ChatMessage; isLast: boolean }) {
 // ── Main Widget ───────────────────────────────────────────────────────────────
 export default function LexWidget() {
   const [open, setOpen] = useState(false);
+  useChatOpen("lex", open);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -172,6 +175,7 @@ export default function LexWidget() {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
+    noteVisitorMessage("lex");
     const userMsg: ChatMessage = { role: "user", content: text.trim() };
     const updated = [...messages, userMsg];
     setMessages(updated);

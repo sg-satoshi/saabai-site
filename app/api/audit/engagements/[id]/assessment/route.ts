@@ -11,6 +11,7 @@ import { getPremiumModel } from "../../../../../../lib/chat-config";
 import { requireAdmin } from "../../../../../../lib/audit-admin";
 import { getEngagement, logEvent, updateEngagement } from "../../../../../../lib/audit-store";
 import { buildAssessmentPrompt, parseAssessmentText } from "../../../../../../lib/audit-assessment";
+import { clientFromEngagement, runBlueprintSearchAudit, searchAuditForPrompt } from "../../../../../../lib/blueprint/search-audit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,17 @@ export async function POST(_req: Request, { params }: Params) {
   if (!engagement)
     return Response.json({ error: "Not found" }, { status: 404 });
 
-  const prompt = buildAssessmentPrompt(engagement);
+  let searchContext = "";
+  const website = engagement.website?.trim();
+  if (website) {
+    try {
+      const audit = await runBlueprintSearchAudit({ url: website, client: clientFromEngagement(engagement) });
+      searchContext = searchAuditForPrompt(audit);
+    } catch {
+      searchContext = "The website crawl failed. Do not invent search findings, ratings, prices, or results.";
+    }
+  }
+  const prompt = buildAssessmentPrompt(engagement, searchContext);
   if (!prompt)
     return Response.json(
       { error: "No fact-find responses yet. Complete the fact-find or interview first." },

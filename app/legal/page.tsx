@@ -5,11 +5,14 @@ import JsonLd from "../components/JsonLd";
 import { breadcrumbSchema, faqSchema, orgRef } from "@/lib/seo-meta";
 import { lexServiceSchema } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { LachieLegalDemo, LexWebsiteDemo } from "../components/legal-demos/HarbourDemos";
+import { OALC_SOURCE_PANEL } from "@/lib/oalc-disclosure";
 import "./legal.css";
 
 export const metadata: Metadata = publicPageMeta.legal;
 
 const DEMO_URL = "https://calendly.com/shanegoldberg/30min";
+const voiceDemoReady = Boolean(process.env.XAI_API_KEY);
 
 /*
  * Every claim on this page is checked against the Lex code (lib/lex-tools.ts,
@@ -51,14 +54,15 @@ const DOC_TYPES = [
 ];
 
 const LEX_FAQS = [
-  { q: "What is Lex?", a: "Lex is an AI legal research and drafting tool for Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
-  { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. Case law is not searched right now. Always check primary sources before advising a client." },
-  { q: "Which sources does Lex search?", a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Lex does not currently search case law databases, so check case law yourself." },
+  { q: "What is Lex?", a: "Lex is an AI legal assistant for research and drafting at Australian law firms. It searches public Australian government sources, including ATO rulings and Commonwealth legislation, and every answer cites its source." },
+  { q: "Is the website chatbot the same as Lex?", a: "No. Lex is the AI legal assistant for research and drafting. The chat demo on this page is a separate website chatbot for a fictional firm. It answers visitor questions. It does not search legislation or draft documents." },
+  { q: "Can I rely on Lex's answers without checking?", a: "No. Lex cites the legislation and rulings it relies on and says when the law is uncertain. A case citation can be checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions (cutoff 10 March 2025). That snapshot is not live case law and does not cover every court. Always check primary sources before advising a client." },
+  { q: "Which sources does Lex search?", a: "Public Australian government sources: ATO rulings and interpretive decisions, the Federal Register of Legislation (including whether an Act is in force), ASIC and the Fair Work Commission. Case citations are checked against a licensed snapshot of NSW Caselaw, Federal Court and High Court decisions, cutoff 10 March 2025. Other courts are not in that snapshot." },
   { q: "Is it useful for tax and ATO disputes?", a: "Yes. Lex searches ATO rulings and interpretive decisions alongside Commonwealth legislation, so it suits objections, reviews and ruling work." },
   { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
   { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
-  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan, with no lock-in and cancel any time." },
+  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan." },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
 
@@ -134,20 +138,24 @@ export default function LegalPage() {
       <JsonLd data={lexSchema} />
       <JsonLd data={faqSchema(LEX_FAQS)} />
       <JsonLd data={breadcrumbSchema([{ name: "Lex", path: "/legal" }])} />
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", url: "https://www.saabai.ai/legal", name: "Lex AI Legal Assistant | Saabai, Gold Coast", dateModified: "2026-10-26" }} />
       <Nav activePage="/legal" />
 
       {/* Hero */}
       <section className="lx-hero">
         <div className="lx-wrap lx-hero-inner">
-          <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal research for Australian firms</span></span>
-          <h1>Legal research that <span className="lx-grad">shows its sources.</span></h1>
+          <span className="lx-badge">Lex by Saabai<span className="lx-hm"> &middot; AI legal assistant for Australian firms</span></span>
+          <h1>Lex, an AI legal assistant that <span className="lx-grad">shows its sources.</span></h1>
           <p className="lx-lead">
             Lex searches public Australian government sources, including ATO rulings and Commonwealth legislation.
             It answers with citations and links to the sources it used, so you can check them yourself. Draft documents in the same workspace.
           </p>
+          <p className="lx-lead" style={{ marginTop: 16 }}>
+            <a href="/legal/lex-vs-ai-legal-tools" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Lex vs other AI legal tools 2026</a>
+          </p>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
-            <a className="lx-btn lx-ghost" href="#how">See how it works</a>
+            <a className="lx-btn lx-ghost" href="#demo">Try the website demo</a>
           </div>
           <div className="lx-proof">
             <span>Every answer cites its sources</span>
@@ -159,18 +167,33 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* Client line (approved: Tributum Law as the example firm) */}
-      <div className="lx-strip">
+      <section className="lx-sec" id="workspace">
         <div className="lx-wrap">
-          <p>
-            Tributum Law, an Adelaide, South Australia ATO dispute and tax law firm, uses Lex for legal research.{" "}
-            <a href="https://tributumlaw.com" target="_blank" rel="noopener noreferrer">Visit Tributum Law</a>
-          </p>
+          <div className="lx-head">
+            <div className="lx-eyebrow">Two products</div>
+            <h2>Lex the workspace is not the chatbot demo.</h2>
+            <p className="lx-lead">Lex is the AI legal assistant on this page. Lawyers use it to research and draft.</p>
+            <p className="lx-lead" style={{ marginTop: 12 }}>The chat further down is a demo of a website chatbot for a fictional firm. It answers visitors. It does not search legislation or draft documents.</p>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Live client-chat demo. Harbour Street Legal is fictional. */}
+      <section id="demo" className="lx-sec lx-pt0">
+        <div className="lx-wrap">
+          <LexWebsiteDemo />
+        </div>
+      </section>
+
+      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Live phone answering is coming soon. */}
+      <section id="lachie" className="lx-sec lx-pt0 lx-lachie">
+        <div className="lx-wrap">
+          <LachieLegalDemo ready={voiceDemoReady} />
+        </div>
+      </section>
 
       {/* How it works */}
-      <section id="how" className="lx-sec">
+      <section id="how" className="lx-sec lx-pt0">
         <div className="lx-wrap">
           <div className="lx-head">
             <div className="lx-eyebrow">How it works</div>
@@ -186,17 +209,17 @@ export default function LegalPage() {
             <div className="lx-card">
               <div className="lx-n">02</div>
               <h3>Check the citations</h3>
-              <p>Each point cites the section or ruling it relies on, with a link to the source Lex found. Open it and read the passage yourself. Lex is not searching case law right now, so check any case it mentions.</p>
+              <p>Each point cites the section or ruling it relies on, with a link to the source Lex found. Open it and read the passage yourself. A case citation can be checked against the licensed snapshot (cutoff 10 March 2025). If it is not in the snapshot, confirm it exists.</p>
             </div>
             <div className="lx-card">
               <div className="lx-n">03</div>
               <h3>Draft and check</h3>
-              <p>Turn the research into a first draft. Lex runs a QA pass and marks each clause verified, flagged or unverified for your review. The QA pass does not check case law.</p>
+              <p>Turn the research into a first draft. Lex runs a QA pass and marks each clause verified, flagged or unverified for your review. The QA pass does not quote case law.</p>
             </div>
           </div>
           <div className="lx-callouts">
             <div><b>Proper citations</b>Section and Act, or ruling number, not just a vague reference.</div>
-            <div><b>Cases to check</b>Lex is not searching Australian case law right now. Treat any case it mentions as unchecked and look it up yourself.</div>
+            <div><b>Cases in the snapshot</b>NSW Caselaw, the Federal Court and the High Court, cutoff 10 March 2025. Not every court. NSW and High Court results are citation and link only.</div>
             <div><b>Clear verify cues</b>Lex says when the law is uncertain or developing, and tells you what to check.</div>
           </div>
         </div>
@@ -213,6 +236,15 @@ export default function LegalPage() {
           <div className="lx-srcs">
             {SOURCES.map((s) => (
               <div key={s.name}><b>{s.name}</b>{s.note}</div>
+            ))}
+          </div>
+          <div className="lx-head" style={{ marginTop: 48 }}>
+            <h2>Case law is a licensed snapshot.</h2>
+            <p className="lx-lead">NSW Caselaw, the Federal Court and the High Court. Cutoff 10 March 2025. Not every court, and not current law.</p>
+          </div>
+          <div className="lx-snap">
+            {OALC_SOURCE_PANEL.map((p) => (
+              <div key={p.title}><b>{p.title}</b><span>{p.body}</span></div>
             ))}
           </div>
         </div>
@@ -242,7 +274,7 @@ export default function LegalPage() {
               <ul>
                 <li><Check />Verified, flagged or unverified status per clause</li>
                 <li><Check />Critical issues: legislation mismatches, missing clauses, citation risks</li>
-                <li><Check />Case law is not checked, so verify any case yourself</li>
+                <li><Check />The case-law snapshot does not include judgment text, so verify any quote yourself</li>
                 <li><Check />Recommended checks for a senior lawyer before filing or signing</li>
               </ul>
             </div>
@@ -272,9 +304,9 @@ export default function LegalPage() {
             <div className="lx-card"><Icon d="M5 3h10l4 4v14H5zM9 13h6M9 17h4" /><h3>Every answer cites its sources</h3><p>Points link to the legislation or ruling Lex found, so you can read the passage yourself.</p></div>
             <div className="lx-card"><Icon d="m5 12 5 5 9-10" /><h3>Always check primary sources</h3><p>Lex flags uncertain law. Its output is research assistance, not legal advice.</p></div>
             <div className="lx-card"><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3a14 14 0 0 1 0 18" /><h3>Built for Australian law</h3><p>Australian government sources first. Overseas material is only used for comparison.</p></div>
-            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first. Case law is not checked.</p></div>
+            <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first. Case-law text is not checked.</p></div>
             <div className="lx-card"><Icon d="M4 6h16M4 12h16M4 18h10" /><h3>Saved to your login</h3><p>Research threads are tied to your own sign-in, so your history is there when you come back.</p></div>
-            <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>No lock-in</h3><p>Cancel anytime.</p></div>
+            <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>Book a demo</h3><p>We confirm billing with you before a firm starts.</p></div>
           </div>
         </div>
       </section>
@@ -303,15 +335,15 @@ export default function LegalPage() {
           <div className="lx-head lx-center">
             <div className="lx-eyebrow">Pricing</div>
             <h2>Simple, transparent pricing.</h2>
-            <p className="lx-lead">No surprises. No lock-in.</p>
+            <p className="lx-lead">Firm is $299 a month. Enterprise is custom.</p>
           </div>
           <div className="lx-plans">
             <div className="lx-plan lx-hi">
               <div className="lx-tier">Firm</div>
-              <div className="lx-price">$299<small> /month</small></div>
+              <div className="lx-price">$299<small> per month</small></div>
               <p>Perfect for small-to-mid sized firms.</p>
               <ul>
-                {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "All Australian databases", "QA verification on every draft", "Thread memory and history"].map((i) => (
+                {["Unlimited legal research", "20 documents per month", "3 lawyer seats", "Government sources and a licensed case-law snapshot", "QA verification on every draft", "Thread memory and history"].map((i) => (
                   <li key={i}><Check />{i}</li>
                 ))}
               </ul>
@@ -331,7 +363,7 @@ export default function LegalPage() {
           </div>
           <div className="lx-fine">
             <p>Prices in AUD. GST not applicable.</p>
-            <p>No lock-in. Cancel anytime.</p>
+            <p>We confirm billing with you before a firm starts.</p>
           </div>
         </div>
       </section>

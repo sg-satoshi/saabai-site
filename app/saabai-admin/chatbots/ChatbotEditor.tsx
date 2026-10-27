@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LIMITS, POSITIONS, TONES, TONE_LABEL, canRemovePoweredBy, poweredByVisible, isHex, type Faq, type PublicWidgetConfig, type Tone } from "../../../lib/chatbot/core";
+import { appendFaqs } from "../../../lib/chatbot/faq-import";
 import { installSnippet } from "../../../lib/chatbot/seed-shared";
 import { contrast } from "../../../lib/announce/core";
+import FaqBulkAdd from "./FaqBulkAdd";
 
 export type EditorRow = {
   slug: string; name: string; plan: string;
@@ -27,6 +29,19 @@ const css = `
 .ce .warn{color:#8a5a00;font-size:12px;margin-top:3px}
 .ce .faq{border:1px solid #e6e6ef;border-radius:8px;padding:8px;margin:0 0 8px;background:#fafafe}
 .ce .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.ce .bulk{flex:1 0 100%;border:1px solid #e6e6ef;border-radius:8px;padding:10px;margin:4px 0;background:#fff}
+.ce .bulk textarea{min-height:140px}
+.ce .sample{margin:0 0 8px;padding:8px;background:#fafafe;border:1px solid #e6e6ef;border-radius:8px;font:12px/1.45 var(--mono,monospace);white-space:pre-wrap;color:var(--n-800)}
+.ce .bulk-list{list-style:none;margin:0;padding:0}
+.ce .bulk-row{border:1px solid #e6e6ef;border-radius:8px;padding:8px;margin:0 0 8px;background:#fafafe}
+.ce .bulk-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.ce .include{display:flex;align-items:center;gap:6px;margin:0 0 0 auto;font-size:12px;color:var(--n-700)}
+.ce .include input{margin:0}
+.ce .pill{font:600 11px Inter,system-ui,sans-serif;border-radius:999px;padding:2px 8px}
+.ce .pill.ok{background:#e7f6ee;color:#137a52}
+.ce .pill.bad{background:#fdecea;color:#b42318}
+.ce .pill.skip{background:#f4f4f8;color:#5c5c70}
+.ce .count{font:600 12.5px Inter,system-ui,sans-serif;color:var(--n-800);margin:8px 0 4px}
 .ce .pv{position:sticky;top:12px;align-self:start}
 .ce .pvbox{border:1px solid #e6e6ef;border-radius:12px;overflow:hidden;background:#fff}
 .ce .pvtools{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
@@ -136,6 +151,7 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
           </label>
           <div className="hint">{d.facts.length} of {LIMITS.facts} characters. Plain text. The bot is told not to invent anything else.</div>{err("facts")}
           <h3 style={{ marginTop: 12 }}>Questions and approved answers</h3>
+          <div className="hint">{d.faqs.length} of {LIMITS.faqs} questions. A question can be {LIMITS.q} characters and an answer {LIMITS.a}.</div>
           {d.faqs.map((f, i) => (
             <div className="faq" key={i}>
               <label>Question<input type="text" maxLength={LIMITS.q} value={f.q} onChange={(e) => set("faqs", d.faqs.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)))} data-testid={`faq-q-${i}`} /></label>
@@ -145,7 +161,10 @@ export default function ChatbotEditor({ row, onSaved }: { row: EditorRow; onSave
             </div>
           ))}
           {err("faqs")}
-          <button type="button" className="btn sm" disabled={d.faqs.length >= LIMITS.faqs} onClick={() => set("faqs", [...d.faqs, { q: "", a: "" }])} data-testid="faq-add">Add a question</button>
+          <div className="bar">
+            <button type="button" className="btn sm" disabled={d.faqs.length >= LIMITS.faqs} onClick={() => set("faqs", [...d.faqs, { q: "", a: "" }])} data-testid="faq-add">Add a question</button>
+            <FaqBulkAdd existing={d.faqs} onAppend={(rows) => setD((cur) => ({ ...cur, faqs: appendFaqs(cur.faqs, rows) }))} />
+          </div>
         </fieldset>
 
         <fieldset>

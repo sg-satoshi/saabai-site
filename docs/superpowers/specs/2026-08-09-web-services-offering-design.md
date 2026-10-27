@@ -21,7 +21,7 @@ existing SaabAI brand without diluting its premium positioning.
   *"Websites that work like an employee."* Every site ships with a trained AI team member
   that answers enquiries, qualifies leads and never clocks off. This is the differentiator
   no Wix/Squarespace/generic agency can match, and it reuses existing SaabAI capability
-  (Rex, Lex, Mia widgets, Site Factory).
+  (Lex, Mia widgets, Site Factory).
 - **Brand architecture:** one SaabAI brand. No sub-brand. Low dilution risk.
 - **Why it strengthens the business:** the website is a Trojan horse for the AI. Upper
   tiers include automations, which form a natural on-ramp to the existing **$3.5k+ AI
@@ -93,7 +93,7 @@ and monthly requires a subscription setup. Stripe self-serve can come later.
 
 ## 8. Deferred / roadmap
 
-- **Full navigation reorganisation** into clean **Products** (Rex, Lex, Mia as branded
+- **Full navigation reorganisation** into clean **Products** (Lex and Mia as branded
   products) vs **Services** top-level menus — its own design conversation.
 - Self-serve Stripe checkout for web tiers.
 

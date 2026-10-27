@@ -5,7 +5,10 @@ import { useChat } from "@ai-sdk/react";
 import { usePathname } from "next/navigation";
 import type { UIMessage } from "ai";
 import { track } from "../../lib/analytics";
+import { trackMarketingLead } from "../../lib/marketing/browser";
 import { NUDGE_DELAY_MS, NUDGE_SCROLL_RATIO, NUDGE_SESSION_KEY, nudgeFor } from "../../lib/mia-nudge";
+import { interruptBlocked, noteVisitorMessage, subscribeConversationActivity } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 import { CTA_META, ctaHref, isCtaStep, newSessionId, type CtaStep } from "../../lib/mia-cta";
 import { MiaReplyText } from "../../lib/mia-reply-format";
 
@@ -135,6 +138,7 @@ function BouncingDots() {
 export default function ChatWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("mia", isOpen);
   const [showBubble, setShowBubble] = useState(false);
   const [nudgeText, setNudgeText] = useState<string | null>(null);
   const [pulsing, setPulsing] = useState(false);
@@ -206,6 +210,11 @@ export default function ChatWidget() {
     if (stored) {
       setMessages(stored);
       setReturningVisitor(true);
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const at = new Date(raw ? JSON.parse(raw).timestamp : 0).getTime();
+        if (Number.isFinite(at)) noteVisitorMessage("mia", at);
+      } catch { /* ignore a bad timestamp */ }
     }
     const profile = loadVisitorProfile();
     if (profile) setVisitorProfile(profile);
@@ -363,21 +372,28 @@ export default function ChatWidget() {
     if (!text || isOpen) return;
     try { if (sessionStorage.getItem(NUDGE_SESSION_KEY)) return; } catch { return; }
     let done = false;
+    let triggered = false;
+    let unsub = () => {};
     const show = () => {
-      if (done) return;
+      if (done || !triggered || interruptBlocked()) return;
       done = true;
       try { sessionStorage.setItem(NUDGE_SESSION_KEY, "1"); } catch {}
       setNudgeText(text);
       setShowBubble(true);
       track("bubble_shown", { page: pathname });
     };
+    const arm = () => { triggered = true; show(); };
     const onScroll = () => {
       const h = document.documentElement.scrollHeight - window.innerHeight;
-      if (h > 0 && window.scrollY / h >= NUDGE_SCROLL_RATIO) show();
+      if (h > 0 && window.scrollY / h >= NUDGE_SCROLL_RATIO) arm();
     };
-    const timer = setTimeout(show, NUDGE_DELAY_MS);
+    const timer = setTimeout(arm, NUDGE_DELAY_MS);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { done = true; clearTimeout(timer); window.removeEventListener("scroll", onScroll); };
+    unsub = subscribeConversationActivity(() => {
+      if (interruptBlocked()) setShowBubble(false);
+      else show();
+    });
+    return () => { done = true; clearTimeout(timer); window.removeEventListener("scroll", onScroll); unsub(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
@@ -540,6 +556,7 @@ export default function ChatWidget() {
       });
       if (!skipEmail && endEmail.trim()) {
         track("transcript_requested");
+        trackMarketingLead({ source: "enquiry", email: endEmail.trim(), contentName: "Enquiry form" });
       }
       setEndSubmitted(true);
     } finally {
@@ -560,6 +577,7 @@ export default function ChatWidget() {
     splitTimers.current = [];
     stopAudio();
     setInputValue("");
+    noteVisitorMessage("mia");
     await sendMessage({ text });
   }
 
@@ -574,6 +592,7 @@ export default function ChatWidget() {
     splitTimers.current = [];
     stopAudio();
     setInputValue("");
+    noteVisitorMessage("mia");
     await sendMessage({ text });
   }
 
@@ -662,6 +681,7 @@ export default function ChatWidget() {
         }),
       });
       track("lead_captured", { hasName: !!leadForm.name.trim(), sendTranscript: leadForm.sendTranscript });
+      trackMarketingLead({ source: "enquiry", email: leadForm.email.trim(), contentName: "Enquiry form", skipGa: true });
       setLeadSubmitted(true);
     } finally {
       setLeadSubmitting(false);
@@ -919,6 +939,7 @@ export default function ChatWidget() {
                         hasTrackedFirstMessage.current = true;
                         track("first_message_sent");
                       }
+                      noteVisitorMessage("mia");
                       sendMessage({ text: chip });
                     }}
                     className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all hover:border-saabai-teal/60 hover:text-saabai-teal"

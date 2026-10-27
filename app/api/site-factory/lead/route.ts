@@ -4,37 +4,12 @@ import { getSiteBySlug } from "../../../../lib/site-registry";
 import { listSiteLeads } from "../../../../lib/site-leads";
 import { verifySessionToken, isAdminSession, COOKIE_NAME } from "../../../../lib/auth";
 import { isValidEmail } from "../../../../lib/leads-guard";
+import { siteLeadEmail, siteTelegramDestination } from "../../../../lib/notify-routing";
 
 const redis = Redis.fromEnv();
 // Created lazily: constructing Resend at module load throws when
 // RESEND_API_KEY is absent (e.g. Preview builds), failing the whole build.
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
-
-// Hardcoded lead email overrides, for sites not in the Redis registry
-const LEAD_EMAIL_OVERRIDES: Record<string, string> = {
-  "bo-consultancy": "info@boconsulting.com.au",
-  "wholesale-homes": "hello@wholesalehomes.com.au",
-};
-
-// Telegram config per site. Add new sites here.
-// Read at send time so a cold start cannot freeze empty env values.
-function telegramTarget(siteSlug: string): { token: string; chatId: string } | undefined {
-  const sites: Record<string, { token: string; chatId: string }> = {
-    "nico-moretti": {
-      token: process.env.TG_NICO_BOT || "",
-      chatId: process.env.TELEGRAM_CHAT_ID_NICO_MORETTI || "",
-    },
-    "heaven-thai-massage": {
-      token: process.env.TG_HTM_BOT || "",
-      chatId: process.env.TELEGRAM_CHAT_ID_HEAVEN_THAI_MASSAGE || "",
-    },
-    "wholesale-homes": {
-      token: process.env.TG_WHOLESALE_HOMES_BOT || "",
-      chatId: process.env.TELEGRAM_CHAT_ID_WHOLESALE_HOMES || "",
-    },
-  };
-  return sites[siteSlug];
-}
 
 // Em dash and en dash (plus the neighbouring unicode dashes) never go out in copy.
 function clean(value: string): string {
@@ -225,14 +200,8 @@ export async function POST(req: Request) {
 
     // Send notifications, awaited inline (Edge kills an un-awaited task on exit)
     try {
-      const slugKey = siteSlug.toUpperCase().replace(/-/g, "_");
       const site = await getSiteBySlug(siteSlug);
-      const toEmail =
-        LEAD_EMAIL_OVERRIDES[siteSlug] ??
-        process.env[`LEAD_NOTIFY_EMAIL_${slugKey}`] ??
-        site?.business?.email ??
-        process.env.LEAD_NOTIFY_EMAIL ??
-        "shanegoldberg@pm.me";
+      const toEmail = siteLeadEmail(siteSlug, site?.business?.email);
 
       const replyTo = submitterReplyTo(typeof email === "string" ? email : "");
       try {
@@ -252,9 +221,9 @@ export async function POST(req: Request) {
         console.error(`Lead notification email failed for ${siteSlug}: ${resendErrorMessage(message)}`);
       }
 
-      // Per-site Telegram alerts
-      const tgConfig = telegramTarget(siteSlug);
-      if (tgConfig && tgConfig.token && tgConfig.chatId) {
+      // This site's Telegram only. An unknown slug sends no Telegram.
+      const tgConfig = siteTelegramDestination(siteSlug);
+      if (tgConfig) {
         const ts = new Date(lead.createdAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane", dateStyle: "medium", timeStyle: "short" });
         let msg = `🔔 *New inquiry - ${clean(siteSlug)}*\n\n`;
         msg += `*Name:* ${clean(name || "-")}\n*Email:* ${clean(email || "-")}\n*Phone:* ${clean(phone || "-")}\n`;

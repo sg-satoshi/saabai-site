@@ -5,20 +5,20 @@
  * needed when adding a new client.
  *
  * Required env vars per client (replace N with 1, 2, 3, …):
- *   SAABAI_CLIENT_N_ID          — Unique slug, no spaces (e.g. "plasticonline")
- *   SAABAI_CLIENT_N_NAME        — Display name (e.g. "PlasticOnline")
- *   SAABAI_CLIENT_N_EMAIL       — Login email (e.g. "admin@plasticonline.com.au")
+ *   SAABAI_CLIENT_N_ID          — Unique slug, no spaces (e.g. "acme")
+ *   SAABAI_CLIENT_N_NAME        — Display name (e.g. "Acme")
+ *   SAABAI_CLIENT_N_EMAIL       — Login email (e.g. "admin@acme.example")
  *   SAABAI_CLIENT_N_PASSWORD    — Password. Plain text or (preferred) a scrypt hash
  *                                 from `npx tsx scripts/hash-password.ts`. Verified
  *                                 in constant time by lib/password-auth.ts.
- *   SAABAI_CLIENT_N_DASHBOARD   — Dashboard path (e.g. "/rex-dashboard")
+ *   SAABAI_CLIENT_N_DASHBOARD   — Dashboard path (e.g. "/dashboard")
  *
- * Example for PlasticOnline:
- *   SAABAI_CLIENT_1_ID=plasticonline
- *   SAABAI_CLIENT_1_NAME=PlasticOnline
- *   SAABAI_CLIENT_1_EMAIL=admin@plasticonline.com.au
+ * Example:
+ *   SAABAI_CLIENT_1_ID=acme
+ *   SAABAI_CLIENT_1_NAME=Acme
+ *   SAABAI_CLIENT_1_EMAIL=admin@acme.example
  *   SAABAI_CLIENT_1_PASSWORD=yourpassword
- *   SAABAI_CLIENT_1_DASHBOARD=/rex-dashboard
+ *   SAABAI_CLIENT_1_DASHBOARD=/dashboard
  */
 
 export interface ClientConfig {

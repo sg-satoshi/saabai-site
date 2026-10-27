@@ -11,11 +11,13 @@ import {
   POSTAL_ADDRESS,
   SAME_AS,
   SITE_URL,
+  aboutPageSchema,
   lawFirmChatbotServiceNode,
   lexServiceSchema,
   locationServiceSchema,
   miaServiceSchema,
   organizationSchema,
+  organizationSchemaForSegment,
   receptionistServiceNode,
   websitesServiceNode,
 } from "../lib/seo-entity";
@@ -113,9 +115,25 @@ test("service and FAQ JSON-LD parses, with no ratings, reviews or unpublished pr
 
   const receptionist = parseLd(receptionistServiceNode);
   assert.equal(receptionist.name, "AI receptionist for Gold Coast businesses");
-  assert.equal(receptionist.offers, undefined);
+  assert.equal((receptionist.offers as { price: string }).price, "2000");
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Gold Coast"));
   assert.ok((receptionist.areaServed as { name: string }[]).some((area) => area.name === "Brisbane"));
+});
+
+test("blueprint JSON-LD offers are only the prices shown on the page", () => {
+  const prices: string[] = [];
+  walk(organizationSchemaForSegment("blueprint"), (node) => {
+    if (node["@type"] === "Offer" && node.price !== undefined) prices.push(String(node.price));
+  });
+  assert.deepEqual(prices.sort(), ["1497", "3500", "497"]);
+  const elsewhere: string[] = [];
+  walk(organizationSchemaForSegment("websites"), (node) => {
+    if (node["@type"] === "Offer" && node.price !== undefined) elsewhere.push(String(node.price));
+  });
+  assert.ok(elsewhere.includes("200") && elsewhere.includes("300"));
+  const blueprintPage = readFileSync("app/blueprint/page.tsx", "utf8");
+  assert.match(blueprintPage, /priceLabel/);
+  assert.doesNotMatch(blueprintPage, /"200"|"300"|price: 200|price: 300/);
 });
 
 test("schema prices are copied from the pages that publish them", () => {
@@ -155,7 +173,7 @@ test("product pages render the shared Service and FAQ schema", () => {
   assert.match(receptionist, /receptionistServiceNode/);
   assert.match(receptionist, /faqNode\(/);
   assert.match(faq, /faqSchema\(faqs\.flatMap/);
-  assert.match(layout, /organizationSchema/);
+  assert.match(layout, /organizationSchemaForSegment/);
   assert.match(location, /locationServiceSchema/);
   assert.doesNotMatch(location, /#business/);
   assert.doesNotMatch(location, /addressLocality: "Gold Coast"/);
@@ -184,6 +202,67 @@ test("public titles and descriptions are unique, local, and free of em dashes", 
   }
   assert.equal(GOLD_COAST.seo.description, publicPageMeta.goldCoast.description);
   assert.equal(BRISBANE.seo.description, publicPageMeta.brisbane.description);
+});
+
+test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
+  const data = parseLd(aboutPageSchema);
+  assert.equal(data["@context"], "https://schema.org");
+  const graph = data["@graph"] as Record<string, unknown>[];
+  const about = graph.find((node) => node["@type"] === "AboutPage");
+  assert.ok(about, "AboutPage node");
+  assert.equal(about["@id"], `${SITE_URL}/about#webpage`);
+  assert.equal(about.url, `${SITE_URL}/about`);
+  assert.equal(about.name, "About Saabai | Gold Coast AI Business");
+  assert.equal(about.isPartOf && (about.isPartOf as { "@id": string })["@id"], `${SITE_URL}/#website`);
+  assert.equal((about.mainEntity as { "@id": string })["@id"], `${SITE_URL}/#organization`);
+
+  const person = graph.find((node) => node["@type"] === "Person");
+  assert.equal(person?.name, "Shane Goldberg");
+  assert.equal(person?.["@id"], `${SITE_URL}/#shane-goldberg`);
+  assert.equal(person?.jobTitle, "Founder");
+  assert.equal(person?.image, `${SITE_URL}/shane-goldberg.png`);
+  assert.deepEqual(person?.sameAs, [...SAME_AS]);
+
+  const org = graph.find((node) => {
+    const type = node["@type"];
+    return Array.isArray(type) && type.includes("Organization") && type.includes("ProfessionalService");
+  });
+  assert.ok(org, "Organization node");
+  assert.equal(org.name, NAP.name);
+  assert.equal(org.email, NAP.email);
+  assert.equal(org.taxID, NAP.taxID);
+  assert.equal(org.telephone, undefined);
+  assert.deepEqual(org.address, POSTAL_ADDRESS);
+  assert.equal((org.address as Record<string, unknown>).streetAddress, undefined);
+
+  const prices: string[] = [];
+  walk(data, (node) => {
+    if (node["@type"] === "Offer" && node.price !== undefined) prices.push(String(node.price));
+    assert.equal(node.aggregateRating, undefined);
+    assert.equal(node.streetAddress, undefined);
+  });
+  for (const price of prices) assert.ok(PUBLISHED_PRICES.has(price), `unpublished price ${price}`);
+
+  const page = readFileSync("app/about/page.tsx", "utf8");
+  assert.match(page, /aboutPageSchema/);
+  assert.match(page, /<h1[\s\S]*About Saabai/);
+  assert.match(page, /We usually reply within 1 business day\./);
+  assert.doesNotMatch(page, /2 business days/);
+  assert.doesNotMatch(page, /home-based/i);
+  assert.match(page, /href="\/pricing"/);
+  assert.match(page, /href="\/websites"/);
+  assert.match(page, /href="\/legal"/);
+  assert.match(page, /href="\/blueprint"/);
+  assert.match(page, /href="\/contact"/);
+  assert.match(page, /href="\/case-studies"/);
+  assert.match(page, /coming soon/);
+  assert.doesNotMatch(page, /Tributum|LeadGen|leadgen|Rex Plastics|PlasticOnline|Holland Plastics|unedited/i);
+  assert.doesNotMatch(page, /[\u2012-\u2015]/);
+  assert.doesNotMatch(page, /<h[1-6][^>]*>[^<]*48 hours/i);
+  assert.doesNotMatch(page, /(?<!with)in 48 hours/i);
+  assert.doesNotMatch(page, /Blueprint is free|your Blueprint is free/i);
+  assert.doesNotMatch(page, /free trial|14-day trial/i);
+  assert.doesNotMatch(page, /24\/7 AI quoting|answers your calls|get Lachie on your number/i);
 });
 
 test("footer, contact, terms, privacy and about share one NAP and publish no phone or street", () => {

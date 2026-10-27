@@ -5,7 +5,7 @@
 export type LexScopeKey = "cases" | "legislation" | "ato" | "tribunals" | "other";
 
 export const LEX_SCOPES: { key: LexScopeKey; label: string; hint: string; tools: string[] }[] = [
-  { key: "cases", label: "Cases", hint: "Case law search paused", tools: ["searchAustLII"] },
+  { key: "cases", label: "Cases", hint: "Licensed snapshot: NSW, Federal Court, High Court (cutoff 10 March 2025)", tools: ["searchAustLII", "checkCitation"] },
   { key: "legislation", label: "Legislation", hint: "Commonwealth Acts and status", tools: ["searchLegislation", "searchStateLegislation", "verifySection", "checkLegislationStatus"] },
   { key: "ato", label: "ATO", hint: "Rulings and guidance", tools: ["searchATO"] },
   { key: "tribunals", label: "Tribunals", hint: "Fair Work (ART search paused)", tools: ["searchART", "searchFairWork"] },

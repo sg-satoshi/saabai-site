@@ -4,8 +4,11 @@ import { getDefaultModel } from "../chat-config";
 import { getSiteBySlug } from "../site-registry";
 import { SLUG_RE, allowedHosts, callerHost, cleanMessages, hostAllowed, logOriginMiss, mappedHostsFor, originMode, slugLimited } from "../chat-origin";
 import { offMessage, promptAdditions } from "./core";
+import { DISCLOSURE_ONCE_RULE, NOT_SURE_RULE } from "./disclosure";
+import { isNotSureReply } from "./events";
+import { buildSystemPrompt, domainsForBot, getPersona } from "./personas";
 import { NO_DASH_RULE, noDashes } from "../no-dashes";
-import { fallbackSessionId, getConfig, isEnabled, recordTokens, recordUsage } from "./store";
+import { fallbackSessionId, getConfig, isEnabled, recordChatEvent, recordTokens, recordUsage } from "./store";
 import { lastUserText, logChatTurn, modelIdFrom } from "../chat-log";
 
 export function cors(origin: string | null): Record<string, string> {
@@ -17,14 +20,14 @@ export function cors(origin: string | null): Record<string, string> {
   };
 }
 
-/** Origin allow-list decision. "block" only in enforce mode; log mode records the miss and lets it through. */
-export async function originDecision(req: NextRequest, slug: string, siteDomains: string[] | undefined): Promise<"ok" | "miss" | "block"> {
+/** Origin allow-list. "off" is the only mode that lets a foreign host through. "log" still blocks, and records the miss. */
+export async function originDecision(req: NextRequest, slug: string, siteDomains: string[] | undefined): Promise<"ok" | "block"> {
   const mode = originMode();
   if (mode === "off") return "ok";
   const host = callerHost(req.headers.get("origin"), req.headers.get("referer"));
   if (hostAllowed(host, allowedHosts(siteDomains, await mappedHostsFor(slug), process.env.NODE_ENV !== "production"))) return "ok";
   await logOriginMiss(slug, host);
-  return mode === "enforce" ? "block" : "miss";
+  return "block";
 }
 
 export function optionsResponse(req: NextRequest) {
@@ -52,7 +55,7 @@ export async function handleChat(req: NextRequest): Promise<Response> {
     const site = await getSiteBySlug(slug);
     if (!site) return say("Chat is not available for this site.", 404, h);
 
-    if ((await originDecision(req, slug, site.domains)) === "block") return say("Chat is not available from this website.", 403, h);
+    if ((await originDecision(req, slug, domainsForBot(slug, site.domains))) === "block") return say("Chat is not available from this website.", 403, h);
 
     // OFF: polite message, status 200 so every widget shows it as a normal reply. No model call, nothing counted.
     if (!(await isEnabled(slug, site.chatbot?.enabled))) {
@@ -72,10 +75,15 @@ export async function handleChat(req: NextRequest): Promise<Response> {
       typeof body?.sessionId === "string" && /^[\w-]{8,64}$/.test(body.sessionId)
         ? `s:${body.sessionId}`
         : fallbackSessionId(clientIp(req), req.headers.get("user-agent") || "");
-    await recordUsage(slug, config.plan, sid); // log-only caps
+    const usage = await recordUsage(slug, config.plan, sid); // log-only caps
+    if (usage.isNewConversation) await recordChatEvent(slug, "conversation_started");
 
     let system: string;
-    if (site.chatbot?.systemPrompt) {
+    const persona = getPersona(slug);
+    if (persona) {
+      // The persona file is the prompt. A stored copy cannot keep speaking old wording.
+      system = buildSystemPrompt(persona);
+    } else if (site.chatbot?.systemPrompt) {
       system = site.chatbot.systemPrompt;
     } else {
       const name = site.business?.name || site.name || slug;
@@ -91,6 +99,8 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
 
     const extra = promptAdditions(config);
     if (extra) system = `${system}\n\n${extra}`;
+    if (!system.includes(DISCLOSURE_ONCE_RULE)) system = `${system}\n\n${DISCLOSURE_ONCE_RULE}`;
+    if (!system.toLowerCase().includes("not sure")) system = `${system}\n\n${NOT_SURE_RULE}`;
     // House rule for every Saabai chatbot: no em or en dashes.
     system = `${system}\n\n${NO_DASH_RULE}`;
 
@@ -98,6 +108,7 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
     const result = await generateText({ model, system, messages: chatMessages, maxOutputTokens: 600 });
     const u = result.usage as { inputTokens?: number; outputTokens?: number } | undefined;
     await recordTokens(slug, u?.inputTokens ?? 0, u?.outputTokens ?? 0);
+    const text = noDashes(result.text);
     logChatTurn({
       bot: slug,
       siteId: slug,
@@ -105,8 +116,9 @@ Keep responses under 120 words. End with a helpful next step when relevant.`;
       model: modelIdFrom(model),
       usage: result.totalUsage ?? result.usage,
       userText: lastUserText(chatMessages),
-      assistantText: result.text,
+      assistantText: text,
     });
+    if (isNotSureReply(text)) await recordChatEvent(slug, "not_sure");
     return Response.json({ content: noDashes(result.text) }, { headers: h });
   } catch (e) {
     console.error("chat handler error:", e);
