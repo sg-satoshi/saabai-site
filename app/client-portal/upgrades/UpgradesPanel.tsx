@@ -22,7 +22,7 @@ type Confirm =
   | { kind: "remove"; addon: Addon }
   | null;
 
-const ICON: Record<string, string> = { "extra-page": "▤", booking: "◷", "ai-chatbot": "◎", "seo-pack": "⌕", "reviews-carousel": "☆", "custom-integration": "⌁" };
+const ICON: Record<string, string> = { "extra-page": "▤", booking: "◷", "seo-pack": "⌕", "reviews-carousel": "☆", "custom-integration": "⌁" };
 
 export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
   const [data, setData] = useState<Data | null>(null);

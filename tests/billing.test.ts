@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dunningDays, dueDunningStep, isLinkExpired, linkExpiresAt, planChangeKind, prorate, shouldPause, statusAfterFailure, statusFromSubscription, upfrontTotals } from "../lib/billing/state";
-import { normaliseCatalog, SEED_CATALOG } from "../lib/billing/catalog";
+import { isRetiredPortalAddon, normaliseCatalog, omitRetiredPortalAddons, SEED_CATALOG, type Addon } from "../lib/billing/catalog";
 import { paymentFailedEmail, setupLinkEmail } from "../lib/billing/emails";
 
 const DAY = 86_400_000;
@@ -63,6 +63,27 @@ test("catalogue seed matches /websites and price changes bump version", () => {
   assert.equal(out.plans[0].priceVersion, 2);
   assert.equal(out.plans[1].priceVersion, 1);
   assert.deepEqual(out.plans[1].features, ["Edited"]);
+});
+
+test("AI chatbot is not a portal add-on, including a stored catalogue", () => {
+  assert.equal(SEED_CATALOG.addons.some((a) => a.id === "ai-chatbot" || a.name === "AI chatbot"), false);
+  assert.deepEqual(
+    SEED_CATALOG.addons.map((a) => [a.id, a.priceCents, a.visible, a.checkout]),
+    [
+      ["extra-page", 15000, true, "stripe"],
+      ["booking", 4000, true, "stripe"],
+      ["seo-pack", 45000, true, "quote"],
+      ["reviews-carousel", 2500, true, "stripe"],
+      ["custom-integration", 80000, true, "quote"],
+    ],
+  );
+  const retired: Addon = { id: "ai-chatbot", name: "AI chatbot", description: "A trained assistant that answers questions and captures leads.", billing: "monthly", priceCents: 9900, checkout: "stripe", visible: true, order: 2, feature: "chatbot", priceVersion: 1 };
+  const stored = omitRetiredPortalAddons({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, retired] });
+  assert.equal(stored.addons.some((a) => a.id === "ai-chatbot"), false);
+  assert.equal(isRetiredPortalAddon({ name: "AI chatbot" }), true);
+  const saved = normaliseCatalog({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, retired] }, SEED_CATALOG);
+  assert.equal(saved.addons.some((a) => a.id === "ai-chatbot" || a.name === "AI chatbot"), false);
+  assert.equal(saved.addons.find((a) => a.id === "booking")?.priceCents, 4000);
 });
 
 test("emails have no em dashes and the key copy", () => {

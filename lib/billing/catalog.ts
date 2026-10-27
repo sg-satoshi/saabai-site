@@ -65,22 +65,40 @@ export const SEED_CATALOG: Catalog = {
     },
   ],
   // Placeholder prices, set real ones in the admin manager.
+  // The chatbot is included in every website plan. It is not an add-on.
   addons: [
     { id: "extra-page", name: "Extra page", description: "A new page designed to match your site.", billing: "one_off", priceCents: 15000, checkout: "stripe", visible: true, order: 0, priceVersion: 1 },
     { id: "booking", name: "Booking system", description: "Online bookings with reminders, synced to your calendar.", billing: "monthly", priceCents: 4000, checkout: "stripe", visible: true, order: 1, feature: "booking", priceVersion: 1 },
-    { id: "ai-chatbot", name: "AI chatbot", description: "A trained assistant that answers questions and captures leads.", billing: "monthly", priceCents: 9900, checkout: "stripe", visible: true, order: 2, feature: "chatbot", priceVersion: 1 },
     { id: "seo-pack", name: "SEO pack", description: "Keyword research, on-page fixes and local listings.", billing: "one_off", priceCents: 45000, fromPrice: true, checkout: "quote", visible: true, order: 3, priceVersion: 1 },
     { id: "reviews-carousel", name: "Google reviews carousel", description: "Your best Google reviews, kept fresh automatically.", billing: "monthly", priceCents: 2500, checkout: "stripe", visible: true, order: 4, feature: "reviews", priceVersion: 1 },
     { id: "custom-integration", name: "Custom integration", description: "Connect your site to your CRM, booking or practice software.", billing: "one_off", priceCents: 80000, fromPrice: true, checkout: "quote", visible: true, order: 5, priceVersion: 1 },
   ],
 };
 
+/**
+ * Portal add-on retired because the chatbot is included in every website plan.
+ * A stored catalogue can still contain it. Reads and saves drop it, and checkout rejects it.
+ * This does not call Stripe and does not change an existing subscription item.
+ */
+export const RETIRED_PORTAL_ADDON_IDS = new Set(["ai-chatbot"]);
+
+export function isRetiredPortalAddon(addon: { id?: string; name?: string }): boolean {
+  const id = (addon.id || "").trim() || slugId(addon.name || "");
+  return RETIRED_PORTAL_ADDON_IDS.has(id) || (addon.name || "").trim().toLowerCase() === "ai chatbot";
+}
+
+export function omitRetiredPortalAddons(catalog: Catalog): Catalog {
+  const addons = catalog.addons.filter((a) => !isRetiredPortalAddon(a));
+  return addons.length === catalog.addons.length ? catalog : { ...catalog, addons };
+}
+
 export async function getCatalog(): Promise<Catalog> {
   const r = getRedis();
   if (!r) return structuredClone(SEED_CATALOG);
   const raw = await r.get<Catalog | string>(CATALOG_KEY);
   if (!raw) return structuredClone(SEED_CATALOG);
-  return typeof raw === "string" ? (JSON.parse(raw) as Catalog) : raw;
+  const stored = typeof raw === "string" ? (JSON.parse(raw) as Catalog) : raw;
+  return omitRetiredPortalAddons(stored);
 }
 
 export async function saveCatalog(next: Catalog, prev?: Catalog): Promise<Catalog> {
@@ -114,7 +132,7 @@ export function normaliseCatalog(next: Catalog, prev: Catalog): Catalog {
       };
     });
   const addons = [...next.addons]
-    .filter((a) => a && String(a.name || "").trim())
+    .filter((a) => a && String(a.name || "").trim() && !isRetiredPortalAddon(a))
     .sort((a, b) => a.order - b.order)
     .map((a, i) => {
       const old = prevAddon.get(a.id);
