@@ -4,14 +4,14 @@
   // ─── CONFIG ──────────────────────────────────────────
   var CONFIG = {
     name: 'Sofia',
-    subtitle: 'Personal Booking Consultant',
+    subtitle: 'AI booking assistant',
     avatar: 'https://www.saabai.ai/clients/nico-moretti/sofia-avatar.png',
     primaryColor: '#d4af37',
     accentColor: '#0F1B2E',
     bgColor: '#FAF8F5',
     textColor: '#1A1A1A',
     apiEndpoint: 'https://www.saabai.ai/api/nico-chat',
-    greeting: "Hello. I'm Sofia, Nico's personal booking consultant. I'm here to help you find the perfect experience, whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
+    greeting: "Hi, I'm Sofia, Nico's AI booking assistant. I'm here to help you find the perfect experience, whether it's an evening at the gala, a private dinner, or a weekend away. How may I assist you?",
     placeholder: 'Ask me anything...',
     branding: 'Nico Moretti'
   };
@@ -21,6 +21,7 @@
   var messages = [];
   var isLoading = false;
   var STORAGE_KEY = 'nico-chat-history';
+  var MAX_HISTORY = 40;
 
   function privacyHref() {
     var path = location.pathname || '';
@@ -158,9 +159,9 @@
       '.nm-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }' +
       '.nm-send-btn svg { width: 18px; height: 18px; }' +
       '.nm-disclaimer {' +
-        'text-align: center; font-size: 11px; line-height: 1.45; opacity: 0.72; padding: 8px 16px 0; color: ' + CONFIG.textColor + ';' +
+        'text-align: center; font-size: 13px; line-height: 1.45; padding: 8px 12px 0; color: ' + CONFIG.textColor + ';' +
       '}' +
-      '.nm-disclaimer a { color: inherit; text-decoration: underline; }' +
+      '.nm-disclaimer a { color: inherit; text-decoration: underline; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 8px; }' +
       '@media (max-width: 480px) {' +
         '.nm-window {' +
           'bottom: 0; right: 0; left: 0; top: 0;' +
@@ -189,7 +190,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div class="nm-disclaimer">Do not share sensitive information. Messages are sent to DeepSeek in China. <a href="' + privacyHref() + '">Privacy policy</a></div>' +
+        '<div class="nm-disclaimer">Sofia is an AI assistant. Please don\'t share sensitive details such as health, sexual matters, or sexual preferences or practices. Messages are sent to DeepSeek in China. <a href="' + privacyHref() + '">Privacy policy</a></div>' +
       '</div>' +
     '</div>';
 
@@ -204,6 +205,10 @@
   var closeBtn = document.getElementById('nmClose');
 
   // ─── LOAD STORED MESSAGES ───────────────────────────
+  function trimMessages() {
+    if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
+  }
+
   function loadMessages() {
     try {
       var stored = localStorage.getItem(STORAGE_KEY);
@@ -212,12 +217,14 @@
         if (!Array.isArray(messages)) messages = [];
       }
     } catch(e) { messages = []; }
+    trimMessages();
+    saveMessages();
   }
 
   function saveMessages() {
     try {
-      var toStore = messages.slice(-50);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      trimMessages();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     } catch(e) {}
   }
 
@@ -247,6 +254,7 @@
     if (!text.trim() || isLoading) return;
 
     messages.push({ role: 'user', content: text.trim() });
+    trimMessages();
     saveMessages();
     renderMessages();
     inputEl.value = '';

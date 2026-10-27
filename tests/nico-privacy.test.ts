@@ -7,59 +7,112 @@ const dir = "public/clients/nico-moretti";
 const policy = readFileSync(`${dir}/privacy-policy.html`, "utf8");
 const widget = readFileSync(`${dir}/chat-widget.js`, "utf8");
 const route = readFileSync("app/api/nico-chat/route.ts", "utf8");
+const pages = readdirSync(dir).filter((file) => file.endsWith(".html"));
 
 test("the privacy policy states the chat facts the code can support", () => {
   for (const phrase of [
     "Australian Privacy Principles",
+    "APP 5",
     "APP 8",
+    "Saabai (saabai.ai)",
+    "limited to operating the service",
+    "Sofia is an AI assistant",
     "DeepSeek",
     "deepseek-v4-flash",
-    "China",
-    "People's Republic of China",
     "api.deepseek.com",
+    "Hangzhou DeepSeek",
+    "DeepSeek is based in China and may process and store data there",
+    "People's Republic of China",
     "nico-chat-history",
-    "last 50 messages",
+    "last 40 messages",
     "Sydney",
     "Supabase",
     "Tokyo, Japan",
     "20,000 characters",
+    "cost figure",
     "90 days",
-    "OpenAI",
-    "does not store the chat in Redis",
-    "sensitive information",
+    "about 26 hours",
+    "sexual matters",
+    "sexual preferences or practices",
     "Upstash Redis",
-    "does not set a deletion date",
     "Resend",
+    "United States",
     "Telegram",
     "api.telegram.org",
+    "British Virgin Islands",
+    "Dubai",
+    "Vercel",
+    "Google Fonts",
+    "cdn.tailwindcss.com",
+    "kept only for as long as needed",
     "oaic.gov.au",
     "https://nicomoretti.au/#contact",
+    'id="mobile-menu"',
   ]) {
     assert.ok(policy.includes(phrase), phrase);
   }
+  assert.ok(!policy.includes("It is not legal advice"));
+  assert.ok(!policy.includes("the code does not"));
+  assert.ok(!policy.includes("If a Telegram"));
+  assert.ok(!policy.includes("last 50 messages"));
   assert.ok(!/[\u2012-\u2015]/.test(policy), "policy must not use em or en dashes");
 });
 
-test("every Nico page links the privacy policy, and the chat says where messages go", () => {
-  for (const file of readdirSync(dir)) {
-    if (!file.endsWith(".html")) continue;
+test("every Nico page links the privacy policy, and the chat discloses the AI", () => {
+  const formPages: string[] = [];
+  for (const file of pages) {
     const html = readFileSync(`${dir}/${file}`, "utf8");
     assert.match(html, /nicomoretti\.au\/privacy-policy|href="\/privacy-policy"|privacy-policy\.html/, file);
+    assert.match(html, /chat-widget\.js\?4/, file);
+    if (html.includes('type="submit"')) formPages.push(file);
   }
+  assert.deepEqual(formPages.sort(), [
+    "brisbane.html",
+    "canberra.html",
+    "gold-coast.html",
+    "hobart.html",
+    "husband-experience.html",
+    "index.html",
+    "melbourne.html",
+    "perth.html",
+    "sydney.html",
+  ]);
+  for (const file of formPages) {
+    const html = readFileSync(`${dir}/${file}`, "utf8");
+    assert.match(html, /nm-app5/, file);
+    assert.match(html, /Nico receives your inquiry by email and Telegram/, file);
+    assert.match(html, /font-size:13px/, file);
+    assert.match(html, /min-height:44px/, file);
+  }
+  assert.match(widget, /Hi, I'm Sofia, Nico's AI booking assistant/);
+  assert.match(widget, /Sofia is an AI assistant/);
+  assert.match(widget, /sexual matters/);
+  assert.match(widget, /sexual preferences or practices/);
   assert.match(widget, /DeepSeek in China/);
-  assert.match(widget, /Do not share sensitive information/);
+  assert.match(widget, /font-size: 13px/);
+  assert.match(widget, /min-height: 44px/);
   assert.match(widget, /privacyHref/);
   assert.match(widget, /nico-chat-history/);
-  assert.match(widget, /messages\.slice\(-50\)/);
+  assert.match(widget, /MAX_HISTORY = 40/);
+  assert.match(widget, /messages = messages\.slice\(-MAX_HISTORY\)/);
+  assert.doesNotMatch(widget, /slice\(-50\)/);
   assert.doesNotMatch(widget, /embed\/chat\.v1|chat-platform/);
   assert.ok(!/[\u2012-\u2015]/.test(widget));
 });
 
-test("the chat route stays on DeepSeek and the repo HTML is what Nico's site serves", () => {
+test("discretion copy is unchanged and the chat route stays on DeepSeek", () => {
+  const faq = readFileSync(`${dir}/faq.html`, "utf8");
+  const husband = readFileSync(`${dir}/husband-experience.html`, "utf8");
+  assert.match(faq, /never disclosed to any third party/);
+  assert.match(husband, /Your privacy is permanent\. Nothing is ever disclosed\./);
+  assert.doesNotMatch(faq, /AI service in China/);
+  assert.doesNotMatch(husband, /AI service in China/);
   assert.match(route, /model: "deepseek-v4-flash"/);
   assert.match(route, /https:\/\/api\.deepseek\.com\/v1\/chat\/completions/);
   assert.match(route, /logChatTurn/);
   assert.doesNotMatch(route, /openai|embedding|Redis/i);
+  assert.match(readFileSync("lib/repo-client-html.ts", "utf8"), /not from Vercel Blob/);
+  assert.match(readFileSync(".github/workflows/client-site-surface.yml", "utf8"), /tests\/nico-privacy\.test\.ts/);
   assert.equal(readRepoClientHtml("cycle-repair", "index.html"), null);
   assert.equal(readRepoClientHtml("nico-moretti", "../index.html"), null);
   const served = readRepoClientHtml("nico-moretti", "privacy-policy.html");
