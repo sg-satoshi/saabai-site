@@ -13,7 +13,7 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: Freq; upda
   { path: "/services", updated: "2026-10-13", priority: 0.9, changeFrequency: "monthly" },
   { path: "/use-cases", updated: "2026-05-15", priority: 0.9, changeFrequency: "monthly" },
   { path: "/case-studies", updated: "2026-10-14", priority: 0.9, changeFrequency: "monthly" },
-  { path: "/case-studies/rex-plastics-online", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/case-studies/national-plastics-supplier", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
   { path: "/process", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },
   { path: "/calculator", updated: "2026-05-15", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faq", updated: "2026-10-13", priority: 0.8, changeFrequency: "monthly" },

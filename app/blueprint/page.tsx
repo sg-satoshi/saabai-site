@@ -92,7 +92,7 @@ export default function BlueprintPage() {
           <div className="credit">
             <div className="big">100% credited</div>
             <div>
-              <h3>Book a build within 30 days and the fee comes off that invoice</h3>
+              <h3>Build with us within 30 days and your Blueprint fee (from {TIERS.starter.priceLabel}) is credited to your build</h3>
               <p style={{ fontSize: 14, marginTop: 4 }}>Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days.</p>
               <p style={{ fontSize: 15, marginTop: 4 }}>Book any build with Saabai within 30 days of delivery and the full Blueprint fee comes off your build invoice.</p>
             </div>

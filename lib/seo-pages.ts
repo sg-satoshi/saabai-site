@@ -18,7 +18,7 @@ export const publicPageMeta = {
     path: "/contact",
     title: "Contact Saabai | Gold Coast and Brisbane",
     description:
-      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 2 business days and serve the Gold Coast, Brisbane, Queensland and clients across Australia.`,
+      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 1 business day and serve the Gold Coast, Brisbane, Queensland and clients across Australia.`,
   }),
   terms: pageMeta({
     path: "/terms",
@@ -117,7 +117,7 @@ export const publicPageMeta = {
       "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions and prices cut-to-size jobs.",
   }),
   rexCase: pageMeta({
-    path: "/case-studies/rex-plastics-online",
+    path: "/case-studies/national-plastics-supplier",
     title: "Rex Case Study | AI Sales Agent | Saabai",
     description:
       "A custom AI sales agent Saabai built on the Gold Coast for a national plastics supplier, whose name is withheld. It answers product questions and prices cut-to-size jobs from that supplier's catalogue.",

@@ -13,17 +13,17 @@ const articleSchema = {
   "@type": "Article",
   headline: "A custom AI sales agent for a national plastics supplier",
   description: publicPageMeta.rexCase.description,
-  url: `${SITE_URL}/case-studies/rex-plastics-online`,
-  mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
+  url: `${SITE_URL}/case-studies/national-plastics-supplier`,
+  mainEntityOfPage: `${SITE_URL}/case-studies/national-plastics-supplier`,
   author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
   publisher: { "@id": ORG_ID },
 };
 
-export default function RexPlasticsCaseStudy() {
+export default function NationalPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <JsonLd data={articleSchema} />
-      <JsonLd data={breadcrumbSchema([{ name: "Rex case study", path: "/case-studies/rex-plastics-online" }])} />
+      <JsonLd data={breadcrumbSchema([{ name: "Rex case study", path: "/case-studies/national-plastics-supplier" }])} />
       <Nav />
 
       <section className="relative pt-52 pb-20 px-6 max-w-5xl mx-auto overflow-hidden">

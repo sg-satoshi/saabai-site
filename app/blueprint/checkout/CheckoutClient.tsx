@@ -144,7 +144,7 @@ export default function CheckoutClient({ initialTier, cancelled }: { initialTier
               ) : (
                 <>
                   <p style={{ marginTop: 18, fontSize: 15 }}>
-                    Online payment is coming soon. Email Shane. We usually reply within 2 business days with a secure payment link.
+                    Online payment is coming soon. Email Shane. We usually reply within 1 business day with a secure payment link.
                   </p>
                   <a className="btn full" href={enquireHref} style={{ marginTop: 22 }}>
                     Enquire about {t.name} Blueprint

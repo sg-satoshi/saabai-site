@@ -98,7 +98,7 @@ export const miaServiceSchema = withContext(
     name: "Mia",
     serviceType: "AI receptionist and website chatbot",
     description:
-      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors, and a conversation can email the Saabai team, who usually reply within 2 business days.",
+      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors, and a conversation can email the Saabai team, who usually reply within 1 business day.",
     url: SITE_URL,
   }),
 );

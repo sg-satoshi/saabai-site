@@ -331,7 +331,7 @@ function NewRequestForm({
       <div className="ph">
         <div>
           <h1>New request</h1>
-          <div className="sub">Tell us what you need. We usually reply within 2 business days.</div>
+          <div className="sub">Tell us what you need. We usually reply within 1 business day.</div>
         </div>
       </div>
       <form onSubmit={submit} className="card">

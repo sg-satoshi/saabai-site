@@ -438,7 +438,7 @@ function ClientPortalInner() {
               <>
                 <div className="tagl">Client Portal</div>
                 <h1>Request access</h1>
-                <p className="lead">Tell us who you are. We usually reply within 2 business days to confirm your account.</p>
+                <p className="lead">Tell us who you are. We usually reply within 1 business day to confirm your account.</p>
                 {error && <div className="note bad" style={{ marginTop: 14 }} role="alert">{error}</div>}
                 <form className="f" onSubmit={sendAccessRequest}>
                   <label htmlFor="rname">Full name</label>
@@ -479,7 +479,7 @@ function ClientPortalInner() {
                 </div>
                 <div className="tagl">Request sent</div>
                 <h1>Thanks. We have your request.</h1>
-                <p className="lead">We usually reply within 2 business days to confirm your access. If your email matches an order, access may be ready sooner.</p>
+                <p className="lead">We usually reply within 1 business day to confirm your access. If your email matches an order, access may be ready sooner.</p>
                 <button type="button" className="tbtn" onClick={() => setAuthView("login")}>
                   Back to sign in
                 </button>

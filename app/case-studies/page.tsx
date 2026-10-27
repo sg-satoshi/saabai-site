@@ -73,10 +73,10 @@ export default function CaseStudies() {
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          <a href="/case-studies/rex-plastics-online">National Plastics Supplier</a>
+          <a href="/case-studies/national-plastics-supplier">National Plastics Supplier</a>
         </h2>
         <p className="mb-6">
-          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex case study</a>
+          <a href="/case-studies/national-plastics-supplier" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex case study</a>
         </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
           Large national plastics supplier (name withheld on request), trade and retail

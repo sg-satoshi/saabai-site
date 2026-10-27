@@ -25,7 +25,7 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What does a care plan include, and what are the limits?",
-    a: "Presence, Growth and Signature include hosting, security, updates and a trained enquiry chatbot. Care plans include small edits on a fair-use basis. Work outside the list for your tier is quoted before we start.",
+    a: "Presence, Growth and Signature include hosting, security, updates and a trained enquiry chatbot. Fixes are included at no extra charge, plus small edits on a fair-use basis. Work outside the list for your tier is quoted before we start.",
   },
   {
     q: "Where is chatbot data stored, and which AI providers process it?",

@@ -97,6 +97,6 @@ export async function POST(req: Request) {
 
   return Response.json({
     ok: true,
-    message: "Thanks. We usually reply within 2 business days.",
+    message: "Thanks. We usually reply within 1 business day.",
   });
 }
