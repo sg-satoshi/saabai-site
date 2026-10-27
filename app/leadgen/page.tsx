@@ -9,13 +9,13 @@ const DEMO_SLUG = "bne-emergency-plumbing";
 
 const FEATURES = [
   {
-    title: "Captures Every Lead",
-    desc: "Never miss a potential customer. Our AI engages every visitor, collecting name, phone, and service needed — even after hours.",
+    title: "Captures lead details",
+    desc: "Stop missing potential customers. The AI can talk with visitors and collect a name, phone, and the service they need, including after hours.",
     icon: "🎯",
   },
   {
     title: "Instant Multi-Channel Alerts",
-    desc: "Get notified the second a lead comes in via email, SMS, or WhatsApp. Name, phone, service, address, and urgency — everything you need to respond fast.",
+    desc: "Get notified when a lead comes in via email, SMS, or WhatsApp. Name, phone, service, address, and urgency. Everything you need to respond fast.",
     icon: "📲",
   },
   {
@@ -25,7 +25,7 @@ const FEATURES = [
   },
   {
     title: "Works 24/7",
-    desc: "While you are on a job, asleep, or on the weekend — your AI lead agent is qualifying and capturing every visitor.",
+    desc: "While you are on a job, asleep, or on the weekend, the AI lead agent can qualify visitors and capture their details.",
     icon: "🕐",
   },
   {
@@ -35,15 +35,15 @@ const FEATURES = [
   },
   {
     title: "Grows Your Business",
-    desc: "More leads captured means more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
+    desc: "More leads captured means more jobs booked. Capture more leads than a contact form alone.",
     icon: "📈",
   },
 ];
 
 const HOW_IT_WORKS = [
   { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
-  { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes every visitor, asks what they need, and captures their details." },
-  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, urgency — collected in a natural conversation." },
+  { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes visitors, asks what they need, and can capture their details." },
+  { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, and urgency, collected in a natural conversation." },
   { step: "04", title: "You Get Notified Instantly", desc: "Email, SMS, and WhatsApp alerts with every detail. Call the lead back and book the job." },
 ];
 
@@ -80,7 +80,7 @@ export default function LeadGenPage() {
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
           Saabai LeadGen is a 24/7 AI lead conversion agent for service businesses.
           It captures, qualifies, and alerts you via email, SMS, and WhatsApp
-          the instant a lead comes in. No forms. No missed calls. No lost revenue.
+          the instant a lead comes in. No forms. Enquiries can come in while you are on a job.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -124,7 +124,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            This is exactly what your customers will see. Jack answers 24/7, captures their details, and sends you the lead instantly.
+            This demo is what a customer would see. Jack can answer day and night, capture their details, and send you the lead.
           </p>
         </div>
 
@@ -183,7 +183,7 @@ export default function LeadGenPage() {
               <iframe
                 src={`/leadgen-widget?slug=${DEMO_SLUG}`}
                 style={{ width: "100%", height: "100%", border: "none" }}
-                title="Jack AI Agent — Live Demo"
+                title="Jack AI Agent, live demo"
               />
             </div>
             <p className="text-xs text-saabai-text-dim mt-4">Live · Powered by Saabai</p>

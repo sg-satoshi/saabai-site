@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: "What does the chatbot actually do?",
-    a: "It answers the questions your visitors keep asking, captures their details and sends every enquiry straight to you. On the Growth tier it also qualifies leads and books calls into your calendar.",
+    a: "It answers the questions your visitors keep asking, captures their details and sends the enquiry to you. On the Growth tier it also qualifies leads and books calls into your calendar.",
   },
   {
     q: "What is the custom avatar on the Signature tier?",
@@ -111,7 +111,7 @@ export default function WebsitesPage() {
           </h2>
           <p className="text-saabai-text-muted leading-relaxed">
             A normal website waits. Someone lands, reads, and usually leaves.
-            Ours greets every visitor, answers their questions in your words and
+            The chatbot greets visitors, answers their questions in your words and
             captures the lead before it goes cold. That is the difference between
             a page and a team member.
           </p>
@@ -119,12 +119,12 @@ export default function WebsitesPage() {
         <div className="grid md:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
           {[
             {
-              t: "Answers instantly",
-              d: "Every visitor gets a fast, on-brand answer, day or night, without you touching your phone.",
+              t: "Answers quickly",
+              d: "Visitors can get a fast, on-brand answer, day or night, without you picking up the phone.",
             },
             {
-              t: "Never misses a lead",
-              d: "Enquiries are captured and sent to you the moment they happen, so slow follow-up stops costing you work.",
+              t: "Stop missing leads",
+              d: "Enquiries are captured and sent to you when they happen, so you can follow up while the job is still open.",
             },
             {
               t: "Sounds like you",

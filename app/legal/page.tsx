@@ -155,7 +155,7 @@ export default function LegalPage() {
           </p>
           <div className="lx-ctas">
             <a className="lx-btn lx-pri" href={DEMO_URL} target="_blank" rel="noopener noreferrer">Book a free 30-min demo</a>
-            <a className="lx-btn lx-ghost" href="#demo">Try Lex live</a>
+            <a className="lx-btn lx-ghost" href="#demo">Try the website demo</a>
           </div>
           <div className="lx-proof">
             <span>Every answer cites its sources</span>
@@ -195,7 +195,7 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* Phone demo. Same fictional firm as Lex. Lachie answers the phone. */}
+      {/* Phone demo. Lex is the assistant on this page. Lachie is the voice demo. Live phone answering is coming soon. */}
       <section id="lachie" className="lx-sec lx-pt0 lx-lachie">
         <div className="lx-wrap">
           <LachieLegalDemo ready={voiceDemoReady} />

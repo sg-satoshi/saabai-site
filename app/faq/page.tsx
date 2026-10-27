@@ -98,7 +98,7 @@ const faqs = [
       },
       {
         q: "We run a real estate agency. Where does automation have the biggest impact?",
-        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: inspection reminders, appraisal follow-up and listing update comms.",
+        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to new enquiries within seconds, ask qualifying questions, and escalate serious buyers and sellers to your agents. Beyond that: inspection reminders, appraisal follow-up and listing update comms.",
       },
       {
         q: "What about privacy and data security?",

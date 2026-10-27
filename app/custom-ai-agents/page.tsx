@@ -15,7 +15,7 @@ const PATH = "/custom-ai-agents";
 
 const POINTS = [
   "Trained on your services, prices and FAQs",
-  "Captures and qualifies every lead",
+  "Captures and qualifies leads",
   "Follow-up, reminders and CRM handoff",
   "Scoped from your Blueprint, with the build quoted before it starts",
 ];

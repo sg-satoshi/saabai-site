@@ -317,12 +317,12 @@ export default function VoiceDemo({
         ? "Call ended"
         : VOICE_COPY.button;
   const buttonSub = ttlState === "connecting"
-    ? "Calling Lachie, your AI receptionist"
+    ? "Starting the Lachie voice demo"
     : ttlState === "live"
-      ? `AI receptionist · ${clock}`
+      ? `Voice demo · ${clock}`
       : ttlState === "ended"
-        ? "Thanks for calling. Tap to call again"
-        : "AI receptionist";
+        ? "Demo ended. Tap to try again"
+        : "Voice demo";
 
   const dialog = phase === "idle" ? null : (
     <div className="voice-back" role="presentation">
@@ -402,7 +402,7 @@ export default function VoiceDemo({
             </span>
             <span className="ttl__wave" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span>
           </button>
-          {showSupport ? <LachieLockup second="Legend" descriptor="Saabai's AI receptionist." /> : null}
+          {showSupport ? <LachieLockup second="Legend" descriptor="A demo of Saabai's AI voice receptionist." /> : null}
         </span>
       ) : (
         <button type="button" className="btn ghost" disabled style={{ cursor: "not-allowed" }}>{VOICE_COPY.comingSoon}</button>

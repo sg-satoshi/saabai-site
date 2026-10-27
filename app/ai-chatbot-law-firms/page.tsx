@@ -24,7 +24,7 @@ const LEX_FEATURES = [
 
 const SECTIONS: { title: string; body: string[]; features?: string[]; href?: string; hrefLabel?: string }[] = [
   {
-    title: "Never miss a new client enquiry",
+    title: "Stop missing new client enquiries",
     body: [
       "People often look for a lawyer at night or on the weekend.",
       "A Saabai chatbot on your firm's website answers their first questions, collects their details and the type of matter, and sends the enquiry to your team straight away.",
@@ -167,14 +167,14 @@ export default function AiChatbotLawFirmsPage() {
         </div>
       </section>
 
-      {/* Lex is the website chat. Same Harbour Street demo as /legal. */}
+      {/* Website chatbot demo. The panel greets as Lex. Same Harbour Street demo as /legal. */}
       <section id="demo" className="lx-demo-scope" style={{ paddingTop: 24 }}>
         <div className="wrap">
           <LexWebsiteDemo />
         </div>
       </section>
 
-      {/* Lachie answers the phones. Same legal voice demo as /legal. */}
+      {/* Lachie voice demo. Live phone answering is coming soon. Same demo as /legal. */}
       <section id="lachie" className="lx-demo-scope lx-lachie" style={{ paddingTop: 24 }}>
         <div className="wrap">
           <LachieLegalDemo ready={voiceDemoReady} />
@@ -222,7 +222,7 @@ export default function AiChatbotLawFirmsPage() {
           <div className="cta">
             <div className="glow" />
             <div style={{ position: "relative" }}>
-              <h2>Never miss a new client enquiry</h2>
+              <h2>Stop missing new client enquiries</h2>
               <div className="ctas" style={{ marginTop: 28 }}>
                 <BookDemo />
               </div>
