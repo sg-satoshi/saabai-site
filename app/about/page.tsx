@@ -141,13 +141,13 @@ export default function About() {
           </div>
           <div className="flex flex-col gap-5">
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
-              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier, and an after-hours intake agent for an Adelaide law firm serving clients across Australia and internationally.
+              Systems currently running in production include a 24/7 AI quoting and lead capture agent for a national plastics supplier.
             </p>
             <p className="text-xl md:text-2xl text-saabai-text-muted leading-relaxed">
               Websites on our care plans are live too. Saabai is based in {NAP.addressLine} (ABN {NAP.abn}).
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
-              Neither client had to rip out their existing tools. Both were live within weeks.
+              The supplier did not have to rip out their existing tools. The agent was live within weeks.
             </p>
           </div>
         </div>

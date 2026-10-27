@@ -309,14 +309,14 @@ export default function LeadGenPage() {
           <span className="text-saabai-gold">into booked jobs?</span>
         </h2>
         <p className="relative text-saabai-text-dim text-lg mb-10 max-w-lg mx-auto">
-          Get started with a free 14-day trial. No credit card. No commitment. We set everything up for you.
+          Talk to us. We set everything up for you.
         </p>
         <div className="relative flex flex-wrap justify-center gap-4">
           <a
-            href="mailto:hello@saabai.ai?subject=LeadGen%20Trial"
+            href="mailto:hello@saabai.ai?subject=LeadGen"
             className="px-8 py-4 rounded-xl bg-saabai-gold text-black font-bold text-sm tracking-wide hover:brightness-125 transition-all shadow-lg shadow-saabai-gold/25"
           >
-            Start Free Trial
+            Get started
           </a>
           <a
             href="mailto:hello@saabai.ai?subject=LeadGen%20Question"
