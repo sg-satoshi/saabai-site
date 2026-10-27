@@ -48,7 +48,7 @@ export default function About() {
           <p>
             Saabai is a sole trader business operated by Shane Goldberg, based in {NAP.addressLine}.
             We work with small businesses on the Gold Coast, in Brisbane and across Queensland, and with clients Australia-wide online.
-            Saabai is a home-based, online business. We do not operate a public shopfront, and visits are by appointment only.
+            Saabai is an online business. We do not operate a public shopfront, and visits are by appointment only.
           </p>
           <p>
             Mia is Saabai&apos;s own AI assistant on this website, so you can see how a Saabai chat feels.
