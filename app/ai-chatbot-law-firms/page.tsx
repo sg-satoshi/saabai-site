@@ -189,24 +189,6 @@ export default function AiChatbotLawFirmsPage() {
 
       <section style={{ paddingTop: 24 }}>
         <div className="wrap" style={{ maxWidth: 860 }}>
-          <div className="head"><h2>Tributum Law</h2></div>
-          <div style={{ display: "grid", gap: 12, marginBottom: 16, fontSize: 17 }}>
-            <p>Tributum Law is an Adelaide law firm serving clients across Australia and internationally.</p>
-            <p>From the <a href="/case-studies" style={{ color: "var(--teal)", textDecoration: "underline", textUnderlineOffset: 3 }}>Tributum Law case study</a>.</p>
-          </div>
-          <blockquote className="card" style={{ margin: 0 }}>
-            <p style={{ fontSize: 18, lineHeight: 1.5 }}>
-              &ldquo;The clients calling about ATO disputes are stressed. They want to know someone&apos;s there. Lex answers that in 90 seconds, any time of day. The difference it&apos;s made to our conversion rate has been significant.&rdquo;
-            </p>
-            <p style={{ marginTop: 16, fontSize: 14, letterSpacing: "0.04em" }}>
-              , Principal, Tributum Law
-            </p>
-          </blockquote>
-        </div>
-      </section>
-
-      <section style={{ paddingTop: 24 }}>
-        <div className="wrap" style={{ maxWidth: 860 }}>
           <div className="head"><h2>Common questions</h2></div>
           {FAQS.map((f) => (
             <details className="faq" key={f.q}>

@@ -167,16 +167,6 @@ export default function LegalPage() {
         </div>
       </section>
 
-      {/* Client line (approved: Tributum Law as the example firm) */}
-      <div className="lx-strip">
-        <div className="lx-wrap">
-          <p>
-            Tributum Law, an Adelaide, South Australia ATO dispute and tax law firm, uses Lex for legal research.{" "}
-            <a href="https://tributumlaw.com" target="_blank" rel="noopener noreferrer">Visit Tributum Law</a>
-          </p>
-        </div>
-      </div>
-
       <section className="lx-sec" id="workspace">
         <div className="lx-wrap">
           <div className="lx-head">
