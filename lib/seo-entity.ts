@@ -306,6 +306,34 @@ export const organizationSchema = {
   ],
 };
 
+/**
+ * /about. AboutPage plus the same Person and Organization nodes the sitewide
+ * graph already publishes, so the ids stay one entity.
+ */
+export const aboutPageSchema = schemaGraph([
+  {
+    "@type": "AboutPage",
+    "@id": `${SITE_URL}/about#webpage`,
+    url: `${SITE_URL}/about`,
+    name: "About Saabai | Gold Coast AI Business",
+    description:
+      "Saabai is a Gold Coast AI business for Australian small businesses, founded by Shane Goldberg. Website care plans start from $100 a month and the Blueprint AI audit from $497.",
+    inLanguage: "en-AU",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    about: { "@id": ORG_ID },
+    mainEntity: { "@id": ORG_ID },
+    publisher: { "@id": ORG_ID },
+    dateModified: "2026-10-27",
+  },
+  {
+    ...founderSchema,
+    image: `${SITE_URL}/shane-goldberg.png`,
+    description:
+      "Shane Goldberg is the founder of Saabai, a sole trader business based in Merrimac on the Gold Coast, Queensland.",
+  },
+  organizationSchema["@graph"][0],
+]);
+
 /** Prices rendered on /blueprint: Starter $497, Pro $1,497, Business $3,500. */
 const BLUEPRINT_PAGE_OFFER_PRICES = new Set(["497", "1497", "3500"]);
 
