@@ -5,7 +5,7 @@
 ## Products
 
 - [Website care plans](https://www.saabai.ai/websites): Saabai builds, hosts and manages small business websites with an AI enquiry chatbot built in. Care plans: Presence $100/month, Growth $200/month, Signature $300/month. Builds start from $2,000.
-- [Saabai Blueprint AI audit](https://www.saabai.ai/blueprint): a ranked AI plan showing where AI saves hours and dollars. Starter $497 (48 hours), Pro $1,497 (3 business days, reviewed by Shane, 30 min walkthrough), Business $3,500 (2 to 3 weeks, team discovery, 12 month roadmap). Fee credited if you build with Saabai within 30 days.
+- [Saabai Blueprint AI audit](https://www.saabai.ai/blueprint): a ranked AI plan showing where AI saves hours and dollars. Starter $497 (within 48 hours), Pro $1,497 (3 business days, reviewed by Shane, 30 min walkthrough), Business $3,500 (2 to 3 weeks, team discovery, 12 month roadmap). Fee credited if you build with Saabai within 30 days.
 - [Free AI Readiness Score](https://www.saabai.ai/score): a free 3 minute, 12 question quiz with an instant score out of 100 and three quick wins.
 - [Lex](https://www.saabai.ai/legal): an AI legal assistant for Australian law firms. It cites ATO rulings and Commonwealth legislation. The Firm plan is $299 a month.
 - [Custom AI chatbots](https://www.saabai.ai/ai-chatbot-developer-queensland): custom AI chatbots for Queensland business websites. A website chatbot is included in the care plans above. A custom build is quoted on a call.

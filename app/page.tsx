@@ -37,7 +37,7 @@ export default function Home() {
       <div className="hero">
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
-          <span className="pill">New: Saabai Blueprint. Starter is delivered within 48 hours.</span>
+          <span className="pill">New: Saabai Blueprint from $497.</span>
           <HeroHeadline />
           <p className="lead">
             Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.

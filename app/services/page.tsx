@@ -242,9 +242,9 @@ export default function Services() {
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "48 hours" },
-            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "3 business days", highlight: true },
-            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "2 to 3 weeks" },
+            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "Delivered within 48 hours" },
+            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "Delivered in 3 business days", highlight: true },
+            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "Delivered in 2 to 3 weeks" },
           ].map((t) => (
             <div
               key={t.name}
@@ -263,7 +263,7 @@ export default function Services() {
                 {t.price}
               </div>
               <p className="text-xs text-saabai-text-dim tracking-wide">
-                AUD · Delivered in {t.duration}
+                AUD · {t.duration}
               </p>
             </div>
           ))}

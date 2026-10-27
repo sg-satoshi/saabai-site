@@ -487,20 +487,6 @@ export function validateAnnouncement(input: Input, prev: Announcement | null, no
   return { ok: true, value };
 }
 
-/**
- * Public wording for the Blueprint coupon bar. The stored banner can say
- * "Limited Time Only" and "Offer Ends Soon". Visitors see the fixed end
- * instead. This does not write the stored announcement.
- */
-export function accuratePublicMessage(a: Pick<Announcement, "id" | "message" | "endsAt" | "timer">, message = a.message): string {
-  const plain = message.replace(/<[^>]+>/g, " ");
-  const coupon = a.id === "20off" || /20OFFBP/i.test(plain);
-  if (!coupon || !/offer ends soon|limited time/i.test(plain)) return message;
-  const end = a.timer?.endAt || a.endsAt;
-  const when = end ? `${brisbaneText(end)} AEST` : "5:00 pm AEST on 1 November 2026";
-  return `Save 20% on the Saabai Blueprint with code 20OFFBP. Ends ${when}.`;
-}
-
 /** What a browser needs to render. Never includes admin-only fields. */
 export type PublicAnnouncement = Pick<Announcement, "id" | "layout" | "message" | "title" | "linkText" | "linkUrl" | "theme" | "colors" | "shadow" | "shadowColor" | "device" | "reshow" | "reshowDays" | "delaySec" | "scrollPct" | "version" | "include" | "exclude"> & Partial<Pick<Announcement, "pageMode" | "afterClick" | "maxShows" | "priority" | "requiresClickOf">> & { expId?: string; timer?: PublicTimer };
 /** What the browser gets for a timer. `serverNow` lets it correct for a wrong device clock. `expired` is decided on the server. */
@@ -509,7 +495,7 @@ export const toPublic = (a: Announcement, expId?: string, now: number = Date.now
   const tm = a.timer, expired = !!tm && timerExpired(tm, now);
   const ended = expired && tm?.endMode === "message" && !!tm.endMessage;
   const shown = ended && tm ? { ...a, message: sanitizeRich(tm.endMessage), linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a;
-  const base = toPublicBase({ ...shown, message: accuratePublicMessage(a, shown.message) }, expId);
+  const base = toPublicBase(shown, expId);
   return tm ? { ...base, timer: { style: tm.style, endAt: tm.endAt, endMode: tm.endMode, ...(tm.endMessage ? { endMessage: sanitizeRich(tm.endMessage) } : {}), ...(tm.endLinkText ? { endLinkText: tm.endLinkText, endLinkUrl: tm.endLinkUrl } : {}), expired, serverNow: now } } : base;
 };
 const toPublicBase = (a: Announcement, expId?: string): PublicAnnouncement => ({

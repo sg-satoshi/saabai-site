@@ -17,7 +17,7 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How long does a website take to build?",
-    a: "Basic websites take about 1 week, mid-tier websites about 2 weeks, and custom builds generally up to 4 weeks, depending on complexity. The timeline starts once we have your content and you have signed off on the design. Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. A Saabai Blueprint is delivered in 48 hours on Starter, 3 business days on Pro, or 2 to 3 weeks on Business.",
+    a: "Basic websites take about 1 week, mid-tier websites about 2 weeks, and custom builds generally up to 4 weeks, depending on complexity. The timeline starts once we have your content and you have signed off on the design. Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. A Starter Blueprint is delivered within 48 hours. Pro is 3 business days and Business is 2 to 3 weeks.",
   },
   {
     q: "Who owns the website and domain if I cancel?",

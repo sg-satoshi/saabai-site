@@ -29,7 +29,7 @@ export const SLOTS: SlotDecl[] = [
     control: { text: "Know exactly where AI will", emphasis: "save your business hours." },
     variants: [
       { text: "Stop guessing where AI fits.", emphasis: "Get a clear plan for your business." },
-      { text: "See which jobs AI can take off your plate,", emphasis: "Starter is ready in 48\u00a0hours." },
+      { text: "See which jobs AI can take off your plate,", emphasis: "before you pay to build them." },
     ],
   },
   {
@@ -66,16 +66,22 @@ export function slotToExperiment(d: SlotDecl): Experiment {
 }
 
 /**
- * Live headline copy. Redis can still hold an older variant. This rewrites a
- * general "in 48 hours" claim so it names the Starter tier, which is the only
- * Blueprint delivered in 48 hours. It does not change weights, status or ids.
+ * Live headline copy. Redis can still hold an older "in 48 hours" variant.
+ * That phrase is not a claim we publish. This drops it at render time.
+ * It does not change weights, status or ids, and it does not write Redis.
+ * Starter delivery stays on the Blueprint page as "within 48 hours".
  */
 export function qualifyHoursClaim(text: string, emphasis?: string): { text: string; emphasis?: string } {
-  const fix = (s: string) => {
-    if (!/48[\u00a0 ]hours/i.test(s) || /starter/i.test(s)) return s;
-    return s.replace(/,?\s*in 48[\u00a0 ]hours\.?/gi, ". Starter is ready in 48 hours.").replace(/\s{2,}/g, " ").trim();
-  };
-  return { text: fix(text), ...(emphasis !== undefined ? { emphasis: fix(emphasis) } : {}) };
+  const fix = (s: string) => s
+    .replace(/,?\s*in 48[\u00a0 ]hours\.?/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.!?])/g, "$1")
+    .replace(/[,\s]+$/g, "")
+    .trim();
+  const nextText = fix(text);
+  if (emphasis === undefined) return { text: nextText };
+  const nextEmphasis = fix(emphasis);
+  return nextEmphasis ? { text: nextText, emphasis: nextEmphasis } : { text: nextText };
 }
 
 /** Built-in config, used when Redis has nothing for a slot (and lazily written to Redis on first render). */

@@ -148,7 +148,7 @@ test("AI suggestion clean-up for a button drops emphasis and keeps rules", () =>
 
 test("headline suggestion rules are unchanged by default", () => {
   assert.ok(checkSuggestion({ text: "Get 100 leads", emphasis: "", rationale: "" }, []));
-  assert.equal(checkSuggestion({ text: "Know where AI fits,", emphasis: "in 48\u00a0hours.", rationale: "" }, []), null);
+  assert.equal(checkSuggestion({ text: "Know where AI fits,", emphasis: "in 48\u00a0hours.", rationale: "" }, []), "in 48 hours is not a claim we can make");
 });
 
 test("button suggestions use the button prompt and noun", () => {
