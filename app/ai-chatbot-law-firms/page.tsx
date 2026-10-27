@@ -27,14 +27,14 @@ const SECTIONS: { title: string; body: string[]; features?: string[]; href?: str
     title: "Stop missing new client enquiries",
     body: [
       "People often look for a lawyer at night or on the weekend.",
-      "A Saabai chatbot on your firm's website answers their first questions, collects their details and the type of matter, and sends the enquiry to your team straight away.",
+      "A Saabai chatbot on your firm's website answers their first questions and keeps a log of the chat. Enquiry alerts are coming soon.",
     ],
   },
   {
     title: "Built around your firm",
     body: [
       "Your chatbot is trained on your firm's own information: practice areas, locations, hours and how to book.",
-      "It sounds like your firm, not a generic bot, and it hands enquiries to a person rather than giving legal advice.",
+      "It sounds like your firm, not a generic bot, and it does not give legal advice.",
     ],
   },
   {
@@ -59,9 +59,9 @@ const SECTIONS: { title: string; body: string[]; features?: string[]; href?: str
     hrefLabel: "Custom AI chatbot developer in Queensland",
   },
   {
-    title: "Alerts where your team already works",
+    title: "Answers today, alerts coming soon",
     body: [
-      "Every new enquiry can arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS, so the right person sees it fast.",
+      "The chatbot answers visitors and keeps a log of each chat. Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.",
     ],
   },
 ];
@@ -71,7 +71,7 @@ const FAQS: { q: string; a: string[] }[] = [
     q: "What is the best AI chatbot for a law firm in Australia?",
     a: [
       "The best one is built for your firm and answers from your own information.",
-      "Saabai builds custom chatbots for Australian law firms that capture enquiries around the clock and alert your team.",
+      "Saabai builds custom chatbots for Australian law firms that answer visitors around the clock and keep a log of each chat. Enquiry alerts are coming soon.",
     ],
   },
   {
@@ -86,7 +86,7 @@ const FAQS: { q: string; a: string[] }[] = [
     q: "Does the chatbot give legal advice?",
     a: [
       "No.",
-      "It answers general questions about your firm, collects enquiry details and passes them to your team.",
+      "It answers general questions about your firm and keeps a log of the chat.",
     ],
   },
   {

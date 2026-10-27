@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: "What does the chatbot actually do?",
-    a: "It answers the questions your visitors keep asking, captures their details and sends the enquiry to you. On the Growth tier it also qualifies leads and books calls into your calendar.",
+    a: "It answers the questions your visitors keep asking and keeps a log of each chat. Enquiry alerts are coming soon. On the Growth tier the published offer also includes a lead qualifying chatbot with booking.",
   },
   {
     q: "What is the custom avatar on the Signature tier?",
@@ -76,7 +76,7 @@ export default function WebsitesPage() {
         <p className="text-lg text-saabai-text-muted max-w-2xl mx-auto leading-relaxed mb-10">
           We build, host and look after websites for Australian small
           businesses, each one with a trained AI team member built in. It
-          answers enquiries, qualifies leads and works around the clock, so your
+          answers visitors and works around the clock, so your
           site does more than sit there looking pretty.
         </p>
 

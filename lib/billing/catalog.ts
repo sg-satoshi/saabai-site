@@ -53,11 +53,11 @@ export const SEED_CATALOG: Catalog = {
   plans: [
     {
       id: "presence", name: "Presence", blurb: "Get online with an AI that answers", priceCents: 10000, visible: true, order: 0, priceVersion: 1,
-      features: ["Custom site designed for your firm", "Fast, mobile and search ready", "Trained enquiry chatbot that answers FAQs", "Lead capture straight to your inbox", "Hosting, security and updates included"],
+      features: ["Custom site designed for your firm", "Fast, mobile and search ready", "Trained enquiry chatbot that answers FAQs", "Enquiry alerts coming soon", "Hosting, security and updates included"],
     },
     {
       id: "growth", name: "Growth", blurb: "For firms that want the site to sell", priceCents: 20000, visible: true, order: 1, priceVersion: 1,
-      features: ["Everything in Presence", "Larger site, or a full rebuild of your current one", "Lead qualifying chatbot with booking", "Handoff to your CRM or inbox", "Light workflow automations"],
+      features: ["Everything in Presence", "Larger site, or a full rebuild of your current one", "Lead qualifying chatbot with booking", "Enquiry alerts coming soon", "Light workflow automations"],
     },
     {
       id: "signature", name: "Signature", blurb: "Your brand, with an AI that sounds like you", priceCents: 30000, visible: true, order: 2, priceVersion: 1,
