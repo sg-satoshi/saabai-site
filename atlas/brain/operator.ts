@@ -217,7 +217,6 @@ function summarizeGoal(raw: string, lower: string): string {
   }
 
   if (lower.includes("lex")) return `Improve Lex: ${raw}`;
-  if (lower.includes("rex")) return `Improve Rex: ${raw}`;
   if (lower.includes("website") || lower.includes("home") || lower.includes("homepage")) {
     return `Improve website: ${raw}`;
   }
@@ -244,7 +243,6 @@ function inferFiles(input: string): string[] {
 
   if (input.includes("ui") || input.includes("layout") || input.includes("design")) {
     if (input.includes("lex")) return ["app/lex/page.tsx"];
-    if (input.includes("rex")) return ["app/rex-dashboard/page.tsx"];
     if (input.includes("website") || input.includes("home")) return ["app/page.tsx"];
   }
 
@@ -260,12 +258,6 @@ function pickPrimaryTarget(input: string, files: string[]): string | null {
     if (hasStandaloneWord(input, "chat")) return "app/api/lex-chat/route.ts";
     if (hasStandaloneWord(input, "config")) return "lib/lex-config.ts";
     return "app/lex/page.tsx";
-  }
-
-  if (input.includes("rex")) {
-    if (hasStandaloneWord(input, "analytics")) return "app/rex-analytics/page.tsx";
-    if (hasStandaloneWord(input, "changelog")) return "app/rex-changelog/ChangelogClient.tsx";
-    return "app/rex-dashboard/page.tsx";
   }
 
   if (input.includes("theme") || input.includes("globals") || input.includes("dark")) {
@@ -291,10 +283,6 @@ function pickFeatureTargets(input: string, files: string[]): string[] {
     ];
   }
 
-  if (input.includes("rex")) {
-    return ["app/rex-dashboard/page.tsx"];
-  }
-
   if (files.length > 0) return files;
 
   return ["app/page.tsx"];
@@ -304,7 +292,6 @@ function friendlyTargetName(file: string): string {
   if (file === "app/lex/page.tsx") return "Lex UI";
   if (file === "app/api/lex-chat/route.ts") return "Lex chat route";
   if (file === "lib/lex-config.ts") return "Lex config";
-  if (file === "app/rex-dashboard/page.tsx") return "Rex dashboard";
   if (file === "app/globals.css") return "global theme";
   if (file === "app/page.tsx") return "homepage";
   return file;

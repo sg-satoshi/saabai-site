@@ -156,7 +156,6 @@ test("interrupts consult the shared hold", () => {
     ["app/components/legal-demos/LexDemoPanel.tsx", "lex-demo"],
     ["app/components/LexWidget.tsx", "lex"],
     ["app/components/LexAvatarWidget.tsx", "lex-avatar"],
-    ["app/components/PeterAvatarWidget.tsx", "rex"],
     ["app/components/BOChatWidget.tsx", "christina"],
     ["app/components/TributumChatWidget.tsx", "mike"],
     ["app/sites/wholesale-homes/_components/ChatWidget.tsx", "sophie"],

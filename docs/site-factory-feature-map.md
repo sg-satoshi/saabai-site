@@ -63,7 +63,7 @@ Registry of coded sites: `lib/site-registry.ts` (`APP_ROUTER_SITES`: slug, domai
 ### Saabai.ai
 | Term | Where |
 |---|---|
-| Header / menu | `app/components/Nav.tsx` (`<Nav activePage="/" />`), `RexNav.tsx` for Rex pages |
+| Header / menu | `app/components/Nav.tsx` (`<Nav activePage="/" />`) |
 | Hero and sections | `app/page.tsx` |
 | Footer | `app/components/sb/SbFooter.tsx` (also `Footer.tsx`) |
 | Chat widget (Mia) | `app/components/ChatWidget.tsx`, mounted by `ConditionalWidgets.tsx` from `app/layout.tsx`; backend `app/api/chat/route.ts` |
