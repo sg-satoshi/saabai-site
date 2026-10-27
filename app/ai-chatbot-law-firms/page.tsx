@@ -24,7 +24,7 @@ const LEX_FEATURES = [
 
 const SECTIONS: { title: string; body: string[]; features?: string[]; href?: string; hrefLabel?: string }[] = [
   {
-    title: "Stop missing new client enquiries",
+    title: "Answer new client enquiries after hours",
     body: [
       "People often look for a lawyer at night or on the weekend.",
       "A Saabai chatbot on your firm's website answers their first questions and keeps a log of the chat. Enquiry alerts are coming soon.",
@@ -204,7 +204,7 @@ export default function AiChatbotLawFirmsPage() {
           <div className="cta">
             <div className="glow" />
             <div style={{ position: "relative" }}>
-              <h2>Stop missing new client enquiries</h2>
+              <h2>Answer new client enquiries after hours</h2>
               <div className="ctas" style={{ marginTop: 28 }}>
                 <BookDemo />
               </div>

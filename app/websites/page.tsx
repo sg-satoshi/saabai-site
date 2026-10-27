@@ -123,8 +123,8 @@ export default function WebsitesPage() {
               d: "Visitors can get a fast, on-brand answer, day or night, without you picking up the phone.",
             },
             {
-              t: "Stop missing leads",
-              d: "Enquiries are captured and sent to you when they happen, so you can follow up while the job is still open.",
+              t: "Keeps a log",
+              d: "The chatbot answers questions and keeps a log of each chat. Enquiry alerts are coming soon.",
             },
             {
               t: "Sounds like you",

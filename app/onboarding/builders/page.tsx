@@ -246,7 +246,7 @@ export default function Onboarding() {
           </div>
           <h1 className="text-3xl font-semibold tracking-tight mb-4">Got it — thank you.</h1>
           <p className="text-base text-saabai-text-muted leading-relaxed mb-8">
-            We&apos;ll review your answers and come back to you within 1 business day with a clear picture of what&apos;s possible.
+            We&apos;ll review your answers. We usually reply within 2 business days with a clear picture of what&apos;s possible.
           </p>
           <a href="https://saabai.ai" className="text-sm text-saabai-teal hover:text-saabai-teal-bright transition-colors">
             ← Back to saabai.ai
@@ -502,7 +502,7 @@ export default function Onboarding() {
             {submitting ? "Sending…" : "Send My Answers →"}
           </button>
           <p className="text-xs text-saabai-text-dim text-center -mt-8">
-            We&apos;ll review your answers and come back within 1 business day with a tailored scope of what we&apos;d build.
+            We&apos;ll review your answers. We usually reply within 2 business days with a tailored scope of what we&apos;d build.
           </p>
 
         </div>

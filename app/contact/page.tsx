@@ -30,7 +30,7 @@ export default function ContactPage() {
           <span className="eyebrow">Saabai</span>
           <h1 style={{ marginTop: 16 }}>Contact</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
-            The best way to reach us is email. We reply within one business day.
+            The best way to reach us is email. We usually reply within 2 business days.
           </p>
 
           <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>

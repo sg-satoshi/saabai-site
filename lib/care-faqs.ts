@@ -29,6 +29,6 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Where is chatbot data stored, and which AI providers process it?",
-    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The code can send that message to Anthropic, OpenAI, Google or xAI. The provider in use is chosen in the hosting configuration. A transcript is stored in Supabase, and a scheduled task deletes those chat logs after 90 days. That Supabase project is the one the privacy policy describes as stored in Tokyo, Japan. Some conversation records are also stored in Upstash Redis. The code does not name the Redis region. The site is hosted on Vercel, and the serverless functions are set to run in Sydney.",
+    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The privacy policy names those providers, including one in China for one chat path. A transcript is stored, and a scheduled task deletes those chat logs after 90 days. The code does not name the region of that database. It is not the split-test store the privacy policy describes as being in Tokyo. Some conversation records are also stored with a separate cache provider. The code does not name that region. The site is hosted on Vercel, and the serverless functions run in Sydney. That does not mean chat data stays in Australia.",
   },
 ];

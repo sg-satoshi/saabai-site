@@ -10,17 +10,17 @@ const DEMO_SLUG = "bne-emergency-plumbing";
 const FEATURES = [
   {
     title: "Captures lead details",
-    desc: "Stop missing potential customers. The AI can talk with visitors and collect a name, phone, and the service they need, including after hours.",
+    desc: "The AI can talk with visitors and collect a name, phone, and the service they need, including after hours.",
     icon: "🎯",
   },
   {
-    title: "Instant Multi-Channel Alerts",
-    desc: "Get notified when a lead comes in via email, SMS, or WhatsApp. Name, phone, service, address, and urgency. Everything you need to respond fast.",
+    title: "Lead details for your team",
+    desc: "The plan includes email notifications, plus SMS and WhatsApp alerts up to the monthly limit on your tier. Ask us to confirm live SMS and WhatsApp delivery before you rely on them.",
     icon: "📲",
   },
   {
     title: "Zero Effort Setup",
-    desc: "One line of code on your website. We configure the AI with your services, pricing, and service area. Done in under an hour.",
+    desc: "We configure the AI with your services and service area. Ask us how long setup will take for your site.",
     icon: "🔌",
   },
   {
@@ -30,12 +30,12 @@ const FEATURES = [
   },
   {
     title: "Emergency Ready",
-    desc: "Emergency callouts flagged immediately. The AI knows to prioritise urgent leads so you can respond when it matters most.",
+    desc: "The captured details can mark a job as urgent, so your team can see it when they read the lead.",
     icon: "🚨",
   },
   {
     title: "Grows Your Business",
-    desc: "More leads captured means more jobs booked. Capture more leads than a contact form alone.",
+    desc: "The widget collects a name, phone and the job, which a bare contact form often does not.",
     icon: "📈",
   },
 ];
@@ -44,7 +44,7 @@ const HOW_IT_WORKS = [
   { step: "01", title: "Embed the Widget", desc: "Add one line of code to your website. That is it." },
   { step: "02", title: "AI Greets Visitors", desc: "Your AI assistant welcomes visitors, asks what they need, and can capture their details." },
   { step: "03", title: "Lead Captured", desc: "Name, phone, service, address, and urgency, collected in a natural conversation." },
-  { step: "04", title: "You Get Notified Instantly", desc: "Email, SMS, and WhatsApp alerts with every detail. Call the lead back and book the job." },
+  { step: "04", title: "Your team gets the details", desc: "The plan includes an email with the lead details, plus SMS and WhatsApp up to your tier limit. Ask us to confirm live SMS and WhatsApp delivery before you rely on them." },
 ];
 
 const TIER_SMS = { starter: 10, pro: 50, enterprise: 500 } as const;
@@ -74,13 +74,13 @@ export default function LeadGenPage() {
 
         <h1 className="relative text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.92] mb-8">
           Turn website visitors<br />
-          <span className="text-saabai-gold">into booked jobs</span>
+          <span className="text-saabai-gold">into captured leads</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-dim max-w-2xl mx-auto mb-12 leading-relaxed">
-          Saabai LeadGen is a 24/7 AI lead conversion agent for service businesses.
-          It captures, qualifies, and alerts you via email, SMS, and WhatsApp
-          the instant a lead comes in. No forms. Enquiries can come in while you are on a job.
+          Saabai LeadGen is an AI lead capture widget for service businesses.
+          It can collect a name, phone and the job at any hour, including while you are on a job.
+          The plan includes email notifications, plus SMS and WhatsApp alerts up to your tier limit. Ask us to confirm live SMS and WhatsApp delivery before you rely on them.
         </p>
 
         <div className="relative flex flex-wrap items-center justify-center gap-4">
@@ -104,7 +104,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            From website visitor to booked job in four steps. No apps to install. No training needed.
+            From website visitor to a captured lead in four steps. No apps to install. No training needed.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Live Demo</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            This demo is what a customer would see. Jack can answer day and night, capture their details, and send you the lead.
+            This is an AI demo for an example plumbing business, not a real client. Jack can answer day and night and collect a name and phone.
           </p>
         </div>
 
@@ -158,9 +158,9 @@ export default function LeadGenPage() {
               <h3 className="text-lg font-semibold mb-4">What happens after Jack captures a lead</h3>
               <div className="space-y-4">
                 {[
-                  "Your team gets an instant email with the full conversation and lead details",
-                  "Emergency leads trigger an SMS notification to your phone directly",
-                  "A WhatsApp message is sent for high-priority leads with full contact info",
+                  "The plan includes an email with the conversation and lead details",
+                  "SMS and WhatsApp are listed on your tier. Ask us to confirm live delivery before you rely on them",
+                  "Urgent jobs can be marked in the captured details so your team can see them",
                   "The lead appears in your Saabai dashboard with all channels logged",
                 ].map((step, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm text-saabai-text-dim">
@@ -197,7 +197,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            Built for service businesses that want more bookings without more overhead.
+            Built for service businesses that want enquiries captured without more overhead.
           </p>
         </div>
 
@@ -220,7 +220,7 @@ export default function LeadGenPage() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
           <p className="text-saabai-text-dim text-lg max-w-xl mx-auto">
-            One flat monthly fee. No surprises, no long contracts, no hidden costs.
+            One flat monthly fee. Published prices are Starter $197, Pro $397 and Enterprise $997. Cancellation terms for LeadGen are not in our terms yet.
           </p>
         </div>
 
@@ -263,8 +263,6 @@ export default function LeadGenPage() {
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Everything in Starter</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`SMS alerts (${TIER_SMS.pro} per month)`}</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> {`WhatsApp alerts (${TIER_WA.pro} per month)`}</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Google Maps listing management</li>
-              <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Automated review responses</li>
               <li className="flex items-center gap-2"><span className="text-saabai-teal">✓</span> Weekly performance reports</li>
             </ul>
             <form action="/api/leadgen/checkout" method="POST" target="_blank">
@@ -305,8 +303,8 @@ export default function LeadGenPage() {
           background: "radial-gradient(ellipse 60% 40% at 50% 50%, var(--saabai-glow) 0%, transparent 70%)"
         }} />
         <h2 className="relative text-3xl md:text-5xl font-bold mb-6">
-          Ready to turn more visitors<br />
-          <span className="text-saabai-gold">into booked jobs?</span>
+          Ready to capture more<br />
+          <span className="text-saabai-gold">website enquiries?</span>
         </h2>
         <p className="relative text-saabai-text-dim text-lg mb-10 max-w-lg mx-auto">
           Talk to us. We set everything up for you.

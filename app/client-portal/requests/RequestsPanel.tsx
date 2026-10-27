@@ -55,8 +55,8 @@ const TYPE_OPTS: { id: RequestType; label: string }[] = [
 
 const PRI_OPTS: { id: Priority; label: string; hint: string }[] = [
   { id: "low", label: "Low", hint: "When you can" },
-  { id: "normal", label: "Normal", hint: "1 business day" },
-  { id: "high", label: "High", hint: "Same day" },
+  { id: "normal", label: "Normal", hint: "2 business days" },
+  { id: "high", label: "High", hint: "2 business days" },
   { id: "critical", label: "Critical", hint: "Site broken" },
 ];
 
@@ -331,7 +331,7 @@ function NewRequestForm({
       <div className="ph">
         <div>
           <h1>New request</h1>
-          <div className="sub">Tell us what you need. Normal requests get a reply within one business day.</div>
+          <div className="sub">Tell us what you need. We usually reply within 2 business days.</div>
         </div>
       </div>
       <form onSubmit={submit} className="card">

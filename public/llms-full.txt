@@ -9,9 +9,9 @@
 - [Free AI Readiness Score](https://www.saabai.ai/score): a free 3 minute, 12 question quiz with an instant score out of 100 and three quick wins.
 - [Lex](https://www.saabai.ai/legal): an AI legal assistant for Australian law firms. It cites ATO rulings and Commonwealth legislation. The Firm plan is $299 a month.
 - [Custom AI chatbots](https://www.saabai.ai/ai-chatbot-developer-queensland): custom AI chatbots for Queensland business websites. A website chatbot is included in the care plans above. A custom build is quoted on a call.
-- [Custom AI agents](https://www.saabai.ai/custom-ai-agents): agents that answer, quote and follow up. Scoped from a Blueprint. Book a call for a quote.
-- [AI chatbot for law firms](https://www.saabai.ai/ai-chatbot-law-firms): custom AI chatbots for Australian law firms, plus Lex. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.
-- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): a website chatbot for Gold Coast businesses. Included in the website tiers, from $2,000 plus $100 a month care. Answers enquiries 24/7 and alerts you by email, SMS, WhatsApp or Telegram.
+- [Custom AI agents](https://www.saabai.ai/custom-ai-agents): agents that answer questions. Quoting and follow-up are custom work, quoted to the job. Book a call for a quote.
+- [AI chatbot for law firms](https://www.saabai.ai/ai-chatbot-law-firms): custom AI chatbots for Australian law firms, plus Lex. The chatbot answers after-hours enquiries and keeps a log of the chat. Enquiry alerts are coming soon.
+- [AI receptionist for Gold Coast businesses](https://www.saabai.ai/ai-receptionist-gold-coast): a website chatbot for Gold Coast businesses. Included in the website tiers, from $2,000 plus $100 a month care. Answers enquiries 24/7 and keeps a log of each chat. Enquiry alerts are coming soon.
 - [SEO and AI search visibility](https://www.saabai.ai/seo-ai-search): included in every Blueprint, from $497. Checks Google, ChatGPT, Claude, Perplexity and Gemini.
 - [LeadGen](https://www.saabai.ai/leadgen): AI lead capture for service businesses. Starter $197/month, Pro $397/month, Enterprise $997/month.
 - [Pricing](https://www.saabai.ai/pricing): the published prices collected on one page.
@@ -26,6 +26,7 @@
 ## Contact
 
 - Email: hello@saabai.ai
+- We usually reply within 2 business days.
 - Book a free 30 minute call: https://calendly.com/shanegoldberg/30min
 
 ## Business details
@@ -48,7 +49,7 @@ Simple automations can go live in one to two weeks. More complex multi-system wo
 Almost certainly yes. We build on top of the tools you already have: your CRM, email platform, practice management software, calendar, documents. You shouldn't have to rip anything out.
 
 **How much does AI automation typically cost?**
-Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes.
+A Saabai Blueprint is optional. It is a fixed-price plan: Starter $497, Pro $1,497 or Business $3,500. Website care plans are sold on their own, from $2,000 plus $100 a month. If you book a build within 30 days of receiving the Blueprint, the fee comes off that build invoice. The credit does not cover care plans or monthly fees. Custom work is quoted to the job. The free AI Readiness Score takes about 3 minutes.
 
 **Is the strategy call really free?**
 Yes, genuinely free. No invoice, no follow-up pressure, no free call that turns into a two-hour pitch. We only take it if we think there's a real opportunity to help. If your operation isn't a good fit, we'll tell you on the call.
@@ -57,7 +58,7 @@ Yes, genuinely free. No invoice, no follow-up pressure, no free call that turns 
 Usually because the previous attempt was a generic off-the-shelf tool not designed around how your business actually operates. We build custom systems and stay involved post-launch. Ongoing maintenance is part of the deal, not an afterthought.
 
 **I run a trade or local service business. What does AI actually do for us?**
-Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.
+Usually a website that answers enquiries and keeps a log of the chat after hours. Quoting from your own price list is custom work, scoped and quoted, not part of the website plans. Follow-up and invoice reminders are quoted separately. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497.
 
 **What about privacy and data security?**
 We design with data handling in mind from the start and only connect the tools you approve. Your requirements are discussed upfront and the setup is built around them. Most of what we automate is enquiries, follow-up and scheduling, not sensitive records.

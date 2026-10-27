@@ -405,11 +405,16 @@ test("the demo is mounted on the homepage and /legal, and the privacy policy has
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LachieLegalDemo/);
   assert.match(read("app/ai-chatbot-law-firms/page.tsx"), /LexWebsiteDemo/);
   const privacy = read("app/privacy/page.tsx");
+  assert.match(privacy, /Australian Privacy Principle 1/);
+  assert.match(privacy, /Australian Privacy Principle 5/);
   assert.match(privacy, /Australian Privacy Principle 8/);
   assert.match(privacy, /overseas AI service provider/);
   assert.match(privacy, /United States/);
+  assert.match(privacy, /China/);
+  assert.match(privacy, /DeepSeek/);
+  assert.match(privacy, /90 days/);
   assert.match(privacy, /text transcripts only, not audio recordings/);
-  assert.doesNotMatch(privacy, /xAI|Grok/);
+  assert.doesNotMatch(privacy, /Grok/);
   assert.doesNotMatch(privacy, /calls may be recorded/);
   assert.ok(!DASH.test(privacy));
   const widget = ["app/components/sb/VoiceDemo.tsx", "app/components/sb/voice-call.ts", "app/page.tsx"].map(read).join("\n");

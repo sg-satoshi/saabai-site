@@ -30,8 +30,8 @@ export const PRIORITY_LABELS: Record<RequestPriority, string> = {
 /** Default first-response targets (overridable by care plan metadata). */
 export const RESPONSE_TARGETS: Record<RequestPriority, string> = {
   low: "3 business days",
-  normal: "1 business day",
-  high: "same day",
+  normal: "2 business days",
+  high: "2 business days",
   critical: "within 1 hour",
 };
 

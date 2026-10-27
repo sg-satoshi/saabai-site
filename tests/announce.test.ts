@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { shadowCss, isShadow, normHex, normColors, bestText, resolveTheme, checkColors, isThemeKey, validateAnnouncement, pageAllowed, pathMatches, isLiveNow, safeUrl, contrast, THEMES, isOwnedSite, isDismissed, toPublic, announcementValue, isEmptyValue, normTimer, timerParts, timerUnits, timerOver, timerExpired, timerColors, timerValue, timerFromValue, validateAll, settle, brisbaneText, TIMER_STYLES } from "../lib/announce/core";
+import { shadowCss, isShadow, normHex, normColors, bestText, resolveTheme, checkColors, isThemeKey, validateAnnouncement, pageAllowed, pathMatches, isLiveNow, safeUrl, contrast, THEMES, isOwnedSite, isDismissed, toPublic, accuratePublicMessage, announcementValue, isEmptyValue, normTimer, timerParts, timerUnits, timerOver, timerExpired, timerColors, timerValue, timerFromValue, validateAll, settle, brisbaneText, TIMER_STYLES } from "../lib/announce/core";
 import { buildTest } from "../lib/announce/test";
 import { validateExperiment, assign } from "../lib/exp/core";
 
@@ -291,4 +291,15 @@ test("validateAll reports every faulty field at once, keyed by form field id", (
   assert.match(c.error, /things need fixing/);
   const one = validateAll({ ...base, message: "" } as never, null, NOW); assert.ok(!one.ok && Object.keys(one.fields).join() === "message" && one.error === one.fields.message);
   assert.ok(validateAll({ ...base } as never, null, NOW).ok);
+});
+test("the Blueprint coupon bar states its fixed end instead of ends soon", () => {
+  const message = accuratePublicMessage({
+    id: "20off",
+    message: "Save 20% Off Saabai AI Blueprint - Limited Time Only Offer Ends Soon - Use Coupon Code: 20OFFBP",
+    endsAt: "2026-11-01T07:00:00.000Z",
+  });
+  assert.match(message, /code 20OFFBP/);
+  assert.match(message, /Sun 1 Nov, 5:00 pm AEST/);
+  assert.doesNotMatch(message, /Limited Time|Offer Ends Soon|ends soon/i);
+  assert.equal(accuratePublicMessage({ id: "other", message: "Hello there", endsAt: undefined }), "Hello there");
 });

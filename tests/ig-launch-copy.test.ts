@@ -49,7 +49,7 @@ test("homepage does not claim every chatbot emails, and LeadGen has no 2-3x figu
   assert.match(home, /Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon\./);
   assert.match(home, /keeps a log of each chat/);
   assert.doesNotMatch(home, /Every Saabai chatbot sends new enquiry alerts by email on all plans/);
-  assert.match(leadgen, /Capture more leads than a contact form alone\./);
+  assert.match(leadgen, /which a bare contact form often does not\./);
   assert.doesNotMatch(leadgen, /2-3x|2–3x/);
   assert.ok(!/[\u2012-\u2015]/.test(home));
 });

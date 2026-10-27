@@ -51,6 +51,7 @@ export function checkSuggestion(s: Suggestion, existingCopy: string[], kind: Slo
     if (digits.some((d) => d !== "48")) return "number we cannot back up";
     if (/\b48\b/.test(all) && !/48[\u00a0 ]hours/i.test(all)) return "48 must mean 48 hours";
     if (BANNED.test(all)) return "claim we cannot back up";
+    if (/48[\u00a0 ]hours/i.test(all) && !/starter/i.test(all)) return "48 hours is the Starter Blueprint only";
   }
   if (existingCopy.some((c) => norm(c) === norm(all))) return "duplicate";
   return null;
@@ -78,7 +79,7 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
   return { ok, dropped };
 }
 
-export const SUGGEST_SYSTEM_BUTTON = `You write button label variants for the main button on the saabai.ai homepage. The button opens a free 3 minute quiz that gives the visitor an AI score out of 100 and leads into the Saabai Blueprint, a clear plan for where AI will save a small business time, delivered in 48 hours.
+export const SUGGEST_SYSTEM_BUTTON = `You write button label variants for the main button on the saabai.ai homepage. The button opens a free 3 minute quiz that gives the visitor an AI score out of 100 and leads into the Saabai Blueprint, a clear plan for where AI will save a small business time. The Starter Blueprint is delivered in 48 hours. Pro is 3 business days. Business is 2 to 3 weeks. Do not say every plan is ready in 48 hours.
 Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no urgency tricks.
 Hard rules:
 - Never use em dashes or en dashes.
@@ -89,7 +90,7 @@ Hard rules:
 - Each label must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles: the quiz itself, the score, finding out where AI fits, a low-effort first step.
 Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
 
-export const suggestSystemGeneric = (noun: string, maxText: number) => `You write ${noun} variants for a page on saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
+export const suggestSystemGeneric = (noun: string, maxText: number) => `You write ${noun} variants for a page on saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time. The Starter Blueprint is delivered in 48 hours. Do not say every plan is ready in 48 hours.
 Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks.
 Hard rules:
 - Never use em dashes or en dashes.
@@ -101,11 +102,11 @@ Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": 
 
 export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : kind === "headline" ? SUGGEST_SYSTEM : suggestSystemGeneric(KIND_RULES[kind].noun, KIND_RULES[kind].maxText));
 
-export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
+export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time. The Starter Blueprint is delivered in 48 hours. Pro is 3 business days. Business is 2 to 3 weeks.
 Voice: plain, direct, Australian English, like a sensible tradie explaining things. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no question marks needed.
 Hard rules:
 - Never use em dashes or en dashes. Use a comma or full stop.
-- Only claim what the current headlines already claim: a clear plan for where AI fits in the business, ready in 48 hours. Do not invent prices, savings, percentages, customer numbers, awards, guarantees, reviews, or results.
+- Only claim a clear plan for where AI fits in the business. If you mention 48 hours, the line must say Starter. Do not invent prices, savings, percentages, customer numbers, awards, guarantees, reviews, or results.
 - The only number allowed is "48 hours". No other digits.
 - Avoid: best, free, guaranteed, proven, instant, unlock, transform, revolutionary, game changing, supercharge, effortless.
 - Each headline must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles to try: the owner's time, the cost of guessing, a clear next step, fear of wasting money on the wrong tool, plain English with no jargon.

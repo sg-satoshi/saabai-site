@@ -12,7 +12,8 @@ const S = (text: string, emphasis = "") => ({ text, emphasis, rationale: "" });
 
 // ---- guardrails ----
 test("a plain, honest headline passes", () => {
-  assert.equal(checkSuggestion(S("Not sure where AI fits in your business?", "Get a straight answer in 48 hours."), []), null);
+  assert.equal(checkSuggestion(S("Not sure where AI fits in your business?", "A Starter plan in 48 hours."), []), null);
+  assert.equal(checkSuggestion(S("Not sure where AI fits?", "A plan in 48 hours."), []), "48 hours is the Starter Blueprint only");
 });
 
 test("guardrails reject dashes, hype, exclamations, numbers, links, emoji, long copy and duplicates", () => {
@@ -36,10 +37,10 @@ test("guardrails reject dashes, hype, exclamations, numbers, links, emoji, long 
 
 test("cleanSuggestions keeps at most 3 good ones, tidies, drops bad and duplicate ones, and keeps 48 hours together", () => {
   const raw = [
-    { text: "Know where AI fits.", emphasis: "Plan ready in 48 hours.", why: "Clear next step" },
-    { text: "Know where AI fits.", emphasis: "Plan ready in 48 hours.", why: "dupe" },
+    { text: "Know where AI fits.", emphasis: "Starter plan in 48 hours.", why: "Clear next step" },
+    { text: "Know where AI fits.", emphasis: "Starter plan in 48 hours.", why: "dupe" },
     { text: "Best AI plan ever", emphasis: "", why: "hype" },
-    { text: "Stop wasting money on the wrong AI tool.", emphasis: "Get a plan in 48 hours.", why: "Cost of guessing" },
+    { text: "Stop wasting money on the wrong AI tool.", emphasis: "A Starter plan in 48 hours.", why: "Cost of guessing" },
     { text: "Your week is full.\n  Let AI take the busywork.", emphasis: "", why: "Time" },
     { text: "Plain English AI advice for your business.", emphasis: "No jargon.", why: "Jargon" },
     "junk", null, 5,
