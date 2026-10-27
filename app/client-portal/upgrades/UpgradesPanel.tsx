@@ -22,7 +22,10 @@ type Confirm =
   | { kind: "remove"; addon: Addon }
   | null;
 
-const ICON: Record<string, string> = { "extra-page": "▤", booking: "◷", "seo-pack": "⌕", "reviews-carousel": "☆", "custom-integration": "⌁" };
+const ICON: Record<string, string> = { "extra-page": "▤", "seo-pack": "⌕", "custom-integration": "⌁" };
+/** Matches lib/billing/catalog.ts. The portal also drops these on the server. */
+const HIDDEN_ADDON_IDS = new Set(["ai-chatbot", "reviews-carousel", "booking"]);
+const HIDDEN_ADDON_NAMES = new Set(["ai chatbot", "google reviews carousel", "booking system"]);
 
 export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
   const [data, setData] = useState<Data | null>(null);
@@ -140,7 +143,7 @@ export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
         <>
           <p className="bl-note" style={{ marginTop: 0, marginBottom: 12 }}>Fixed price: checkout with Stripe. Custom work: we quote first. Monthly extras added mid-cycle are prorated.</p>
           <div className="bl-addons">
-            {data.addons.map((a) => {
+            {data.addons.filter((a) => !HIDDEN_ADDON_IDS.has(a.id) && !HIDDEN_ADDON_NAMES.has(a.name.trim().toLowerCase())).map((a) => {
               const own = owned(a.id);
               return (
                 <div key={a.id} className="bl-addon">

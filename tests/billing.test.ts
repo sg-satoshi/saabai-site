@@ -65,25 +65,30 @@ test("catalogue seed matches /websites and price changes bump version", () => {
   assert.deepEqual(out.plans[1].features, ["Edited"]);
 });
 
-test("AI chatbot is not a portal add-on, including a stored catalogue", () => {
-  assert.equal(SEED_CATALOG.addons.some((a) => a.id === "ai-chatbot" || a.name === "AI chatbot"), false);
+test("retired portal add-ons stay hidden, including a stored catalogue", () => {
+  for (const id of ["ai-chatbot", "reviews-carousel", "booking"]) {
+    assert.equal(SEED_CATALOG.addons.some((a) => a.id === id), false, id);
+  }
   assert.deepEqual(
     SEED_CATALOG.addons.map((a) => [a.id, a.priceCents, a.visible, a.checkout]),
     [
       ["extra-page", 15000, true, "stripe"],
-      ["booking", 4000, true, "stripe"],
       ["seo-pack", 45000, true, "quote"],
-      ["reviews-carousel", 2500, true, "stripe"],
       ["custom-integration", 80000, true, "quote"],
     ],
   );
-  const retired: Addon = { id: "ai-chatbot", name: "AI chatbot", description: "A trained assistant that answers questions and captures leads.", billing: "monthly", priceCents: 9900, checkout: "stripe", visible: true, order: 2, feature: "chatbot", priceVersion: 1 };
-  const stored = omitRetiredPortalAddons({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, retired] });
-  assert.equal(stored.addons.some((a) => a.id === "ai-chatbot"), false);
-  assert.equal(isRetiredPortalAddon({ name: "AI chatbot" }), true);
-  const saved = normaliseCatalog({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, retired] }, SEED_CATALOG);
-  assert.equal(saved.addons.some((a) => a.id === "ai-chatbot" || a.name === "AI chatbot"), false);
-  assert.equal(saved.addons.find((a) => a.id === "booking")?.priceCents, 4000);
+  const retired: Addon[] = [
+    { id: "ai-chatbot", name: "AI chatbot", description: "x", billing: "monthly", priceCents: 9900, checkout: "stripe", visible: true, order: 2, feature: "chatbot", priceVersion: 1 },
+    { id: "reviews-carousel", name: "Google reviews carousel", description: "x", billing: "monthly", priceCents: 2500, checkout: "stripe", visible: true, order: 4, feature: "reviews", priceVersion: 1 },
+    { id: "booking", name: "Booking system", description: "x", billing: "monthly", priceCents: 4000, checkout: "stripe", visible: true, order: 1, feature: "booking", priceVersion: 1 },
+  ];
+  const stored = omitRetiredPortalAddons({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, ...retired] });
+  assert.deepEqual(stored.addons.map((a) => a.id), ["extra-page", "seo-pack", "custom-integration"]);
+  assert.equal(isRetiredPortalAddon({ name: "Google reviews carousel" }), true);
+  assert.equal(isRetiredPortalAddon({ name: "Booking system" }), true);
+  const saved = normaliseCatalog({ ...structuredClone(SEED_CATALOG), addons: [...SEED_CATALOG.addons, ...retired] }, SEED_CATALOG);
+  assert.deepEqual(saved.addons.map((a) => a.id), ["extra-page", "seo-pack", "custom-integration"]);
+  assert.equal(saved.addons.find((a) => a.id === "extra-page")?.priceCents, 15000);
 });
 
 test("emails have no em dashes and the key copy", () => {
