@@ -3,6 +3,8 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { track } from "../../lib/analytics";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 type ChatMode = "text" | "voice" | null;
@@ -218,6 +220,7 @@ function randomGreeting(): string {
 
 export default function PeterAvatarWidget({ clientId, quickReplies: quickRepliesPool }: { clientId?: string; quickReplies?: string[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("rex", isOpen);
   const [pulsing, setPulsing] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>(null);
   const [isStarted, setIsStarted] = useState(false);
@@ -582,6 +585,7 @@ export default function PeterAvatarWidget({ clientId, quickReplies: quickReplies
 
   async function handleUserMessage(text: string) {
     if (!text.trim()) return;
+    noteVisitorMessage("rex");
     const isText = chatModeRef.current === "text";
 
     // Hide chips and email capture when user messages

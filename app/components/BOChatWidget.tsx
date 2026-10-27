@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 const SLUG = "bo-consultancy";
 const STORAGE_KEY = "bo-consultancy-conversation";
@@ -45,6 +47,7 @@ function getText(msg: UIMessage): string {
 
 export default function BOChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("christina", isOpen);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,6 +91,7 @@ export default function BOChatWidget() {
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
+    noteVisitorMessage("christina");
 
     const userMsg: UIMessage = { id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text }] };
     const newMessages = [...messages, userMsg];
