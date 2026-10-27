@@ -29,14 +29,14 @@ export const WEBSITE_TIERS: readonly WebsiteTier[] = [
     monthly: 100,
     priceNote: "one-off build",
     description:
-      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures the enquiry.",
+      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and keeps a log of the chat.",
     features: [
       "Custom site designed for your business",
       "Fast, mobile, SEO and AI search ready out of the box",
       "Google reviews carousel showing your real reviews",
       "AI information gathering and a basic training session before we build",
       "Trained enquiry chatbot that answers FAQs",
-      "Lead capture straight to your inbox",
+      "Enquiry alerts coming soon",
       "Hosting, security and updates included",
     ],
     homePoints: [
@@ -53,18 +53,18 @@ export const WEBSITE_TIERS: readonly WebsiteTier[] = [
     monthly: 200,
     priceNote: "one-off build",
     description:
-      "Everything in Presence, on a larger or rebuilt site, with a chatbot that qualifies leads, books calls and hands off to your CRM.",
+      "Everything in Presence, on a larger or rebuilt site, with a lead qualifying chatbot and booking. Enquiry alerts are coming soon.",
     features: [
       "Everything in Presence",
       "Larger site, or a full rebuild of your current one",
       "Lead qualifying chatbot with booking",
-      "Handoff to your CRM or inbox",
+      "Enquiry alerts coming soon",
       "Light workflow automations",
     ],
     homePoints: [
       "Everything in Presence",
       "Lead qualifying chatbot with booking",
-      "Handoff to your CRM or inbox",
+      "Enquiry alerts coming soon",
     ],
     highlight: true,
   },

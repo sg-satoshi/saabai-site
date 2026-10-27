@@ -98,7 +98,7 @@ export const miaServiceSchema = withContext(
     name: "Mia",
     serviceType: "AI receptionist and website chatbot",
     description:
-      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors, captures enquiry details and sends alerts by email, Telegram, WhatsApp or SMS.",
+      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors. A conversation on this site can also email the Saabai team.",
     url: SITE_URL,
   }),
 );
@@ -171,7 +171,7 @@ export const receptionistServiceNode = serviceSchema({
   name: "AI receptionist for Gold Coast businesses",
   serviceType: "Website AI chatbot",
   description:
-    "A website chatbot for Gold Coast businesses. It answers visitors on the site and alerts you by email, SMS, WhatsApp or Telegram.",
+    "A website chatbot for Gold Coast businesses. It answers visitors on the site and keeps a log of each chat. Enquiry alerts are coming soon.",
   url: `${SITE_URL}/ai-receptionist-gold-coast`,
   areaServed: AREA_SERVED,
   offers: {
@@ -189,7 +189,7 @@ export const lawFirmChatbotServiceNode = serviceSchema({
   name: "AI chatbot and AI legal assistant for Australian law firms",
   serviceType: "AI chatbot for law firms",
   description:
-    "Custom AI chatbots and Lex, an AI workspace for Australian law firms. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.",
+    "Custom AI chatbots and Lex, an AI workspace for Australian law firms. The chatbot answers after-hours questions and keeps a log of each chat. Enquiry alerts are coming soon.",
   url: `${SITE_URL}/ai-chatbot-law-firms`,
   areaServed: AREA_SERVED,
   offers: {

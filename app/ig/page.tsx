@@ -78,12 +78,12 @@ export default function InstagramLandingPage() {
             <article className="card">
               <p className="eyebrow">AI receptionist</p>
               <h3>Someone answers when you are on the tools</h3>
-              <p>A website receptionist takes the enquiry and sends it to you. Lachie, the voice demo, is on the Saabai homepage. That demo already says you are talking with an AI before it starts.</p>
+              <p>A website receptionist answers visitors and keeps a log of the chat. Enquiry alerts are coming soon. Lachie, the voice demo, is on the Saabai homepage. That demo already says you are talking with an AI before it starts.</p>
               <a className="ig-more" href="/ai-receptionist-gold-coast">See the AI receptionist</a>
             </article>
             <article className="card">
               <p className="eyebrow">Websites</p>
-              <h3>A site that captures the enquiry</h3>
+              <h3>A site with a chatbot that answers</h3>
               <p>
                 Builds from {formatAud(presence.buildFrom)}, care from {formatAud(presence.monthly)} a month.
                 A basic site is about 1 week, a mid-tier site about 2 weeks, and a custom build up to 4 weeks, once we have your content and you have signed off the design.

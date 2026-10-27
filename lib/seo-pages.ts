@@ -12,7 +12,7 @@ export const publicPageMeta = {
     rawCanonical: true,
     title: "Know exactly where AI will save your business hours, in 48 hours | Saabai",
     description:
-      "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, with alerts by email, SMS, WhatsApp or Telegram.",
+      "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, and the chatbot answers visitors and keeps a log of each chat.",
   }),
   contact: pageMeta({
     path: "/contact",
@@ -72,19 +72,19 @@ export const publicPageMeta = {
     path: "/ai-chatbot-developer-queensland",
     title: "Custom AI Chatbot Developer in Queensland | Saabai",
     description:
-      "Saabai builds custom AI chatbots for Queensland businesses in Brisbane, the Gold Coast and the Sunshine Coast. Alerts go out by email, SMS, WhatsApp or Telegram.",
+      "Saabai builds custom AI chatbots for Queensland businesses in Brisbane, the Gold Coast and the Sunshine Coast. The chatbot answers visitors and keeps a log of each chat.",
   }),
   receptionist: pageMeta({
     path: "/ai-receptionist-gold-coast",
     title: "AI Receptionist for Gold Coast Businesses | Saabai",
     description:
-      "A Gold Coast built AI receptionist for your website, from Saabai in Merrimac. It answers enquiries day and night and alerts you by email, SMS, WhatsApp or Telegram.",
+      "A Gold Coast built AI receptionist for your website, from Saabai in Merrimac. It answers visitors day and night and keeps a log of each chat.",
   }),
   lawFirms: pageMeta({
     path: "/ai-chatbot-law-firms",
     title: "AI Chatbot for Law Firms | Saabai, Gold Coast",
     description:
-      "Custom AI chatbots and Lex for Australian law firms, built by Saabai on the Gold Coast. Capture after-hours enquiries and get alerts by email, SMS or WhatsApp.",
+      "Custom AI chatbots and Lex for Australian law firms, built by Saabai on the Gold Coast. The chatbot answers after-hours questions and keeps a log of each chat.",
   }),
   blueprint: pageMeta({
     path: "/blueprint",

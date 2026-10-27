@@ -202,7 +202,7 @@ export const BRISBANE: LocationConfig = {
     paragraphs: [
       "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast.",
       "We are based in Merrimac on the Gold Coast and work with Brisbane clients mostly remotely.",
-      "Your chatbot learns your services, hours and policies. New enquiries arrive by email, and we can also send alerts to Telegram, WhatsApp or SMS.",
+      "Your chatbot learns your services, hours and policies. It answers visitors and keeps a log of each chat. Enquiry alerts are coming soon.",
     ],
     linkHref: "/ai-chatbot-developer-queensland",
     linkLabel: "Custom AI chatbots in Queensland",

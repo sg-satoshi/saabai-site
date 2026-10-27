@@ -185,8 +185,8 @@ export default function Home() {
               <p>Saabai is a <a href="/ai-receptionist-gold-coast" style={copyLink}>Gold Coast</a> business based in Merrimac, Queensland, and we work remotely with clients across Australia.</p>
               <p>We build custom AI chatbots for business websites, trained on your own services, hours and policies.</p>
               <p>Your chatbot answers visitors day and night, so enquiries that come in after hours get a reply instead of sitting in an inbox until morning.</p>
-              <p>It captures the person&apos;s details and what they need, then alerts you straight away.</p>
-              <p>Email enquiry alerts come with every plan, and we can also send alerts to Telegram, WhatsApp or SMS.</p>
+              <p>It answers their questions and keeps a log of the chat.</p>
+              <p>Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.</p>
               <p>Want to see one working? Chat with Mia, our own AI assistant, right here on saabai.ai.</p>
               <p>For <a href="/ai-chatbot-law-firms" style={copyLink}>law firms</a>, we also build <a href="/legal" style={copyLink}>Lex</a>, an AI legal assistant for legal practices.</p>
               <p>For businesses in Brisbane, the Gold Coast and the Sunshine Coast, see our <a href="/ai-chatbot-developer-queensland" style={copyLink}>custom AI chatbot developer in Queensland</a> page.</p>
@@ -200,9 +200,8 @@ export default function Home() {
           <div className="card">
             <h2>Enquiry alerts</h2>
             <div style={{ display: "grid", gap: 14, marginTop: 16, maxWidth: 900, fontSize: 17 }}>
-              <p>The website chatbot does not send enquiry emails yet.</p>
-              <p>If you would rather hear about leads on your phone, we can also send alerts to Telegram, WhatsApp or SMS.</p>
-              <p>You choose where each enquiry goes, so the right person sees it quickly and can follow up while the customer is still keen.</p>
+              <p>The chatbot answers visitors and keeps a log of each chat.</p>
+              <p>Enquiry alerts by email, Telegram, WhatsApp or SMS are coming soon.</p>
             </div>
           </div>
         </div>
