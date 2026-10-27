@@ -155,7 +155,7 @@ export default function About() {
             <p className="text-lg text-saabai-text-muted leading-relaxed">
               Lex is an AI legal assistant for research and drafting at Australian law firms.
               Firm is $299 a month: unlimited legal research, 20 documents a month, 3 lawyer seats, a licensed case-law snapshot, QA verification on every draft, and thread memory.
-              Enterprise is custom. There is no lock-in. You can cancel anytime.
+              Enterprise is custom. We confirm billing with you before a firm starts.
               <a href="/legal" className={linkClass}>The Lex page</a> has the detail, and the workspace sits behind a login.
             </p>
             <p className="text-lg text-saabai-text-muted leading-relaxed">
