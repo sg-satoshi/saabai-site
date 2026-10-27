@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<!--
+  Nico Moretti: Privacy Policy
+  Site Factory: /sites/nico-moretti/privacy-policy
+-->
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Privacy Policy | Nico Moretti</title>
+<meta name="description" content="How Nico Moretti handles personal information from the website chat and the inquiry form, including the DeepSeek chatbot and overseas storage."/>
+<meta name="robots" content="index, follow"/>
+<link rel="canonical" href="https://nicomoretti.au/privacy-policy"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Nico Moretti"/>
+<meta property="og:locale" content="en_AU"/>
+<meta property="og:title" content="Privacy Policy | Nico Moretti"/>
+<meta property="og:description" content="How the Nico Moretti website chat and inquiry form handle personal information."/>
+<meta property="og:url" content="https://nicomoretti.au/privacy-policy"/>
+<link rel="icon" href="https://www.saabai.ai/favicon.ico"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Playfair+Display:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #101415; color: #e0e3e5; font-family: Manrope, sans-serif; line-height: 1.7; }
+  a { color: #f2ca50; }
+  header { border-bottom: 1px solid rgba(153,144,124,0.2); }
+  .bar { width: min(100% - 48px, 880px); margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 24px 0; }
+  .brand { color: #f2ca50; letter-spacing: 0.14em; text-decoration: none; font-weight: 600; }
+  nav a { color: #99907c; text-decoration: none; margin-left: 20px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  nav a:hover { color: #f2ca50; }
+  main { width: min(100% - 48px, 880px); margin: 0 auto; padding: 56px 0 80px; }
+  h1 { font-family: "Playfair Display", serif; font-weight: 500; font-size: clamp(32px, 5vw, 48px); line-height: 1.15; margin: 0 0 12px; }
+  .lede { color: #d0c5af; margin: 0 0 36px; }
+  h2 { font-family: "Playfair Display", serif; font-weight: 500; font-size: 26px; margin: 40px 0 12px; }
+  p, li { font-size: 16px; }
+  ul { padding-left: 1.2em; }
+  li { margin: 0.35em 0; }
+  footer { border-top: 1px solid rgba(153,144,124,0.2); padding: 28px 0 40px; color: #99907c; font-size: 13px; }
+  footer .bar { padding: 0; }
+  @media (max-width: 640px) {
+    nav { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a class="brand" href="https://nicomoretti.au/">NICO MORETTI</a>
+    <nav>
+      <a href="https://nicomoretti.au/">Home</a>
+      <a href="https://nicomoretti.au/faq">FAQ</a>
+      <a href="https://nicomoretti.au/#contact">Inquire</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="lede">Last updated: 27 October 2026</p>
+
+  <h2>About this policy</h2>
+  <p>This policy explains how Nico Moretti, based in Adelaide, South Australia, handles personal information collected on nicomoretti.au. It is written in plain English for the Australian Privacy Principles in the Privacy Act 1988 (Cth), in particular APP 1 (an open and transparent policy), APP 5 (telling you when information is collected) and APP 8 (sending information outside Australia). It is not legal advice.</p>
+  <p>The website does not publish an ABN, a phone number, or an email address. To ask about your information, use the inquiry form on the <a href="https://nicomoretti.au/#contact">contact section of the website</a> and say that your message is about privacy.</p>
+
+  <h2>The website chat</h2>
+  <p>The site has a chat called Sofia. Sofia is an AI assistant. The replies are not typed by a person.</p>
+  <p>When you send a message, this is what happens.</p>
+  <ul>
+    <li>Your browser keeps the chat on this device, under the name nico-chat-history. It keeps the last 50 messages. The chat code does not set an end date. That copy stays until you clear this site's saved data, or your browser removes it.</li>
+    <li>The whole chat kept in the browser, up to those 50 messages, is sent to this website's server with each new message. That server runs in Sydney.</li>
+    <li>The server sends those messages to DeepSeek so DeepSeek can write the reply. The call goes to api.deepseek.com and uses DeepSeek's deepseek-v4-flash model. DeepSeek is Hangzhou DeepSeek Artificial Intelligence Co., Ltd., a company in China. DeepSeek's privacy policy says it stores personal data in the People's Republic of China. Sending your messages there is a disclosure outside Australia under APP 8.</li>
+    <li>The chat route does not send your messages to OpenAI, and it does not create embeddings. It does not store the chat in Redis.</li>
+  </ul>
+  <p>Do not type sensitive information into the chat. That includes passwords, payment card numbers, bank details, tax file numbers, identity document numbers, and health information. What you type is sent to DeepSeek in China, and a copy may be stored outside Australia as described below.</p>
+
+  <h2>What we store from the chat, and for how long</h2>
+  <p>When the site's database is connected, the server keeps a copy of your latest message and Sofia's reply in Supabase. That project is in Tokyo, Japan, which is also outside Australia. The copy includes the text (shortened if it is longer than 20,000 characters), the model name, and the token counts for that reply. It is labelled as the Nico Moretti chat. The route does not send a thread id, so each reply is stored as its own record. Earlier messages in the same chat are sent again to DeepSeek with your next message. They are not written again unless they were the latest message on an earlier reply. The chat record does not include your IP address.</p>
+  <p>If that database is not connected, the chat still replies and no server copy is stored. The copy in your browser is separate.</p>
+  <p>A daily job is set to delete these chat records after 90 days.</p>
+
+  <h2>The inquiry form</h2>
+  <p>The contact form collects your name, email address, phone number if you give one, your message, the duration you select, and the event type. It is sent to this website's inquiry service.</p>
+  <p>The inquiry is saved in an Upstash Redis list. The code that saves it does not set a deletion date, and it does not name the country where that list is stored. A copy is emailed to the business through Resend. The code does not name the country where Resend stores or sends that email. If a Telegram channel is configured for this business, the same inquiry is also sent to Telegram at api.telegram.org. Telegram is outside Australia. The code does not name the country where Telegram keeps the message.</p>
+  <p>The chat and the inquiry form are separate. Typing in the chat does not fill in the form.</p>
+
+  <h2>Why we collect it</h2>
+  <p>We collect this information to answer questions about Nico Moretti's services, to reply to an inquiry, and to run the website chat. We do not sell personal information.</p>
+
+  <h2>Access, correction and complaints</h2>
+  <p>You can ask for access to the personal information we hold about you, or ask us to correct it, by using the <a href="https://nicomoretti.au/#contact">inquiry form</a>. Say that the message is about privacy, and include the email address you used so we can find the right record. We may need to check that you are the person the information is about before we release it.</p>
+  <p>If you are unhappy with how we handle your information, contact us the same way first. If you are not satisfied with the response, you can complain to the Office of the Australian Information Commissioner (OAIC):</p>
+  <ul>
+    <li>Website: <a href="https://www.oaic.gov.au">www.oaic.gov.au</a></li>
+    <li>Privacy complaints and enquiries: <a href="https://www.oaic.gov.au/contact-us">OAIC contact form</a></li>
+    <li>Phone: 1300 363 992 (Monday to Thursday, 10 am to 4 pm AEST/AEDT)</li>
+    <li>Post: GPO Box 5288, Sydney NSW 2001</li>
+  </ul>
+</main>
+<footer>
+  <div class="bar">
+    <a class="brand" href="https://nicomoretti.au/">NICO MORETTI</a>
+    <span>Adelaide, South Australia</span>
+  </div>
+</footer>
+<script src="/clients/nico-moretti/chat-widget.js?3"></script>
+</body>
+</html>

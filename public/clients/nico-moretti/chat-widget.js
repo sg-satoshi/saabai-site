@@ -22,6 +22,12 @@
   var isLoading = false;
   var STORAGE_KEY = 'nico-chat-history';
 
+  function privacyHref() {
+    var path = location.pathname || '';
+    if (path.indexOf('/sites/nico-moretti') !== -1) return '/sites/nico-moretti/privacy-policy';
+    return '/privacy-policy';
+  }
+
   // ─── CREATE WIDGET DOM ──────────────────────────────
   var container = document.createElement('div');
   container.id = 'nm-chat-widget';
@@ -152,8 +158,9 @@
       '.nm-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }' +
       '.nm-send-btn svg { width: 18px; height: 18px; }' +
       '.nm-disclaimer {' +
-        'text-align: center; font-size: 10px; opacity: 0.4; padding: 8px 16px 0;' +
+        'text-align: center; font-size: 11px; line-height: 1.45; opacity: 0.72; padding: 8px 16px 0; color: ' + CONFIG.textColor + ';' +
       '}' +
+      '.nm-disclaimer a { color: inherit; text-decoration: underline; }' +
       '@media (max-width: 480px) {' +
         '.nm-window {' +
           'bottom: 0; right: 0; left: 0; top: 0;' +
@@ -182,7 +189,7 @@
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>' +
           '</button>' +
         '</div>' +
-        '<div class="nm-disclaimer">' + CONFIG.branding + '</div>' +
+        '<div class="nm-disclaimer">Do not share sensitive information. Messages are sent to DeepSeek in China. <a href="' + privacyHref() + '">Privacy policy</a></div>' +
       '</div>' +
     '</div>';
 
