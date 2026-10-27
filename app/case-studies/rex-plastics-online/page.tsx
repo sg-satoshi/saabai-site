@@ -69,7 +69,8 @@ export default function RexPlasticsCaseStudy() {
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
               A national plastics supplier serving trade and retail
-              customers across Australia.
+              customers across Australia. The shop is at{" "}
+              <a href="https://plasticonline.com.au" className="text-saabai-teal font-semibold underline underline-offset-2">plasticonline.com.au</a>.
             </p>
           </div>
           <div>
