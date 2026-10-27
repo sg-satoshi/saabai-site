@@ -22,7 +22,7 @@ export type TokenUsage = {
 };
 
 export type ChatTurn = {
-  /** Bot slug: mia, rex, lex-research, or a client site slug. */
+  /** Bot slug: mia, lex-research, or a client site slug. */
   bot: string;
   /** Client or site id, when the route has one. */
   siteId?: string | null;

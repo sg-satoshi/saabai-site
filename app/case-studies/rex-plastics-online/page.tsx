@@ -11,19 +11,19 @@ export const metadata: Metadata = publicPageMeta.rexCase;
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "A custom AI sales agent for a national plastics supplier",
+  headline: "A custom AI sales agent for Rex Plastics",
   description: publicPageMeta.rexCase.description,
-  url: `${SITE_URL}/case-studies/national-plastics-supplier`,
-  mainEntityOfPage: `${SITE_URL}/case-studies/national-plastics-supplier`,
+  url: `${SITE_URL}/case-studies/rex-plastics-online`,
+  mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
   author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
   publisher: { "@id": ORG_ID },
 };
 
-export default function NationalPlasticsCaseStudy() {
+export default function RexPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <JsonLd data={articleSchema} />
-      <JsonLd data={breadcrumbSchema([{ name: "Rex case study", path: "/case-studies/national-plastics-supplier" }])} />
+      <JsonLd data={breadcrumbSchema([{ name: "Rex Plastics case study", path: "/case-studies/rex-plastics-online" }])} />
       <Nav />
 
       <section className="relative pt-52 pb-20 px-6 max-w-5xl mx-auto overflow-hidden">
@@ -50,10 +50,10 @@ export default function NationalPlasticsCaseStudy() {
         <h1 className="relative text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           A custom AI sales agent
           <br />
-          <span className="text-gradient">for a national plastics supplier</span>
+          <span className="text-gradient">for Rex Plastics</span>
         </h1>
         <p className="relative text-lg text-saabai-text-muted max-w-2xl leading-relaxed">
-          Name withheld on request. This page describes what the agent does.
+          Rex Plastics is a national plastics supplier. This page describes what the agent does.
           It does not publish result figures.
         </p>
       </section>
@@ -65,11 +65,11 @@ export default function NationalPlasticsCaseStudy() {
               Company
             </p>
             <h2 className="text-3xl font-semibold tracking-tight mb-3">
-              National Plastics Supplier
+              Rex Plastics
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A large national plastics supplier serving trade and retail
-              customers across Australia. Name withheld on request.
+              A national plastics supplier serving trade and retail
+              customers across Australia.
             </p>
           </div>
           <div>
@@ -80,7 +80,7 @@ export default function NationalPlasticsCaseStudy() {
               AI sales agent: &ldquo;Rex&rdquo;
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A custom AI sales agent on the supplier&apos;s website. It answers
+              A custom AI sales agent on the Rex Plastics website. It answers
               product questions at any hour, prices cut-to-size jobs from the
               supplier&apos;s own product data, captures leads, and emails those
               leads to the sales team. There is no published price. Custom
@@ -98,7 +98,7 @@ export default function NationalPlasticsCaseStudy() {
           Product questions, cut-to-size pricing, and lead capture.
         </h2>
         <p className="text-base text-saabai-text-muted max-w-3xl mb-16 leading-relaxed">
-          Quoting on this site is custom work, scoped for this supplier. It is
+          Quoting on this site is custom work, scoped for Rex Plastics. It is
           not included in the website care plans, and it is not a 24/7 quoting
           product you can buy off the page.
         </p>

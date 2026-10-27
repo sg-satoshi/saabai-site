@@ -114,10 +114,7 @@ function inferDomain(file: string): string[] {
   const lower = file.toLowerCase();
   const domains: string[] = [];
 
-  if (lower.includes("rex")) domains.push("rex");
   if (lower.includes("lex")) domains.push("lex");
-  if (lower.includes("pipedrive")) domains.push("crm");
-  if (lower.includes("woo")) domains.push("commerce");
   if (lower.includes("portal")) domains.push("portal");
   if (lower.includes("analytics")) domains.push("analytics");
   if (lower.includes("linkedin")) domains.push("linkedin");

@@ -44,22 +44,6 @@ const DEFAULT_TOOLS: Tool[] = [
     createdAt: "2025-01-01",
     updatedAt: "2025-01-01",
   },
-  {
-    id: "peter",
-    name: "Pete",
-    role: "Founder · Saabai.ai",
-    systemPrompt: "You are Pete, founder of Saabai.ai...",
-    voiceId: "txdmFzaxxwmYbb99FY4D",
-    model: "claude-sonnet-4-6",
-    triggerText: "Talk to Peter",
-    triggerSubtext: "Got questions? I'm here.",
-    avatarInitials: "PS",
-    avatarColor: "bg-cyan-500",
-    pages: "/onboarding/plon",
-    status: "active",
-    createdAt: "2026-03-21",
-    updatedAt: "2026-03-21",
-  },
 ];
 
 const MODELS = [
@@ -501,18 +485,6 @@ const VENTURES = [
     initials: "SA",
   },
   {
-    id: "plon",
-    name: "PlasticOnline (PLON)",
-    type: "Client Engagement",
-    stage: "Scoping",
-    stageColor: "text-slate-700 bg-slate-100 border-slate-200",
-    value: "AUD $30–55k+",
-    nextAction: "Complete scoping form — build AI agent proposal",
-    url: "https://www.saabai.ai/onboarding/plon",
-    color: "bg-cyan-500",
-    initials: "PL",
-  },
-  {
     id: "builder",
     name: "Builder Client",
     type: "Client Engagement",
@@ -569,7 +541,6 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
 
   const QUICK_ACTIONS = [
     { label: "Saabai.ai", sub: "Main site", href: "https://www.saabai.ai", icon: "↗", color: "text-white" },
-    { label: "PLON Onboarding", sub: "Client page", href: "https://www.saabai.ai/onboarding/plon", icon: "↗", color: "text-slate-700" },
     { label: "ElevenLabs", sub: "Voice studio", href: "https://elevenlabs.io/app", icon: "↗", color: "text-slate-700" },
     { label: "Vercel", sub: "Deployments", href: "https://vercel.com/dashboard", icon: "↗", color: "text-white/70" },
     { label: "Atlas Memory", sub: "Control Panel", href: "/atlas-memory-control", icon: "⚙", color: "text-cyan-600" },
@@ -580,7 +551,6 @@ function DashboardView({ tools, activeCount, onEditTool, onNewTool, onTabChange 
     { key: "claude", label: "Claude API", desc: "AI brain" },
     { key: "elevenlabs", label: "ElevenLabs", desc: "TTS voice" },
     { key: "elevenlabsVoice", label: "Voice ID", desc: "Mia voice" },
-    { key: "heygen", label: "HeyGen", desc: "Video avatar" },
     { key: "resend", label: "Resend", desc: "Email" },
   ];
 
@@ -2765,7 +2735,7 @@ export default function MissionControl() {
                       label="Show on pages"
                       value={draftTool.pages ?? "*"}
                       onChange={(v) => setDraftTool(d => ({ ...d, pages: v }))}
-                      placeholder="* for all pages, or /onboarding/plon"
+                      placeholder="* for all pages, or /contact"
                       hint="* = all pages. Use a URL path to restrict to specific pages."
                     />
                     <div className="flex flex-col gap-1.5">
@@ -2795,9 +2765,9 @@ export default function MissionControl() {
                   <div className="mt-6 pt-5 border-t border-slate-300">
                     <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-3 font-medium">Embed Code</p>
                     <div className="bg-white rounded-xl p-3 font-mono text-[10px] text-slate-600 leading-relaxed border border-slate-300">
-                      {`<PeterAvatarWidget\n  name="${draftTool.name || "Agent"}"\n  voiceId="${draftTool.voiceId || ""}"\n  pages="${draftTool.pages || "*"}"\n/>`}
+                      {`name="${draftTool.name || "Agent"}"\nvoiceId="${draftTool.voiceId || ""}"\npages="${draftTool.pages || "*"}"`}
                     </div>
-                    <p className="text-[10px] text-slate-600 mt-2">Drop this into any page component.</p>
+                    <p className="text-[10px] text-slate-600 mt-2">Tool settings stored in Mission Control.</p>
                   </div>
 
                   {draftTool.systemPrompt && (
@@ -2824,7 +2794,6 @@ export default function MissionControl() {
               {[
                 { label: "ElevenLabs API Key", key: "ELEVENLABS_API_KEY", desc: "Text-to-speech · Set in Vercel env vars" },
                 { label: "ElevenLabs Voice ID (Mia)", key: "ELEVENLABS_VOICE_ID", desc: "Default voice for Mia · Override per-tool with voiceId" },
-                { label: "HeyGen API Key", key: "HEYGEN_API_KEY", desc: "Video avatar streaming · Set in Vercel env vars" },
                 { label: "Mission Control Access", key: "Admin login", desc: "Sign in at saabai.ai/login with your admin account" },
                 { label: "Chat Model (Default)", key: "CHAT_MODEL", desc: "Defaults to claude-sonnet-4-6" },
               ].map((item) => (

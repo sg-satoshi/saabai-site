@@ -12,7 +12,7 @@ import {
 } from "@/lib/conversation-activity";
 
 const COOKIE_KEY = "saabai_subscribed";
-const SKIP_PATHS = ["/login", "/lex", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding"];
+const SKIP_PATHS = ["/login", "/lex", "/saabai-admin", "/lex-widget", "/mission-control", "/onboarding"];
 
 const INDUSTRIES = ["Law / Legal", "Accounting / Finance", "Real Estate", "Other"];
 

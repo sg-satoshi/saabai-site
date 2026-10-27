@@ -25,15 +25,6 @@ const PROJECT_STATS: ProjectStats[] = [
     trend: 2,
   },
   {
-    name: "PLON / Rex",
-    type: "project",
-    tokens: 28500,
-    cost: 2.85,
-    status: "active",
-    icon: "🤖",
-    trend: 5,
-  },
-  {
     name: "Lex / Tributum Law",
     type: "project",
     tokens: 12300,

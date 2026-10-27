@@ -18,7 +18,6 @@ export const PUBLIC_SOURCES = [
   "chat_ended_short",
   "calculator_page",
   "calculator_homepage",
-  "pete_ended",
   "instagram",
 ] as const;
 
@@ -265,7 +264,7 @@ export const CONTACT_SOURCES = ["chat_widget", "calculator_page", "calculator_ho
  * - chat_widget and calculator_*: a valid email is required.
  * - instagram (/ig free site check): email, name, business and a website.
  *   Phone is optional and is not a contact on its own.
- * - chat_closed, chat_ended, chat_ended_short, pete_ended: a valid email or at
+ * - chat_closed, chat_ended, chat_ended_short: a valid email or at
  *   least one real visitor message.
  * - mia_qualified (server only): at least one visitor message or a qualification summary.
  */

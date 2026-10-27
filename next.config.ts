@@ -74,8 +74,6 @@ const nextConfig: NextConfig = {
       { source: "/ai-audit", destination: "/blueprint", permanent: true },
       { source: "/ai-audit/:path*", destination: "/blueprint", permanent: true },
       { source: "/offers", destination: "/blueprint", permanent: true },
-      // Oct 2026: case study slug renamed so the URL does not carry the client name
-      { source: "/case-studies/rex-plastics-online", destination: "/case-studies/national-plastics-supplier", statusCode: 301, missing: CLIENT_HOST },
     ];
   },
   async rewrites() {
