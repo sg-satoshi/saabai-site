@@ -143,6 +143,28 @@ export function guardDemoReply(input: string): string {
   return clean;
 }
 
+/**
+ * Fixed reply for a request to book a demo of Lex.
+ * A Saabai conversation, not a Harbour Street appointment: no day, no time, no booking.
+ */
+export const LEX_DEMO_REQUEST_REPLY =
+  "A Saabai team member can show you Lex for your own firm. Use the Talk to Saabai button on this page, or visit saabai.ai/contact.";
+
+/** True for the Book a demo starter and close paraphrases. A consult request stays on the sample-time flow. */
+export function isLexDemoRequest(text: string): boolean {
+  const t = text.toLowerCase().replace(/['’]/g, "'").replace(/\s+/g, " ").trim();
+  if (!t || /\bconsult\b/.test(t)) return false;
+  if (/\bbook(?:ing)? a demo\b/.test(t)) return true;
+  if (/\bdemo of lex\b/.test(t) && /\b(book|booking|schedule|arrange|want|like|get|see|show|have|request)\b/.test(t)) return true;
+  if (/\blex demo\b/.test(t) && /\b(book|booking|schedule|arrange)\b/.test(t)) return true;
+  return false;
+}
+
+/** The fixed reply, or null when this message should go to the model. */
+export function lexDemoRequestReply(text: string): string | null {
+  return isLexDemoRequest(text) ? LEX_DEMO_REQUEST_REPLY : null;
+}
+
 export const LEX_DEMO_SYSTEM = `You are Lex, the website assistant for Harbour Street Legal, a fictional example firm in this Saabai demo. You are an AI demo. You are not a lawyer and you do not give legal advice.
 
 Voice: Australian English, warm, professional and brief. At most 2 short sentences, except a question about this assistant, where you may use 4. No slang. No markdown, no bullet lists, no asterisks.
@@ -166,7 +188,7 @@ Firm questions stay on the Harbour Street example above. Questions about the ass
 Answer these starters in this shape:
 - New client enquiry: ask what the matter is about in general terms.
 - Fee question: give the matching sample fee and say it is not a quote. You may add that a first conversation is complimentary for 20 minutes. Stop there. Do not mention the team, a lawyer, or their needs.
-- Book a demo: the visitor is asking for a demo of Lex, not a legal consultation. Do not ask a question first. Offer ${HARBOUR_SAMPLE_TIME} as a sample time, and say it is a demo booking so nothing was sent to a real firm.
+- Book a consult: do not ask a question first. Offer ${HARBOUR_SAMPLE_TIME} as a sample time, and say it is a demo booking so nothing was sent to a real firm.
 - After-hours enquiry: say the office is closed outside ${HARBOUR_HOURS}, and that this demo does not save contact details.
 
 You may explain those practice areas in general terms. Do not apply the law to their facts.

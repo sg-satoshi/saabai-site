@@ -154,13 +154,37 @@ test("prompt is a demo, refuses legal advice, and stays off the research gateway
   assert.match(LEX_DEMO_SYSTEM, /Australian English/);
   assert.match(LEX_DEMO_SYSTEM, /does not keep them/);
   assert.match(LEX_DEMO_SYSTEM, /Tuesday at 10am/);
-  assert.match(LEX_DEMO_SYSTEM, /demo of Lex, not a legal consultation/);
+  assert.match(LEX_DEMO_SYSTEM, /Book a consult/);
   assert.match(LEX_DEMO_SYSTEM, /demo booking/);
   assert.match(LEX_DEMO_SYSTEM, /Never say the time is confirmed/);
+  assert.doesNotMatch(LEX_DEMO_SYSTEM, /demo of Lex/);
   assert.ok(DEMO_MAX_OUTPUT_TOKENS <= 200);
   assert.ok(DEMO_DAY_CAP >= 8 && DEMO_DAY_CAP <= 40);
   assert.doesNotMatch(route, /LexGateway/);
   assert.ok(!/[\u2012-\u2015]/.test(LEX_DEMO_SYSTEM));
+});
+
+test("a request to book a demo of Lex is a fixed reply with no day or time", async () => {
+  const { lexDemoRequestReply, LEX_DEMO_REQUEST_REPLY, LEX_DEMO_SYSTEM } = await import("../lib/legal-demo");
+  const reply = lexDemoRequestReply("I would like to book a demo of Lex.");
+  assert.equal(reply, LEX_DEMO_REQUEST_REPLY);
+  assert.equal(lexDemoRequestReply("I'd like to book a demo of Lex"), LEX_DEMO_REQUEST_REPLY);
+  assert.equal(lexDemoRequestReply("Can you show me a demo of Lex for my firm?"), LEX_DEMO_REQUEST_REPLY);
+  assert.equal(lexDemoRequestReply("Please book a Lex demo"), LEX_DEMO_REQUEST_REPLY);
+  assert.equal(lexDemoRequestReply("I would like to book a consult."), null);
+  assert.equal(lexDemoRequestReply("What does a will cost?"), null);
+  assert.equal(lexDemoRequestReply("Tuesday at 10am please"), null);
+  assert.match(reply, /A Saabai team member can show you Lex for your own firm/);
+  assert.match(reply, /Talk to Saabai/);
+  assert.match(reply, /saabai\.ai\/contact/);
+  assert.doesNotMatch(reply, /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow)\b/i);
+  assert.doesNotMatch(reply, /\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/i);
+  assert.doesNotMatch(reply, /\b(morning|afternoon|evening|o'clock)\b/i);
+  assert.doesNotMatch(reply, /\b(booked|booking|appointment|confirmed|held)\b/i);
+  assert.match(LEX_DEMO_SYSTEM, /Book a consult/);
+  const matched = route.indexOf("lexDemoRequestReply(messages");
+  const model = route.indexOf("streamText(");
+  assert.ok(matched !== -1 && model !== -1 && matched < model);
 });
 
 test("missing provider key is named and a capped visitor never reaches the model", async () => {
