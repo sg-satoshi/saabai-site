@@ -13,6 +13,7 @@ import {
   missingModelKey,
   reserveDemoMessage,
   guardDemoReply,
+  lexDemoRequestReply,
   scrubDemoText,
   visitorIdFrom,
 } from "../../../lib/legal-demo";
@@ -50,6 +51,9 @@ export async function POST(req: Request) {
   if (!messages.length || messages[messages.length - 1].role !== "user") {
     return json("Please type a message.", 400);
   }
+
+  const demoOfLex = lexDemoRequestReply(messages[messages.length - 1].content);
+  if (demoOfLex) return json(demoOfLex, 200);
 
   const missing = missingModelKey();
   if (missing) {

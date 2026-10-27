@@ -143,6 +143,28 @@ export function guardDemoReply(input: string): string {
   return clean;
 }
 
+/**
+ * Fixed reply for a request to book a demo of Lex.
+ * A Saabai conversation, not a Harbour Street appointment: no day, no time, no booking.
+ */
+export const LEX_DEMO_REQUEST_REPLY =
+  "A Saabai team member can show you Lex for your own firm. Use the Talk to Saabai button on this page, or visit saabai.ai/contact.";
+
+/** True for the Book a demo starter and close paraphrases. A consult request stays on the sample-time flow. */
+export function isLexDemoRequest(text: string): boolean {
+  const t = text.toLowerCase().replace(/['’]/g, "'").replace(/\s+/g, " ").trim();
+  if (!t || /\bconsult\b/.test(t)) return false;
+  if (/\bbook(?:ing)? a demo\b/.test(t)) return true;
+  if (/\bdemo of lex\b/.test(t) && /\b(book|booking|schedule|arrange|want|like|get|see|show|have|request)\b/.test(t)) return true;
+  if (/\blex demo\b/.test(t) && /\b(book|booking|schedule|arrange)\b/.test(t)) return true;
+  return false;
+}
+
+/** The fixed reply, or null when this message should go to the model. */
+export function lexDemoRequestReply(text: string): string | null {
+  return isLexDemoRequest(text) ? LEX_DEMO_REQUEST_REPLY : null;
+}
+
 export const LEX_DEMO_SYSTEM = `You are Lex, the website assistant for Harbour Street Legal, a fictional example firm in this Saabai demo. You are an AI demo. You are not a lawyer and you do not give legal advice.
 
 Voice: Australian English, warm, professional and brief. At most 2 short sentences, except a question about this assistant, where you may use 4. No slang. No markdown, no bullet lists, no asterisks.
