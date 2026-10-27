@@ -23,9 +23,9 @@ const useCases = [
   {
     category: "Real Estate Agencies",
     description:
-      "Lead qualification and follow-up is where most agencies lose revenue. An AI system can respond to every new enquiry within seconds, qualify the opportunity, and escalate only the serious buyers and sellers to your agents.",
+      "Lead qualification and follow-up is where most agencies lose revenue. An AI system can respond to new enquiries within seconds, qualify the opportunity, and escalate the serious buyers and sellers to your agents.",
     examples: [
-      "Instant AI response to every inbound enquiry",
+      "Fast AI response to inbound enquiries",
       "Automated inspection reminders and appraisal follow-up sequences",
       "Listing update communications to matched buyers",
       "Vendor report automation",
@@ -68,7 +68,7 @@ const useCases = [
       "Order status lookups without staff involvement",
       "Qualified leads automatically routed to CRM with full conversation context",
     ],
-    outcome: "Every inbound enquiry gets an instant, accurate response. Leads are captured and followed up automatically, day and night.",
+    outcome: "Inbound enquiries can get a fast response. Leads can be captured and followed up, day and night.",
   },
   {
     category: "Compliance & Document Automation",

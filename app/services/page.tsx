@@ -58,7 +58,7 @@ const services: { title: string; description: string; benefits: string[]; href?:
       "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
     benefits: [
       "Trained on your services, prices and FAQs",
-      "Captures and qualifies every lead",
+      "Captures and qualifies leads",
       "Follow-up, reminders and CRM handoff",
       "Scoped from your Blueprint, no surprise invoices",
     ],

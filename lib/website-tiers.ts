@@ -29,7 +29,7 @@ export const WEBSITE_TIERS: readonly WebsiteTier[] = [
     monthly: 100,
     priceNote: "one-off build",
     description:
-      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures every lead.",
+      "A polished, fast website built for your business, with a trained enquiry chatbot that answers common questions and captures the enquiry.",
     features: [
       "Custom site designed for your business",
       "Fast, mobile, SEO and AI search ready out of the box",
