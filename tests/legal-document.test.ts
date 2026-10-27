@@ -21,7 +21,7 @@ test("terms and privacy share one layout and keep their own wording", () => {
   assert.match(terms, /title="Terms"/);
   assert.match(terms, /General terms\. Last updated: October 2026/);
   assert.match(privacy, /title="Privacy Policy"/);
-  assert.match(privacy, /lede="Last updated: October 2026"/);
+  assert.match(privacy, /lede="Last updated: 27 October 2026"/);
   assert.match(privacy, /1\. About this policy/);
   assert.match(privacy, /sb_attr/);
   assert.match(privacy, /sb_exp/);

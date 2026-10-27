@@ -207,7 +207,7 @@ export function UpgradesPanel({ readOnly }: { readOnly?: boolean }) {
                 </>
               )}
               {confirm.kind === "quote-sent" && (
-                <div className="bl-done"><div className="ic">✓</div><div style={{ fontWeight: 600 }}>We&apos;re on it</div><div className="bl-help">You&apos;ll find it under Requests. We usually reply within one business day.</div></div>
+                <div className="bl-done"><div className="ic">✓</div><div style={{ fontWeight: 600 }}>We&apos;re on it</div><div className="bl-help">You&apos;ll find it under Requests. We usually reply within 1 business day.</div></div>
               )}
               {confirm.kind === "remove" && <p style={{ margin: 0, fontSize: 14 }}>{confirm.addon.name} stays on until the end of this billing cycle{b?.currentPeriodEnd ? ` (${shortDate(b.currentPeriodEnd)})` : ""}, then it&apos;s removed. No more charges after that.</p>}
               {err && <div className="bl-err">{err}</div>}

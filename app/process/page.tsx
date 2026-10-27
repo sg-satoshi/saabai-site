@@ -140,7 +140,7 @@ export default function Process() {
             Typical Timeline
           </p>
           <p className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
-            Most firms have their first automations live within 2–4 weeks of the Blueprint.
+            Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment.
           </p>
           <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
             The Saabai Blueprint is the starting point, from $497, a fixed-price plan that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.

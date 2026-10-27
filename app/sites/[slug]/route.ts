@@ -3,6 +3,7 @@ import { list } from "@vercel/blob";
 import { readFileSync } from "fs";
 import path from "path";
 import { ensurePoweredBy } from "@/lib/client-site";
+import { readRepoClientHtml } from "@/lib/repo-client-html";
 import { prepareLmmHomeHtml } from "@/lib/lmm-legal";
 import { ensureFavicon } from "@/lib/site-favicon";
 import { ensureSchema } from "@/lib/site-schema";
@@ -33,6 +34,20 @@ export async function GET(
   const { slug } = await params;
 
   try {
+    // Nico's HTML in this repo is the copy visitors should see. Blob is only
+    // the fallback, so the privacy policy ships with the deploy.
+    const repoHtml = readRepoClientHtml(slug, "index.html");
+    if (repoHtml !== null) {
+      const html = ensurePoweredBy(slug, ensureSchema(slug, await ensureFavicon(slug, prepareStoredHtml(slug, repoHtml))));
+      return new Response(html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     // 1. Check Vercel Blob first (AI-generated sites). A missing token or a
     // blob outage must not hide the legacy file in public/clients/.
     let blobHtml: string | null = null;

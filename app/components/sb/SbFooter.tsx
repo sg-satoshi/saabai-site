@@ -32,7 +32,7 @@ const PRODUCTS = [
   { label: "AI receptionist", href: "/ai-receptionist-gold-coast" },
   { label: "Custom AI agents", href: "/custom-ai-agents" },
   { label: "SEO and AI search", href: "/seo-ai-search" },
-  { label: "Rex", href: "/case-studies/rex-plastics-online" },
+  { label: "Rex", href: "/case-studies/national-plastics-supplier" },
 ];
 
 function Column({

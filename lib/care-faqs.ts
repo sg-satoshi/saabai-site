@@ -17,7 +17,7 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How long does a website take to build?",
-    a: "Basic websites take about 1 week, mid-tier websites about 2 weeks, and custom builds generally up to 4 weeks, depending on complexity. The timeline starts once we have your content and you have signed off on the design. Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. A Saabai Blueprint is delivered in 48 hours on Starter, 3 business days on Pro, or 2 to 3 weeks on Business.",
+    a: "Basic websites take about 1 week, mid-tier websites about 2 weeks, and custom builds generally up to 4 weeks, depending on complexity. The timeline starts once we have your content and you have signed off on the design. Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment. A Starter Blueprint is delivered within 48 hours. Pro is 3 business days and Business is 2 to 3 weeks.",
   },
   {
     q: "Who owns the website and domain if I cancel?",
@@ -25,10 +25,10 @@ export const CARE_PLAN_FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What does a care plan include, and what are the limits?",
-    a: "Presence, Growth and Signature include hosting, security, updates and a trained enquiry chatbot. Care plans include small edits on a fair-use basis. Work outside the list for your tier is quoted before we start.",
+    a: "Presence, Growth and Signature include hosting, security, updates and a trained enquiry chatbot. Fixes are included at no extra charge, plus small edits on a fair-use basis. Work outside the list for your tier is quoted before we start.",
   },
   {
     q: "Where is chatbot data stored, and which AI providers process it?",
-    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The code can send that message to Anthropic, OpenAI, Google or xAI. The provider in use is chosen in the hosting configuration. A transcript is stored in Supabase, and a scheduled task deletes those chat logs after 90 days. That Supabase project is the one the privacy policy describes as stored in Tokyo, Japan. Some conversation records are also stored in Upstash Redis. The code does not name the Redis region. The site is hosted on Vercel, and the serverless functions are set to run in Sydney.",
+    a: "Messages typed into a Saabai chatbot are sent to an external AI provider to write the reply. The privacy policy names those providers. Some chats are processed in China. Chat transcripts are stored with our database provider Supabase in Tokyo, Japan, and a scheduled task deletes those chat logs after 90 days. Chat IP addresses are kept briefly in Upstash Redis for abuse protection. A short-window record expires after 11 minutes, and a daily record expires after 26 hours. Our host Vercel keeps standard server logs. Serverless functions run in Sydney. That does not mean every chat stays in Australia.",
   },
 ];

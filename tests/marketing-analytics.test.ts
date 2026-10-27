@@ -410,9 +410,11 @@ test("scripts, privacy copy and wiring stay on saabai.ai and off lead endpoints"
   assert.match(privacy, /Australian dollars/);
   assert.match(privacy, /facebook\.com\/settings\?tab=ads/);
   assert.match(privacy, /client portal/);
-  assert.match(privacy, /Australian Privacy Principle 8/);
+  assert.match(privacy, /Tokyo, Japan/);
+  assert.match(privacy, /xAI/);
   assert.doesNotMatch(privacy, /[\u2012-\u2015]/);
-  assert.doesNotMatch(privacy, /xAI|Grok/);
+  assert.doesNotMatch(privacy, /Grok/);
+  assert.doesNotMatch(privacy, /Australian Privacy Principle/);
 
   const sites = walk(path.join(ROOT, "app/sites")).filter((file) => /\.(tsx?|jsx?)$/.test(file));
   const hits = sites.filter((file) => /connect\.facebook\.net|META_PIXEL|NEXT_PUBLIC_GA4_ID|saabaiMarketingLayer|widget\.js/.test(readFileSync(file, "utf8")));

@@ -72,9 +72,9 @@ export default function InstagramLandingPage() {
         <div className="wrap">
           <div className="head">
             <p className="eyebrow">If you want to look around</p>
-            <h2>Three ways Saabai helps after the check</h2>
+            <h2>Four ways Saabai helps after the check</h2>
           </div>
-          <div className="grid3">
+          <div className="grid4">
             <article className="card">
               <p className="eyebrow">AI receptionist</p>
               <h3>Someone answers when you are on the tools</h3>
@@ -98,6 +98,15 @@ export default function InstagramLandingPage() {
                 Starter {TIERS.starter.priceLabel}, Pro {TIERS.pro.priceLabel}, Business {TIERS.business.priceLabel}.
               </p>
               <a className="ig-more" href="/blueprint">See the Blueprint</a>
+            </article>
+            <article className="card">
+              <p className="eyebrow">Lex for law firms</p>
+              <h3>An AI legal assistant that shows its sources</h3>
+              <p>
+                Lex searches public Australian government sources, including ATO rulings and Commonwealth legislation, and answers with citations so you can check them yourself.
+                Book a free 30-minute demo.
+              </p>
+              <a className="ig-more" href="/legal">See Lex and book a demo</a>
             </article>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default function Home() {
       <div className="hero">
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
-          <span className="pill">New: Saabai Blueprint, your AI plan in 48 hours</span>
+          <span className="pill">New: Saabai Blueprint from $497.</span>
           <HeroHeadline />
           <p className="lead">
             Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.
@@ -88,10 +88,10 @@ export default function Home() {
           <div className="grid2">
             <a className="site" href="https://stuscyclerepairs.com" target="_blank" rel="noopener noreferrer">
               <div className="bar"><i /><i /><i /></div>
-              <div className="shot" role="img" aria-label="Stu's Cycle Repairs website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
+              <div className="shot" role="img" aria-label="Gold Coast cycle workshop website homepage" style={{ backgroundImage: "url(/sites/cycle-repair/stus-hero-thumb.webp)", backgroundPosition: "top center" }} />
               <div className="meta">
-                <h3>Stu&apos;s Cycle Repairs</h3>
-                <p style={{ fontSize: 15 }}>Bookings site with online enquiries, Google reviews and instant lead alerts to Stu&apos;s phone.</p>
+                <h3>Gold Coast cycle workshop</h3>
+                <p style={{ fontSize: 15 }}>Bookings site with online enquiries and Google reviews.</p>
               </div>
             </a>
             <a className="site" href="https://wholesalehomes.com.au" target="_blank" rel="noopener noreferrer">

@@ -98,7 +98,7 @@ export const miaServiceSchema = withContext(
     name: "Mia",
     serviceType: "AI receptionist and website chatbot",
     description:
-      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors. A conversation on this site can also email the Saabai team.",
+      "Mia is Saabai's own AI assistant on saabai.ai. It answers website visitors, and a conversation can email the Saabai team, who usually reply within 1 business day.",
     url: SITE_URL,
   }),
 );
@@ -323,7 +323,7 @@ export const aboutPageSchema = schemaGraph([
     about: { "@id": ORG_ID },
     mainEntity: { "@id": ORG_ID },
     publisher: { "@id": ORG_ID },
-    dateModified: "2026-10-27",
+    dateModified: "2026-10-28",
   },
   {
     ...founderSchema,

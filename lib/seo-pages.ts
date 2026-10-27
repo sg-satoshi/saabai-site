@@ -10,7 +10,7 @@ export const publicPageMeta = {
   home: pageMeta({
     path: "/",
     rawCanonical: true,
-    title: "Know exactly where AI will save your business hours, in 48 hours | Saabai",
+    title: "Know exactly where AI will save your business hours | Saabai",
     description:
       "Custom AI chatbots and websites for Australian small businesses and law firms. Saabai is based in Merrimac on the Gold Coast, and the chatbot answers visitors and keeps a log of each chat.",
   }),
@@ -18,7 +18,7 @@ export const publicPageMeta = {
     path: "/contact",
     title: "Contact Saabai | Gold Coast and Brisbane",
     description:
-      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We serve the Gold Coast, Brisbane and Queensland, and clients across Australia online.`,
+      `Email ${NAP.email} to reach Saabai in ${NAP.addressLine}. We usually reply within 1 business day and serve the Gold Coast, Brisbane, Queensland and clients across Australia.`,
   }),
   terms: pageMeta({
     path: "/terms",
@@ -114,19 +114,19 @@ export const publicPageMeta = {
     path: "/case-studies",
     title: "Saabai Case Studies | Gold Coast AI Results",
     description:
-      "Real results from Saabai, a Gold Coast AI business, including AI agents that answer enquiries and quote around the clock. Start with a Blueprint from $497.",
+      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions and prices cut-to-size jobs.",
   }),
   rexCase: pageMeta({
-    path: "/case-studies/rex-plastics-online",
+    path: "/case-studies/national-plastics-supplier",
     title: "Rex Case Study | AI Sales Agent | Saabai",
     description:
-      "How a national plastics supplier used Rex, an AI sales agent built by Saabai on the Gold Coast. The team recovered 60% of the sales day, with 344 leads in 30 days.",
+      "A custom AI sales agent Saabai built on the Gold Coast for a national plastics supplier, whose name is withheld. It answers product questions and prices cut-to-size jobs from that supplier's catalogue.",
   }),
   process: pageMeta({
     path: "/process",
     title: "Saabai AI Process | Gold Coast",
     description:
-      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Most small businesses have a first automation live within 2 to 4 weeks.",
+      "Saabai's process on the Gold Coast runs from a Blueprint to a live automation. Simple automations can go live in one to two weeks, and more complex workflows typically take four to six weeks.",
   }),
   insights: pageMeta({
     path: "/insights",
@@ -139,13 +139,13 @@ export const publicPageMeta = {
     path: "/use-cases",
     title: "AI Use Cases for Small Business | Saabai, Gold Coast",
     description:
-      "Practical AI and automation examples for Australian small businesses, from Saabai on the Gold Coast, including enquiry agents, quoting, follow-up and admin. Blueprint audits start from $497.",
+      "Practical AI and automation examples for Australian small businesses, from Saabai on the Gold Coast. Chatbots answer at any hour, quoting and reminders are custom work, and Blueprint audits start from $497.",
   }),
   leadgen: pageMeta({
     path: "/leadgen",
     title: "Saabai LeadGen | AI Lead Capture, Gold Coast",
     description:
-      "Saabai LeadGen turns website visitors into booked jobs for Australian service businesses, and alerts you by email, SMS or WhatsApp. Built on the Gold Coast.",
+      "Saabai LeadGen is an AI lead capture widget for Australian service businesses on the Gold Coast. It can collect a name and phone at any hour.",
   }),
   calculator: pageMeta({
     path: "/calculator",

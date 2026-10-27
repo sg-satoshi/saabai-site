@@ -15,12 +15,25 @@ const GREETING =
 const STARTERS: { label: string; text: string }[] = [
   { label: "New client enquiry", text: "I have a new client enquiry." },
   { label: "What does a will cost?", text: "What does a will cost?" },
-  { label: "Book a consult", text: "I would like to book a consult." },
+  { label: "Book a demo", text: "I would like to book a demo of Lex." },
   { label: "After-hours enquiry", text: "It is after hours. Can someone help me?" },
 ];
 
 const TROUBLE =
   "Lex is having trouble responding. Please try again, or use the button below to talk to Saabai.";
+
+/** Decorative mark. The name Lex is already visible text, so the image has no alt. */
+function LexMark({ size }: { size: 36 | 26 }) {
+  const src2x = size === 36 ? "/brand/lex/lex-avatar-72.webp" : "/brand/lex/lex-avatar-52.webp";
+  const src3x = size === 36 ? "/brand/lex/lex-avatar-108.webp" : "/brand/lex/lex-avatar-78.webp";
+  return (
+    <span className={size === 36 ? "lx-chat-mark" : "lx-chat-mark lx-chat-mark-sm"} aria-hidden="true">
+      {/* Exact WebP cuts. next/image would rebuild a srcSet, and these sizes are already final. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src2x} srcSet={`${src2x} 2x, ${src3x} 3x`} width={size} height={size} alt="" aria-hidden="true" />
+    </span>
+  );
+}
 
 export default function LexDemoPanel() {
   const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: GREETING }]);
@@ -126,7 +139,7 @@ export default function LexDemoPanel() {
   return (
     <div className="lx-chat">
       <div className="lx-chat-bar">
-        <span className="lx-chat-mark" aria-hidden="true">L</span>
+        <LexMark size={36} />
         <span className="lx-chat-who">
           <strong>Lex</strong>
           <span>Harbour Street Legal · Example firm</span>
@@ -137,13 +150,13 @@ export default function LexDemoPanel() {
       <div className="lx-chat-log" ref={logRef} role="log" aria-live="polite" aria-relevant="additions">
         {messages.map((msg, i) => (
           <div key={i} className={msg.role === "user" ? "lx-chat-row lx-chat-me" : "lx-chat-row"}>
-            {msg.role === "assistant" && <span className="lx-chat-mark lx-chat-mark-sm" aria-hidden="true">L</span>}
+            {msg.role === "assistant" && <LexMark size={26} />}
             <p className={msg.role === "user" ? "lx-bubble lx-bubble-me" : "lx-bubble"}>{msg.content}</p>
           </div>
         ))}
         {loading && messages[messages.length - 1]?.role === "user" && (
           <div className="lx-chat-row">
-            <span className="lx-chat-mark lx-chat-mark-sm" aria-hidden="true">L</span>
+            <LexMark size={26} />
             <p className="lx-bubble lx-typing" aria-label="Lex is replying"><i /><i /><i /></p>
           </div>
         )}

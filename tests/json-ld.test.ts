@@ -246,7 +246,9 @@ test("about page publishes AboutPage, Person and Organization JSON-LD", () => {
   const page = readFileSync("app/about/page.tsx", "utf8");
   assert.match(page, /aboutPageSchema/);
   assert.match(page, /<h1[\s\S]*About Saabai/);
-  assert.match(page, /We usually reply within 2 business days\./);
+  assert.match(page, /We usually reply within 1 business day\./);
+  assert.doesNotMatch(page, /2 business days/);
+  assert.doesNotMatch(page, /home-based/i);
   assert.match(page, /href="\/pricing"/);
   assert.match(page, /href="\/websites"/);
   assert.match(page, /href="\/legal"/);
