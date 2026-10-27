@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { LexAnswerMeta } from "../../../lib/lex-sources";
 import { pinpointLabel } from "../../../lib/lex-sources";
 import { authorityBadge, citedSources, copyCiteText, sourceGroup, STATUS_TEXT, type SourceGroup } from "../../../lib/lex-cite-display";
+import { OALC_SOURCE_PANEL } from "../../../lib/oalc-disclosure";
 import { Icon } from "./icons";
 
 const GROUPS: [SourceGroup | "all", string][] = [["all", "All"], ["cases", "Cases"], ["legislation", "Legislation"], ["ato", "ATO"], ["other", "Other"]];
@@ -96,6 +97,12 @@ export function SourcesPanel({ meta, selected, onSelect, onClose }: {
             ))}
           </>
         )}
+        <div className="lx-snapshot">
+          <div className="lx-sec-h">Licensed case-law snapshot</div>
+          {OALC_SOURCE_PANEL.map((p) => (
+            <p key={p.title}><b>{p.title}.</b> {p.body}</p>
+          ))}
+        </div>
       </div>
     </aside>
   );

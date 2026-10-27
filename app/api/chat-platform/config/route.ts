@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getSiteBySlug } from "@/lib/site-registry";
 import { SLUG_RE } from "@/lib/chat-origin";
 import { toPublicConfig } from "@/lib/chatbot/core";
+import { domainsForBot } from "@/lib/chatbot/personas";
 import { getConfig, isEnabled } from "@/lib/chatbot/store";
 import { cors, originDecision, optionsResponse } from "@/lib/chatbot/handler";
 
@@ -24,11 +25,11 @@ export async function GET(req: NextRequest) {
   try {
     const site = await getSiteBySlug(slug);
     if (!site) return Response.json(INACTIVE, { headers: h });
-    if ((await originDecision(req, slug, site.domains)) === "block") return Response.json(INACTIVE, { headers: { ...h, "Cache-Control": "no-store" } });
+    if ((await originDecision(req, slug, domainsForBot(slug, site.domains))) === "block") return Response.json(INACTIVE, { headers: { ...h, "Cache-Control": "no-store" } });
     const hit = cache.get(slug);
     if (hit && Date.now() - hit.at < TTL) return Response.json(hit.body, { headers: h });
     const [active, config] = await Promise.all([isEnabled(slug, site.chatbot?.enabled), getConfig(slug)]);
-    const body = toPublicConfig({ active, config, site });
+    const body = toPublicConfig({ slug, active, config, site });
     cache.set(slug, { at: Date.now(), body });
     return Response.json(body, { headers: h });
   } catch (e) {

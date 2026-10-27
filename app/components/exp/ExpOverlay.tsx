@@ -5,6 +5,7 @@ import { CLICK_KINDS, IMAGE_PATH_RE } from "@/lib/exp/core";
 import { OV_COOKIE, decodeOverlay, fingerprint, pageKey, type OvItem } from "@/lib/exp/overlay";
 import { findTarget, sigOf } from "@/lib/exp/overlay-dom";
 import { captureOrig, previewInto } from "@/lib/exp/editor-dom";
+import { qualifyHoursClaim } from "@/lib/exp/seed";
 import { showsSaabaiChrome } from "@/lib/client-site-surface";
 import ExpBeacon from "./ExpBeacon";
 
@@ -31,7 +32,8 @@ export default function ExpOverlay() {
         const el = findTarget(document, it);
         if (!el) continue;
         const orig = captureOrig(el);
-        const want = it.x === undefined ? null : { text: it.x, emphasis: it.e };
+        const raw = it.x === undefined ? null : { text: it.x, emphasis: it.e };
+        const want = raw && it.k === "headline" ? qualifyHoursClaim(raw.text, raw.emphasis) : raw;
         if (it.k === "image" && want && !IMAGE_PATH_RE.test(want.text)) continue;
         const apply = () => { previewInto(el, orig, it.k, want); };
         const before = sigOf(el);

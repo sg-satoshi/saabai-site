@@ -18,6 +18,7 @@ import {
   canonicalDomainsFromHostMap,
   canonicalHostForSlug,
   clientSiteRequestDecision,
+  apexWwwRedirect,
   isAdminSitePreview,
   isSaabaiProductionHost,
   parseSitesPath,
@@ -76,6 +77,7 @@ const PUBLIC_API = [
   "/api/site-factory-chat",  // generic Site Factory widget (Wholesale Homes etc.)
   "/api/chat-platform/message", // central chatbot platform (origin, limits and on/off inside)
   "/api/chat-platform/config",  // public widget config (read-only, no secrets)
+  "/api/chat-platform/event",   // handoff click counter (no lead post, no client notify)
   "/api/legal-demo",            // public /legal demo, fictional firm, no lead capture; origin and limits inside
   "/api/bo-contact",
   "/api/lmm-contact",
@@ -85,6 +87,7 @@ const PUBLIC_API = [
   "/api/lex-leads",
   "/api/advisory-leads",
   "/api/leads",
+  "/api/ig/check",        // Instagram instant site check (GET crawl only, rate limited, no lead email)
   "/api/site-factory/lead",
   "/api/leadgen/lead",
   "/api/subscribe",
@@ -176,6 +179,7 @@ const CUSTOM_DOMAIN_PUBLIC_API = [
   "/api/site-factory-chat",
   "/api/chat-platform/message",
   "/api/chat-platform/config",
+  "/api/chat-platform/event",
 ];
 
 
@@ -267,6 +271,12 @@ async function apiAuthCheck(req: NextRequest, pathname: string): Promise<NextRes
 export async function proxy(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const hostname = host.split(":")[0];
+
+  // Apex saabai.ai → https://www.saabai.ai (same path and query). Exact host only:
+  // www, client domains, and *.vercel.app do not match, so this cannot loop.
+  // /api and /api/* are not redirected (MCP and webhooks on the apex).
+  const apex = apexWwwRedirect(hostname, req.nextUrl.pathname, req.nextUrl.search);
+  if (apex) return NextResponse.redirect(apex.location, apex.status);
 
   // Custom domain routing — rewrite to /sites/${slug}
   if (

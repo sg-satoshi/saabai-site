@@ -494,7 +494,8 @@ export type PublicTimer = { style: TimerStyle; endAt: string; endMode: EndMode; 
 export const toPublic = (a: Announcement, expId?: string, now: number = Date.now()): PublicAnnouncement => {
   const tm = a.timer, expired = !!tm && timerExpired(tm, now);
   const ended = expired && tm?.endMode === "message" && !!tm.endMessage;
-  const base = toPublicBase(ended && tm ? { ...a, message: sanitizeRich(tm.endMessage), linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a, expId);
+  const shown = ended && tm ? { ...a, message: sanitizeRich(tm.endMessage), linkText: tm.endLinkText ?? "", linkUrl: tm.endLinkUrl ?? "" } : a;
+  const base = toPublicBase(shown, expId);
   return tm ? { ...base, timer: { style: tm.style, endAt: tm.endAt, endMode: tm.endMode, ...(tm.endMessage ? { endMessage: sanitizeRich(tm.endMessage) } : {}), ...(tm.endLinkText ? { endLinkText: tm.endLinkText, endLinkUrl: tm.endLinkUrl } : {}), expired, serverNow: now } } : base;
 };
 const toPublicBase = (a: Announcement, expId?: string): PublicAnnouncement => ({

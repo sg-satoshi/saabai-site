@@ -3,6 +3,10 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import { publicPageMeta } from "@/lib/seo-pages";
+import JsonLd from "../components/JsonLd";
+import BreadcrumbLd from "../components/BreadcrumbLd";
+import { schemaGraph, serviceSchema, websitesServiceNode, SITE_URL } from "@/lib/seo-entity";
+import { TIERS, TIER_ORDER } from "@/lib/blueprint";
 
 export const metadata: Metadata = publicPageMeta.services;
 
@@ -36,7 +40,7 @@ const services: { title: string; description: string; benefits: string[]; href?:
   {
     title: "SEO & AI Search Visibility",
     price: "In every Blueprint",
-    href: "/blueprint",
+    href: "/seo-ai-search",
     description:
       "Where you rank in Google, and whether ChatGPT, Claude, Perplexity and Gemini actually recommend you, or your competitor down the road.",
     benefits: [
@@ -49,14 +53,14 @@ const services: { title: string; description: string; benefits: string[]; href?:
   {
     title: "AI Chat Agents & Automations",
     price: "Scoped from your Blueprint",
-    href: "/blueprint",
+    href: "/custom-ai-agents",
     description:
-      "Custom AI agents on your website that answer, quote and book around the clock, plus automations that take the follow-up, reminders and data entry off your plate.",
+      "Custom AI agents on your website that answer questions at any hour. Quoting, booking and reminders are scoped and quoted. Booking on a website plan is Growth and Signature only.",
     benefits: [
-      "Trained on your services, prices and FAQs",
-      "Captures and qualifies every lead",
-      "Follow-up, reminders and CRM handoff",
-      "Scoped from your Blueprint, no surprise invoices",
+      "Trained on your services and FAQs",
+      "Captures the conversation",
+      "Follow-up and reminders are quoted separately",
+      "Quoted before we start",
     ],
   },
 ];
@@ -84,32 +88,30 @@ const steps = [
   },
 ];
 
-const results = [
-  {
-    stat: "90s",
-    label: "Enquiry response",
-    detail: "Every enquiry answered within 90 seconds, day or night, for a Brisbane law firm. Previously 2 to 14 hours.",
-  },
-  {
-    stat: "12 hrs",
-    label: "Recovered per week",
-    detail: "Intake admin taken off the same team's plate each week by one AI agent.",
-  },
-  {
-    stat: "40%",
-    label: "Enquiries resolved by AI",
-    detail: "Share of a national supplier's inbound enquiries fully handled without staff, with instant quotes.",
-  },
-  {
-    stat: "3 wks",
-    label: "Kickoff to live",
-    detail: "Typical time from kickoff to an AI agent handling real customers. See the case studies.",
-  },
-];
+
+const servicesSchema = schemaGraph([
+  websitesServiceNode,
+  serviceSchema({
+    id: `${SITE_URL}/blueprint#service`,
+    name: "Saabai Blueprint AI audit",
+    serviceType: "AI audit",
+    description: "A ranked AI plan. Starter, Pro and Business prices are the ones published on the Blueprint page.",
+    url: `${SITE_URL}/blueprint`,
+    offers: TIER_ORDER.map((id) => ({
+      "@type": "Offer",
+      name: `Blueprint ${TIERS[id].name}`,
+      price: String(TIERS[id].price),
+      priceCurrency: "AUD",
+      url: `${SITE_URL}/blueprint`,
+    })),
+  }),
+]);
 
 export default function Services() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={servicesSchema} />
+      <BreadcrumbLd name="Services" path="/services" />
 
       <Nav activePage="/services" />
 
@@ -147,7 +149,8 @@ export default function Services() {
           (<strong>Starter $497</strong>, <strong>Pro $1,497</strong>,{" "}
           <strong>Business $3,500</strong>) with SEO and AI search visibility, and
           custom AI agents and automations. Start free with the{" "}
-          <a href="/score">AI score</a>.
+          <a href="/score">AI score</a>, or{" "}
+          <a href="/compare">compare Saabai with an agency or a DIY builder</a>.
         </InShort>
 
 
@@ -212,7 +215,7 @@ export default function Services() {
 
         <div className="mt-6 flex flex-col md:flex-row md:items-center gap-6 md:gap-8 rounded-2xl border border-saabai-border-accent bg-saabai-surface p-7 md:px-10 md:py-9 shadow-[0_0_40px_var(--saabai-glow-mid)]" style={{ background: "radial-gradient(ellipse 60% 120% at 100% 0%, rgba(98,197,209,.16), transparent 60%), var(--saabai-surface)" }}>
           <div className="flex-1">
-            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 5 MIN</span>
+            <span className="inline-block font-[family-name:var(--font-geist-mono)] text-[11px] font-semibold tracking-[0.12em] bg-saabai-teal text-saabai-bg px-2.5 py-1 rounded-full">FREE · 3 MIN</span>
             <h3 className="text-[22px] font-semibold tracking-tight mt-2 mb-2">Not sure where to start? Take the free AI score.</h3>
             <p className="text-base text-saabai-text-muted leading-relaxed">
               A few quick questions and you&apos;ll get a score showing how ready your business is for AI, and which of the above is worth doing first. Takes a few minutes, costs nothing.
@@ -231,16 +234,17 @@ export default function Services() {
           Know exactly what to automate, before you spend a dollar building it.
         </h2>
         <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
-          Every Saabai engagement starts with a Saabai Blueprint, a fixed-price
-          plan that ranks your highest-ROI automation opportunities. Three tiers,
-          with the fee credited if you book a build within 30 days.
+          A Saabai Blueprint is optional. It is a fixed-price plan that ranks
+          automation opportunities. Website builds are also sold on their own.
+          Three tiers, with the fee credited if you book a build within 30 days
+          of delivery. The credit does not cover care plans.
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {[
-            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "a few days" },
-            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "3 business days", highlight: true },
-            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "2 to 3 weeks" },
+            { name: "Starter", staff: "Async fact-find, no call", price: "$497", duration: "Delivered within 48 hours" },
+            { name: "Pro", staff: "Includes walkthrough call", price: "$1,497", duration: "Delivered in 3 business days", highlight: true },
+            { name: "Business", staff: "Deep dive for larger teams", price: "$3,500", duration: "Delivered in 2 to 3 weeks" },
           ].map((t) => (
             <div
               key={t.name}
@@ -259,7 +263,7 @@ export default function Services() {
                 {t.price}
               </div>
               <p className="text-xs text-saabai-text-dim tracking-wide">
-                AUD · Delivered in {t.duration}
+                AUD · {t.duration}
               </p>
             </div>
           ))}
@@ -305,29 +309,19 @@ export default function Services() {
         </div>
       </section>
 
-      {/* ── Results ─────────────────────────────────────────────────────── */}
+      {/* ── Work ───────────────────────────────────────────────────────── */}
       <section className="py-32 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase text-center mb-5">
-          Results From Live Client Systems
+          Published work
         </p>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-20 max-w-2xl mx-auto leading-snug">
-          Time recovered. Costs reduced. Capacity unlocked.
+        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center mb-8 max-w-2xl mx-auto leading-snug">
+          Case study
         </h2>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden" style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 32px rgba(98,197,209,0.25)" }}>
-          {results.map(({ stat, label, detail }) => (
-            <div key={label} className="bg-saabai-surface p-10 relative h-full">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-              <div className="text-5xl font-semibold tracking-tight text-saabai-teal stat-glow mb-2">
-                {stat}
-              </div>
-              <div className="text-[11px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-5">
-                {label}
-              </div>
-              <p className="text-sm text-saabai-text-muted leading-relaxed">{detail}</p>
-            </div>
-          ))}
-        </div>
+        <p className="text-base text-saabai-text-muted text-center max-w-2xl mx-auto leading-relaxed">
+          A custom AI sales agent for a national plastics supplier. The name is withheld.
+          It answers product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.{" "}
+          <a href="/case-studies" className="text-saabai-teal font-semibold">See the case study.</a>
+        </p>
       </section>
 
       {/* ── Final CTA ───────────────────────────────────────────────────── */}

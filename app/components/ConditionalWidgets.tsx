@@ -25,7 +25,7 @@ const SUPPRESS_PATHS = [
 ];
 
 // Pages where the NewsTicker/Signal bar should be hidden
-const SUPPRESS_TICKER_PATHS = ["/for-law-firms", "/leadgen-widget"];
+const SUPPRESS_TICKER_PATHS = ["/leadgen-widget"];
 
 export default function ConditionalWidgets() {
   const pathname = usePathname();

@@ -75,5 +75,6 @@ test("client bots: shared handler, factory chat and widget template", async () =
   assert.ok(!/[\u2013\u2014]/.test(readFileSync("lib/chat-widget-template.ts", "utf8")));
   const { toPublicConfig } = await import("../lib/chatbot/core");
   const cfg = toPublicConfig({ active: true, config: { plan: "starter", skin: {} } as never, site: { name: "Acme", chatbot: { greeting: "G'day — how can I help?" } } });
-  assert.equal(cfg.greeting, "G'day, how can I help?");
+  assert.equal(cfg.greeting, "Hi, I'm Acme, an AI assistant for Acme. G'day, how can I help?");
+  assert.equal(cfg.greeting.toLowerCase().match(/ai assistant/g)?.length, 1);
 });

@@ -3,12 +3,14 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.caseStudies;
 
 export default function CaseStudies() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="Case studies" path="/case-studies" />
 
       <Nav />
 
@@ -32,19 +34,18 @@ export default function CaseStudies() {
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           Real results
           <br />
-          <span className="text-gradient">from real businesses.</span>
+          <span className="text-gradient">from a real business.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          These aren&apos;t projections. They&apos;re outcomes from businesses that deployed
-          Saabai AI agents and measured the difference, in hours recovered, leads
-          converted, and revenue captured after hours.
+          One published example: a custom AI sales agent on the Rex Plastics website.
         </p>
         <InShort>
-          Saabai, a Gold Coast AI business founded by Shane Goldberg, has an AI agent
-          live for a Brisbane tax law firm (enquiries answered in 90 seconds, 12
-          hours a week recovered). Most projects start with a{" "}
-          <a href="/blueprint">Saabai Blueprint from $497</a>.
+          Saabai, a Gold Coast AI business founded by Shane Goldberg, has a custom AI
+          sales agent live for Rex Plastics. It answers
+          product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.
+          A Blueprint is optional, from{" "}
+          <a href="/blueprint">the Starter Blueprint at $497</a>. Website care plans are sold on their own.
         </InShort>
 
 
@@ -53,116 +54,68 @@ export default function CaseStudies() {
         }} />
       </section>
 
-      {/* ── Case Study 1, Tributum Law ─────────────────────────────────── */}
+      {/* ── National Plastics Supplier ─────────────────────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
 
         {/* Header */}
         <div className="flex flex-wrap items-center gap-3 mb-12">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saabai-surface-raised border border-saabai-border text-[11px] font-medium tracking-[0.15em] text-saabai-teal uppercase">
-            Legal Services
+            Trade &amp; Retail Supply
           </span>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saabai-surface-raised border border-saabai-border text-[11px] font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-            AI Intake Agent
+            AI Sales Agent
           </span>
           <span className="ml-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saabai-surface border border-saabai-border text-[11px] font-semibold tracking-[0.12em] text-saabai-teal uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal inline-block" />
-            Live in 3 weeks
+            Custom build
           </span>
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          Tributum Law
+          <a href="/case-studies/rex-plastics-online">Rex Plastics</a>
         </h2>
+        <p className="mb-6">
+          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex Plastics case study</a>
+        </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
-          Specialist ATO dispute and tax law firm, Brisbane
+          Rex Plastics, a national plastics supplier, trade and retail
+          customers across Australia
         </p>
 
-        {/* Problem / Solution */}
-        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden mb-px">
+        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden">
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase">
-              The Problem
+              What it is
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
-              Enquiries going unanswered for 12+ hours
+              A custom agent, not a published plan
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                After-hours client enquiries sat untouched until the next business day,
-                a 2–14 hour window where stressed ATO dispute clients were left wondering
-                if anyone was there.
+                Rex is a custom AI sales agent on the supplier&apos;s website. It answers
+                product questions at any hour, prices cut-to-size jobs from that
+                supplier&apos;s own product data, and captures leads.
               </p>
               <p>
-                Fee earners were manually qualifying every initial enquiry before
-                deciding whether it was worth their time. Two paralegals were each
-                spending around 6 hours per week on intake coordination alone.
+                Leads are emailed to the sales team. This quoting setup was scoped
+                for this client. It is not included in the website care plans.
               </p>
             </div>
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase">
-              The Solution, &ldquo;Lex&rdquo;
+              Note
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
-              AI intake agent deployed across all channels
+              Quoted to the job
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                Saabai deployed &ldquo;Lex&rdquo;, an AI intake agent that handles all incoming
-                enquiries 24/7, qualifies the matter type, and captures key details
-                before a human is ever involved.
-              </p>
-              <p>
-                Urgent ATO dispute cases are routed immediately. Non-urgent matters
-                enter an automated follow-up sequence, ensuring nothing falls through
-                the cracks regardless of when it arrives.
+                This page describes what the agent does. Custom agents are quoted to the job.
               </p>
             </div>
           </div>
         </div>
-
-        {/* Results grid */}
-        <div
-          className="grid md:grid-cols-4 gap-px bg-saabai-border rounded-b-xl overflow-hidden mb-10"
-          style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 160px rgba(98,197,209,0.15)" }}
-        >
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">90s</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              100% of enquiries responded to within 90 seconds, previously 2–14 hours
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">12 hrs</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Per week recovered across the intake team, returned to billable work
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">3x</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Increase in qualified matters converted from first contact
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">3 wks</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              From kickoff to Lex handling live enquiries in production
-            </p>
-          </div>
-        </div>
-
-        {/* Quote */}
-        <blockquote className="bg-saabai-surface-raised border-l-2 border-saabai-teal rounded-r-xl px-10 py-8">
-          <p className="text-base italic text-saabai-text-muted leading-relaxed mb-5">
-            &ldquo;The clients calling about ATO disputes are stressed. They want to know
-            someone&apos;s there. Lex answers that in 90 seconds, any time of day. The
-            difference it&apos;s made to our conversion rate has been significant.&rdquo;
-          </p>
-          <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Principal, Tributum Law
-          </p>
-        </blockquote>
 
       </section>
 

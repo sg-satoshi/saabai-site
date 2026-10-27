@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { list } from "@vercel/blob";
 import { ensurePoweredBy } from "@/lib/client-site";
+import { readRepoClientHtml } from "@/lib/repo-client-html";
+import { lmmLegalDocument, type LmmLegalPage } from "@/lib/lmm-legal";
 import { resolveGeoProfile } from "@/lib/geo/profiles";
 import { llmsFullTxt, llmsTxt, robotsTxt, sitemapXml } from "@/lib/geo";
 import { ensureFavicon, findSiteFavicon, SAABAI_FAVICON } from "@/lib/site-favicon";
@@ -54,6 +56,17 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; page: string }> }
 ) {
   const { slug, page } = await params;
+
+  if (slug === "lmm-site" && (page === "privacy" || page === "complaints")) {
+    const html = ensurePoweredBy(slug, lmmLegalDocument(page as LmmLegalPage));
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, s-maxage=3600",
+      },
+    });
+  }
 
   // Favicon files — served as binary from blob
   const faviconMime = FAVICON_EXTS[page];
@@ -113,6 +126,18 @@ export async function GET(
   }
 
   try {
+    const repoHtml = readRepoClientHtml(slug, `${page}.html`);
+    if (repoHtml !== null) {
+      const html = ensurePoweredBy(slug, await ensureFavicon(slug, repoHtml));
+      return new Response(html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     const { blobs } = await list({ prefix: `sites/${slug}/${page}.html` });
     const blob = blobs.find((b) => b.pathname === `sites/${slug}/${page}.html`);
     if (!blob) return new Response("Page not found", { status: 404 });

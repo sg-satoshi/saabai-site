@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 import "../components/sb/sb.css";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -20,6 +21,7 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <BreadcrumbLd name="Contact" path="/contact" />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>
@@ -28,7 +30,7 @@ export default function ContactPage() {
           <span className="eyebrow">Saabai</span>
           <h1 style={{ marginTop: 16 }}>Contact</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
-            The best way to reach us is email. We reply within one business day.
+            The best way to reach us is email. We usually reply within 1 business day.
           </p>
 
           <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>

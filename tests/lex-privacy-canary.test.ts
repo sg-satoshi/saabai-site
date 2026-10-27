@@ -56,7 +56,12 @@ const usage = { input_tokens: 10, output_tokens: 5 };
 
 function anthropicReply(body: { stream?: boolean; tools?: Array<{ name: string }> }): Response {
   turn++;
-  const toolName = body.tools?.find((t) => t.name === "searchAustLII")?.name ?? body.tools?.find((t) => t.name !== "captureMatter" && t.name !== "readSource" && t.name !== "json")?.name;
+  // Drive an outbound search so result masking is exercised. checkCitation is a local
+  // index lookup and is not that search. AustLII tools are absent while the pause is on.
+  const toolName =
+    body.tools?.find((t) => t.name === "searchAustLII")?.name
+    ?? body.tools?.find((t) => t.name.startsWith("search"))?.name
+    ?? body.tools?.find((t) => t.name !== "captureMatter" && t.name !== "readSource" && t.name !== "json" && t.name !== "checkCitation")?.name;
   const useTool = turn === 1 && !!toolName;
   const text = "Advice for {{PERSON_1}} at {{COMPANY_1}}.";
   if (!body.stream) {

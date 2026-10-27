@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 const SLUG = "bo-consultancy";
 const STORAGE_KEY = "bo-consultancy-conversation";
@@ -45,13 +47,8 @@ function getText(msg: UIMessage): string {
 
 export default function BOChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<UIMessage[]>([
-    {
-      id: "init",
-      role: "assistant",
-      parts: [{ type: "text", text: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?" }],
-    },
-  ]);
+  useChatOpen("christina", isOpen);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatOff, setChatOff] = useState<string | null>(null);
@@ -59,21 +56,31 @@ export default function BOChatWidget() {
 
   useEffect(() => {
     let cancelled = false;
+    const stored = loadStored();
+    if (stored && stored.length > 1) {
+      Promise.resolve().then(() => {
+        if (!cancelled) setMessages(stored);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
     fetch(`/api/chat-platform/config?site=${SLUG}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((c: { active?: boolean; offMessage?: string } | null) => {
-        if (cancelled || !c || c.active !== false) return;
-        setChatOff(c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.");
+      .then((c: { active?: boolean; offMessage?: string; greeting?: string } | null) => {
+        if (cancelled || !c) return;
+        if (c.active === false) {
+          setChatOff(c.offMessage || "Our chat assistant is taking a break. Please call or email the team directly and they'll be happy to help.");
+          return;
+        }
+        if (c.greeting) {
+          setMessages([{ id: "init", role: "assistant", parts: [{ type: "text", text: c.greeting }] }]);
+        }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    const stored = loadStored();
-    if (stored && stored.length > 1) setMessages(stored);
   }, []);
 
   useEffect(() => {
@@ -84,6 +91,7 @@ export default function BOChatWidget() {
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
+    noteVisitorMessage("christina");
 
     const userMsg: UIMessage = { id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text }] };
     const newMessages = [...messages, userMsg];

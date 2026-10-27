@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { BO_SYSTEM_PROMPT } from "./chatbot/platform-bot-seed";
+import { BO_SYSTEM_PROMPT, CHRISTINA_GREETING } from "./chatbot/platform-bot-seed";
 import { CLIENT_SITE_DIRECTORY } from "./client-site-directory";
 
 const redis = Redis.fromEnv();
@@ -48,6 +48,8 @@ export interface SiteConfig {
     avatarUrl?: string;
   };
   domains?: string[];
+  /** Hostnames counted for this site in AI visitors. When set, they replace inferred domains. */
+  analyticsHosts?: string[];
   reviews?: {
     url: string;
     fetchedReviews: Array<{ name: string; rating: number; text: string; date?: string }>;
@@ -129,7 +131,7 @@ const APP_ROUTER_SITE_DETAILS: Array<Omit<SiteConfig, "url" | "domains">> = [
     chatbot: {
       enabled: true,
       name: "Christina",
-      greeting: "G'day! I'm Christina, the BO Consulting assistant. Whether you're looking to hire skilled workers or searching for your next role, I can help point you in the right direction. What can I do for you?",
+      greeting: CHRISTINA_GREETING,
       systemPrompt: BO_SYSTEM_PROMPT,
       avatarUrl: "/sites/bo-consultancy/christina-avatar.jpg",
     },

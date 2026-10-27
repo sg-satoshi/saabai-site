@@ -19,6 +19,8 @@
 
 ## Pages
 - [Home](https://www.lifestylemoneymanagement.com.au/)
+- [Privacy Policy](https://www.lifestylemoneymanagement.com.au/privacy)
+- [Complaints](https://www.lifestylemoneymanagement.com.au/complaints)
 - [Full details for AI assistants](https://www.lifestylemoneymanagement.com.au/llms-full.txt)
 
 ## About Nick Foale

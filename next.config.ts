@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // City-page redirects are for saabai.ai only; client sites on their own domains must not inherit them.
-const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com)" }];
+const CLIENT_HOST = [{ type: "host" as const, value: "(www\\.)?(stuscyclerepairs\\.com|boconsulting\\.com\\.au|wholesalehomes\\.com\\.au|lifestylemoneymanagement\\.com\\.au|tributumlaw\\.com|nicomoretti\\.au)" }];
 
 // Lex routes that run the open-source name model.
 const LEX_NER_ROUTES = ["/api/lex-chat", "/api/lex-research", "/api/lex-draft", "/api/lex-review", "/api/lex-compare", "/api/lex-extract", "/api/lex-threads", "/api/lex-settings", "/api/lex-ner-health"];
@@ -35,12 +35,20 @@ const nextConfig: NextConfig = {
   async headers() {
     const noindex = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
     const embed = [{ source: "/embed/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=300, stale-while-revalidate=86400" }] }];
-    return embed.concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal"].map(
+    return embed.concat(["/saabai-admin", "/saabai-admin/:path*", "/admin/:path*", "/login", "/login/:path*", "/dashboard/:path*", "/dashboard", "/client-portal", "/forgot-password", "/insights", "/ai-news", "/ig"].map(
       (source) => ({ source, headers: noindex })
     ));
   },
   async redirects() {
     return [
+      // Bare apex only. The host check is anchored, so www and client domains do not match.
+      // /api and /api/* stay on the apex (MCP clients and webhooks). Other paths 308 to www.
+      {
+        source: "/:path((?!api(?:/|$)).*)",
+        has: [{ type: "host", value: "saabai.ai" }],
+        destination: "https://www.saabai.ai/:path*",
+        permanent: true,
+      },
       { source: "/counsel", destination: "/blueprint", statusCode: 301 },
       // Retired Oct 2026: advisory + law/accounting pages -> Blueprint; non-QLD city pages -> /websites
       { source: "/advisory", destination: "/blueprint", statusCode: 301 },

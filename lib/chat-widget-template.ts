@@ -14,6 +14,8 @@ export interface ChatWidgetConfig {
 // Generates a complete self-contained chat widget <script> block.
 // Zero external dependencies. It is safe to inline in any HTML file.
 export function buildChatWidget(cfg: ChatWidgetConfig): string {
+  // The baked greeting is not copied into the page. The widget loads it from shared config.
+  void cfg.greeting;
   // New one-line widget, behind the CHAT_WIDGET_V2 flag (off by default). Same call sites, same position in the page.
   if (process.env.CHAT_WIDGET_V2 === "1" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cfg.slug)) {
     const src = (cfg.apiBase ?? "https://www.saabai.ai") + "/embed/chat.v1.js";
@@ -60,7 +62,7 @@ var CFG={
   slug:${JSON.stringify(cfg.slug)},
   name:${JSON.stringify(cfg.botName)},
   initials:${JSON.stringify(initials)},
-  greeting:${JSON.stringify(cfg.greeting)},
+  configUrl:${JSON.stringify((cfg.apiBase ?? "https://www.saabai.ai") + "/api/chat-platform/config?site=" + cfg.slug)},
   primary:${JSON.stringify(cfg.primaryColor)},
   accent:${JSON.stringify(cfg.accentColor)},
   bg:${JSON.stringify(cfg.bgColor)},
@@ -69,6 +71,8 @@ var CFG={
   api:${JSON.stringify(api)},
   storageKey:${JSON.stringify("sf-chat:" + cfg.slug)}
 };
+CFG.greeting="";
+fetch(CFG.configUrl).then(function(r){return r.ok?r.json():null;}).then(function(c){if(c&&typeof c.greeting==="string")CFG.greeting=c.greeting;}).catch(function(){});
 var msgs=[],isOpen=false,isTyping=false;
 try{var saved=localStorage.getItem(CFG.storageKey);if(saved)msgs=JSON.parse(saved);}catch(e){}
 function save(){try{localStorage.setItem(CFG.storageKey,JSON.stringify(msgs.slice(-40)));}catch(e){}}

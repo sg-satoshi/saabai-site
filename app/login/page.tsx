@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionToken, COOKIE_NAME } from "../../lib/auth";
 import LoginForm from "./LoginForm";
 import { safeRedirect } from "../../lib/safe-redirect";
 
-export const metadata = { title: "Client Portal, Saabai" };
+export const metadata: Metadata = {
+  title: "Client Portal, Saabai",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
+  // Root layout points canonical and og:url at the homepage. This page is noindex, so both point at /login.
+  alternates: { canonical: "/login" },
+  openGraph: { url: "/login", title: "Client Portal, Saabai" },
+  twitter: { card: "summary", title: "Client Portal, Saabai" },
+};
 
 export default async function LoginPage({
   searchParams,

@@ -6,6 +6,7 @@ import AnnouncementView from "./AnnouncementView";
 import { hidesAnnouncement } from "@/lib/focused-paths";
 import { showsSaabaiChrome } from "@/lib/client-site-surface";
 import { countShown, EMPTY_STATE, pickAnnouncement, type PublicAnnouncement, type VisitorState } from "@/lib/announce/core";
+import { interruptBlocked, lachieHoldsPage, subscribeConversationActivity } from "@/lib/conversation-activity";
 
 const OWNED_HOST = /^(?:www\.)?saabai\.ai$|\.vercel\.app$|^localhost$|^127(?:\.\d+){3}$/i;
 const storeKey = (a: { id: string; version: number }) => `sb_ann_${a.id}_v${a.version}`;
@@ -100,15 +101,41 @@ export default function AnnouncementBar() {
     if (!ann) return;
     if (ann.layout !== "card") { setShow(true); return; }
     // Card: after a delay or scroll depth, never on first paint.
+    // A live conversation holds it. Once Lachie has started, the card stays off for this page view.
     let done = false;
-    const go = () => { if (!done) { done = true; setShow(true); cleanup(); } };
-    const t = ann.delaySec > 0 ? window.setTimeout(go, ann.delaySec * 1000) : undefined;
+    let triggered = false;
+    let shown = false;
+    let unsub = () => {};
+    const tryShow = () => {
+      if (done || shown) return;
+      if (lachieHoldsPage()) { done = true; cleanup(); return; }
+      if (!triggered || interruptBlocked()) return;
+      shown = true;
+      setShow(true);
+      cleanup();
+    };
+    const arm = () => { triggered = true; tryShow(); };
+    const t = ann.delaySec > 0 ? window.setTimeout(arm, ann.delaySec * 1000) : undefined;
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (ann.scrollPct > 0 && max > 0 && (window.scrollY / max) * 100 >= ann.scrollPct) go();
+      if (ann.scrollPct > 0 && max > 0 && (window.scrollY / max) * 100 >= ann.scrollPct) arm();
     };
     if (ann.scrollPct > 0) window.addEventListener("scroll", onScroll, { passive: true });
-    const cleanup = () => { if (t) clearTimeout(t); window.removeEventListener("scroll", onScroll); };
+    unsub = subscribeConversationActivity(() => {
+      if (shown && interruptBlocked()) {
+        setShow(false);
+        shown = false;
+        done = true;
+        cleanup();
+        return;
+      }
+      tryShow();
+    });
+    function cleanup() {
+      if (t) clearTimeout(t);
+      window.removeEventListener("scroll", onScroll);
+      unsub();
+    }
     return cleanup;
   }, [annKey, path]); // eslint-disable-line react-hooks/exhaustive-deps
 

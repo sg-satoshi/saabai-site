@@ -40,6 +40,8 @@ import {
   verifySection,
   type LegalSearchResponse,
 } from "../../../lib/lex-tools";
+import { checkCitation, type CitationCheck } from "../../../lib/oalc-citations";
+import { CHECK_CITATION_DESCRIPTION, SEARCH_AUSTLII_DESCRIPTION, SEARCH_CORPORATIONS_DESCRIPTION, SEARCH_FAMILY_LAW_DESCRIPTION } from "../../../lib/oalc-disclosure";
 import {
   getDocumentType,
   type DocumentType,
@@ -175,7 +177,7 @@ ${warnings}
 SUGGESTED SEARCH TERMS (use these with the available search tools):
 ${searchTerms}
 
-MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation, and searchAustLII and/or searchFamilyLaw/searchCorporationsLaw where available, as appropriate. Confirm the key section numbers. Only then begin the draft.`;
+MANDATORY FIRST STEP: Before drafting a single clause, search for the governing legislation using searchLegislation and verifySection. Case citations in the licensed snapshot (NSW Caselaw, Federal Court and High Court, cutoff 10 March 2025) are checked with checkCitation, which returns a citation, court, date and link, not judgment text. Family Court decisions are not in that snapshot. Do not treat searchAustLII, searchFamilyLaw or searchCorporationsLaw as a complete set of Australian courts.`;
 }
 
 // ── POST handler ──────────────────────────────────────────────────────────────
@@ -315,10 +317,20 @@ export async function POST(req: Request) {
       experimental_transform: [dropNarrationTransform(), noDashesTransform()],
       tools: withoutAustliiTools({
 
+        checkCitation: tool<{ citation: string }, CitationCheck>({
+          description: CHECK_CITATION_DESCRIPTION,
+          inputSchema: jsonSchema<{ citation: string }>({
+            type: "object",
+            properties: {
+              citation: { type: "string", description: "One case citation or an Act title. Example: [2024] FCA 100" },
+            },
+            required: ["citation"],
+          }),
+          execute: async ({ citation }) => checkCitation(citation),
+        }),
+
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
-          description:
-            "Search AustLII for Australian case law, tribunal decisions, and legislation summaries. " +
-            "Use BEFORE drafting to find governing cases and confirm legal principles.",
+          description: SEARCH_AUSTLII_DESCRIPTION,
           inputSchema: jsonSchema<AustLIIInput>({
             type: "object",
             properties: {
@@ -328,7 +340,7 @@ export async function POST(req: Request) {
               },
               jurisdiction: {
                 type: "string",
-                description: "Optional court filter: HCA, FCA, NSWSC, VSC, QSC, WASC",
+                description: "Optional extra words added to the query. Not a filter over every Australian court.",
               },
             },
             required: ["query"],
@@ -372,9 +384,7 @@ export async function POST(req: Request) {
         }),
 
         searchFamilyLaw: tool<SimpleQueryInput, LegalSearchResponse>({
-          description:
-            "Search Family Law Act 1975, Federal Circuit and Family Court decisions, and family law case law. " +
-            "Use for BFAs, property settlements, parenting, spousal maintenance, de facto relationships.",
+          description: SEARCH_FAMILY_LAW_DESCRIPTION,
           inputSchema: jsonSchema<SimpleQueryInput>({
             type: "object",
             properties: {
@@ -389,9 +399,7 @@ export async function POST(req: Request) {
         }),
 
         searchCorporationsLaw: tool<SimpleQueryInput, LegalSearchResponse>({
-          description:
-            "Search Corporations Act 2001 case law on AustLII. Use for director duties, share transfers, " +
-            "managed investment schemes, oppression remedy, company constitution.",
+          description: SEARCH_CORPORATIONS_DESCRIPTION,
           inputSchema: jsonSchema<SimpleQueryInput>({
             type: "object",
             properties: {
@@ -487,9 +495,19 @@ async function runQAPass(
       system: QA_SYSTEM_PROMPT,
       messages: [{ role: "user", content: qaUserPrompt }],
       tools: withoutAustliiTools({
+        checkCitation: tool<{ citation: string }, CitationCheck>({
+          description: CHECK_CITATION_DESCRIPTION,
+          inputSchema: jsonSchema<{ citation: string }>({
+            type: "object",
+            properties: {
+              citation: { type: "string", description: "The case citation or Act title to check" },
+            },
+            required: ["citation"],
+          }),
+          execute: async ({ citation }) => checkCitation(citation),
+        }),
         searchAustLII: tool<AustLIIInput, LegalSearchResponse>({
-          description:
-            "Search AustLII to verify whether a legal proposition or case citation in the draft is accurate.",
+          description: SEARCH_AUSTLII_DESCRIPTION,
           inputSchema: jsonSchema<AustLIIInput>({
             type: "object",
             properties: {

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { noteVisitorMessage, postConversationToParent, setChatOpen } from "@/lib/conversation-activity";
 
 // ── Brand colours ──────────────────────────────────────────────────────────────
 const C = {
@@ -44,6 +45,13 @@ function WidgetInner() {
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // This document is the chat. Hold its own exit popup for the whole view,
+  // and tell the parent page while the visitor is actually in the demo.
+  useEffect(() => {
+    setChatOpen("leadgen", true);
+    return () => setChatOpen("leadgen", false);
+  }, []);
+
   // Auto scroll to bottom
   useEffect(() => {
     if (containerRef.current) {
@@ -58,6 +66,8 @@ function WidgetInner() {
   ];
 
   async function sendMessage(text: string) {
+    noteVisitorMessage("leadgen");
+    postConversationToParent({ id: "leadgen", message: true });
     const userMsg: Message = { role: "user", content: text };
     const updated = [...messages, userMsg];
     setMessages(updated);
@@ -184,6 +194,8 @@ function WidgetInner() {
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
+          onFocus={() => postConversationToParent({ id: "leadgen", open: true })}
+          onBlur={() => postConversationToParent({ id: "leadgen", open: false })}
           onKeyDown={handleKeyDown}
           placeholder="Ask a plumbing question..."
           disabled={loading}
