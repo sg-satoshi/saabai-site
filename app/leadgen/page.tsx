@@ -35,7 +35,7 @@ const FEATURES = [
   },
   {
     title: "Grows Your Business",
-    desc: "More leads captured means more jobs booked. Our clients see 2-3x more lead capture vs contact forms alone.",
+    desc: "More leads captured means more jobs booked. Capture more leads than a contact form alone.",
     icon: "📈",
   },
 ];

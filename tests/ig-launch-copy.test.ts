@@ -41,6 +41,15 @@ test("pricing includes the website chatbot and keeps Lachie phone answering as c
   assert.ok(!/[\u2012-\u2015]/.test(pricing));
 });
 
+test("homepage does not claim every chatbot emails, and LeadGen has no 2-3x figure", () => {
+  const home = read("app/page.tsx");
+  const leadgen = read("app/leadgen/page.tsx");
+  assert.match(home, /The website chatbot does not send enquiry emails yet\./);
+  assert.doesNotMatch(home, /Every Saabai chatbot sends new enquiry alerts by email on all plans/);
+  assert.match(leadgen, /Capture more leads than a contact form alone\./);
+  assert.doesNotMatch(leadgen, /2-3x|2–3x/);
+});
+
 test("the legal phone demo is labelled as Lachie, and Lex stays the legal assistant", () => {
   const page = read("app/legal/page.tsx");
   const demos = read("app/components/legal-demos/HarbourDemos.tsx");

@@ -200,7 +200,7 @@ export default function Home() {
           <div className="card">
             <h2>Enquiry alerts</h2>
             <div style={{ display: "grid", gap: 14, marginTop: 16, maxWidth: 900, fontSize: 17 }}>
-              <p>Every Saabai chatbot sends new enquiry alerts by email on all plans.</p>
+              <p>The website chatbot does not send enquiry emails yet.</p>
               <p>If you would rather hear about leads on your phone, we can also send alerts to Telegram, WhatsApp or SMS.</p>
               <p>You choose where each enquiry goes, so the right person sees it quickly and can follow up while the customer is still keen.</p>
             </div>
