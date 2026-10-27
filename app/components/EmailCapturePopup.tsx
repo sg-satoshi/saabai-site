@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { gaEvent } from "@/lib/ga";
 import { isFocusedFormPath } from "@/lib/focused-paths";
 import { showsSaabaiChrome } from "@/lib/client-site-surface";
+import {
+  installConversationBridge,
+  interruptBlocked,
+  isExitIntentLeave,
+  subscribeConversationActivity,
+} from "@/lib/conversation-activity";
 
 const COOKIE_KEY = "saabai_subscribed";
 const SKIP_PATHS = ["/login", "/lex", "/saabai-admin", "/rex-dashboard", "/rex-analytics", "/rex-changelog", "/rex-widget", "/lex-widget", "/plon", "/mission-control", "/onboarding"];
@@ -26,26 +32,49 @@ export default function EmailCapturePopup() {
   const [industry, setIndustry] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
 
-  const show = useCallback(() => {
-    if (hasCookie(COOKIE_KEY)) return;
+  // True means the attempt is finished (shown, or this page should not show it).
+  // False means a conversation hold blocked it and the timer may try again.
+  const show = useCallback((): boolean => {
+    if (hasCookie(COOKIE_KEY)) return true;
+    if (interruptBlocked()) return false;
     const path = window.location.pathname;
-    if (!showsSaabaiChrome(window.location.hostname, path)) return;
-    if (SKIP_PATHS.some(p => path.startsWith(p)) || isFocusedFormPath(path)) return;
+    if (!showsSaabaiChrome(window.location.hostname, path)) return true;
+    if (SKIP_PATHS.some(p => path.startsWith(p)) || isFocusedFormPath(path)) return true;
     setVisible(true);
+    return true;
   }, []);
 
+  const timerPending = useRef(false);
+
+  useEffect(() => installConversationBridge(), []);
+
   useEffect(() => {
-    // Exit intent, mouse leaves viewport from the top
+    // Exit intent: pointer leaves through the top. Mic prompts and tab switches
+    // also fire mouseleave, but the document is hidden or unfocused, so they are ignored.
     function onMouseLeave(e: MouseEvent) {
-      if (e.clientY <= 0) show();
+      if (!isExitIntentLeave(e, document)) return;
+      show();
     }
-    // Time-based fallback, 35 seconds
-    const timer = setTimeout(show, 35000);
+    // Time-based fallback, 35 seconds. If a conversation is in the way, wait until it clears.
+    // A Lachie attempt locks the page, so that wait never opens the popup.
+    const timer = window.setTimeout(() => {
+      timerPending.current = true;
+      if (show()) timerPending.current = false;
+    }, 35000);
+
+    const unsub = subscribeConversationActivity(() => {
+      if (interruptBlocked()) {
+        setVisible(false);
+        return;
+      }
+      if (timerPending.current && show()) timerPending.current = false;
+    });
 
     document.addEventListener("mouseleave", onMouseLeave);
     return () => {
       document.removeEventListener("mouseleave", onMouseLeave);
-      clearTimeout(timer);
+      window.clearTimeout(timer);
+      unsub();
     };
   }, [show]);
 

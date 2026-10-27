@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { UIMessage } from "ai";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 const STORAGE_KEY = "tributum-law-v2-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -45,6 +47,7 @@ function getText(msg: UIMessage): string {
 
 export default function TributumChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("mike", isOpen);
   const [messages, setMessages] = useState<UIMessage[]>([
     { id: "init", role: "assistant", parts: [{ type: "text", text: "Hello. I'm Mike, Tributum Law's AI assistant. I can help with questions about tax law, ATO disputes, trusts, estate planning — or get you connected with the team. How can I help?" }] },
   ]);
@@ -65,6 +68,7 @@ export default function TributumChatWidget() {
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
+    noteVisitorMessage("mike");
 
     const userMsg: UIMessage = { id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text }] };
     const newMessages = [...messages, userMsg];

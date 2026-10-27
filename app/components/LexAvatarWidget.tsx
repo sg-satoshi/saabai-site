@@ -7,6 +7,8 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "./useChatOpen";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -88,6 +90,7 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
   quickReplies?: string[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("lex-avatar", isOpen);
   const [pulsing, setPulsing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -168,6 +171,7 @@ export default function LexAvatarWidget({ clientId, firmName, quickReplies: pool
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
+    noteVisitorMessage("lex-avatar");
     setChips([]);
     const updated: ChatMessage[] = [...msgsRef.current, { role: "user", content: text.trim() }];
     msgsRef.current = updated;
