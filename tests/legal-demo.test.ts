@@ -50,9 +50,18 @@ test("the panel is inline on /legal with starters, the firm line and a contact C
   assert.match(demos, /This is what a chatbot on your firm&apos;s own website would look like/);
   assert.match(demos, /href="\/contact"/);
   assert.match(page, /href="#demo"/);
-  for (const label of ["New client enquiry", "What does a will cost?", "Book a consult", "After-hours enquiry"]) {
+  for (const label of ["New client enquiry", "What does a will cost?", "Book a demo", "After-hours enquiry"]) {
     assert.ok(panel.includes(label), label);
   }
+  assert.match(panel, /I would like to book a demo of Lex\./);
+  assert.doesNotMatch(panel, /book a consult/i);
+  assert.match(panel, /\/brand\/lex\/lex-avatar-72\.webp/);
+  assert.match(panel, /\/brand\/lex\/lex-avatar-108\.webp/);
+  assert.match(panel, /\/brand\/lex\/lex-avatar-52\.webp/);
+  assert.match(panel, /\/brand\/lex\/lex-avatar-78\.webp/);
+  assert.match(panel, /alt=""/);
+  assert.match(css, /\.lx-chat-mark\{[^}]*overflow:hidden/);
+  assert.doesNotMatch(css, /\.lx-chat-mark\{[^}]*linear-gradient/);
   assert.match(panel, /AI demo/);
   assert.match(panel, /Not legal advice/);
   assert.doesNotMatch(panel, /position:\s*["']fixed["']/);
@@ -145,6 +154,7 @@ test("prompt is a demo, refuses legal advice, and stays off the research gateway
   assert.match(LEX_DEMO_SYSTEM, /Australian English/);
   assert.match(LEX_DEMO_SYSTEM, /does not keep them/);
   assert.match(LEX_DEMO_SYSTEM, /Tuesday at 10am/);
+  assert.match(LEX_DEMO_SYSTEM, /demo of Lex, not a legal consultation/);
   assert.match(LEX_DEMO_SYSTEM, /demo booking/);
   assert.match(LEX_DEMO_SYSTEM, /Never say the time is confirmed/);
   assert.ok(DEMO_MAX_OUTPUT_TOKENS <= 200);
