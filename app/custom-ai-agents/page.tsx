@@ -16,14 +16,14 @@ const PATH = "/custom-ai-agents";
 const POINTS = [
   "Trained on your services, prices and FAQs",
   "Captures and qualifies leads",
-  "Follow-up, reminders and CRM handoff",
+  "Follow-up and reminders are quoted separately",
   "Scoped from your Blueprint, with the build quoted before it starts",
 ];
 
 const FAQS = [
   {
     q: "How much does a custom AI agent cost?",
-    a: `Book a call for a quote. Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter ${TIERS.starter.priceLabel}, Pro ${TIERS.pro.priceLabel} or Business ${TIERS.business.priceLabel}. The agent build is quoted after the Blueprint.`,
+    a: `Book a call for a quote. A custom agent is quoted to the job. A Blueprint is optional: Starter ${TIERS.starter.priceLabel}, Pro ${TIERS.pro.priceLabel} or Business ${TIERS.business.priceLabel}. Website care plans are sold on their own. If you book a build within 30 days of receiving a Blueprint, the fee comes off that build invoice. It does not come off care plans.`,
   },
   {
     q: "Is this the same as the chatbot on a website care plan?",

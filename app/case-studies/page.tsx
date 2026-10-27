@@ -38,14 +38,15 @@ export default function CaseStudies() {
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
-          A measured outcome from a business that deployed a Saabai AI agent:
-          hours recovered, quotes delivered, and enquiries handled after hours.
+          One published example: a custom AI sales agent on a national plastics
+          supplier&apos;s website. The client&apos;s name is withheld.
         </p>
         <InShort>
-          Saabai, a Gold Coast AI business founded by Shane Goldberg, has an AI agent
-          live for a national plastics supplier
-          (instant quotes, 40% of enquiries resolved without staff). Most projects start with a{" "}
-          <a href="/blueprint">Saabai Blueprint from $497</a>.
+          Saabai, a Gold Coast AI business founded by Shane Goldberg, has a custom AI
+          sales agent live for a national plastics supplier (name withheld). It answers
+          product questions and prices cut-to-size jobs from that supplier&apos;s catalogue.
+          A Blueprint is optional, from{" "}
+          <a href="/blueprint">the Starter Blueprint at $497</a>. Website care plans are sold on their own.
         </InShort>
 
 
@@ -67,107 +68,55 @@ export default function CaseStudies() {
           </span>
           <span className="ml-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saabai-surface border border-saabai-border text-[11px] font-semibold tracking-[0.12em] text-saabai-teal uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal inline-block" />
-            Live in 3 weeks
+            Custom build
           </span>
         </div>
 
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">
-          <a href="/case-studies/rex-plastics-online">National Plastics Supplier</a>
+          <a href="/case-studies/national-plastics-supplier">National Plastics Supplier</a>
         </h2>
         <p className="mb-6">
-          <a href="/case-studies/rex-plastics-online" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex case study</a>
+          <a href="/case-studies/national-plastics-supplier" className="text-saabai-teal font-semibold underline underline-offset-2">Read the Rex case study</a>
         </p>
         <p className="text-saabai-text-muted text-base mb-16 max-w-2xl leading-relaxed">
           Large national plastics supplier (name withheld on request), trade and retail
           customers across Australia
         </p>
 
-        {/* Problem / Solution */}
-        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden mb-px">
+        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden">
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase">
-              The Problem
+              What it is
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
-              60% of the sales day lost to repetitive quoting
+              A custom agent, not a published plan
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                The sales team was overwhelmed with repetitive product and pricing
-                enquiries. Customers waited hours for simple cut-to-size quotes.
-                After-hours enquiries were lost entirely.
+                Rex is a custom AI sales agent on the supplier&apos;s website. It answers
+                product questions at any hour, prices cut-to-size jobs from that
+                supplier&apos;s own product data, and captures leads.
               </p>
               <p>
-                More than 60% of the team&apos;s day was consumed by quote requests, leaving
-                no capacity to build relationships with trade accounts or focus on
-                higher-value sales activity.
+                Leads are emailed to the sales team. This quoting setup was scoped
+                for this client. It is not included in the website care plans.
               </p>
             </div>
           </div>
           <div className="bg-saabai-surface p-10 flex flex-col gap-5">
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-teal uppercase">
-              The Solution, &ldquo;Rex&rdquo;
+              Note
             </p>
             <h3 className="text-xl font-semibold tracking-tight">
-              AI sales agent embedded on the supplier&apos;s website
+              Quoted to the job
             </h3>
             <div className="flex flex-col gap-3 text-saabai-text-muted text-sm leading-relaxed">
               <p>
-                Saabai deployed &ldquo;Rex&rdquo;, an AI sales agent that handles product enquiries,
-                calculates cut-to-size pricing in real time, and captures leads directly
-                on the supplier&apos;s website.
-              </p>
-              <p>
-                Complex orders are handed off to the sales team with full context already
-                captured, no repeated questions, no manual re-entry. Rex runs 24/7,
-                so after-hours enquiries are quoted and captured automatically.
+                This page describes what the agent does. Custom agents are quoted to the job.
               </p>
             </div>
           </div>
         </div>
-
-        {/* Results grid */}
-        <div
-          className="grid md:grid-cols-4 gap-px bg-saabai-border rounded-b-xl overflow-hidden mb-10"
-          style={{ boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 160px rgba(98,197,209,0.15)" }}
-        >
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">Seconds</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Quotes delivered instantly, previously 2–4 hours per request
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">40%</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              Of inbound enquiries fully resolved without any team involvement
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">24/7</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              After-hours enquiries now captured and quoted automatically, zero lost
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-8 flex flex-col gap-3">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal">3 wks</p>
-            <p className="text-saabai-text-muted text-xs leading-relaxed">
-              From kickoff to Rex handling live product and pricing enquiries
-            </p>
-          </div>
-        </div>
-
-        {/* Quote */}
-        <blockquote className="bg-saabai-surface-raised border-l-2 border-saabai-teal rounded-r-xl px-10 py-8">
-          <p className="text-base italic text-saabai-text-muted leading-relaxed mb-5">
-            &ldquo;Rex handles the quoting work our team was doing manually all day. They&apos;re
-            actually selling now instead of answering the same questions. And the
-            after-hours enquiries, we were just losing those before.&rdquo;
-          </p>
-          <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-           , Operations Manager, National Plastics Supplier
-          </p>
-        </blockquote>
 
       </section>
 

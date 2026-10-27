@@ -42,7 +42,7 @@ const faqs = [
     items: [
       {
         q: "How much does it typically cost?",
-        a: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. Not sure where to start? The free AI Readiness Score takes a few minutes. See the Blueprint page for what is included at each tier.",
+        a: "A Saabai Blueprint is optional. It is a fixed-price plan: Starter $497, Pro $1,497 or Business $3,500. Website care plans are sold on their own, from $2,000 plus $100 a month. If you book a build within 30 days of receiving the Blueprint, the fee comes off that build invoice. The credit does not cover care plans or monthly fees. Custom work is quoted to the job. The free AI Readiness Score takes about 3 minutes. See the Blueprint page for what is included at each tier.",
       },
       {
         q: "How do we measure the ROI?",
@@ -54,11 +54,11 @@ const faqs = [
       },
       {
         q: "Is there ongoing cost after the initial build?",
-        a: "Yes, most automation systems have ongoing running costs (software subscriptions, API usage, hosting) and we offer optional monthly optimisation retainers to keep systems performing well. We'll give you a full picture of ongoing costs upfront so there are no surprises.",
+        a: "Yes. Most automation systems have ongoing running costs (software subscriptions, API usage, hosting). We also offer optional monthly optimisation retainers. We set out those ongoing costs before we start. Retainer prices are not published.",
       },
       {
         q: "What if I buy a Saabai Blueprint and decide it's not for me?",
-        a: "You have 7 days from purchase to cancel for a full refund, no questions asked, provided the discovery session hasn't started yet. Once the discovery session begins, the engagement is non-refundable. We don't pressure anyone into proceeding to a build after the Blueprint. If the Blueprint shows there's nothing high-impact worth automating, we'll tell you.",
+        a: "If we have not started your analysis, we will refund you in full. We do not pressure anyone into a build after the Blueprint. If the Blueprint shows there is nothing high-impact worth automating, we will tell you.",
       },
           ],
   },
@@ -90,15 +90,15 @@ const faqs = [
     items: [
       {
         q: "I run a trade or local service business. What does AI actually do for us?",
-        a: "Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.",
+        a: "Usually a website that answers enquiries and keeps a log of the chat after hours. Quoting from your own price list is custom work, scoped and quoted, not part of the website plans. Follow-up and invoice reminders are quoted separately. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497.",
       },
       {
         q: "We run a clinic, studio or salon. Where does it help most?",
-        a: "Bookings and enquiries. An AI agent on your site answers the same ten questions you get every day, takes booking requests after hours and sends reminders, so fewer no-shows and less time on the phone. Pair it with a care plan so your site stays fast and found.",
+        a: "Enquiries. An AI agent on your site can answer common questions at any hour and keeps a log of the chat. Booking is on Growth and Signature, not on every plan. Reminders are quoted separately, or they come from your own booking tool. Pair the chat with a care plan so your site stays fast and found.",
       },
       {
         q: "We run a real estate agency. Where does automation have the biggest impact?",
-        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to new enquiries within seconds, ask qualifying questions, and escalate serious buyers and sellers to your agents. Beyond that: inspection reminders, appraisal follow-up and listing update comms.",
+        a: "Lead qualification. An AI system can answer new enquiries at any hour, ask qualifying questions, and pass serious buyers and sellers to your agents. Inspection reminders, appraisal follow-up and listing updates are quoted separately.",
       },
       {
         q: "What about privacy and data security?",

@@ -62,7 +62,7 @@ const LEX_FAQS = [
   { q: "What documents can Lex draft?", a: "Ten document types: discretionary and unit trust deeds, BFAs for married and de facto couples, financial settlement consent orders, separation agreements, service agreements, shareholders agreements, employment contracts and commercial leases. You can also draft a custom document from your own instructions, and every draft gets a QA pass." },
   { q: "Does my client's information reach the AI model?", a: "Not in readable form. Names, business names, phone numbers, emails and ABNs or ACNs are swapped for placeholders before anything is sent, and the real details are put back only in the answer you see." },
   { q: "Can a firm switch the privacy masking off?", a: "No. Every Lex AI request goes through the same privacy checkpoint for every firm, including firms that use their own AI key, and if masking fails nothing is sent." },
-  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan, with no lock-in and cancel any time." },
+  { q: "How much does Lex cost?", a: "The Firm plan is $299 a month (AUD, GST not applicable) for 3 lawyer seats, unlimited research and 20 documents a month. Larger firms can ask about a custom Enterprise plan." },
   { q: "How do I get started?", a: "Book a free 30-minute demo. We will show you Lex on your own practice area, and if it suits your firm we set up your logins." },
 ];
 
@@ -306,7 +306,7 @@ export default function LegalPage() {
             <div className="lx-card"><Icon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3a14 14 0 0 1 0 18" /><h3>Built for Australian law</h3><p>Australian government sources first. Overseas material is only used for comparison.</p></div>
             <div className="lx-card"><Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" /><h3>QA on every draft</h3><p>Each clause is marked verified, flagged or unverified, with critical issues listed first. Case-law text is not checked.</p></div>
             <div className="lx-card"><Icon d="M4 6h16M4 12h16M4 18h10" /><h3>Saved to your login</h3><p>Research threads are tied to your own sign-in, so your history is there when you come back.</p></div>
-            <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>No lock-in</h3><p>Cancel anytime.</p></div>
+            <div className="lx-card"><Icon d="M12 3v18M3 12h18" /><h3>Book a demo</h3><p>We confirm billing with you before a firm starts.</p></div>
           </div>
         </div>
       </section>
@@ -335,7 +335,7 @@ export default function LegalPage() {
           <div className="lx-head lx-center">
             <div className="lx-eyebrow">Pricing</div>
             <h2>Simple, transparent pricing.</h2>
-            <p className="lx-lead">No surprises. No lock-in.</p>
+            <p className="lx-lead">Firm is $299 a month. Enterprise is custom.</p>
           </div>
           <div className="lx-plans">
             <div className="lx-plan lx-hi">
@@ -363,7 +363,7 @@ export default function LegalPage() {
           </div>
           <div className="lx-fine">
             <p>Prices in AUD. GST not applicable.</p>
-            <p>No lock-in. Cancel anytime.</p>
+            <p>We confirm billing with you before a firm starts.</p>
           </div>
         </div>
       </section>

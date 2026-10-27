@@ -87,19 +87,19 @@ export function accessRequestConfirmationEmail(opts: {
   }
   return renderBrandedEmail({
     subject: "We got your Saabai portal access request",
-    preheader: "Thanks. We will confirm access within one business day.",
+    preheader: "Thanks. We usually reply within 1 business day.",
     eyebrow: "Client Portal",
     title: "Request received",
     bodyHtml: [
       p(`Hi ${first},`),
-      p("Thanks for requesting Client Portal access. We will confirm within one business day. If your email matches an order, we often approve it sooner."),
+      p("Thanks for requesting Client Portal access. We usually reply within 1 business day. If your email matches an order, we often approve it sooner."),
       p("When you are in, sign in with your work email. Magic link, optional 6-digit code, zero password drama."),
     ].join(""),
     cta: { href: EMAIL_BRAND.portalUrl, label: "Go to sign in" },
     textBody: [
       `Hi ${firstName(opts.name)},`,
       "",
-      "Thanks for requesting Client Portal access. We will confirm within one business day.",
+      "Thanks for requesting Client Portal access. We usually reply within 1 business day.",
       "",
       `Sign in: ${EMAIL_BRAND.portalUrl}`,
     ],
@@ -182,12 +182,12 @@ export function blueprintOrderCustomerEmail(opts: {
       : { href: `mailto:${EMAIL_BRAND.supportEmail}`, label: "Email Shane" },
     footnote: opts.factFindUrl
       ? undefined
-      : "I will send your private fact-find link within one business day.",
+      : "We usually reply within 1 business day with your private fact-find link.",
     textBody: [
       `Hi ${firstName(opts.name)},`,
       "",
       `Thank you for your ${opts.tierName} Blueprint order (${opts.paidLabel}).`,
-      opts.factFindUrl ? `Start your fact-find: ${opts.factFindUrl}` : "Your fact-find link will arrive within one business day.",
+      opts.factFindUrl ? `Start your fact-find: ${opts.factFindUrl}` : "We usually reply within 1 business day with your fact-find link.",
       "",
       `Delivery: within ${opts.delivery} of the fact-find. Build credit: full ${opts.priceLabel} within 30 days of delivery.`,
     ],
