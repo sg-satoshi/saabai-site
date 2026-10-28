@@ -176,6 +176,17 @@ a.btn{text-decoration:none}
 .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;transform:none}
 .btn.loading{position:relative;cursor:progress;opacity:1;pointer-events:none;filter:saturate(.7)}
 .btn.loading::before{content:"";width:13px;height:13px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:btnspin .7s linear infinite}
+
+/* Native selects: keep the chevron off the right border. Inline background colours still apply. */
+.admin-root select:not([multiple]):not([size]){
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1.5 1.75 6 6.25 10.5 1.75' stroke='%234e546c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+  background-repeat:no-repeat !important;
+  background-position:right .75rem center !important;
+  background-size:12px 8px !important;
+  padding-right:2.5rem !important;
+}
 @keyframes btnspin{to{transform:rotate(360deg)}}
 .xp-ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:var(--r-md);padding:10px 12px;font-size:13px;margin-top:10px}
 .xp-ok a{color:inherit;font-weight:600;text-decoration:underline}
