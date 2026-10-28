@@ -259,19 +259,19 @@ export default function WebsitesPage() {
                 Book a Consult
               </a>
               <a
-                href={CALENDLY}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@saabai.ai"
                 className="text-center text-xs text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
               >
-                Ask a question →
+                Email a question →
               </a>
             </div>
           ))}
         </div>
         <p className="text-center text-xs text-saabai-text-dim mt-8">
-          Build fees are quoted from these figures and scoped to your project.
-          Monthly care keeps your site and AI running.
+          Build fees start from these figures. The price only goes above the
+          &apos;from&apos; figure for custom integrations or other additional work,
+          and we quote that in writing before any work starts. Monthly care keeps
+          your site and AI running.
         </p>
       </section>
 
@@ -298,7 +298,7 @@ export default function WebsitesPage() {
             rel="noopener noreferrer"
             className="inline-block text-sm font-semibold text-saabai-teal hover:text-saabai-teal-bright transition-colors tracking-wide"
           >
-            See what your AI could sound like →
+            Book a call to hear a sample of your AI →
           </a>
         </div>
       </section>

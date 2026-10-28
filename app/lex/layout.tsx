@@ -8,7 +8,7 @@ const mono = localFont({ src: "../fonts/geist-mono-latin-wght-normal.woff2", wei
 const serif = localFont({ src: "../fonts/source-serif-4-latin-wght-normal.woff2", weight: "200 900", variable: "--font-lex-serif", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Lex: Australian Legal Research",
+  title: { absolute: "Lex, Australian Legal Research | Saabai" },
   robots: { index: false, follow: false },
 };
 
