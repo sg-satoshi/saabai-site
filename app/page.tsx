@@ -7,7 +7,7 @@ import JsonLd from "./components/JsonLd";
 import { miaServiceSchema } from "@/lib/seo-entity";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
-import { formatAud, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
+import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteHomeCareNote, websiteOfferLine } from "@/lib/website-tiers";
 import { TIERS } from "@/lib/blueprint";
 import VoiceDemo from "./components/sb/VoiceDemo";
 import "./components/sb/sb.css";
@@ -60,6 +60,7 @@ export default function Home() {
             <p>We design, build, host and look after it. Every tier includes hosting, care and a trained AI enquiry chatbot.</p>
             <ul className="tick">
               {WEBSITE_TIERS.map((tier) => <li key={tier.name}>{websiteOfferLine(tier)}</li>)}
+              <li><a href="/websites#split-testing" style={copyLink}>{SPLIT_TESTING.name}</a> add-on: test your headlines and keep what wins</li>
             </ul>
             <div className="price">From <b>{formatAud(WEBSITE_TIERS[0].buildFrom)}</b> + {formatAud(WEBSITE_TIERS[0].monthly)}/mo care, AUD</div>
             <a className="btn ghost" href="/websites" style={{ marginTop: 22 }}>See websites →</a>

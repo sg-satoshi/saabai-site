@@ -3,10 +3,11 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import InShort from "../components/InShort";
 import JsonLd from "../components/JsonLd";
+import SplitTestingSection from "./SplitTestingSection";
 import { schemaGraph, websitesServiceNode } from "@/lib/seo-entity";
 import { breadcrumbNode, faqNode } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
-import { formatAud, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
+import { formatAud, SPLIT_TESTING, WEBSITE_TIERS, websiteBuildPrice, websiteCareFaqAnswer, websiteMonthlyCare } from "@/lib/website-tiers";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
 
 export const metadata: Metadata = publicPageMeta.websites;
@@ -26,6 +27,10 @@ const faqs = [
   {
     q: "What is the custom avatar on the Signature tier?",
     a: "We train the AI to look and sound like a persona you choose, so it matches your brand voice rather than sounding like a generic bot. It becomes a recognisable part of your business.",
+  },
+  {
+    q: `What is the ${SPLIT_TESTING.name}?`,
+    a: `It shows different versions of a headline, button or image to real visitors and tracks which one brings in more enquiries, including which version works best for each ad source. When there is a clear winner, it becomes the live version. It is an add-on for ${SPLIT_TESTING.tiers.join(" and ")} sites.`,
   },
   {
     q: "What does the monthly care cover?",
@@ -166,6 +171,8 @@ export default function WebsitesPage() {
           </div>
         </div>
       </section>
+
+      <SplitTestingSection />
 
       {/* Pricing tiers */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
