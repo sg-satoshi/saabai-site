@@ -16,6 +16,20 @@ import {
   persistSplit,
   splitEnd,
   splitHome,
+  REPLY_DEFAULT,
+  REPLY_MIN,
+  TABS_PX,
+  THREAD_MIN,
+  THREAD_RATIO,
+  clampReply,
+  defaultReply,
+  defaultTop,
+  loadReply,
+  moveReply,
+  persistReply,
+  replyEnd,
+  replyHome,
+  threadHeight,
 } from "../app/saabai-admin/requests/split";
 
 function memory() {
@@ -52,9 +66,11 @@ test("a short panel does not invent space", () => {
 test("split persistence clamps on load and clears on reset", () => {
   const store = memory();
   assert.equal(loadSplit(store, 900), null);
-  persistSplit(store, 640);
-  assert.equal(loadSplit(store, 900), 640);
-  assert.equal(loadSplit(store, 400), 400 - HANDLE_PX - BOTTOM_MIN);
+  persistSplit(store, 400);
+  assert.equal(loadSplit(store, 900), 400);
+  persistSplit(store, 900);
+  assert.equal(loadSplit(store, 900), 900 - HANDLE_PX - BOTTOM_MIN);
+  assert.equal(loadSplit(store, 400), TOP_MIN);
   store.setItem("mc.requests.split", "nope");
   assert.equal(loadSplit(store, 900), null);
   persistSplit(store, null);
@@ -72,4 +88,37 @@ test("panel width stays between 420px and 60 percent of the viewport", () => {
   assert.equal(loadPanelWidth(store, 1400), 840);
   persistPanelWidth(store, null);
   assert.equal(loadPanelWidth(store, 1400), PANEL_DEFAULT);
+});
+
+test("the default header leaves the thread at least 45 percent of an 800px panel", () => {
+  const panel = 800;
+  const top = defaultTop(panel);
+  assert.ok(top >= TOP_MIN);
+  assert.ok(top <= panel - HANDLE_PX - BOTTOM_MIN);
+  assert.ok(threadHeight(panel, top) >= Math.round(panel * THREAD_RATIO));
+});
+
+test("the reply box stays between 110px and the space above a 160px thread", () => {
+  const bottom = 500;
+  assert.equal(clampReply(40, bottom), REPLY_MIN);
+  assert.equal(clampReply(REPLY_DEFAULT, bottom), REPLY_DEFAULT);
+  assert.equal(clampReply(5000, bottom), bottom - TABS_PX - HANDLE_PX - THREAD_MIN);
+  assert.equal(moveReply(150, bottom, 24), 174);
+  assert.equal(moveReply(150, bottom, -24), 126);
+  assert.equal(replyHome(bottom), REPLY_MIN);
+  assert.equal(replyEnd(bottom), bottom - TABS_PX - HANDLE_PX - THREAD_MIN);
+  assert.equal(defaultReply(bottom), REPLY_DEFAULT);
+  assert.equal(clampReply(200, 120), 120 - TABS_PX - HANDLE_PX);
+});
+
+test("reply split persistence clamps on load and clears on reset", () => {
+  const store = memory();
+  assert.equal(loadReply(store, 500), REPLY_DEFAULT);
+  persistReply(store, 240);
+  assert.equal(loadReply(store, 500), 240);
+  assert.equal(loadReply(store, 280), REPLY_MIN);
+  store.setItem("mc.requests.replySplit", "nope");
+  assert.equal(loadReply(store, 500), REPLY_DEFAULT);
+  persistReply(store, null);
+  assert.equal(store.getItem("mc.requests.replySplit"), null);
 });

@@ -2,11 +2,18 @@
 
 export const SPLIT_STORAGE_KEY = "mc.requests.split";
 export const WIDTH_STORAGE_KEY = "mc.requests.panelWidth";
+export const REPLY_STORAGE_KEY = "mc.requests.replySplit";
 
 export const TOP_MIN = 120;
-export const BOTTOM_MIN = 220;
 export const HANDLE_PX = 12;
 export const SPLIT_STEP = 24;
+export const TABS_PX = 44;
+export const THREAD_MIN = 160;
+export const THREAD_RATIO = 0.45;
+export const REPLY_MIN = 110;
+export const REPLY_DEFAULT = 150;
+/** Tabs, a usable thread, the reply grip, and the shortest reply box. */
+export const BOTTOM_MIN = TABS_PX + THREAD_MIN + HANDLE_PX + REPLY_MIN;
 
 export const PANEL_MIN = 420;
 export const PANEL_MAX_RATIO = 0.6;
@@ -43,6 +50,52 @@ export function splitHome(panelHeight: number): number {
 
 export function splitEnd(panelHeight: number): number {
   return clampSplit(Number.POSITIVE_INFINITY, panelHeight);
+}
+
+/** Compact header so the thread can take at least 45% of an 800px panel. */
+export function defaultTop(panelHeight: number): number {
+  const thread = Math.max(THREAD_MIN, Math.round(panelHeight * THREAD_RATIO));
+  const used = HANDLE_PX + TABS_PX + thread + HANDLE_PX + REPLY_DEFAULT;
+  return clampSplit(panelHeight - used, panelHeight);
+}
+
+export function threadHeight(panelHeight: number, top: number, reply = REPLY_DEFAULT): number {
+  return panelHeight - top - HANDLE_PX - TABS_PX - HANDLE_PX - reply;
+}
+
+/** Reply-box height inside the tabbed section. Dragging the grip up increases it. */
+export function clampReply(reply: number, bottomHeight: number): number {
+  const room = Number.isFinite(bottomHeight) ? Math.max(0, bottomHeight - TABS_PX - HANDLE_PX) : 0;
+  const min = Math.min(REPLY_MIN, room);
+  const max = Math.max(min, room - THREAD_MIN);
+  const value = reply === Number.POSITIVE_INFINITY ? max : Number.isFinite(reply) ? reply : min;
+  return Math.round(Math.min(max, Math.max(min, value)));
+}
+
+export function moveReply(reply: number, bottomHeight: number, delta: number): number {
+  return clampReply(reply + delta, bottomHeight);
+}
+
+export function replyHome(bottomHeight: number): number {
+  return clampReply(REPLY_MIN, bottomHeight);
+}
+
+export function replyEnd(bottomHeight: number): number {
+  return clampReply(Number.POSITIVE_INFINITY, bottomHeight);
+}
+
+export function defaultReply(bottomHeight: number): number {
+  return clampReply(REPLY_DEFAULT, bottomHeight);
+}
+
+export function persistReply(storage: Pick<Store, "setItem" | "removeItem">, reply: number | null): void {
+  if (reply == null) storage.removeItem(REPLY_STORAGE_KEY);
+  else storage.setItem(REPLY_STORAGE_KEY, String(Math.round(reply)));
+}
+
+export function loadReply(storage: Pick<Store, "getItem">, bottomHeight: number): number {
+  const n = readStoredNumber(storage.getItem(REPLY_STORAGE_KEY));
+  return clampReply(n ?? REPLY_DEFAULT, bottomHeight);
 }
 
 export function clampPanelWidth(width: number, viewport: number): number {
