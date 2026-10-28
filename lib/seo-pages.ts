@@ -179,9 +179,9 @@ export const publicPageMeta = {
   }),
   customAgents: pageMeta({
     path: "/custom-ai-agents",
-    title: "Custom AI Agents for Australian Businesses | Saabai",
+    title: "Custom AI Agents for Gold Coast Businesses | Saabai",
     description:
-      "Custom AI agents for Australian businesses, scoped in a Saabai Blueprint and quoted before any build. Saabai is based on the Gold Coast, and you can book a call for a quote.",
+      "Custom AI agents for Gold Coast and Australian businesses, scoped with you and quoted to the job before any build. Book a call for a quote.",
   }),
   changelog: pageMeta({
     path: "/saabai-changelog",
