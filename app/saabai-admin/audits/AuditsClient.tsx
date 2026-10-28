@@ -143,7 +143,7 @@ export default function AuditsClient() {
 
   return (
     <AdminShell activePath="/saabai-admin/audits">
-      <div style={{ maxWidth: 1100 }}>
+      <div>
         <div className="mc-head">
           <div>
             <h1 className="mc-h1">Blueprints</h1>

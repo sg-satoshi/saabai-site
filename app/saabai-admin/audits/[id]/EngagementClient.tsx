@@ -273,7 +273,7 @@ export default function EngagementClient({ id }: { id: string }) {
 
   return (
     <AdminShell activePath="/saabai-admin/audits">
-      <div style={{ maxWidth: 1000 }}>
+      <div>
         {/* Header */}
         <Link href="/saabai-admin/audits" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }}>
           ← Blueprints

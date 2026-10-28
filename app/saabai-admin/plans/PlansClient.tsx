@@ -58,7 +58,7 @@ export default function PlansClient() {
   );
 
   return (
-    <div className="bl" style={{ maxWidth: 1100 }}>
+    <div className="bl">
       <div className="mc-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
         <div>
           <h1 className="mc-h1">Plans &amp; Add-ons</h1>

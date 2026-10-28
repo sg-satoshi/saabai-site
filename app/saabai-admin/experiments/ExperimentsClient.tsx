@@ -48,7 +48,7 @@ export default function ExperimentsClient() {
   const open = (id: string | null) => { setOpenId(id); history.replaceState(null, "", id ? `?id=${id}` : window.location.pathname); if (!id) loadList(); };
 
   return (
-    <div className="pg xp">
+    <div className="xp">
       {openId ? <DetailView id={openId} onBack={() => open(null)} /> : (
         <>
           <div className="ph"><div><h1>Split testing</h1><p className="sub">Split tests on saabai.ai. Pick a test to edit copy, see results and choose a winner.</p></div><a className="xp-editlink" href="?view=editor">Visual editor</a></div>

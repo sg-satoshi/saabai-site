@@ -1,4 +1,4 @@
-.xp{max-width:1080px}
+.xp{min-width:0}
 .xp h1{margin-bottom:2px}
 .xp .xp-back{background:none;border:0;color:var(--teal-700);font:inherit;font-weight:500;cursor:pointer;padding:0;margin-bottom:10px}
 .xp-list{display:grid;gap:12px}

@@ -157,7 +157,7 @@ export default function VisualEditor() {
   const src = path.startsWith("/") && !path.startsWith("//") ? path : "/";
 
   return (
-    <div className="pg xp xp-wide">
+    <div className="xp xp-wide">
       <div className="ph">
         <div><h1>Visual editor</h1><p className="sub">See the live page, click a test element to edit its variants. Nothing here changes what visitors see unless you save a change, and you only ever see the original copy.</p></div>
         <a className="xp-editlink" href="/saabai-admin/experiments">All tests</a>
