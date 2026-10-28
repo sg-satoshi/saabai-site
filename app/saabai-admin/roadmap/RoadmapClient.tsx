@@ -54,6 +54,13 @@ export default function RoadmapClient() {
 
   const areas = useMemo(() => Array.from(new Set<string>([...RM_AREAS, ...items.map((i) => i.area)])), [items]);
   const shown = useMemo(() => filterView(items, { q, status, area }), [items, q, status, area]);
+  const openWork = useMemo(() => {
+    const workstreams = shown.filter((i) => i.workstream);
+    const openIssues = shown.filter((i) => i.source === "github" && i.issueNumber && !i.workstream && i.status !== "shipped" && i.status !== "deployed");
+    const openPrs = shown.filter((i) => i.source === "github" && !i.issueNumber && i.prNumber && i.status !== "shipped" && i.status !== "deployed");
+    const ids = new Set([...workstreams, ...openIssues, ...openPrs].map((i) => i.id));
+    return { workstreams, openIssues, openPrs, ids };
+  }, [shown]);
   const counts = useMemo(() => Object.fromEntries(STATUSES.map((s) => [s, items.filter((i) => i.status === s).length])) as Record<RoadmapStatus, number>, [items]);
 
   async function call(method: string, body: object) {
@@ -81,7 +88,7 @@ export default function RoadmapClient() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800 }}>Roadmap</h1>
-          <p style={{ margin: gh.ok && gh.fetchedAt ? "0 0 6px" : "0 0 16px", fontSize: 13, color: "#5f6580" }}>Open issues and pull requests come from GitHub, grouped by their status labels. Link an item to an issue or PR and the status follows it. A merged PR or a closed issue stays Done.</p>
+          <p style={{ margin: gh.ok && gh.fetchedAt ? "0 0 6px" : "0 0 16px", fontSize: 13, color: "#5f6580" }}>Open issues, open pull requests, and workstreams (issues labelled type:workstream) have their own sections. Every merged pull request is listed under Shipped or Deployed. Link an item to an issue or PR and the status follows it.</p>
           {gh.ok && gh.fetchedAt && <p style={{ margin: "0 0 16px", fontSize: 12, color: "#8a8fa6" }}>GitHub checked {ago(gh.fetchedAt)}.</p>}
         </div>
         {canWrite && <button type="button" style={{ ...btn, background: "#0e7482", color: "#fff" }} onClick={() => setDraft({ ...blank })}>Add item</button>}
@@ -104,8 +111,34 @@ export default function RoadmapClient() {
       </div>
 
       {loading ? <p style={{ color: "#5f6580", fontSize: 13 }}>Loading…</p> : shown.length === 0 ? <p style={{ color: "#5f6580", fontSize: 13 }}>Nothing matches.</p> : (
-        ORDER.map((s) => {
-          const group = shown.filter((i) => i.status === s);
+        <>
+        {([
+          ["Workstreams", openWork.workstreams],
+          ["Open issues", openWork.openIssues],
+          ["Open pull requests", openWork.openPrs],
+        ] as const).map(([label, group]) => group.length ? (
+          <section key={label} aria-label={label} style={{ marginBottom: 16 }}>
+            <h2 style={{ fontWeight: 700, fontSize: 14, margin: "6px 0 8px" }}>{label} <span style={{ color: "#8a8fa6", fontWeight: 500 }}>({group.length})</span></h2>
+            <div style={{ display: "grid", gap: 8 }}>
+              {group.map((i) => (
+                <div key={i.id} style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "12px 14px" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <span style={{ background: COLORS[i.status].bg, color: COLORS[i.status].fg, borderRadius: 99, padding: "2px 9px", fontSize: 11, fontWeight: 700 }}>{STATUS_LABEL[i.status]}</span>
+                    <strong style={{ fontSize: 14 }}>{i.title}</strong>
+                  </div>
+                  <p style={{ margin: "6px 0 0", fontSize: 11, color: "#8a8fa6" }}>
+                    {i.area}
+                    {i.issueNumber ? <> · <a href={i.issueUrl || `${REPO_WEB}/issues/${i.issueNumber}`} target="_blank" rel="noreferrer">Issue #{i.issueNumber}</a></> : ""}
+                    {i.prNumber ? <> · <a href={i.prUrl || `${REPO_WEB}/pull/${i.prNumber}`} target="_blank" rel="noreferrer">PR #{i.prNumber}</a></> : ""}
+                    {` · updated ${ago(i.updatedAt)}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null)}
+        {ORDER.map((s) => {
+          const group = shown.filter((i) => i.status === s && !openWork.ids.has(i.id));
           if (!group.length) return null;
           const collapsed = (s === "shipped" || s === "deployed") && status === "all" && !q;
           return (
@@ -126,7 +159,7 @@ export default function RoadmapClient() {
                         {i.priority ? ` · ${i.priority} priority` : ""}
                         {i.issueNumber ? <> · <a href={i.issueUrl || `${REPO_WEB}/issues/${i.issueNumber}`} target="_blank" rel="noreferrer">Issue #{i.issueNumber}</a></> : ""}
                         {i.prNumber ? <> · <a href={i.prUrl || `${REPO_WEB}/pull/${i.prNumber}`} target="_blank" rel="noreferrer">PR #{i.prNumber}</a></> : ""}
-                        {` · ${i.source === "github" ? "merged" : "updated"} ${ago(i.mergedAt || i.updatedAt)}`}
+                        {` · ${i.mergedAt ? "merged" : "updated"} ${ago(i.mergedAt || i.updatedAt)}`}
                       </p>
                     </div>
                     {canWrite && i.source === "manual" && (
@@ -142,7 +175,8 @@ export default function RoadmapClient() {
               </div>
             </details>
           );
-        })
+        })}
+        </>
       )}
 
       {draft && (
