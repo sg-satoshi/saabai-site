@@ -6,7 +6,7 @@
 .bp .mono{font-family:var(--font-geist-mono),ui-monospace,Menlo,monospace}
 .bp-top{background:var(--navy);color:#fff}
 .bp-top-in{max-width:1180px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.bp-top img{height:34px;width:auto;display:block}
+.bp-top img{height:46px;width:auto;max-width:none;display:block}
 .bp-top-r{display:flex;align-items:center;gap:14px;font-size:13px;color:#c9cbe6}
 .bp-avatar{width:34px;height:34px;border-radius:50%;background:var(--teal);color:var(--navy);font-weight:700;display:grid;place-items:center}
 .bp-signout{background:none;border:0;color:#c9cbe6;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 4px}
@@ -67,12 +67,15 @@ textarea.bp-in{min-height:110px;resize:vertical}
 .bp-foot-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:22px}
 .bp-note{font-size:14px;color:var(--muted);text-align:center;margin-top:14px}
 @media (max-width:860px){
- .bp-wrap{grid-template-columns:1fr;padding:20px 16px 56px;gap:16px}
- .bp-nav{flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:4px}.bp-nav a{white-space:nowrap;border:1px solid var(--line);background:#fff;min-height:44px}
+ .bp-wrap{grid-template-columns:minmax(0,1fr);padding:20px 16px 56px;gap:16px}
+ .bp-wrap>*{min-width:0}
+ .bp-nav{flex-direction:row;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.bp-nav::-webkit-scrollbar{display:none}
+ .bp-nav a{flex:1 1 auto;justify-content:center;white-space:nowrap;border:1px solid var(--line);background:#fff;min-height:44px;padding:0 10px;font-size:14.5px}
+ .bp-steps{gap:4px}
  .bp-help{display:none}
  .bp h1{font-size:27px}
  .bp-login{grid-template-columns:1fr}.bp-hero{padding:32px 24px}.bp-hero h2{font-size:28px}
- .bp-top-in{padding:10px 16px}.bp-top-r .ref{display:none}
+ .bp-top-in{padding:10px 16px}.bp-top img{height:38px}.bp-top-r .ref{display:none}
  .bp-card{padding:18px}
 }
 @media (prefers-reduced-motion:no-preference){.bp-bar>i{transition:width .3s}}

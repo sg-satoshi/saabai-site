@@ -5,7 +5,7 @@
  */
 import { after } from "next/server";
 import { portalEnabled } from "../../../../../lib/portal-blueprint/flag";
-import { sendPortalLink, underIpLimit } from "../../../../../lib/portal-blueprint/links";
+import { portalBaseUrl, sendPortalLink, underIpLimit } from "../../../../../lib/portal-blueprint/links";
 import { clientIp, notFound } from "../../../../../lib/portal-blueprint/api";
 import { sameOrigin } from "../../../../../lib/portal-blueprint/session";
 
@@ -22,8 +22,9 @@ export async function POST(req: Request) {
     /* identical response below */
   }
   const ip = clientIp(req);
+  const base = portalBaseUrl(req);
   after(async () => {
-    if (await underIpLimit(ip)) await sendPortalLink(email);
+    if (await underIpLimit(ip)) await sendPortalLink(email, { base });
   });
   return Response.json({ ok: true });
 }

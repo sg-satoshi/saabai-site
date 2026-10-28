@@ -13,14 +13,15 @@ import { BP_COOKIE, bpCookieOptions, signBpSession } from "../../../../../lib/po
 import { findEngagementsByEmail } from "../../../../../lib/audit-store";
 import { notFound } from "../../../../../lib/portal-blueprint/api";
 import { recordLogin } from "../../../../../lib/portal-blueprint/store";
-import { baseUrl } from "../../../../../lib/portal-blueprint/links";
+import { portalBaseUrl } from "../../../../../lib/portal-blueprint/links";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   if (!portalEnabled()) return notFound();
-  const to = (path: string) => NextResponse.redirect(`${baseUrl()}${path}`, 303);
+  const base = portalBaseUrl(req);
+  const to = (path: string) => NextResponse.redirect(`${base}${path}`, 303);
   const sid = new URL(req.url).searchParams.get("session_id") || "";
   const key = process.env.STRIPE_SECRET_KEY;
   if (!/^cs_[A-Za-z0-9_]+$/.test(sid) || !key) return to("/portal/login");

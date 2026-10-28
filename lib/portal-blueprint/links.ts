@@ -23,6 +23,35 @@ export function baseUrl(): string {
   return (process.env.NEXT_PUBLIC_BASE_URL || "https://www.saabai.ai").replace(/\/+$/, "");
 }
 
+/** Vercel preview hosts for this project only (deployment and branch aliases). */
+const PREVIEW_HOST_RE = /^saabai-site-[a-z0-9-]+-shanegoldbergs-projects\.vercel\.app$/;
+
+/** Hosts we will put in a portal link. Anything else falls back to baseUrl(). */
+export function isAllowedPortalHost(host: string | null | undefined): boolean {
+  if (!host) return false;
+  const h = host.trim().toLowerCase();
+  return h === "saabai.ai" || h === "www.saabai.ai" || PREVIEW_HOST_RE.test(h);
+}
+
+/**
+ * Base URL for links and redirects in portal emails. Production always uses
+ * baseUrl() (https://www.saabai.ai). On previews it uses the host the request
+ * came in on, then the deployment's own Vercel URL, so a preview email points
+ * back at that preview. Only allow-listed hosts are trusted.
+ */
+export function portalBaseUrl(req?: Request | null): string {
+  if (process.env.VERCEL_ENV === "production") return baseUrl();
+  const candidates: (string | null | undefined)[] = [];
+  if (req) {
+    candidates.push(req.headers.get("x-forwarded-host")?.split(",")[0], req.headers.get("host"));
+  }
+  if (process.env.VERCEL_ENV === "preview") candidates.push(process.env.VERCEL_BRANCH_URL, process.env.VERCEL_URL);
+  for (const c of candidates) {
+    if (c && isAllowedPortalHost(c)) return `https://${c.trim().toLowerCase()}`;
+  }
+  return baseUrl();
+}
+
 export async function createPortalToken(
   email: string,
   opts: { redirect?: string; ttlSeconds?: number } = {}
@@ -51,8 +80,8 @@ export async function consumePortalToken(token: unknown): Promise<{ email: strin
   return { email: rec.email, redirect: safeRedirect(rec.redirect, "/portal") };
 }
 
-export function linkUrl(token: string): string {
-  return `${baseUrl()}/portal/auth?token=${encodeURIComponent(token)}`;
+export function linkUrl(token: string, base: string = baseUrl()): string {
+  return `${base.replace(/\/+$/, "")}/portal/auth?token=${encodeURIComponent(token)}`;
 }
 
 async function underLimit(key: string, max: number): Promise<boolean> {
@@ -72,7 +101,7 @@ export async function underIpLimit(ip: string): Promise<boolean> {
  * Email a sign-in link if (and only if) this email has an engagement the portal
  * is enabled for. Never throws, never reveals whether the email exists.
  */
-export async function sendPortalLink(rawEmail: unknown): Promise<void> {
+export async function sendPortalLink(rawEmail: unknown, opts: { base?: string } = {}): Promise<void> {
   try {
     if (!portalEnabled() || typeof rawEmail !== "string") return;
     const email = rawEmail.trim().toLowerCase();
@@ -84,7 +113,7 @@ export async function sendPortalLink(rawEmail: unknown): Promise<void> {
     const dest = engagements.length === 1 ? `/portal/${engagements[0].id}/factfind` : "/portal";
     const token = await createPortalToken(email, { redirect: dest });
     if (!token) return;
-    const link = linkUrl(token);
+    const link = linkUrl(token, opts.base || portalBaseUrl());
     const mail = portalLinkEmail({ name: engagements[0].contactName, link });
     const sent = await sendBrandedEmail({ to: email, email: mail, from: EMAIL_BRAND.fromPortal });
     if (!sent && process.env.NODE_ENV !== "production") console.log("[blueprint-portal] (dev) link:", link);

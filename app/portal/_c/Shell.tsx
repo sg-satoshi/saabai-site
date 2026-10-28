@@ -15,7 +15,7 @@ export default function Shell({ id, active, orderRef, planName, name, children }
       <header className="bp-top">
         <div className="bp-top-in">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/saabai-lockup-dark.png" alt="Saabai.ai" />
+          <img src="/brand/saabai-lockup-dark.png" alt="Saabai.ai" width={145} height={46} decoding="async" />
           <div className="bp-top-r">
             <span className="mono ref">{orderRef} · {planName} Blueprint</span>
             <SignOut />
