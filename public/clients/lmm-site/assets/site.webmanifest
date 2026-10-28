@@ -3,7 +3,7 @@
  "short_name": "LMM",
  "start_url": "/",
  "display": "browser",
- "background_color": "#f8faf7",
+ "background_color": "#F8FAF7",
  "theme_color": "#101F34",
  "icons": [
   {
@@ -15,11 +15,6 @@
    "src": "/clients/lmm-site/assets/icon-512.png",
    "sizes": "512x512",
    "type": "image/png"
-  },
-  {
-   "src": "/clients/lmm-site/assets/favicon.svg",
-   "sizes": "any",
-   "type": "image/svg+xml"
   }
  ]
 }

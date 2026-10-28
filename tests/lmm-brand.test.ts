@@ -50,6 +50,9 @@ test("LMM favicon set is square LMM artwork, not Saabai's", async () => {
   assert.match(read("favicon.svg").toString(), /viewBox="0 0 64 64"/);
   const manifest = JSON.parse(read("site.webmanifest").toString());
   assert.equal(manifest.short_name, "LMM");
+  assert.ok(!manifest.icons.some((i: { type?: string }) => i.type === "image/svg+xml"), "no SVG icon in manifest");
+  // Legacy URL from before #329 still resolves for cached references.
+  assert.deepEqual(pngSize("apple-touch-icon-lmm.png"), [180, 180]);
   for (const icon of manifest.icons) {
     assert.ok(existsSync(path.join(__dirname, "..", "public", icon.src)), icon.src);
   }
@@ -60,8 +63,9 @@ test("LMM home and legal pages link the LMM icon set", async () => {
   const { LMM_ICON_LINKS } = await import("../lib/lmm-legal");
   const home = readFileSync(path.join(__dirname, "..", "public", "clients", "lmm-site", "index.html"), "utf8");
   for (const html of [home, LMM_ICON_LINKS]) {
-    assert.match(html, /rel="icon" href="\/clients\/lmm-site\/assets\/favicon\.ico\?v=/);
-    assert.match(html, /rel="icon" type="image\/svg\+xml" href="\/clients\/lmm-site\/assets\/favicon\.svg\?v=/);
+    assert.match(html, /rel="icon" href="\/clients\/lmm-site\/assets\/favicon\.ico\?v=\d+" sizes="any"/);
+    // No SVG icon link: SVG-capable browsers would skip the pixel-tuned 16px bitmap in the ICO.
+    assert.doesNotMatch(html, /<link[^>]*rel="icon"[^>]*image\/svg\+xml/);
     assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="\/clients\/lmm-site\/assets\/apple-touch-icon\.png\?v=/);
     assert.match(html, /rel="manifest" href="\/clients\/lmm-site\/assets\/site\.webmanifest\?v=/);
   }
