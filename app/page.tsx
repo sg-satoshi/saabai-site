@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Nav from "./components/Nav";
-import HeroHeadline from "./components/exp/HeroHeadline";
 import HeroCta from "./components/exp/HeroCta";
 import SbFooter from "./components/sb/SbFooter";
 import JsonLd from "./components/JsonLd";
@@ -35,8 +34,10 @@ export default function Home() {
       <div className="hero">
         <div className="glow" />
         <div className="wrap" style={{ position: "relative" }}>
-          <span className="pill">New: Saabai Blueprint from $497.</span>
-          <HeroHeadline />
+          <h1 className="hero-long">
+            Custom AI chatbots that turn your website visitors into <span className="grad">qualified leads</span>, integrate with your existing systems and reduce customer service costs.
+          </h1>
+          <span className="pill" style={{ marginTop: 28 }}>New: Saabai Blueprint from $497.</span>
           <p className="lead">
             Saabai Blueprint shows small businesses and practices which tasks to automate first, what each costs, and what you&apos;ll save. Start with the free 3 minute AI score.
           </p>

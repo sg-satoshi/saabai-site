@@ -11,22 +11,22 @@ export const metadata: Metadata = publicPageMeta.rexCase;
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "A custom AI sales agent for Rex Plastics",
+  headline: "Rex: a custom AI sales agent for PlasticOnline.com.au",
   description: publicPageMeta.rexCase.description,
   url: `${SITE_URL}/case-studies/rex-plastics-online`,
   mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
-  about: { "@type": "Organization", name: "Rex Plastics", url: "https://www.plasticonline.com.au" },
+  about: { "@type": "Organization", name: "PlasticOnline.com.au", url: "https://www.plasticonline.com.au" },
   author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
   publisher: { "@id": ORG_ID },
 };
 
-export default function RexPlasticsCaseStudy() {
+export default function PlasticOnlineCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
       <JsonLd data={articleSchema} />
       <JsonLd data={breadcrumbSchema([
         { name: "Case studies", path: "/case-studies" },
-        { name: "Rex Plastics case study", path: "/case-studies/rex-plastics-online" },
+        { name: "PlasticOnline.com.au case study", path: "/case-studies/rex-plastics-online" },
       ])} />
       <Nav />
 
@@ -51,14 +51,15 @@ export default function RexPlasticsCaseStudy() {
           </span>
         </div>
 
-        <h1 className="relative text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
+        <h1 className="relative text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
           A custom AI sales agent
           <br />
-          <span className="text-gradient">for Rex Plastics</span>
+          <span className="text-gradient">for PlasticOnline<wbr />.com.au</span>
         </h1>
         <p className="relative text-lg text-saabai-text-muted max-w-2xl leading-relaxed">
-          Rex Plastics is a national plastics supplier. This page describes what the agent did.
-          It does not publish result figures.
+          PlasticOnline.com.au is a national plastics supplier. Rex is the AI sales agent
+          Saabai built for its website. This page describes what Rex did. It does not
+          publish result figures.
         </p>
       </section>
 
@@ -69,7 +70,7 @@ export default function RexPlasticsCaseStudy() {
               Company
             </p>
             <h2 className="text-3xl font-semibold tracking-tight mb-3">
-              Rex Plastics
+              PlasticOnline<wbr />.com.au
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
               A national plastics supplier serving trade and retail
@@ -85,7 +86,7 @@ export default function RexPlasticsCaseStudy() {
               AI sales agent: &ldquo;Rex&rdquo;
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A custom AI sales agent ran on the Rex Plastics website. It answered
+              Rex, a custom AI sales agent, ran on the PlasticOnline.com.au website. It answered
               product questions at any hour, priced cut-to-size jobs from the
               supplier&apos;s own product data, captured leads, and emailed those
               leads to the sales team. There is no published price. Custom
@@ -103,7 +104,7 @@ export default function RexPlasticsCaseStudy() {
           Product questions, cut-to-size pricing, and lead capture.
         </h2>
         <p className="text-base text-saabai-text-muted max-w-3xl mb-16 leading-relaxed">
-          Quoting on this site was custom work, scoped for Rex Plastics. It is
+          Quoting on this site was custom work, scoped for PlasticOnline.com.au. It is
           not included in the website care plans, and it is not a 24/7 quoting
           product you can buy off the page.
         </p>
