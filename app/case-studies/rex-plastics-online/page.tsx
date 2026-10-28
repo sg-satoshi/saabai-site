@@ -53,7 +53,7 @@ export default function RexPlasticsCaseStudy() {
           <span className="text-gradient">for Rex Plastics</span>
         </h1>
         <p className="relative text-lg text-saabai-text-muted max-w-2xl leading-relaxed">
-          Rex Plastics is a national plastics supplier. This page describes what the agent does.
+          Rex Plastics is a national plastics supplier. This page describes what the agent did.
           It does not publish result figures.
         </p>
       </section>
@@ -69,7 +69,8 @@ export default function RexPlasticsCaseStudy() {
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
               A national plastics supplier serving trade and retail
-              customers across Australia.
+              customers across Australia. The shop is at{" "}
+              <a href="https://www.plasticonline.com.au" target="_blank" rel="noopener noreferrer" className="text-saabai-teal font-semibold underline underline-offset-2">www.plasticonline.com.au</a>.
             </p>
           </div>
           <div>
@@ -80,9 +81,9 @@ export default function RexPlasticsCaseStudy() {
               AI sales agent: &ldquo;Rex&rdquo;
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A custom AI sales agent on the Rex Plastics website. It answers
-              product questions at any hour, prices cut-to-size jobs from the
-              supplier&apos;s own product data, captures leads, and emails those
+              A custom AI sales agent ran on the Rex Plastics website. It answered
+              product questions at any hour, priced cut-to-size jobs from the
+              supplier&apos;s own product data, captured leads, and emailed those
               leads to the sales team. There is no published price. Custom
               agents are quoted to the job.
             </p>
@@ -92,13 +93,13 @@ export default function RexPlasticsCaseStudy() {
 
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-5">
-          What it does
+          What it did
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6 leading-snug">
           Product questions, cut-to-size pricing, and lead capture.
         </h2>
         <p className="text-base text-saabai-text-muted max-w-3xl mb-16 leading-relaxed">
-          Quoting on this site is custom work, scoped for Rex Plastics. It is
+          Quoting on this site was custom work, scoped for Rex Plastics. It is
           not included in the website care plans, and it is not a 24/7 quoting
           product you can buy off the page.
         </p>
@@ -109,9 +110,9 @@ export default function RexPlasticsCaseStudy() {
               Product questions
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Visitors can ask about products, sizes and materials. The agent
-              answers from the supplier&apos;s catalogue. Answering at any hour
-              is the chat itself, not a promise about staff follow-up.
+              Visitors could ask about products, sizes and materials. The agent
+              answered from the supplier&apos;s catalogue. Answering at any hour
+              was the chat itself, not a promise about staff follow-up.
             </p>
           </div>
           <div className="bg-saabai-surface p-10 relative">
@@ -119,7 +120,7 @@ export default function RexPlasticsCaseStudy() {
               Cut-to-size pricing
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              The agent prices cut-to-size jobs from the supplier&apos;s own
+              The agent priced cut-to-size jobs from the supplier&apos;s own
               product data. That pricing was built for this client. A quoting
               tool for another business is quoted separately.
             </p>
@@ -129,8 +130,8 @@ export default function RexPlasticsCaseStudy() {
               Leads to the sales team
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              The agent can capture a lead and email it to the sales team.
-              This is a custom alert for this client. Enquiry alerts are not
+              The agent could capture a lead and email it to the sales team.
+              This was a custom alert for this client. Enquiry alerts are not
               included on the published website plans.
             </p>
           </div>

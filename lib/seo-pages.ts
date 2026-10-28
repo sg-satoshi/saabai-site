@@ -114,13 +114,13 @@ export const publicPageMeta = {
     path: "/case-studies",
     title: "Saabai Case Studies | Gold Coast AI Results",
     description:
-      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answers product questions and prices cut-to-size jobs.",
+      "One published example from Saabai, a Gold Coast AI business: a custom AI sales agent that answered product questions and priced cut-to-size jobs.",
   }),
   rexCase: pageMeta({
     path: "/case-studies/rex-plastics-online",
     title: "Rex Plastics Case Study | AI Sales Agent | Saabai",
     description:
-      "A custom AI sales agent Saabai built on the Gold Coast for Rex Plastics. It answers product questions and prices cut-to-size jobs from that supplier's catalogue.",
+      "A custom AI sales agent Saabai built on the Gold Coast for Rex Plastics. It answered product questions and priced cut-to-size jobs from that supplier's catalogue.",
   }),
   process: pageMeta({
     path: "/process",
