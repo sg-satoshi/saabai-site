@@ -6,12 +6,13 @@
 
 import { useEffect, useState } from "react";
 import AdminShell from "../AdminSidebar";
+import { PageHeader } from "../ui/PageHeader";
 
 const C = {
   card: "#ffffff",
-  border: "rgba(0,0,0,0.08)",
+  border: "#e2e8f0",
   text: "#111827",
-  muted: "#9ca3af",
+  muted: "#64748b",
   gold: "#b45309",
   goldBg: "rgba(180,83,9,0.08)",
   green: "#16a34a",
@@ -144,29 +145,15 @@ export default function AuditsClient() {
   return (
     <AdminShell activePath="/saabai-admin/audits">
       <div>
-        <div className="mc-head">
-          <div>
-            <h1 className="mc-h1">Blueprints</h1>
-            <p className="mc-sub">
-              Blueprint intake pipeline - fact-find, discovery, assessment, report.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreate(!showCreate)}
-            style={{
-              background: "#0e0c2e",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px 18px",
-              fontSize: 13.5,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {showCreate ? "Cancel" : "+ New Engagement"}
-          </button>
-        </div>
+        <PageHeader
+          title="Blueprints"
+          meta="Blueprint intake pipeline - fact-find, discovery, assessment, report."
+          actions={
+            <button type="button" className="btn pri au-1" onClick={() => setShowCreate(!showCreate)}>
+              {showCreate ? "Cancel" : "+ New Engagement"}
+            </button>
+          }
+        />
 
         {/* Pipeline stats */}
         {!loading && engagements.length > 0 && (() => {
@@ -183,9 +170,9 @@ export default function AuditsClient() {
             { label: "Active pipeline", value: `$${pipelineValue.toLocaleString()}`, accent: C.text },
           ];
           return (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16, marginBottom: 24 }}>
               {stats.map((s) => (
-                <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
+                <div key={s.label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", padding: "14px 16px" }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: s.accent }}>{s.value}</div>
                   <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
                     {s.label}
@@ -209,7 +196,7 @@ export default function AuditsClient() {
               gap: 14,
             }}
           >
-            <div style={{ gridColumn: "1 / -1", fontWeight: 600, fontSize: 14, color: C.text }}>
+            <div style={{ gridColumn: "1 / -1", fontWeight: 600, fontSize: 18, lineHeight: "28px", letterSpacing: "-0.025em", color: "#0b092e" }}>
               New Blueprint engagement
             </div>
             <input
@@ -274,7 +261,7 @@ export default function AuditsClient() {
           </div>
         )}
 
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: "hidden" }}>
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", overflow: "hidden" }}>
           {loading ? (
             <div style={{ padding: 40, textAlign: "center", color: C.muted, fontSize: 13.5 }}>Loading…</div>
           ) : engagements.length === 0 ? (

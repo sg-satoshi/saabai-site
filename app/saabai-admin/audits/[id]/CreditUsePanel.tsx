@@ -75,19 +75,29 @@ export function CreditUsePanel({
   }
 
   return (
-    <div>
-      <h3 style={{ margin: "0 0 12px", fontSize: 14.5 }}>Blueprint credit</h3>
-      <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 8px" }}>
-        {tierCreditName(eng.tier)} credit {formatAud(full / 100)}. Used {formatAud(used / 100)}. Remaining {formatAud(Math.max(0, full - used) / 100)}.
-      </p>
-      <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px" }}>
+    <div style={{ display: "grid", gap: 12 }}>
+      <div className="au-stats">
+        <div>
+          <div className="au-stat-l">{tierCreditName(eng.tier)} credit</div>
+          <div className="au-stat-v">{formatAud(full / 100)}</div>
+        </div>
+        <div>
+          <div className="au-stat-l">Used</div>
+          <div className="au-stat-v">{formatAud(used / 100)}</div>
+        </div>
+        <div>
+          <div className="au-stat-l">Remaining</div>
+          <div className="au-stat-v">{formatAud(Math.max(0, full - used) / 100)}</div>
+        </div>
+      </div>
+      <p className="au-status">
         {deliveredAt
           ? `Delivered ${new Date(deliveredAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })} Brisbane. Window ends ${ends ? ends.toLocaleString("en-AU", { timeZone: "Australia/Brisbane" }) : ""} Brisbane.`
           : "Not delivered yet. The credit starts when this Blueprint is marked delivered."}
         {view ? ` Portal card: ${view.statusLabel}.` : deliveredAt ? " Portal card is hidden." : ""}
       </p>
       {(eng.creditApplications ?? []).length > 0 ? (
-        <ul style={{ margin: "0 0 12px", paddingLeft: 18, fontSize: 13, color: "#111827" }}>
+        <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, lineHeight: "24px", color: "#334155" }}>
           {eng.creditApplications!.map((row) => (
             <li key={row.id}>
               {row.kind === "deposit" ? "Deposit" : "Signed quote"} · {formatAud(row.cents / 100)}
@@ -97,27 +107,27 @@ export function CreditUsePanel({
         </ul>
       ) : null}
       {view ? (
-        <form onSubmit={onSubmit} style={{ display: "grid", gap: 8, maxWidth: 420 }}>
-          <label style={{ fontSize: 13 }}>
-            Amount (AUD)
+        <form onSubmit={onSubmit} style={{ display: "grid", gap: 12, maxWidth: 420 }}>
+          <label>
+            <span className="au-label">Amount (AUD)</span>
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
-              style={{ ...inputStyle, marginTop: 4 }}
+              style={inputStyle}
               placeholder="500"
             />
           </label>
-          <label style={{ fontSize: 13 }}>
-            Recorded as
-            <select value={kind} onChange={(e) => setKind(e.target.value as "signed_quote" | "deposit")} style={{ ...inputStyle, marginTop: 4 }}>
+          <label>
+            <span className="au-label">Recorded as</span>
+            <select value={kind} onChange={(e) => setKind(e.target.value as "signed_quote" | "deposit")} style={inputStyle}>
               <option value="signed_quote">Signed quote</option>
               <option value="deposit">Deposit</option>
             </select>
           </label>
-          <label style={{ fontSize: 13 }}>
-            Reference (optional)
-            <input value={reference} onChange={(e) => setReference(e.target.value)} style={{ ...inputStyle, marginTop: 4 }} />
+          <label>
+            <span className="au-label">Reference (optional)</span>
+            <input value={reference} onChange={(e) => setReference(e.target.value)} style={inputStyle} />
           </label>
           {error ? <p style={{ color: "#dc2626", fontSize: 13, margin: 0 }}>{error}</p> : null}
           <button type="submit" disabled={busy} style={{ ...btn, justifySelf: "start" }}>
@@ -125,7 +135,7 @@ export function CreditUsePanel({
           </button>
         </form>
       ) : (
-        <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
+        <p className={deliveredAt ? "au-status" : "au-callout"}>
           {deliveredAt
             ? "Nothing further can be applied. The window has closed or the credit is fully used."
             : "Mark the Blueprint delivered before recording a quote or deposit."}
