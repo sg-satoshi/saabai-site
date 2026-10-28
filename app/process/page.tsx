@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.process;
 
@@ -43,6 +44,7 @@ const steps = [
 export default function Process() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="Process" path="/process" />
 
       <Nav activePage="/process" />
 
@@ -64,9 +66,9 @@ export default function Process() {
         </div>
 
         <h1 className="relative text-6xl md:text-7xl lg:text-[86px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          From plan to
+          From Blueprint to
           <br />
-          <span className="text-gradient">working automation, in weeks.</span>
+          <span className="text-gradient">operating advantage.</span>
         </h1>
 
         <p className="relative text-lg md:text-xl text-saabai-text-muted max-w-2xl mx-auto mb-14 leading-relaxed">
@@ -138,7 +140,7 @@ export default function Process() {
             Typical Timeline
           </p>
           <p className="text-2xl md:text-3xl font-semibold tracking-tight mb-4">
-            Most clients have their first automation live within 2 to 4 weeks of their Blueprint.
+            Simple automations can go live in one to two weeks. More complex multi-system workflows typically take four to six weeks from design to deployment.
           </p>
           <p className="text-base text-saabai-text-muted leading-relaxed max-w-2xl">
             The Saabai Blueprint is the starting point, from $497, a fixed-price plan that produces a written roadmap of what to automate, in what order, with projected time savings for each workflow. From there, we move to design and build quickly.

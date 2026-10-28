@@ -1,8 +1,9 @@
 import { Resend } from "resend";
+import { CYCLE_REPAIR_LEAD_EMAIL, siteTelegramDestination } from "../../../../lib/notify-routing";
 
 export const runtime = "edge";
 
-const OWNER_EMAIL = "stuscyclerepairs@gmail.com";
+const OWNER_EMAIL = CYCLE_REPAIR_LEAD_EMAIL;
 // From-address is env-driven so we can flip to noreply@stuscyclerepairs.com once
 // the domain is verified in Resend, without a code change.
 const FROM_EMAIL = process.env.CYCLE_FROM_EMAIL || "Stu's Cycle Repairs <noreply@saabai.ai>";
@@ -99,14 +100,13 @@ async function sendEmail(html: string, subject: string, replyTo: string): Promis
 }
 
 async function sendTelegram(text: string): Promise<boolean> {
-  const token = process.env.TELEGRAM_CYCLE_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CYCLE_CHAT_ID;
-  if (!token || !chatId) return false;
+  const dest = siteTelegramDestination("cycle-repair");
+  if (!dest) return false;
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${dest.token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+      body: JSON.stringify({ chat_id: dest.chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
     });
     if (!res.ok) {
       console.error("[cycle-repair-lead] telegram failed:", res.status, await res.text());

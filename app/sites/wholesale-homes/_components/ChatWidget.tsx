@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { noteVisitorMessage } from "@/lib/conversation-activity";
+import { useChatOpen } from "../../../components/useChatOpen";
 
 const STORAGE_KEY = "wholesale-homes-conversation";
 const STORAGE_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -43,6 +45,7 @@ export function ChatWidget() {
   const WELCOME = "Hey, Sophie here. I was wondering, how long have you been looking at house and land packages? Some people I talk to have been searching for months without realising they can get the same homes for a lot less going wholesale. What kind of property are you thinking about?";
 
   const [isOpen, setIsOpen] = useState(false);
+  useChatOpen("sophie", isOpen);
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
     { role: "assistant", content: WELCOME },
   ]);
@@ -79,6 +82,7 @@ export function ChatWidget() {
   async function send() {
     const text = input.trim();
     if (!text || loading) return;
+    noteVisitorMessage("sophie");
 
     const userMsg = { role: "user", content: text };
     const newMessages = [...messages, userMsg];

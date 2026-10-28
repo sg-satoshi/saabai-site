@@ -3,6 +3,7 @@ import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
 import { NAP } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 import "../components/sb/sb.css";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -11,7 +12,7 @@ export const metadata: Metadata = publicPageMeta.contact;
 
 const ROWS: [string, string][] = [
   ["Email", NAP.email],
-  ["Address", "Merrimac QLD 4226 (home office, visits by appointment)"],
+  ["Address", NAP.addressLine],
   ["ABN", NAP.abn],
   ["Service areas", "Gold Coast, Brisbane and Queensland, with clients Australia-wide online"],
   ["GST", "Not applicable"],
@@ -20,6 +21,7 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <BreadcrumbLd name="Contact" path="/contact" />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />
       <div style={{ position: "relative" }}>
@@ -28,8 +30,7 @@ export default function ContactPage() {
           <span className="eyebrow">Saabai</span>
           <h1 style={{ marginTop: 16 }}>Contact</h1>
           <p style={{ marginTop: 18, fontSize: 19, maxWidth: 640 }}>
-            The best way to reach us is email. We reply within one business day. Prefer to talk?{" "}
-            <a href={CALENDLY} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>Book a free 30 minute call with Shane.</a>
+            The best way to reach us is email. We usually reply within 1 business day.
           </p>
 
           <div className="card" style={{ marginTop: 32, display: "grid", gap: 22 }}>
@@ -51,7 +52,7 @@ export default function ContactPage() {
           </div>
 
           <p className="dim" style={{ marginTop: 28, fontSize: 15 }}>
-            Saabai is a home-based, online business. We do not operate a public shopfront, and visits are by appointment only.
+            Saabai is an online business. We do not operate a public shopfront, and visits are by appointment only.
           </p>
 
           <div style={{ marginTop: 28 }}>

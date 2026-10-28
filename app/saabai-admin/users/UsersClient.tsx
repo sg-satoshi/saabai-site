@@ -64,7 +64,6 @@ const C = {
 };
 
 const DASHBOARD_PRESETS = [
-  { value: "/rex-dashboard", label: "Rex Dashboard", hint: "Trade & e-commerce — Rex agent" },
   { value: "/lex",           label: "Lex Workspace", hint: "Legal — Lex AI assistant" },
   { value: "/client-portal", label: "Client Portal", hint: "Firm config — agent personality, skill packs" },
   { value: "/saabai-admin",  label: "Admin",         hint: "Full Saabai admin (staff only)" },
@@ -570,10 +569,9 @@ function UserForm({ initial, mode, onSubmit, onCancel }: {
 
       <Field label="Product access" hint="Toggle which products this user can access. Changes take effect immediately.">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {(["rex", "leadgen", "lex"] as const).map((pid) => {
+          {(["leadgen", "lex"] as const).map((pid) => {
             const active = selectedProducts.includes(pid);
             const productLabels: Record<string, { label: string; icon: string; description: string }> = {
-              rex:     { label: "Rex",     icon: "🤖", description: "AI chat agent for trade & e-commerce" },
               leadgen: { label: "LeadGen", icon: "📋", description: "Lead generation widget" },
               lex:     { label: "Lex",     icon: "⚖️", description: "Legal AI assistant" },
             };

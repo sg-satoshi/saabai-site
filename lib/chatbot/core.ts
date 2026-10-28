@@ -1,4 +1,5 @@
-import { noDashes } from "../no-dashes";
+import { handoffTarget, type HandoffLink } from "./disclosure";
+import { greetingForSlug } from "./personas";
 /** Pure rules for the central chatbot platform. No I/O, easy to test. */
 
 export const PLANS = ["presence", "growth", "signature"] as const;
@@ -235,16 +236,19 @@ export interface PublicWidgetConfig {
   poweredBy: boolean;
   placeholder: string;
   offMessage: string;
+  /** Call or email link. Null when the site has neither. Clicking it is a handoff event, not a lead post. */
+  handoff: HandoffLink | null;
 }
 
-export function toPublicConfig(opts: { active: boolean; config: Pick<ChatbotConfig, "plan" | "skin">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
+export function toPublicConfig(opts: { slug?: string; active: boolean; config: Pick<ChatbotConfig, "plan" | "skin">; site: { name: string; business?: { name?: string; phone?: string; email?: string }; chatbot?: { name?: string; greeting?: string; avatarUrl?: string } } }): PublicWidgetConfig {
   const sk = resolveSkin(opts.config, { botName: opts.site.chatbot?.name, greeting: opts.site.chatbot?.greeting, avatarUrl: opts.site.chatbot?.avatarUrl });
-  const bot = sk.botName || opts.site.business?.name || opts.site.name;
+  const businessName = opts.site.business?.name || opts.site.name;
+  const bot = sk.botName || businessName;
   return {
     v: 1,
     active: opts.active,
     botName: bot,
-    greeting: noDashes(sk.greeting || `Hi! I'm ${bot}. How can I help you today?`),
+    greeting: greetingForSlug(opts.slug, bot, businessName, sk.greeting),
     avatarUrl: sk.avatarUrl,
     primary: sk.primary,
     accent: sk.accent,
@@ -252,7 +256,8 @@ export function toPublicConfig(opts: { active: boolean; config: Pick<ChatbotConf
     text: sk.text,
     position: sk.position,
     poweredBy: sk.poweredBy,
-    placeholder: `Ask about ${opts.site.business?.name || opts.site.name}...`,
+    placeholder: `Ask about ${businessName}...`,
     offMessage: offMessage(opts.site.business),
+    handoff: handoffTarget(opts.site.business),
   };
 }

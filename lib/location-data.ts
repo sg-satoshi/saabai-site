@@ -15,13 +15,6 @@ export interface LocationFaq {
   a: string;
 }
 
-export interface LocationCaseStudy {
-  client: string;
-  industry: string;
-  context: string;
-  outcome: string;
-}
-
 export interface LocationIndustryLink {
   /** e.g. "Website Care Plans" */
   industry: string;
@@ -38,6 +31,8 @@ export interface LocationConfig {
   stateCode: string;
   heroHeadline: string;
   heroSubheading: string;
+  /** Optional price line under the headline. Published prices only. */
+  heroPrice?: string;
   industries: string[];
   /** 3-4 paragraphs, ~80-120 words each */
   marketContext: string[];
@@ -47,13 +42,26 @@ export interface LocationConfig {
   howWeHelpIntro: string;
   /** 6 per city */
   services: Array<{ title: string; detail: string }>;
-  caseStudy: LocationCaseStudy;
   /** 3 per city, linking to existing industry pages */
   industryLinks: LocationIndustryLink[];
   /** 7 per city, genuinely city-specific questions */
   faqs: LocationFaq[];
   ctaHeadline: string;
   ctaSubtext: string;
+  /** Extra block when a city page needs a topic the shared services list does not cover. */
+  spotlight?: {
+    eyebrow: string;
+    title: string;
+    paragraphs: string[];
+    linkHref: string;
+    linkLabel: string;
+  };
+  /** Visible breadcrumb and BreadcrumbList label. Defaults to "Websites and AI {city}". */
+  breadcrumbName?: string;
+  /** Service schema name. Defaults to "Websites and AI automation in {city}". */
+  serviceName?: string;
+  /** ISO date for the WebPage dateModified node. */
+  dateModified?: string;
   seo: {
     title: string;
     description: string;
@@ -72,6 +80,7 @@ export const BRISBANE: LocationConfig = {
   state: "Queensland",
   stateCode: "QLD",
   heroHeadline: "Websites and AI systems for Brisbane small businesses",
+  heroPrice: "Websites from $2,000 plus $100 a month.",
   heroSubheading:
     "From growth-corridor trades in Logan and Moreton Bay to CBD practices, we build, host and manage websites that win work, and map exactly where AI can take the admin off your plate with a Saabai Blueprint.",
   industries: [
@@ -151,14 +160,6 @@ export const BRISBANE: LocationConfig = {
         "Private AI assistants trained on your own procedures and documentation, so staff find the right answer in seconds rather than interrupting a senior colleague.",
     },
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Manufacturing & Industrial Supply",
-    context:
-      "Holland Plastics sells cut-to-size plastics where every order needs individual pricing based on material, dimensions and finishing. Quoting was a manual, expert-dependent task that capped how many enquiries the team could handle in a day.",
-    outcome:
-      "We built Rex, a custom AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. Enquiries are answered in seconds rather than hours, freeing the team to focus on complex orders and customer relationships while routine pricing runs itself.",
-  },
   industryLinks: [
     {
       industry: "Website Care Plans",
@@ -179,7 +180,23 @@ export const BRISBANE: LocationConfig = {
         "Not sure where to start? A few quick questions show how ready your Brisbane business is for AI and what to do first. Free, about 3 minutes.",
     },
   ],
+  spotlight: {
+    eyebrow: "Custom AI chatbots",
+    title: "Custom AI chatbots in Brisbane",
+    paragraphs: [
+      "Saabai builds custom AI chatbots for business websites in Brisbane, the Gold Coast and the Sunshine Coast.",
+      "We are based in Merrimac on the Gold Coast and work with Brisbane clients mostly remotely.",
+      "Your chatbot learns your services, hours and policies. It answers visitors and keeps a log of each chat. Enquiry alerts are coming soon.",
+    ],
+    linkHref: "/ai-chatbot-developer-queensland",
+    linkLabel: "Custom AI chatbots in Queensland",
+  },
+  dateModified: "2026-10-25",
   faqs: [
+    {
+      q: "How much does an AI chatbot cost?",
+      a: "It depends on what your chatbot needs to do. Book a free 30 minute call for a quote.",
+    },
     {
       q: "Do you work with Brisbane businesses in person, or only remotely?",
       a: "We work with Brisbane and southeast Queensland businesses both remotely and on-site where it helps. Most discovery and build work is done remotely and efficiently, but we're happy to meet in person for scoping and key milestones, particularly for businesses across the Ipswich, Logan and Moreton Bay growth corridor.",
@@ -215,10 +232,10 @@ export const BRISBANE: LocationConfig = {
   seo: {
     title: "Websites and AI Automation in Brisbane | Saabai",
     description:
-      "Brisbane websites from $2,000 plus $100 a month, and AI automation plans from $497, built for small businesses and trades. Start with the free AI Readiness Score.",
+      "Brisbane websites from $2,000 plus $100 a month, plus custom AI chatbots for local businesses. Book a free 30 minute call for a chatbot quote.",
     ogTitle: "Websites and AI Automation in Brisbane | Saabai",
     ogDescription:
-      "Brisbane websites from $2,000 plus $100 a month, and AI automation plans from $497, built for small businesses and trades. Start with the free AI Readiness Score.",
+      "Brisbane websites from $2,000 plus $100 a month, plus custom AI chatbots for local businesses. Book a free 30 minute call for a chatbot quote.",
     canonical: `${BASE_URL}/brisbane`,
   },
 };
@@ -231,9 +248,12 @@ export const GOLD_COAST: LocationConfig = {
   slug: "gold-coast",
   state: "Queensland",
   stateCode: "QLD",
-  heroHeadline: "Gold Coast websites and AI systems, built by a local team",
+  heroHeadline: "Web design Gold Coast, hosting included, from $2,000",
   heroSubheading:
-    "Saabai is based on the Gold Coast. We build, host and manage websites for local small businesses, from Coomera to Coolangatta, and map where AI can take the admin off a lean team with a Saabai Blueprint.",
+    "Saabai is based on the Gold Coast. Web design for local small businesses starts from $2,000 plus $100 a month care, with hosting included.",
+  breadcrumbName: "Web design Gold Coast",
+  serviceName: "Web design Gold Coast, hosting included",
+  dateModified: "2026-10-25",
   industries: [
     "Trades & Construction",
     "Property Development",
@@ -311,14 +331,6 @@ export const GOLD_COAST: LocationConfig = {
         "Private AI assistants that give staff instant answers from your own procedures, so the owner isn't the only person who knows how everything works.",
     },
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Manufacturing & Industrial Supply",
-    context:
-      "Gold Coast-based Holland Plastics sells cut-to-size plastics, where every order is individually priced on material, size and finishing. Manual quoting limited how many enquiries the small team could process and tied up expert staff in routine pricing.",
-    outcome:
-      "We built Rex, an AI pricing agent that quotes cut-to-size orders instantly from the company's own pricing logic. The lean team now handles far more enquiries without adding headcount, with routine quoting running itself and people freed for complex orders and relationships.",
-  },
   industryLinks: [
     {
       industry: "Website Care Plans",
@@ -340,6 +352,10 @@ export const GOLD_COAST: LocationConfig = {
     },
   ],
   faqs: [
+    {
+      q: "Is hosting included?",
+      a: "Yes. A Gold Coast website starts from $2,000 plus $100 a month care, and that care includes hosting.",
+    },
     {
       q: "I run a small Gold Coast business. Is AI automation overkill for me?",
       a: "Quite the opposite. Smaller businesses usually get the biggest benefit because the owner is the one absorbing the admin. Automating quoting, bookings and invoicing frees up the most valuable person in the business. We scope to fit small budgets and start with the highest-impact task first.",
@@ -373,12 +389,12 @@ export const GOLD_COAST: LocationConfig = {
   ctaSubtext:
     "Get your Saabai Blueprint from the team down the road, or start with the free AI Readiness Score and see where your business stands in a few minutes.",
   seo: {
-    title: "Websites and AI Automation on the Gold Coast | Saabai",
+    title: "Web Design Gold Coast, Hosting Included, From $2,000 | Saabai",
     description:
-      "Gold Coast websites built, hosted and managed from $2,000 plus $100 a month, plus Saabai Blueprint AI plans from $497. Start with the free AI Readiness Score.",
-    ogTitle: "Websites and AI Automation on the Gold Coast | Saabai",
+      "Web design on the Gold Coast from $2,000 plus $100 a month care, with hosting included. Saabai is based in Merrimac, and Blueprint AI plans start from $497.",
+    ogTitle: "Web Design Gold Coast, Hosting Included, From $2,000 | Saabai",
     ogDescription:
-      "Gold Coast websites built, hosted and managed from $2,000 plus $100 a month, plus Saabai Blueprint AI plans from $497. Start with the free AI Readiness Score.",
+      "Web design on the Gold Coast from $2,000 plus $100 a month care, with hosting included. Saabai is based in Merrimac, and Blueprint AI plans start from $497.",
     canonical: `${BASE_URL}/gold-coast`,
   },
 };

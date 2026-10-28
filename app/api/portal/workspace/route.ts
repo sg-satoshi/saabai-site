@@ -11,6 +11,7 @@ import { getPortalUser } from "../../../../lib/portal-users";
 import { getDirectoryUser } from "../../../../lib/user-directory";
 import { listSites } from "../../../../lib/site-registry";
 import { classifySubscription } from "../../../../lib/subscription-classify";
+import { creditModelForEngagements, resolveDeliveredAt, tierCreditName } from "../../../../lib/blueprint-credit";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -189,14 +190,23 @@ export async function GET(req: Request) {
     });
   }
   for (const b of blueprints) {
-    const delivered = /deliver|complete|done/i.test(b.status || "");
+    const deliveredAt = resolveDeliveredAt(b);
+    const delivered = !!deliveredAt || /deliver|complete|done/i.test(b.status || "");
     const items = b.assessment?.opportunities?.length;
+    const deliveredLabel = deliveredAt
+      ? new Date(deliveredAt).toLocaleDateString("en-AU", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          timeZone: "Australia/Brisbane",
+        })
+      : null;
     products.push({
       id: `bp-${b.id}`,
       kind: "blueprint",
-      name: `${b.tier || "Blueprint"} Blueprint`,
-      detail: delivered
-        ? `Delivered ${new Date(b.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`
+      name: `${tierCreditName(b.tier)} Blueprint`,
+      detail: deliveredLabel
+        ? `Delivered ${deliveredLabel}`
         : `${b.status || "In progress"} · ${b.firmName || "Your Blueprint"}`,
       status: delivered ? "Delivered" : b.status || "In progress",
       statusTone: delivered ? "ok" : "info",
@@ -244,6 +254,7 @@ export async function GET(req: Request) {
       updatedAt: r.updatedAt,
     })),
     openRequestCount: requests.filter((r) => r.status !== "done").length,
+    credit: creditModelForEngagements(blueprints, new Date()),
     impersonating: impersonation
       ? {
           name: impersonation.clientName,

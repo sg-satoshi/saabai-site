@@ -1,37 +1,31 @@
 import type { Metadata } from "next";
 import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
-import { pageMeta } from "@/lib/seo-meta";
+import { publicPageMeta } from "@/lib/seo-pages";
+import JsonLd from "../../components/JsonLd";
+import { breadcrumbSchema } from "@/lib/seo-meta";
+import { ORG_ID, SITE_URL } from "@/lib/seo-entity";
 
-const rexMeta = pageMeta({
-  path: "/case-studies/rex-plastics-online",
-  title: "PlasticOnline Case Study: Rex, AI Quoting Agent | Saabai",
-  description:
-    "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline, 59% email capture.",
-});
+export const metadata: Metadata = publicPageMeta.rexCase;
 
-export const metadata: Metadata = {
-  ...rexMeta,
-  openGraph: {
-    ...rexMeta.openGraph,
-    description:
-      "How PlasticOnline (Holland Plastics) deployed Rex, an AI sales agent, to take repetitive quoting off the sales team: 344 leads in 30 days, $218K quoted pipeline.",
-  },
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "A custom AI sales agent for Rex Plastics",
+  description: publicPageMeta.rexCase.description,
+  url: `${SITE_URL}/case-studies/rex-plastics-online`,
+  mainEntityOfPage: `${SITE_URL}/case-studies/rex-plastics-online`,
+  author: { "@type": "Organization", name: "Saabai", url: SITE_URL },
+  publisher: { "@id": ORG_ID },
 };
-
-const stats = [
-  { value: "344", label: "Leads in 30 days" },
-  { value: "$218K", label: "Quoted pipeline in 30 days" },
-  { value: "59%", label: "Email capture rate" },
-  { value: "$1,316", label: "Average quote value" },
-];
 
 export default function RexPlasticsCaseStudy() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <JsonLd data={articleSchema} />
+      <JsonLd data={breadcrumbSchema([{ name: "Rex Plastics case study", path: "/case-studies/rex-plastics-online" }])} />
       <Nav />
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative pt-52 pb-20 px-6 max-w-5xl mx-auto overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
@@ -40,15 +34,6 @@ export default function RexPlasticsCaseStudy() {
               "radial-gradient(ellipse 90% 60% at 50% 30%, var(--saabai-glow-mid) 0%, transparent 65%)",
           }}
         />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 40% 30% at 50% 20%, var(--saabai-glow) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Tags */}
         <div className="relative flex flex-wrap items-center gap-3 mb-10">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saabai-surface-raised border border-saabai-border text-[11px] font-medium tracking-[0.15em] text-saabai-teal uppercase">
             Trade &amp; Retail Supply
@@ -58,58 +43,32 @@ export default function RexPlasticsCaseStudy() {
           </span>
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saabai-surface border border-saabai-border text-[11px] font-semibold tracking-[0.12em] text-saabai-teal uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-saabai-teal inline-block" />
-            Live in 3 weeks
+            Custom build
           </span>
         </div>
 
         <h1 className="relative text-5xl md:text-6xl lg:text-[72px] font-semibold tracking-[-0.03em] leading-[1.05] mb-8">
-          How PlasticOnline (Holland Plastics)
+          A custom AI sales agent
           <br />
-          <span className="text-gradient">Took Repetitive Quoting Off Their Sales Team</span>
+          <span className="text-gradient">for Rex Plastics</span>
         </h1>
-
-        <div
-          className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-          style={{
-            background: "linear-gradient(to bottom, transparent, var(--saabai-bg))",
-          }}
-        />
+        <p className="relative text-lg text-saabai-text-muted max-w-2xl leading-relaxed">
+          Rex Plastics is a national plastics supplier. This page describes what the agent does.
+          It does not publish result figures.
+        </p>
       </section>
 
-      {/* ── Stats ─────────────────────────────────────────────────────────── */}
-      <section className="pb-20 px-6 max-w-5xl mx-auto">
-        <div
-          className="grid md:grid-cols-4 gap-px bg-saabai-border rounded-xl overflow-hidden"
-          style={{
-            boxShadow: "0 0 80px rgba(98,197,209,0.45), 0 0 160px rgba(98,197,209,0.15)",
-          }}
-        >
-          {stats.map(({ value, label }) => (
-            <div key={label} className="bg-saabai-surface p-10 text-center relative">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-              <p className="stat-glow text-4xl md:text-5xl font-semibold tracking-tight text-saabai-teal mb-2">
-                {value}
-              </p>
-              <p className="text-xs text-saabai-text-muted leading-relaxed">
-                {label}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Overview ──────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <div className="grid md:grid-cols-2 gap-16">
           <div>
             <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-4">
-                  Company
-                </p>
+              Company
+            </p>
             <h2 className="text-3xl font-semibold tracking-tight mb-3">
-              PlasticOnline (Holland Plastics)
+              Rex Plastics
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              A cut-to-size plastics supplier serving trade and retail
+              A national plastics supplier serving trade and retail
               customers across Australia.
             </p>
           </div>
@@ -118,279 +77,94 @@ export default function RexPlasticsCaseStudy() {
               Engagement
             </p>
             <h2 className="text-3xl font-semibold tracking-tight mb-3">
-              AI Sales Agent: &ldquo;Rex&rdquo;
+              AI sales agent: &ldquo;Rex&rdquo;
             </h2>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              3-week deployment of a custom AI sales agent embedded on the
-              supplier&apos;s website, handling product enquiries, real-time
-              cut-to-size pricing, and 24/7 lead capture.
+              A custom AI sales agent on the Rex Plastics website. It answers
+              product questions at any hour, prices cut-to-size jobs from the
+              supplier&apos;s own product data, captures leads, and emails those
+              leads to the sales team. There is no published price. Custom
+              agents are quoted to the job.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ── Problem ────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
-        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-5">
-          The Problem
-        </p>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-16 max-w-2xl leading-snug">
-          Repetitive quoting was consuming 60% of the sales team&apos;s day.
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl p-10">
-            <div className="text-[72px] font-bold leading-none tracking-tight mb-4 select-none" style={{ color: "var(--saabai-glow-mid)" }}>
-              60%
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Of the sales team&apos;s day was consumed by manual quoting —
-              repetitive product and pricing enquiries that left no capacity
-              for relationship-building or higher-value sales activity.
-            </p>
-          </div>
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl p-10">
-            <div className="text-[72px] font-bold leading-none tracking-tight mb-4 select-none" style={{ color: "var(--saabai-glow-mid)" }}>
-              2-4 hrs
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Customers waited 2–4 hours for simple cut-to-size quotes. What
-              could be answered in seconds was taking half a day, generating
-              frustration and lost sales.
-            </p>
-          </div>
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl p-10">
-            <div className="text-[72px] font-bold leading-none tracking-tight mb-4 select-none" style={{ color: "var(--saabai-glow-mid)" }}>
-              Lost
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              After-hours enquiries were lost entirely. Customers visiting the
-              website outside business hours had no way to get a quote or
-              capture their enquiry. No follow-up, no contact captured — pure
-              missed revenue.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Solution ───────────────────────────────────────────────────────── */}
       <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
         <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-5">
-          The Solution
+          What it does
         </p>
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-6 leading-snug">
-          &ldquo;Rex&rdquo;, an AI sales agent embedded on the website.
+          Product questions, cut-to-size pricing, and lead capture.
         </h2>
         <p className="text-base text-saabai-text-muted max-w-3xl mb-16 leading-relaxed">
-          Saabai deployed Rex, a custom AI sales agent trained on the
-          supplier&apos;s full product catalogue, pricing tables, and
-          cut-to-size calculation logic. Embedded directly on the website via
-          a small widget, Rex handles every product and pricing enquiry in
-          real time.
+          Quoting on this site is custom work, scoped for Rex Plastics. It is
+          not included in the website care plans, and it is not a 24/7 quoting
+          product you can buy off the page.
         </p>
 
         <div className="grid md:grid-cols-3 gap-px bg-saabai-border rounded-xl overflow-hidden">
           <div className="bg-saabai-surface p-10 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <div className="w-8 h-px bg-saabai-teal/50 mb-5" />
             <h3 className="text-base font-semibold mb-3 tracking-tight">
-              Product Enquiries Handled Automatically
+              Product questions
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Customers ask about products, dimensions, materials, and
-              availability in natural language. Rex answers instantly with
-              accurate, up-to-date information drawn from the supplier&apos;s
-              product catalogue and knowledge base.
+              Visitors can ask about products, sizes and materials. The agent
+              answers from the supplier&apos;s catalogue. Answering at any hour
+              is the chat itself, not a promise about staff follow-up.
             </p>
           </div>
           <div className="bg-saabai-surface p-10 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <div className="w-8 h-px bg-saabai-teal/50 mb-5" />
             <h3 className="text-base font-semibold mb-3 tracking-tight">
-              Real-Time Cut-to-Size Pricing
+              Cut-to-size pricing
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Rex calculates cut-to-size pricing in real time using live
-              WooCommerce data. What previously took a salesperson 15 minutes
-              of manual calculation now happens in seconds. Complex orders
-              with pricing variations are handled instantly.
+              The agent prices cut-to-size jobs from the supplier&apos;s own
+              product data. That pricing was built for this client. A quoting
+              tool for another business is quoted separately.
             </p>
           </div>
           <div className="bg-saabai-surface p-10 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <div className="w-8 h-px bg-saabai-teal/50 mb-5" />
             <h3 className="text-base font-semibold mb-3 tracking-tight">
-              24/7 Lead Capture &amp; Email Notifications
+              Leads to the sales team
             </h3>
             <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Every interaction captures the customer&apos;s email (59%
-              capture rate). Leads are emailed to the sales team with full
-              context — what was discussed, what was quoted, and the
-              customer&apos;s intent. Complex orders are handed off with no
-              repeated questions.
+              The agent can capture a lead and email it to the sales team.
+              This is a custom alert for this client. Enquiry alerts are not
+              included on the published website plans.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ── Results ────────────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 max-w-5xl mx-auto border-t border-saabai-border">
-        <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-5">
-          The Results
-        </p>
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-16 max-w-2xl leading-snug">
-          Quantified outcomes measured in the first 30 days.
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-px bg-saabai-border rounded-xl overflow-hidden mb-px">
-          <div className="bg-saabai-surface p-12 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-6">
-              Lead Volume
-            </p>
-            <div className="text-6xl font-semibold tracking-tight text-saabai-teal stat-glow mb-3">
-              344
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Leads captured in the first 30 days of Rex going live. Each one
-              is a genuine product or pricing conversation with Rex. Previously, the
-              majority of these would have been hours-long turnaround or lost
-              after hours.
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-12 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-6">
-              Quoted Pipeline
-            </p>
-            <div className="text-6xl font-semibold tracking-tight text-saabai-teal stat-glow mb-3">
-              $218K
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Total quoted pipeline generated in 30 days. Every quote
-              represents real-time pricing calculated by Rex and presented to
-              the customer during the conversation. The sales team receives
-              the full context — no manual re-entry, no lost details.
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-12 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-6">
-              Email Capture
-            </p>
-            <div className="text-6xl font-semibold tracking-tight text-saabai-teal stat-glow mb-3">
-              59%
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              59% of all Rex conversations resulted in email capture,
-              building a growing database of engaged, in-market prospects.
-              Every captured lead enters an automated follow-up sequence,
-              ensuring no enquiry goes cold even if the customer doesn&apos;t
-              convert immediately.
-            </p>
-          </div>
-          <div className="bg-saabai-surface p-12 relative">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-saabai-teal/30 to-transparent" />
-            <p className="text-[10px] font-medium tracking-[0.18em] text-saabai-text-dim uppercase mb-6">
-              Average Quote
-            </p>
-            <div className="text-6xl font-semibold tracking-tight text-saabai-teal stat-glow mb-3">
-              $1,316
-            </div>
-            <p className="text-sm text-saabai-text-muted leading-relaxed">
-              Average quote value across all Rex-generated leads.
-            </p>
-          </div>
-        </div>
-
-        {/* Additional impact stats */}
-        <div className="grid md:grid-cols-3 gap-6 mt-6">
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl px-10 py-8 text-center">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal mb-2">Seconds</p>
-            <p className="text-xs text-saabai-text-muted leading-relaxed">
-              Quotes delivered instantly, replacing 2–4 hour wait times
-            </p>
-          </div>
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl px-10 py-8 text-center">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal mb-2">40%</p>
-            <p className="text-xs text-saabai-text-muted leading-relaxed">
-              Of enquiries fully resolved without any team involvement
-            </p>
-          </div>
-          <div className="bg-saabai-surface border border-saabai-border rounded-xl px-10 py-8 text-center">
-            <p className="stat-glow text-4xl font-semibold tracking-tight text-saabai-teal mb-2">24/7</p>
-            <p className="text-xs text-saabai-text-muted leading-relaxed">
-              After-hours capture — zero lost enquiries
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Quote ──────────────────────────────────────────────────────────── */}
-      <section className="py-16 px-6 max-w-5xl mx-auto border-t border-saabai-border">
-        <blockquote className="bg-saabai-surface-raised border-l-2 border-saabai-teal rounded-r-xl px-10 py-8 max-w-4xl">
-          <p className="text-base italic text-saabai-text-muted leading-relaxed mb-5">
-            &ldquo;Rex handles the quoting work our team was doing manually all
-            day. They&apos;re actually selling now instead of answering the same
-            questions. And the after-hours enquiries — we were just losing those
-            before. The numbers speak for themselves.&rdquo;
-          </p>
-          <p className="text-xs font-medium tracking-[0.15em] text-saabai-text-dim uppercase">
-            Operations Manager, PlasticOnline (Holland Plastics)
-          </p>
-        </blockquote>
-      </section>
-
-      {/* ── Bridge to Blueprint CTA ────────────────────────────────────────────── */}
       <section className="relative py-40 px-6 text-center border-t border-saabai-border overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 70% at 50% 50%, var(--saabai-glow-strong) 0%, transparent 65%)",
-          }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 40% 40% at 50% 45%, var(--saabai-glow-mid) 0%, transparent 60%)",
-          }}
-        />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-px bg-gradient-to-r from-transparent via-saabai-teal/50 to-transparent" />
-
         <p className="relative text-[11px] font-medium tracking-[0.2em] text-saabai-text-dim uppercase mb-8">
-          Is Your Business Losing Revenue to Manual Processes?
+          A similar agent for your business
         </p>
-        <h2 className="relative text-4xl md:text-5xl lg:text-6xl font-semibold tracking-[-0.02em] mb-7 max-w-3xl mx-auto leading-[1.08]">
-          Find out exactly how much capacity
-          <br />
-          <span className="text-gradient">your team can recover.</span>
+        <h2 className="relative text-4xl md:text-5xl font-semibold tracking-[-0.02em] mb-7 max-w-3xl mx-auto leading-[1.08]">
+          Custom agents are quoted to the job.
         </h2>
         <p className="relative text-saabai-text-muted text-lg mb-14 max-w-lg mx-auto leading-relaxed">
-          The same approach that took repetitive quoting off PlasticOnline&apos;s
-          sales team can work for your business. Start with a Saabai Blueprint. Plans start at $497, credited if you book a build within 30 days.
+          A Blueprint is optional, from $497. Website care plans are sold on
+          their own. If you book a build within 30 days of receiving a
+          Blueprint, the fee comes off that build invoice.
         </p>
-
         <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
             href="https://calendly.com/shanegoldberg/30min"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide shadow-[0_0_40px_var(--saabai-glow-mid)]"
+            className="bg-saabai-teal text-saabai-bg px-12 py-4 rounded-xl font-bold text-base hover:bg-saabai-teal-bright transition-colors tracking-wide"
           >
-            Book Your Free Strategy Call
+            Book a free 30 minute call
           </a>
           <a
             href="/blueprint"
             className="inline-flex items-center min-h-[44px] text-sm text-saabai-text-dim hover:text-saabai-teal transition-colors tracking-wide"
           >
-            Learn more about the Blueprint →
+            See the Blueprint →
           </a>
         </div>
-        <p className="relative text-saabai-text-dim text-xs mt-8 tracking-wide">
-          No pitch, no invoice, no follow-up pressure. If we&apos;re not a good fit, we&apos;ll tell you.
-        </p>
       </section>
 
       <Footer />

@@ -20,9 +20,12 @@ const read = (f: string) => readFileSync(ROOT + f, "utf8");
 let modelBodies: string[] = [];
 
 function routePrompt(file: string): string {
-  const m = read(file).match(/const SYSTEM_PROMPT = `([\s\S]*?)`;\r?\n/);
-  assert.ok(m, `${file} still has its system prompt`);
-  return m[1];
+  const src = read(file);
+  const m = src.match(/const SYSTEM_PROMPT = `([\s\S]*?)`;\r?\n/);
+  if (m) return m[1];
+  if (src.includes("ZARA_SYSTEM_PROMPT")) return ZARA_SYSTEM_PROMPT;
+  if (src.includes("BO_SYSTEM_PROMPT")) return BO_SYSTEM_PROMPT;
+  assert.fail(`${file} still has its system prompt`);
 }
 
 function anthropicReply(text: string) {
@@ -48,7 +51,7 @@ async function bodyText(init?: RequestInit): Promise<string> {
 }
 
 function voiceFromPrompt(body: string): string {
-  const christina = body.includes("1,000+ placements") && body.includes("blue-collar");
+  const christina = body.includes("BO Consulting") && body.includes("blue-collar");
   const zara = body.includes("Lifestyle Money Management (LMM)") && body.includes("mortgage broking");
   if (christina && !body.includes("Lifestyle Money Management (LMM)")) {
     return "G'day, Christina here from BO Consulting. I place blue-collar workers across construction and mining.";
@@ -114,8 +117,10 @@ const post = (slug: string, origin: string) =>
 test("seed prompts are the route prompts, word for word, and the bots stay on", () => {
   assert.equal(BO_SYSTEM_PROMPT, routePrompt("app/api/bo-chat/route.ts"));
   assert.equal(ZARA_SYSTEM_PROMPT, routePrompt("app/api/lmm-chat/route.ts"));
-  assert.match(BO_SYSTEM_PROMPT, /You are Christina, the AI assistant for BO Consulting/);
-  assert.match(ZARA_SYSTEM_PROMPT, /You are Zara, a knowledgeable and friendly Australian finance and mortgage broking specialist/);
+  assert.match(BO_SYSTEM_PROMPT, /You are Christina, an AI assistant for BO Consulting/);
+  assert.match(ZARA_SYSTEM_PROMPT, /You are Zara, an AI assistant for Lifestyle Money Management \(LMM\)/);
+  assert.doesNotMatch(read("app/api/lmm-chat/route.ts"), /const SYSTEM_PROMPT = `/);
+  assert.doesNotMatch(read("app/api/bo-chat/route.ts"), /const SYSTEM_PROMPT = `/);
   assert.deepEqual([...BO_DOMAINS], ["boconsulting.com.au", "www.boconsulting.com.au"]);
   assert.deepEqual([...LMM_DOMAINS], ["lifestylemoneymanagement.com.au", "www.lifestylemoneymanagement.com.au"]);
   assert.equal(runMode([]), "dry-run");
@@ -200,7 +205,7 @@ test("widgets call the platform with the slug, fallbacks remain, contact forms s
   assert.match(lmm, /https:\/\/www\.saabai\.ai\/api\/chat-platform\/message/);
   assert.match(lmm, /https:\/\/www\.saabai\.ai\/api\/chat-platform\/config\?site=lmm-site/);
   assert.doesNotMatch(lmm, /\/api\/lmm-chat/);
-  assert.match(read("public/clients/lmm-site/index.html"), /chat-widget\.js\?v=10/);
+  assert.match(read("public/clients/lmm-site/index.html"), /chat-widget\.js\?v=11/);
   for (const f of ["app/api/bo-chat/route.ts", "app/api/lmm-chat/route.ts"]) {
     assert.match(read(f), /Delete this route after 27 October 2026/);
     assert.match(read(f), /export async function POST/);
@@ -228,7 +233,8 @@ test("Christina answers in her own voice from both BO domains, and a foreign ori
     assert.match(j.content, /blue-collar/);
     assert.doesNotMatch(j.content, /Zara|mortgage broking/);
     assert.equal(modelBodies.length, 1);
-    assert.match(modelBodies[0], /1,000\+ placements/);
+    assert.match(modelBodies[0], /blue-collar/);
+    assert.doesNotMatch(modelBodies[0], /1,000\+ placements|95%/);
     assert.doesNotMatch(modelBodies[0], /Lifestyle Money Management \(LMM\)/);
   }
 
@@ -236,6 +242,18 @@ test("Christina answers in her own voice from both BO domains, and a foreign ori
   const blocked = await handleChat(post("bo-consultancy", "https://evil.example"));
   assert.equal(blocked.status, 403);
   assert.equal(modelBodies.length, 0);
+});
+
+test("a stale stored prompt does not override the persona", async () => {
+  const stale = boSite();
+  stale.chatbot = { ...stale.chatbot, systemPrompt: "1,000+ placements, 95% retention rate. Based in Brisbane. Portfolio management and retirement planning." };
+  mock.seed({ hashes: { "saabai:sites": { bo1: JSON.stringify(stale), lmm1: JSON.stringify(lmmSite()) } } });
+  const { handleChat } = await import("../lib/chatbot/handler");
+  modelBodies = [];
+  const res = await handleChat(post("bo-consultancy", "https://boconsulting.com.au"));
+  assert.equal(res.status, 200);
+  assert.match(modelBodies[0], /blue-collar/);
+  assert.doesNotMatch(modelBodies[0], /95%|1,000\+ placements|Brisbane|portfolio management/i);
 });
 
 test("Zara answers in her own voice from both LMM domains, and stays off when the record is switched off", async () => {

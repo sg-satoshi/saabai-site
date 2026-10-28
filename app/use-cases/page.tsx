@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { publicPageMeta } from "@/lib/seo-pages";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.useCases;
 
@@ -11,10 +12,10 @@ const useCases = [
     description:
       "Tradies win work on how fast they quote and lose it on how slowly they follow up. Most of that happens at night, after a full day on the tools.",
     examples: [
-      "Website AI agent that answers enquiries and books site visits after hours",
-      "Instant ballpark quotes from your own price list",
-      "Automatic quote follow-up when a customer goes quiet",
-      "Invoice and payment reminders without awkward phone calls",
+      "Website AI agent that answers enquiries after hours. Booking is on Growth and Signature only",
+      "Quoting from your price list is custom work, scoped and quoted separately",
+      "Quote follow-up can be scoped as custom work",
+      "Invoice and payment reminders are quoted separately",
     ],
     outcome: "More jobs quoted, fewer leads gone cold, and evenings back.",
   },
@@ -22,21 +23,21 @@ const useCases = [
   {
     category: "Real Estate Agencies",
     description:
-      "Lead qualification and follow-up is where most agencies lose revenue. An AI system can respond to every new enquiry within seconds, qualify the opportunity, and escalate only the serious buyers and sellers to your agents.",
+      "Lead qualification is where many agencies lose track of enquiries. An AI system can answer new enquiries at any hour, ask qualifying questions, and pass serious buyers and sellers to your agents.",
     examples: [
-      "Instant AI response to every inbound enquiry",
-      "Automated inspection reminders and appraisal follow-up sequences",
+      "Fast AI response to inbound enquiries",
+      "Illustrative example: inspection reminders and appraisal follow-up, quoted separately",
       "Listing update communications to matched buyers",
       "Vendor report automation",
     ],
-    outcome: "Agents focus on relationships and negotiations. The system handles everything else.",
+    outcome: "Agents can spend more time on relationships and negotiations.",
   },
   {
     category: "Clinics, Studios & Salons",
     description:
-      "Appointment businesses run on bookings, and the phone rings while you're with a client. Automation answers, books and reminds so your chair or room stays full.",
+      "Appointment businesses run on bookings, and the phone rings while you're with a client. A chatbot can answer questions at any hour. Booking is on Growth and Signature. Reminders are quoted separately.",
     examples: [
-      "AI agent that answers FAQs and takes booking requests 24/7",
+      "AI agent that answers FAQs at any hour",
       "Appointment reminders that cut no-shows (quoted separately, or use your booking system's built-in reminders)",
       "Post-visit review requests that build your Google rating (best done with an outside tool such as Podium, Birdeye or Hatch; we advise in your Blueprint)",
       "Rebooking nudges for clients who haven't been back (quoted separately)",
@@ -49,7 +50,7 @@ const useCases = [
     description:
       "Seasonal surges and after-hours questions swamp small teams. An AI agent handles the repeat questions and bookings so staff can serve the people in front of them.",
     examples: [
-      "Opening hours, stock and booking questions answered instantly",
+      "Opening hours, stock and booking questions answered at any hour",
       "Function and group booking enquiries captured and qualified",
       "Email and SMS offers to past customers, with opt-in handled properly",
       "Showing up when locals ask Google or ChatGPT for a recommendation",
@@ -60,14 +61,14 @@ const useCases = [
   {
     category: "Trade & E-commerce",
     description:
-      "Product businesses with a high volume of inbound enquiries are leaving money on the table every hour they're not available to respond. An AI agent can quote, qualify, and capture leads instantly, without a sales team on standby.",
+      "Product businesses get a lot of the same questions. An AI agent can answer product questions at any hour, qualify interest, and capture a lead. Quoting is custom work, scoped and quoted.",
     examples: [
-      "AI agent handles product Q&A, specifications, and pricing 24/7",
-      "Cut-to-size and custom quoting handled in real time from a chat window",
+      "AI agent handles product questions and specifications at any hour. Pricing is custom work",
+      "Cut-to-size quoting can be scoped from your own product data",
       "Order status lookups without staff involvement",
       "Qualified leads automatically routed to CRM with full conversation context",
     ],
-    outcome: "Every inbound enquiry gets an instant, accurate response. Leads are captured and followed up automatically, day and night.",
+    outcome: "Inbound enquiries can get a fast response. Leads can be captured and followed up, day and night.",
   },
   {
     category: "Compliance & Document Automation",
@@ -92,6 +93,7 @@ const inlineCta = {
 export default function UseCases() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="Use cases" path="/use-cases" />
 
       <Nav activePage="/use-cases" />
 

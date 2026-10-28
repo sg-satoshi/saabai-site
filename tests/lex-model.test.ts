@@ -91,11 +91,11 @@ test("all research tools are still built", async () => {
   const { getLexConfig } = await import("../lib/lex-config");
   const keys = Object.keys(buildLexResearchTools(getLexConfig()));
   // AustLII access is paused by default (LEX_AUSTLII_ENABLED unset).
-  assert.deepEqual(keys.sort(), ["checkLegislationStatus", "searchASIC", "searchATO", "searchFairWork", "searchInternational", "searchLegislation", "verifySection"].sort());
+  assert.deepEqual(keys.sort(), ["checkCitation", "checkLegislationStatus", "searchASIC", "searchATO", "searchFairWork", "searchInternational", "searchLegislation", "verifySection"].sort());
   process.env.LEX_AUSTLII_ENABLED = "true";
   const all = Object.keys(buildLexResearchTools(getLexConfig()));
   delete process.env.LEX_AUSTLII_ENABLED;
-  assert.deepEqual(all.sort(), ["checkLegislationStatus", "searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
+  assert.deepEqual(all.sort(), ["checkCitation", "checkLegislationStatus", "searchASIC", "searchART", "searchATO", "searchAustLII", "searchCorporationsLaw", "searchFairWork", "searchFamilyLaw", "searchInternational", "searchLegislation", "searchStateLegislation", "verifySection"].sort());
   assert.deepEqual(Object.keys(buildLexResearchTools(getLexConfig("lex-external"))), ["captureMatter"]);
 });
 

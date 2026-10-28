@@ -4,6 +4,7 @@
  */
 import { PRIORITY_LABELS, STATUS_LABELS, type ClientRequest } from "./client-requests";
 import { EMAIL_BRAND, escapeHtml, renderBrandedEmail, sendBrandedEmail } from "./email/branded-layout";
+import { adminRequestEmail } from "./notify-routing";
 
 const SITE = "https://www.saabai.ai";
 
@@ -83,7 +84,7 @@ export function buildStatusEmail(r: ClientRequest) {
 }
 
 export function notifyEmail(): string {
-  return process.env.REQUESTS_NOTIFY_EMAIL || "hello@saabai.ai";
+  return adminRequestEmail(process.env, "new");
 }
 
 export async function sendNewRequestNotification(r: ClientRequest): Promise<boolean> {

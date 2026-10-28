@@ -110,12 +110,6 @@ export const BRISBANE: LocationConfig = {
     { title: "Operational Efficiency Audits", detail: "Before we build anything, we audit your current operations. We map every manual process, quantify the time cost, and identify which automations will generate the highest ROI in your specific business. Brisbane business owners consistently tell us the audit alone changes how they think about their operations." },
     { title: "AI Implementation Consulting", detail: "We help Brisbane business owners make sense of the AI landscape — what is real, what is hype, and what actually applies to a business of your size and type. We build implementation roadmaps grounded in your industry, your team's capabilities, and your growth objectives." }
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Industrial Supply — Gold Coast / Queensland",
-    context: "PlasticOnline — part of Holland Plastics, one of Queensland's largest cut-to-size plastics suppliers — was handling hundreds of manual pricing enquiries per week. Sales staff were spending significant time quoting standard cut-to-size orders that followed predictable rules. Customer response times averaged several hours.",
-    outcome: "Saabai built Rex — an AI sales agent trained on PlasticOnline's full product catalogue, pricing engine, and ordering rules. Rex now handles every cut-to-size pricing enquiry instantly, 24/7, and captures leads into the CRM automatically. The sales team focuses exclusively on complex orders and relationship management."
-  },
   faqs: [
     { q: "Do you work with Brisbane businesses remotely, or do you visit on-site?", a: "Both. For most projects, the initial discovery and strategy phase is conducted remotely via video call — it's faster and more efficient. For larger engagements or businesses with complex on-site operations (manufacturing, construction), we do visit. We have worked with businesses across Greater Brisbane, Ipswich, Logan, Moreton Bay, and the Sunshine Coast." },
     { q: "How long does it take to see results from AI automation?", a: "Most Brisbane clients see measurable results within 60–90 days of project start. Lead qualification agents and customer service automations typically go live within 4–6 weeks. More complex workflow automations involving integrations with existing software take 8–12 weeks. We build in stages so you see progress continuously, not just at the end." },
@@ -169,12 +163,6 @@ export const GOLD_COAST: LocationConfig = {
     { title: "Workflow Automation", detail: "We map your current business processes and automate every step that does not require human judgement. For Gold Coast property businesses, this often includes contract preparation workflows, settlement milestone tracking, and vendor update communications." },
     { title: "Operational Efficiency Audit", detail: "A systematic review of how your Gold Coast business currently operates — every process, every manual step, every tool in use. We identify the highest-ROI automation opportunities and give you a prioritised implementation roadmap." }
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Industrial Supply — Gold Coast",
-    context: "Holland Plastics, based on the Gold Coast, operates PlasticOnline — one of Australia's largest cut-to-size plastics suppliers. Their sales team was handling hundreds of manual pricing enquiries weekly, with response times of several hours for standard cut-to-size orders.",
-    outcome: "Saabai built Rex, an AI sales agent that handles all standard cut-to-size pricing enquiries instantly, captures leads automatically, and provides 24/7 customer service. The sales team now focuses entirely on complex orders and trade account relationships — the work that actually requires their expertise."
-  },
   faqs: [
     { q: "Can AI help Gold Coast trade businesses reduce their admin time?", a: "Yes — and this is one of the clearest ROI cases we see. Gold Coast trade businesses typically spend 8–12 hours per week on admin that can be largely automated: quoting, scheduling, compliance documentation, and invoice follow-up. We have built systems for trades businesses that recover the majority of this time within 60 days of go-live." },
     { q: "We have a seasonal tourism business. Does AI make sense for us?", a: "Particularly so. Seasonal businesses benefit enormously from AI because you get the capacity of a full-time enquiry handling team during peak periods without paying for that capacity year-round. An AI agent handling your enquiries costs the same in January as in July. A staff member does not." },
@@ -346,12 +334,6 @@ export const PERTH: LocationConfig = {
     { title: "Customer Service and Communications", detail: "AI agents handle standard client enquiries, status update requests, and document delivery — freeing your Perth team to focus on the technical and relationship work that requires their expertise." },
     { title: "AI Operational Audit — Resource Sector Specialist", detail: "A structured review of your Perth business's operations with specific focus on the documentation, compliance, and coordination challenges common in the resource services sector. Delivers a prioritised implementation roadmap with quantified ROI estimates." }
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Industrial Supply — National, including WA operations",
-    context: "Holland Plastics supplies industrial plastics to resource sector businesses across Australia, including significant WA and remote site operations. Managing pricing enquiries, product specifications, and order coordination for remote site deliveries was a significant administrative burden on their team.",
-    outcome: "Saabai built Rex, an AI agent that handles all standard product enquiries and cut-to-size pricing calculations instantly. For resource sector clients — including WA-based businesses ordering for remote sites — Rex provides immediate, accurate pricing and product information at any hour, reducing the sales team's administrative load materially."
-  },
   faqs: [
     { q: "Can AI help Perth businesses manage FIFO workforce administration?", a: "Yes — FIFO coordination is one of the most document-intensive and time-consuming administrative challenges for Perth businesses, and it is highly automatable. The scheduling communications, site induction coordination, travel confirmation, and compliance check-in components are all rule-based processes that AI handles reliably. We have designed systems for businesses managing 20 to 200+ FIFO personnel." },
     { q: "How can AI help with mining and resource sector compliance documentation?", a: "Resource sector compliance documentation — SWMS, safety management plans, environmental compliance reports — follows structured formats and draws on consistent underlying information. AI systems can generate these documents automatically from structured input, reducing preparation time by 60–80%. The output requires review and sign-off by your team, but the manual drafting work is eliminated." },
@@ -523,12 +505,6 @@ export const DARWIN: LocationConfig = {
     { title: "Customer and Stakeholder Communication", detail: "AI systems that manage consistent communications with clients, government stakeholders, and partners across the distances inherent in NT operations. Status updates, milestone communications, and routine correspondence run automatically." },
     { title: "NT Business Operational Audit", detail: "A structured review of your Darwin business's operations — with specific attention to the remote operations, seasonal demand, and workforce challenges unique to the NT business environment. Delivers a prioritised roadmap of automation opportunities." }
   ],
-  caseStudy: {
-    client: "PlasticOnline (Holland Plastics)",
-    industry: "Industrial Supply — National, including remote NT supply",
-    context: "Holland Plastics supplies industrial materials to resource sector operations nationally, including remote NT sites. Managing enquiries, specifications, and order coordination for remote site deliveries — often to locations with limited communications — required significant administrative effort.",
-    outcome: "Saabai built Rex, an AI agent handling all standard product enquiries and pricing calculations instantly. Resource sector clients in remote NT locations can get accurate pricing and product information immediately, at any hour, without requiring a staff member to be available. The system also captures all enquiries into the CRM automatically, ensuring no lead from remote operations is lost."
-  },
   faqs: [
     { q: "Do you work with Darwin businesses remotely?", a: "Yes — and the remote model works well for Darwin businesses. All discovery, design, and implementation work is conducted via video conference. We have experience working with businesses in Darwin, Alice Springs, and remote NT locations. The time zone (30 minutes behind Brisbane) is not an operational issue." },
     { q: "Can AI help Darwin tourism businesses manage the Dry Season demand spike?", a: "This is one of the clearest applications we see for Darwin businesses. During the Dry Season, tourism and hospitality businesses face enquiry volumes that their small teams cannot manage manually without significant cost. An AI agent handling all standard enquiries instantly, 24 hours a day, gives small Darwin tourism businesses the capacity of a large enquiry team without the wage cost." },
@@ -1535,7 +1511,7 @@ Add this section to `LocationPage.tsx` between the Case Study and FAQ sections:
 The following work from the expanded brief should be a separate implementation plan:
 
 1. **Strengthen existing industry pages** — expand thin sections, improve metadata, add FAQs, add city cross-links, improve CTAs
-2. **Case study page structure** — build proper case study pages for PlasticOnline/Rex, Tributum Law/Lex, LocalSearch, Ink FX Printing — each with Challenge / Process / Opportunity / Solution / Outcome / Lessons structure
+2. **Case study page structure** — build proper case study pages for Tributum Law/Lex, LocalSearch, Ink FX Printing — each with Challenge / Process / Opportunity / Solution / Outcome / Lessons structure
 3. **Service authority pages** — audit gaps, potentially add: AI Operational Efficiency Audits, AI Workflow Automation, AI Agents for Business, AI Customer Service Automation, AI Lead Qualification Systems
 4. **E-E-A-T optimisation** — founder bio, experience signals, client work, transparent service offering
 5. **Reverse internal linking** — add city page links FROM industry pages (e.g. /for-law-firms links to /sydney, /melbourne, /brisbane)

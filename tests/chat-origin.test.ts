@@ -17,12 +17,13 @@ test("allowed hosts: saabai, site domains (with and without www), mapped domains
   assert.ok(hostAllowed("localhost", allowedHosts([], [], true)));
 });
 
-test("origin mode defaults to log; enforce and off are explicit", () => {
+test("origin mode defaults to enforce; off and log are explicit", () => {
   const prev = process.env.CHAT_ORIGIN_MODE;
-  delete process.env.CHAT_ORIGIN_MODE; assert.equal(originMode(), "log");
+  delete process.env.CHAT_ORIGIN_MODE; assert.equal(originMode(), "enforce");
   process.env.CHAT_ORIGIN_MODE = "ENFORCE"; assert.equal(originMode(), "enforce");
   process.env.CHAT_ORIGIN_MODE = "off"; assert.equal(originMode(), "off");
-  process.env.CHAT_ORIGIN_MODE = "junk"; assert.equal(originMode(), "log");
+  process.env.CHAT_ORIGIN_MODE = "log"; assert.equal(originMode(), "log");
+  process.env.CHAT_ORIGIN_MODE = "junk"; assert.equal(originMode(), "enforce");
   if (prev === undefined) delete process.env.CHAT_ORIGIN_MODE; else process.env.CHAT_ORIGIN_MODE = prev;
 });
 

@@ -12,10 +12,13 @@ export async function GET() {
   if (!(await adminActor())) return Response.json({ error: "Forbidden" }, { status: 403 });
   const items = await loadItems();
   if (!items) return Response.json({ error: "Storage is not configured" }, { status: 503 });
-  const gh = await fetchGithubState(); // fails soft
+  const gh = await fetchGithubState(false, {
+    prs: items.flatMap((i) => (i.prNumber ? [i.prNumber] : [])),
+    issues: items.flatMap((i) => (i.issueNumber ? [i.issueNumber] : [])),
+  });
   return Response.json({
     items: buildView(items, gh.ok ? gh : null),
-    github: { ok: gh.ok, error: gh.error, deployedAt: gh.deployedAt },
+    github: { ok: gh.ok, error: gh.ok ? undefined : "unavailable", deployedAt: gh.deployedAt, fetchedAt: gh.fetchedAt ?? null },
     canWrite: await canWriteRoadmap(),
   });
 }

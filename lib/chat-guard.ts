@@ -4,7 +4,6 @@ import type { Redis } from "@upstash/redis";
 // Public chat endpoints guarded by per-IP rate limits and size caps.
 export const CHAT_API = [
   "/api/chat", // Mia (saabai.ai)
-  "/api/pete-chat",
   "/api/lex-chat",
   "/api/lmm-chat",
   "/api/nextinvestment-chat",
@@ -16,6 +15,7 @@ export const CHAT_API = [
   "/api/site-factory-chat",
   "/api/site-factory/chat",
   "/api/chat-platform/message",
+  "/api/legal-demo",
 ];
 
 const num = (v: string | undefined, d: number) => (v && Number(v) > 0 ? Number(v) : d);

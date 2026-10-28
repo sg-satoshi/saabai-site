@@ -51,6 +51,7 @@ export function checkSuggestion(s: Suggestion, existingCopy: string[], kind: Slo
     if (digits.some((d) => d !== "48")) return "number we cannot back up";
     if (/\b48\b/.test(all) && !/48[\u00a0 ]hours/i.test(all)) return "48 must mean 48 hours";
     if (BANNED.test(all)) return "claim we cannot back up";
+    if (/48[\u00a0 ]hours/i.test(all)) return "in 48 hours is not a claim we can make";
   }
   if (existingCopy.some((c) => norm(c) === norm(all))) return "duplicate";
   return null;
@@ -66,9 +67,7 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
     if (!r || typeof r !== "object") continue;
     const o = r as Record<string, unknown>;
     const tidy = (x: unknown) => (typeof x === "string" ? x.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() : "");
-    // Keep "48 hours" together like the live headline does.
-    const nb = (x: string) => x.replace(/\b48 hours/gi, "48\u00a0hours");
-    const s: Suggestion = { text: nb(tidy(o.text)), emphasis: kind !== "headline" ? "" : nb(tidy(o.emphasis)), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
+    const s: Suggestion = { text: tidy(o.text), emphasis: kind !== "headline" ? "" : tidy(o.emphasis), rationale: tidy(o.why ?? o.rationale).slice(0, 280) };
     const why = checkSuggestion(s, seen, kind);
     if (why) { dropped.push({ text: s.text, why }); continue; }
     if (ok.length >= max) continue;
@@ -78,7 +77,7 @@ export function cleanSuggestions(raw: unknown, existingCopy: string[], max = SUG
   return { ok, dropped };
 }
 
-export const SUGGEST_SYSTEM_BUTTON = `You write button label variants for the main button on the saabai.ai homepage. The button opens a free 3 minute quiz that gives the visitor an AI score out of 100 and leads into the Saabai Blueprint, a clear plan for where AI will save a small business time, delivered in 48 hours.
+export const SUGGEST_SYSTEM_BUTTON = `You write button label variants for the main button on the saabai.ai homepage. The button opens a free 3 minute quiz that gives the visitor an AI score out of 100 and leads into the Saabai Blueprint, a clear plan for where AI will save a small business time. Do not mention a delivery time.
 Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no urgency tricks.
 Hard rules:
 - Never use em dashes or en dashes.
@@ -89,7 +88,7 @@ Hard rules:
 - Each label must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles: the quiz itself, the score, finding out where AI fits, a low-effort first step.
 Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": string, "why": string}. "why" is one plain sentence on the angle being tested.`;
 
-export const suggestSystemGeneric = (noun: string, maxText: number) => `You write ${noun} variants for a page on saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
+export const suggestSystemGeneric = (noun: string, maxText: number) => `You write ${noun} variants for a page on saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time. Do not mention a delivery time, and do not write "in 48 hours".
 Voice: plain, direct, Australian English, like a sensible tradie. Short words. No hype, no buzzwords, no emoji, no exclamation marks.
 Hard rules:
 - Never use em dashes or en dashes.
@@ -101,12 +100,12 @@ Reply with JSON only, no markdown fence: an array of exactly 3 objects {"text": 
 
 export const suggestSystem = (kind: SlotKind) => (kind === "button" ? SUGGEST_SYSTEM_BUTTON : kind === "headline" ? SUGGEST_SYSTEM : suggestSystemGeneric(KIND_RULES[kind].noun, KIND_RULES[kind].maxText));
 
-export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time, delivered in 48 hours.
+export const SUGGEST_SYSTEM = `You write headline variants for saabai.ai, an Australian business that gives small businesses a clear plan for where AI will save them time. Do not write "in 48 hours" or any 48 hours delivery promise. Starter delivery stays on the Blueprint page.
 Voice: plain, direct, Australian English, like a sensible tradie explaining things. Short words. No hype, no buzzwords, no emoji, no exclamation marks, no question marks needed.
 Hard rules:
 - Never use em dashes or en dashes. Use a comma or full stop.
-- Only claim what the current headlines already claim: a clear plan for where AI fits in the business, ready in 48 hours. Do not invent prices, savings, percentages, customer numbers, awards, guarantees, reviews, or results.
-- The only number allowed is "48 hours". No other digits.
+- Only claim a clear plan for where AI fits in the business. Do not invent prices, savings, percentages, customer numbers, awards, guarantees, reviews, results, or a delivery time.
+- No digits.
 - Avoid: best, free, guaranteed, proven, instant, unlock, transform, revolutionary, game changing, supercharge, effortless.
 - Each headline must be meaningfully different from the others and from the existing ones (different angle, not a reword). Angles to try: the owner's time, the cost of guessing, a clear next step, fear of wasting money on the wrong tool, plain English with no jargon.
 - "text" is the first part. "emphasis" is an optional second part shown in a highlight colour that finishes the sentence. Together they read as one headline of 100 characters or fewer. Each part 90 characters or fewer.

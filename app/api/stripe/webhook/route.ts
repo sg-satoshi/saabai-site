@@ -6,6 +6,7 @@ import { recordRedemptionUse, resolveRedemptionCode } from "@/lib/coupons/stripe
 import { attrFromMetadata } from "@/lib/growth/attribution";
 import { recordEvent, touchContact } from "@/lib/growth/events";
 import { markUpsellConverted, recordReferralPurchase } from "@/lib/growth/growth2";
+import { reportCheckoutPurchase } from "@/lib/marketing/report-purchase";
 
 export const runtime = "nodejs";
 
@@ -161,6 +162,7 @@ export async function POST(req: Request) {
   if (session.metadata?.product === "blueprint") {
     if (session.payment_status !== "paid") return Response.json({ received: true, skipped: "unpaid blueprint" });
     const result = await handleBlueprintCheckout(session, redemption);
+    await reportCheckoutPurchase(session);
     return Response.json({ received: true, blueprint: result });
   }
   const customerName = session.customer_details?.name ?? null;

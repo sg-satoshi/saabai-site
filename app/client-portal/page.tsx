@@ -8,6 +8,8 @@ import { LexWorkspace } from "./LexWorkspace";
 import { RequestsPanel } from "./requests/RequestsPanel";
 import { UpgradesPanel } from "./upgrades/UpgradesPanel";
 import { portalPageFromSearchParam } from "../../lib/portal-pages";
+import { BLUEPRINT_PAGE_HREF, type BlueprintCreditModel } from "../../lib/blueprint-credit";
+import { CreditPlanRail } from "./credit/CreditPlanRail";
 
 type AuthView = "checking" | "login" | "sent" | "request" | "request-sent" | "code" | "error" | "app";
 type PageId =
@@ -59,6 +61,8 @@ type Workspace = {
   requests: { id: string; title: string; status: string; createdAt: string; updatedAt: string }[];
   openRequestCount: number;
   impersonating?: { name: string; email: string; clientId: string; returnTo: string; expiresAt: string; readOnly: true } | null;
+  /** Null unless this account has a delivered Blueprint credit still on screen. */
+  credit?: BlueprintCreditModel | null;
 };
 
 const PRODUCT_ICON_PATHS: Record<string, React.ReactNode> = {
@@ -434,7 +438,7 @@ function ClientPortalInner() {
               <>
                 <div className="tagl">Client Portal</div>
                 <h1>Request access</h1>
-                <p className="lead">Tell us who you are. We will confirm your account within one business day.</p>
+                <p className="lead">Tell us who you are. We usually reply within 1 business day to confirm your account.</p>
                 {error && <div className="note bad" style={{ marginTop: 14 }} role="alert">{error}</div>}
                 <form className="f" onSubmit={sendAccessRequest}>
                   <label htmlFor="rname">Full name</label>
@@ -475,7 +479,7 @@ function ClientPortalInner() {
                 </div>
                 <div className="tagl">Request sent</div>
                 <h1>Thanks. We have your request.</h1>
-                <p className="lead">We will confirm your access within one business day. If your email matches an order, access may be ready sooner.</p>
+                <p className="lead">We usually reply within 1 business day to confirm your access. If your email matches an order, access may be ready sooner.</p>
                 <button type="button" className="tbtn" onClick={() => setAuthView("login")}>
                   Back to sign in
                 </button>
@@ -543,6 +547,8 @@ function ClientPortalInner() {
             <a className="btn dt" href="mailto:hello@saabai.ai">Book a call with Shane</a>
           </div>
 
+          <div className={workspace.credit ? "ov-with-credit" : undefined}>
+          <div>
           <div className="card" style={{ marginBottom: 16 }}>
             <div className="hd">
               <div>
@@ -720,6 +726,9 @@ function ClientPortalInner() {
                 </div>
               )}
             </div>
+          </div>
+          </div>
+          {workspace.credit ? <CreditPlanRail model={workspace.credit} blueprintHref={BLUEPRINT_PAGE_HREF} /> : null}
           </div>
         </>
       )}

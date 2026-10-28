@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import JsonLd from "../components/JsonLd";
 import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
+import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
+import BreadcrumbLd from "../components/BreadcrumbLd";
 
 export const metadata: Metadata = publicPageMeta.faq;
 
@@ -40,7 +42,7 @@ const faqs = [
     items: [
       {
         q: "How much does it typically cost?",
-        a: "Every Saabai engagement starts with a fixed-price Saabai Blueprint: Starter $497, Pro $1,497 or Business $3,500. The Blueprint gives you a written roadmap of your highest-ROI automation opportunities, and the fee is credited if you book a build within 30 days of delivery. Credit applies to implementation costs only, not care plans or monthly fees. Any unused credit expires after 30 days. Builds are quoted after the Blueprint based on scope. Websites through Web Solutions start from $2,000 plus $100 a month. The price only goes above a 'from' figure for custom integrations or other additional work, and we quote that in writing before any work starts. Not sure where to start? The free AI Readiness Score takes a few minutes. See the Blueprint page for what is included at each tier.",
+        a: "A Saabai Blueprint is optional. It is a fixed-price plan: Starter $497, Pro $1,497 or Business $3,500. Website care plans are sold on their own, from $2,000 plus $100 a month. If you book a build within 30 days of receiving the Blueprint, the fee comes off that build invoice. The credit does not cover care plans or monthly fees. Custom work is quoted to the job. The free AI Readiness Score takes about 3 minutes. See the Blueprint page for what is included at each tier.",
       },
       {
         q: "How do we measure the ROI?",
@@ -52,11 +54,11 @@ const faqs = [
       },
       {
         q: "Is there ongoing cost after the initial build?",
-        a: "Yes, most automation systems have ongoing running costs (software subscriptions, API usage, hosting) and we offer optional monthly optimisation retainers to keep systems performing well. We'll give you a full picture of ongoing costs upfront so there are no surprises.",
+        a: "Yes. Most automation systems have ongoing running costs (software subscriptions, API usage, hosting). We also offer optional monthly optimisation retainers. We set out those ongoing costs before we start. Retainer prices are not published.",
       },
       {
         q: "What if I buy a Saabai Blueprint and decide it's not for me?",
-        a: "If work hasn't begun, we'll refund you in full. Just reply to your confirmation email. Once work has begun, we don't give change-of-mind refunds. Your rights under the Australian Consumer Law always apply. We don't pressure anyone into proceeding to a build after the Blueprint. If the Blueprint shows there's nothing high-impact worth automating, we'll tell you.",
+        a: "If we have not started your analysis, we will refund you in full. We do not pressure anyone into a build after the Blueprint. If the Blueprint shows there is nothing high-impact worth automating, we will tell you.",
       },
           ],
   },
@@ -88,15 +90,15 @@ const faqs = [
     items: [
       {
         q: "I run a trade or local service business. What does AI actually do for us?",
-        a: "Usually three things: a website that answers enquiries and captures leads after hours, instant quoting from your own price list, and automatic follow-up and invoice reminders. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497 to find the biggest win first.",
+        a: "Usually a website that answers enquiries and keeps a log of the chat after hours. Quoting from your own price list is custom work, scoped and quoted, not part of the website plans. Follow-up and invoice reminders are quoted separately. Most tradies and service businesses start with a website care plan from $100 a month or a Saabai Blueprint from $497.",
       },
       {
         q: "We run a clinic, studio or salon. Where does it help most?",
-        a: "Bookings and enquiries. An AI agent on your site answers the same ten questions you get every day, takes booking requests after hours and sends reminders, so fewer no-shows and less time on the phone. Pair it with a care plan so your site stays fast and found.",
+        a: "Enquiries. An AI agent on your site can answer common questions at any hour and keeps a log of the chat. Booking is on Growth and Signature, not on every plan. Reminders are quoted separately, or they come from your own booking tool. Pair the chat with a care plan so your site stays fast and found.",
       },
       {
         q: "We run a real estate agency. Where does automation have the biggest impact?",
-        a: "Lead qualification and follow-up is where most agencies leak the most revenue. An AI system can respond to every new enquiry within seconds, ask qualifying questions, and only escalate serious buyers and sellers to your agents. Beyond that: inspection reminders, appraisal follow-up and listing update comms.",
+        a: "Lead qualification. An AI system can answer new enquiries at any hour, ask qualifying questions, and pass serious buyers and sellers to your agents. Inspection reminders, appraisal follow-up and listing updates are quoted separately.",
       },
       {
         q: "What about privacy and data security?",
@@ -108,8 +110,7 @@ const faqs = [
       },
       {
         q: "Do you work with e-commerce or product businesses?",
-        a: "Yes, and it's one of the most immediate ROI cases we see. Product businesses with high enquiry volume are losing leads every hour they can't respond instantly. We build AI agents that handle product questions, custom quoting, order lookups and lead capture 24/7. PlasticOnline (Holland Plastics) is currently running one of these in production.",
-        link: { href: "/case-studies/rex-plastics-online", label: "Read the case study." },
+        a: "Yes. Product businesses with high enquiry volume lose leads every hour they can't respond. We build AI agents that handle product questions, custom quoting, order lookups and lead capture around the clock.",
       },
     ],
   },
@@ -123,7 +124,7 @@ const faqs = [
       },
       {
         q: "Is the strategy call really free? What's the catch?",
-        a: "Yes, genuinely free. No invoice, no follow-up pressure, no \"free call\" that turns into a two-hour pitch. If we don't think we can help, we'll say so on the call and point you somewhere useful.",
+        a: "Yes, genuinely free. No invoice, no follow-up pressure, no \"free call\" that turns into a two-hour pitch. The only catch: we only take it if we think there's a real opportunity to help. If your operation isn't a good fit for what we do, we'll tell you on the call.",
       },
       {
         q: "What does ongoing support look like after the build?",
@@ -135,11 +136,17 @@ const faqs = [
       },
     ],
   },
+  {
+    id: "care-plans",
+    category: "Care plans, ownership and data",
+    items: CARE_PLAN_FAQS,
+  },
 ];
 
 export default function FAQ() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
+      <BreadcrumbLd name="FAQ" path="/faq" />
       <JsonLd data={faqSchema(faqs.flatMap((cat) => cat.items))} />
 
       <Nav activePage="/faq" />
@@ -210,7 +217,7 @@ export default function FAQ() {
             className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden"
             style={{ boxShadow: "0 0 60px rgba(98,197,209,0.25), 0 0 24px rgba(98,197,209,0.15)" }}
           >
-            {items.map(({ q, a, ...rest }) => (
+            {items.map(({ q, a }) => (
               <details key={q} className="group bg-saabai-surface">
                 <summary className="flex items-center justify-between gap-6 px-8 py-6 cursor-pointer list-none select-none hover:bg-saabai-surface-raised transition-colors">
                   <span className="text-base font-medium text-saabai-text leading-snug">{q}</span>
@@ -219,15 +226,7 @@ export default function FAQ() {
                   </span>
                 </summary>
                 <div className="px-8 pb-7 pt-1">
-                  <p className="text-base text-saabai-text-muted leading-relaxed">
-                    {a}
-                    {"link" in rest && rest.link ? (
-                      <>
-                        {" "}
-                        <a href={rest.link.href} className="text-saabai-teal hover:text-saabai-teal-bright underline underline-offset-2">{rest.link.label}</a>
-                      </>
-                    ) : null}
-                  </p>
+                  <p className="text-base text-saabai-text-muted leading-relaxed">{a}</p>
                 </div>
               </details>
             ))}

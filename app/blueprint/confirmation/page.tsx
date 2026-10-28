@@ -4,14 +4,15 @@ import SbNav from "../../components/sb/SbNav";
 import "../../components/sb/checkout.css";
 import { TIERS, isTier, type BlueprintTier } from "@/lib/blueprint";
 import GaEvent from "../../components/GaEvent";
+import MarketingPurchase from "../../components/MarketingPurchase";
 
 export const metadata: Metadata = { title: "You're in: Saabai Blueprint", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
 
-async function lookup(sessionId: string | undefined): Promise<{ tier: BlueprintTier | null; name: string; email: string; paid: boolean; ref: string }> {
-  const empty = { tier: null, name: "", email: "", paid: false, ref: "" };
+async function lookup(sessionId: string | undefined): Promise<{ tier: BlueprintTier | null; name: string; email: string; paid: boolean; ref: string; amountAud: number | null; sessionId: string }> {
+  const empty = { tier: null, name: "", email: "", paid: false, ref: "", amountAud: null, sessionId: "" };
   const key = process.env.STRIPE_SECRET_KEY;
   if (!sessionId || !key || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return empty;
   try {
@@ -23,6 +24,8 @@ async function lookup(sessionId: string | undefined): Promise<{ tier: BlueprintT
       email: s.customer_details?.email || s.customer_email || "",
       paid: s.payment_status === "paid",
       ref: "SB-" + s.id.slice(-6).toUpperCase(),
+      amountAud: typeof s.amount_total === "number" ? s.amount_total / 100 : null,
+      sessionId: s.id,
     };
   } catch (err) {
     console.error("[blueprint confirmation]", err);
@@ -38,7 +41,9 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
 
   return (
     <div className="sb">
-      {o.paid && t && o.ref ? (
+      {o.paid && t && o.sessionId && o.amountAud != null ? (
+        <MarketingPurchase eventId={`purchase_${o.sessionId}`} transactionId={o.sessionId} value={o.amountAud} contentName={`Saabai Blueprint ${t.name}`} contentId={`blueprint_${o.tier}`} contentCategory="blueprint" />
+      ) : o.paid && t && o.ref ? (
         <GaEvent name="purchase" onceKey={`purchase:${o.ref}`} params={{ transaction_id: o.ref, currency: "AUD", value: t.price, items: [{ item_id: `blueprint_${o.tier}`, item_name: `Saabai Blueprint ${t.name}`, item_category: "blueprint", price: t.price, quantity: 1 }] }} />
       ) : null}
       <SbNav minimal right={o.ref ? <span className="dim" style={{ fontSize: 14 }}>Order {o.ref}</span> : undefined} />

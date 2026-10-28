@@ -7,6 +7,7 @@ import LoginAsBanner from "./components/LoginAsBanner";
 import EmailCapturePopup from "./components/EmailCapturePopup";
 import SaabaiJsonLd from "./components/SaabaiJsonLd";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import MarketingAnalytics from "./components/MarketingAnalytics";
 import ExpOverlay from "./components/exp/ExpOverlay";
 import AnnouncementBar from "./components/AnnouncementBar";
 import { ANTI_FLICKER_SCRIPT } from "@/lib/exp/overlay";
@@ -80,7 +81,7 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   alternates: {
-    canonical: BASE_URL,
+    canonical: `${BASE_URL}/`,
   },
   robots: {
     index: true,
@@ -113,6 +114,7 @@ export default function RootLayout({
         <ConditionalWidgets />
         <EmailCapturePopup />
         <GoogleAnalytics />
+        <MarketingAnalytics />
         <ExpOverlay />
         <AnnouncementBar />
       </body>

@@ -41,7 +41,6 @@ const IMPLEMENTATION_SIGNALS = [
 
 const EXECUTION_SIGNALS = [
   "check lex",
-  "inspect rex",
   "inspect lex",
   "run build",
   "clean things up",

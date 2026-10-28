@@ -88,7 +88,7 @@ readme.push(
   "## Manual checks",
   "1. Portal `/client-portal` → Requests → New request: Type dropdown, Priority segmented, Critical warn copy",
   "2. Submit hours example → clarifier asks or agrees → Triaged + Agreed change",
-  "3. Critical → email shanegoldberg@pm.me + Telegram if env set; assignee Chief AI; mode Auto",
+  "3. Critical → email hello@saabai.ai (or REQUESTS_CRITICAL_EMAIL) and Telegram only when an admin chat is configured; assignee Chief AI; mode Auto",
   "4. Admin inbox Critical strip: Take over; detail: Chief is handling + Escalate to Shane",
   "5. Impersonation: create/reply/upload blocked",
   "6. Change log at `/saabai-admin/change-log`",
