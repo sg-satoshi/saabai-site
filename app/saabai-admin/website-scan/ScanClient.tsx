@@ -55,7 +55,7 @@ export default function ScanClient() {
   const flag = async () => { if (!confirm(pub ? "Turn the public scan step OFF on /score?" : "Turn the public scan step ON for all /score visitors?")) return; await post({ action: "flag", on: !pub }); void loadMeta(); };
 
   return (
-    <div style={{ margin: 20, padding: 24, maxWidth: 1100, color: "#fff", background: "#0b092e", borderRadius: 16 }}>
+    <div style={{ padding: 24, color: "#fff", background: "#0b092e", borderRadius: 16 }}>
       <h1 style={{ fontSize: 26, margin: 0 }}>Website scanner</h1>
       <p style={{ color: "#a5b4fc", marginTop: 6 }}>Internal tool. Public data only, read-only: nothing is changed on any scanned site.</p>
       <form onSubmit={scan} style={{ display: "grid", gap: 10, background: "#14123a", border: "1px solid #62c5d138", borderRadius: 14, padding: 18, marginTop: 14 }}>

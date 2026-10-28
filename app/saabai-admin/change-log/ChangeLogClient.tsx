@@ -54,7 +54,7 @@ export default function ChangeLogClient() {
   }
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 900, fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
+    <div style={{ fontFamily: "var(--font-admin-sans), system-ui, sans-serif" }}>
       <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800 }}>Change log</h1>
       <p style={{ margin: "0 0 20px", fontSize: 13, color: "#5f6580" }}>
         Site and global changes. Request status updates land here automatically.
