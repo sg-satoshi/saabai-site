@@ -8,6 +8,7 @@ const OFFERS = [
   { label: "Web Solutions", href: "/websites" },
   { label: "Saabai Blueprint", href: "/blueprint" },
   { label: "Free AI score", href: "/score" },
+  { label: "Services", href: "/services" },
   { label: "Pricing", href: "/pricing" },
 ];
 

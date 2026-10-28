@@ -4,6 +4,7 @@ import CheckoutClient from "./CheckoutClient";
 
 export const metadata: Metadata = {
   title: "Checkout: Saabai Blueprint",
+  alternates: { canonical: "https://www.saabai.ai/blueprint/checkout" },
   robots: { index: false, follow: false },
 };
 

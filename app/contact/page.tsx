@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Nav from "../components/Nav";
 import SbFooter from "../components/sb/SbFooter";
-import { NAP } from "@/lib/seo-entity";
+import { NAP, ORG_ID } from "@/lib/seo-entity";
 import { publicPageMeta } from "@/lib/seo-pages";
 import BreadcrumbLd from "../components/BreadcrumbLd";
+import JsonLd from "../components/JsonLd";
 import "../components/sb/sb.css";
 
 const CALENDLY = "https://calendly.com/shanegoldberg/30min";
@@ -21,6 +22,14 @@ const ROWS: [string, string][] = [
 export default function ContactPage() {
   return (
     <div className="sb">
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        url: "https://www.saabai.ai/contact",
+        name: "Contact Saabai | Gold Coast and Brisbane",
+        about: { "@id": ORG_ID },
+        mainEntity: { "@id": ORG_ID },
+      }} />
       <BreadcrumbLd name="Contact" path="/contact" />
       <Nav />
       <div aria-hidden="true" style={{ height: 92 }} />

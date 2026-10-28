@@ -147,8 +147,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", marginTop: 32 }}>
+          <div style={{ textAlign: "center", marginTop: 32, display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn ghost" href="/blueprint">See Blueprint tiers →</a>
+            <a className="btn ghost" href="/case-studies">See the case studies →</a>
           </div>
         </div>
       </section>

@@ -6,6 +6,7 @@ import { faqSchema } from "@/lib/seo-meta";
 import { publicPageMeta } from "@/lib/seo-pages";
 import { CARE_PLAN_FAQS } from "@/lib/care-faqs";
 import BreadcrumbLd from "../components/BreadcrumbLd";
+import LinkedText from "../components/LinkedText";
 
 export const metadata: Metadata = publicPageMeta.faq;
 
@@ -143,6 +144,13 @@ const faqs = [
   },
 ];
 
+const ANSWER_LINKS = [
+  { phrase: "free calculator", href: "/calculator" },
+  { phrase: "free AI Readiness Score", href: "/score" },
+  { phrase: "free AI score", href: "/score" },
+  { phrase: "Blueprint page", href: "/blueprint" },
+];
+
 export default function FAQ() {
   return (
     <div className="bg-saabai-bg text-saabai-text min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -209,9 +217,9 @@ export default function FAQ() {
           id={id}
           className={`py-16 px-6 max-w-3xl mx-auto ${catIndex > 0 ? "border-t border-saabai-border" : ""}`}
         >
-          <p className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-8">
+          <h2 className="text-[11px] font-medium tracking-[0.2em] text-saabai-teal uppercase mb-8">
             {category}
-          </p>
+          </h2>
 
           <div
             className="flex flex-col divide-y divide-saabai-border border border-saabai-border rounded-2xl overflow-hidden"
@@ -226,7 +234,9 @@ export default function FAQ() {
                   </span>
                 </summary>
                 <div className="px-8 pb-7 pt-1">
-                  <p className="text-base text-saabai-text-muted leading-relaxed">{a}</p>
+                  <p className="text-base text-saabai-text-muted leading-relaxed">
+                    <LinkedText text={a} links={ANSWER_LINKS} />
+                  </p>
                 </div>
               </details>
             ))}
